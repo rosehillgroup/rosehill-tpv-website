@@ -982,13 +982,8 @@
         // Load installations data
         async function loadInstallations() {
             try {
-                console.log('Loading installations from Supabase...');
                 const response = await fetch('/.netlify/functions/get-installations');
                 const data = await response.json();
-                console.log('Received installations data:', data.installations?.length || 0, 'installations');
-                if (data.installations && data.installations.length > 0) {
-                    console.log('Sample installation:', data.installations[0]);
-                }
                 allInstallations = data.installations || [];
                 
                 // Sort by date (newest first)
@@ -1204,9 +1199,7 @@
 
         // Helper function to get proper image URL
         function getImageUrl(img) {
-            console.log('Processing image:', img);
             // The Netlify function already provides the correct URLs, so just return them
-            console.log('Using image URL as-is:', img);
             return img;
         }
 
