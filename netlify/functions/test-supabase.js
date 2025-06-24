@@ -39,7 +39,7 @@ exports.handler = async (event, context) => {
         // Simple test query
         const { data, error } = await supabase
             .from('installations')
-            .select('count(*)')
+            .select('*')
             .limit(1);
         
         return {
