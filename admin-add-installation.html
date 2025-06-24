@@ -546,7 +546,8 @@
                 
                 // Check if response is ok
                 if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    const text = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${text}`);
                 }
                 
                 // Check if response has content
@@ -563,7 +564,12 @@
                     throw new Error('Server returned invalid JSON: ' + text.substring(0, 200));
                 }
                 
-                return result;
+                // For testing, show the actual result
+                if (result.success) {
+                    throw new Error('TEST SUCCESS: ' + JSON.stringify(result.data));
+                } else {
+                    throw new Error('TEST FAILED: ' + result.message);
+                }
             } catch (error) {
                 console.error('Submission error:', error);
                 throw error;
