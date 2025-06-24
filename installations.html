@@ -1205,29 +1205,9 @@
         // Helper function to get proper image URL
         function getImageUrl(img) {
             console.log('Processing image:', img);
-            // Handle different image data structures
-            if (typeof img === 'string') {
-                // Old format: just a filename string
-                const url = `images/installations/${img}`;
-                console.log('String image -> URL:', url);
-                return url;
-            } else if (img && typeof img === 'object') {
-                // New format: object with url and/or filename
-                if (img.url) {
-                    // Supabase Storage image - use the full URL
-                    console.log('Supabase image -> URL:', img.url);
-                    return img.url;
-                } else if (img.filename) {
-                    // Local image file - prepend images/installations/ path
-                    const url = `images/installations/${img.filename}`;
-                    console.log('Local image -> URL:', url);
-                    return url;
-                }
-            }
-            // Fallback
-            const url = `images/installations/${img}`;
-            console.log('Fallback image -> URL:', url);
-            return url;
+            // The Netlify function already provides the correct URLs, so just return them
+            console.log('Using image URL as-is:', img);
+            return img;
         }
 
         // Show installation details (placeholder)
