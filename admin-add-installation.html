@@ -539,7 +539,7 @@
 
         async function simulateSubmission(formData) {
             try {
-                const response = await fetch('admin-process-installation.php', {
+                const response = await fetch('/.netlify/functions/process-installation', {
                     method: 'POST',
                     body: formData
                 });

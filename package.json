@@ -1,0 +1,14 @@
+{
+  "name": "rosehill-tpv-website",
+  "version": "1.0.0",
+  "description": "Rosehill TPV Sports & Recreation Surfaces Website",
+  "scripts": {
+    "build": "echo 'No build process needed'"
+  },
+  "dependencies": {
+    "parse-multipart-data": "^1.5.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
