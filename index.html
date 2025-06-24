@@ -1474,7 +1474,7 @@
         // Load latest installations
         async function loadLatestInstallations() {
             try {
-                const response = await fetch('installations.json');
+                const response = await fetch('/.netlify/functions/get-installations');
                 if (!response.ok) throw new Error('Failed to load installations');
                 
                 const data = await response.json();
