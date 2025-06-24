@@ -539,7 +539,7 @@
 
         async function simulateSubmission(formData) {
             try {
-                const response = await fetch('/.netlify/functions/simple-test', {
+                const response = await fetch('/.netlify/functions/process-installation-final', {
                     method: 'POST',
                     body: formData
                 });
@@ -564,12 +564,12 @@
                     throw new Error('Server returned invalid JSON: ' + text.substring(0, 200));
                 }
                 
-                // For testing, show the actual result
-                if (result.success) {
-                    throw new Error('TEST SUCCESS: ' + JSON.stringify(result.data));
-                } else {
-                    throw new Error('TEST FAILED: ' + result.message);
+                // Check if the operation was successful
+                if (!result.success) {
+                    throw new Error(result.error || 'Unknown error occurred');
                 }
+                
+                return result;
             } catch (error) {
                 console.error('Submission error:', error);
                 throw error;
