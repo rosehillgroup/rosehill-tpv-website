@@ -539,15 +539,28 @@
 
         async function simulateSubmission(formData) {
             try {
-                const response = await fetch('/.netlify/functions/process-installation-final', {
+                const response = await fetch('/.netlify/functions/debug-upload', {
                     method: 'POST',
                     body: formData
                 });
                 
-                const result = await response.json();
+                // Check if response is ok
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
                 
-                if (!result.success) {
-                    throw new Error(result.error || 'Unknown error occurred');
+                // Check if response has content
+                const text = await response.text();
+                if (!text) {
+                    throw new Error('Empty response from server');
+                }
+                
+                // Try to parse JSON
+                let result;
+                try {
+                    result = JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Server returned invalid JSON: ' + text.substring(0, 200));
                 }
                 
                 return result;
