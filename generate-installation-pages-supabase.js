@@ -71,7 +71,7 @@ async function generateInstallationPage(installation, outputDir) {
             
             if (typeof img === 'string') {
                 // Old format: just a filename string
-                imageUrl = `../images/${img}`;
+                imageUrl = `../images/installations/${img}`;
                 filename = img;
             } else if (img && typeof img === 'object') {
                 // New format: object with url and/or filename
@@ -80,13 +80,13 @@ async function generateInstallationPage(installation, outputDir) {
                     imageUrl = img.url;
                     filename = img.filename || 'image';
                 } else if (img.filename) {
-                    // Local image file - prepend images/ path
-                    imageUrl = `../images/${img.filename}`;
+                    // Local image file - prepend images/installations/ path
+                    imageUrl = `../images/installations/${img.filename}`;
                     filename = img.filename;
                 }
             } else {
                 // Fallback
-                imageUrl = `../images/${img}`;
+                imageUrl = `../images/installations/${img}`;
                 filename = img;
             }
             
@@ -101,15 +101,15 @@ async function generateInstallationPage(installation, outputDir) {
             let imageUrl;
             
             if (typeof img === 'string') {
-                imageUrl = `../images/${img}`;
+                imageUrl = `../images/installations/${img}`;
             } else if (img && typeof img === 'object') {
                 if (img.url) {
                     imageUrl = img.url;
                 } else if (img.filename) {
-                    imageUrl = `../images/${img.filename}`;
+                    imageUrl = `../images/installations/${img.filename}`;
                 }
             } else {
-                imageUrl = `../images/${img}`;
+                imageUrl = `../images/installations/${img}`;
             }
             
             return `

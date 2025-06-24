@@ -60,19 +60,19 @@ exports.handler = async (event, context) => {
                 // Handle different image data structures
                 if (typeof img === 'string') {
                     // Old format: just a filename string
-                    return `images/${img}`;
+                    return `images/installations/${img}`;
                 } else if (img && typeof img === 'object') {
                     // New format: object with url and/or filename
                     if (img.url) {
                         // Supabase Storage image - use the full URL
                         return img.url;
                     } else if (img.filename) {
-                        // Local image file - prepend images/ path
-                        return `images/${img.filename}`;
+                        // Local image file - prepend images/installations/ path
+                        return `images/installations/${img.filename}`;
                     }
                 }
                 // Fallback
-                return img;
+                return `images/installations/${img}`;
             }),
             slug: installation.slug
         }));
