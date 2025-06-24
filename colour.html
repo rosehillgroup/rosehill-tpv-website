@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rosehill TPV Colours - 21 Vibrant Options & Custom Blends</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 15px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 600;
+            font-family: 'Source Sans Pro', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 6px;
+        }
+
+        .nav-menu a:hover {
+            background: rgba(255, 107, 53, 0.2);
+            color: #ff6b35;
+        }
+
+        .nav-menu a.active {
+            background: rgba(255, 107, 53, 0.2);
+            color: #ff6b35;
+            font-weight: 600;
+        }
+
+        .contact-btn {
+            background: #ff6b35;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .contact-btn:hover {
+            background: #e55a2b !important;
+            transform: translateY(-2px);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, rgba(255, 107, 53, 0.8), rgba(229, 90, 43, 0.8)), url('hero_background_colour.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: white;
+            padding: 140px 0 100px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 70px;
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+            text-align: center;
+        }
+
+        .hero-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 3;
+            width: 100%;
+        }
+
+        .hero h1 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            line-height: 1.6;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            opacity: 0.95;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 80px 0;
+        }
+
+        .section-title {
+            font-family: 'Overpass', sans-serif;
+            color: #1a365d;
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-align: center;
+            position: relative;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: #6c757d;
+            font-size: 1.2rem;
+            margin-bottom: 60px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .section-title::after {
+            content: '';
+            width: 80px;
+            height: 4px;
+            background: #ff6b35;
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Color Palette Section */
+        .color-palette-section {
+            background: white;
+            padding: 80px 0;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .color-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .color-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+
+        .color-image {
+            height: 200px;
+            background: #f8f9fa;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .color-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            transition: transform 0.3s ease;
+        }
+
+        .color-card:hover .color-image img {
+            transform: scale(1.05);
+        }
+
+        .color-info {
+            padding: 25px;
+        }
+
+        .color-name {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #1a365d;
+        }
+
+        .color-code {
+            color: #6c757d;
+            font-size: 1rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        /* Blends Section */
+        .blends-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 100px 0;
+        }
+
+        .blend-intro {
+            max-width: 900px;
+            margin: 0 auto 60px;
+            text-align: center;
+        }
+
+        .blend-intro p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #495057;
+            margin-bottom: 20px;
+        }
+
+        .blend-categories {
+            margin-top: 60px;
+        }
+
+        .blend-category {
+            margin-bottom: 80px;
+        }
+
+        .category-title {
+            font-family: 'Overpass', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #1a365d;
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .category-title::after {
+            content: '';
+            width: 60px;
+            height: 3px;
+            background: #ff6b35;
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .blend-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .blend-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .blend-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .blend-image {
+            height: 220px;
+            background: #f8f9fa;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .blend-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            transition: transform 0.3s ease;
+        }
+
+        .blend-card:hover .blend-image img {
+            transform: scale(1.03);
+        }
+
+        .blend-info {
+            padding: 25px;
+        }
+
+        .blend-name {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1a365d;
+        }
+
+        .blend-formula {
+            color: #ff6b35;
+            font-size: 0.95rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .blend-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 2.8rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn-primary {
+            background: #ff6b35;
+            color: white;
+            padding: 18px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #e55a2b;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn-outline-white {
+            background: transparent;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: inline-block;
+            transition: all 0.3s ease;
+            border: 2px solid white;
+        }
+
+        .btn-outline-white:hover {
+            background: white;
+            color: #1a365d;
+            transform: translateY(-3px);
+        }
+
+        /* Footer */
+        .footer {
+            background: #1a365d;
+            color: white;
+            padding: 60px 0 30px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h3 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #ff6b35;
+        }
+
+        .footer-section p,
+        .footer-section li {
+            opacity: 0.9;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: #ff6b35;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 30px;
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 8px;
+            background: none;
+            border: none;
+            z-index: 1001;
+        }
+
+        .mobile-menu-toggle span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 3px 0;
+            transition: 0.3s;
+            border-radius: 2px;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+        }
+
+        .mobile-menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
+        }
+
+        .mobile-nav-menu {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 999;
+        }
+
+        .mobile-nav-menu.active {
+            display: flex;
+        }
+
+        .mobile-nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: color 0.3s ease;
+        }
+
+        .mobile-nav-menu a:hover {
+            color: #ff6b35;
+        }
+
+        .mobile-nav-menu a.active {
+            color: #ff6b35;
+            font-weight: 600;
+        }
+
+        .mobile-nav-menu a:last-child {
+            border-bottom: none;
+        }
+
+        .mobile-nav-menu .contact-btn {
+            background: #ff6b35;
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 10px;
+            border-bottom: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .mobile-menu-toggle {
+                display: flex;
+            }
+
+            .color-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 25px;
+            }
+
+            .blend-grid {
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 25px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.8rem;
+            }
+
+            .hero p {
+                font-size: 1.2rem;
+            }
+
+            .section-title {
+                font-size: 2.2rem;
+            }
+
+            .color-grid {
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 20px;
+            }
+
+            .blend-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <a href="index.html" class="logo">
+                <img src="rosehill_tpv_logo.png" alt="Rosehill TPV" style="height: 60px;">
+            </a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="products.html">Products</a></li>
+                    <li><a href="applications.html">Applications</a></li>
+                    <li><a href="colour.html" class="active">Colour</a></li>
+                    <li><a href="installations.html">Installations</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="contact.html" class="contact-btn">Get in Touch</a></li>
+                </ul>
+                <button class="mobile-menu-toggle" id="mobile-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="mobile-nav-menu" id="mobile-menu">
+                    <a href="index.html">Home</a>
+                    <a href="products.html">Products</a>
+                    <a href="applications.html">Applications</a>
+                    <a href="colour.html" class="active">Colour</a>
+                    <a href="installations.html">Installations</a>
+                    <a href="about.html">About Us</a>
+                    <a href="contact.html" class="contact-btn">Get in Touch</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>21 Vibrant Colours<br>Endless Possibilities</h1>
+            <p>From subtle single-colour installations to dynamic custom blends, our UV-stable TPV granules deliver lasting vibrancy for architects, designers, and specifiers creating exceptional surfaces.</p>
+        </div>
+    </section>
+
+    <!-- Color Palette Section -->
+    <section class="color-palette-section">
+        <div class="container">
+            <h2 class="section-title">Our 21 Standard Colours</h2>
+            <p class="section-subtitle">Each colour is engineered for longevity and maintains its vibrancy even in challenging environments. All colours are UV-stable, non-toxic, and manufactured in the UK.</p>
+            
+            <div class="color-grid">
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Azure RH23.jpg" alt="Azure RH23">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Azure</h3>
+                        <p class="color-code">RH23</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Beige RH30.jpg" alt="Beige RH30">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Beige</h3>
+                        <p class="color-code">RH30</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Black RH70.jpg" alt="Black RH70">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Black</h3>
+                        <p class="color-code">RH70</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Bright Green RH11.jpg" alt="Bright Green RH11">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Bright Green</h3>
+                        <p class="color-code">RH11</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Bright Red RH02.jpg" alt="Bright Red RH02">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Bright Red</h3>
+                        <p class="color-code">RH02</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Bright Yellow RH41.jpg" alt="Bright Yellow RH41">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Bright Yellow</h3>
+                        <p class="color-code">RH41</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Brown RH32.jpg" alt="Brown RH32">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Brown</h3>
+                        <p class="color-code">RH32</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Cream RH31.jpg" alt="Cream RH31">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Cream</h3>
+                        <p class="color-code">RH31</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Dark Green RH12.jpg" alt="Dark Green RH12">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Dark Green</h3>
+                        <p class="color-code">RH12</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Dark Grey RH60.jpg" alt="Dark Grey RH60">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Dark Grey</h3>
+                        <p class="color-code">RH60</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Funky Pink RH90.jpg" alt="Funky Pink RH90">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Funky Pink</h3>
+                        <p class="color-code">RH90</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Light Blue RH22.jpg" alt="Light Blue RH22">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Light Blue</h3>
+                        <p class="color-code">RH22</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Light Grey RH61.jpg" alt="Light Grey RH61">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Light Grey</h3>
+                        <p class="color-code">RH61</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Mustard RH40.jpg" alt="Mustard RH40">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Mustard</h3>
+                        <p class="color-code">RH40</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Orange RH50.jpg" alt="Orange RH50">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Orange</h3>
+                        <p class="color-code">RH50</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Pale Grey RH65.jpg" alt="Pale Grey RH65">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Pale Grey</h3>
+                        <p class="color-code">RH65</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Purple RH21.jpg" alt="Purple RH21">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Purple</h3>
+                        <p class="color-code">RH21</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Standard Blue RH20.jpg" alt="Standard Blue RH20">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Standard Blue</h3>
+                        <p class="color-code">RH20</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Standard Green RH10.jpg" alt="Standard Green RH10">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Standard Green</h3>
+                        <p class="color-code">RH10</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Standard Red RH01.jpg" alt="Standard Red RH01">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Standard Red</h3>
+                        <p class="color-code">RH01</p>
+                    </div>
+                </div>
+
+                <div class="color-card">
+                    <div class="color-image">
+                        <img src="Turquoise RH26.jpg" alt="Turquoise RH26">
+                    </div>
+                    <div class="color-info">
+                        <h3 class="color-name">Turquoise</h3>
+                        <p class="color-code">RH26</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Blends Section -->
+    <section class="blends-section">
+        <div class="container">
+            <h2 class="section-title">Custom Colour Blends</h2>
+            <div class="blend-intro">
+                <p>Surfaces come alive when multiple colours are expertly blended. From subtle two-tone combinations to dynamic multi-colour patterns, our custom blending service allows architects and designers to create truly unique installations.</p>
+                <p>Each blend is precisely formulated using percentage ratios of our standard colours, ensuring consistent results and reproducible specifications for your projects.</p>
+            </div>
+
+            <div class="blend-categories">
+                <!-- Warm Blends -->
+                <div class="blend-category">
+                    <h3 class="category-title">Warm Tones</h3>
+                    <div class="blend-grid">
+                        <div class="blend-card">
+                            <div class="blend-image">
+                                <img src="Blends/01 Gold_66-33_RH41-RH40_FTZ3757.jpg" alt="Gold Blend">
+                            </div>
+                            <div class="blend-info">
+                                <h4 class="blend-name">Gold</h4>
+                                <p class="blend-formula">2 parts RH41 Bright Yellow / 1 part RH40 Mustard</p>
+                                <p class="blend-description">Sophisticated golden tone perfect for premium installations and accent areas.</p>
+                            </div>
+                        </div>
+
+                        <div class="blend-card">
+                            <div class="blend-image">
+                                <img src="Blends/02 Golden Sunshine_Thirds_RH41-RH40-RH50_FTZ3755.jpg" alt="Golden Sunshine Blend">
+                            </div>
+                            <div class="blend-info">
+                                <h4 class="blend-name">Golden Sunshine</h4>
+                                <p class="blend-formula">1 part RH41 Bright Yellow / 1 part RH40 Mustard / 1 part RH50 Orange</p>
+                                <p class="blend-description">Vibrant three-colour blend creating warm, energetic surfaces ideal for play areas.</p>
+                            </div>
+                        </div>
+
+                        <div class="blend-card">
+                            <div class="blend-image">
+                                <img src="Blends/05 Apricot Orange_50-50_RH50-RH30_FTZ3746.jpg" alt="Apricot Orange Blend">
+                            </div>
+                            <div class="blend-info">
+                                <h4 class="blend-name">Apricot Orange</h4>
+                                <p class="blend-formula">1 part RH50 Orange / 1 part RH30 Beige</p>
+                                <p class="blend-description">Soft, approachable orange blend suitable for residential and community spaces.</p>
+                            </div>
+                        </div>
+
+                        <div class="blend-card">
+                            <div class="blend-image">
+                                <img src="Blends/35 Pumpkin Orange_66-33_RH50-RH40_FTZ4019.jpg" alt="Pumpkin Orange Blend">
+                            </div>
+                            <div class="blend-info">
+                                <h4 class="blend-name">Pumpkin Orange</h4>
+                                <p class="blend-formula">2 parts RH50 Orange / 1 part RH40 Mustard</p>
+                                <p class="blend-description">Rich autumn-inspired orange perfect for seasonal themes and warm environments.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Natural Blends -->
+                <div class="blend-category">
+                    <h3 class="category-title">Natural Earth Tones</h3>
+                    <div class="blend-grid">
+                        <div class="blend-card">
+                            <div class="blend-image">
+                                <img src="Blends/26 Desert Camouflage_50-50_RH30-RH31_FTZ4004.jpg" alt="Desert Camouflage Blend">
+                            </div>
+                            <div class="blend-info">
+                                <h4 class="blend-name">Desert Camouflage</h4>
+                                <p class="blend-formula">1 part RH30 Beige / 1 part RH31 Cream</p>
+                                <p class="blend-description">Natural sandy blend ideal for landscapes that need to blend with surroundings.</p>
+                            </div>
+                        </div>
+
+                        <div class="blend-card">
+                            <div class="blend-image">
+                                <img src="Blends/29 Sand_Thirds_RH30-RH40-RH41_FTZ4002.jpg" alt="Sand Blend">
+                            </div>
+                            <div class="blend-info">
+                                <h4 class="blend-name">Sand</h4>
+                                <p class="blend-formula">1 part RH30 Beige / 1 part RH40 Mustard / 1 part RH41 Bright Yellow</p>
+                                <p class="blend-description">Multi-tonal sand effect creating natural, organic-looking surfaces.</p>
+                            </div>
+                        </div>
+
+                        <div class="blend-card">
+                            <div class="blend-image">
+                                <img src="Blends/08 Autumn Brown_40-20-40_RH33-RH40-RH01_FTZ3769.jpg" alt="Autumn Brown Blend">
+                            </div>
+                            <div class="blend-info">
+                                <h4 class="blend-name">Autumn Brown</h4>
+                                <p class="blend-formula">2 parts RH32 Brown / 1 part RH40 Mustard / 2 parts RH01 Standard Red</p>
+                                <p class="blend-description">Rich earth-tone blend perfect for natural play environments and parkland settings.</p>
+                            </div>
+                        </div>
+
+                        <div class="blend-card">
+                            <div class="blend-image">
+                                <img src="Blends/25 Granite_50-50_RH60-RH65_FTZ3772.jpg" alt="Granite Blend">
+                            </div>
+                            <div class="blend-info">
+                                <h4 class="blend-name">Granite</h4>
+                                <p class="blend-formula">1 part RH60 Dark Grey / 1 part RH65 Pale Grey</p>
+                                <p class="blend-description">Contemporary grey blend mimicking natural stone for modern architectural applications.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cool Blends -->
+                <div class="blend-category">
+                    <h3 class="category-title">Cool Blues & Greens</h3>
+                    <div class="blend-grid">
+                        <div class="blend-card">
+                            <div class="blend-image">
+                                <img src="Blends/12 Green Meadow_Thirds_RH10-RH11-RH12_FTZ3738.jpg" alt="Green Meadow Blend">
+                            </div>
+                            <div class="blend-info">
+                                <h4 class="blend-name">Green Meadow</h4>
+                                <p class="blend-formula">1 part RH10 Standard Green / 1 part RH11 Bright Green / 1 part RH12 Dark Green</p>
+                                <p class="blend-description">Natural grass-like blend ideal for sports surfaces and recreational areas.</p>
+                            </div>
+                        </div>
+
+                        <div class="blend-card">
+                            <div class="blend-image">
+                                <img src="Blends/37 Verdigris_66-33_RH11-RH23_FTZ4022.jpg" alt="Verdigris Blend">
+                            </div>
+                            <div class="blend-info">
+                                <h4 class="blend-name">Verdigris</h4>
+                                <p class="blend-formula">2 parts RH11 Bright Green / 1 part RH23 Azure</p>
+                                <p class="blend-description">Sophisticated blue-green reminiscent of weathered copper, perfect for contemporary designs.</p>
+                            </div>
+                        </div>
+
+                        <div class="blend-card">
+                            <div class="blend-image">
+                                <img src="Blends/17 Ice Blue_25-25-50_RH23-RH26-RH31_FTZ3765.jpg" alt="Ice Blue Blend">
+                            </div>
+                            <div class="blend-info">
+                                <h4 class="blend-name">Ice Blue</h4>
+                                <p class="blend-formula">1 part RH23 Azure / 1 part RH26 Turquoise / 2 parts RH31 Cream</p>
+                                <p class="blend-description">Cool, refreshing blend perfect for water-themed areas and modern playgrounds.</p>
+                            </div>
+                        </div>
+
+                        <div class="blend-card">
+                            <div class="blend-image">
+                                <img src="Blends/15 Ultramarine_50-50_RH20-RH21_FTZ3748.jpg" alt="Ultramarine Blend">
+                            </div>
+                            <div class="blend-info">
+                                <h4 class="blend-name">Ultramarine</h4>
+                                <p class="blend-formula">1 part RH20 Standard Blue / 1 part RH21 Purple</p>
+                                <p class="blend-description">Deep, rich blue-purple blend for premium sports facilities and statement installations.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bold & Dynamic -->
+                <div class="blend-category">
+                    <h3 class="category-title">Bold & Dynamic</h3>
+                    <div class="blend-grid">
+                        <div class="blend-card">
+                            <div class="blend-image">
+                                <img src="Blends/19 Bubblegum_Thirds_RH02-RH90-RH26_FTZ3761.jpg" alt="Bubblegum Blend">
+                            </div>
+                            <div class="blend-info">
+                                <h4 class="blend-name">Bubblegum</h4>
+                                <p class="blend-formula">1 part RH02 Bright Red / 1 part RH90 Funky Pink / 1 part RH26 Turquoise</p>
+                                <p class="blend-description">Fun, energetic blend perfect for children's play areas and creative installations.</p>
+                            </div>
+                        </div>
+
+                        <div class="blend-card">
+                            <div class="blend-image">
+                                <img src="Blends/33 Bonfire Black_50-50_RH70-RH02_FTZ4013.jpg" alt="Bonfire Black Blend">
+                            </div>
+                            <div class="blend-info">
+                                <h4 class="blend-name">Bonfire Black</h4>
+                                <p class="blend-formula">1 part RH70 Black / 1 part RH02 Bright Red</p>
+                                <p class="blend-description">Dramatic contrast blend ideal for striking visual impact and safety applications.</p>
+                            </div>
+                        </div>
+
+                        <div class="blend-card">
+                            <div class="blend-image">
+                                <img src="Blends/21 Funky Purple_75-25_RH21-RH90_FTZ3753.jpg" alt="Funky Purple Blend">
+                            </div>
+                            <div class="blend-info">
+                                <h4 class="blend-name">Funky Purple</h4>
+                                <p class="blend-formula">3 parts RH21 Purple / 1 part RH90 Funky Pink</p>
+                                <p class="blend-description">Vibrant purple with pink highlights, perfect for creative and expressive environments.</p>
+                            </div>
+                        </div>
+
+                        <div class="blend-card">
+                            <div class="blend-image">
+                                <img src="Blends/34 Glowing Embers_50-25-25_RH70-RH02-RH50_FTZ4015.jpg" alt="Glowing Embers Blend">
+                            </div>
+                            <div class="blend-info">
+                                <h4 class="blend-name">Glowing Embers</h4>
+                                <p class="blend-formula">2 parts RH70 Black / 1 part RH02 Bright Red / 1 part RH50 Orange</p>
+                                <p class="blend-description">Fiery three-tone blend creating dynamic surfaces with depth and visual interest.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>Ready to Specify Your Colours?</h2>
+            <p>Our technical team can help you select the perfect colours and blends for your project, providing samples and specification support.</p>
+            <div class="cta-buttons">
+                <a href="contact.html" class="btn-primary">Request Colour Samples</a>
+                <a href="contact.html" class="btn-outline-white">Contact for Colour Chart</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Contact Us</h3>
+                    <p><strong>Rosehill Sports & Play</strong><br>
+                    A Division of Rosehill Polymers Limited<br>
+                    Spring Bank Mills<br>
+                    Sowerby Bridge<br>
+                    West Yorkshire HX6 3BW<br>
+                    United Kingdom</p>
+                    <p>📞 +44 (0)1422 839 456<br>
+                    📧 info@rosehilltpv.com</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Our Services</h3>
+                    <ul>
+                        <li><a href="products.html">Products</a></li>
+                        <li><a href="applications.html">Applications</a></li>
+                        <li><a href="colour.html">Colours</a></li>
+                        <li><a href="installations.html">Installations</a></li>
+                        <li><a href="contact.html">Request Samples</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="contact.html">Technical Support</a></li>
+                        <li><a href="contact.html">Specification Support</a></li>
+                        <li><a href="contact.html">Project Consultation</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="contact.html">Get in Touch</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Quality & Innovation</h3>
+                    <p>All Rosehill TPV® colours are UV-stable, non-toxic, and manufactured in the UK using premium virgin polymers.</p>
+                    <p style="margin-top: 20px;">
+                        <strong>Features:</strong><br>
+                        UV Stable • Non-Toxic • 21 Colours • UK Made • Custom Blends
+                    </p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>© 2025 Rosehill Sports & Play. A Division of Rosehill Polymers Limited. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Enhanced scroll effect for header
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 100) {
+                header.style.background = 'linear-gradient(135deg, rgba(26, 54, 93, 0.98), rgba(45, 74, 113, 0.98))';
+                header.style.backdropFilter = 'blur(10px)';
+                header.style.boxShadow = '0 8px 32px rgba(0,0,0,0.15)';
+            } else {
+                header.style.background = 'linear-gradient(135deg, #1a365d, #2d4a71)';
+                header.style.backdropFilter = 'none';
+                header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+            }
+        });
+
+        // Mobile menu toggle functionality
+        const mobileToggle = document.getElementById('mobile-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if (mobileToggle && mobileMenu) {
+            mobileToggle.addEventListener('click', function() {
+                mobileToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+            });
+
+            // Close mobile menu when clicking on a link
+            document.querySelectorAll('.mobile-nav-menu a').forEach(link => {
+                link.addEventListener('click', function() {
+                    mobileToggle.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                });
+            });
+
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!mobileToggle.contains(event.target) && !mobileMenu.contains(event.target)) {
+                    mobileToggle.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                }
+            });
+        }
+
+        // Randomize color cards order on page load
+        function randomizeColorCards() {
+            const colorGrid = document.querySelector('.color-grid');
+            if (colorGrid) {
+                const colorCards = Array.from(colorGrid.children);
+                
+                // Shuffle the array using Fisher-Yates algorithm
+                for (let i = colorCards.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [colorCards[i], colorCards[j]] = [colorCards[j], colorCards[i]];
+                }
+                
+                // Clear the grid and append shuffled cards
+                colorGrid.innerHTML = '';
+                colorCards.forEach(card => colorGrid.appendChild(card));
+            }
+        }
+
+        // Call randomization when page loads
+        randomizeColorCards();
+
+        // Animate elements on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe cards and elements for animation
+        document.querySelectorAll('.color-card, .blend-card').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>

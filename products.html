@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rosehill TPV Products - Technical Specifications & Guidance</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 15px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 600;
+            font-family: 'Source Sans Pro', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 6px;
+        }
+
+        .nav-menu a:hover {
+            background: rgba(255, 107, 53, 0.2);
+            color: #ff6b35;
+        }
+
+        .nav-menu a.active {
+            background: rgba(255, 107, 53, 0.2);
+            color: #ff6b35;
+            font-weight: 600;
+        }
+
+        .contact-btn {
+            background: #ff6b35;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .contact-btn:hover {
+            background: #e55a2b !important;
+            transform: translateY(-2px);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, rgba(26, 54, 93, 0.9), rgba(45, 74, 113, 0.9)), url('hero_background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: white;
+            padding: 140px 0 100px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 70px;
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+            text-align: center;
+        }
+
+        .hero-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 3;
+            width: 100%;
+        }
+
+        .hero h1 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            line-height: 1.6;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            opacity: 0.95;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 80px 0;
+        }
+
+        .section-title {
+            font-family: 'Overpass', sans-serif;
+            color: #1a365d;
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-align: center;
+            position: relative;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: #6c757d;
+            font-size: 1.2rem;
+            margin-bottom: 60px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .section-title::after {
+            content: '';
+            width: 80px;
+            height: 4px;
+            background: #ff6b35;
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Product Overview Section */
+        .product-overview {
+            background: white;
+            padding: 80px 0;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            margin-top: 50px;
+            align-items: start;
+        }
+
+        .product-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 20px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border-left: 5px solid #ff6b35;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .product-title {
+            font-family: 'Overpass', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 15px;
+        }
+
+        .product-subtitle {
+            font-size: 1.1rem;
+            color: #ff6b35;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .product-description {
+            color: #495057;
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 25px;
+        }
+
+        .key-features {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 30px;
+        }
+
+        .key-features li {
+            color: #495057;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        .key-features li::before {
+            content: '▪';
+            position: absolute;
+            left: 0;
+            color: #ff6b35;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* Binder Selector Section */
+        .binder-selector {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 80px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .selector-intro {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .selector-intro h2 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .selector-intro p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .selector-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            color: #333;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .selector-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #ff6b35;
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+
+        .btn-primary {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: fit-content;
+            margin: 0 auto;
+        }
+
+        .btn-primary:hover {
+            background: #e55a2b;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+        }
+
+        /* Results Section */
+        .results-container {
+            margin-top: 40px;
+            min-height: 200px;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #6c757d;
+            font-size: 1.1rem;
+            margin-top: 40px;
+            font-style: italic;
+        }
+
+        .recommendation-card {
+            background: linear-gradient(135deg, #1a365d 0%, #2d4a71 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .recommendation-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60px;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            clip-path: polygon(30% 0%, 100% 0%, 100% 100%, 0% 100%);
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+
+        .rec-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .rec-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .rec-type {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .match-score {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            position: relative;
+            z-index: 2;
+        }
+
+        .rec-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .rec-detail {
+            font-size: 0.9rem;
+            opacity: 0.95;
+        }
+
+        .rec-detail strong {
+            font-weight: 600;
+            opacity: 1;
+        }
+
+        .rec-description {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            z-index: 2;
+            opacity: 0.9;
+        }
+
+        /* Technical Specs Section */
+        .tech-specs {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 80px 0;
+        }
+
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .spec-category {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .spec-category:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+        }
+
+        .spec-icon {
+            background: rgba(255, 107, 53, 0.1);
+            color: #ff6b35;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .spec-title {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 15px;
+        }
+
+        .spec-description {
+            color: #6c757d;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: #ff6b35;
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 2.8rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.95;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn-white {
+            background: white;
+            color: #ff6b35;
+            padding: 18px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-white:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn-outline-white {
+            background: transparent;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: inline-block;
+            transition: all 0.3s ease;
+            border: 2px solid white;
+        }
+
+        .btn-outline-white:hover {
+            background: white;
+            color: #ff6b35;
+            transform: translateY(-3px);
+        }
+
+        /* Footer */
+        .footer {
+            background: #1a365d;
+            color: white;
+            padding: 60px 0 30px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h3 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #ff6b35;
+        }
+
+        .footer-section p,
+        .footer-section li {
+            opacity: 0.9;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: #ff6b35;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 30px;
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 8px;
+            background: none;
+            border: none;
+            z-index: 1001;
+        }
+
+        .mobile-menu-toggle span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 3px 0;
+            transition: 0.3s;
+            border-radius: 2px;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+        }
+
+        .mobile-menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
+        }
+
+        .mobile-nav-menu {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 999;
+        }
+
+        .mobile-nav-menu.active {
+            display: flex;
+        }
+
+        .mobile-nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: color 0.3s ease;
+        }
+
+        .mobile-nav-menu a:hover {
+            color: #ff6b35;
+        }
+
+        .mobile-nav-menu a.active {
+            color: #ff6b35;
+            font-weight: 600;
+        }
+
+        .mobile-nav-menu a:last-child {
+            border-bottom: none;
+        }
+
+        .mobile-nav-menu .contact-btn {
+            background: #ff6b35;
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 10px;
+            border-bottom: none;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(255, 107, 53, 0.1);
+            border-left: 4px solid #ff6b35;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #1a365d;
+            line-height: 1.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .product-grid {
+                gap: 40px;
+            }
+
+            .selector-form {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .mobile-menu-toggle {
+                display: flex;
+            }
+
+            .product-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .specs-grid {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.8rem;
+            }
+
+            .hero p {
+                font-size: 1.2rem;
+            }
+
+            .section-title {
+                font-size: 2.2rem;
+            }
+
+            .rec-details {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <a href="index.html" class="logo">
+                <img src="rosehill_tpv_logo.png" alt="Rosehill TPV" style="height: 60px;">
+            </a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="products.html" class="active">Products</a></li>
+                    <li><a href="applications.html">Applications</a></li>
+                    <li><a href="colour.html">Colour</a></li>
+                    <li><a href="installations.html">Installations</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="contact.html" class="contact-btn">Get in Touch</a></li>
+                </ul>
+                <button class="mobile-menu-toggle" id="mobile-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="mobile-nav-menu" id="mobile-menu">
+                    <a href="index.html">Home</a>
+                    <a href="products.html" class="active">Products</a>
+                    <a href="applications.html">Applications</a>
+                    <a href="colour.html">Colour</a>
+                    <a href="installations.html">Installations</a>
+                    <a href="about.html">About Us</a>
+                    <a href="contact.html" class="contact-btn">Get in Touch</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Technical Excellence<br>Proven Performance</h1>
+            <p>Comprehensive surface solutions combining Rosehill TPV® coloured rubber granules with our advanced Flexilon® polyurethane binder technology.</p>
+        </div>
+    </section>
+
+    <!-- Product Overview -->
+    <section class="product-overview">
+        <div class="container">
+            <h2 class="section-title">Our Product Range</h2>
+            <p class="section-subtitle">Two essential components working together to create exceptional surface systems</p>
+            
+            <div class="product-grid">
+                <div class="product-card">
+                    <h3 class="product-title">Rosehill TPV®</h3>
+                    <div class="product-subtitle">Coloured Rubber Granules</div>
+                    <p class="product-description">Cutting-edge, elastomer-based coloured rubber granules manufactured in the United Kingdom. Our unique, 100% fully cross-linked and non-porous granules are polypropylene-free and non-spherical.</p>
+                    
+                    <ul class="key-features">
+                        <li>Premium virgin polymers - no sulphur, clay fillers, or heavy metals</li>
+                        <li>Remarkable thermal stability with no carbon black leaching</li>
+                        <li>Maintains suppleness under harsh UV conditions</li>
+                        <li>Superior colour consistency across all 21 vibrant colours</li>
+                        <li>Enhanced UV stability compared to EPDM and SBR granules</li>
+                        <li>Custom colour blending service available</li>
+                    </ul>
+                    
+                    <div class="info-box">
+                        <strong>Technical Advantage:</strong> Our unique polyurethane chemistry delivers non-porous granules that require less binder during installation, reducing costs whilst maintaining superior performance.
+                    </div>
+                </div>
+
+                <div class="product-card">
+                    <h3 class="product-title">Flexilon®</h3>
+                    <div class="product-subtitle">Polyurethane Binder Range</div>
+                    <p class="product-description">Comprehensive range of cleaners, primers, binders, catalysts and pigments for both hot and cold moulding applications. With over 30 years of experience developing MDI polyurethane binders.</p>
+                    
+                    <ul class="key-features">
+                        <li>15+ specialised binder formulations for different conditions</li>
+                        <li>MDI-based, TDI-free, and solvent-free formulations</li>
+                        <li>Climate-specific solutions from cold to very warm environments</li>
+                        <li>UV-stabilised options for light-coloured installations</li>
+                        <li>Moisture-tolerant variants for challenging conditions</li>
+                        <li>Fast to very slow curing options for project flexibility</li>
+                    </ul>
+                    
+                    <div class="info-box">
+                        <strong>Professional Support:</strong> Our technical team provides comprehensive binder selection guidance to ensure optimal performance for your specific project requirements.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Binder Selector Tool -->
+    <section class="binder-selector">
+        <div class="container">
+            <div class="selector-intro">
+                <h2>Flexilon® Binder Selector</h2>
+                <p>Find the perfect binder for your project requirements using our technical specification tool</p>
+            </div>
+            
+            <div class="selector-container">
+                <form id="binderForm" class="selector-form">
+                    <div class="form-group">
+                        <label for="climate">Climate Conditions</label>
+                        <select id="climate" class="form-control" required>
+                            <option value="">Select climate...</option>
+                            <option value="cold">Cold Climate (&lt; 15°C average)</option>
+                            <option value="temperate">Temperate Climate (15-25°C average)</option>
+                            <option value="warm">Warm Climate (25-35°C average)</option>
+                            <option value="very-warm">Very Warm Climate (&gt; 35°C average)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="application">Application Method</label>
+                        <select id="application" class="form-control" required>
+                            <option value="">Select application method...</option>
+                            <option value="wet-pour">Wet Pour Installation</option>
+                            <option value="paver">Paver Machine Installation</option>
+                            <option value="compression">Compression Moulding</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="surface-type">Surface Type</label>
+                        <select id="surface-type" class="form-control" required>
+                            <option value="">Select surface type...</option>
+                            <option value="safety">Safety Surfaces (Playgrounds)</option>
+                            <option value="athletic">Athletic Tracks</option>
+                            <option value="shock-pad">Shock Pads (Under Artificial Grass)</option>
+                            <option value="solid-products">Solid Products (Wheels, Mats)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cure-speed">Required Cure Speed</label>
+                        <select id="cure-speed" class="form-control" required>
+                            <option value="">Select cure speed...</option>
+                            <option value="fast">Fast Curing (Quick turnaround)</option>
+                            <option value="medium">Medium Curing (Standard)</option>
+                            <option value="slow">Slow Curing (Extended working time)</option>
+                            <option value="very-slow">Very Slow Curing (Hot climate/large areas)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="color-sensitivity">Colour Sensitivity</label>
+                        <select id="color-sensitivity" class="form-control">
+                            <option value="">Select colour requirements...</option>
+                            <option value="not-sensitive">Standard Colours (Red, Black, Green)</option>
+                            <option value="sensitive">Light/Sensitive Colours (Blue, White, Cream, Grey, Beige)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="moisture-conditions">Moisture Conditions</label>
+                        <select id="moisture-conditions" class="form-control">
+                            <option value="">Select moisture conditions...</option>
+                            <option value="dry">Dry Conditions</option>
+                            <option value="normal">Normal Moisture</option>
+                            <option value="high">High Moisture/Humidity</option>
+                        </select>
+                    </div>
+                </form>
+                
+                <button type="submit" form="binderForm" class="btn-primary">Find Recommended Binders</button>
+                
+                <div class="results-container">
+                    <div id="results">
+                        <div class="no-results">
+                            Please complete the form above to see personalised binder recommendations
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technical Specifications -->
+    <section class="tech-specs">
+        <div class="container">
+            <h2 class="section-title">Technical Specifications</h2>
+            <p class="section-subtitle">Understanding the technical advantages of our integrated surface system</p>
+            
+            <div class="specs-grid">
+                <div class="spec-category">
+                    <div class="spec-icon">🧪</div>
+                    <h3 class="spec-title">Chemical Composition</h3>
+                    <p class="spec-description">All Flexilon® binders are MDI-based polyurethane systems that are TDI-free and solvent-free. TPV® granules use premium virgin polymers without sulphur, clay fillers, heavy metals like zinc, or phthalate plasticisers.</p>
+                </div>
+
+                <div class="spec-category">
+                    <div class="spec-icon">🌡️</div>
+                    <h3 class="spec-title">Performance Range</h3>
+                    <p class="spec-description">Viscosity ranges from 230cP (primers) to 6000cP (high-viscosity binders). Temperature performance from -40°C to +70°C. Cure speeds from fast (cool climates) to very slow (hot climates/large areas).</p>
+                </div>
+
+                <div class="spec-category">
+                    <div class="spec-icon">⚗️</div>
+                    <h3 class="spec-title">Application Rates</h3>
+                    <p class="spec-description">Binder usage rates: 12-20% for wet pour installations, 10-12% for paver applications, 6% for compression moulding. Primer coverage: 2-3 m²/kg. Pre-treatment: 1-2% of rubber weight.</p>
+                </div>
+
+                <div class="spec-category">
+                    <div class="spec-icon">📦</div>
+                    <h3 class="spec-title">Storage & Handling</h3>
+                    <p class="spec-description">9-month storage stability when kept cool and dry. Containers must be resealed immediately after use. Cure inhibition occurs when exposed to moisture. Flash point >200°C for safe handling.</p>
+                </div>
+
+                <div class="spec-category">
+                    <div class="spec-icon">🔬</div>
+                    <h3 class="spec-title">Quality Control</h3>
+                    <p class="spec-description">NCO values range from 7.5-16.0% depending on formulation. Specific gravity 1.02-1.1. Every batch tested for viscosity, NCO content, and performance characteristics before release.</p>
+                </div>
+
+                <div class="spec-category">
+                    <div class="spec-icon">🌞</div>
+                    <h3 class="spec-title">UV Stability</h3>
+                    <p class="spec-description">Standard binders may yellow with light colours under UV exposure. Flexilon® 1231 includes UV stabilisers to retard yellowing. For complete UV protection, aliphatic binders are available.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>Need Technical Guidance?</h2>
+            <p>Our experienced technical team provides comprehensive support from product selection through to installation guidance.</p>
+            <div class="cta-buttons">
+                <a href="contact.html" class="btn-white">Speak to Technical Team</a>
+                <a href="colour.html" class="btn-outline-white">View Colour Options</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Contact Us</h3>
+                    <p><strong>Rosehill Sports & Play</strong><br>
+                    A Division of Rosehill Group<br>
+                    Spring Bank Mills<br>
+                    Sowerby Bridge<br>
+                    West Yorkshire HX6 3BW<br>
+                    United Kingdom</p>
+                    <p>📞 +44 (0)1422 839 456<br>
+                    📧 info@rosehilltpv.com</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Technical Support</h3>
+                    <ul>
+                        <li><a href="#binder-selector">Binder Selection Tool</a></li>
+                        <li><a href="contact.html">Project Consultation</a></li>
+                        <li><a href="contact.html">Installation Guidance</a></li>
+                        <li><a href="contact.html">Technical Data Sheets</a></li>
+                        <li><a href="contact.html">Custom Formulations</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Product Range</h3>
+                    <ul>
+                        <li><a href="#tpv">Rosehill TPV® Granules</a></li>
+                        <li><a href="#flexilon">Flexilon® Binders</a></li>
+                        <li><a href="colour.html">21 Standard Colours</a></li>
+                        <li><a href="colour.html">Custom Colour Blends</a></li>
+                        <li><a href="contact.html">Primer & Pre-treatment Systems</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Quality Assurance</h3>
+                    <p>All products manufactured in the UK using premium materials and rigorous quality control procedures. MDI-based, TDI-free formulations for professional installations.</p>
+                    <p style="margin-top: 20px;">
+                        <strong>Features:</strong><br>
+                        UK Made • MDI-Based • TDI-Free • Premium Polymers
+                    </p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>© 2025 Rosehill Sports & Play. A Division of Rosehill Group. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Include the binder data and functionality from the original specifier tool -->
+    <script>
+        // Import the complete binder data from the original tool
+        const binderData = {
+            'FX457': {
+                name: 'FLEXILON 457',
+                type: 'Compression Moulding Binder',
+                viscosity: '1300-1600',
+                cureSpeed: 'medium',
+                climate: ['temperate', 'warm'],
+                application: ['compression'],
+                surfaceType: ['solid-products'],
+                usage: '6%',
+                description: 'Low viscosity binder for solid rubber products using rubber fines. Ideal for wheels, traffic-calming devices and cattle mats.',
+                uvSensitive: true
+            },
+            'FX1102': {
+                name: 'FLEXILON 1102',
+                type: 'Slow Curing Binder',
+                viscosity: '2500-3500',
+                cureSpeed: 'slow',
+                climate: ['warm', 'very-warm'],
+                application: ['wet-pour', 'paver'],
+                surfaceType: ['safety', 'athletic', 'shock-pad'],
+                usage: '10-12% (paver), 12-20% (wet pour)',
+                description: 'Slow curing binder for warm climates. Available in both wet pour and paver versions.',
+                uvSensitive: true
+            },
+            'FX1103': {
+                name: 'FLEXILON 1103',
+                type: 'Wet Pour Primer',
+                viscosity: '230-600',
+                cureSpeed: 'medium',
+                climate: ['temperate', 'warm', 'cold'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '2-3 m²/kg',
+                description: 'Low viscosity primer for use on asphalt and base layers before wearing layer installation.',
+                uvSensitive: false
+            },
+            'FX1110': {
+                name: 'FLEXILON 1110',
+                type: 'Fast Curing Binder',
+                viscosity: '1900-2300',
+                cureSpeed: 'fast',
+                climate: ['cold', 'temperate'],
+                application: ['wet-pour'],
+                surfaceType: ['safety'],
+                usage: '12-20%',
+                description: 'Fast curing, moisture tolerant binder. Faster version of FLEXILON 1263.',
+                uvSensitive: true,
+                moistureTolerant: true
+            },
+            'FX1117': {
+                name: 'FLEXILON 1117',
+                type: 'Pre-Treatment',
+                viscosity: '900-1100',
+                cureSpeed: 'fast',
+                climate: ['cold', 'dry'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '1-2%',
+                description: 'Rubber pre-treatment for cold or dry conditions. Increases cure speed of other binders.',
+                uvSensitive: false
+            },
+            'FX1118': {
+                name: 'FLEXILON 1118',
+                type: 'Medium Curing Binder',
+                viscosity: '1800-2500',
+                cureSpeed: 'medium',
+                climate: ['temperate', 'warm'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '12-20%',
+                description: 'Medium curing binder. FLEXILON 1180 is similar with faster cure rate.',
+                uvSensitive: true
+            },
+            'FX1142': {
+                name: 'FLEXILON 1142',
+                type: 'Slow-Medium Curing Binder',
+                viscosity: '1400-1800',
+                cureSpeed: 'slow',
+                climate: ['warm'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '12-20%',
+                description: 'Slow-medium curing for warmer climates. Good for athletic tracks and safety surfaces.',
+                uvSensitive: true
+            },
+            'FX1180': {
+                name: 'FLEXILON 1180',
+                type: 'Fast Curing Binder',
+                viscosity: '1800-2500',
+                cureSpeed: 'fast',
+                climate: ['cold', 'temperate'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '12-20%',
+                description: 'Fast curing for cooler climates. Similar to FLEXILON 1118 but with faster cure rate.',
+                uvSensitive: true
+            },
+            'FX1230': {
+                name: 'FLEXILON 1230',
+                type: 'Very Slow Curing Binder',
+                viscosity: '2500-3500',
+                cureSpeed: 'very-slow',
+                climate: ['warm', 'very-warm'],
+                application: ['wet-pour', 'paver'],
+                surfaceType: ['safety', 'athletic', 'shock-pad'],
+                usage: '10-12% (paver), 12-20% (wet pour)',
+                description: 'Very slow curing for warm climates. FLEXILON 1102 is slightly faster version.',
+                uvSensitive: true
+            },
+            'FX1248S': {
+                name: 'FLEXILON 1248S',
+                type: 'Very Slow Curing Binder',
+                viscosity: '3400-4600',
+                cureSpeed: 'very-slow',
+                climate: ['warm', 'very-warm'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '12-20%',
+                description: 'High viscosity, very slow curing for warm climates. FLEXILON 1248W is faster with lower viscosity.',
+                uvSensitive: true
+            },
+            'FX1248W': {
+                name: 'FLEXILON 1248W',
+                type: 'Slow Curing Binder',
+                viscosity: '1950-2750',
+                cureSpeed: 'slow',
+                climate: ['warm'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '12-20%',
+                description: 'Slow curing for warm climates. Lower viscosity than FLEXILON 1248S.',
+                uvSensitive: true
+            },
+            'FX1258': {
+                name: 'FLEXILON 1258',
+                type: 'Very Slow Curing Binder',
+                viscosity: '4500-6000',
+                cureSpeed: 'very-slow',
+                climate: ['very-warm'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '12-20%',
+                description: 'Very high viscosity, very slow curing for very warm climates.',
+                uvSensitive: true
+            },
+            'FX1263': {
+                name: 'FLEXILON 1263',
+                type: 'Medium Curing Binder',
+                viscosity: '1900-3200',
+                cureSpeed: 'medium',
+                climate: ['temperate', 'warm'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '12-20%',
+                description: 'Medium curing, moisture tolerant binder. Slower version of FLEXILON 1110.',
+                uvSensitive: true,
+                moistureTolerant: true
+            },
+            'FX1231': {
+                name: 'FLEXILON 1231',
+                type: 'UV Stabilised Binder',
+                viscosity: '1800-2500',
+                cureSpeed: 'medium',
+                climate: ['temperate', 'warm'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '12-20%',
+                description: 'UV stabilised binder with improved resistance to early discolouration. Retards yellowing process, especially during curing. Ideal for light-coloured rubber installations.',
+                uvSensitive: false,
+                uvStabilized: true
+            }
+        };
+
+        // Binder recommendation logic (simplified version of the original)
+        document.getElementById('binderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const climate = document.getElementById('climate').value;
+            const application = document.getElementById('application').value;
+            const surfaceType = document.getElementById('surface-type').value;
+            const cureSpeed = document.getElementById('cure-speed').value;
+            const colorSensitivity = document.getElementById('color-sensitivity').value;
+            const moistureConditions = document.getElementById('moisture-conditions').value;
+            
+            const recommendations = findRecommendations(climate, application, surfaceType, cureSpeed, colorSensitivity, moistureConditions);
+            displayResults(recommendations, colorSensitivity);
+        });
+
+        function findRecommendations(climate, application, surfaceType, cureSpeed, colorSensitivity, moistureConditions) {
+            const results = [];
+            
+            for (const [code, product] of Object.entries(binderData)) {
+                let score = 0;
+                let reasons = [];
+                
+                // Check compatibility
+                if (!product.climate.includes(climate)) continue;
+                if (!product.application.includes(application)) continue;
+                if (!product.surfaceType.includes(surfaceType)) continue;
+                
+                // Score based on matching criteria
+                if (product.cureSpeed === cureSpeed) {
+                    score += 3;
+                    reasons.push('Exact cure speed match');
+                } else if (isCompatibleCureSpeed(cureSpeed, product.cureSpeed)) {
+                    score += 2;
+                    reasons.push('Compatible cure speed');
+                } else {
+                    score += 1;
+                    reasons.push('Workable cure speed');
+                }
+                
+                // UV considerations
+                if (colorSensitivity === 'sensitive' && product.uvStabilized) {
+                    score += 2;
+                    reasons.push('UV stabilised - ideal for light colours');
+                } else if (colorSensitivity === 'sensitive' && product.uvSensitive) {
+                    reasons.push('Note: May cause yellowing with light colours');
+                } else if (colorSensitivity === 'not-sensitive') {
+                    score += 1;
+                    reasons.push('Suitable for standard colours');
+                }
+                
+                // Moisture tolerance
+                if (moistureConditions === 'high' && product.moistureTolerant) {
+                    score += 1;
+                    reasons.push('Moisture tolerant');
+                }
+                
+                const matchPercentage = Math.min(Math.round((score / 6) * 100), 100);
+                
+                results.push({
+                    code,
+                    product,
+                    score,
+                    matchPercentage,
+                    reasons
+                });
+            }
+            
+            return results.sort((a, b) => b.score - a.score);
+        }
+
+        function isCompatibleCureSpeed(requested, available) {
+            const speedMap = {
+                'fast': ['medium'],
+                'medium': ['fast', 'slow'],
+                'slow': ['medium', 'very-slow'],
+                'very-slow': ['slow']
+            };
+            return speedMap[requested]?.includes(available) || false;
+        }
+
+        function displayResults(recommendations, colorSensitivity) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (recommendations.length === 0) {
+                resultsDiv.innerHTML = '<div class="no-results">No matching products found. Please adjust your criteria.</div>';
+                return;
+            }
+            
+            let html = '';
+            
+            // Show UV warning for sensitive colours
+            if (colorSensitivity === 'sensitive') {
+                const hasUVStabilized = recommendations.some(rec => rec.product.uvStabilized);
+                
+                if (hasUVStabilized) {
+                    html += `
+                        <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 10px; padding: 15px; margin-bottom: 20px; color: #155724;">
+                            <div style="font-weight: 600; margin-bottom: 5px;">✅ UV Protection Available</div>
+                            FLEXILON 1231 with UV stabiliser is recommended for your light-coloured installation to minimise yellowing during the curing process.
+                        </div>
+                    `;
+                }
+            }
+            
+            // Display top recommendations
+            const topRecommendations = recommendations.slice(0, 3);
+            
+            topRecommendations.forEach(rec => {
+                html += `
+                    <div class="recommendation-card">
+                        <div class="rec-header">
+                            <div>
+                                <div class="rec-title">${rec.product.name}</div>
+                                <div class="rec-type">${rec.product.type}</div>
+                            </div>
+                            <div class="match-score">${rec.matchPercentage}% Match</div>
+                        </div>
+                        
+                        <div class="rec-details">
+                            <div class="rec-detail"><strong>Viscosity:</strong> ${rec.product.viscosity} cP</div>
+                            <div class="rec-detail"><strong>Usage Rate:</strong> ${rec.product.usage}</div>
+                            <div class="rec-detail"><strong>Cure Speed:</strong> ${rec.product.cureSpeed.charAt(0).toUpperCase() + rec.product.cureSpeed.slice(1)}</div>
+                            <div class="rec-detail"><strong>Product Code:</strong> ${rec.code}</div>
+                        </div>
+                        
+                        <div class="rec-description">
+                            ${rec.product.description}
+                        </div>
+                        
+                        ${rec.product.uvStabilized ? 
+                            '<div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.2); border-radius: 5px; font-size: 0.9rem;">✅ UV Stabilised - Reduces yellowing with light colours</div>' : 
+                            rec.product.uvSensitive && colorSensitivity === 'sensitive' ? 
+                            '<div style="margin-top: 15px; padding: 10px; background: rgba(255,193,7,0.3); border-radius: 5px; font-size: 0.9rem;">⚠️ May cause yellowing with light colours</div>' : 
+                            ''
+                        }
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        // Mobile menu and scroll effects
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Enhanced scroll effect for header
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 100) {
+                header.style.background = 'linear-gradient(135deg, rgba(26, 54, 93, 0.98), rgba(45, 74, 113, 0.98))';
+                header.style.backdropFilter = 'blur(10px)';
+                header.style.boxShadow = '0 8px 32px rgba(0,0,0,0.15)';
+            } else {
+                header.style.background = 'linear-gradient(135deg, #1a365d, #2d4a71)';
+                header.style.backdropFilter = 'none';
+                header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+            }
+        });
+
+        // Mobile menu toggle functionality
+        const mobileToggle = document.getElementById('mobile-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if (mobileToggle && mobileMenu) {
+            mobileToggle.addEventListener('click', function() {
+                mobileToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+            });
+
+            // Close mobile menu when clicking on a link
+            document.querySelectorAll('.mobile-nav-menu a').forEach(link => {
+                link.addEventListener('click', function() {
+                    mobileToggle.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                });
+            });
+
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!mobileToggle.contains(event.target) && !mobileMenu.contains(event.target)) {
+                    mobileToggle.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                }
+            });
+        }
+
+        // Animate elements on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe elements for animation
+        document.querySelectorAll('.product-card, .spec-category').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>

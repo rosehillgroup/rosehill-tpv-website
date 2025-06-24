@@ -1,0 +1,17 @@
+# Robots.txt for Rosehill TPV
+
+User-agent: *
+Allow: /
+
+# Disallow admin pages
+Disallow: /admin/
+Disallow: /admin-add-installation.html
+Disallow: /admin-process-installation.php
+
+# Disallow backup files
+Disallow: /*.backup
+Disallow: /*.backup2
+Disallow: /*.backup_*
+
+# Sitemap location (update after generating sitemap)
+Sitemap: https://yourdomain.com/sitemap.xml

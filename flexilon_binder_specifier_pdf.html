@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flexilon Binder Specifier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            clip-path: polygon(30% 0%, 100% 0%, 100% 100%, 0% 100%);
+            opacity: 0.8;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            min-height: 700px;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-right: 3px solid #ff6b35;
+        }
+
+        .results-section {
+            padding: 25px;
+            background: white;
+        }
+
+        .section-title {
+            color: #1a365d;
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #1a365d;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            background: white;
+            font-family: inherit;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #ff6b35;
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+
+        .btn {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: #e55a2b;
+            transform: translateY(-1px);
+        }
+
+        .results-title {
+            color: #1a365d;
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .binder-card {
+            background: linear-gradient(135deg, #1a365d 0%, #2d4a71 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .binder-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50px;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            clip-path: polygon(40% 0%, 100% 0%, 100% 100%, 0% 100%);
+        }
+
+        .binder-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+
+        .binder-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .binder-type {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-block;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .binder-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .detail-item {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            opacity: 1;
+        }
+
+        .binder-description {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            z-index: 2;
+            opacity: 0.9;
+        }
+
+        .no-results {
+            text-align: center;
+            color: #6c757d;
+            font-size: 1.1rem;
+            margin-top: 50px;
+            font-style: italic;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #856404;
+            border-left: 4px solid #ff6b35;
+        }
+
+        .warning-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .match-score {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            float: right;
+            position: relative;
+            z-index: 2;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #e3f2fd, #f0f8ff);
+            border-left: 4px solid #ff6b35;
+            padding: 12px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 15px;
+            font-size: 0.85rem;
+            color: #1a365d;
+            line-height: 1.4;
+        }
+
+        .btn-download {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .btn-download:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 1200px) {
+            .container {
+                max-width: 100%;
+            }
+            
+            .content {
+                grid-template-columns: 280px 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-section {
+                border-right: none;
+                border-bottom: 3px solid #ff6b35;
+            }
+
+            .binder-details {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>Flexilon Binder Specifier</h1>
+                <p>Select the perfect binder for your Rosehill TPV rubber surfacing project</p>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="form-section">
+                <h2 class="section-title">Project Requirements</h2>
+                <form id="binderForm">
+                    <div class="form-group">
+                        <label for="climate">Climate Conditions</label>
+                        <select id="climate" class="form-control" required>
+                            <option value="">Select climate...</option>
+                            <option value="cold">Cold Climate (&lt; 15°C average)</option>
+                            <option value="temperate">Temperate Climate (15-25°C average)</option>
+                            <option value="warm">Warm Climate (25-35°C average)</option>
+                            <option value="very-warm">Very Warm Climate (&gt; 35°C average)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="application">Application Method</label>
+                        <select id="application" class="form-control" required>
+                            <option value="">Select application method...</option>
+                            <option value="wet-pour">Wet Pour Installation</option>
+                            <option value="paver">Paver Machine Installation</option>
+                            <option value="compression">Compression Moulding</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="surface-type">Surface Type</label>
+                        <select id="surface-type" class="form-control" required>
+                            <option value="">Select surface type...</option>
+                            <option value="safety">Safety Surfaces (Playgrounds)</option>
+                            <option value="athletic">Athletic Tracks</option>
+                            <option value="shock-pad">Shock Pads (Under Artificial Grass)</option>
+                            <option value="solid-products">Solid Products (Wheels, Mats)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cure-speed">Required Cure Speed</label>
+                        <select id="cure-speed" class="form-control" required>
+                            <option value="">Select cure speed...</option>
+                            <option value="fast">Fast Curing (Quick turnaround)</option>
+                            <option value="medium">Medium Curing (Standard)</option>
+                            <option value="slow">Slow Curing (Extended working time)</option>
+                            <option value="very-slow">Very Slow Curing (Hot climate/large areas)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="color-sensitivity">Colour Sensitivity</label>
+                        <select id="color-sensitivity" class="form-control">
+                            <option value="">Select colour requirements...</option>
+                            <option value="not-sensitive">Standard Colours (Red, Black, Green)</option>
+                            <option value="sensitive">Light/Sensitive Colours (Blue, White, Cream, Grey, Beige)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="moisture-conditions">Moisture Conditions</label>
+                        <select id="moisture-conditions" class="form-control">
+                            <option value="">Select moisture conditions...</option>
+                            <option value="dry">Dry Conditions</option>
+                            <option value="normal">Normal Moisture</option>
+                            <option value="high">High Moisture/Humidity</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn">Find Recommended Products</button>
+                </form>
+                
+                <div class="info-box">
+                    <strong>Technical Support:</strong> All Flexilon binders are MDI-based, TDI-free, and designed for professional wet pour installations. Storage temperature should be kept cool and dry with containers sealed when not in use.
+                </div>
+            </div>
+
+            <div class="results-section">
+                <h2 class="results-title">Recommended Products</h2>
+                <div id="results">
+                    <div class="no-results">
+                        Please complete the form to see product recommendations
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        const binderData = {
+            'FX457': {
+                name: 'FLEXILON 457',
+                type: 'Compression Moulding Binder',
+                viscosity: '1300-1600',
+                cureSpeed: 'medium',
+                climate: ['temperate', 'warm'],
+                application: ['compression'],
+                surfaceType: ['solid-products'],
+                usage: '6%',
+                description: 'Low viscosity binder for solid rubber products using rubber fines. Ideal for wheels, traffic-calming devices and cattle mats.',
+                uvSensitive: true,
+                technicalData: {
+                    specificGravity: '1.1',
+                    appearance: 'Clear straw coloured liquid',
+                    flashPoint: '>200°C',
+                    storageStability: '9 months',
+                    ncoValue: '9.8 – 10.8%',
+                    detailedDescription: 'FLEXILON 457 is a low viscosity, solvent-free, single component, moisture-curing binder based on polyether polyols. FLEXILON 457 is MDI based, contains no volatile monomer and is TDI free.',
+                    uses: 'Used as a binder in the manufacture of solid rubber products using rubber fines. Typical products include solid wheels, traffic-calming devices and cattle mats.',
+                    application: 'Usage rate normally around 6% of the final mixture. Ambient processing with cure temperatures between ambient to 95°C.',
+                    storage: 'Store in a cool, dry place, indoors. Once opened will start to cure and a skin will form. Partly used containers should be resealed immediately.',
+                    safety: 'Follow material safety data sheet (MSDS) recommendations at all times.'
+                }
+            },
+            'FX1102': {
+                name: 'FLEXILON 1102',
+                type: 'Slow Curing Binder',
+                viscosity: '2500-3500',
+                cureSpeed: 'slow',
+                climate: ['warm', 'very-warm'],
+                application: ['wet-pour', 'paver'],
+                surfaceType: ['safety', 'athletic', 'shock-pad'],
+                usage: '10-12% (paver), 12-20% (wet pour)',
+                description: 'Slow curing binder for warm climates. Available in both wet pour and paver versions.',
+                uvSensitive: true,
+                technicalData: {
+                    specificGravity: '1.1',
+                    appearance: 'Clear brown coloured liquid',
+                    flashPoint: '>200°C',
+                    storageStability: '9 months',
+                    ncoValue: '8.5 – 9.5%',
+                    detailedDescription: 'FLEXILON 1102 is a solvent-free, single component, moisture-curing binder based on polyether polyols. It is MDI based, contains no volatile monomer and is TDI free.',
+                    uses: 'Used as a binder in the in-situ installation of safety surfaces using ROSEHILL TPV, EPDM and rubber reclaimed from tyres.',
+                    application: 'Usage rate 10-12% for base layers (paver), 12-20% for wet pour. Should not be applied to wet surfaces. Can be used after rain when surface has visibly dried. Not recommended below 5°C.',
+                    storage: 'Store in a cool, dry place, indoors. Once opened will start to cure and a skin will form. Partly used containers should be resealed immediately.',
+                    safety: 'Follow safety data sheet (SDS) recommendations at all times.',
+                    uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                }
+            },
+            'FX1103': {
+                name: 'FLEXILON 1103',
+                type: 'Wet Pour Primer',
+                viscosity: '230-600',
+                cureSpeed: 'medium',
+                climate: ['temperate', 'warm', 'cold'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '2-3 m²/kg',
+                description: 'Low viscosity primer for use on asphalt and base layers before wearing layer installation.',
+                uvSensitive: false,
+                technicalData: {
+                    specificGravity: '1.1',
+                    appearance: 'Clear brown coloured liquid',
+                    flashPoint: '>200°C',
+                    storageStability: '9 months',
+                    ncoValue: '15.0 – 16.0%',
+                    detailedDescription: 'FLEXILON 1103 is a low viscosity, solvent-free, single component, moisture-curing wet pour primer based on polyether polyols. FLEXILON 1103 is MDI-based and TDI-free.',
+                    uses: 'Used as a primer in the installation of safety surfaces. Should be used without thinning and can be used both on asphalt layers and on base layers before the wearing layer is installed.',
+                    application: 'Coverage rate 2-3 m²/kg depending on surface porosity. Should not be applied to wet surfaces, though damp substrates can be treated provided material is well brushed into surface. Can be used after rain when surface has visibly dried.',
+                    storage: 'Store in a cool, dry place, indoors. Once opened will start to cure and a skin will form. Partly used containers should be resealed immediately.',
+                    safety: 'Follow safety data sheet (SDS) recommendations at all times.'
+                }
+            },
+            'FX1110': {
+                name: 'FLEXILON 1110',
+                type: 'Fast Curing Binder',
+                viscosity: '1900-2300',
+                cureSpeed: 'fast',
+                climate: ['cold', 'temperate'],
+                application: ['wet-pour'],
+                surfaceType: ['safety'],
+                usage: '12-20%',
+                description: 'Fast curing, moisture tolerant binder. Faster version of FLEXILON 1263.',
+                uvSensitive: true,
+                moistureTolerant: true,
+                technicalData: {
+                    specificGravity: '1.1',
+                    appearance: 'Clear straw coloured liquid',
+                    flashPoint: '>200°C',
+                    storageStability: '9 months',
+                    ncoValue: '9.8 – 10.8%',
+                    detailedDescription: 'FLEXILON 1110 is a low viscosity, solvent-free, single component, moisture-curing binder, based on polyether polyols. FLEXILON 1110 is MDI-based and TDI-free. It is a fast curing binder and more moisture tolerant than other binders.',
+                    uses: 'Used as a binder in the in-situ installation of safety surfaces using ROSEHILL TPV, EPDM and rubber reclaimed from tyres.',
+                    application: 'Usage rate 12-20% for wet pour. Should not be applied to wet surfaces. Can be used after rain when surface has visibly dried. In very cold or dry conditions, pre-treatment with FLEXILON 1117 is recommended. Not recommended below 5°C.',
+                    storage: 'Store in a cool, dry place, indoors. Once opened will start to cure and a skin will form. Partly used containers should be resealed immediately.',
+                    safety: 'Follow safety data sheet (SDS) recommendations at all times.',
+                    uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                }
+            },
+            'FX1117': {
+                name: 'FLEXILON 1117',
+                type: 'Pre-Treatment',
+                viscosity: '900-1100',
+                cureSpeed: 'fast',
+                climate: ['cold', 'dry'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '1-2%',
+                description: 'Rubber pre-treatment for cold or dry conditions. Increases cure speed of other binders.',
+                uvSensitive: false,
+                technicalData: {
+                    specificGravity: '1.02',
+                    appearance: 'Clear liquid',
+                    flashPoint: '>200°C',
+                    storageStability: '9 months',
+                    ncoValue: 'N/A',
+                    detailedDescription: 'FLEXILON 1117 is a low viscosity, solvent-free, single component rubber pre-treatment for use in conjunction with FLEXILON wet pour binders.',
+                    uses: 'Used as a pre-treatment in the in-situ installation of safety surfaces using ROSEHILL TPV, EPDM or rubber reclaimed from tyres.',
+                    application: 'Usage rate 1-2% of the rubber weight. Add to rubber in mixer and mix for 30 seconds before addition of binder.',
+                    storage: 'Store in a cool, dry place, indoors. Once opened will start to absorb water.',
+                    safety: 'Follow safety data sheet recommendations at all times. Material is non-hazardous.'
+                }
+            },
+            'FX1118': {
+                name: 'FLEXILON 1118',
+                type: 'Medium Curing Binder',
+                viscosity: '1800-2500',
+                cureSpeed: 'medium',
+                climate: ['temperate', 'warm'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '12-20%',
+                description: 'Medium curing binder. FLEXILON 1180 is similar with faster cure rate.',
+                uvSensitive: true,
+                technicalData: {
+                    specificGravity: '1.1',
+                    appearance: 'Clear straw coloured liquid',
+                    flashPoint: '>200°C',
+                    storageStability: '9 months',
+                    ncoValue: '8.5 – 9.5%',
+                    detailedDescription: 'FLEXILON 1118 is a low viscosity, solvent-free, single component, moisture-curing binder based on polyether polyols. FLEXILON 1118 is MDI-based and TDI-free. FLEXILON 1118 is medium curing binder. FLEXILON 1180 is a similar product with a faster curing rate.',
+                    uses: 'FLEXILON 1118 is used as a binder in the in-situ installation of safety surfaces using ROSEHILL TPV, EPDM and rubber reclaimed from tyres.',
+                    application: 'Usage rate 12-20% for wet pour. Should not be applied to wet surfaces. Can be used after rain when surface has visibly dried. In very cold or dry conditions, pre-treatment with FLEXILON 1117 is recommended. Not recommended below 5°C.',
+                    storage: 'Store in a cool, dry place, indoors and avoid unnecessary opening of containers. Once opened will start to cure and a skin will form. Partly used containers should be resealed immediately and re-used as quickly as possible.',
+                    safety: 'Follow safety data sheet (SDS) recommendations at all times.',
+                    uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                }
+            },
+            'FX1142': {
+                name: 'FLEXILON 1142',
+                type: 'Slow-Medium Curing Binder',
+                viscosity: '1400-1800',
+                cureSpeed: 'slow',
+                climate: ['warm'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '12-20%',
+                description: 'Slow-medium curing for warmer climates. Good for athletic tracks and safety surfaces.',
+                uvSensitive: true,
+                technicalData: {
+                    specificGravity: '1.1',
+                    appearance: 'Clear brown coloured liquid',
+                    flashPoint: '>200°C',
+                    storageStability: '9 months',
+                    ncoValue: '8.8 – 9.4%',
+                    detailedDescription: 'FLEXILON 1142 is a low viscosity, solvent-free, single component, moisture-curing binder based on polyether polyols. FLEXILON 1142 is MDI-based and TDI-free. FLEXILON 1142 is slow-medium curing for use in warmer climates.',
+                    uses: 'FLEXILON 1142 is used as a binder in the in-situ installation of athletic tracks and safety surfaces using ROSEHILL TPV, EPDM and rubber reclaimed from tyres.',
+                    application: 'Usage rate 12-20% for wet pour. Should not be applied to wet surfaces. Can be used after rain when surface has visibly dried. Not recommended below 5°C.',
+                    storage: 'Store in a cool, dry place, indoors and avoid unnecessary opening of containers. Once opened will start to cure and a skin will form. Partly used containers should be resealed immediately and re-used as quickly as possible.',
+                    safety: 'Follow safety data sheet (SDS) recommendations at all times.',
+                    uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                }
+            },
+            'FX1180': {
+                name: 'FLEXILON 1180',
+                type: 'Fast Curing Binder',
+                viscosity: '1800-2500',
+                cureSpeed: 'fast',
+                climate: ['cold', 'temperate'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '12-20%',
+                description: 'Fast curing for cooler climates. Similar to FLEXILON 1118 but with faster cure rate.',
+                uvSensitive: true,
+                technicalData: {
+                    specificGravity: '1.1',
+                    appearance: 'Clear straw coloured liquid',
+                    flashPoint: '>200°C',
+                    storageStability: '9 months',
+                    ncoValue: '8.5 – 9.5%',
+                    detailedDescription: 'FLEXILON 1180 is a low viscosity, solvent-free, single component, moisture-curing binder based on polyether polyols. FLEXILON 1180 is MDI-based and TDI-free. FLEXILON 1180 is a fast curing for use in cooler climates.',
+                    uses: 'FLEXILON 1180 is used as a binder in the in-situ installation of safety surfaces using ROSEHILL TPV, EPDM and rubber reclaimed from tyres.',
+                    application: 'Usage rate 12-20% for wet pour. Should not be applied to wet surfaces. Can be used after rain when surface has visibly dried. Not recommended below 5°C.',
+                    storage: 'Store in a cool, dry place, indoors and avoid unnecessary opening of containers. Once opened will start to cure and a skin will form. Partly used containers should be resealed immediately and re-used as quickly as possible.',
+                    safety: 'Follow safety data sheet (SDS) recommendations at all times.',
+                    uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                }
+            },
+            'FX1230': {
+                name: 'FLEXILON 1230',
+                type: 'Very Slow Curing Binder',
+                viscosity: '2500-3500',
+                cureSpeed: 'very-slow',
+                climate: ['warm', 'very-warm'],
+                application: ['wet-pour', 'paver'],
+                surfaceType: ['safety', 'athletic', 'shock-pad'],
+                usage: '10-12% (paver), 12-20% (wet pour)',
+                description: 'Very slow curing for warm climates. FLEXILON 1102 is slightly faster version.',
+                uvSensitive: true,
+                technicalData: {
+                    specificGravity: '1.1',
+                    appearance: 'Clear brown coloured liquid',
+                    flashPoint: '>200°C',
+                    storageStability: '9 months',
+                    ncoValue: '8.5 – 9.5%',
+                    detailedDescription: 'FLEXILON 1230 is a medium viscosity, solvent-free, single component, moisture-curing binder based on polyether polyols. FLEXILON 1230 is MDI-based and TDI-free. FLEXILON 1230 is a slow curing binder for use in warm climates.',
+                    uses: 'FLEXILON 1230 is used as a binder in the in-situ installation of safety surfaces using ROSEHILL TPV, EPDM and rubber reclaimed from tyres. Also available as paver version for athletic tracks, rubber shock pads under artificial grass and large scale rubberised safety surfaces.',
+                    application: 'Usage rate 12-20% for wet pour, 10-12% for base layers (paver). Should not be applied to wet surfaces. Can be used after rain when surface has visibly dried. In very cold or dry conditions, pre-treatment with FLEXILON 1117 is recommended. Not recommended below 5°C.',
+                    storage: 'Store in a cool, dry place, indoors and avoid unnecessary opening of containers. Once opened will start to cure and a skin will form. Partly used containers should be resealed immediately and re-used as quickly as possible.',
+                    safety: 'Follow safety data sheet (SDS) recommendations at all times.',
+                    uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                }
+            },
+            'FX1248S': {
+                name: 'FLEXILON 1248S',
+                type: 'Very Slow Curing Binder',
+                viscosity: '3400-4600',
+                cureSpeed: 'very-slow',
+                climate: ['warm', 'very-warm'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '12-20%',
+                description: 'High viscosity, very slow curing for warm climates. FLEXILON 1248W is faster with lower viscosity.',
+                uvSensitive: true,
+                technicalData: {
+                    specificGravity: '1.1',
+                    appearance: 'Clear brown coloured liquid',
+                    flashPoint: '>200°C',
+                    storageStability: '9 months',
+                    ncoValue: '7.5 – 8.5%',
+                    detailedDescription: 'FLEXILON 1248S is a high viscosity, solvent-free, single component, moisture-curing binder based on polyether polyols. FLEXILON 1248S is MDI-based and TDI-free. FLEXILON 1248S is a very slow curing binder for use in warm climates.',
+                    uses: 'FLEXILON 1248S is used as a binder in the in-situ installation of safety surfaces using ROSEHILL TPV, EPDM and rubber reclaimed from tyres.',
+                    application: 'Usage rate 12-20% for wet pour. Should not be applied to wet surfaces. Can be used after rain when surface has visibly dried. In very cold or dry conditions, pre-treatment with FLEXILON 1117 is recommended. Not recommended below 5°C.',
+                    storage: 'Store in a cool, dry place, indoors and avoid unnecessary opening of containers. Once opened will start to cure and a skin will form. Partly used containers should be resealed immediately and re-used as quickly as possible.',
+                    safety: 'Follow safety data sheet (SDS) recommendations at all times.',
+                    uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                }
+            },
+            'FX1248W': {
+                name: 'FLEXILON 1248W',
+                type: 'Slow Curing Binder',
+                viscosity: '1950-2750',
+                cureSpeed: 'slow',
+                climate: ['warm'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '12-20%',
+                description: 'Slow curing for warm climates. Lower viscosity than FLEXILON 1248S.',
+                uvSensitive: true,
+                technicalData: {
+                    specificGravity: '1.1',
+                    appearance: 'Clear brown coloured liquid',
+                    flashPoint: '>200°C',
+                    storageStability: '9 months',
+                    ncoValue: '8.5 – 9.5%',
+                    detailedDescription: 'FLEXILON 1248W is a low viscosity, solvent-free, single component, moisture-curing binder based on polyether polyols. FLEXILON 1248W is MDI-based and TDI-free. FLEXILON 1248W is a slow curing binder for use in warm climates.',
+                    uses: 'FLEXILON 1248W is used as a binder in the in-situ installation of safety surfaces using ROSEHILL TPV, EPDM and rubber reclaimed from tyres.',
+                    application: 'Usage rate 12-20% for wet pour. Should not be applied to wet surfaces. Can be used after rain when surface has visibly dried. In very cold or dry conditions, pre-treatment with FLEXILON 1117 is recommended. Not recommended below 5°C.',
+                    storage: 'Store in a cool, dry place, indoors and avoid unnecessary opening of containers. Once opened will start to cure and a skin will form. Partly used containers should be resealed immediately and re-used as quickly as possible.',
+                    safety: 'Follow safety data sheet (SDS) recommendations at all times.',
+                    uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                }
+            },
+            'FX1258': {
+                name: 'FLEXILON 1258',
+                type: 'Very Slow Curing Binder',
+                viscosity: '4500-6000',
+                cureSpeed: 'very-slow',
+                climate: ['very-warm'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '12-20%',
+                description: 'Very high viscosity, very slow curing for very warm climates.',
+                uvSensitive: true,
+                technicalData: {
+                    specificGravity: '1.1',
+                    appearance: 'Clear brown coloured liquid',
+                    flashPoint: '>200°C',
+                    storageStability: '9 months',
+                    ncoValue: '8.1 – 9.1%',
+                    detailedDescription: 'FLEXILON 1258 is a very high viscosity, solvent-free, single component, moisture-curing binder based on polyether polyols. FLEXILON 1258 is MDI-based and TDI-free. FLEXILON 1258 is a very slow curing binder for use in very warm climates.',
+                    uses: 'FLEXILON 1258 is used as a binder in the in-situ installation of safety surfaces using ROSEHILL TPV, EPDM and rubber reclaimed from tyres.',
+                    application: 'Usage rate 12-20% for wet pour. Should not be applied to wet surfaces. Can be used after rain when surface has visibly dried. In very cold or dry conditions, pre-treatment with FLEXILON 1117 is recommended. Not recommended below 5°C.',
+                    storage: 'Store in a cool, dry place, indoors and avoid unnecessary opening of containers. Once opened will start to cure and a skin will form. Partly used containers should be resealed immediately and re-used as quickly as possible.',
+                    safety: 'Follow safety data sheet (SDS) recommendations at all times.',
+                    uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                }
+            },
+            'FX1263': {
+                name: 'FLEXILON 1263',
+                type: 'Medium Curing Binder',
+                viscosity: '1900-3200',
+                cureSpeed: 'medium',
+                climate: ['temperate', 'warm'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '12-20%',
+                description: 'Medium curing, moisture tolerant binder. Slower version of FLEXILON 1110.',
+                uvSensitive: true,
+                moistureTolerant: true,
+                technicalData: {
+                    specificGravity: '1.1',
+                    appearance: 'Clear straw coloured liquid',
+                    flashPoint: '>200°C',
+                    storageStability: '9 months',
+                    ncoValue: '9.8 – 10.8%',
+                    detailedDescription: 'FLEXILON 1263 is a low viscosity, solvent-free, single component, moisture-curing binder, based on polyether polyols. FLEXILON 1263 is MDI-based and TDI-free. FLEXILON 1263 is a medium curing binder. It is a slower version of FLEXILON 1110. FLEXILON 1263 is more moisture tolerant than other binders.',
+                    uses: 'FLEXILON 1263 is used as a binder in the in-situ installation of safety surfaces using ROSEHILL TPV, EPDM and rubber reclaimed from tyres.',
+                    application: 'Usage rate 12-20% for wet pour. Should not be applied to wet surfaces. Can be used after rain when surface has visibly dried. In very cold or dry conditions, pre-treatment with FLEXILON 1117 is recommended. Not recommended below 5°C.',
+                    storage: 'Store in a cool, dry place, indoors and avoid unnecessary opening of containers. Once opened will start to cure and a skin will form. Partly used containers should be resealed immediately and re-used as quickly as possible.',
+                    safety: 'Follow safety data sheet (SDS) recommendations at all times.',
+                    uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                }
+            },
+            'FX1231': {
+                name: 'FLEXILON 1231',
+                type: 'UV Stabilised Binder',
+                viscosity: '1800-2500',
+                cureSpeed: 'medium',
+                climate: ['temperate', 'warm'],
+                application: ['wet-pour'],
+                surfaceType: ['safety', 'athletic'],
+                usage: '12-20%',
+                description: 'UV stabilised binder with improved resistance to early discolouration. Retards yellowing process, especially during curing. Ideal for light-coloured rubber installations.',
+                uvSensitive: false,
+                uvStabilized: true,
+                technicalData: {
+                    specificGravity: '1.1',
+                    appearance: 'Clear straw coloured liquid',
+                    flashPoint: '>200°C',
+                    storageStability: '9 months',
+                    ncoValue: '8.5 – 9.5%',
+                    detailedDescription: 'FLEXILON 1231 is a low viscosity, solvent-free, single component, moisture-curing binder based on polyether polyols. FLEXILON 1231 is MDI-based and TDI-free. FLEXILON 1231 has improved UV stability, particularly against early discolouration during the curing process.',
+                    uses: 'Used as a binder in the in-situ installation of safety surfaces using ROSEHILL TPV, EPDM and rubber reclaimed from tyres.',
+                    application: 'Usage rate 12-20% for wet pour. Should not be applied to wet surfaces. Can be used after rain when surface has visibly dried. In very cold or dry conditions, pre-treatment with FLEXILON 1117 is recommended. Not recommended below 5°C.',
+                    storage: 'Store in a cool, dry place, indoors. Once opened will start to cure and a skin will form. Partly used containers should be resealed immediately.',
+                    safety: 'Follow safety data sheet (SDS) recommendations at all times.',
+                    uvNote: 'Yellowing can still occur eventually when exposed to strong UV light. The UV stabiliser package retards the yellowing process (especially during curing) but does not totally eliminate it. For no yellowing at all, use an aliphatic binder.'
+                }
+            }
+        };
+
+        document.getElementById('binderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const climate = document.getElementById('climate').value;
+            const application = document.getElementById('application').value;
+            const surfaceType = document.getElementById('surface-type').value;
+            const cureSpeed = document.getElementById('cure-speed').value;
+            const colorSensitivity = document.getElementById('color-sensitivity').value;
+            const moistureConditions = document.getElementById('moisture-conditions').value;
+            
+            const recommendations = findRecommendations(climate, application, surfaceType, cureSpeed, colorSensitivity, moistureConditions);
+            displayResults(recommendations, colorSensitivity, climate, moistureConditions);
+        });
+
+        function findRecommendations(climate, application, surfaceType, cureSpeed, colorSensitivity, moistureConditions) {
+            const binders = [];
+            const primers = [];
+            const pretreatments = [];
+            
+            for (const [code, product] of Object.entries(binderData)) {
+                let score = 0;
+                let maxPossibleScore = 0;
+                let reasons = [];
+                
+                // Climate matching (required for compatibility)
+                maxPossibleScore += 3;
+                if (product.climate.includes(climate)) {
+                    score += 3;
+                    reasons.push('Climate compatible');
+                } else {
+                    // Skip if climate doesn't match
+                    continue;
+                }
+                
+                // Application matching (required for compatibility)
+                maxPossibleScore += 3;
+                if (product.application.includes(application)) {
+                    score += 3;
+                    reasons.push('Application compatible');
+                } else {
+                    // Skip if application doesn't match
+                    continue;
+                }
+                
+                // Surface type matching (required for compatibility)
+                maxPossibleScore += 3;
+                if (product.surfaceType.includes(surfaceType)) {
+                    score += 3;
+                    reasons.push('Surface type compatible');
+                } else {
+                    // Skip if surface type doesn't match
+                    continue;
+                }
+                
+                // Cure speed matching
+                maxPossibleScore += 3;
+                if (product.cureSpeed === cureSpeed) {
+                    score += 3;
+                    reasons.push('Exact cure speed match');
+                } else if (
+                    (cureSpeed === 'fast' && product.cureSpeed === 'medium') ||
+                    (cureSpeed === 'medium' && ['fast', 'slow'].includes(product.cureSpeed)) ||
+                    (cureSpeed === 'slow' && ['medium', 'very-slow'].includes(product.cureSpeed)) ||
+                    (cureSpeed === 'very-slow' && product.cureSpeed === 'slow')
+                ) {
+                    score += 2;
+                    reasons.push('Compatible cure speed');
+                } else {
+                    score += 1;
+                    reasons.push('Workable cure speed');
+                }
+                
+                // Colour sensitivity matching
+                maxPossibleScore += 2;
+                if (colorSensitivity === 'sensitive' && product.uvStabilized) {
+                    score += 2;
+                    reasons.push('UV stabilised - ideal for light colours');
+                } else if (colorSensitivity === 'sensitive' && product.uvSensitive) {
+                    score += 0; // No bonus but no penalty
+                    reasons.push('Note: May cause yellowing with light colours');
+                } else if (colorSensitivity === 'not-sensitive') {
+                    score += 2; // Full score for standard colours
+                    reasons.push('Suitable for standard colours');
+                } else {
+                    score += 1; // Partial score if no colour preference specified
+                }
+                
+                // Moisture tolerance
+                maxPossibleScore += 1;
+                if (moistureConditions === 'high' && product.moistureTolerant) {
+                    score += 1;
+                    reasons.push('Moisture tolerant');
+                } else if (moistureConditions !== 'high') {
+                    score += 1; // Normal moisture conditions - all products get this point
+                }
+                
+                // Calculate percentage match
+                const matchPercentage = Math.round((score / maxPossibleScore) * 100);
+                
+                const recommendation = {
+                    code,
+                    product,
+                    score,
+                    maxPossibleScore,
+                    matchPercentage,
+                    reasons
+                };
+                
+                // Categorize by product type
+                if (product.type.toLowerCase().includes('primer')) {
+                    primers.push(recommendation);
+                } else if (product.type.toLowerCase().includes('pre-treatment')) {
+                    pretreatments.push(recommendation);
+                } else {
+                    binders.push(recommendation);
+                }
+            }
+            
+            // Sort each category by score
+            binders.sort((a, b) => b.score - a.score);
+            primers.sort((a, b) => b.score - a.score);
+            pretreatments.sort((a, b) => b.score - a.score);
+            
+            return { binders, primers, pretreatments };
+        }
+
+        function displayResults(recommendations, colorSensitivity, climate, moistureConditions) {
+            const resultsDiv = document.getElementById('results');
+            
+            if (recommendations.binders.length === 0 && recommendations.primers.length === 0 && recommendations.pretreatments.length === 0) {
+                resultsDiv.innerHTML = '<div class="no-results">No matching products found. Please adjust your criteria.</div>';
+                return;
+            }
+            
+            let html = '';
+            
+            // Add UV warning for sensitive colours
+            if (colorSensitivity === 'sensitive') {
+                const hasUVStabilized = recommendations.binders.some(rec => rec.product.uvStabilized);
+                
+                if (hasUVStabilized) {
+                    html += `
+                        <div style="background: #d4edda; border: 1px solid #c3e6cb; border-radius: 10px; padding: 15px; margin-bottom: 20px; color: #155724;">
+                            <div style="font-weight: 600; margin-bottom: 5px;">✅ UV Protection Available</div>
+                            FLEXILON 1231 with UV stabiliser is recommended for your light-coloured installation to minimise yellowing during the curing process.
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="warning">
+                            <div class="warning-title">⚠️ Colour Sensitivity Notice</div>
+                            Light colours (blue, white, cream, grey, beige) may experience yellowing when exposed to UV light.<br>
+                            <strong>Recommended:</strong> FLEXILON 1231 (UV stabilised binder) for optimal colour protection.<br>
+                            Alternative: Use an aliphatic binder for complete UV protection.
+                        </div>
+                    `;
+                }
+            }
+
+            // Display Binders section
+            if (recommendations.binders.length > 0) {
+                html += `<h3 style="color: #1a365d; font-size: 1.3rem; margin-bottom: 15px; border-bottom: 2px solid #ff6b35; padding-bottom: 5px;">🧪 Recommended Binders</h3>`;
+                
+                recommendations.binders.forEach(rec => {
+                    html += createProductCard(rec, colorSensitivity);
+                });
+            }
+
+            // Display Primers section
+            if (recommendations.primers.length > 0) {
+                html += `<h3 style="color: #1a365d; font-size: 1.3rem; margin: 30px 0 15px 0; border-bottom: 2px solid #ff6b35; padding-bottom: 5px;">🔧 Primers</h3>`;
+                html += `<div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px; border-radius: 0 8px 8px 0; margin-bottom: 15px; font-size: 0.9rem; color: #1a365d;">
+                    <strong>Note:</strong> Primers are used to improve adhesion between layers. You will typically need both a primer AND a binder for your project.
+                </div>`;
+                
+                recommendations.primers.forEach(rec => {
+                    html += createProductCard(rec, colorSensitivity);
+                });
+            }
+
+            // Display Pre-treatments section
+            if (recommendations.pretreatments.length > 0) {
+                html += `<h3 style="color: #1a365d; font-size: 1.3rem; margin: 30px 0 15px 0; border-bottom: 2px solid #ff6b35; padding-bottom: 5px;">⚡ Pre-treatments</h3>`;
+                
+                const needsPretreatment = climate === 'cold' || moistureConditions === 'dry';
+                if (needsPretreatment) {
+                    html += `<div style="background: #fff3cd; border-left: 4px solid #ff6b35; padding: 12px; border-radius: 0 8px 8px 0; margin-bottom: 15px; font-size: 0.9rem; color: #856404;">
+                        <strong>Recommended for your conditions:</strong> Pre-treatment is advised for cold or dry conditions to improve cure speed and performance.
+                    </div>`;
+                } else {
+                    html += `<div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px; border-radius: 0 8px 8px 0; margin-bottom: 15px; font-size: 0.9rem; color: #1a365d;">
+                        <strong>Optional:</strong> Pre-treatment may be used if needed to enhance performance in specific conditions.
+                    </div>`;
+                }
+                
+                recommendations.pretreatments.forEach(rec => {
+                    html += createProductCard(rec, colorSensitivity);
+                });
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        function createProductCard(rec, colorSensitivity) {
+            return `
+                <div class="binder-card">
+                    <div class="binder-name">
+                        ${rec.product.name}
+                        <span class="match-score">${rec.matchPercentage}% Match</span>
+                    </div>
+                    <div class="binder-type">${rec.product.type}</div>
+                    
+                    <div class="binder-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Viscosity:</span> ${rec.product.viscosity} cP
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Usage Rate:</span> ${rec.product.usage}
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Cure Speed:</span> ${rec.product.cureSpeed.charAt(0).toUpperCase() + rec.product.cureSpeed.slice(1)}
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Product Code:</span> ${rec.code}
+                        </div>
+                    </div>
+                    
+                    <div class="binder-description">
+                        ${rec.product.description}
+                    </div>
+                    
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.2);">
+                        <button class="btn-download" onclick="downloadTDS('${rec.code}', '${rec.product.name}')">
+                            📄 Download Technical Data Sheet
+                        </button>
+                    </div>
+                    
+                    ${rec.product.uvStabilized ? 
+                        '<div style="margin-top: 10px; padding: 10px; background: #d4edda; border-radius: 5px; font-size: 0.9rem; color: #155724;">✅ UV Stabilised - Reduces yellowing with light colours</div>' : 
+                        rec.product.uvSensitive && colorSensitivity === 'sensitive' ? 
+                        '<div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px; font-size: 0.9rem; color: #856404;">⚠️ May cause yellowing with light colours</div>' : 
+                        ''
+                    }
+                </div>
+            `;
+        }
+
+        function downloadTDS(binderCode, binderName) {
+            // Check if jsPDF is available
+            if (typeof window.jspdf === 'undefined') {
+                alert('PDF generation not available. Please contact Rosehill Polymers for technical data sheets.');
+                return;
+            }
+
+            const product = binderData[binderCode];
+            if (!product || !product.technicalData) {
+                alert('Technical data not available for this binder. Please contact Rosehill Polymers for the complete data sheet.');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Get user's project details
+            const climate = document.getElementById('climate').value;
+            const application = document.getElementById('application').value;
+            const surfaceType = document.getElementById('surface-type').value;
+            const cureSpeed = document.getElementById('cure-speed').value;
+            const colorSensitivity = document.getElementById('color-sensitivity').value;
+            const moistureConditions = document.getElementById('moisture-conditions').value;
+
+            // Header
+            doc.setFillColor(26, 54, 93);
+            doc.rect(0, 0, 210, 30, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.text("Rosehill Polymers Ltd", 105, 12, { align: "center" });
+            
+            doc.setFontSize(14);
+            doc.text("Technical Data Sheet", 105, 22, { align: "center" });
+
+            // Reset text colour
+            doc.setTextColor(0, 0, 0);
+            
+            let yPos = 45;
+
+            // Product name
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(16);
+            doc.setTextColor(26, 54, 93);
+            doc.text(binderName, 14, yPos);
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(12);
+            doc.setTextColor(255, 107, 53);
+            doc.text(product.type, 14, yPos + 8);
+            
+            yPos += 20;
+
+            // Project details section
+            doc.setFillColor(248, 249, 250);
+            doc.rect(10, yPos, 190, 45, 'F');
+            
+            doc.setTextColor(0, 0, 0);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.text("Your Project Requirements", 14, yPos + 8);
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            const projectDetails = [
+                `Climate: ${getDisplayText(climate)}`,
+                `Application: ${getDisplayText(application)}`,
+                `Surface Type: ${getDisplayText(surfaceType)}`,
+                `Cure Speed: ${getDisplayText(cureSpeed)}`,
+                `Colour Requirements: ${getDisplayText(colorSensitivity)}`,
+                `Moisture Conditions: ${getDisplayText(moistureConditions)}`
+            ];
+            
+            projectDetails.forEach((detail, index) => {
+                const col = index < 3 ? 0 : 95;
+                const row = index % 3;
+                doc.text(detail, 14 + col, yPos + 18 + (row * 6));
+            });
+            
+            yPos += 55;
+
+            // Technical properties
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.setTextColor(26, 54, 93);
+            doc.text("Technical Properties", 14, yPos);
+            yPos += 12;
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(11);
+            doc.setTextColor(0, 0, 0);
+            
+            const properties = [
+                ['Specific Gravity:', product.technicalData.specificGravity],
+                ['Appearance:', product.technicalData.appearance],
+                ['Viscosity @ 25°C:', `${product.viscosity} cP`],
+                ['Flash Point:', product.technicalData.flashPoint],
+                ['Storage Stability:', product.technicalData.storageStability],
+                ['NCO Value:', product.technicalData.ncoValue],
+                ['Usage Rate:', product.usage]
+            ];
+            
+            properties.forEach(([label, value]) => {
+                doc.setFont("helvetica", "bold");
+                doc.text(label, 14, yPos);
+                doc.setFont("helvetica", "normal");
+                doc.text(value, 70, yPos);
+                yPos += 7;
+            });
+            
+            yPos += 10;
+
+            // Description
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.setTextColor(26, 54, 93);
+            doc.text("Description", 14, yPos);
+            yPos += 8;
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            const descLines = doc.splitTextToSize(product.technicalData.detailedDescription, 180);
+            doc.text(descLines, 14, yPos);
+            yPos += descLines.length * 5 + 10;
+
+            // Uses
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.setTextColor(26, 54, 93);
+            doc.text("Uses", 14, yPos);
+            yPos += 6;
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            const usesLines = doc.splitTextToSize(product.technicalData.uses, 180);
+            doc.text(usesLines, 14, yPos);
+            yPos += usesLines.length * 5 + 10;
+
+            // Application
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.setTextColor(26, 54, 93);
+            doc.text("Application", 14, yPos);
+            yPos += 6;
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            const appLines = doc.splitTextToSize(product.technicalData.application, 180);
+            doc.text(appLines, 14, yPos);
+            yPos += appLines.length * 5 + 10;
+
+            // UV note if applicable
+            if (product.technicalData.uvNote) {
+                // Check if we need a new page before adding UV note
+                if (yPos > 200) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+                
+                doc.setFillColor(255, 243, 205);
+                doc.rect(10, yPos - 2, 190, 25, 'F');
+                
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(11);
+                doc.setTextColor(133, 100, 4);
+                doc.text("UV Considerations", 14, yPos + 5);
+                
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(9);
+                const uvLines = doc.splitTextToSize(product.technicalData.uvNote, 180);
+                doc.text(uvLines, 14, yPos + 12);
+                yPos += Math.max(25, uvLines.length * 4 + 15);
+            }
+
+            // Check if we need a new page for remaining content
+            if (yPos > 200) {
+                doc.addPage();
+                yPos = 20;
+            }
+
+            // Storage
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.setTextColor(26, 54, 93);
+            doc.text("Storage", 14, yPos);
+            yPos += 6;
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            const storageLines = doc.splitTextToSize(product.technicalData.storage, 180);
+            doc.text(storageLines, 14, yPos);
+            yPos += storageLines.length * 5 + 15;
+
+            // Safety
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(12);
+            doc.setTextColor(26, 54, 93);
+            doc.text("Health & Safety", 14, yPos);
+            yPos += 6;
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            const safetyLines = doc.splitTextToSize(product.technicalData.safety, 180);
+            doc.text(safetyLines, 14, yPos);
+            yPos += safetyLines.length * 5 + 15;
+
+            // Footer
+            doc.setFillColor(248, 249, 250);
+            doc.rect(10, yPos, 190, 25, 'F');
+            
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            doc.setTextColor(26, 54, 93);
+            doc.text("Rosehill Polymers Ltd", 14, yPos + 8);
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
+            doc.setTextColor(0, 0, 0);
+            doc.text("Spring Bank Mills, Watson Mill Lane, Sowerby Bridge, West Yorkshire, HX6 3BW", 14, yPos + 14);
+            doc.text("Phone: +44 (0)1422 839 456 | Email: info@rosehillpolymers.com", 14, yPos + 20);
+            
+            // Disclaimer
+            yPos += 30;
+            doc.setFont("helvetica", "italic");
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text("This information is given in good faith. Users must ensure by thorough testing that products perform adequately in each specific situation.", 105, yPos, { align: "center" });
+            doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')}`, 105, yPos + 5, { align: "center" });
+
+            // Save the PDF
+            doc.save(`${binderName.replace(/\s+/g, '_')}_Technical_Data_Sheet.pdf`);
+        }
+
+        function getDisplayText(value) {
+            const displayMap = {
+                'cold': 'Cold Climate (< 15°C)',
+                'temperate': 'Temperate Climate (15-25°C)',
+                'warm': 'Warm Climate (25-35°C)',
+                'very-warm': 'Very Warm Climate (> 35°C)',
+                'wet-pour': 'Wet Pour Installation',
+                'paver': 'Paver Machine Installation',
+                'compression': 'Compression Moulding',
+                'safety': 'Safety Surfaces (Playgrounds)',
+                'athletic': 'Athletic Tracks',
+                'shock-pad': 'Shock Pads (Under Artificial Grass)',
+                'solid-products': 'Solid Products (Wheels, Mats)',
+                'fast': 'Fast Curing',
+                'medium': 'Medium Curing',
+                'slow': 'Slow Curing',
+                'very-slow': 'Very Slow Curing',
+                'not-sensitive': 'Standard Colours',
+                'sensitive': 'Light/Sensitive Colours',
+                'dry': 'Dry Conditions',
+                'normal': 'Normal Moisture',
+                'high': 'High Moisture/Humidity'
+            };
+            return displayMap[value] || value || 'Not specified';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rosehill TPV - Sports & Recreation Surfaces</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 15px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 600;
+            font-family: 'Source Sans Pro', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 6px;
+        }
+
+        .nav-menu a:hover {
+            background: rgba(255, 107, 53, 0.2);
+            color: #ff6b35;
+        }
+
+        .nav-menu a.active {
+            background: rgba(255, 107, 53, 0.2);
+            color: #ff6b35;
+            font-weight: 600;
+        }
+
+        .contact-btn {
+            background: #ff6b35;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .contact-btn:hover {
+            background: #e55a2b !important;
+            transform: translateY(-2px);
+        }
+
+        /* Hero Section */
+        .hero {
+            background-image: url('hero_background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: white;
+            padding: 140px 0 100px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 70px;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 3;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            width: 100%;
+        }
+
+        .hero-text {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 50px;
+            border-radius: 20px;
+            color: #1a365d;
+            text-align: left;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .hero-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero h1 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 3.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+            color: #1a365d;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            line-height: 1.6;
+            color: #495057;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: #ff6b35;
+            color: white;
+            padding: 18px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #e55a2b;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #1a365d;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: inline-block;
+            transition: all 0.3s ease;
+            border: 2px solid #1a365d;
+        }
+
+        .btn-secondary:hover {
+            background: #1a365d;
+            color: white;
+            transform: translateY(-3px);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 80px 0;
+        }
+
+        .section-title {
+            font-family: 'Overpass', sans-serif;
+            color: #1a365d;
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-align: center;
+            position: relative;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: #6c757d;
+            font-size: 1.2rem;
+            margin-bottom: 60px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .section-title::after {
+            content: '';
+            width: 80px;
+            height: 4px;
+            background: #ff6b35;
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Benefits Section */
+        .benefits-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 80px 0;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .benefit-item {
+            text-align: center;
+            padding: 30px 20px;
+            background: white;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .benefit-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .benefit-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 107, 53, 0.1);
+            border: 3px solid #ff6b35;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2rem;
+            color: #ff6b35;
+        }
+
+        .benefit-title {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #1a365d;
+        }
+
+        .benefit-description {
+            color: #6c757d;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        /* Products Section */
+        .products-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 100px 0;
+        }
+
+        .products-container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0;
+        }
+
+        .product-row {
+            margin-bottom: 0;
+            padding: 80px 0;
+        }
+
+        .product-row:nth-child(odd) {
+            background: #ffffff;
+        }
+
+        .product-row:nth-child(even) {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .product-row .products-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .product-row:nth-child(even) .products-inner .product-content {
+            order: 2;
+        }
+
+        .product-row:nth-child(even) .products-inner .product-visual {
+            order: 1;
+        }
+
+        .product-content h3 {
+            font-family: 'Overpass', sans-serif;
+            color: #1a365d;
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .product-content p {
+            color: #6c757d;
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin-bottom: 30px;
+        }
+
+        .product-features {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 40px;
+        }
+
+        .product-features li {
+            color: #1a365d;
+            font-size: 1rem;
+            margin-bottom: 12px;
+            padding-left: 30px;
+            position: relative;
+            font-weight: 500;
+        }
+
+        .product-features li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #ff6b35;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .product-visual {
+            height: 400px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-visual.tpv-granules {
+            background: linear-gradient(135deg, #ff6b35, #e55a2b);
+        }
+
+        .product-visual.flexilon-binders {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .product-visual img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            transition: transform 0.3s ease;
+        }
+
+        .product-visual:hover img {
+            transform: scale(1.05);
+        }
+
+        .product-visual .icon {
+            position: absolute;
+            z-index: 3;
+            font-size: 8rem;
+            color: rgba(255, 255, 255, 0.9);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        /* Applications Section */
+        .applications-section {
+            background: white;
+            padding: 80px 0;
+        }
+
+        .applications-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .application-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .application-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        }
+
+        .application-image {
+            height: 200px;
+            background: linear-gradient(135deg, #e9ecef, #dee2e6);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+
+        .application-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            transition: transform 0.3s ease;
+        }
+
+        .application-card:hover .application-image img {
+            transform: scale(1.05);
+        }
+
+        .application-content {
+            padding: 25px;
+        }
+
+        .application-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 107, 53, 0.1);
+            border: 2px solid #ff6b35;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 1.5rem;
+            color: #ff6b35;
+            transition: all 0.3s ease;
+        }
+
+        .application-card:hover .application-icon {
+            background: #ff6b35;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .application-title {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: #1a365d;
+        }
+
+        .application-description {
+            color: #6c757d;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* Latest Installations Section */
+        .installations-section {
+            padding: 80px 0;
+            background: #f8f9fa;
+        }
+
+        .installations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .installation-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .installation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+
+        .installation-image {
+            width: 100%;
+            height: 220px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .installation-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .installation-card:hover .installation-image img {
+            transform: scale(1.05);
+        }
+
+        .installation-content {
+            padding: 25px;
+        }
+
+        .installation-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+
+        .installation-date {
+            font-weight: 500;
+        }
+
+        .installation-application {
+            background: #ff6b35;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .installation-title {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .installation-location {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .installation-description {
+            color: #555;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+
+        .read-more-btn {
+            color: #ff6b35;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .read-more-btn:hover {
+            color: #e55a2b;
+            transform: translateX(3px);
+        }
+
+        .installations-cta {
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .loading-installations {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e9ecef;
+            border-top: 4px solid #ff6b35;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Company Section */
+        .company-section {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 80px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .company-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .company-item {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .company-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 107, 53, 0.2);
+            border: 3px solid #ff6b35;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2rem;
+        }
+
+        .company-title {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .company-description {
+            opacity: 0.9;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: #ff6b35;
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 2.8rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn-white {
+            background: white;
+            color: #ff6b35;
+            padding: 18px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-white:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn-outline-white {
+            background: transparent;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: inline-block;
+            transition: all 0.3s ease;
+            border: 2px solid white;
+        }
+
+        .btn-outline-white:hover {
+            background: white;
+            color: #ff6b35;
+            transform: translateY(-3px);
+        }
+
+        /* Footer */
+        .footer {
+            background: #1a365d;
+            color: white;
+            padding: 60px 0 30px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h3 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #ff6b35;
+        }
+
+        .footer-section p,
+        .footer-section li {
+            opacity: 0.9;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: #ff6b35;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 30px;
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 8px;
+            background: none;
+            border: none;
+            z-index: 1001;
+        }
+
+        .mobile-menu-toggle span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 3px 0;
+            transition: 0.3s;
+            border-radius: 2px;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+        }
+
+        .mobile-menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
+        }
+
+        .mobile-nav-menu {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 999;
+        }
+
+        .mobile-nav-menu.active {
+            display: flex;
+        }
+
+        .mobile-nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: color 0.3s ease;
+        }
+
+        .mobile-nav-menu a:hover {
+            color: #ff6b35;
+        }
+
+        .mobile-nav-menu a.active {
+            color: #ff6b35;
+            font-weight: 600;
+        }
+
+        .mobile-nav-menu a:last-child {
+            border-bottom: none;
+        }
+
+        .mobile-nav-menu .contact-btn {
+            background: #ff6b35;
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 10px;
+            border-bottom: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .product-row .products-inner {
+                gap: 40px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .mobile-menu-toggle {
+                display: flex;
+            }
+
+            .product-row .products-inner {
+                grid-template-columns: 1fr;
+                gap: 30px;
+                text-align: center;
+            }
+            
+            .product-row:nth-child(even) .products-inner .product-content {
+                order: 2;
+            }
+
+            .product-row:nth-child(even) .products-inner .product-visual {
+                order: 1;
+            }
+
+            .product-row:nth-child(odd) .products-inner .product-content {
+                order: 2;
+            }
+
+            .product-row:nth-child(odd) .products-inner .product-visual {
+                order: 1;
+            }
+            
+            .product-content h3 {
+                margin-bottom: 15px;
+            }
+            
+            .product-content p {
+                margin-bottom: 25px;
+            }
+            
+            .product-features {
+                margin-bottom: 30px;
+                text-align: left;
+                display: inline-block;
+            }
+
+            .installations-grid {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+
+            .installation-image {
+                height: 200px;
+            }
+
+            .installation-content {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.2rem;
+            }
+
+            .section-title {
+                font-size: 2.2rem;
+            }
+
+            .benefits-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 30px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .benefits-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .applications-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 30px;
+            }
+
+            .company-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .applications-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 30px;
+                text-align: center;
+            }
+
+            .hero-text {
+                padding: 30px;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .product-content h3 {
+                font-size: 1.8rem;
+            }
+            
+            .product-visual {
+                height: 280px;
+            }
+            
+            .product-visual .icon {
+                font-size: 6rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <a href="index.html" class="logo">
+                <img src="rosehill_tpv_logo.png" alt="Rosehill TPV" style="height: 60px;">
+            </a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="index.html" class="active">Home</a></li>
+                    <li><a href="products.html">Products</a></li>
+                    <li><a href="applications.html">Applications</a></li>
+                    <li><a href="colour.html">Colour</a></li>
+                    <li><a href="installations.html">Installations</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="contact.html" class="contact-btn">Get in Touch</a></li>
+                </ul>
+                <button class="mobile-menu-toggle" id="mobile-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="mobile-nav-menu" id="mobile-menu">
+                    <a href="index.html" class="active">Home</a>
+                    <a href="products.html">Products</a>
+                    <a href="applications.html">Applications</a>
+                    <a href="colour.html">Colour</a>
+                    <a href="installations.html">Installations</a>
+                    <a href="about.html">About Us</a>
+                    <a href="contact.html" class="contact-btn">Get in Touch</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1>Durable. Reliable. <br />UV Stable.</h1>
+                <p>Rosehill TPV® combines durability, reliability, and UV stability to create high-quality, long-lasting surfaces.</p>
+               
+                <div class="hero-buttons">
+                    <a href="products.html" class="btn-primary">Explore Products</a>
+                    <a href="contact.html" class="btn-secondary">Request Samples</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <!-- Space for additional visual elements if needed -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section class="products-section" id="products">
+        <div class="products-container">
+            <h2 class="section-title">Our Products</h2>
+            <p class="section-subtitle">Cutting-edge solutions manufactured in the UK using premium virgin polymers</p>
+            
+            <!-- Rosehill TPV Granules -->
+            <div class="product-row">
+                <div class="products-inner">
+                    <div class="product-content">
+                        <h3>Rosehill TPV Granules</h3>
+                        <p>Cutting-edge, elastomer-based coloured rubber granules manufactured in the United Kingdom. Our unique, 100% fully cross-linked and non-porous granules are polypropylene-free and non-spherical.</p>
+                        <ul class="product-features">
+                            <li>Premium virgin polymers - no sulphur, clay fillers, or heavy metals</li>
+                            <li>Remarkable thermal stability with no carbon black leaching</li>
+                            <li>Maintains suppleness under harsh UV conditions</li>
+                            <li>Superior colour consistency across all 21 vibrant colours</li>
+                            <li>Enhanced UV stability compared to EPDM and SBR granules</li>
+                            <li>Custom colour blending service available</li>
+                        </ul>
+                        <a href="contact.html" class="btn-primary">Request Samples</a>
+                    </div>
+                    <div class="product-visual tpv-granules">
+                        <img src="tpv_granules.jpg" alt="Rosehill TPV Granules">
+                        
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flexilon Binders -->
+            <div class="product-row">
+                <div class="products-inner">
+                    <div class="product-content">
+                        <h3>Flexilon Binders</h3>
+                        <p>Comprehensive range of cleaners, primers, binders, catalysts and pigments for both hot and cold moulding applications. With over 30 years of experience developing MDI polyurethane binders, our Flexilon® range offers solutions for every climate and condition.</p>
+                        <ul class="product-features">
+                            <li>30+ years of MDI polyurethane binder development</li>
+                            <li>Solutions for all climates and conditions</li>
+                            <li>Hot and cold moulding applications</li>
+                            <li>Complete system including cleaners and primers</li>
+                            <li>Proven performance in demanding environments</li>
+                            <li>Technical support and guidance included</li>
+                        </ul>
+                        <a href="products.html" class="btn-primary">Learn More</a>
+                    </div>
+                    <div class="product-visual flexilon-binders">
+                        <img src="flexilon_binders.jpg" alt="Flexilon Binders">
+                       
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="benefits-section" id="benefits">
+        <div class="container">
+            <h2 class="section-title">Key Benefits</h2>
+            <p class="section-subtitle">Innovative TPV technology delivering superior performance for sports and play surfaces</p>
+            
+            <div class="benefits-grid">
+                <div class="benefit-item">
+                    <div class="benefit-icon">☀️</div>
+                    <h3 class="benefit-title">UV-Resistant</h3>
+                    <p class="benefit-description">Highly weather resistant, remaining supple even in constant sunlight with unrivalled UV resistance.</p>
+                </div>
+                
+                <div class="benefit-item">
+                    <div class="benefit-icon">🎨</div>
+                    <h3 class="benefit-title">Colour Stable</h3>
+                    <p class="benefit-description">Surfaces retain their vibrancy longer with superior colour consistency and no pigment leaching.</p>
+                </div>
+                
+                <div class="benefit-item">
+                    <div class="benefit-icon">🛡️</div>
+                    <h3 class="benefit-title">Long-Lasting</h3>
+                    <p class="benefit-description">Ideal combination of durability and reliability that won't harden over time.</p>
+                </div>
+
+                <div class="benefit-item">
+                    <div class="benefit-icon">💰</div>
+                    <h3 class="benefit-title">Cost-Effective</h3>
+                    <p class="benefit-description">Non-porous granules require less binder during installation, reducing overall costs.</p>
+                </div>
+
+                <div class="benefit-item">
+                    <div class="benefit-icon">🌱</div>
+                    <h3 class="benefit-title">Safe</h3>
+                    <p class="benefit-description">Non-toxic, non-allergenic, and environmentally friendly formulations.</p>
+                </div>
+
+                <div class="benefit-item">
+                    <div class="benefit-icon">🎯</div>
+                    <h3 class="benefit-title">Versatile</h3>
+                    <p class="benefit-description">Available in 21 vibrant colours for endless design possibilities and custom blends.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Applications Section -->
+    <section class="applications-section" id="applications">
+        <div class="container">
+            <h2 class="section-title">Applications</h2>
+            <p class="section-subtitle">Versatile solutions for sports, recreation, and safety surfacing across diverse environments</p>
+            
+            <div class="applications-grid">
+                <a href="applications.html#playground-surfaces" class="application-card">
+                    <div class="application-image">
+                        <img src="playground.jpg">
+                    </div>
+                    <div class="application-content">
+                        <div class="application-icon">🛝</div>
+                        <h3 class="application-title">Playground Surfaces</h3>
+                        <p class="application-description">Safe, non-slip surfaces for children's play areas with excellent impact absorption and vibrant colour options.</p>
+                    </div>
+                </a>
+
+                <a href="applications.html#multi-use-games-areas" class="application-card">
+                    <div class="application-image">
+                        <img src="muga.jpg">
+                    </div>
+                    <div class="application-content">
+                        <div class="application-icon">🏀</div>
+                        <h3 class="application-title">Multi-Use Games Areas</h3>
+                        <p class="application-description">Durable court surfaces suitable for basketball, tennis, netball and other sports with superior UV resistance.</p>
+                    </div>
+                </a>
+
+                <a href="applications.html#running-tracks" class="application-card">
+                    <div class="application-image">
+                        <img src="track.jpg">
+                    </div>
+                    <div class="application-content">
+                        <div class="application-icon">🏃‍♂️</div>
+                        <h3 class="application-title">Running Tracks</h3>
+                        <p class="application-description">High-performance athletic track surfaces providing optimal grip, comfort, and longevity for competitive sports.</p>
+                    </div>
+                </a>
+
+                <a href="applications.html#sports-pitches" class="application-card">
+                    <div class="application-image">
+                        <img src="pitch.jpg">
+                    </div>
+                    <div class="application-content">
+                        <div class="application-icon">⚽</div>
+                        <h3 class="application-title">Sports Pitches</h3>
+                        <p class="application-description">Synthetic turf and pitch surfaces with excellent drainage and consistent playing characteristics year-round.</p>
+                    </div>
+                </a>
+
+                <a href="applications.html#footpaths" class="application-card">
+                    <div class="application-image">
+                        <img src="footpath.jpg">
+                    </div>
+                    <div class="application-content">
+                        <div class="application-icon">🚶‍♀️</div>
+                        <h3 class="application-title">Footpaths</h3>
+                        <p class="application-description">Slip-resistant pathway surfaces ideal for parks, trails, and public spaces with low maintenance requirements.</p>
+                    </div>
+                </a>
+
+                <a href="applications.html#splash-parks" class="application-card">
+                    <div class="application-image">
+                        <img src="splashpark.jpg">
+                    </div>
+                    <div class="application-content">
+                        <div class="application-icon">💦</div>
+                        <h3 class="application-title">Splash Parks</h3>
+                        <p class="application-description">Water-resistant surfaces perfect for water play areas, providing safety and comfort in wet conditions.</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Latest Installations Section -->
+    <section class="installations-section" id="latest-installations">
+        <div class="container">
+            <h2 class="section-title">Latest Installations</h2>
+            <p class="section-subtitle">Discover our recent projects showcasing TPV surfaces worldwide</p>
+            
+            <div class="installations-grid" id="latest-installations-grid">
+                <!-- Installations will be loaded here -->
+                <div class="loading-installations">
+                    <div class="loading-spinner"></div>
+                    <p>Loading latest installations...</p>
+                </div>
+            </div>
+
+            <div class="installations-cta">
+                <a href="installations.html" class="btn-primary">View All Installations</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Company Section -->
+    <section class="company-section" id="about">
+        <div class="container">
+            <h2 class="section-title" style="color: white;">About Rosehill Sports & Play</h2>
+            <p class="section-subtitle" style="color: rgba(255,255,255,0.9);">Market-leading manufacturer with global recognition and trust</p>
+            
+            <div class="company-grid">
+                <div class="company-item">
+                    <div class="company-icon">🏭</div>
+                    <h3 class="company-title">UK Manufacturing</h3>
+                    <p class="company-description">State-of-the-art facilities in Yorkshire using unique polyurethane chemistry, tailor-made for the toughest environments.</p>
+                </div>
+                
+                <div class="company-item">
+                    <div class="company-icon">🏆</div>
+                    <h3 class="company-title">Global Recognition</h3>
+                    <p class="company-description">Specified by architects and designers worldwide, from Olympic Games venues to Disney, Sea World, and Universal Studios.</p>
+                </div>
+                
+                <div class="company-item">
+                    <div class="company-icon">🔬</div>
+                    <h3 class="company-title">Innovation &amp; R&amp;D</h3>
+                    <p class="company-description">Continuous innovation driven by talented polymer scientists and extensive research capabilities.</p>
+                </div>
+
+                <div class="company-item">
+                    <div class="company-icon">✅</div>
+                    <h3 class="company-title">Quality Assured</h3>
+                    <p class="company-description">Rigorous quality control procedures with comprehensive testing ensuring consistent, high-quality outputs.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>Ready to create exceptional surfaces?</h2>
+            <div class="cta-buttons">
+                <a href="contact.html" class="btn-white">Request Samples</a>
+                <a href="colour.html" class="btn-outline-white">View Colour Chart</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Contact Us</h3>
+                    <p><strong>Rosehill Sports & Play</strong><br>
+                    A Division of Rosehill Polymers Limited<br>
+                    Spring Bank Mills<br>
+                    Sowerby Bridge<br>
+                    West Yorkshire HX6 3BW<br>
+                    United Kingdom</p>
+                    <p>📞 +44 (0)1422 839 456<br>
+                    📧 info@rosehilltpv.com</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Our Products</h3>
+                    <ul>
+                        <li><a href="products.html">Rosehill TPV<sup>®</sup> Granules</a></li>
+                        <li><a href="products.html">Flexilon<sup>®</sup> Binders</a></li>
+                        <li><a href="colour.html">21 Vibrant Colours</a></li>
+                        <li><a href="colour.html">Custom Colour Blends</a></li>
+                        <li><a href="contact.html">Request Samples</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Applications</h3>
+                    <ul>
+                        <li><a href="applications.html">Sports Surfaces</a></li>
+                        <li><a href="applications.html">Play Areas</a></li>
+                        <li><a href="applications.html">Athletic Tracks</a></li>
+                        <li><a href="applications.html">Safety Surfacing</a></li>
+                        <li><a href="installations.html">View All Installations</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Company</h3>
+                    <ul>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                        <li><a href="installations.html">Latest Installations</a></li>
+                        <li><a href="colour.html">Colour Options</a></li>
+                    </ul>
+                    <p style="margin-top: 20px;">
+                        <strong>Features:</strong><br>
+                        UV Stable • Non-Toxic • 21 Colours • UK Made
+                    </p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>© 2025 Rosehill Sports & Play. A Division of Rosehill Polymers Limited. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Enhanced scroll effect for header
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 100) {
+                header.style.background = 'linear-gradient(135deg, rgba(26, 54, 93, 0.98), rgba(45, 74, 113, 0.98))';
+                header.style.backdropFilter = 'blur(10px)';
+                header.style.boxShadow = '0 8px 32px rgba(0,0,0,0.15)';
+            } else {
+                header.style.background = 'linear-gradient(135deg, #1a365d, #2d4a71)';
+                header.style.backdropFilter = 'none';
+                header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+            }
+        });
+
+        // Mobile menu toggle functionality
+        const mobileToggle = document.getElementById('mobile-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if (mobileToggle && mobileMenu) {
+            mobileToggle.addEventListener('click', function() {
+                mobileToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+            });
+
+            // Close mobile menu when clicking on a link
+            document.querySelectorAll('.mobile-nav-menu a').forEach(link => {
+                link.addEventListener('click', function() {
+                    mobileToggle.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                });
+            });
+
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!mobileToggle.contains(event.target) && !mobileMenu.contains(event.target)) {
+                    mobileToggle.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                }
+            });
+        }
+
+        // Animate elements on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe cards and elements for animation
+        document.querySelectorAll('.benefit-item, .product-row, .company-item, .application-card').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+
+        // Load latest installations
+        async function loadLatestInstallations() {
+            try {
+                const response = await fetch('installations.json');
+                if (!response.ok) throw new Error('Failed to load installations');
+                
+                const data = await response.json();
+                const installations = data.installations;
+                
+                // Sort by date (most recent first) and take first 3
+                const latestInstallations = installations
+                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .slice(0, 3);
+                
+                displayLatestInstallations(latestInstallations);
+            } catch (error) {
+                console.error('Error loading installations:', error);
+                document.getElementById('latest-installations-grid').innerHTML = `
+                    <div class="loading-installations">
+                        <p style="color: #e74c3c;">Unable to load installations. Please check your connection.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayLatestInstallations(installations) {
+            const grid = document.getElementById('latest-installations-grid');
+            
+            const installationsHtml = installations.map(installation => {
+                const slug = createSlug(installation.title, installation.location);
+                const previewText = installation.description[0].substring(0, 120) + '...';
+                const formattedDate = formatDate(installation.date);
+                const applicationName = capitalizeApplication(installation.application);
+                
+                return `
+                    <div class="installation-card" onclick="window.location.href='installations/${slug}.html'">
+                        <div class="installation-image">
+                            <img src="images/installations/${installation.images[0]}" alt="${installation.title}" loading="lazy">
+                        </div>
+                        <div class="installation-content">
+                            <div class="installation-meta">
+                                <span class="installation-date">${formattedDate}</span>
+                                <span class="installation-application">${applicationName}</span>
+                            </div>
+                            <h3 class="installation-title">${installation.title}</h3>
+                            <p class="installation-location">📍 ${installation.location}</p>
+                            <div class="installation-description">
+                                <p>${previewText}</p>
+                            </div>
+                            <a href="installations/${slug}.html" class="read-more-btn" onclick="event.stopPropagation()">
+                                Read More →
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            grid.innerHTML = installationsHtml;
+            
+            // Animate the cards
+            setTimeout(() => {
+                document.querySelectorAll('.installation-card').forEach((card, index) => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(30px)';
+                    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                    
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, index * 150);
+                });
+            }, 100);
+        }
+
+        // Helper functions
+        function createSlug(title, location) {
+            const combined = `${title} ${location}`.toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+                .replace(/\s+/g, '-') // Replace spaces with hyphens
+                .replace(/-+/g, '-') // Replace multiple hyphens with single
+                .trim() // Trim whitespace
+                .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+            
+            return combined;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', { 
+                year: 'numeric', 
+                month: 'short'
+            });
+        }
+
+        function capitalizeApplication(app) {
+            const appMap = {
+                'playground': 'Playground',
+                'muga': 'MUGA',
+                'sports': 'Sports Court',
+                'athletics': 'Athletics Track',
+                'fitness': 'Fitness Area',
+                'safety': 'Safety Surface',
+                'tennis': 'Tennis Court'
+            };
+            return appMap[app] || app.charAt(0).toUpperCase() + app.slice(1);
+        }
+
+        // Load installations when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLatestInstallations();
+        });
+    </script>
+</body>
+</html>

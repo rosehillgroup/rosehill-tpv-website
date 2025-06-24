@@ -1,0 +1,18 @@
+# Netlify Redirects File
+
+# Pretty URLs - remove .html extension
+/about              /about.html             200
+/products           /products.html          200
+/applications       /applications.html      200
+/colour             /colour.html            200
+/contact            /contact.html           200
+/installations      /installations.html     200
+
+# Admin redirect (optional)
+/admin              /admin-add-installation.html    200
+
+# Redirect www to non-www (update with your actual domain)
+# https://www.yourdomain.com/* https://yourdomain.com/:splat 301!
+
+# Force HTTPS
+# http://yourdomain.com/* https://yourdomain.com/:splat 301!

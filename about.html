@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Rosehill Sports & Play - UK Manufacturing Excellence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 15px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 600;
+            font-family: 'Source Sans Pro', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 6px;
+        }
+
+        .nav-menu a:hover {
+            background: rgba(255, 107, 53, 0.2);
+            color: #ff6b35;
+        }
+
+        .nav-menu a.active {
+            background: rgba(255, 107, 53, 0.2);
+            color: #ff6b35;
+            font-weight: 600;
+        }
+
+        .contact-btn {
+            background: #ff6b35;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .contact-btn:hover {
+            background: #e55a2b !important;
+            transform: translateY(-2px);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, rgba(26, 54, 93, 0.9), rgba(45, 74, 113, 0.9)), url('hero_background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: white;
+            padding: 140px 0 100px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 70px;
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+            text-align: center;
+        }
+
+        .hero-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 3;
+            width: 100%;
+        }
+
+        .hero h1 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            line-height: 1.6;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            opacity: 0.95;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 80px 0;
+        }
+
+        .section-title {
+            font-family: 'Overpass', sans-serif;
+            color: #1a365d;
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-align: center;
+            position: relative;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: #6c757d;
+            font-size: 1.2rem;
+            margin-bottom: 60px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .section-title::after {
+            content: '';
+            width: 80px;
+            height: 4px;
+            background: #ff6b35;
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Overview Section */
+        .overview-section {
+            background: white;
+            padding: 80px 0;
+        }
+
+        .overview-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            margin-top: 40px;
+        }
+
+        .overview-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #495057;
+        }
+
+        .overview-text p {
+            margin-bottom: 25px;
+        }
+
+        .overview-highlights {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 40px;
+            border-radius: 20px;
+            border-left: 5px solid #ff6b35;
+        }
+
+        .highlight-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .highlight-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .highlight-icon {
+            background: #ff6b35;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .highlight-text {
+            font-size: 1rem;
+            color: #495057;
+            line-height: 1.6;
+        }
+
+        /* Capabilities Section */
+        .capabilities-section {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 80px 0;
+        }
+
+        .capabilities-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .capability-card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .capability-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+        }
+
+        .capability-icon {
+            background: rgba(255, 107, 53, 0.1);
+            color: #ff6b35;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+        }
+
+        .capability-title {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 15px;
+        }
+
+        .capability-description {
+            color: #6c757d;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        .capability-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        .capability-list li {
+            color: #495057;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        .capability-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #ff6b35;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* Commitment Section */
+        .commitment-section {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 80px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .commitment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .commitment-item {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .commitment-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 107, 53, 0.2);
+            border: 3px solid #ff6b35;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 2rem;
+        }
+
+        .commitment-title {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .commitment-description {
+            opacity: 0.9;
+            line-height: 1.7;
+            font-size: 1rem;
+        }
+
+        /* Stats Section */
+        .stats-section {
+            background: white;
+            padding: 80px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .stat-number {
+            font-family: 'Overpass', sans-serif;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #ff6b35;
+            display: block;
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            font-size: 1.1rem;
+            color: #1a365d;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .stat-description {
+            font-size: 0.9rem;
+            color: #6c757d;
+            line-height: 1.5;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: #ff6b35;
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 2.8rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.95;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn-white {
+            background: white;
+            color: #ff6b35;
+            padding: 18px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-white:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn-outline-white {
+            background: transparent;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: inline-block;
+            transition: all 0.3s ease;
+            border: 2px solid white;
+        }
+
+        .btn-outline-white:hover {
+            background: white;
+            color: #ff6b35;
+            transform: translateY(-3px);
+        }
+
+        /* Footer */
+        .footer {
+            background: #1a365d;
+            color: white;
+            padding: 60px 0 30px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h3 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #ff6b35;
+        }
+
+        .footer-section p,
+        .footer-section li {
+            opacity: 0.9;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: #ff6b35;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 30px;
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 8px;
+            background: none;
+            border: none;
+            z-index: 1001;
+        }
+
+        .mobile-menu-toggle span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 3px 0;
+            transition: 0.3s;
+            border-radius: 2px;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+        }
+
+        .mobile-menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
+        }
+
+        .mobile-nav-menu {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 999;
+        }
+
+        .mobile-nav-menu.active {
+            display: flex;
+        }
+
+        .mobile-nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: color 0.3s ease;
+        }
+
+        .mobile-nav-menu a:hover {
+            color: #ff6b35;
+        }
+
+        .mobile-nav-menu a.active {
+            color: #ff6b35;
+            font-weight: 600;
+        }
+
+        .mobile-nav-menu a:last-child {
+            border-bottom: none;
+        }
+
+        .mobile-nav-menu .contact-btn {
+            background: #ff6b35;
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 10px;
+            border-bottom: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .overview-content {
+                gap: 40px;
+            }
+
+            .capabilities-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .mobile-menu-toggle {
+                display: flex;
+            }
+
+            .overview-content {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 30px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.8rem;
+            }
+
+            .hero p {
+                font-size: 1.2rem;
+            }
+
+            .section-title {
+                font-size: 2.2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <a href="index.html" class="logo">
+                <img src="rosehill_tpv_logo.png" alt="Rosehill TPV" style="height: 60px;">
+            </a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="products.html">Products</a></li>
+                    <li><a href="applications.html">Applications</a></li>
+                    <li><a href="colour.html">Colour</a></li>
+                    <li><a href="installations.html">Installations</a></li>
+                    <li><a href="about.html" class="active">About Us</a></li>
+                    <li><a href="contact.html" class="contact-btn">Get in Touch</a></li>
+                </ul>
+                <button class="mobile-menu-toggle" id="mobile-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="mobile-nav-menu" id="mobile-menu">
+                    <a href="index.html">Home</a>
+                    <a href="products.html">Products</a>
+                    <a href="applications.html">Applications</a>
+                    <a href="colour.html">Colour</a>
+                    <a href="installations.html">Installations</a>
+                    <a href="about.html" class="active">About Us</a>
+                    <a href="contact.html" class="contact-btn">Get in Touch</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Leading UK Innovation<br>in Surface Technology</h1>
+            <p>Market-leading manufacturer of Rosehill TPV® coloured rubber granules and Flexilon® polyurethane binders, trusted by architects and designers worldwide.</p>
+        </div>
+    </section>
+
+    <!-- Overview Section -->
+    <section class="overview-section">
+        <div class="container">
+            <h2 class="section-title">About Rosehill Sports & Play</h2>
+            <p class="section-subtitle">A division of Rosehill Group, delivering innovative surface solutions from our Yorkshire manufacturing facility</p>
+            
+            <div class="overview-content">
+                <div class="overview-text">
+                    <p>Rosehill Sports & Play stands at the forefront of sports and leisure surface innovation as the market-leading manufacturer of Rosehill TPV® coloured rubber granules and the Flexilon® range of polyurethane binders and adhesives.</p>
+                    
+                    <p>Our products have earned global recognition and trust, being specified by architects and designers worldwide. From international sporting venues to installations at major theme parks, Rosehill TPV® has proven its excellence in the most demanding environments.</p>
+                    
+                    <p>As a division of Rosehill Group, we leverage the Group's extensive research and development capabilities to drive continuous innovation and excellence in our field.</p>
+                </div>
+                
+                <div class="overview-highlights">
+                    <div class="highlight-item">
+                        <div class="highlight-icon">UK</div>
+                        <div class="highlight-text"><strong>Made in Yorkshire:</strong> State-of-the-art manufacturing facility using proprietary polyurethane chemistry</div>
+                    </div>
+                    
+                    <div class="highlight-item">
+                        <div class="highlight-icon">21</div>
+                        <div class="highlight-text"><strong>Colour Range:</strong> 21 vibrant standard colours plus unlimited custom blending possibilities</div>
+                    </div>
+                    
+                    <div class="highlight-item">
+                        <div class="highlight-icon">R&D</div>
+                        <div class="highlight-text"><strong>Innovation Focus:</strong> Dedicated team of polymer scientists driving continuous product advancement</div>
+                    </div>
+                    
+                    <div class="highlight-item">
+                        <div class="highlight-icon">QA</div>
+                        <div class="highlight-text"><strong>Quality Assured:</strong> Rigorous testing and quality control ensures consistent, reliable performance</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Capabilities Section -->
+    <section class="capabilities-section">
+        <div class="container">
+            <h2 class="section-title">Our Capabilities</h2>
+            <p class="section-subtitle">Comprehensive expertise from research and development through to manufacturing and technical support</p>
+            
+            <div class="capabilities-grid">
+                <div class="capability-card">
+                    <div class="capability-icon">🏭</div>
+                    <h3 class="capability-title">Manufacturing Excellence</h3>
+                    <p class="capability-description">Our Yorkshire facility represents modern polymer production technology, creating unique TPV® products using proprietary chemistry.</p>
+                    <ul class="capability-list">
+                        <li>State-of-the-art production equipment</li>
+                        <li>Proprietary polyurethane chemistry</li>
+                        <li>Continuous process refinement</li>
+                        <li>Environmental impact minimisation</li>
+                    </ul>
+                </div>
+
+                <div class="capability-card">
+                    <div class="capability-icon">🔬</div>
+                    <h3 class="capability-title">Research & Development</h3>
+                    <p class="capability-description">Our experienced polymer scientists lead innovation efforts, developing new solutions to meet evolving market demands.</p>
+                    <ul class="capability-list">
+                        <li>New colour formulation development</li>
+                        <li>Enhanced product durability research</li>
+                        <li>UV resistance improvements</li>
+                        <li>Sustainable solution creation</li>
+                    </ul>
+                </div>
+
+                <div class="capability-card">
+                    <div class="capability-icon">✅</div>
+                    <h3 class="capability-title">Quality Control</h3>
+                    <p class="capability-description">Every batch undergoes comprehensive testing to ensure consistent quality that meets or exceeds industry specifications.</p>
+                    <ul class="capability-list">
+                        <li>Physical properties testing</li>
+                        <li>UV resistance verification</li>
+                        <li>Colour stability assessment</li>
+                        <li>Batch traceability systems</li>
+                    </ul>
+                </div>
+
+                <div class="capability-card">
+                    <div class="capability-icon">🎯</div>
+                    <h3 class="capability-title">Technical Support</h3>
+                    <p class="capability-description">Expert guidance from specification through installation, ensuring optimal results for every project.</p>
+                    <ul class="capability-list">
+                        <li>Project specification assistance</li>
+                        <li>Installation guidance and training</li>
+                        <li>Custom colour development</li>
+                        <li>Ongoing technical consultation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="container">
+            <h2 class="section-title">Proven Track Record</h2>
+            <p class="section-subtitle">Decades of experience delivering exceptional sports and recreation surfaces worldwide</p>
+            
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-number">30+</span>
+                    <div class="stat-label">Years Experience</div>
+                    <div class="stat-description">Developing polyurethane binder technology</div>
+                </div>
+
+                <div class="stat-item">
+                    <span class="stat-number">21</span>
+                    <div class="stat-label">Standard Colours</div>
+                    <div class="stat-description">Plus unlimited custom blending options</div>
+                </div>
+
+                <div class="stat-item">
+                    <span class="stat-number">100%</span>
+                    <div class="stat-label">UK Manufactured</div>
+                    <div class="stat-description">Premium quality from Yorkshire facility</div>
+                </div>
+
+                <div class="stat-item">
+                    <span class="stat-number">365</span>
+                    <div class="stat-label">Days Performance</div>
+                    <div class="stat-description">Year-round reliability in all climates</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Commitment Section -->
+    <section class="commitment-section">
+        <div class="container">
+            <h2 class="section-title" style="color: white;">Our Commitment</h2>
+            <p class="section-subtitle" style="color: rgba(255,255,255,0.9);">Driving innovation whilst maintaining our responsibility to the environment and our customers</p>
+            
+            <div class="commitment-grid">
+                <div class="commitment-item">
+                    <div class="commitment-icon">🌱</div>
+                    <h3 class="commitment-title">Sustainability</h3>
+                    <p class="commitment-description">Environmentally responsible manufacturing with non-toxic, non-allergenic formulations and longer-lasting products that reduce replacement frequency.</p>
+                </div>
+                
+                <div class="commitment-item">
+                    <div class="commitment-icon">🏆</div>
+                    <h3 class="commitment-title">Quality Excellence</h3>
+                    <p class="commitment-description">Rigorous quality management systems ensure consistent product quality, with comprehensive testing and continuous monitoring throughout production.</p>
+                </div>
+                
+                <div class="commitment-item">
+                    <div class="commitment-icon">🤝</div>
+                    <h3 class="commitment-title">Customer Partnership</h3>
+                    <p class="commitment-description">Dedicated technical support and ongoing consultation to ensure project success, from initial specification through to long-term maintenance guidance.</p>
+                </div>
+
+                <div class="commitment-item">
+                    <div class="commitment-icon">🚀</div>
+                    <h3 class="commitment-title">Continuous Innovation</h3>
+                    <p class="commitment-description">Investment in research and development, staying current with industry developments and creating new opportunities for our customers.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>Ready to Specify Excellence?</h2>
+            <p>Partner with Rosehill Sports & Play for your next project and experience the difference that UK manufacturing excellence makes.</p>
+            <div class="cta-buttons">
+                <a href="contact.html" class="btn-white">Speak to Our Technical Team</a>
+                <a href="contact.html" class="btn-outline-white">Request Company Information</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Contact Us</h3>
+                    <p><strong>Rosehill Sports & Play</strong><br>
+                    A Division of Rosehill Group<br>
+                    Spring Bank Mills<br>
+                    Sowerby Bridge<br>
+                    West Yorkshire HX6 3BW<br>
+                    United Kingdom</p>
+                    <p>📞 +44 (0)1422 839 456<br>
+                    📧 info@rosehilltpv.com</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Our Services</h3>
+                    <ul>
+                        <li><a href="products.html">Products</a></li>
+                        <li><a href="applications.html">Applications</a></li>
+                        <li><a href="colour.html">Colours</a></li>
+                        <li><a href="installations.html">Installations</a></li>
+                        <li><a href="contact.html">Request Samples</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Support</h3>
+                    <ul>
+                        <li><a href="contact.html">Technical Support</a></li>
+                        <li><a href="contact.html">Specification Support</a></li>
+                        <li><a href="contact.html">Project Consultation</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="contact.html">Get in Touch</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Quality Assurance</h3>
+                    <p>All Rosehill TPV® products are manufactured in the UK to the highest standards using premium virgin polymers and rigorous quality control procedures.</p>
+                    <p style="margin-top: 20px;">
+                        <strong>Features:</strong><br>
+                        UV Stable • Non-Toxic • 30+ Years Experience • UK Made
+                    </p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>© 2025 Rosehill Sports & Play. A Division of Rosehill Group. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Enhanced scroll effect for header
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 100) {
+                header.style.background = 'linear-gradient(135deg, rgba(26, 54, 93, 0.98), rgba(45, 74, 113, 0.98))';
+                header.style.backdropFilter = 'blur(10px)';
+                header.style.boxShadow = '0 8px 32px rgba(0,0,0,0.15)';
+            } else {
+                header.style.background = 'linear-gradient(135deg, #1a365d, #2d4a71)';
+                header.style.backdropFilter = 'none';
+                header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+            }
+        });
+
+        // Mobile menu toggle functionality
+        const mobileToggle = document.getElementById('mobile-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if (mobileToggle && mobileMenu) {
+            mobileToggle.addEventListener('click', function() {
+                mobileToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+            });
+
+            // Close mobile menu when clicking on a link
+            document.querySelectorAll('.mobile-nav-menu a').forEach(link => {
+                link.addEventListener('click', function() {
+                    mobileToggle.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                });
+            });
+
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!mobileToggle.contains(event.target) && !mobileMenu.contains(event.target)) {
+                    mobileToggle.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                }
+            });
+        }
+
+        // Animate elements on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Observe sections for animation
+        document.querySelectorAll('.capability-card, .commitment-item, .stat-item').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+
+        // Animate stats numbers
+        function animateNumbers() {
+            const statNumbers = document.querySelectorAll('.stat-number');
+            statNumbers.forEach(stat => {
+                const target = stat.textContent;
+                const isPlus = target.includes('+');
+                const isPercent = target.includes('%');
+                const number = parseInt(target.replace(/\D/g, ''));
+                
+                let current = 0;
+                const increment = number / 50;
+                
+                const updateNumber = () => {
+                    current += increment;
+                    if (current < number) {
+                        stat.textContent = Math.ceil(current) + (isPlus ? '+' : '') + (isPercent ? '%' : '');
+                        requestAnimationFrame(updateNumber);
+                    } else {
+                        stat.textContent = target;
+                    }
+                };
+                
+                // Start animation when element is visible
+                const statObserver = new IntersectionObserver(function(entries) {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            updateNumber();
+                            statObserver.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.5 });
+                
+                statObserver.observe(stat);
+            });
+        }
+
+        // Initialize number animation
+        animateNumbers();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rosehill TPV Applications - Sports & Recreation Surface Solutions</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 15px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 600;
+            font-family: 'Source Sans Pro', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 6px;
+        }
+
+        .nav-menu a:hover {
+            background: rgba(255, 107, 53, 0.2);
+            color: #ff6b35;
+        }
+
+        .nav-menu a.active {
+            background: rgba(255, 107, 53, 0.2);
+            color: #ff6b35;
+            font-weight: 600;
+        }
+
+        .contact-btn {
+            background: #ff6b35;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .contact-btn:hover {
+            background: #e55a2b !important;
+            transform: translateY(-2px);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, rgba(26, 54, 93, 0.9), rgba(45, 74, 113, 0.9)), url('hero_background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: white;
+            padding: 140px 0 100px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 70px;
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+            text-align: center;
+        }
+
+        .hero-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 3;
+            width: 100%;
+        }
+
+        .hero h1 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            letter-spacing: -1px;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 40px;
+            line-height: 1.6;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            opacity: 0.95;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 80px 0;
+        }
+
+        .section-title {
+            font-family: 'Overpass', sans-serif;
+            color: #1a365d;
+            font-size: 2.8rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-align: center;
+            position: relative;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: #6c757d;
+            font-size: 1.2rem;
+            margin-bottom: 60px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .section-title::after {
+            content: '';
+            width: 80px;
+            height: 4px;
+            background: #ff6b35;
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Application Detail Styles */
+        .application-detail {
+            margin-bottom: 0;
+            padding: 80px 0;
+        }
+
+        .application-detail:nth-child(odd) {
+            background: white;
+        }
+
+        .application-detail:nth-child(even) {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        }
+
+        .application-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .application-detail:nth-child(even) .application-inner .application-content {
+            order: 2;
+        }
+
+        .application-detail:nth-child(even) .application-inner .application-visual {
+            order: 1;
+        }
+
+        .application-content h3 {
+            font-family: 'Overpass', sans-serif;
+            color: #1a365d;
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        .application-overview {
+            color: #495057;
+            font-size: 1.2rem;
+            line-height: 1.7;
+            margin-bottom: 30px;
+            font-weight: 500;
+        }
+
+        .application-specs {
+            margin-bottom: 35px;
+        }
+
+        .tabs-container {
+            margin-bottom: 35px;
+        }
+
+        .tabs-nav {
+            display: flex;
+            border-bottom: 3px solid #e9ecef;
+            margin-bottom: 25px;
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 15px 25px;
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #6c757d;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            flex: 1;
+            text-align: center;
+        }
+
+        .tab-button.active {
+            color: #1a365d;
+            border-bottom-color: #ff6b35;
+        }
+
+        .tab-button:hover {
+            color: #1a365d;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .spec-category {
+            margin-bottom: 25px;
+        }
+
+        .spec-title {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spec-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .spec-list li {
+            color: #495057;
+            font-size: 1rem;
+            margin-bottom: 8px;
+            padding-left: 25px;
+            position: relative;
+            line-height: 1.6;
+        }
+
+        .spec-list li::before {
+            content: '▪';
+            position: absolute;
+            left: 0;
+            color: #ff6b35;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+
+        .application-visual {
+            height: 450px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .application-visual img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            transition: transform 0.3s ease;
+        }
+
+        .application-detail:hover .application-visual img {
+            transform: scale(1.02);
+        }
+
+        .btn-primary {
+            background: #ff6b35;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: #e55a2b;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 53, 0.3);
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 2.8rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .cta-section p {
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn-white {
+            background: white;
+            color: #1a365d;
+            padding: 18px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-white:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn-outline-white {
+            background: transparent;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: inline-block;
+            transition: all 0.3s ease;
+            border: 2px solid white;
+        }
+
+        .btn-outline-white:hover {
+            background: white;
+            color: #1a365d;
+            transform: translateY(-3px);
+        }
+
+        /* Footer */
+        .footer {
+            background: #1a365d;
+            color: white;
+            padding: 60px 0 30px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-section h3 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            color: #ff6b35;
+        }
+
+        .footer-section p,
+        .footer-section li {
+            opacity: 0.9;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section a {
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: #ff6b35;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 30px;
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 8px;
+            background: none;
+            border: none;
+            z-index: 1001;
+        }
+
+        .mobile-menu-toggle span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 3px 0;
+            transition: 0.3s;
+            border-radius: 2px;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+        }
+
+        .mobile-menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
+        }
+
+        .mobile-nav-menu {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 999;
+        }
+
+        .mobile-nav-menu.active {
+            display: flex;
+        }
+
+        .mobile-nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: color 0.3s ease;
+        }
+
+        .mobile-nav-menu a:hover {
+            color: #ff6b35;
+        }
+
+        .mobile-nav-menu a.active {
+            color: #ff6b35;
+            font-weight: 600;
+        }
+
+        .mobile-nav-menu a:last-child {
+            border-bottom: none;
+        }
+
+        .mobile-nav-menu .contact-btn {
+            background: #ff6b35;
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 10px;
+            border-bottom: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .application-inner {
+                gap: 40px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .mobile-menu-toggle {
+                display: flex;
+            }
+
+            .application-inner {
+                grid-template-columns: 1fr;
+                gap: 30px;
+                text-align: center;
+            }
+            
+            .application-detail:nth-child(even) .application-inner .application-content {
+                order: 2;
+            }
+
+            .application-detail:nth-child(even) .application-inner .application-visual {
+                order: 1;
+            }
+
+            .application-detail:nth-child(odd) .application-inner .application-content {
+                order: 2;
+            }
+
+            .application-detail:nth-child(odd) .application-inner .application-visual {
+                order: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.8rem;
+            }
+
+            .hero p {
+                font-size: 1.2rem;
+            }
+
+            .section-title {
+                font-size: 2.2rem;
+            }
+
+            .application-content h3 {
+                font-size: 2rem;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .application-visual {
+                height: 300px;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <a href="index.html" class="logo">
+                <img src="rosehill_tpv_logo.png" alt="Rosehill TPV" style="height: 60px;">
+            </a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="products.html">Products</a></li>
+                    <li><a href="applications.html" class="active">Applications</a></li>
+                    <li><a href="colour.html">Colour</a></li>
+                    <li><a href="installations.html">Installations</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="contact.html" class="contact-btn">Get in Touch</a></li>
+                </ul>
+                <button class="mobile-menu-toggle" id="mobile-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="mobile-nav-menu" id="mobile-menu">
+                    <a href="index.html">Home</a>
+                    <a href="products.html">Products</a>
+                    <a href="applications.html" class="active">Applications</a>
+                    <a href="colour.html">Colour</a>
+                    <a href="installations.html">Installations</a>
+                    <a href="about.html">About Us</a>
+                    <a href="contact.html" class="contact-btn">Get in Touch</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Professional Applications<br>Proven Performance</h1>
+            <p>From international venues to local playgrounds, Rosehill TPV delivers exceptional performance across diverse sports and recreation environments worldwide.</p>
+        </div>
+    </section>
+
+    <!-- Application Details -->
+    <main>
+        <!-- Playground Surfaces -->
+        <section class="application-detail" id="playground-surfaces">
+            <div class="application-inner">
+                <div class="application-content">
+                    <h3>Playground Surfaces</h3>
+                    <p class="application-overview">Create safe, engaging play environments with TPV surfaces that exceed safety standards whilst inspiring creative play through vibrant colour combinations.</p>
+                    
+                    <div class="tabs-container">
+                        <div class="tabs-nav">
+                            <button class="tab-button active" onclick="showTab(event, 'playground-safety')">Safety Features</button>
+                            <button class="tab-button" onclick="showTab(event, 'playground-design')">Design Flexibility</button>
+                            <button class="tab-button" onclick="showTab(event, 'playground-performance')">Performance</button>
+                        </div>
+                        
+                        <div id="playground-safety" class="tab-content active">
+                            <ul class="spec-list">
+                                <li>Excellent impact absorption meeting EN 1177 standards</li>
+                                <li>Non-slip surface texture for wet and dry conditions</li>
+                                <li>Seamless installation eliminates trip hazards</li>
+                                <li>Non-toxic, non-allergenic materials safe for children</li>
+                                <li>Critical fall height protection capabilities</li>
+                            </ul>
+                        </div>
+                        
+                        <div id="playground-design" class="tab-content">
+                            <ul class="spec-list">
+                                <li>21 vibrant colours plus unlimited custom blends</li>
+                                <li>Create themed play areas with colour zoning</li>
+                                <li>Integrate graphics, patterns, and educational elements</li>
+                                <li>Maintenance-free colour that won't fade or wear</li>
+                                <li>Flexible design options for creative installations</li>
+                            </ul>
+                        </div>
+                        
+                        <div id="playground-performance" class="tab-content">
+                            <ul class="spec-list">
+                                <li>Long-term lifespan with minimal maintenance</li>
+                                <li>UV stable - maintains colour and properties</li>
+                                <li>Excellent drainage prevents puddle formation</li>
+                                <li>Temperature stable performance</li>
+                                <li>Resistant to weathering and wear</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <a href="contact.html" class="btn-primary">Request Playground Specification</a>
+                </div>
+                <div class="application-visual">
+                    <img src="playground.jpg" alt="TPV Playground Surface Installation">
+                </div>
+            </div>
+        </section>
+
+        <!-- Multi-Use Games Areas -->
+        <section class="application-detail" id="multi-use-games-areas">
+            <div class="application-inner">
+                <div class="application-content">
+                    <h3>Multi-Use Games Areas</h3>
+                    <p class="application-overview">Versatile court surfaces engineered for multiple sports with consistent ball bounce, optimal traction, and long-term durability for high-usage community facilities.</p>
+                    
+                    <div class="tabs-container">
+                        <div class="tabs-nav">
+                            <button class="tab-button active" onclick="showTab(event, 'muga-performance')">Sport Performance</button>
+                            <button class="tab-button" onclick="showTab(event, 'muga-specifications')">Court Specifications</button>
+                            <button class="tab-button" onclick="showTab(event, 'muga-installation')">Installation & Maintenance</button>
+                        </div>
+                        
+                        <div id="muga-performance" class="tab-content active">
+                            <ul class="spec-list">
+                                <li>Consistent ball rebound characteristics</li>
+                                <li>Optimal grip for basketball, tennis, netball</li>
+                                <li>Shock absorption reduces player fatigue</li>
+                                <li>Multi-directional traction for quick movements</li>
+                                <li>Suitable for recreational and competitive use</li>
+                            </ul>
+                        </div>
+                        
+                        <div id="muga-specifications" class="tab-content">
+                            <ul class="spec-list">
+                                <li>Standard thickness: 12-15mm for recreational use</li>
+                                <li>Professional grade: 15-20mm for intensive use</li>
+                                <li>Line marking integrated during installation</li>
+                                <li>Perimeter edge details and drainage integration</li>
+                                <li>Customisable court dimensions and layouts</li>
+                            </ul>
+                        </div>
+                        
+                        <div id="muga-installation" class="tab-content">
+                            <ul class="spec-list">
+                                <li>In-situ installation over concrete or tarmac</li>
+                                <li>Rapid cure times minimise downtime</li>
+                                <li>Annual cleaning maintains performance</li>
+                                <li>Easy repair of localised damage</li>
+                                <li>Professional installation support available</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <a href="contact.html" class="btn-primary">Get Technical Support</a>
+                </div>
+                <div class="application-visual">
+                    <img src="muga.jpg" alt="Multi-Use Games Area with TPV Surface">
+                </div>
+            </div>
+        </section>
+
+        <!-- Running Tracks -->
+        <section class="application-detail" id="running-tracks">
+            <div class="application-inner">
+                <div class="application-content">
+                    <h3>Running Tracks</h3>
+                    <p class="application-overview">High-performance athletic surfaces delivering optimal energy return, weather resistance, and precise specification compliance for competitive and recreational running facilities.</p>
+                    
+                    <div class="tabs-container">
+                        <div class="tabs-nav">
+                            <button class="tab-button active" onclick="showTab(event, 'track-performance')">Athletic Performance</button>
+                            <button class="tab-button" onclick="showTab(event, 'track-specifications')">Track Specifications</button>
+                            <button class="tab-button" onclick="showTab(event, 'track-weather')">Weather Performance</button>
+                        </div>
+                        
+                        <div id="track-performance" class="tab-content active">
+                            <ul class="spec-list">
+                                <li>Optimal energy return for enhanced performance</li>
+                                <li>Consistent traction in all weather conditions</li>
+                                <li>Spike resistance for competitive use</li>
+                                <li>Excellent force reduction properties</li>
+                                <li>Suitable for recreational and competitive athletics</li>
+                            </ul>
+                        </div>
+                        
+                        <div id="track-specifications" class="tab-content">
+                            <ul class="spec-list">
+                                <li>Standard 400m track with 8-lane configuration</li>
+                                <li>Professional system thickness for competitive tracks</li>
+                                <li>Precision lane marking and field integration</li>
+                                <li>Compatible with athletics field events</li>
+                                <li>Customisable track configurations available</li>
+                            </ul>
+                        </div>
+                        
+                        <div id="track-weather" class="tab-content">
+                            <ul class="spec-list">
+                                <li>UV stable formulation prevents degradation</li>
+                                <li>Excellent drainage prevents standing water</li>
+                                <li>Thermal stability maintains performance year-round</li>
+                                <li>Freeze-thaw resistance in harsh climates</li>
+                                <li>Long-term weather resistance properties</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <a href="contact.html" class="btn-primary">Get Track Certification Details</a>
+                </div>
+                <div class="application-visual">
+                    <img src="track.jpg" alt="Professional Running Track with TPV Surface">
+                </div>
+            </div>
+        </section>
+
+        <!-- Sports Pitches -->
+        <section class="application-detail" id="sports-pitches">
+            <div class="application-inner">
+                <div class="application-content">
+                    <h3>Sports Pitches</h3>
+                    <p class="application-overview">Durable synthetic surfaces supporting natural and artificial turf systems with superior drainage, consistent playing characteristics, and reduced maintenance requirements.</p>
+                    
+                    <div class="tabs-container">
+                        <div class="tabs-nav">
+                            <button class="tab-button active" onclick="showTab(event, 'pitch-performance')">Playing Performance</button>
+                            <button class="tab-button" onclick="showTab(event, 'pitch-drainage')">Drainage & Maintenance</button>
+                            <button class="tab-button" onclick="showTab(event, 'pitch-value')">Lifecycle Value</button>
+                        </div>
+                        
+                        <div id="pitch-performance" class="tab-content active">
+                            <ul class="spec-list">
+                                <li>Consistent ball roll and bounce characteristics</li>
+                                <li>Player safety with optimal impact absorption</li>
+                                <li>All-weather playability 365 days per year</li>
+                                <li>Supports 3G and 4G artificial turf systems</li>
+                                <li>Suitable for professional and recreational use</li>
+                            </ul>
+                        </div>
+                        
+                        <div id="pitch-drainage" class="tab-content">
+                            <ul class="spec-list">
+                                <li>Rapid drainage prevents pitch closure</li>
+                                <li>Porous construction eliminates standing water</li>
+                                <li>Reduced maintenance compared to natural grass</li>
+                                <li>No fertilisers or pesticides required</li>
+                                <li>Easy cleaning and maintenance procedures</li>
+                            </ul>
+                        </div>
+                        
+                        <div id="pitch-value" class="tab-content">
+                            <ul class="spec-list">
+                                <li>Long-term surface lifespan</li>
+                                <li>Higher usage capacity than natural grass</li>
+                                <li>Year-round revenue generation</li>
+                                <li>Lower total cost of ownership</li>
+                                <li>Reduced operational costs over time</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <a href="contact.html" class="btn-primary">Request Pitch Consultation</a>
+                </div>
+                <div class="application-visual">
+                    <img src="pitch.jpg" alt="Synthetic Sports Pitch with TPV Base">
+                </div>
+            </div>
+        </section>
+
+        <!-- Footpaths -->
+        <section class="application-detail" id="footpaths">
+            <div class="application-inner">
+                <div class="application-content">
+                    <h3>Footpaths & Walkways</h3>
+                    <p class="application-overview">Safe, accessible pathway solutions providing slip resistance, comfort underfoot, and visual appeal for parks, trails, and public spaces with minimal maintenance requirements.</p>
+                    
+                    <div class="tabs-container">
+                        <div class="tabs-nav">
+                            <button class="tab-button active" onclick="showTab(event, 'path-accessibility')">Accessibility Features</button>
+                            <button class="tab-button" onclick="showTab(event, 'path-environmental')">Environmental Integration</button>
+                            <button class="tab-button" onclick="showTab(event, 'path-practical')">Practical Benefits</button>
+                        </div>
+                        
+                        <div id="path-accessibility" class="tab-content active">
+                            <ul class="spec-list">
+                                <li>DDA compliant slip-resistant surface</li>
+                                <li>Wheelchair and mobility aid friendly</li>
+                                <li>Smooth, seamless transitions</li>
+                                <li>Tactile integration for visually impaired users</li>
+                                <li>Consistent surface gradient capability</li>
+                            </ul>
+                        </div>
+                        
+                        <div id="path-environmental" class="tab-content">
+                            <ul class="spec-list">
+                                <li>Natural colour blends harmonise with landscapes</li>
+                                <li>Tree root compatible flexible installation</li>
+                                <li>Permeable options for sustainable drainage</li>
+                                <li>Temperature regulation reduces heat island effect</li>
+                                <li>Environmentally friendly installation methods</li>
+                            </ul>
+                        </div>
+                        
+                        <div id="path-practical" class="tab-content">
+                            <ul class="spec-list">
+                                <li>Minimal maintenance surface finish</li>
+                                <li>Frost and ice resistant in winter</li>
+                                <li>Easy snow clearance when required</li>
+                                <li>Vandal resistant and graffiti proof</li>
+                                <li>Long-term durability in public spaces</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <a href="contact.html" class="btn-primary">Download Pathway Specification</a>
+                </div>
+                <div class="application-visual">
+                    <img src="footpath.jpg" alt="TPV Footpath in Park Setting">
+                </div>
+            </div>
+        </section>
+
+        <!-- Splash Parks -->
+        <section class="application-detail" id="splash-parks">
+            <div class="application-inner">
+                <div class="application-content">
+                    <h3>Splash Parks & Water Play</h3>
+                    <p class="application-overview">Specialised aquatic surfaces engineered for constant water exposure with superior slip resistance, rapid drainage, and vibrant colours that enhance the water play experience.</p>
+                    
+                    <div class="tabs-container">
+                        <div class="tabs-nav">
+                            <button class="tab-button active" onclick="showTab(event, 'splash-water')">Water Performance</button>
+                            <button class="tab-button" onclick="showTab(event, 'splash-design')">Creative Design</button>
+                            <button class="tab-button" onclick="showTab(event, 'splash-hygiene')">Hygiene & Maintenance</button>
+                        </div>
+                        
+                        <div id="splash-water" class="tab-content active">
+                            <ul class="spec-list">
+                                <li>Superior wet-surface slip resistance</li>
+                                <li>Rapid drainage prevents standing water</li>
+                                <li>Chlorine and chemical resistant formulation</li>
+                                <li>UV stable in high-reflection water environments</li>
+                                <li>Soft surface reduces injury from slips and falls</li>
+                            </ul>
+                        </div>
+                        
+                        <div id="splash-design" class="tab-content">
+                            <ul class="spec-list">
+                                <li>Bright, fun colours enhance play experience</li>
+                                <li>Custom patterns and graphics integration</li>
+                                <li>Themed colour zones for different age groups</li>
+                                <li>Colour-fast technology prevents fading</li>
+                                <li>Creative design possibilities for unique installations</li>
+                            </ul>
+                        </div>
+                        
+                        <div id="splash-hygiene" class="tab-content">
+                            <ul class="spec-list">
+                                <li>Non-porous surface prevents bacterial growth</li>
+                                <li>Easy cleaning with standard maintenance</li>
+                                <li>No joints or seams to harbour bacteria</li>
+                                <li>Quick-dry properties reduce downtime</li>
+                                <li>Hygienic surface suitable for aquatic environments</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <a href="contact.html" class="btn-primary">Get Aquatic Surface Guide</a>
+                </div>
+                <div class="application-visual">
+                    <img src="splashpark.jpg" alt="Splash Park with Colorful TPV Surface">
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>Ready to Specify Your Project?</h2>
+            <p>Our technical team provides comprehensive support from initial design through to installation and beyond.</p>
+            <div class="cta-buttons">
+                <a href="contact.html" class="btn-white">Speak to a Specialist</a>
+                <a href="contact.html" class="btn-outline-white">Request Technical Information</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer" id="contact">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Contact Us</h3>
+                    <p><strong>Rosehill Sports & Play</strong><br>
+                    A Division of Rosehill Polymers Limited<br>
+                    Spring Bank Mills<br>
+                    Sowerby Bridge<br>
+                    West Yorkshire HX6 3BW<br>
+                    United Kingdom</p>
+                    <p>📞 +44 (0)1422 839 456<br>
+                    📧 info@rosehilltpv.com</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Professional Services</h3>
+                    <ul>
+                        <li><a href="contact.html">Technical Consultation</a></li>
+                        <li><a href="contact.html">Specification Support</a></li>
+                        <li><a href="contact.html">Site Assessments</a></li>
+                        <li><a href="contact.html">Installation Training</a></li>
+                        <li><a href="contact.html">Warranty Programs</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Applications</h3>
+                    <ul>
+                        <li><a href="#playgrounds">Playground Surfaces</a></li>
+                        <li><a href="#muga">Multi-Use Games Areas</a></li>
+                        <li><a href="#tracks">Running Tracks</a></li>
+                        <li><a href="#pitches">Sports Pitches</a></li>
+                        <li><a href="#pathways">Footpaths & Walkways</a></li>
+                        <li><a href="#splash">Splash Parks</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>Quality Assurance</h3>
+                    <p>All applications meet or exceed international standards including EN 1177, SAPCA, World Athletics, and FIFA Quality Pro certifications.</p>
+                    <p style="margin-top: 20px;">
+                        <strong>Features:</strong><br>
+                        UV Stable • Non-Toxic • 15+ Year Lifespan • UK Made
+                    </p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>© 2025 Rosehill Sports & Play. A Division of Rosehill Polymers Limited. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Enhanced scroll effect for header
+        window.addEventListener('scroll', function() {
+            const header = document.querySelector('.header');
+            if (window.scrollY > 100) {
+                header.style.background = 'linear-gradient(135deg, rgba(26, 54, 93, 0.98), rgba(45, 74, 113, 0.98))';
+                header.style.backdropFilter = 'blur(10px)';
+                header.style.boxShadow = '0 8px 32px rgba(0,0,0,0.15)';
+            } else {
+                header.style.background = 'linear-gradient(135deg, #1a365d, #2d4a71)';
+                header.style.backdropFilter = 'none';
+                header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+            }
+        });
+
+        // Mobile menu toggle functionality
+        const mobileToggle = document.getElementById('mobile-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if (mobileToggle && mobileMenu) {
+            mobileToggle.addEventListener('click', function() {
+                mobileToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+            });
+
+            // Close mobile menu when clicking on a link
+            document.querySelectorAll('.mobile-nav-menu a').forEach(link => {
+                link.addEventListener('click', function() {
+                    mobileToggle.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                });
+            });
+
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!mobileToggle.contains(event.target) && !mobileMenu.contains(event.target)) {
+                    mobileToggle.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                }
+            });
+        }
+
+        // Animate elements on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        // Tab functionality
+        function showTab(event, tabId) {
+            // Hide all tab contents
+            const tabContents = event.target.closest('.tabs-container').querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons
+            const tabButtons = event.target.closest('.tabs-nav').querySelectorAll('.tab-button');
+            tabButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabId).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+        
+        // Make showTab function global
+        window.showTab = showTab;
+
+        // Observe application sections for animation
+        document.querySelectorAll('.application-detail').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
