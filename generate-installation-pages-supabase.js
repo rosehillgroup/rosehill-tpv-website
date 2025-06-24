@@ -207,10 +207,14 @@ async function generateInstallationPage(installation, outputDir) {
         }
 
         .logo {
-            font-size: 1.8rem;
-            font-weight: 600;
             color: white;
             text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 60px;
         }
 
         .nav-menu {
@@ -503,9 +507,13 @@ async function generateInstallationPage(installation, outputDir) {
         }
 
         .footer-logo {
-            font-size: 2rem;
-            font-weight: 600;
             margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .footer-logo img {
+            height: 80px;
         }
 
         .footer-text {
@@ -576,7 +584,9 @@ async function generateInstallationPage(installation, outputDir) {
     <!-- Header -->
     <header class="header">
         <div class="header-container">
-            <a href="../index.html" class="logo">Rosehill TPV</a>
+            <a href="../index.html" class="logo">
+                <img src="../rosehill_tpv_logo.png" alt="Rosehill TPV">
+            </a>
             <nav class="nav-menu">
                 <a href="../index.html">Home</a>
                 <a href="../products.html">Products</a>
@@ -645,7 +655,9 @@ async function generateInstallationPage(installation, outputDir) {
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-content">
-            <div class="footer-logo">Rosehill TPV</div>
+            <div class="footer-logo">
+                <img src="../rosehill_tpv_logo.png" alt="Rosehill TPV">
+            </div>
             <p class="footer-text">Creating safer, more vibrant play and sports surfaces worldwide with our premium coloured rubber granules.</p>
             <nav class="footer-nav">
                 <a href="../index.html">Home</a>
