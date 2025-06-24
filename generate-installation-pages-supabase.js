@@ -594,7 +594,7 @@ async function generateInstallationPage(installation, outputDir) {
                 <a href="../colour.html">Colour</a>
                 <a href="../installations.html" class="active">Installations</a>
                 <a href="../about.html">About Us</a>
-                <a href="../contact.html" class="contact-btn">Contact</a>
+                <a href="../contact.html" class="contact-btn">Get in Touch</a>
             </nav>
         </div>
     </header>
@@ -666,7 +666,7 @@ async function generateInstallationPage(installation, outputDir) {
                 <a href="../colour.html">Colour</a>
                 <a href="../installations.html">Installations</a>
                 <a href="../about.html">About Us</a>
-                <a href="../contact.html">Contact</a>
+                <a href="../contact.html">Get in Touch</a>
             </nav>
             <div class="footer-bottom">
                 <p>&copy; 2025 Rosehill TPV. All rights reserved.</p>
