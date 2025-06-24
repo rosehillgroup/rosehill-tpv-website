@@ -38,21 +38,52 @@ exports.handler = async (event, context) => {
         
         const supabase = createClient(supabaseUrl, supabaseKey);
         
-        // For now, let's just test saving a simple record
-        const testInstallation = {
-            title: 'Test Installation - ' + new Date().toISOString(),
-            location: 'Test Location, UK',
-            installation_date: '2024-06-24',
-            application: 'playground',
-            description: ['Test description paragraph 1', 'Test description paragraph 2'],
-            images: [],
-            slug: 'test-installation-' + Date.now()
+        // Parse the request body
+        let requestData;
+        try {
+            requestData = JSON.parse(event.body);
+        } catch (e) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({
+                    success: false,
+                    error: 'Invalid JSON in request body'
+                })
+            };
+        }
+        
+        // Generate slug
+        function generateSlug(title) {
+            return title
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/[\s-]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+        }
+        
+        // Parse descriptions
+        let descriptions;
+        try {
+            descriptions = JSON.parse(requestData.descriptions);
+        } catch (e) {
+            descriptions = [requestData.descriptions || 'No description provided'];
+        }
+        
+        const installationData = {
+            title: requestData.title || 'Untitled Installation',
+            location: requestData.location || 'Unknown Location',
+            installation_date: requestData.date || new Date().toISOString().split('T')[0],
+            application: requestData.application || 'other',
+            description: descriptions,
+            images: [], // For now, no images
+            slug: generateSlug(requestData.title || 'untitled-installation') + '-' + Date.now()
         };
         
         // Save to database
         const { data, error } = await supabase
             .from('installations')
-            .insert([testInstallation])
+            .insert([installationData])
             .select();
         
         if (error) {
@@ -72,7 +103,7 @@ exports.handler = async (event, context) => {
             headers,
             body: JSON.stringify({
                 success: true,
-                message: 'Test installation created successfully',
+                message: 'Installation created successfully',
                 data: data[0]
             })
         };

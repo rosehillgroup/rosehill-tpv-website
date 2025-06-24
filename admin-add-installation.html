@@ -539,9 +539,21 @@
 
         async function simulateSubmission(formData) {
             try {
-                const response = await fetch('/.netlify/functions/process-installation', {
+                // For now, let's test with a simple JSON payload
+                const jsonData = {
+                    title: formData.get('title'),
+                    location: formData.get('location'),
+                    date: formData.get('date'),
+                    application: formData.get('application'),
+                    descriptions: formData.get('descriptions')
+                };
+                
+                const response = await fetch('/.netlify/functions/process-installation-v2', {
                     method: 'POST',
-                    body: formData
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(jsonData)
                 });
                 
                 const result = await response.json();
