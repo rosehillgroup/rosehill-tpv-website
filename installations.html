@@ -982,8 +982,13 @@
         // Load installations data
         async function loadInstallations() {
             try {
+                console.log('Loading installations from Supabase...');
                 const response = await fetch('/.netlify/functions/get-installations');
                 const data = await response.json();
+                console.log('Received installations data:', data.installations?.length || 0, 'installations');
+                if (data.installations && data.installations.length > 0) {
+                    console.log('Sample installation:', data.installations[0]);
+                }
                 allInstallations = data.installations || [];
                 
                 // Sort by date (newest first)
@@ -1199,22 +1204,30 @@
 
         // Helper function to get proper image URL
         function getImageUrl(img) {
+            console.log('Processing image:', img);
             // Handle different image data structures
             if (typeof img === 'string') {
                 // Old format: just a filename string
-                return `images/installations/${img}`;
+                const url = `images/installations/${img}`;
+                console.log('String image -> URL:', url);
+                return url;
             } else if (img && typeof img === 'object') {
                 // New format: object with url and/or filename
                 if (img.url) {
                     // Supabase Storage image - use the full URL
+                    console.log('Supabase image -> URL:', img.url);
                     return img.url;
                 } else if (img.filename) {
                     // Local image file - prepend images/installations/ path
-                    return `images/installations/${img.filename}`;
+                    const url = `images/installations/${img.filename}`;
+                    console.log('Local image -> URL:', url);
+                    return url;
                 }
             }
             // Fallback
-            return `images/installations/${img}`;
+            const url = `images/installations/${img}`;
+            console.log('Fallback image -> URL:', url);
+            return url;
         }
 
         // Show installation details (placeholder)
