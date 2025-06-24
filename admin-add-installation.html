@@ -274,6 +274,78 @@
         .required {
             color: #dc3545;
         }
+
+        /* Installation List Styles */
+        .installation-item {
+            border: 1px solid #e1e8ed;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .installation-item:hover {
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .installation-info {
+            flex: 1;
+        }
+
+        .installation-title {
+            font-weight: bold;
+            color: #1a365d;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .installation-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .installation-images {
+            color: #888;
+            font-size: 12px;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        .delete-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .confirm-delete {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .confirm-delete:hover {
+            background: #e0a800;
+        }
     </style>
 </head>
 <body>
@@ -346,6 +418,20 @@
             </form>
 
             <div class="status-message" id="statusMessage"></div>
+        </div>
+
+        <!-- Manage Existing Installations Section -->
+        <div class="form-container" style="margin-top: 40px;">
+            <h2 style="color: #1a365d; margin-bottom: 20px; font-size: 1.8rem;">Manage Existing Installations</h2>
+            <div class="help-text" style="margin-bottom: 20px;">View and delete existing installations. Changes will be reflected on the website immediately.</div>
+            
+            <div class="loading-message" id="loadingInstallations" style="text-align: center; padding: 20px; color: #666;">
+                Loading installations...
+            </div>
+            
+            <div class="installations-list" id="installationsList" style="display: none;">
+                <!-- Installations will be loaded here -->
+            </div>
         </div>
     </div>
 
@@ -605,6 +691,127 @@
             `;
             descriptionCount = 1;
         }
+
+        // Load and display existing installations
+        async function loadExistingInstallations() {
+            try {
+                const response = await fetch('/.netlify/functions/get-installations');
+                if (!response.ok) throw new Error('Failed to load installations');
+                
+                const data = await response.json();
+                const installations = data.installations || [];
+                
+                displayInstallations(installations);
+                
+            } catch (error) {
+                console.error('Error loading installations:', error);
+                document.getElementById('loadingInstallations').innerHTML = '<p style="color: #dc3545;">Error loading installations. Please refresh the page.</p>';
+            }
+        }
+
+        function displayInstallations(installations) {
+            const loadingDiv = document.getElementById('loadingInstallations');
+            const listDiv = document.getElementById('installationsList');
+            
+            loadingDiv.style.display = 'none';
+            listDiv.style.display = 'block';
+            
+            if (installations.length === 0) {
+                listDiv.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No installations found.</p>';
+                return;
+            }
+
+            // Sort by date (newest first)
+            installations.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            const installationsHtml = installations.map(installation => {
+                const imageCount = installation.images ? installation.images.length : 0;
+                const date = new Date(installation.date).toLocaleDateString('en-GB');
+                
+                return `
+                    <div class="installation-item" data-id="${installation.slug}">
+                        <div class="installation-info">
+                            <div class="installation-title">${installation.title}</div>
+                            <div class="installation-meta">📍 ${installation.location} • 📅 ${date} • 🏷️ ${installation.application}</div>
+                            <div class="installation-images">🖼️ ${imageCount} image${imageCount !== 1 ? 's' : ''}</div>
+                        </div>
+                        <button class="delete-btn" onclick="confirmDelete('${installation.slug}', '${installation.title.replace(/'/g, "\\'")}')">
+                            Delete
+                        </button>
+                    </div>
+                `;
+            }).join('');
+            
+            listDiv.innerHTML = installationsHtml;
+        }
+
+        function confirmDelete(slug, title) {
+            const button = document.querySelector(`[data-id="${slug}"] .delete-btn`);
+            
+            if (button.classList.contains('confirm-delete')) {
+                // Second click - actually delete
+                deleteInstallation(slug, title);
+            } else {
+                // First click - show confirmation
+                button.textContent = 'Click Again to Confirm';
+                button.classList.add('confirm-delete');
+                
+                // Reset after 3 seconds if no second click
+                setTimeout(() => {
+                    button.textContent = 'Delete';
+                    button.classList.remove('confirm-delete');
+                }, 3000);
+            }
+        }
+
+        async function deleteInstallation(slug, title) {
+            const button = document.querySelector(`[data-id="${slug}"] .delete-btn`);
+            button.disabled = true;
+            button.textContent = 'Deleting...';
+            
+            try {
+                const response = await fetch('/.netlify/functions/delete-installation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ slug: slug })
+                });
+                
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${text}`);
+                }
+                
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error || 'Unknown error occurred');
+                }
+                
+                // Remove the item from the display
+                const item = document.querySelector(`[data-id="${slug}"]`);
+                item.style.transition = 'all 0.3s ease';
+                item.style.opacity = '0';
+                item.style.transform = 'translateX(-100%)';
+                
+                setTimeout(() => {
+                    item.remove();
+                }, 300);
+                
+                showStatus(`Installation "${title}" deleted successfully!`, 'success');
+                
+            } catch (error) {
+                console.error('Delete error:', error);
+                button.disabled = false;
+                button.textContent = 'Delete';
+                button.classList.remove('confirm-delete');
+                showStatus(`Error deleting installation: ${error.message}`, 'error');
+            }
+        }
+
+        // Load installations when page loads
+        window.addEventListener('load', loadExistingInstallations);
     </script>
 </body>
 </html>
