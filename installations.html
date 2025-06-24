@@ -995,6 +995,9 @@
             const featured = allInstallations.find(installation => installation.featured) || allInstallations[0];
             if (!featured) return;
 
+            const imageUrl = featured.images && featured.images.length > 0 ? getImageUrl(featured.images[0]) : '';
+            const slugUrl = featured.slug || createSlug(featured.title, featured.location);
+
             const featuredHtml = `
                 <div class="featured-content">
                     <div class="featured-text">
@@ -1004,12 +1007,12 @@
                         <div class="featured-description">
                             ${featured.description.map(paragraph => `<p>${paragraph}</p>`).join('')}
                         </div>
-                        <a href="installations/${createSlug(featured.title, featured.location)}.html" class="read-more-btn">
+                        <a href="installations/${slugUrl}.html" class="read-more-btn">
                             View Full Details →
                         </a>
                     </div>
                     <div class="featured-image">
-                        <img src="images/installations/${featured.images[0]}" alt="${featured.title}" onclick="window.location.href='installations/${createSlug(featured.title, featured.location)}.html'" style="cursor: pointer;">
+                        ${imageUrl ? `<img src="${imageUrl}" alt="${featured.title}" onclick="window.location.href='installations/${slugUrl}.html'" style="cursor: pointer;">` : '<div class="no-image">No image available</div>'}
                     </div>
                 </div>
             `;
@@ -1049,13 +1052,14 @@
             
             const installationsHtml = currentInstallations.map(installation => {
                 const imageCount = installation.images.length;
-                const firstImage = installation.images[0];
+                const firstImageUrl = imageCount > 0 ? getImageUrl(installation.images[0]) : '';
                 const previewText = installation.description[0].substring(0, 150) + '...';
+                const slugUrl = installation.slug || createSlug(installation.title, installation.location);
                 
                 return `
                     <div class="installation-card" data-application="${installation.application}">
-                        <div class="installation-image" onclick="window.location.href='installations/${createSlug(installation.title, installation.location)}.html'">
-                            <img src="images/installations/${firstImage}" alt="${installation.title}" loading="lazy">
+                        <div class="installation-image" onclick="window.location.href='installations/${slugUrl}.html'">
+                            ${firstImageUrl ? `<img src="${firstImageUrl}" alt="${installation.title}" loading="lazy">` : '<div class="no-image">No image available</div>'}
                             ${imageCount > 1 ? `<div class="image-overlay">+${imageCount - 1} more</div>` : ''}
                         </div>
                         <div class="installation-content">
@@ -1068,7 +1072,7 @@
                             <div class="installation-description">
                                 <p>${previewText}</p>
                             </div>
-                            <a href="installations/${createSlug(installation.title, installation.location)}.html" class="read-more-btn">
+                            <a href="installations/${slugUrl}.html" class="read-more-btn">
                                 Read More →
                             </a>
                         </div>
@@ -1167,16 +1171,36 @@
             });
         }
 
-        // Create URL-friendly slug
+        // Create URL-friendly slug (using database slug)
         function createSlug(title, location) {
-            const combined = `${title} ${location}`.toLowerCase()
+            // For backwards compatibility, we'll still accept title and location
+            // but now we should use the slug from the database directly
+            return title.toLowerCase()
                 .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
                 .replace(/\s+/g, '-') // Replace spaces with hyphens
                 .replace(/-+/g, '-') // Replace multiple hyphens with single
                 .trim() // Trim whitespace
                 .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
-            
-            return combined;
+        }
+
+        // Helper function to get proper image URL
+        function getImageUrl(img) {
+            // Handle different image data structures
+            if (typeof img === 'string') {
+                // Old format: just a filename string
+                return `images/${img}`;
+            } else if (img && typeof img === 'object') {
+                // New format: object with url and/or filename
+                if (img.url) {
+                    // Supabase Storage image - use the full URL
+                    return img.url;
+                } else if (img.filename) {
+                    // Local image file - prepend images/ path
+                    return `images/${img.filename}`;
+                }
+            }
+            // Fallback
+            return `images/${img}`;
         }
 
         // Show installation details (placeholder)
