@@ -57,12 +57,22 @@ exports.handler = async (event, context) => {
             application: installation.application,
             description: installation.description,
             images: installation.images.map(img => {
-                // If it's a new Supabase image with URL, use the URL
-                if (img.url) {
-                    return img.url;
+                // Handle different image data structures
+                if (typeof img === 'string') {
+                    // Old format: just a filename string
+                    return `images/${img}`;
+                } else if (img && typeof img === 'object') {
+                    // New format: object with url and/or filename
+                    if (img.url) {
+                        // Supabase Storage image - use the full URL
+                        return img.url;
+                    } else if (img.filename) {
+                        // Local image file - prepend images/ path
+                        return `images/${img.filename}`;
+                    }
                 }
-                // If it's an old image filename, keep it as is
-                return img.filename || img;
+                // Fallback
+                return img;
             }),
             slug: installation.slug
         }));

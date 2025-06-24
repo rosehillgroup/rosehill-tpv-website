@@ -1,10 +1,173 @@
-<!DOCTYPE html>
+const { createClient } = require('@supabase/supabase-js');
+const fs = require('fs');
+const path = require('path');
+
+// Initialize Supabase client
+// Note: You'll need to set these environment variables or replace with actual values
+const supabaseUrl = process.env.SUPABASE_URL || 'your-supabase-url';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || 'your-supabase-service-role-key';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Function to generate individual installation pages from Supabase data
+async function generateInstallationPages() {
+    try {
+        console.log('Fetching installations from Supabase...');
+        
+        // Get all installations from Supabase
+        const { data: installations, error } = await supabase
+            .from('installations')
+            .select('*')
+            .order('installation_date', { ascending: false });
+
+        if (error) {
+            throw new Error(`Failed to fetch installations: ${error.message}`);
+        }
+
+        console.log(`Found ${installations.length} installations in database`);
+
+        // Create installations directory if it doesn't exist
+        const installationsDir = path.join(__dirname, 'installations');
+        if (!fs.existsSync(installationsDir)) {
+            fs.mkdirSync(installationsDir, { recursive: true });
+        }
+
+        // Generate a page for each installation
+        for (const installation of installations) {
+            await generateInstallationPage(installation, installationsDir);
+        }
+
+        console.log('✅ All installation pages generated successfully!');
+
+    } catch (error) {
+        console.error('❌ Error generating installation pages:', error);
+        process.exit(1);
+    }
+}
+
+// Function to generate a single installation page
+async function generateInstallationPage(installation, outputDir) {
+    const { title, location, installation_date, application, description, images, slug } = installation;
+
+    console.log(`Generating page for: ${title}`);
+
+    // Format date
+    const date = new Date(installation_date);
+    const formattedDate = date.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+
+    // Generate breadcrumb
+    const breadcrumb = `<a href="../installations.html">Installations</a> / ${title}`;
+
+    // Generate image gallery HTML
+    let imageGalleryHTML = '';
+    if (images && images.length > 0) {
+        const imageItems = images.map((img, index) => {
+            // Handle different image data structures
+            let imageUrl;
+            let filename;
+            
+            if (typeof img === 'string') {
+                // Old format: just a filename string
+                imageUrl = `../images/${img}`;
+                filename = img;
+            } else if (img && typeof img === 'object') {
+                // New format: object with url and/or filename
+                if (img.url) {
+                    // Supabase Storage image - use the full URL
+                    imageUrl = img.url;
+                    filename = img.filename || 'image';
+                } else if (img.filename) {
+                    // Local image file - prepend images/ path
+                    imageUrl = `../images/${img.filename}`;
+                    filename = img.filename;
+                }
+            } else {
+                // Fallback
+                imageUrl = `../images/${img}`;
+                filename = img;
+            }
+            
+            return `
+                <div class="gallery-item">
+                    <img src="${imageUrl}" alt="${title} - Image ${index + 1}" onclick="openModal(${index})">
+                </div>`;
+        }).join('');
+
+        const modalImages = images.map((img, index) => {
+            // Handle different image data structures (same logic as above)
+            let imageUrl;
+            
+            if (typeof img === 'string') {
+                imageUrl = `../images/${img}`;
+            } else if (img && typeof img === 'object') {
+                if (img.url) {
+                    imageUrl = img.url;
+                } else if (img.filename) {
+                    imageUrl = `../images/${img.filename}`;
+                }
+            } else {
+                imageUrl = `../images/${img}`;
+            }
+            
+            return `
+                <div class="modal-image" id="modal-img-${index}" ${index === 0 ? 'style="display: block;"' : ''}>
+                    <img src="${imageUrl}" alt="${title} - Image ${index + 1}">
+                </div>`;
+        }).join('');
+
+        imageGalleryHTML = `
+            <div class="image-gallery">
+                <h3>Project Images</h3>
+                <div class="gallery-grid">
+                    ${imageItems}
+                </div>
+            </div>
+
+            <!-- Modal for image viewing -->
+            <div id="imageModal" class="modal" onclick="closeModal()">
+                <div class="modal-content" onclick="event.stopPropagation()">
+                    <span class="close" onclick="closeModal()">&times;</span>
+                    ${modalImages}
+                    ${images.length > 1 ? `
+                    <button class="nav-btn prev" onclick="changeImage(-1)">&#10094;</button>
+                    <button class="nav-btn next" onclick="changeImage(1)">&#10095;</button>
+                    ` : ''}
+                </div>
+            </div>`;
+    }
+
+    // Generate description HTML
+    const descriptionHTML = Array.isArray(description) 
+        ? description.map(paragraph => `<p>${paragraph}</p>`).join('\n                ')
+        : `<p>${description}</p>`;
+
+    // Application type mapping
+    const applicationTypes = {
+        'playground': 'Playground Surfaces',
+        'muga': 'Multi-Use Games Areas',
+        'track': 'Running Tracks',
+        'pitch': 'Sports Pitches',
+        'footpath': 'Footpaths & Walkways',
+        'splashpark': 'Splash Parks & Water Play',
+        'tennis': 'Tennis Courts',
+        'athletics': 'Athletics Tracks',
+        'safety': 'Safety Surfaces',
+        'other': 'Other Applications'
+    };
+
+    const applicationDisplay = applicationTypes[application] || application;
+
+    // Generate the complete HTML page
+    const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hillview Christian School Vibrant New Playground - Rosehill TPV Installation</title>
-    <meta name="description" content="Hillview Christian School Vibrant New Playground in . See how Rosehill TPV coloured rubber granules were used to create safe, vibrant surfaces for playground surfaces.">
+    <title>${title} - Rosehill TPV Installation</title>
+    <meta name="description" content="${title} in ${location}. See how Rosehill TPV coloured rubber granules were used to create safe, vibrant surfaces for ${applicationDisplay.toLowerCase()}.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
@@ -431,33 +594,33 @@
         <div class="container">
             <!-- Breadcrumb -->
             <div class="breadcrumb">
-                <a href="../installations.html">Installations</a> / Hillview Christian School Vibrant New Playground
+                ${breadcrumb}
             </div>
 
             <!-- Installation Header -->
             <div class="installation-header">
-                <h1>Hillview Christian School Vibrant New Playground</h1>
+                <h1>${title}</h1>
                 <div class="installation-meta">
                     <div class="meta-item">
                         <svg class="meta-icon" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
                         </svg>
                         <span class="meta-label">Location:</span>
-                        <span class="meta-value"></span>
+                        <span class="meta-value">${location}</span>
                     </div>
                     <div class="meta-item">
                         <svg class="meta-icon" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
                         </svg>
                         <span class="meta-label">Date:</span>
-                        <span class="meta-value">7 October 2024</span>
+                        <span class="meta-value">${formattedDate}</span>
                     </div>
                     <div class="meta-item">
                         <svg class="meta-icon" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v8a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clip-rule="evenodd"></path>
                         </svg>
                         <span class="meta-label">Application:</span>
-                        <span class="meta-value">Playground Surfaces</span>
+                        <span class="meta-value">${applicationDisplay}</span>
                     </div>
                 </div>
             </div>
@@ -465,43 +628,10 @@
             <!-- Installation Content -->
             <div class="installation-content">
                 <h2>Project Overview</h2>
-                <p>Hillview Christian School in Christchurch, New Zealand has unveiled a vibrant new playground, recently completed by NumatREC. The project features a colourful Rosehill TPV® softfall surface, designed to keep play safe and engaging for years to come.</p>
-                <p>The renovation includes brand new play equipment and a detailed wetpour surface enriched with a variety of floor games, inviting students to enjoy and explore in a dynamic environment. Rosehill TPV® ensures this playful oasis remains a safe, comfortable space with its durable, long-lasting surfaces that stay softer for longer, requiring minimal maintenance.</p>
-                <p>With 21 colours available, Rosehill TPV® allows for custom blends to match any playground theme, from bright patterns to natural tones.</p>
-                <p>Thanks to NumatREC and Surface Designs TPV</p>
+                ${descriptionHTML}
             </div>
 
-            
-            <div class="image-gallery">
-                <h3>Project Images</h3>
-                <div class="gallery-grid">
-                    
-                <div class="gallery-item">
-                    <img src="../images/1728291291082.jpeg" alt="Hillview Christian School Vibrant New Playground - Image 1" onclick="openModal(0)">
-                </div>
-                <div class="gallery-item">
-                    <img src="../images/1728291290878.jpeg" alt="Hillview Christian School Vibrant New Playground - Image 2" onclick="openModal(1)">
-                </div>
-                </div>
-            </div>
-
-            <!-- Modal for image viewing -->
-            <div id="imageModal" class="modal" onclick="closeModal()">
-                <div class="modal-content" onclick="event.stopPropagation()">
-                    <span class="close" onclick="closeModal()">&times;</span>
-                    
-                <div class="modal-image" id="modal-img-0" style="display: block;">
-                    <img src="../images/1728291291082.jpeg" alt="Hillview Christian School Vibrant New Playground - Image 1">
-                </div>
-                <div class="modal-image" id="modal-img-1" >
-                    <img src="../images/1728291290878.jpeg" alt="Hillview Christian School Vibrant New Playground - Image 2">
-                </div>
-                    
-                    <button class="nav-btn prev" onclick="changeImage(-1)">&#10094;</button>
-                    <button class="nav-btn next" onclick="changeImage(1)">&#10095;</button>
-                    
-                </div>
-            </div>
+            ${imageGalleryHTML}
 
             <!-- Call to Action -->
             <div class="cta-section">
@@ -534,7 +664,7 @@
 
     <script>
         let currentImageIndex = 0;
-        const totalImages = 2;
+        const totalImages = ${images ? images.length : 0};
 
         function openModal(index) {
             currentImageIndex = index;
@@ -572,4 +702,19 @@
         });
     </script>
 </body>
-</html>
+</html>`;
+
+    // Write the HTML file
+    const fileName = `${slug}.html`;
+    const filePath = path.join(outputDir, fileName);
+    
+    fs.writeFileSync(filePath, htmlContent, 'utf8');
+    console.log(`✓ Generated: ${fileName}`);
+}
+
+// Run if called directly
+if (require.main === module) {
+    generateInstallationPages();
+}
+
+module.exports = { generateInstallationPages };
