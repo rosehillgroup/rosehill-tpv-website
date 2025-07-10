@@ -798,27 +798,10 @@
 
         @media (max-width: 768px) {
             .canvas-wrapper {
-                height: 70vw;
+                /* Maintain 2:1 aspect ratio */
+                height: 50vw;
                 max-height: 400px;
-                min-height: 300px;
-            }
-        }
-
-        /* iPhone and small mobile devices in portrait */
-        @media (max-width: 480px) {
-            .canvas-wrapper {
-                height: 75vw;
-                max-height: 350px;
-                min-height: 280px;
-            }
-        }
-
-        /* Very small devices */
-        @media (max-width: 375px) {
-            .canvas-wrapper {
-                height: 80vw;
-                max-height: 320px;
-                min-height: 260px;
+                min-height: 200px;
             }
             
             .colour-swatch {
@@ -1178,11 +1161,46 @@
                 });
                 const [shareInput, setShareInput] = useState('');
                 const [shareError, setShareError] = useState('');
+                const [dimensions, setDimensions] = useState({ width: 1000, height: 500 });
 
-                const canvasWidth = 1000;
-                const canvasHeight = 500;
+                // Dynamic canvas sizing based on viewport
+                const getCanvasDimensions = () => {
+                    const viewportWidth = window.innerWidth;
+                    const wrapperWidth = Math.min(viewportWidth - 40, 1000); // 20px padding on each side
+                    
+                    // For mobile, use full width with 2:1 aspect ratio
+                    if (viewportWidth <= 768) {
+                        return {
+                            width: wrapperWidth,
+                            height: wrapperWidth / 2
+                        };
+                    }
+                    
+                    // Desktop: default size
+                    return {
+                        width: 1000,
+                        height: 500
+                    };
+                };
+                
+                const canvasWidth = dimensions.width;
+                const canvasHeight = dimensions.height;
                 const exportWidth = 2000;
                 const exportHeight = 1000;
+                
+                // Update dimensions on resize
+                useEffect(() => {
+                    const handleResize = () => {
+                        const newDimensions = getCanvasDimensions();
+                        setDimensions(newDimensions);
+                    };
+                    
+                    // Set initial dimensions
+                    handleResize();
+                    
+                    window.addEventListener('resize', handleResize);
+                    return () => window.removeEventListener('resize', handleResize);
+                }, []);
 
                 // Initialize Voronoi diagram
                 useEffect(() => {
@@ -1226,7 +1244,7 @@
                     };
 
                     initializeVoronoi();
-                }, [seed]);
+                }, [seed, canvasWidth, canvasHeight]);
 
                 // Render canvas
                 useEffect(() => {
@@ -1423,7 +1441,7 @@
                     
                     // Restore the canvas state
                     ctx.restore();
-                }, [voronoiData, parts, seed, zoomLevel, panOffset]);
+                }, [voronoiData, parts, seed, zoomLevel, panOffset, canvasWidth, canvasHeight]);
 
                 // Add part function
                 const addPart = useCallback((colourIndex) => {
