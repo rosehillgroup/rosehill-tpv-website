@@ -798,9 +798,27 @@
 
         @media (max-width: 768px) {
             .canvas-wrapper {
-                height: 50vw;
+                height: 70vw;
+                max-height: 400px;
+                min-height: 300px;
+            }
+        }
+
+        /* iPhone and small mobile devices in portrait */
+        @media (max-width: 480px) {
+            .canvas-wrapper {
+                height: 75vw;
                 max-height: 350px;
-                min-height: 250px;
+                min-height: 280px;
+            }
+        }
+
+        /* Very small devices */
+        @media (max-width: 375px) {
+            .canvas-wrapper {
+                height: 80vw;
+                max-height: 320px;
+                min-height: 260px;
             }
             
             .colour-swatch {
@@ -994,8 +1012,8 @@
     <script type="text/javascript">
         // Predefined colour palette - TPV Rosehill colours
         const PALETTE = [
-            { name: 'Beige', code: 'RH30', hex: '#E8E3D8' },
-            { name: 'Cream', code: 'RH31', hex: '#E4C4AA' },
+            { name: 'Beige', code: 'RH30', hex: '#E4C4AA' },
+            { name: 'Cream', code: 'RH31', hex: '#E8E3D8' },
             { name: 'Bright Yellow', code: 'RH41', hex: '#FFD833' },
             { name: 'Mustard', code: 'RH40', hex: '#E5A144' },
             { name: 'Orange', code: 'RH50', hex: '#F15B32' },
@@ -1147,7 +1165,7 @@
                 const [redoStack, setRedoStack] = useState([]);
                 const [voronoiData, setVoronoiData] = useState(null);
                 const [tooltip, setTooltip] = useState(null);
-                const [zoomLevel, setZoomLevel] = useState(1);
+                const [zoomLevel, setZoomLevel] = useState(2);
                 const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
                 const [isPanning, setIsPanning] = useState(false);
                 const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
@@ -1182,11 +1200,11 @@
                         
                         const points = poissonDiskSampling(canvasWidth, canvasHeight, minDistance, 30, rng);
                         
-                        // Add some size variation to points
+                        // Add enhanced size variation to points
                         const pointsWithSize = points.map(([x, y]) => ({
                             x,
                             y,
-                            size: 0.8 + rng() * 0.4 // 80% to 120% size variation
+                            size: 0.6 + rng() * 0.8 // 60% to 140% size variation
                         }));
                         
                         // Create Voronoi diagram
@@ -1226,8 +1244,8 @@
                     ctx.translate(panOffset.x, panOffset.y);
                     ctx.scale(zoomLevel, zoomLevel);
 
-                    // Clear canvas with white
-                    ctx.fillStyle = '#FFFFFF';
+                    // Clear canvas with light grey background
+                    ctx.fillStyle = '#FAFAFA';
                     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
                     // Calculate colour distribution
@@ -1256,9 +1274,9 @@
                             }
                         });
                     } else {
-                        // If no parts selected, show pale grey granules
+                        // If no parts selected, show white granules (no color assigned)
                         for (let i = 0; i < cellAssignments.length; i++) {
-                            cellAssignments[i] = 17; // Pale Grey (index 17 in the palette)
+                            cellAssignments[i] = -1; // No color assigned (white)
                         }
                     }
 
@@ -1268,7 +1286,7 @@
                         if (!polygon || polygon.length < 3) return;
 
                         const colourIndex = cellAssignments[i];
-                        const colour = colourIndex === -1 ? { hex: '#FFFFFF' } : PALETTE[colourIndex];
+                        const colour = colourIndex === -1 ? { hex: '#FAFAFA' } : PALETTE[colourIndex];
                         
                         // Draw cell with solid color first
                         ctx.beginPath();
@@ -1285,7 +1303,7 @@
                     // Second pass: Add 3D effects only for colored cells
                     voronoiData.cells.forEach((cell, i) => {
                         const colourIndex = cellAssignments[i];
-                        if (colourIndex === -1 || colourIndex === 17) return; // Skip pale grey cells
+                        if (colourIndex === -1) return; // Skip unassigned cells (white)
                         
                         const polygon = cell.polygon;
                         if (!polygon || polygon.length < 3) return;
@@ -1301,10 +1319,67 @@
                         centerX /= polygon.length;
                         centerY /= polygon.length;
 
-                        // Create gradient for 3D effect
-                        const gradient = ctx.createRadialGradient(
-                            centerX - 2, centerY - 2, 0,
-                            centerX, centerY, Math.max(Math.abs(centerX - polygon[0][0]), Math.abs(centerY - polygon[0][1]))
+                        // Create edge-based shading for realistic 3D effect
+                        const granuleSize = voronoiData.points[i].size || 1;
+                        
+                        // Light direction vector (from top-left)
+                        const lightDir = { x: -0.7071, y: -0.7071 }; // Normalized diagonal direction
+                        
+                        // Calculate polygon lighting zones based on edge orientations
+                        let totalLighting = 0;
+                        let lightedArea = 0;
+                        
+                        for (let j = 0; j < polygon.length; j++) {
+                            const p1 = polygon[j];
+                            const p2 = polygon[(j + 1) % polygon.length];
+                            
+                            // Calculate edge vector and normal
+                            const edgeVec = { x: p2[0] - p1[0], y: p2[1] - p1[1] };
+                            const edgeLength = Math.sqrt(edgeVec.x * edgeVec.x + edgeVec.y * edgeVec.y);
+                            
+                            // Skip degenerate edges (zero length)
+                            if (edgeLength < 0.001) continue;
+                            
+                            // Calculate edge normal (perpendicular, pointing inward)
+                            const normal = { 
+                                x: -edgeVec.y / edgeLength, 
+                                y: edgeVec.x / edgeLength 
+                            };
+                            
+                            // Calculate lighting intensity based on edge normal vs light direction
+                            const lightIntensity = Math.max(0, -(normal.x * lightDir.x + normal.y * lightDir.y));
+                            
+                            totalLighting += lightIntensity * edgeLength;
+                            lightedArea += edgeLength;
+                        }
+                        
+                        // Calculate average lighting for this polygon with fallback
+                        const avgLighting = lightedArea > 0 ? totalLighting / lightedArea : 0.5;
+                        
+                        // Scale lighting effect by granule size for variation
+                        const sizeFactor = 0.7 + Math.max(0, Math.min(0.8, granuleSize - 0.6)) / 0.8 * 0.6; // Scale 0.7-1.3 based on size
+                        const lightingIntensity = Math.min(1, Math.max(0, avgLighting * sizeFactor));
+                        
+                        // Calculate bounds for gradient positioning
+                        let minX = polygon[0][0], maxX = polygon[0][0];
+                        let minY = polygon[0][1], maxY = polygon[0][1];
+                        for (let j = 1; j < polygon.length; j++) {
+                            minX = Math.min(minX, polygon[j][0]);
+                            maxX = Math.max(maxX, polygon[j][0]);
+                            minY = Math.min(minY, polygon[j][1]);
+                            maxY = Math.max(maxY, polygon[j][1]);
+                        }
+                        
+                        // Ensure valid gradient coordinates
+                        const gradientOffset = Math.max(1, (maxX - minX) * (0.2 + lightingIntensity * 0.3));
+                        const gradientOffsetY = Math.max(1, (maxY - minY) * (0.2 + lightingIntensity * 0.3));
+                        
+                        // Create gradient based on edge lighting analysis with validation
+                        const gradient = ctx.createLinearGradient(
+                            minX + gradientOffset,
+                            minY + gradientOffsetY,
+                            maxX - gradientOffset,
+                            maxY - gradientOffsetY
                         );
                         
                         // Parse hex colour
@@ -1312,10 +1387,15 @@
                         const g = parseInt(colour.hex.slice(3, 5), 16);
                         const b = parseInt(colour.hex.slice(5, 7), 16);
                         
-                        // Add gradient stops for 3D effect
-                        gradient.addColorStop(0, `rgba(${Math.min(255, r + 40)}, ${Math.min(255, g + 40)}, ${Math.min(255, b + 40)}, 1)`);
+                        // Add gradient stops based on edge lighting analysis with validation
+                        const highlightStrength = Math.floor(Math.max(0, Math.min(20, lightingIntensity * 20))); // 0-20 intensity
+                        const shadowStrength = Math.floor(Math.max(0, Math.min(25, (1 - lightingIntensity) * 25))); // 0-25 intensity
+                        
+                        gradient.addColorStop(0, `rgba(${Math.min(255, Math.max(0, r + highlightStrength))}, ${Math.min(255, Math.max(0, g + highlightStrength))}, ${Math.min(255, Math.max(0, b + highlightStrength))}, 1)`);
+                        gradient.addColorStop(0.2, `rgba(${Math.min(255, Math.max(0, r + highlightStrength * 0.4))}, ${Math.min(255, Math.max(0, g + highlightStrength * 0.4))}, ${Math.min(255, Math.max(0, b + highlightStrength * 0.4))}, 1)`);
                         gradient.addColorStop(0.5, colour.hex);
-                        gradient.addColorStop(1, `rgba(${Math.max(0, r - 30)}, ${Math.max(0, g - 30)}, ${Math.max(0, b - 30)}, 1)`);
+                        gradient.addColorStop(0.7, `rgba(${Math.max(0, Math.min(255, r - shadowStrength * 0.4))}, ${Math.max(0, Math.min(255, g - shadowStrength * 0.4))}, ${Math.max(0, Math.min(255, b - shadowStrength * 0.4))}, 1)`);
+                        gradient.addColorStop(1, `rgba(${Math.max(0, Math.min(255, r - shadowStrength))}, ${Math.max(0, Math.min(255, g - shadowStrength))}, ${Math.max(0, Math.min(255, b - shadowStrength))}, 1)`);
 
                         // Draw cell with gradient
                         ctx.beginPath();
@@ -1328,6 +1408,18 @@
                         ctx.fillStyle = gradient;
                         ctx.fill();
                     });
+                    
+                    // Add instructional text for blank canvas
+                    if (totalParts === 0) {
+                        ctx.save();
+                        ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transformations for text
+                        ctx.fillStyle = '#999999';
+                        ctx.font = '24px "Source Sans Pro", sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('Click colours below to add granules', canvasWidth / 2, canvasHeight / 2);
+                        ctx.restore();
+                    }
                     
                     // Restore the canvas state
                     ctx.restore();
@@ -1549,7 +1641,7 @@
                     setRedoStack([]);
                     setParts(new Map());
                     // Reset zoom and pan
-                    setZoomLevel(1);
+                    setZoomLevel(2);
                     setPanOffset({ x: 0, y: 0 });
                 }, [parts]);
 
@@ -1945,7 +2037,7 @@
                                     React.createElement('button', {
                                         className: 'zoom-btn',
                                         onClick: resetCanvas,
-                                        disabled: parts.size === 0 && zoomLevel === 1 && panOffset.x === 0 && panOffset.y === 0,
+                                        disabled: parts.size === 0 && zoomLevel === 2 && panOffset.x === 0 && panOffset.y === 0,
                                         title: 'Reset Canvas',
                                         'aria-label': 'Reset Canvas',
                                         style: { fontSize: '14px' }
