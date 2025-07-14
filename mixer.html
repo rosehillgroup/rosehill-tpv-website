@@ -11,6 +11,185 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/d3-delaunay@6.0.4/dist/d3-delaunay.min.js"></script>
     <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Inline OrbitControls to ensure it's available
+        (function() {
+            if (typeof THREE !== 'undefined') {
+                // Simple orbit controls implementation
+                THREE.OrbitControls = function(camera, domElement) {
+                    this.camera = camera;
+                    this.domElement = domElement;
+                    this.target = new THREE.Vector3();
+                    this.enableDamping = true;
+                    this.dampingFactor = 0.1;
+                    this.enableZoom = true;
+                    this.enablePan = true;
+                    this.minDistance = 0;
+                    this.maxDistance = Infinity;
+                    this.touches = { ONE: 0, TWO: 2 };
+                    
+                    let spherical = new THREE.Spherical();
+                    let sphericalDelta = new THREE.Spherical();
+                    let scale = 1;
+                    let panOffset = new THREE.Vector3();
+                    let rotateStart = new THREE.Vector2();
+                    let rotateEnd = new THREE.Vector2();
+                    let rotateDelta = new THREE.Vector2();
+                    let panStart = new THREE.Vector2();
+                    let panEnd = new THREE.Vector2();
+                    let panDelta = new THREE.Vector2();
+                    let dollyStart = new THREE.Vector2();
+                    let dollyEnd = new THREE.Vector2();
+                    let dollyDelta = new THREE.Vector2();
+                    
+                    let state = { NONE: -1, ROTATE: 0, DOLLY: 1, PAN: 2 };
+                    let currentState = state.NONE;
+                    
+                    this.update = function() {
+                        let offset = new THREE.Vector3();
+                        offset.copy(this.camera.position).sub(this.target);
+                        spherical.setFromVector3(offset);
+                        
+                        if (this.enableDamping) {
+                            spherical.theta += sphericalDelta.theta * this.dampingFactor;
+                            spherical.phi += sphericalDelta.phi * this.dampingFactor;
+                            sphericalDelta.theta *= (1 - this.dampingFactor);
+                            sphericalDelta.phi *= (1 - this.dampingFactor);
+                        } else {
+                            spherical.theta += sphericalDelta.theta;
+                            spherical.phi += sphericalDelta.phi;
+                            sphericalDelta.set(0, 0, 0);
+                        }
+                        
+                        spherical.radius *= scale;
+                        spherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, spherical.radius));
+                        
+                        this.target.add(panOffset);
+                        offset.setFromSpherical(spherical);
+                        this.camera.position.copy(this.target).add(offset);
+                        this.camera.lookAt(this.target);
+                        
+                        if (this.enableDamping) {
+                            panOffset.multiplyScalar(1 - this.dampingFactor);
+                        } else {
+                            panOffset.set(0, 0, 0);
+                        }
+                        
+                        scale = 1;
+                    };
+                    
+                    this.reset = function() {
+                        this.target.set(0, 0, 0);
+                        sphericalDelta.set(0, 0, 0);
+                        panOffset.set(0, 0, 0);
+                        scale = 1;
+                        currentState = state.NONE;
+                    };
+                    
+                    this.getDistance = function() {
+                        return this.camera.position.distanceTo(this.target);
+                    };
+                    
+                    this.dispose = function() {
+                        if (this.domElement) {
+                            this.domElement.removeEventListener('mousedown', onMouseDown);
+                            this.domElement.removeEventListener('wheel', onMouseWheel);
+                            this.domElement.removeEventListener('touchstart', onTouchStart);
+                            this.domElement.removeEventListener('touchmove', onTouchMove);
+                            document.removeEventListener('mousemove', onMouseMove);
+                            document.removeEventListener('mouseup', onMouseUp);
+                            document.removeEventListener('touchend', onTouchEnd);
+                        }
+                    };
+                    
+                    let onMouseDown = (event) => {
+                        event.preventDefault();
+                        if (event.button === 0) {
+                            currentState = state.ROTATE;
+                            rotateStart.set(event.clientX, event.clientY);
+                        }
+                        document.addEventListener('mousemove', onMouseMove);
+                        document.addEventListener('mouseup', onMouseUp);
+                    };
+                    
+                    let onMouseMove = (event) => {
+                        event.preventDefault();
+                        if (currentState === state.ROTATE) {
+                            rotateEnd.set(event.clientX, event.clientY);
+                            rotateDelta.subVectors(rotateEnd, rotateStart).multiplyScalar(0.01);
+                            sphericalDelta.theta -= rotateDelta.x;
+                            sphericalDelta.phi -= rotateDelta.y;
+                            rotateStart.copy(rotateEnd);
+                        }
+                    };
+                    
+                    let onMouseUp = () => {
+                        currentState = state.NONE;
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                    };
+                    
+                    let onMouseWheel = (event) => {
+                        event.preventDefault();
+                        if (event.deltaY < 0) {
+                            scale /= 0.95;
+                        } else {
+                            scale *= 0.95;
+                        }
+                    };
+                    
+                    let onTouchStart = (event) => {
+                        event.preventDefault();
+                        if (event.touches.length === 1) {
+                            currentState = state.ROTATE;
+                            rotateStart.set(event.touches[0].pageX, event.touches[0].pageY);
+                        } else if (event.touches.length === 2) {
+                            currentState = state.DOLLY;
+                            let dx = event.touches[0].pageX - event.touches[1].pageX;
+                            let dy = event.touches[0].pageY - event.touches[1].pageY;
+                            let distance = Math.sqrt(dx * dx + dy * dy);
+                            dollyStart.set(0, distance);
+                        }
+                        document.addEventListener('touchmove', onTouchMove);
+                        document.addEventListener('touchend', onTouchEnd);
+                    };
+                    
+                    let onTouchMove = (event) => {
+                        event.preventDefault();
+                        if (event.touches.length === 1 && currentState === state.ROTATE) {
+                            rotateEnd.set(event.touches[0].pageX, event.touches[0].pageY);
+                            rotateDelta.subVectors(rotateEnd, rotateStart).multiplyScalar(0.01);
+                            sphericalDelta.theta -= rotateDelta.x;
+                            sphericalDelta.phi -= rotateDelta.y;
+                            rotateStart.copy(rotateEnd);
+                        } else if (event.touches.length === 2 && currentState === state.DOLLY) {
+                            let dx = event.touches[0].pageX - event.touches[1].pageX;
+                            let dy = event.touches[0].pageY - event.touches[1].pageY;
+                            let distance = Math.sqrt(dx * dx + dy * dy);
+                            dollyEnd.set(0, distance);
+                            dollyDelta.set(0, Math.pow(dollyEnd.y / dollyStart.y, 0.5));
+                            scale /= dollyDelta.y;
+                            dollyStart.copy(dollyEnd);
+                        }
+                    };
+                    
+                    let onTouchEnd = () => {
+                        currentState = state.NONE;
+                        document.removeEventListener('touchmove', onTouchMove);
+                        document.removeEventListener('touchend', onTouchEnd);
+                    };
+                    
+                    if (this.domElement) {
+                        this.domElement.addEventListener('mousedown', onMouseDown);
+                        this.domElement.addEventListener('wheel', onMouseWheel);
+                        this.domElement.addEventListener('touchstart', onTouchStart);
+                        this.domElement.style.touchAction = 'none';
+                    }
+                };
+            }
+        })();
+    </script>
     <style>
         * {
             margin: 0;
@@ -784,6 +963,111 @@
             margin-top: 5px;
         }
 
+        .tile-preview-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .tile-preview-section h2 {
+            font-family: 'Overpass', sans-serif;
+        }
+
+        .tile-preview-container {
+            width: 100%;
+            height: 250px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f5f5f5, #e8e8e8);
+            cursor: grab;
+        }
+
+        .tile-preview-container:active {
+            cursor: grabbing;
+        }
+
+        .tile-preview-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .tile-preview-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #666;
+            font-size: 0.9rem;
+            z-index: 100;
+        }
+
+        .tile-preview-error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #dc3545;
+            font-size: 0.9rem;
+            text-align: center;
+            z-index: 100;
+        }
+
+        .tile-preview-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .tile-preview-info {
+            display: flex;
+            gap: 15px;
+        }
+
+        .tile-preview-reset {
+            background: #757575;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .tile-preview-reset:hover {
+            background: #616161;
+        }
+
+        @media (max-width: 768px) {
+            .tile-preview-container {
+                height: 200px;
+            }
+            
+            .tile-preview-controls {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            
+            .tile-preview-info {
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tile-preview-container {
+                height: 180px;
+            }
+        }
+
         .tooltip {
             position: absolute;
             background: rgba(0,0,0,0.8);
@@ -798,10 +1082,27 @@
 
         @media (max-width: 768px) {
             .canvas-wrapper {
-                /* Maintain 2:1 aspect ratio */
-                height: 50vw;
+                height: 70vw;
                 max-height: 400px;
-                min-height: 200px;
+                min-height: 300px;
+            }
+        }
+
+        /* iPhone and small mobile devices in portrait */
+        @media (max-width: 480px) {
+            .canvas-wrapper {
+                height: 75vw;
+                max-height: 350px;
+                min-height: 280px;
+            }
+        }
+
+        /* Very small devices */
+        @media (max-width: 375px) {
+            .canvas-wrapper {
+                height: 80vw;
+                max-height: 320px;
+                min-height: 260px;
             }
             
             .colour-swatch {
@@ -1138,6 +1439,409 @@
                 return parts;
             }
 
+            // 3D Tile Preview Component
+            function TilePreview({ canvasRef, parts, totalParts }) {
+                const tileContainerRef = useRef(null);
+                const tileSceneRef = useRef(null);
+                const [tileLoading, setTileLoading] = useState(false);
+                const [tileError, setTileError] = useState(null);
+
+                // Initialize 3D scene
+                useEffect(() => {
+                    if (!tileContainerRef.current || typeof THREE === 'undefined') {
+                        setTileError('3D not supported in this browser');
+                        return;
+                    }
+
+                    // OrbitControls should now be available as we embedded it
+                    if (!THREE.OrbitControls) {
+                        setTileError('3D controls initialization failed');
+                        return;
+                    }
+                    const OrbitControls = THREE.OrbitControls;
+
+                    // Check WebGL support
+                    const canvas = document.createElement('canvas');
+                    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                    if (!gl) {
+                        setTileError('WebGL not supported in this browser');
+                        return;
+                    }
+
+                    try {
+                        // Scene setup
+                        const scene = new THREE.Scene();
+                        scene.background = new THREE.Color(0xf5f5f5);
+
+                        // Camera setup
+                        const camera = new THREE.PerspectiveCamera(
+                            50,
+                            tileContainerRef.current.clientWidth / tileContainerRef.current.clientHeight,
+                            0.1,
+                            1000
+                        );
+                        camera.position.set(300, 200, 300);
+
+                        // Renderer setup with enhanced settings
+                        const renderer = new THREE.WebGLRenderer({ 
+                            antialias: true, 
+                            alpha: true,
+                            powerPreference: "high-performance"
+                        });
+                        renderer.setSize(
+                            tileContainerRef.current.clientWidth,
+                            tileContainerRef.current.clientHeight
+                        );
+                        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit for performance
+                        renderer.shadowMap.enabled = true;
+                        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                        renderer.outputEncoding = THREE.sRGBEncoding;
+                        
+                        // Enhanced renderer settings for better quality
+                        renderer.physicallyCorrectLights = true;
+                        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                        renderer.toneMappingExposure = 1.2;
+
+                        tileContainerRef.current.appendChild(renderer.domElement);
+
+                        // Enhanced lighting setup for realistic rubber tile appearance
+                        
+                        // 1. Ambient light - subtle base illumination
+                        const ambientLight = new THREE.AmbientLight(0xf0f8ff, 0.2); // Reduced from 0.3
+                        scene.add(ambientLight);
+
+                        // 2. Main directional light (sun-like) - creates primary shadows and highlights
+                        const mainLight = new THREE.DirectionalLight(0xffffff, 0.8); // Reduced from 1.2
+                        mainLight.position.set(400, 500, 300);
+                        mainLight.castShadow = true;
+                        mainLight.shadow.mapSize.width = 2048;
+                        mainLight.shadow.mapSize.height = 2048;
+                        mainLight.shadow.camera.near = 0.1;
+                        mainLight.shadow.camera.far = 1000;
+                        mainLight.shadow.camera.left = -300;
+                        mainLight.shadow.camera.right = 300;
+                        mainLight.shadow.camera.top = 300;
+                        mainLight.shadow.camera.bottom = -300;
+                        mainLight.shadow.bias = -0.0001;
+                        scene.add(mainLight);
+
+                        // 3. Fill light - softer light from opposite side to reduce harsh shadows
+                        const fillLight = new THREE.DirectionalLight(0xf0f8ff, 0.25); // Reduced from 0.4
+                        fillLight.position.set(-200, 250, -150);
+                        scene.add(fillLight);
+
+                        // 4. Rim light - creates edge highlighting for depth
+                        const rimLight = new THREE.DirectionalLight(0xfff8e1, 0.35); // Reduced from 0.6
+                        rimLight.position.set(-250, 200, 400);
+                        scene.add(rimLight);
+
+                        // 5. Point light for dynamic highlights on granule texture
+                        const accentLight = new THREE.PointLight(0xffffff, 0.5, 800); // Reduced from 0.8
+                        accentLight.position.set(150, 300, 150);
+                        scene.add(accentLight);
+
+                        // 6. Hemisphere light for natural sky/ground color variation
+                        const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x8b7355, 0.15); // Reduced from 0.2
+                        scene.add(hemiLight);
+
+                        // Tile geometry (200x200x20mm - realistic size)
+                        const geometry = new THREE.BoxGeometry(200, 20, 200);
+                        
+                        // Basic material (will be updated with texture)
+                        const material = new THREE.MeshStandardMaterial({
+                            color: 0xfafafa,
+                            roughness: 0.8,
+                            metalness: 0.1
+                        });
+
+                        const tile = new THREE.Mesh(geometry, material);
+                        tile.castShadow = true;
+                        tile.receiveShadow = true;
+                        scene.add(tile);
+
+                        // Ground plane for shadows
+                        const groundGeometry = new THREE.PlaneGeometry(800, 800);
+                        const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.2 });
+                        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                        ground.rotation.x = -Math.PI / 2;
+                        ground.position.y = -10; // Half the tile height (20mm/2)
+                        ground.receiveShadow = true;
+                        scene.add(ground);
+
+                        // Controls
+                        const controls = new OrbitControls(camera, renderer.domElement);
+                        controls.enableDamping = true;
+                        controls.dampingFactor = 0.1;
+                        controls.target.set(0, 0, 0);
+                        controls.maxDistance = 800;
+                        controls.minDistance = 150;
+
+                        // Store scene references including lights for animation
+                        tileSceneRef.current = {
+                            scene,
+                            camera,
+                            renderer,
+                            controls,
+                            tile,
+                            material,
+                            lights: {
+                                main: mainLight,
+                                accent: accentLight,
+                                rim: rimLight
+                            },
+                            isAnimating: true
+                        };
+
+                        // Animation loop
+                        let lastInteractionTime = Date.now();
+                        let animationTime = 0;
+                        const animate = () => {
+                            if (tileSceneRef.current && tileSceneRef.current.isAnimating) {
+                                animationTime += 0.01;
+                                controls.update();
+                                
+                                // Gentle auto-rotation when not being controlled for a while
+                                const timeSinceInteraction = Date.now() - lastInteractionTime;
+                                if (timeSinceInteraction > 2000) { // 2 seconds of no interaction
+                                    tile.rotation.y += 0.005;
+                                }
+                                
+                                // Subtle dynamic lighting animation for life-like appearance
+                                const { lights } = tileSceneRef.current;
+                                
+                                // Gently move the accent light in a small circle for dynamic highlights
+                                lights.accent.position.x = 150 + Math.sin(animationTime * 0.5) * 30;
+                                lights.accent.position.z = 150 + Math.cos(animationTime * 0.5) * 30;
+                                
+                                // Subtle intensity variation for more natural look
+                                lights.accent.intensity = 0.5 + Math.sin(animationTime * 0.3) * 0.08;
+                                lights.rim.intensity = 0.35 + Math.cos(animationTime * 0.4) * 0.04;
+                                
+                                renderer.render(scene, camera);
+                                requestAnimationFrame(animate);
+                            }
+                        };
+                        
+                        // Track user interactions to pause auto-rotation
+                        const updateInteractionTime = () => { lastInteractionTime = Date.now(); };
+                        renderer.domElement.addEventListener('mousedown', updateInteractionTime);
+                        renderer.domElement.addEventListener('touchstart', updateInteractionTime);
+                        renderer.domElement.addEventListener('wheel', updateInteractionTime);
+                        animate();
+
+                        // Handle resize
+                        const handleResize = () => {
+                            if (tileContainerRef.current && tileSceneRef.current) {
+                                const width = tileContainerRef.current.clientWidth;
+                                const height = tileContainerRef.current.clientHeight;
+                                
+                                camera.aspect = width / height;
+                                camera.updateProjectionMatrix();
+                                renderer.setSize(width, height);
+                            }
+                        };
+
+                        window.addEventListener('resize', handleResize);
+
+                        return () => {
+                            window.removeEventListener('resize', handleResize);
+                            if (tileSceneRef.current) {
+                                tileSceneRef.current.isAnimating = false;
+                                if (tileContainerRef.current && renderer.domElement) {
+                                    tileContainerRef.current.removeChild(renderer.domElement);
+                                }
+                                renderer.dispose();
+                                geometry.dispose();
+                                material.dispose();
+                                controls.dispose();
+                            }
+                        };
+
+                    } catch (error) {
+                        console.error('3D initialization error:', error);
+                        setTileError('Failed to initialize 3D preview');
+                    }
+                }, []);
+
+                // Create randomized texture from canvas
+                const createRandomizedTexture = useCallback((sourceCanvas) => {
+                    if (!sourceCanvas) return null;
+
+                    // Create a larger canvas for randomized tiling
+                    const randomCanvas = document.createElement('canvas');
+                    const randomCtx = randomCanvas.getContext('2d');
+                    const tileSize = 512; // Higher resolution for better quality
+                    randomCanvas.width = tileSize;
+                    randomCanvas.height = tileSize;
+
+                    // Number of random tiles to create variation
+                    const tilesPerRow = 4;
+                    const tileWidth = tileSize / tilesPerRow;
+                    const tileHeight = tileSize / tilesPerRow;
+
+                    // Create random placement of source texture
+                    for (let x = 0; x < tilesPerRow; x++) {
+                        for (let y = 0; y < tilesPerRow; y++) {
+                            const destX = x * tileWidth;
+                            const destY = y * tileHeight;
+                            
+                            // Random rotation and flip for variation
+                            randomCtx.save();
+                            randomCtx.translate(destX + tileWidth/2, destY + tileHeight/2);
+                            
+                            // Random rotation (0, 90, 180, or 270 degrees)
+                            const rotation = (Math.floor(Math.random() * 4) * Math.PI) / 2;
+                            randomCtx.rotate(rotation);
+                            
+                            // Random flip
+                            const flipX = Math.random() > 0.5 ? -1 : 1;
+                            const flipY = Math.random() > 0.5 ? -1 : 1;
+                            randomCtx.scale(flipX, flipY);
+                            
+                            // Random offset within the source canvas
+                            const sourceSize = Math.min(sourceCanvas.width, sourceCanvas.height);
+                            const offsetX = Math.random() * (sourceCanvas.width - sourceSize);
+                            const offsetY = Math.random() * (sourceCanvas.height - sourceSize);
+                            
+                            randomCtx.drawImage(
+                                sourceCanvas,
+                                offsetX, offsetY, sourceSize, sourceSize,
+                                -tileWidth/2, -tileHeight/2, tileWidth, tileHeight
+                            );
+                            randomCtx.restore();
+                        }
+                    }
+
+                    return randomCanvas;
+                }, []);
+
+                // Create bump map for surface texture
+                const createBumpMap = useCallback(() => {
+                    const bumpCanvas = document.createElement('canvas');
+                    const bumpCtx = bumpCanvas.getContext('2d');
+                    const size = 256;
+                    bumpCanvas.width = size;
+                    bumpCanvas.height = size;
+
+                    // Create noise pattern for bump map
+                    const imageData = bumpCtx.createImageData(size, size);
+                    const data = imageData.data;
+
+                    for (let i = 0; i < data.length; i += 4) {
+                        // Generate noise with different frequencies for realistic granule texture
+                        const x = (i / 4) % size;
+                        const y = Math.floor((i / 4) / size);
+                        
+                        // Multiple octaves of noise for complex surface
+                        let noise = 0;
+                        noise += Math.sin(x * 0.1) * Math.cos(y * 0.1) * 0.3;
+                        noise += Math.sin(x * 0.05) * Math.cos(y * 0.05) * 0.5;
+                        noise += Math.random() * 0.2; // Fine detail
+                        
+                        // Convert to grayscale value (0-255)
+                        const value = Math.floor((noise + 1) * 127.5);
+                        
+                        data[i] = value;     // Red
+                        data[i + 1] = value; // Green
+                        data[i + 2] = value; // Blue
+                        data[i + 3] = 255;   // Alpha
+                    }
+
+                    bumpCtx.putImageData(imageData, 0, 0);
+                    return bumpCanvas;
+                }, []);
+
+                // Update tile texture when canvas changes
+                useEffect(() => {
+                    if (!tileSceneRef.current || !canvasRef.current || totalParts === 0) {
+                        // Reset to default material when no parts
+                        if (tileSceneRef.current) {
+                            const { material } = tileSceneRef.current;
+                            material.map = null;
+                            material.bumpMap = null;
+                            material.normalMap = null;
+                            material.color.setHex(0xfafafa);
+                            material.needsUpdate = true;
+                        }
+                        return;
+                    }
+
+                    setTileLoading(true);
+
+                    // Small delay to ensure canvas is updated
+                    setTimeout(() => {
+                        try {
+                            // Create randomized texture
+                            const randomizedCanvas = createRandomizedTexture(canvasRef.current);
+                            if (!randomizedCanvas) {
+                                setTileLoading(false);
+                                return;
+                            }
+
+                            // Create main texture
+                            const texture = new THREE.CanvasTexture(randomizedCanvas);
+                            texture.wrapS = THREE.RepeatWrapping;
+                            texture.wrapT = THREE.RepeatWrapping;
+                            texture.repeat.set(2, 2); // Less obvious tiling
+                            texture.magFilter = THREE.LinearFilter;
+                            texture.minFilter = THREE.LinearMipMapLinearFilter;
+
+                            // Create bump map for surface detail
+                            const bumpCanvas = createBumpMap();
+                            const bumpTexture = new THREE.CanvasTexture(bumpCanvas);
+                            bumpTexture.wrapS = THREE.RepeatWrapping;
+                            bumpTexture.wrapT = THREE.RepeatWrapping;
+                            bumpTexture.repeat.set(8, 8); // Higher frequency for fine detail
+
+                            // Update material with enhanced properties
+                            const { material } = tileSceneRef.current;
+                            material.map = texture;
+                            material.bumpMap = bumpTexture;
+                            material.bumpScale = 0.05; // More pronounced bump for larger, realistic granules
+                            material.roughness = 0.9; // More rubber-like
+                            material.metalness = 0.05; // Very low metalness for rubber
+                            material.color.setHex(0xffffff);
+                            material.needsUpdate = true;
+
+                            setTileLoading(false);
+                        } catch (error) {
+                            console.error('Texture update error:', error);
+                            setTileLoading(false);
+                        }
+                    }, 100);
+                }, [totalParts, parts, createRandomizedTexture, createBumpMap]);
+
+                const resetTileView = useCallback(() => {
+                    if (tileSceneRef.current) {
+                        const { camera, controls, tile } = tileSceneRef.current;
+                        camera.position.set(300, 200, 300);
+                        tile.rotation.set(0, 0, 0);
+                        controls.reset();
+                    }
+                }, []);
+
+                return React.createElement('div', { className: 'tile-preview-section' },
+                    React.createElement('h2', { className: 'palette-title' }, '3D Tile Preview'),
+                    React.createElement('div', { 
+                        className: 'tile-preview-container',
+                        ref: tileContainerRef
+                    },
+                        tileLoading && React.createElement('div', { className: 'tile-preview-loading' }, 'Updating texture...'),
+                        tileError && React.createElement('div', { className: 'tile-preview-error' }, tileError)
+                    ),
+                    React.createElement('div', { className: 'tile-preview-controls' },
+                        React.createElement('div', { className: 'tile-preview-info' },
+                            React.createElement('span', null, '200×200×20mm tile • 1-4mm granules'),
+                            React.createElement('span', null, 'Drag to rotate • Scroll to zoom')
+                        ),
+                        React.createElement('button', {
+                            className: 'tile-preview-reset',
+                            onClick: resetTileView
+                        }, 'Reset View')
+                    )
+                );
+            }
+
             // Main App Component
             function App() {
                 const canvasRef = useRef(null);
@@ -1161,46 +1865,11 @@
                 });
                 const [shareInput, setShareInput] = useState('');
                 const [shareError, setShareError] = useState('');
-                const [dimensions, setDimensions] = useState({ width: 1000, height: 500 });
 
-                // Dynamic canvas sizing based on viewport
-                const getCanvasDimensions = () => {
-                    const viewportWidth = window.innerWidth;
-                    const wrapperWidth = Math.min(viewportWidth - 40, 1000); // 20px padding on each side
-                    
-                    // For mobile, use full width with 2:1 aspect ratio
-                    if (viewportWidth <= 768) {
-                        return {
-                            width: wrapperWidth,
-                            height: wrapperWidth / 2
-                        };
-                    }
-                    
-                    // Desktop: default size
-                    return {
-                        width: 1000,
-                        height: 500
-                    };
-                };
-                
-                const canvasWidth = dimensions.width;
-                const canvasHeight = dimensions.height;
+                const canvasWidth = 1000;
+                const canvasHeight = 500;
                 const exportWidth = 2000;
                 const exportHeight = 1000;
-                
-                // Update dimensions on resize
-                useEffect(() => {
-                    const handleResize = () => {
-                        const newDimensions = getCanvasDimensions();
-                        setDimensions(newDimensions);
-                    };
-                    
-                    // Set initial dimensions
-                    handleResize();
-                    
-                    window.addEventListener('resize', handleResize);
-                    return () => window.removeEventListener('resize', handleResize);
-                }, []);
 
                 // Initialize Voronoi diagram
                 useEffect(() => {
@@ -1244,7 +1913,7 @@
                     };
 
                     initializeVoronoi();
-                }, [seed, canvasWidth, canvasHeight]);
+                }, [seed]);
 
                 // Render canvas
                 useEffect(() => {
@@ -1441,7 +2110,7 @@
                     
                     // Restore the canvas state
                     ctx.restore();
-                }, [voronoiData, parts, seed, zoomLevel, panOffset, canvasWidth, canvasHeight]);
+                }, [voronoiData, parts, seed, zoomLevel, panOffset]);
 
                 // Add part function
                 const addPart = useCallback((colourIndex) => {
@@ -2218,6 +2887,11 @@
                             ),
                             
                             React.createElement('div', { className: 'right-controls' },
+                                React.createElement(TilePreview, {
+                                    canvasRef: canvasRef,
+                                    parts: parts,
+                                    totalParts: totalParts
+                                }),
                                 totalParts > 0 && React.createElement('div', { className: 'blend-preview-section' },
                                     React.createElement('h2', { className: 'palette-title' }, 'Average Blend Colour'),
                                     React.createElement('div', {
