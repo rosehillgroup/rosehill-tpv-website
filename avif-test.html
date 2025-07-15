@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVIF Loading Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: white;
+            padding: 30px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .test-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+        .test-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+        .test-card-info {
+            padding: 15px;
+        }
+        .dom-manipulation-test {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .warning { color: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>AVIF Loading Test - Debugging colour.html Issue</h1>
+        
+        <div class="test-section">
+            <h2>Test 1: Normal AVIF Loading</h2>
+            <p>This should load AVIF images normally without DOM manipulation:</p>
+            <div class="test-grid" id="normal-grid">
+                <div class="test-card">
+                    <picture>
+                        <source srcset="Azure RH23.avif" type="image/avif">
+                        <source srcset="Azure RH23.webp" type="image/webp">
+                        <img src="Azure RH23.jpg" alt="Azure RH23" loading="lazy">
+                    </picture>
+                    <div class="test-card-info">
+                        <h3>Azure RH23</h3>
+                        <p>Normal loading</p>
+                    </div>
+                </div>
+                <div class="test-card">
+                    <picture>
+                        <source srcset="Beige RH30.avif" type="image/avif">
+                        <source srcset="Beige RH30.webp" type="image/webp">
+                        <img src="Beige RH30.jpg" alt="Beige RH30" loading="lazy">
+                    </picture>
+                    <div class="test-card-info">
+                        <h3>Beige RH30</h3>
+                        <p>Normal loading</p>
+                    </div>
+                </div>
+                <div class="test-card">
+                    <picture>
+                        <source srcset="Bright Red RH02.avif" type="image/avif">
+                        <source srcset="Bright Red RH02.webp" type="image/webp">
+                        <img src="Bright Red RH02.jpg" alt="Bright Red RH02" loading="lazy">
+                    </picture>
+                    <div class="test-card-info">
+                        <h3>Bright Red RH02</h3>
+                        <p>Normal loading</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 2: DOM Manipulation Test (Reproducing the Issue)</h2>
+            <p>This will simulate the randomizeColorCards() function from colour.html:</p>
+            <div class="dom-manipulation-test">
+                <p><strong>What happens:</strong></p>
+                <ol>
+                    <li>Cards are initially loaded with AVIF sources</li>
+                    <li>JavaScript shuffles the cards by clearing innerHTML and re-appending</li>
+                    <li>This interrupts the browser's progressive image loading</li>
+                    <li>Browser falls back to JPEG instead of AVIF</li>
+                </ol>
+                <button onclick="testDOMManipulation()">Simulate DOM Manipulation</button>
+                <p id="test-result"></p>
+            </div>
+            <div class="test-grid" id="manipulation-grid">
+                <div class="test-card">
+                    <picture>
+                        <source srcset="Standard Green RH10.avif" type="image/avif">
+                        <source srcset="Standard Green RH10.webp" type="image/webp">
+                        <img src="Standard Green RH10.jpg" alt="Standard Green RH10" loading="lazy">
+                    </picture>
+                    <div class="test-card-info">
+                        <h3>Standard Green RH10</h3>
+                        <p>Will be manipulated</p>
+                    </div>
+                </div>
+                <div class="test-card">
+                    <picture>
+                        <source srcset="Orange RH50.avif" type="image/avif">
+                        <source srcset="Orange RH50.webp" type="image/webp">
+                        <img src="Orange RH50.jpg" alt="Orange RH50" loading="lazy">
+                    </picture>
+                    <div class="test-card-info">
+                        <h3>Orange RH50</h3>
+                        <p>Will be manipulated</p>
+                    </div>
+                </div>
+                <div class="test-card">
+                    <picture>
+                        <source srcset="Purple RH21.avif" type="image/avif">
+                        <source srcset="Purple RH21.webp" type="image/webp">
+                        <img src="Purple RH21.jpg" alt="Purple RH21" loading="lazy">
+                    </picture>
+                    <div class="test-card-info">
+                        <h3>Purple RH21</h3>
+                        <p>Will be manipulated</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>Browser AVIF Support</h2>
+            <p id="avif-support"></p>
+        </div>
+
+        <div class="test-section">
+            <h2>Recommended Solutions</h2>
+            <ol>
+                <li><strong>Delay randomization:</strong> Wait for images to load before shuffling</li>
+                <li><strong>Use CSS randomization:</strong> Instead of DOM manipulation, use CSS transforms</li>
+                <li><strong>Preload images:</strong> Ensure AVIF images are preloaded before shuffling</li>
+                <li><strong>Add MIME type headers:</strong> Configure server to properly serve AVIF files</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Test AVIF support
+        function testAVIFSupport() {
+            const avifSupport = document.getElementById('avif-support');
+            
+            const avifImage = new Image();
+            avifImage.onload = function() {
+                avifSupport.innerHTML = '<span class="success">✓ Browser supports AVIF images</span>';
+            };
+            avifImage.onerror = function() {
+                avifSupport.innerHTML = '<span class="error">✗ Browser does not support AVIF images</span>';
+            };
+            avifImage.src = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAAB0AAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAIAAAACAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQ0MAAAAABNjb2xybmNseAACAAIAAYAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAACVtZGF0EgAKCBgABogQEAwgMg8f8D///8WfhwB8+ErK42A=';
+        }
+
+        // Test DOM manipulation (reproducing the issue)
+        function testDOMManipulation() {
+            const grid = document.getElementById('manipulation-grid');
+            const resultElement = document.getElementById('test-result');
+            
+            resultElement.innerHTML = '<span class="warning">Performing DOM manipulation...</span>';
+            
+            // Simulate the randomizeColorCards() function
+            setTimeout(() => {
+                const cards = Array.from(grid.children);
+                
+                // Shuffle the array (Fisher-Yates algorithm)
+                for (let i = cards.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [cards[i], cards[j]] = [cards[j], cards[i]];
+                }
+                
+                // Clear the grid and append shuffled cards (this is the problem!)
+                grid.innerHTML = '';
+                cards.forEach(card => grid.appendChild(card));
+                
+                resultElement.innerHTML = '<span class="error">DOM manipulation complete - this may cause AVIF fallback to JPEG</span>';
+            }, 1000);
+        }
+
+        // Monitor image loading
+        document.addEventListener('DOMContentLoaded', function() {
+            testAVIFSupport();
+            
+            // Log which images are actually loaded
+            const images = document.querySelectorAll('img');
+            images.forEach((img, index) => {
+                img.addEventListener('load', function() {
+                    console.log(`Image ${index + 1} loaded from:`, this.currentSrc || this.src);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

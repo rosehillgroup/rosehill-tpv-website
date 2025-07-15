@@ -452,24 +452,32 @@
 
             <!-- Image Gallery -->
             <section class="image-gallery">
-                <img src="../images/installations/Freshwater_Beach_2.jpg" alt="Renovations - Main Image" class="main-image" onclick="openLightbox(0)">
+                <picture>
+                <source srcset="../images/installations/Freshwater_Beach_2.avif" type="image/avif">
+                <source srcset="../images/installations/Freshwater_Beach_2.webp" type="image/webp">
+                <img src="../images/installations/Freshwater_Beach_2.jpg" alt="Renovations - Main Image" class="main-image" onclick="openLightbox(0)" loading="lazy">
+            </picture>
                 <div class="thumbnail-grid">
-                <img src="../images/installations/Freshwater_Beach_2.jpg" 
-                     alt="Renovations - Image 1" 
-                     class="thumbnail" 
-                     onclick="setMainImage(0); openLightbox(0)">
-                <img src="../images/installations/Freshwater_Beach_5.jpg" 
-                     alt="Renovations - Image 2" 
-                     class="thumbnail" 
-                     onclick="setMainImage(1); openLightbox(1)">
-                <img src="../images/installations/Freshwater_Beach_1.jpg" 
-                     alt="Renovations - Image 3" 
-                     class="thumbnail" 
-                     onclick="setMainImage(2); openLightbox(2)">
-                <img src="../images/installations/Freshwater_Beach_3.jpg" 
-                     alt="Renovations - Image 4" 
-                     class="thumbnail" 
-                     onclick="setMainImage(3); openLightbox(3)"></div>
+                <picture>
+                <source srcset="../images/installations/Freshwater_Beach_2.avif" type="image/avif">
+                <source srcset="../images/installations/Freshwater_Beach_2.webp" type="image/webp">
+                <img src="../images/installations/Freshwater_Beach_2.jpg" alt="Renovations - Image 1" class="thumbnail" onclick="setMainImage(0); openLightbox(0)" loading="lazy">
+            </picture>
+                <picture>
+                <source srcset="../images/installations/Freshwater_Beach_5.avif" type="image/avif">
+                <source srcset="../images/installations/Freshwater_Beach_5.webp" type="image/webp">
+                <img src="../images/installations/Freshwater_Beach_5.jpg" alt="Renovations - Image 2" class="thumbnail" onclick="setMainImage(1); openLightbox(1)" loading="lazy">
+            </picture>
+                <picture>
+                <source srcset="../images/installations/Freshwater_Beach_1.avif" type="image/avif">
+                <source srcset="../images/installations/Freshwater_Beach_1.webp" type="image/webp">
+                <img src="../images/installations/Freshwater_Beach_1.jpg" alt="Renovations - Image 3" class="thumbnail" onclick="setMainImage(2); openLightbox(2)" loading="lazy">
+            </picture>
+                <picture>
+                <source srcset="../images/installations/Freshwater_Beach_3.avif" type="image/avif">
+                <source srcset="../images/installations/Freshwater_Beach_3.webp" type="image/webp">
+                <img src="../images/installations/Freshwater_Beach_3.jpg" alt="Renovations - Image 4" class="thumbnail" onclick="setMainImage(3); openLightbox(3)" loading="lazy">
+            </picture></div>
             </section>
 
             <!-- Content -->

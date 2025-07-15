@@ -452,20 +452,23 @@
 
             <!-- Image Gallery -->
             <section class="image-gallery">
-                <img src="../images/installations/1702953338828.jpeg" alt="Playground Upgrade - Main Image" class="main-image" onclick="openLightbox(0)">
+                <picture>
+                <source srcset="../images/installations/1702953338828.webp" type="image/webp">
+                <img src="../images/installations/1702953338828.jpeg" alt="Playground Upgrade - Main Image" class="main-image" onclick="openLightbox(0)" loading="lazy">
+            </picture>
                 <div class="thumbnail-grid">
-                <img src="../images/installations/1702953338828.jpeg" 
-                     alt="Playground Upgrade - Image 1" 
-                     class="thumbnail" 
-                     onclick="setMainImage(0); openLightbox(0)">
-                <img src="../images/installations/1702953334190.jpeg" 
-                     alt="Playground Upgrade - Image 2" 
-                     class="thumbnail" 
-                     onclick="setMainImage(1); openLightbox(1)">
-                <img src="../images/installations/1702953342062.jpeg" 
-                     alt="Playground Upgrade - Image 3" 
-                     class="thumbnail" 
-                     onclick="setMainImage(2); openLightbox(2)"></div>
+                <picture>
+                <source srcset="../images/installations/1702953338828.webp" type="image/webp">
+                <img src="../images/installations/1702953338828.jpeg" alt="Playground Upgrade - Image 1" class="thumbnail" onclick="setMainImage(0); openLightbox(0)" loading="lazy">
+            </picture>
+                <picture>
+                <source srcset="../images/installations/1702953334190.webp" type="image/webp">
+                <img src="../images/installations/1702953334190.jpeg" alt="Playground Upgrade - Image 2" class="thumbnail" onclick="setMainImage(1); openLightbox(1)" loading="lazy">
+            </picture>
+                <picture>
+                <source srcset="../images/installations/1702953342062.webp" type="image/webp">
+                <img src="../images/installations/1702953342062.jpeg" alt="Playground Upgrade - Image 3" class="thumbnail" onclick="setMainImage(2); openLightbox(2)" loading="lazy">
+            </picture></div>
             </section>
 
             <!-- Content -->

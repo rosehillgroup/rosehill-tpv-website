@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVIF Loading Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-container { margin: 20px 0; border: 1px solid #ccc; padding: 20px; }
+        .test-image { max-width: 200px; max-height: 200px; object-fit: contain; }
+        .status { margin: 10px 0; padding: 10px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .warning { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <h1>AVIF Loading Test - Colour Page Images</h1>
+    
+    <div class="test-container">
+        <h2>Test 1: Direct AVIF with spaces (current approach)</h2>
+        <picture>
+            <source srcset="Azure RH23.avif" type="image/avif">
+            <source srcset="Azure RH23.webp" type="image/webp">
+            <img src="Azure RH23.jpg" alt="Azure RH23" class="test-image" id="test1">
+        </picture>
+        <div id="status1" class="status"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Test 2: URL-encoded AVIF</h2>
+        <picture>
+            <source srcset="Azure%20RH23.avif" type="image/avif">
+            <source srcset="Azure%20RH23.webp" type="image/webp">
+            <img src="Azure%20RH23.jpg" alt="Azure RH23" class="test-image" id="test2">
+        </picture>
+        <div id="status2" class="status"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Test 3: Blend image with spaces</h2>
+        <picture>
+            <source srcset="Blends/01 Gold_66-33_RH41-RH40_FTZ3757.avif" type="image/avif">
+            <source srcset="Blends/01 Gold_66-33_RH41-RH40_FTZ3757.webp" type="image/webp">
+            <img src="Blends/01 Gold_66-33_RH41-RH40_FTZ3757.jpg" alt="Gold Blend" class="test-image" id="test3">
+        </picture>
+        <div id="status3" class="status"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Test 4: Blend image URL-encoded</h2>
+        <picture>
+            <source srcset="Blends/01%20Gold_66-33_RH41-RH40_FTZ3757.avif" type="image/avif">
+            <source srcset="Blends/01%20Gold_66-33_RH41-RH40_FTZ3757.webp" type="image/webp">
+            <img src="Blends/01%20Gold_66-33_RH41-RH40_FTZ3757.jpg" alt="Gold Blend" class="test-image" id="test4">
+        </picture>
+        <div id="status4" class="status"></div>
+    </div>
+    
+    <div class="test-container">
+        <h2>Test 5: Working image from other page (no spaces)</h2>
+        <picture>
+            <source srcset="playground.avif" type="image/avif">
+            <source srcset="playground.webp" type="image/webp">
+            <img src="playground.jpg" alt="Playground" class="test-image" id="test5">
+        </picture>
+        <div id="status5" class="status"></div>
+    </div>
+
+    <script>
+        function checkImageFormat(img, testNumber) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            img.onload = function() {
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                ctx.drawImage(img, 0, 0);
+                
+                // Check if image loaded and what format browser used
+                const statusDiv = document.getElementById(`status${testNumber}`);
+                const currentSrc = img.currentSrc || img.src;
+                
+                if (currentSrc.includes('.avif')) {
+                    statusDiv.innerHTML = '✅ SUCCESS: AVIF loaded';
+                    statusDiv.className = 'status success';
+                } else if (currentSrc.includes('.webp')) {
+                    statusDiv.innerHTML = '⚠️ WARNING: WebP loaded (AVIF failed)';
+                    statusDiv.className = 'status warning';
+                } else {
+                    statusDiv.innerHTML = '❌ ERROR: JPEG loaded (AVIF and WebP failed)';
+                    statusDiv.className = 'status error';
+                }
+                
+                statusDiv.innerHTML += `<br>Current source: ${currentSrc}`;
+                statusDiv.innerHTML += `<br>Natural size: ${img.naturalWidth}x${img.naturalHeight}`;
+            };
+            
+            img.onerror = function() {
+                const statusDiv = document.getElementById(`status${testNumber}`);
+                statusDiv.innerHTML = '❌ ERROR: Image failed to load';
+                statusDiv.className = 'status error';
+            };
+        }
+        
+        // Test all images
+        for (let i = 1; i <= 5; i++) {
+            const img = document.getElementById(`test${i}`);
+            checkImageFormat(img, i);
+        }
+        
+        // Browser support check
+        function checkAVIFSupport() {
+            const avif = new Image();
+            avif.onload = avif.onerror = function() {
+                const supported = avif.height === 2;
+                console.log('AVIF support:', supported);
+                document.body.insertAdjacentHTML('afterbegin', 
+                    `<div class="status ${supported ? 'success' : 'error'}">
+                        ${supported ? '✅' : '❌'} AVIF Support: ${supported}
+                    </div>`);
+            };
+            avif.src = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAAB0AAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAIAAAACAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQ0MAAAAABNjb2xybmNseAACAAIAAYAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAACVtZGF0EgAKCBgABogQEAwgMg8f8D///8WfhwB8+ErK42A=';
+        }
+        
+        checkAVIFSupport();
+    </script>
+</body>
+</html>

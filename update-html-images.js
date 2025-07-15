@@ -25,14 +25,18 @@ let stats = {
 };
 
 /**
- * Check if WebP version of image exists
+ * Check if modern image formats exist (AVIF and WebP)
  */
-function webpExists(imagePath) {
+function checkModernFormats(imagePath) {
     const ext = path.extname(imagePath);
     const nameWithoutExt = imagePath.replace(ext, '');
+    const avifPath = nameWithoutExt + '.avif';
     const webpPath = nameWithoutExt + '.webp';
     
-    return fs.existsSync(webpPath);
+    return {
+        avif: fs.existsSync(avifPath),
+        webp: fs.existsSync(webpPath)
+    };
 }
 
 /**
@@ -46,10 +50,12 @@ function updateImageReferences(htmlContent, filePath) {
     const imgPattern = /<img([^>]*?)src=["']([^"']+\.(jpg|jpeg|png))["']([^>]*?)>/gi;
     
     updatedContent = updatedContent.replace(imgPattern, (match, beforeSrc, imageSrc, ext, afterSrc) => {
-        // Check if WebP version exists
-        let webpSrc = imageSrc.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+        // Generate modern format paths
+        const baseName = imageSrc.replace(/\.(jpg|jpeg|png)$/i, '');
+        const avifSrc = baseName + '.avif';
+        const webpSrc = baseName + '.webp';
         
-        // Handle relative paths for WebP check
+        // Handle relative paths for format check
         let checkPath = imageSrc;
         if (!imageSrc.startsWith('/') && !imageSrc.startsWith('http')) {
             // For installation pages, images are in ../images/installations/
@@ -60,8 +66,10 @@ function updateImageReferences(htmlContent, filePath) {
             }
         }
         
-        if (webpExists(checkPath)) {
-            // Create picture element with WebP and fallback
+        const formats = checkModernFormats(checkPath);
+        
+        if (formats.avif || formats.webp) {
+            // Create picture element with AVIF, WebP, and JPEG fallbacks
             const altMatch = match.match(/alt=["']([^"']*?)["']/);
             const altText = altMatch ? altMatch[1] : '';
             
@@ -74,13 +82,21 @@ function updateImageReferences(htmlContent, filePath) {
             const loadingMatch = match.match(/loading=["']([^"']*?)["']/);
             const loadingAttr = loadingMatch ? ` loading="${loadingMatch[1]}"` : ' loading="lazy"';
             
+            let sources = '';
+            if (formats.avif) {
+                sources += `<source srcset="${avifSrc}" type="image/avif">\n                `;
+            }
+            if (formats.webp) {
+                sources += `<source srcset="${webpSrc}" type="image/webp">\n                `;
+            }
+            
             const newElement = `<picture>
-                <source srcset="${webpSrc}" type="image/webp">
-                <img${beforeSrc}src="${imageSrc}"${afterSrc}${loadingAttr}>
+                ${sources}<img${beforeSrc}src="${imageSrc}"${afterSrc}${loadingAttr}>
             </picture>`;
             
             imageCount++;
-            console.log(`  ✓ Updated: ${imageSrc} → WebP with fallback`);
+            const formatList = [formats.avif && 'AVIF', formats.webp && 'WebP', 'JPEG'].filter(Boolean).join(' → ');
+            console.log(`  ✓ Updated: ${imageSrc} → ${formatList}`);
             return newElement;
         } else {
             // Just add lazy loading if not present

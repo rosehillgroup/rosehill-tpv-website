@@ -452,20 +452,27 @@
 
             <!-- Image Gallery -->
             <section class="image-gallery">
-                <img src="../images/installations/DSC06567.jpg" alt="Lingnan University's New Outdoor Fitness Gym - Main Image" class="main-image" onclick="openLightbox(0)">
+                <picture>
+                <source srcset="../images/installations/DSC06567.avif" type="image/avif">
+                <source srcset="../images/installations/DSC06567.webp" type="image/webp">
+                <img src="../images/installations/DSC06567.jpg" alt="Lingnan University" class="main-image" onclick="openLightbox(0)" loading="lazy">
+            </picture>
                 <div class="thumbnail-grid">
-                <img src="../images/installations/DSC06567.jpg" 
-                     alt="Lingnan University's New Outdoor Fitness Gym - Image 1" 
-                     class="thumbnail" 
-                     onclick="setMainImage(0); openLightbox(0)">
-                <img src="../images/installations/DSC06559.jpg" 
-                     alt="Lingnan University's New Outdoor Fitness Gym - Image 2" 
-                     class="thumbnail" 
-                     onclick="setMainImage(1); openLightbox(1)">
-                <img src="../images/installations/DSC06580.jpg" 
-                     alt="Lingnan University's New Outdoor Fitness Gym - Image 3" 
-                     class="thumbnail" 
-                     onclick="setMainImage(2); openLightbox(2)"></div>
+                <picture>
+                <source srcset="../images/installations/DSC06567.avif" type="image/avif">
+                <source srcset="../images/installations/DSC06567.webp" type="image/webp">
+                <img src="../images/installations/DSC06567.jpg" alt="Lingnan University" class="thumbnail" onclick="setMainImage(0); openLightbox(0)" loading="lazy">
+            </picture>
+                <picture>
+                <source srcset="../images/installations/DSC06559.avif" type="image/avif">
+                <source srcset="../images/installations/DSC06559.webp" type="image/webp">
+                <img src="../images/installations/DSC06559.jpg" alt="Lingnan University" class="thumbnail" onclick="setMainImage(1); openLightbox(1)" loading="lazy">
+            </picture>
+                <picture>
+                <source srcset="../images/installations/DSC06580.avif" type="image/avif">
+                <source srcset="../images/installations/DSC06580.webp" type="image/webp">
+                <img src="../images/installations/DSC06580.jpg" alt="Lingnan University" class="thumbnail" onclick="setMainImage(2); openLightbox(2)" loading="lazy">
+            </picture></div>
             </section>
 
             <!-- Content -->

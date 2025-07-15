@@ -452,16 +452,22 @@
 
             <!-- Image Gallery -->
             <section class="image-gallery">
-                <img src="../images/installations/1712217674036.jpg" alt="Ysgol Cedewain Playground - Main Image" class="main-image" onclick="openLightbox(0)">
+                <picture>
+                <source srcset="../images/installations/1712217674036.avif" type="image/avif">
+                <source srcset="../images/installations/1712217674036.webp" type="image/webp">
+                <img src="../images/installations/1712217674036.jpg" alt="Ysgol Cedewain Playground - Main Image" class="main-image" onclick="openLightbox(0)" loading="lazy">
+            </picture>
                 <div class="thumbnail-grid">
-                <img src="../images/installations/1712217674036.jpg" 
-                     alt="Ysgol Cedewain Playground - Image 1" 
-                     class="thumbnail" 
-                     onclick="setMainImage(0); openLightbox(0)">
-                <img src="../images/installations/1712217672389.jpg" 
-                     alt="Ysgol Cedewain Playground - Image 2" 
-                     class="thumbnail" 
-                     onclick="setMainImage(1); openLightbox(1)"></div>
+                <picture>
+                <source srcset="../images/installations/1712217674036.avif" type="image/avif">
+                <source srcset="../images/installations/1712217674036.webp" type="image/webp">
+                <img src="../images/installations/1712217674036.jpg" alt="Ysgol Cedewain Playground - Image 1" class="thumbnail" onclick="setMainImage(0); openLightbox(0)" loading="lazy">
+            </picture>
+                <picture>
+                <source srcset="../images/installations/1712217672389.avif" type="image/avif">
+                <source srcset="../images/installations/1712217672389.webp" type="image/webp">
+                <img src="../images/installations/1712217672389.jpg" alt="Ysgol Cedewain Playground - Image 2" class="thumbnail" onclick="setMainImage(1); openLightbox(1)" loading="lazy">
+            </picture></div>
             </section>
 
             <!-- Content -->

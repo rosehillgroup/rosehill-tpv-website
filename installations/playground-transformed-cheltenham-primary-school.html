@@ -452,20 +452,27 @@
 
             <!-- Image Gallery -->
             <section class="image-gallery">
-                <img src="../images/installations/Cheltenham_School_4.jpg" alt="Playground Transformed - Main Image" class="main-image" onclick="openLightbox(0)">
+                <picture>
+                <source srcset="../images/installations/Cheltenham_School_4.avif" type="image/avif">
+                <source srcset="../images/installations/Cheltenham_School_4.webp" type="image/webp">
+                <img src="../images/installations/Cheltenham_School_4.jpg" alt="Playground Transformed - Main Image" class="main-image" onclick="openLightbox(0)" loading="lazy">
+            </picture>
                 <div class="thumbnail-grid">
-                <img src="../images/installations/Cheltenham_School_4.jpg" 
-                     alt="Playground Transformed - Image 1" 
-                     class="thumbnail" 
-                     onclick="setMainImage(0); openLightbox(0)">
-                <img src="../images/installations/Cheltenham_School_3.jpg" 
-                     alt="Playground Transformed - Image 2" 
-                     class="thumbnail" 
-                     onclick="setMainImage(1); openLightbox(1)">
-                <img src="../images/installations/Cheltenham_School_2.jpg" 
-                     alt="Playground Transformed - Image 3" 
-                     class="thumbnail" 
-                     onclick="setMainImage(2); openLightbox(2)"></div>
+                <picture>
+                <source srcset="../images/installations/Cheltenham_School_4.avif" type="image/avif">
+                <source srcset="../images/installations/Cheltenham_School_4.webp" type="image/webp">
+                <img src="../images/installations/Cheltenham_School_4.jpg" alt="Playground Transformed - Image 1" class="thumbnail" onclick="setMainImage(0); openLightbox(0)" loading="lazy">
+            </picture>
+                <picture>
+                <source srcset="../images/installations/Cheltenham_School_3.avif" type="image/avif">
+                <source srcset="../images/installations/Cheltenham_School_3.webp" type="image/webp">
+                <img src="../images/installations/Cheltenham_School_3.jpg" alt="Playground Transformed - Image 2" class="thumbnail" onclick="setMainImage(1); openLightbox(1)" loading="lazy">
+            </picture>
+                <picture>
+                <source srcset="../images/installations/Cheltenham_School_2.avif" type="image/avif">
+                <source srcset="../images/installations/Cheltenham_School_2.webp" type="image/webp">
+                <img src="../images/installations/Cheltenham_School_2.jpg" alt="Playground Transformed - Image 3" class="thumbnail" onclick="setMainImage(2); openLightbox(2)" loading="lazy">
+            </picture></div>
             </section>
 
             <!-- Content -->

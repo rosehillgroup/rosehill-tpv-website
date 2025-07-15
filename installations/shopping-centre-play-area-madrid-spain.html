@@ -452,20 +452,23 @@
 
             <!-- Image Gallery -->
             <section class="image-gallery">
-                <img src="../images/installations/Shopping_Centre_Madrid_3-scaled.jpeg" alt="Shopping Centre Play Area - Main Image" class="main-image" onclick="openLightbox(0)">
+                <picture>
+                <source srcset="../images/installations/Shopping_Centre_Madrid_3-scaled.webp" type="image/webp">
+                <img src="../images/installations/Shopping_Centre_Madrid_3-scaled.jpeg" alt="Shopping Centre Play Area - Main Image" class="main-image" onclick="openLightbox(0)" loading="lazy">
+            </picture>
                 <div class="thumbnail-grid">
-                <img src="../images/installations/Shopping_Centre_Madrid_3-scaled.jpeg" 
-                     alt="Shopping Centre Play Area - Image 1" 
-                     class="thumbnail" 
-                     onclick="setMainImage(0); openLightbox(0)">
-                <img src="../images/installations/Shopping_Centre_Madrid_2-scaled.jpeg" 
-                     alt="Shopping Centre Play Area - Image 2" 
-                     class="thumbnail" 
-                     onclick="setMainImage(1); openLightbox(1)">
-                <img src="../images/installations/Shopping_Centre_Madrid_4-scaled.jpeg" 
-                     alt="Shopping Centre Play Area - Image 3" 
-                     class="thumbnail" 
-                     onclick="setMainImage(2); openLightbox(2)"></div>
+                <picture>
+                <source srcset="../images/installations/Shopping_Centre_Madrid_3-scaled.webp" type="image/webp">
+                <img src="../images/installations/Shopping_Centre_Madrid_3-scaled.jpeg" alt="Shopping Centre Play Area - Image 1" class="thumbnail" onclick="setMainImage(0); openLightbox(0)" loading="lazy">
+            </picture>
+                <picture>
+                <source srcset="../images/installations/Shopping_Centre_Madrid_2-scaled.webp" type="image/webp">
+                <img src="../images/installations/Shopping_Centre_Madrid_2-scaled.jpeg" alt="Shopping Centre Play Area - Image 2" class="thumbnail" onclick="setMainImage(1); openLightbox(1)" loading="lazy">
+            </picture>
+                <picture>
+                <source srcset="../images/installations/Shopping_Centre_Madrid_4-scaled.webp" type="image/webp">
+                <img src="../images/installations/Shopping_Centre_Madrid_4-scaled.jpeg" alt="Shopping Centre Play Area - Image 3" class="thumbnail" onclick="setMainImage(2); openLightbox(2)" loading="lazy">
+            </picture></div>
             </section>
 
             <!-- Content -->

@@ -452,7 +452,11 @@
 
             <!-- Image Gallery -->
             <section class="image-gallery">
-                <img src="../images/installations/Chile-2.jpg" alt="Playground Installation - Main Image" class="main-image" onclick="openLightbox(0)">
+                <picture>
+                <source srcset="../images/installations/Chile-2.avif" type="image/avif">
+                <source srcset="../images/installations/Chile-2.webp" type="image/webp">
+                <img src="../images/installations/Chile-2.jpg" alt="Playground Installation - Main Image" class="main-image" onclick="openLightbox(0)" loading="lazy">
+            </picture>
                 
             </section>
 
