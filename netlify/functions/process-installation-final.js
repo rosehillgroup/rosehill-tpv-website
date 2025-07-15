@@ -167,15 +167,27 @@ exports.handler = async (event, context) => {
             };
         }
         
+        // Auto-regenerate installation pages with optimized images
+        // Note: In a production environment, you might want to do this as a background job
+        try {
+            const { autoRegenerateInstallationPages } = require('../../auto-generate-installation-page');
+            await autoRegenerateInstallationPages();
+            console.log('✅ Installation pages regenerated with optimized images');
+        } catch (regenError) {
+            console.error('⚠️ Failed to regenerate installation pages:', regenError);
+            // Don't fail the main request if regeneration fails
+        }
+        
         return {
             statusCode: 200,
             headers,
             body: JSON.stringify({
                 success: true,
-                message: 'Installation created successfully with images!',
+                message: 'Installation created successfully with optimized images!',
                 data: {
                     installation: data[0],
-                    images_uploaded: uploadedImages.length
+                    images_uploaded: uploadedImages.length,
+                    optimized_images: true
                 }
             })
         };

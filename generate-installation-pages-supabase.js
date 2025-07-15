@@ -8,6 +8,68 @@ const supabaseUrl = process.env.SUPABASE_URL || 'your-supabase-url';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || 'your-supabase-service-role-key';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+/**
+ * Transform Supabase URL to use image transformations
+ * @param {string} originalUrl - Original Supabase storage URL
+ * @param {Object} options - Transformation options
+ * @returns {string} - Transformed URL
+ */
+function transformSupabaseUrl(originalUrl, options = {}) {
+    if (!originalUrl || !originalUrl.includes('supabase.co/storage')) {
+        return originalUrl;
+    }
+    
+    const transformParams = [];
+    
+    // Add width and height if specified
+    if (options.width) transformParams.push(`width=${options.width}`);
+    if (options.height) transformParams.push(`height=${options.height}`);
+    
+    // Add quality (default 80, optimized 75)
+    const quality = options.quality || 75;
+    transformParams.push(`quality=${quality}`);
+    
+    // Add resize mode
+    const resize = options.resize || 'cover';
+    transformParams.push(`resize=${resize}`);
+    
+    // Add format for WebP
+    if (options.format) {
+        transformParams.push(`format=${options.format}`);
+    }
+    
+    // Construct transform URL
+    const transformQuery = transformParams.join('&');
+    const transformUrl = `${originalUrl}?${transformQuery}`;
+    
+    return transformUrl;
+}
+
+/**
+ * Create optimized picture element with Supabase transformations
+ * @param {string} supabaseUrl - Original Supabase URL
+ * @param {string} altText - Alt text for image
+ * @param {Object} options - Size options
+ * @param {string} onclickHandler - Optional onclick handler
+ * @returns {string} - Picture element HTML
+ */
+function createOptimizedPictureElement(supabaseUrl, altText, options = {}, onclickHandler = '') {
+    if (!supabaseUrl || !supabaseUrl.includes('supabase.co/storage')) {
+        // Fallback for non-Supabase URLs
+        const onclickAttr = onclickHandler ? ` onclick="${onclickHandler}"` : '';
+        return `<img src="${supabaseUrl}" alt="${altText}" loading="lazy"${onclickAttr}>`;
+    }
+    
+    const webpUrl = transformSupabaseUrl(supabaseUrl, { ...options, format: 'webp' });
+    const optimizedJpeg = transformSupabaseUrl(supabaseUrl, options);
+    const onclickAttr = onclickHandler ? ` onclick="${onclickHandler}"` : '';
+    
+    return `<picture>
+                        <source srcset="${webpUrl}" type="image/webp">
+                        <img src="${optimizedJpeg}" alt="${altText}" loading="lazy"${onclickAttr}>
+                    </picture>`;
+}
+
 // Function to generate individual installation pages from Supabase data
 async function generateInstallationPages() {
     try {
@@ -90,9 +152,18 @@ async function generateInstallationPage(installation, outputDir) {
                 filename = img;
             }
             
+            // Use optimized picture element for gallery thumbnails
+            const galleryImageOptions = { width: 400, height: 300 };
+            const pictureElement = createOptimizedPictureElement(
+                imageUrl, 
+                `${title} - Image ${index + 1}`, 
+                galleryImageOptions, 
+                `openModal(${index})`
+            );
+            
             return `
                 <div class="gallery-item">
-                    <img src="${imageUrl}" alt="${title} - Image ${index + 1}" onclick="openModal(${index})">
+                    ${pictureElement}
                 </div>`;
         }).join('');
 
@@ -112,9 +183,17 @@ async function generateInstallationPage(installation, outputDir) {
                 imageUrl = `../images/installations/${img}`;
             }
             
+            // Use optimized picture element for modal images (larger size)
+            const modalImageOptions = { width: 1200, height: 800 };
+            const pictureElement = createOptimizedPictureElement(
+                imageUrl, 
+                `${title} - Image ${index + 1}`, 
+                modalImageOptions
+            );
+            
             return `
                 <div class="modal-image" id="modal-img-${index}" ${index === 0 ? 'style="display: block;"' : ''}>
-                    <img src="${imageUrl}" alt="${title} - Image ${index + 1}">
+                    ${pictureElement}
                 </div>`;
         }).join('');
 
@@ -375,11 +454,18 @@ async function generateInstallationPage(installation, outputDir) {
             transform: translateY(-5px);
         }
 
-        .gallery-item img {
+        .gallery-item img,
+        .gallery-item picture {
             width: 100%;
             height: 250px;
             object-fit: cover;
             display: block;
+        }
+        
+        .gallery-item picture img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         /* Modal Styles */
@@ -408,10 +494,17 @@ async function generateInstallationPage(installation, outputDir) {
             text-align: center;
         }
 
-        .modal-image img {
+        .modal-image img,
+        .modal-image picture img {
             max-width: 100%;
             max-height: 70vh;
             object-fit: contain;
+        }
+        
+        .modal-image picture {
+            display: block;
+            max-width: 100%;
+            max-height: 70vh;
         }
 
         .close {
