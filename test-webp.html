@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebP Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-image {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-image img {
+            max-width: 200px;
+            height: auto;
+            border-radius: 4px;
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .error {
+            color: #F44336;
+            font-weight: bold;
+        }
+        .info {
+            color: #2196F3;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>🖼️ WebP Implementation Test</h1>
+    
+    <div class="test-image">
+        <h3>Test 1: Logo with WebP + Fallback</h3>
+        <picture>
+            <source srcset="rosehill_tpv_logo.webp" type="image/webp">
+            <img src="rosehill_tpv_logo.png" alt="Rosehill TPV Logo" loading="lazy">
+        </picture>
+        <p class="info">Should load WebP version in modern browsers, PNG in older browsers</p>
+    </div>
+    
+    <div class="test-image">
+        <h3>Test 2: Color Sample with WebP + Fallback</h3>
+        <picture>
+            <source srcset="Bright Red RH02.webp" type="image/webp">
+            <img src="Bright Red RH02.jpg" alt="Bright Red RH02" loading="lazy">
+        </picture>
+        <p class="info">Should load WebP version in modern browsers, JPEG in older browsers</p>
+    </div>
+    
+    <div class="test-image">
+        <h3>Test 3: Installation Image with WebP + Fallback</h3>
+        <picture>
+            <source srcset="images/installations/Barcelona_1.webp" type="image/webp">
+            <img src="images/installations/Barcelona_1.jpg" alt="Barcelona Installation" loading="lazy">
+        </picture>
+        <p class="info">Should load WebP version in modern browsers, JPEG in older browsers</p>
+    </div>
+    
+    <div class="test-image">
+        <h3>Test 4: Application Image with WebP + Fallback</h3>
+        <picture>
+            <source srcset="playground.webp" type="image/webp">
+            <img src="playground.jpg" alt="Playground" loading="lazy">
+        </picture>
+        <p class="info">Should load WebP version in modern browsers, JPEG in older browsers</p>
+    </div>
+    
+    <h2>📊 Browser Support Information</h2>
+    <div id="browser-info">
+        <p>Loading browser support information...</p>
+    </div>
+    
+    <script>
+        // Check WebP support
+        function checkWebPSupport() {
+            const webpCanvas = document.createElement('canvas');
+            webpCanvas.width = 1;
+            webpCanvas.height = 1;
+            const webpDataURL = webpCanvas.toDataURL('image/webp');
+            
+            const supportsWebP = webpDataURL.indexOf('data:image/webp') === 0;
+            
+            const browserInfo = document.getElementById('browser-info');
+            browserInfo.innerHTML = `
+                <p><strong>Browser:</strong> ${navigator.userAgent}</p>
+                <p><strong>WebP Support:</strong> <span class="${supportsWebP ? 'success' : 'error'}">${supportsWebP ? 'YES' : 'NO'}</span></p>
+                <p><strong>Expected behavior:</strong> ${supportsWebP ? 'Images should load as WebP files' : 'Images should fallback to JPEG/PNG files'}</p>
+            `;
+        }
+        
+        // Check image load success
+        function checkImageLoad() {
+            const images = document.querySelectorAll('img');
+            let loadedCount = 0;
+            
+            images.forEach((img, index) => {
+                img.addEventListener('load', () => {
+                    loadedCount++;
+                    console.log(`Image ${index + 1} loaded successfully:`, img.src);
+                    
+                    if (loadedCount === images.length) {
+                        console.log('All images loaded successfully!');
+                    }
+                });
+                
+                img.addEventListener('error', () => {
+                    console.error(`Image ${index + 1} failed to load:`, img.src);
+                });
+            });
+        }
+        
+        // Run tests when page loads
+        window.addEventListener('load', () => {
+            checkWebPSupport();
+            checkImageLoad();
+        });
+    </script>
+</body>
+</html>
