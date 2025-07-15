@@ -1035,8 +1035,6 @@
             const application = document.getElementById('application').value;
             const surfaceType = document.getElementById('surface-type').value;
             const cureSpeed = document.getElementById('cure-speed').value;
-            const colorSensitivity = document.getElementById('color-sensitivity').value;
-            const moistureConditions = document.getElementById('moisture-conditions').value;
 
             // Header
             doc.setFillColor(26, 54, 93);
@@ -1070,7 +1068,7 @@
 
             // Project details section
             doc.setFillColor(248, 249, 250);
-            doc.rect(10, yPos, 190, 45, 'F');
+            doc.rect(10, yPos, 190, 30, 'F');
             
             doc.setTextColor(0, 0, 0);
             doc.setFont("helvetica", "bold");
@@ -1083,18 +1081,16 @@
                 `Climate: ${getDisplayText(climate)}`,
                 `Application: ${getDisplayText(application)}`,
                 `Surface Type: ${getDisplayText(surfaceType)}`,
-                `Cure Speed: ${getDisplayText(cureSpeed)}`,
-                `Colour Requirements: ${getDisplayText(colorSensitivity)}`,
-                `Moisture Conditions: ${getDisplayText(moistureConditions)}`
+                `Cure Speed: ${getDisplayText(cureSpeed)}`
             ];
             
             projectDetails.forEach((detail, index) => {
-                const col = index < 3 ? 0 : 95;
-                const row = index % 3;
+                const col = index < 2 ? 0 : 95;
+                const row = index % 2;
                 doc.text(detail, 14 + col, yPos + 18 + (row * 6));
             });
             
-            yPos += 55;
+            yPos += 40;
 
             // Technical properties
             doc.setFont("helvetica", "bold");
@@ -1270,11 +1266,6 @@
                 'medium': 'Medium Curing',
                 'slow': 'Slow Curing',
                 'very-slow': 'Very Slow Curing',
-                'not-sensitive': 'Standard Colours',
-                'sensitive': 'Light/Sensitive Colours',
-                'dry': 'Dry Conditions',
-                'normal': 'Normal Moisture',
-                'high': 'High Moisture/Humidity'
             };
             return displayMap[value] || value || 'Not specified';
         }
