@@ -11,6 +11,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-5565Z2W7');</script>
+    <!-- End Google Tag Manager -->
     <style>
         * {
             margin: 0;
@@ -1212,6 +1220,10 @@
     </style>
 </head>
 <body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5565Z2W7"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
     <!-- Header -->
     <header class="header">
         <div class="header-container">
@@ -1713,24 +1725,60 @@
         </div>
     </div>
 
-    <!-- Google Analytics (Conditional Loading) -->
+    <!-- GTM Analytics Consent -->
     <script>
-        // Google Analytics - only loads if consent given
-        function loadGoogleAnalytics() {
-            // Replace 'GA_MEASUREMENT_ID' with your actual Google Analytics Measurement ID
-            const script1 = document.createElement('script');
-            script1.async = true;
-            script1.src = 'https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID';
-            document.head.appendChild(script1);
-            
+        // GTM consent management
+        function enableGTMAnalytics() {
             window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'GA_MEASUREMENT_ID');
+            window.dataLayer.push({
+                'event': 'cookie_consent_granted',
+                'consent_level': 'analytics'
+            });
+        }
+        
+        function disableGTMAnalytics() {
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({
+                'event': 'cookie_consent_denied',
+                'consent_level': 'analytics_denied'
+            });
         }
     </script>
 
     <script>
+        // Track key engagement events
+        document.addEventListener('click', function(e) {
+            const target = e.target.closest('a');
+            if (!target) return;
+            
+            const href = target.getAttribute('href');
+            if (!href) return;
+            
+            // Track color mixer access
+            if (href.includes('mixer.html')) {
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push({
+                    'event': 'engagement',
+                    'engagement_type': 'color_mixer_access',
+                    'click_text': target.textContent.trim(),
+                    'page_location': window.location.href,
+                    'source_section': target.closest('section')?.className || 'unknown'
+                });
+            }
+            
+            // Track product page access
+            if (href.includes('products.html')) {
+                window.dataLayer = window.dataLayer || [];
+                window.dataLayer.push({
+                    'event': 'engagement',
+                    'engagement_type': 'product_page_access',
+                    'click_text': target.textContent.trim(),
+                    'page_location': window.location.href,
+                    'source_section': target.closest('section')?.className || 'unknown'
+                });
+            }
+        });
+
         // Smooth scrolling for navigation links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
@@ -1952,7 +2000,9 @@
             const consent = getCookieConsent();
             if (consent) {
                 if (consent.analytics) {
-                    loadGoogleAnalytics();
+                    enableGTMAnalytics();
+                } else {
+                    disableGTMAnalytics();
                 }
             } else {
                 // Show banner after a short delay
@@ -1963,12 +2013,13 @@
         // Event listeners
         document.getElementById('cookie-accept-all').addEventListener('click', function() {
             setCookieConsent(true);
-            loadGoogleAnalytics();
+            enableGTMAnalytics();
             hideCookieBanner();
         });
         
         document.getElementById('cookie-essential-only').addEventListener('click', function() {
             setCookieConsent(false);
+            disableGTMAnalytics();
             hideCookieBanner();
         });
         
@@ -1995,8 +2046,10 @@
             const analyticsConsent = document.getElementById('analytics-toggle').checked;
             setCookieConsent(analyticsConsent);
             
-            if (analyticsConsent && !window.gtag) {
-                loadGoogleAnalytics();
+            if (analyticsConsent) {
+                enableGTMAnalytics();
+            } else {
+                disableGTMAnalytics();
             }
             
             hideCookieBanner();
