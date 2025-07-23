@@ -14,4 +14,4 @@ Disallow: /*.backup2
 Disallow: /*.backup_*
 
 # Sitemap location (update after generating sitemap)
-Sitemap: https://yourdomain.com/sitemap.xml
+Sitemap: https://tpv.rosehill.group/sitemap.xml
