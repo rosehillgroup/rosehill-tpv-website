@@ -626,7 +626,7 @@
 
         async function simulateSubmission(formData) {
             try {
-                const response = await fetch('/.netlify/functions/process-installation-final', {
+                const response = await fetch('/.netlify/functions/process-installation-simple', {
                     method: 'POST',
                     body: formData
                 });
