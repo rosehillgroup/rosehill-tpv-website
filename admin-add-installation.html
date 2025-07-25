@@ -605,6 +605,7 @@
                 
                 // Add slug for edit mode
                 if (editingSlug) {
+                    console.log('Editing slug:', editingSlug);
                     formData.append('slug', editingSlug);
                 }
                 
@@ -634,6 +635,16 @@
                 const endpoint = editingSlug ? 
                     '/.netlify/functions/update-installation' : 
                     '/.netlify/functions/process-installation-final';
+                
+                console.log('Using endpoint:', endpoint);
+                console.log('FormData entries:');
+                for (let [key, value] of formData.entries()) {
+                    if (typeof value === 'string') {
+                        console.log(key, ':', value.substring(0, 50) + '...');
+                    } else {
+                        console.log(key, ':', 'File -', value.name);
+                    }
+                }
                     
                 await simulateSubmission(formData, endpoint);
                 
@@ -891,11 +902,13 @@
         // Edit installation functionality
         async function editInstallation(slug) {
             try {
+                console.log('Editing installation with slug:', slug);
                 // Fetch installation data
                 const response = await fetch(`/.netlify/functions/get-installations?slug=${slug}`);
                 if (!response.ok) throw new Error('Failed to load installation');
                 
                 const data = await response.json();
+                console.log('Fetched installation data:', data);
                 const installation = data.installation;
                 
                 // Switch to edit mode
