@@ -811,6 +811,7 @@
             const installationsHtml = installations.map(installation => {
                 const imageCount = installation.images ? installation.images.length : 0;
                 const date = new Date(installation.date).toLocaleDateString('en-GB');
+                console.log('Installation in list:', installation.title, 'Slug:', installation.slug);
                 
                 return `
                     <div class="installation-item" data-id="${installation.slug}">
@@ -909,6 +910,7 @@
                 
                 const data = await response.json();
                 console.log('Fetched installation data:', data);
+                console.log('Installation slug from DB:', data.installation?.slug);
                 const installation = data.installation;
                 
                 // Switch to edit mode
