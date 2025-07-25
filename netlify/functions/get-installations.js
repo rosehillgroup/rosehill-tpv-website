@@ -35,11 +35,20 @@ exports.handler = async (event, context) => {
         
         const supabase = createClient(supabaseUrl, supabaseKey);
         
-        // Get all installations, ordered by date (newest first)
-        const { data, error } = await supabase
-            .from('installations')
-            .select('*')
-            .order('installation_date', { ascending: false });
+        // Check if a specific installation slug is requested
+        const slug = event.queryStringParameters?.slug;
+        
+        let query = supabase.from('installations').select('*');
+        
+        if (slug) {
+            // Get single installation by slug
+            query = query.eq('slug', slug).single();
+        } else {
+            // Get all installations, ordered by date (newest first)
+            query = query.order('installation_date', { ascending: false });
+        }
+        
+        const { data, error } = await query;
         
         if (error) {
             return {
@@ -49,41 +58,79 @@ exports.handler = async (event, context) => {
             };
         }
         
-        // Transform the data to match the old JSON format
-        const installations = data.map(installation => ({
-            title: installation.title,
-            location: installation.location,
-            date: installation.installation_date,
-            application: installation.application,
-            description: installation.description,
-            images: installation.images.map(img => {
-                // Handle different image data structures
-                if (typeof img === 'string') {
-                    // Old format: just a filename string
-                    return `images/installations/${img}`;
-                } else if (img && typeof img === 'object') {
-                    // New format: object with url and/or filename
-                    if (img.url) {
-                        // Supabase Storage image - use the full URL
-                        return img.url;
-                    } else if (img.filename) {
-                        // Local image file - prepend images/installations/ path
-                        return `images/installations/${img.filename}`;
+        if (slug) {
+            // Return single installation
+            const installation = {
+                title: data.title,
+                location: data.location,
+                date: data.installation_date,
+                application: data.application,
+                description: data.description,
+                images: data.images.map(img => {
+                    // Handle different image data structures
+                    if (typeof img === 'string') {
+                        // Old format: just a filename string
+                        return `images/installations/${img}`;
+                    } else if (img && typeof img === 'object') {
+                        // New format: object with url and/or filename
+                        if (img.url) {
+                            // Supabase Storage image - use the full URL
+                            return img.url;
+                        } else if (img.filename) {
+                            // Local image file - prepend images/installations/ path
+                            return `images/installations/${img.filename}`;
+                        }
                     }
-                }
-                // Fallback
-                return `images/installations/${img}`;
-            }),
-            slug: installation.slug
-        }));
-        
-        return {
-            statusCode: 200,
-            headers,
-            body: JSON.stringify({
-                installations: installations
-            })
-        };
+                    // Fallback
+                    return `images/installations/${img}`;
+                }),
+                slug: data.slug
+            };
+            
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({
+                    installation: installation
+                })
+            };
+        } else {
+            // Transform the data to match the old JSON format
+            const installations = data.map(installation => ({
+                title: installation.title,
+                location: installation.location,
+                date: installation.installation_date,
+                application: installation.application,
+                description: installation.description,
+                images: installation.images.map(img => {
+                    // Handle different image data structures
+                    if (typeof img === 'string') {
+                        // Old format: just a filename string
+                        return `images/installations/${img}`;
+                    } else if (img && typeof img === 'object') {
+                        // New format: object with url and/or filename
+                        if (img.url) {
+                            // Supabase Storage image - use the full URL
+                            return img.url;
+                        } else if (img.filename) {
+                            // Local image file - prepend images/installations/ path
+                            return `images/installations/${img.filename}`;
+                        }
+                    }
+                    // Fallback
+                    return `images/installations/${img}`;
+                }),
+                slug: installation.slug
+            }));
+            
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({
+                    installations: installations
+                })
+            };
+        }
         
     } catch (error) {
         console.error('Function error:', error);

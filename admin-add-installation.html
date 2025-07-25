@@ -316,9 +316,7 @@
             font-size: 12px;
         }
 
-        .delete-btn {
-            background: #dc3545;
-            color: white;
+        .delete-btn, .edit-btn {
             border: none;
             padding: 10px 20px;
             border-radius: 5px;
@@ -326,6 +324,12 @@
             font-size: 14px;
             font-weight: 500;
             transition: all 0.3s ease;
+            margin-left: 10px;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
         }
 
         .delete-btn:hover {
@@ -339,6 +343,22 @@
             transform: none;
         }
 
+        .edit-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+        }
+
+        .edit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .confirm-delete {
             background: #ffc107;
             color: #000;
@@ -347,12 +367,17 @@
         .confirm-delete:hover {
             background: #e0a800;
         }
+
+        .installation-actions {
+            display: flex;
+            gap: 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Add New Installation</h1>
+            <h1 id="formTitle">Add New Installation</h1>
             <p>Admin Interface - Rosehill TPV Installations</p>
         </div>
 
@@ -413,9 +438,14 @@
                     <div class="image-preview" id="imagePreview"></div>
                 </div>
 
-                <button type="submit" class="submit-button" id="submitButton">
-                    Create Installation Page
-                </button>
+                <div style="display: flex; gap: 15px; margin-top: 20px;">
+                    <button type="submit" class="submit-button" id="submitButton" style="flex: 1; margin-top: 0;">
+                        Create Installation Page
+                    </button>
+                    <button type="button" class="submit-button" id="cancelEditButton" onclick="cancelEdit()" style="background: #6c757d; flex: 0 0 auto; margin-top: 0; display: none;">
+                        Cancel Edit
+                    </button>
+                </div>
             </form>
 
             <div class="status-message" id="statusMessage"></div>
@@ -439,6 +469,8 @@
     <script>
         let selectedFiles = [];
         let descriptionCount = 1;
+        let editingSlug = null;
+        let existingImages = [];
 
         // File upload handling
         const fileInput = document.getElementById('fileInput');
@@ -485,6 +517,13 @@
         }
 
         function updateImagePreview() {
+            if (editingSlug) {
+                // In edit mode, use the specialized preview that shows existing and new images
+                updateExistingImagePreview();
+                return;
+            }
+            
+            // Original function for create mode
             imagePreview.innerHTML = '';
             
             selectedFiles.forEach((file, index) => {
@@ -552,7 +591,7 @@
             }
             
             submitButton.disabled = true;
-            submitButton.textContent = 'Creating Installation...';
+            submitButton.textContent = editingSlug ? 'Updating Installation...' : 'Creating Installation...';
             
             try {
                 // Collect form data
@@ -564,6 +603,11 @@
                 formData.append('date', document.getElementById('date').value);
                 formData.append('application', document.getElementById('application').value);
                 
+                // Add slug for edit mode
+                if (editingSlug) {
+                    formData.append('slug', editingSlug);
+                }
+                
                 // Description paragraphs
                 const descriptions = [];
                 document.querySelectorAll('.description-paragraph textarea').forEach(textarea => {
@@ -573,23 +617,44 @@
                 });
                 formData.append('descriptions', JSON.stringify(descriptions));
                 
-                // Images
+                // Images (new files)
                 selectedFiles.forEach((file, index) => {
                     formData.append(`image_${index}`, file);
                 });
                 
-                // Here you would typically send to a server endpoint
-                // For now, we'll simulate the process
-                await simulateSubmission(formData);
+                // Images to remove (for edit mode)
+                if (editingSlug) {
+                    // Find which images were removed from the original list
+                    const originalImages = (await fetch(`/.netlify/functions/get-installations?slug=${editingSlug}`).then(r => r.json())).installation.images;
+                    const imagesToRemove = originalImages.filter(img => !existingImages.includes(img));
+                    formData.append('imagesToRemove', JSON.stringify(imagesToRemove));
+                }
                 
-                showStatus('Installation created successfully! The page has been generated and added to the website.', 'success');
-                resetForm();
+                // Send to appropriate endpoint
+                const endpoint = editingSlug ? 
+                    '/.netlify/functions/update-installation' : 
+                    '/.netlify/functions/process-installation-final';
+                    
+                await simulateSubmission(formData, endpoint);
+                
+                const successMessage = editingSlug ? 
+                    'Installation updated successfully! Changes have been saved.' : 
+                    'Installation created successfully! The page has been generated and added to the website.';
+                showStatus(successMessage, 'success');
+                
+                if (editingSlug) {
+                    // Exit edit mode and reload list
+                    cancelEdit();
+                    loadExistingInstallations();
+                } else {
+                    resetForm();
+                }
                 
             } catch (error) {
                 showStatus('Error creating installation: ' + error.message, 'error');
             } finally {
                 submitButton.disabled = false;
-                submitButton.textContent = 'Create Installation Page';
+                submitButton.textContent = editingSlug ? 'Update Installation' : 'Create Installation Page';
             }
         });
 
@@ -616,7 +681,7 @@
                 return false;
             }
             
-            if (selectedFiles.length === 0) {
+            if (selectedFiles.length === 0 && (!editingSlug || existingImages.length === 0)) {
                 showStatus('Please upload at least one image.', 'error');
                 return false;
             }
@@ -624,9 +689,9 @@
             return true;
         }
 
-        async function simulateSubmission(formData) {
+        async function simulateSubmission(formData, endpoint = '/.netlify/functions/process-installation-final') {
             try {
-                const response = await fetch('/.netlify/functions/process-installation-final', {
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     body: formData
                 });
@@ -680,6 +745,8 @@
         function resetForm() {
             document.getElementById('installationForm').reset();
             selectedFiles = [];
+            existingImages = [];
+            editingSlug = null;
             updateImagePreview();
             
             // Reset description paragraphs to just one
@@ -691,6 +758,11 @@
                 </div>
             `;
             descriptionCount = 1;
+            
+            // Reset form UI to create mode
+            document.getElementById('formTitle').textContent = 'Add New Installation';
+            document.getElementById('submitButton').textContent = 'Create Installation Page';
+            document.getElementById('cancelEditButton').style.display = 'none';
         }
 
         // Load and display existing installations
@@ -736,9 +808,14 @@
                             <div class="installation-meta">📍 ${installation.location} • 📅 ${date} • 🏷️ ${installation.application}</div>
                             <div class="installation-images">🖼️ ${imageCount} image${imageCount !== 1 ? 's' : ''}</div>
                         </div>
-                        <button class="delete-btn" onclick="confirmDelete('${installation.slug}', '${installation.title.replace(/'/g, "\\'")}')">
-                            Delete
-                        </button>
+                        <div class="installation-actions">
+                            <button class="edit-btn" onclick="editInstallation('${installation.slug}')">
+                                Edit
+                            </button>
+                            <button class="delete-btn" onclick="confirmDelete('${installation.slug}', '${installation.title.replace(/'/g, "\\'")}')">
+                                Delete
+                            </button>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -809,6 +886,130 @@
                 button.classList.remove('confirm-delete');
                 showStatus(`Error deleting installation: ${error.message}`, 'error');
             }
+        }
+
+        // Edit installation functionality
+        async function editInstallation(slug) {
+            try {
+                // Fetch installation data
+                const response = await fetch(`/.netlify/functions/get-installations?slug=${slug}`);
+                if (!response.ok) throw new Error('Failed to load installation');
+                
+                const data = await response.json();
+                const installation = data.installation;
+                
+                // Switch to edit mode
+                editingSlug = slug;
+                existingImages = installation.images || [];
+                
+                // Update form title and button
+                document.getElementById('formTitle').textContent = 'Edit Installation';
+                document.getElementById('submitButton').textContent = 'Update Installation';
+                document.getElementById('cancelEditButton').style.display = 'block';
+                
+                // Populate form fields
+                document.getElementById('title').value = installation.title;
+                document.getElementById('location').value = installation.location;
+                document.getElementById('date').value = installation.date;
+                document.getElementById('application').value = installation.application;
+                
+                // Clear and populate descriptions
+                const container = document.getElementById('descriptionInputs');
+                container.innerHTML = '';
+                descriptionCount = 0;
+                
+                installation.description.forEach((desc, index) => {
+                    addDescriptionParagraph();
+                    const textareas = container.querySelectorAll('textarea');
+                    textareas[textareas.length - 1].value = desc;
+                });
+                
+                // Display existing images
+                updateExistingImagePreview();
+                
+                // Clear new file selection
+                selectedFiles = [];
+                updateImagePreview();
+                
+                // Scroll to form
+                document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (error) {
+                showStatus('Error loading installation for edit: ' + error.message, 'error');
+            }
+        }
+        
+        function updateExistingImagePreview() {
+            const imagePreview = document.getElementById('imagePreview');
+            
+            // Clear current preview
+            imagePreview.innerHTML = '';
+            
+            // Add existing images
+            existingImages.forEach((imageUrl, index) => {
+                const imageItem = document.createElement('div');
+                imageItem.className = 'image-item';
+                imageItem.style.border = '2px solid #28a745'; // Green border for existing images
+                
+                const img = document.createElement('img');
+                img.src = imageUrl;
+                
+                const filename = document.createElement('div');
+                filename.className = 'image-filename';
+                filename.textContent = `Existing: ${imageUrl.split('/').pop()}`;
+                filename.style.background = '#d4edda';
+                filename.style.color = '#155724';
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-image';
+                removeBtn.textContent = '×';
+                removeBtn.onclick = () => removeExistingImage(index);
+                
+                imageItem.appendChild(img);
+                imageItem.appendChild(filename);
+                imageItem.appendChild(removeBtn);
+                imagePreview.appendChild(imageItem);
+            });
+            
+            // Add new images after existing ones
+            selectedFiles.forEach((file, index) => {
+                const imageItem = document.createElement('div');
+                imageItem.className = 'image-item';
+                imageItem.style.border = '2px solid #007bff'; // Blue border for new images
+                
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                
+                const filename = document.createElement('div');
+                filename.className = 'image-filename';
+                filename.textContent = `New: ${file.name}`;
+                filename.style.background = '#d1ecf1';
+                filename.style.color = '#0c5460';
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-image';
+                removeBtn.textContent = '×';
+                removeBtn.onclick = () => removeImage(index);
+                
+                imageItem.appendChild(img);
+                imageItem.appendChild(filename);
+                imageItem.appendChild(removeBtn);
+                imagePreview.appendChild(imageItem);
+            });
+        }
+        
+        function removeExistingImage(index) {
+            existingImages.splice(index, 1);
+            updateExistingImagePreview();
+        }
+        
+        function cancelEdit() {
+            editingSlug = null;
+            existingImages = [];
+            document.getElementById('formTitle').textContent = 'Add New Installation';
+            document.getElementById('submitButton').textContent = 'Create Installation Page';
+            document.getElementById('cancelEditButton').style.display = 'none';
+            resetForm();
         }
 
         // Load installations when page loads
