@@ -182,6 +182,7 @@ exports.handler = async (event, context) => {
         
         console.log('Update form data keys:', Object.keys(formData));
         console.log('Update files count:', files.length);
+        console.log('Form data values:', formData);
         
         // Validate required fields
         const required = ['slug', 'title', 'location', 'date', 'application', 'descriptions'];
@@ -209,19 +210,28 @@ exports.handler = async (event, context) => {
         }
         
         // Get existing installation to preserve current images
+        console.log('Looking for installation with slug:', formData.slug);
         const { data: existingData, error: fetchError } = await supabase
             .from('installations')
             .select('*')
             .eq('slug', formData.slug)
             .single();
         
+        console.log('Supabase query result:', { data: existingData, error: fetchError });
+        
         if (fetchError || !existingData) {
+            console.log('Installation not found. Error:', fetchError);
             return {
                 statusCode: 404,
                 headers,
                 body: JSON.stringify({
                     success: false,
-                    error: 'Installation not found'
+                    error: 'Installation not found',
+                    debug: {
+                        slug: formData.slug,
+                        supabaseError: fetchError?.message,
+                        foundData: !!existingData
+                    }
                 })
             };
         }
