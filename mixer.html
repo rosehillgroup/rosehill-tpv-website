@@ -40,6 +40,8 @@
                     this.enablePan = true;
                     this.minDistance = 0;
                     this.maxDistance = Infinity;
+                    this.minPolarAngle = 0.1; // Prevent gimbal lock at poles
+                    this.maxPolarAngle = Math.PI - 0.1;
                     this.touches = { ONE: 0, TWO: 2 };
                     
                     let spherical = new THREE.Spherical();
@@ -58,8 +60,20 @@
                     
                     let state = { NONE: -1, ROTATE: 0, DOLLY: 1, PAN: 2 };
                     let currentState = state.NONE;
+                    const MOVEMENT_THRESHOLD = 0.001;
+                    let needsUpdate = false;
                     
                     this.update = function() {
+                        // Check if there's actual movement to apply
+                        const hasMovement = Math.abs(sphericalDelta.theta) > MOVEMENT_THRESHOLD ||
+                                          Math.abs(sphericalDelta.phi) > MOVEMENT_THRESHOLD ||
+                                          Math.abs(scale - 1) > MOVEMENT_THRESHOLD ||
+                                          panOffset.length() > MOVEMENT_THRESHOLD;
+                        
+                        if (!hasMovement && !needsUpdate) {
+                            return false; // No update needed
+                        }
+                        
                         let offset = new THREE.Vector3();
                         offset.copy(this.camera.position).sub(this.target);
                         spherical.setFromVector3(offset);
@@ -69,11 +83,18 @@
                             spherical.phi += sphericalDelta.phi * this.dampingFactor;
                             sphericalDelta.theta *= (1 - this.dampingFactor);
                             sphericalDelta.phi *= (1 - this.dampingFactor);
+                            
+                            // Clear tiny values to prevent endless micro-updates
+                            if (Math.abs(sphericalDelta.theta) < MOVEMENT_THRESHOLD) sphericalDelta.theta = 0;
+                            if (Math.abs(sphericalDelta.phi) < MOVEMENT_THRESHOLD) sphericalDelta.phi = 0;
                         } else {
                             spherical.theta += sphericalDelta.theta;
                             spherical.phi += sphericalDelta.phi;
                             sphericalDelta.set(0, 0, 0);
                         }
+                        
+                        // Clamp phi to prevent gimbal lock
+                        spherical.phi = Math.max(this.minPolarAngle, Math.min(this.maxPolarAngle, spherical.phi));
                         
                         spherical.radius *= scale;
                         spherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, spherical.radius));
@@ -85,11 +106,17 @@
                         
                         if (this.enableDamping) {
                             panOffset.multiplyScalar(1 - this.dampingFactor);
+                            // Clear tiny pan offset values
+                            if (panOffset.length() < MOVEMENT_THRESHOLD) {
+                                panOffset.set(0, 0, 0);
+                            }
                         } else {
                             panOffset.set(0, 0, 0);
                         }
                         
                         scale = 1;
+                        needsUpdate = false;
+                        return true; // Update was applied
                     };
                     
                     this.reset = function() {
@@ -98,6 +125,11 @@
                         panOffset.set(0, 0, 0);
                         scale = 1;
                         currentState = state.NONE;
+                        needsUpdate = true;
+                    };
+                    
+                    this.forceUpdate = function() {
+                        needsUpdate = true;
                     };
                     
                     this.getDistance = function() {
@@ -134,6 +166,7 @@
                             sphericalDelta.theta -= rotateDelta.x;
                             sphericalDelta.phi -= rotateDelta.y;
                             rotateStart.copy(rotateEnd);
+                            needsUpdate = true;
                         }
                     };
                     
@@ -150,6 +183,7 @@
                         } else {
                             scale *= 0.95;
                         }
+                        needsUpdate = true;
                     };
                     
                     let onTouchStart = (event) => {
@@ -176,6 +210,7 @@
                             sphericalDelta.theta -= rotateDelta.x;
                             sphericalDelta.phi -= rotateDelta.y;
                             rotateStart.copy(rotateEnd);
+                            needsUpdate = true;
                         } else if (event.touches.length === 2 && currentState === state.DOLLY) {
                             let dx = event.touches[0].pageX - event.touches[1].pageX;
                             let dy = event.touches[0].pageY - event.touches[1].pageY;
@@ -184,6 +219,7 @@
                             dollyDelta.set(0, Math.pow(dollyEnd.y / dollyStart.y, 0.5));
                             scale /= dollyDelta.y;
                             dollyStart.copy(dollyEnd);
+                            needsUpdate = true;
                         }
                     };
                     
@@ -1634,32 +1670,51 @@
                             isAnimating: true
                         };
 
-                        // Animation loop
+                        // Animation loop with smart updates
                         let lastInteractionTime = Date.now();
                         let animationTime = 0;
+                        let lastFrameTime = Date.now();
+                        let isUserControlling = false;
+                        
                         const animate = () => {
                             if (tileSceneRef.current && tileSceneRef.current.isAnimating) {
-                                animationTime += 0.01;
-                                controls.update();
+                                const now = Date.now();
+                                const deltaTime = now - lastFrameTime;
+                                lastFrameTime = now;
                                 
-                                // Gentle auto-rotation when not being controlled for a while
-                                const timeSinceInteraction = Date.now() - lastInteractionTime;
-                                if (timeSinceInteraction > 2000) { // 2 seconds of no interaction
-                                    tile.rotation.y += 0.005;
+                                animationTime += deltaTime * 0.001; // Convert to seconds
+                                
+                                // Check if user is actively controlling
+                                const timeSinceInteraction = now - lastInteractionTime;
+                                isUserControlling = timeSinceInteraction < 100; // 100ms threshold
+                                
+                                // Update controls - this now returns whether an update was applied
+                                const controlsUpdated = controls.update();
+                                
+                                let sceneChanged = controlsUpdated;
+                                
+                                // Only apply auto-rotation if user isn't controlling and sufficient time has passed
+                                if (!isUserControlling && timeSinceInteraction > 3000) { // 3 seconds of no interaction  
+                                    tile.rotation.y += 0.003; // Slower rotation
+                                    sceneChanged = true;
                                 }
                                 
-                                // Subtle dynamic lighting animation for life-like appearance
+                                // Always update subtle lighting animation
                                 const { lights } = tileSceneRef.current;
                                 
                                 // Gently move the accent light in a small circle for dynamic highlights
-                                lights.accent.position.x = 150 + Math.sin(animationTime * 0.5) * 30;
-                                lights.accent.position.z = 150 + Math.cos(animationTime * 0.5) * 30;
+                                lights.accent.position.x = 150 + Math.sin(animationTime * 0.4) * 25;
+                                lights.accent.position.z = 150 + Math.cos(animationTime * 0.4) * 25;
                                 
                                 // Subtle intensity variation for more natural look
-                                lights.accent.intensity = 0.5 + Math.sin(animationTime * 0.3) * 0.08;
-                                lights.rim.intensity = 0.35 + Math.cos(animationTime * 0.4) * 0.04;
+                                lights.accent.intensity = 0.5 + Math.sin(animationTime * 0.25) * 0.06;
+                                lights.rim.intensity = 0.35 + Math.cos(animationTime * 0.3) * 0.03;
                                 
-                                renderer.render(scene, camera);
+                                // Only render if something changed
+                                if (sceneChanged) {
+                                    renderer.render(scene, camera);
+                                }
+                                
                                 requestAnimationFrame(animate);
                             }
                         };
@@ -1859,6 +1914,7 @@
                         camera.position.set(300, 200, 300);
                         tile.rotation.set(0, 0, 0);
                         controls.reset();
+                        controls.forceUpdate(); // Ensure rendering happens
                     }
                 }, []);
 
