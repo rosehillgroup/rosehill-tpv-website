@@ -40,49 +40,133 @@ exports.handler = async (event, context) => {
         const supabase = createClient(supabaseUrl, supabaseKey);
         
         // Parse multipart form data
-        const boundary = event.headers['content-type']?.split('boundary=')[1];
-        if (!boundary) {
+        let boundary;
+        let bodyBuffer;
+        
+        try {
+            // Get boundary from content-type header
+            const contentType = event.headers['content-type'] || event.headers['Content-Type'];
+            boundary = contentType?.split('boundary=')[1];
+            
+            if (!boundary) {
+                return {
+                    statusCode: 400,
+                    headers,
+                    body: JSON.stringify({
+                        success: false,
+                        error: 'Invalid content type. Expected multipart/form-data.',
+                        debug: {
+                            content_type: contentType,
+                            headers: Object.keys(event.headers)
+                        }
+                    })
+                };
+            }
+            
+            // Parse body - handle both base64 and raw formats
+            if (event.isBase64Encoded) {
+                bodyBuffer = Buffer.from(event.body, 'base64');
+            } else {
+                bodyBuffer = Buffer.from(event.body, 'binary');
+            }
+            
+        } catch (parseError) {
             return {
                 statusCode: 400,
                 headers,
                 body: JSON.stringify({
                     success: false,
-                    error: 'Invalid content type. Expected multipart/form-data.'
+                    error: 'Failed to parse request: ' + parseError.message,
+                    debug: {
+                        isBase64: event.isBase64Encoded,
+                        bodyLength: event.body?.length || 0
+                    }
                 })
             };
         }
         
-        const parts = multipart.parse(Buffer.from(event.body, 'base64'), boundary);
+        let parts;
+        try {
+            parts = multipart.parse(bodyBuffer, boundary);
+        } catch (multipartError) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({
+                    success: false,
+                    error: 'Failed to parse multipart data: ' + multipartError.message,
+                    debug: {
+                        boundary: boundary,
+                        bufferLength: bodyBuffer.length
+                    }
+                })
+            };
+        }
         
         // Extract form fields and files
         const formData = {};
         const files = [];
         
-        parts.forEach(part => {
-            if (part.filename) {
-                files.push({
-                    filename: part.filename,
-                    data: part.data,
-                    type: part.type
-                });
-            } else {
-                formData[part.name] = part.data.toString();
+        if (!parts || parts.length === 0) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({
+                    success: false,
+                    error: 'No form data found in request',
+                    debug: {
+                        partsCount: parts?.length || 0
+                    }
+                })
+            };
+        }
+        
+        parts.forEach((part, index) => {
+            try {
+                if (part.filename) {
+                    files.push({
+                        filename: part.filename,
+                        data: part.data,
+                        type: part.type
+                    });
+                } else {
+                    formData[part.name] = part.data.toString();
+                }
+            } catch (partError) {
+                console.error(`Error processing part ${index}:`, partError);
             }
         });
         
+        console.log('Form data keys:', Object.keys(formData));
+        console.log('Files count:', files.length);
+        
         // Validate required fields
         const required = ['title', 'location', 'date', 'application', 'descriptions'];
+        const missing = [];
+        
         for (const field of required) {
-            if (!formData[field]) {
-                return {
-                    statusCode: 400,
-                    headers,
-                    body: JSON.stringify({ 
-                        success: false,
-                        error: `Missing required field: ${field}` 
-                    })
-                };
+            if (!formData[field] || formData[field].trim() === '') {
+                missing.push(field);
             }
+        }
+        
+        if (missing.length > 0) {
+            return {
+                statusCode: 400,
+                headers,
+                body: JSON.stringify({ 
+                    success: false,
+                    error: `Missing required fields: ${missing.join(', ')}`,
+                    debug: {
+                        received_fields: Object.keys(formData),
+                        missing_fields: missing,
+                        form_data_sample: Object.keys(formData).reduce((acc, key) => {
+                            acc[key] = formData[key]?.substring(0, 50) + '...';
+                            return acc;
+                        }, {})
+                    }
+                })
+            };
         }
         
         // Parse descriptions
