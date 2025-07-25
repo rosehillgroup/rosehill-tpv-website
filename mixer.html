@@ -62,6 +62,7 @@
                     let currentState = state.NONE;
                     const MOVEMENT_THRESHOLD = 0.001;
                     let needsUpdate = false;
+                    let forceRender = false;
                     
                     this.update = function() {
                         // Check if there's actual movement to apply
@@ -70,7 +71,7 @@
                                           Math.abs(scale - 1) > MOVEMENT_THRESHOLD ||
                                           panOffset.length() > MOVEMENT_THRESHOLD;
                         
-                        if (!hasMovement && !needsUpdate) {
+                        if (!hasMovement && !needsUpdate && !forceRender) {
                             return false; // No update needed
                         }
                         
@@ -116,6 +117,7 @@
                         
                         scale = 1;
                         needsUpdate = false;
+                        forceRender = false;
                         return true; // Update was applied
                     };
                     
@@ -130,6 +132,7 @@
                     
                     this.forceUpdate = function() {
                         needsUpdate = true;
+                        forceRender = true;
                     };
                     
                     this.getDistance = function() {
@@ -1691,7 +1694,10 @@
                                 // Update controls - this now returns whether an update was applied
                                 const controlsUpdated = controls.update();
                                 
-                                let sceneChanged = controlsUpdated;
+                                // Check if material needs updating (texture changes)
+                                const materialNeedsUpdate = tileSceneRef.current.material && tileSceneRef.current.material.needsUpdate;
+                                
+                                let sceneChanged = controlsUpdated || materialNeedsUpdate;
                                 
                                 // Only apply auto-rotation if user isn't controlling and sufficient time has passed
                                 if (!isUserControlling && timeSinceInteraction > 3000) { // 3 seconds of no interaction  
@@ -1853,12 +1859,17 @@
                     if (!tileSceneRef.current || !canvasRef.current || totalParts === 0) {
                         // Reset to default material when no parts
                         if (tileSceneRef.current) {
-                            const { material } = tileSceneRef.current;
+                            const { material, controls } = tileSceneRef.current;
                             material.map = null;
                             material.bumpMap = null;
                             material.normalMap = null;
                             material.color.setHex(0xfafafa);
                             material.needsUpdate = true;
+                            
+                            // Force a render update
+                            if (controls) {
+                                controls.forceUpdate();
+                            }
                         }
                         return;
                     }
@@ -1899,6 +1910,11 @@
                             material.metalness = 0.05; // Very low metalness for rubber
                             material.color.setHex(0xffffff);
                             material.needsUpdate = true;
+
+                            // Force a render update since texture has changed
+                            if (tileSceneRef.current.controls) {
+                                tileSceneRef.current.controls.forceUpdate();
+                            }
 
                             setTileLoading(false);
                         } catch (error) {
