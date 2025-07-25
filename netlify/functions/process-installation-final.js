@@ -1,5 +1,4 @@
 const { createClient } = require('@supabase/supabase-js');
-const multipart = require('parse-multipart-data');
 
 exports.handler = async (event, context) => {
     const headers = {
@@ -39,7 +38,7 @@ exports.handler = async (event, context) => {
         
         const supabase = createClient(supabaseUrl, supabaseKey);
         
-        // Parse multipart form data
+        // Parse multipart form data with custom parser
         let boundary;
         let bodyBuffer;
         
@@ -85,9 +84,60 @@ exports.handler = async (event, context) => {
             };
         }
         
+        // Custom multipart parser (more reliable than external library)
+        function parseMultipart(buffer, boundary) {
+            const boundaryStr = '--' + boundary;
+            const parts = [];
+            
+            // Split by boundary
+            const sections = buffer.toString('binary').split(boundaryStr);
+            
+            for (let i = 1; i < sections.length - 1; i++) {
+                const section = sections[i];
+                if (!section.trim()) continue;
+                
+                // Find the double newline that separates headers from body
+                const headerEndIndex = section.indexOf('\r\n\r\n');
+                if (headerEndIndex === -1) continue;
+                
+                const headersStr = section.substring(0, headerEndIndex);
+                const bodyStr = section.substring(headerEndIndex + 4);
+                
+                // Parse headers
+                const headers = {};
+                const headerLines = headersStr.split('\r\n');
+                
+                for (const line of headerLines) {
+                    if (!line.trim()) continue;
+                    const colonIndex = line.indexOf(':');
+                    if (colonIndex > 0) {
+                        const key = line.substring(0, colonIndex).trim().toLowerCase();
+                        const value = line.substring(colonIndex + 1).trim();
+                        headers[key] = value;
+                    }
+                }
+                
+                // Extract name and filename from Content-Disposition
+                const disposition = headers['content-disposition'] || '';
+                const nameMatch = disposition.match(/name="([^"]+)"/);
+                const filenameMatch = disposition.match(/filename="([^"]+)"/);
+                
+                const part = {
+                    name: nameMatch ? nameMatch[1] : '',
+                    filename: filenameMatch ? filenameMatch[1] : null,
+                    type: headers['content-type'] || 'text/plain',
+                    data: Buffer.from(bodyStr, 'binary')
+                };
+                
+                parts.push(part);
+            }
+            
+            return parts;
+        }
+        
         let parts;
         try {
-            parts = multipart.parse(bodyBuffer, boundary);
+            parts = parseMultipart(bodyBuffer, boundary);
         } catch (multipartError) {
             return {
                 statusCode: 400,
