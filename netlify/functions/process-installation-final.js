@@ -180,7 +180,7 @@ exports.handler = async (event, context) => {
                         type: part.type
                     });
                 } else {
-                    formData[part.name] = part.data.toString();
+                    formData[part.name] = part.data.toString().trim();
                 }
             } catch (partError) {
                 console.error(`Error processing part ${index}:`, partError);
