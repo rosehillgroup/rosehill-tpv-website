@@ -410,6 +410,7 @@
             height: 500px;
             margin: 0 auto;
             overflow: hidden;
+            aspect-ratio: 2 / 1; /* Modern browsers: maintain 2:1 aspect ratio */
         }
 
         canvas {
@@ -1095,27 +1096,48 @@
 
         @media (max-width: 768px) {
             .canvas-wrapper {
-                height: 70vw;
+                height: auto; /* Let aspect-ratio control height */
                 max-height: 400px;
-                min-height: 300px;
+                min-height: 200px;
+            }
+            
+            /* Fallback for browsers without aspect-ratio support */
+            @supports not (aspect-ratio: 2 / 1) {
+                .canvas-wrapper {
+                    height: 50vw; /* Maintain 2:1 aspect ratio (width:height) */
+                }
             }
         }
 
         /* iPhone and small mobile devices in portrait */
         @media (max-width: 480px) {
             .canvas-wrapper {
-                height: 75vw;
-                max-height: 350px;
-                min-height: 280px;
+                height: auto; /* Let aspect-ratio control height */
+                max-height: 240px;
+                min-height: 180px;
+            }
+            
+            /* Fallback for browsers without aspect-ratio support */
+            @supports not (aspect-ratio: 2 / 1) {
+                .canvas-wrapper {
+                    height: 50vw; /* Maintain 2:1 aspect ratio */
+                }
             }
         }
 
         /* Very small devices */
         @media (max-width: 375px) {
             .canvas-wrapper {
-                height: 80vw;
-                max-height: 320px;
-                min-height: 260px;
+                height: auto; /* Let aspect-ratio control height */
+                max-height: 187px;
+                min-height: 160px;
+            }
+            
+            /* Fallback for browsers without aspect-ratio support */
+            @supports not (aspect-ratio: 2 / 1) {
+                .canvas-wrapper {
+                    height: 50vw; /* Maintain 2:1 aspect ratio */
+                }
             }
             
             .colour-swatch {
