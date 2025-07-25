@@ -1,6 +1,8 @@
 # Netlify Configuration File
 
 [build]
+  # Replace environment variables in HTML files
+  command = "find . -name '*.html' -exec sed -i 's/GOOGLE_MAPS_API_KEY/'$GOOGLE_MAPS_API_KEY'/g' {} +"
   publish = "/"
   functions = "netlify/functions"
   
