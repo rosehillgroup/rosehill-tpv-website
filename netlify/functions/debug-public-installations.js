@@ -41,8 +41,8 @@ exports.handler = async (event, context) => {
         // Try the exact same query as the real function
         const { data, error } = await supabase
             .from('installations')
-            .select('id, title, location, date, application, description, images, slug')
-            .order('date', { ascending: false });
+            .select('id, title, location, installation_date, application, description, images, slug')
+            .order('installation_date', { ascending: false });
         
         return {
             statusCode: 200,

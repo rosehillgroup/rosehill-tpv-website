@@ -57,7 +57,7 @@ exports.handler = async (event, context) => {
             console.log('Fetching installation with slug:', slug);
             const { data: installation, error } = await supabase
                 .from('installations')
-                .select('id, title, location, date, application, description, images, slug')
+                .select('id, title, location, installation_date, application, description, images, slug')
                 .eq('slug', slug)
                 .single();
                 
@@ -70,18 +70,24 @@ exports.handler = async (event, context) => {
                 };
             }
             
+            // Map installation_date to date for frontend compatibility
+            const mappedInstallation = {
+                ...installation,
+                date: installation.installation_date
+            };
+            
             return {
                 statusCode: 200,
                 headers,
-                body: JSON.stringify({ installation })
+                body: JSON.stringify({ installation: mappedInstallation })
             };
         } else {
             // Get all installations for public display
             console.log('Fetching all installations...');
             const { data: installations, error } = await supabase
                 .from('installations')
-                .select('id, title, location, date, application, description, images, slug')
-                .order('date', { ascending: false });
+                .select('id, title, location, installation_date, application, description, images, slug')
+                .order('installation_date', { ascending: false });
                 
             console.log('Query result:', {
                 hasError: !!error,
@@ -101,11 +107,17 @@ exports.handler = async (event, context) => {
                 };
             }
             
-            console.log('Returning successful response with', installations?.length || 0, 'installations');
+            // Map installation_date to date for frontend compatibility
+            const mappedInstallations = installations?.map(installation => ({
+                ...installation,
+                date: installation.installation_date
+            })) || [];
+            
+            console.log('Returning successful response with', mappedInstallations.length, 'installations');
             return {
                 statusCode: 200,
                 headers,
-                body: JSON.stringify({ installations: installations || [] })
+                body: JSON.stringify({ installations: mappedInstallations })
             };
         }
         
