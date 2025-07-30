@@ -624,12 +624,23 @@
             const urlParams = new URLSearchParams(window.location.search);
             let slug = urlParams.get('slug');
             
+            // If no slug parameter, check if the URL itself contains the installation path
+            if (!slug) {
+                const path = window.location.pathname;
+                const match = path.match(/\/installations\/(.+)/);
+                if (match) {
+                    slug = match[1];
+                }
+            }
+            
             // Remove .html extension if present (for backwards compatibility)
             if (slug && slug.endsWith('.html')) {
                 slug = slug.replace(/\.html$/, '');
             }
             
             console.log('Extracted slug:', slug);
+            console.log('Current URL:', window.location.href);
+            console.log('URL parameters:', window.location.search);
             return slug;
         }
 

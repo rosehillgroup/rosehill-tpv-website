@@ -40,11 +40,12 @@
   to = "/installations.html"
   status = 200
 
-# Dynamic installation pages - serve from database
+# Dynamic installation pages - serve from database (must come before general rules)
 [[redirects]]
   from = "/installations/:slug.html"
   to = "/installation-dynamic.html?slug=:slug"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/login"
@@ -58,6 +59,12 @@
 [[redirects]]
   from = "/api/process-installation"
   to = "/.netlify/functions/process-installation"
+  status = 200
+
+# Catch-all for installation pages that might be 404ing
+[[redirects]]
+  from = "/installations/*"
+  to = "/installation-dynamic.html?slug=:splat"
   status = 200
 
 # Headers for security and performance
