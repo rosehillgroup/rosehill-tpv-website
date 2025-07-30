@@ -212,11 +212,18 @@
             transform: translateY(-5px);
         }
 
-        .gallery-item img {
+        .gallery-item img,
+        .gallery-item picture {
             width: 100%;
             height: 250px;
             object-fit: cover;
             display: block;
+        }
+        
+        .gallery-item picture img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         /* Modal Styles */
@@ -245,10 +252,17 @@
             text-align: center;
         }
 
-        .modal-image img {
+        .modal-image img,
+        .modal-image picture img {
             max-width: 100%;
             max-height: 70vh;
             object-fit: contain;
+        }
+        
+        .modal-image picture {
+            display: block;
+            max-width: 100%;
+            max-height: 70vh;
         }
 
         .close {
@@ -486,28 +500,16 @@
                 <div class="gallery-grid">
                     
                 <div class="gallery-item">
-                    <picture>
-                <source srcset="../images/installations/Goomalling_Playground_2.webp" type="image/webp">
-                <img src="../images/installations/Goomalling_Playground_2.jpeg" alt="Beach-Themed Play Area - Image 1" onclick="openModal(0)" loading="lazy">
-            </picture>
+                    <img src="../images/installations/Goomalling_Playground_2.jpeg" alt="Beach-Themed Play Area - Image 1" loading="lazy" onclick="openModal(0)">
                 </div>
                 <div class="gallery-item">
-                    <picture>
-                <source srcset="../images/installations/Goomalling_Playground_5.webp" type="image/webp">
-                <img src="../images/installations/Goomalling_Playground_5.jpeg" alt="Beach-Themed Play Area - Image 2" onclick="openModal(1)" loading="lazy">
-            </picture>
+                    <img src="../images/installations/Goomalling_Playground_5.jpeg" alt="Beach-Themed Play Area - Image 2" loading="lazy" onclick="openModal(1)">
                 </div>
                 <div class="gallery-item">
-                    <picture>
-                <source srcset="../images/installations/Goomalling_Playground_1.webp" type="image/webp">
-                <img src="../images/installations/Goomalling_Playground_1.jpeg" alt="Beach-Themed Play Area - Image 3" onclick="openModal(2)" loading="lazy">
-            </picture>
+                    <img src="../images/installations/Goomalling_Playground_1.jpeg" alt="Beach-Themed Play Area - Image 3" loading="lazy" onclick="openModal(2)">
                 </div>
                 <div class="gallery-item">
-                    <picture>
-                <source srcset="../images/installations/Goomalling_Playground_3.webp" type="image/webp">
-                <img src="../images/installations/Goomalling_Playground_3.jpeg" alt="Beach-Themed Play Area - Image 4" onclick="openModal(3)" loading="lazy">
-            </picture>
+                    <img src="../images/installations/Goomalling_Playground_3.jpeg" alt="Beach-Themed Play Area - Image 4" loading="lazy" onclick="openModal(3)">
                 </div>
                 </div>
             </div>
@@ -518,28 +520,16 @@
                     <span class="close" onclick="closeModal()">&times;</span>
                     
                 <div class="modal-image" id="modal-img-0" style="display: block;">
-                    <picture>
-                <source srcset="../images/installations/Goomalling_Playground_2.webp" type="image/webp">
-                <img src="../images/installations/Goomalling_Playground_2.jpeg" alt="Beach-Themed Play Area - Image 1" loading="lazy">
-            </picture>
+                    <img src="../images/installations/Goomalling_Playground_2.jpeg" alt="Beach-Themed Play Area - Image 1" loading="lazy">
                 </div>
                 <div class="modal-image" id="modal-img-1" >
-                    <picture>
-                <source srcset="../images/installations/Goomalling_Playground_5.webp" type="image/webp">
-                <img src="../images/installations/Goomalling_Playground_5.jpeg" alt="Beach-Themed Play Area - Image 2" loading="lazy">
-            </picture>
+                    <img src="../images/installations/Goomalling_Playground_5.jpeg" alt="Beach-Themed Play Area - Image 2" loading="lazy">
                 </div>
                 <div class="modal-image" id="modal-img-2" >
-                    <picture>
-                <source srcset="../images/installations/Goomalling_Playground_1.webp" type="image/webp">
-                <img src="../images/installations/Goomalling_Playground_1.jpeg" alt="Beach-Themed Play Area - Image 3" loading="lazy">
-            </picture>
+                    <img src="../images/installations/Goomalling_Playground_1.jpeg" alt="Beach-Themed Play Area - Image 3" loading="lazy">
                 </div>
                 <div class="modal-image" id="modal-img-3" >
-                    <picture>
-                <source srcset="../images/installations/Goomalling_Playground_3.webp" type="image/webp">
-                <img src="../images/installations/Goomalling_Playground_3.jpeg" alt="Beach-Themed Play Area - Image 4" loading="lazy">
-            </picture>
+                    <img src="../images/installations/Goomalling_Playground_3.jpeg" alt="Beach-Themed Play Area - Image 4" loading="lazy">
                 </div>
                     
                     <button class="nav-btn prev" onclick="changeImage(-1)">&#10094;</button>

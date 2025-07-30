@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vibrent Fitness Area - Rosehill TPV Installation</title>
-    <meta name="description" content="Vibrent Fitness Area in Maipú, Chile. See how Rosehill TPV coloured rubber granules were used to create safe, vibrant surfaces for playground surfaces.">
+    <title>New Fitness Area In Maipú - Rosehill TPV Installation</title>
+    <meta name="description" content="New Fitness Area In Maipú in Santiago, Chile. See how Rosehill TPV coloured rubber granules were used to create safe, vibrant surfaces for other applications.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
@@ -212,11 +212,18 @@
             transform: translateY(-5px);
         }
 
-        .gallery-item img {
+        .gallery-item img,
+        .gallery-item picture {
             width: 100%;
             height: 250px;
             object-fit: cover;
             display: block;
+        }
+        
+        .gallery-item picture img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         /* Modal Styles */
@@ -245,10 +252,17 @@
             text-align: center;
         }
 
-        .modal-image img {
+        .modal-image img,
+        .modal-image picture img {
             max-width: 100%;
             max-height: 70vh;
             object-fit: contain;
+        }
+        
+        .modal-image picture {
+            display: block;
+            max-width: 100%;
+            max-height: 70vh;
         }
 
         .close {
@@ -441,19 +455,19 @@
         <div class="container">
             <!-- Breadcrumb -->
             <div class="breadcrumb">
-                <a href="../installations.html">Installations</a> / Vibrent Fitness Area
+                <a href="../installations.html">Installations</a> / New Fitness Area In Maipú
             </div>
 
             <!-- Installation Header -->
             <div class="installation-header">
-                <h1>Vibrent Fitness Area</h1>
+                <h1>New Fitness Area In Maipú</h1>
                 <div class="installation-meta">
                     <div class="meta-item">
                         <svg class="meta-icon" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
                         </svg>
                         <span class="meta-label">Location:</span>
-                        <span class="meta-value">Maipú, Chile</span>
+                        <span class="meta-value">Santiago, Chile</span>
                     </div>
                     <div class="meta-item">
                         <svg class="meta-icon" fill="currentColor" viewBox="0 0 20 20">
@@ -467,7 +481,7 @@
                             <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v8a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clip-rule="evenodd"></path>
                         </svg>
                         <span class="meta-label">Application:</span>
-                        <span class="meta-value">Playground Surfaces</span>
+                        <span class="meta-value">Other Applications</span>
                     </div>
                 </div>
             </div>
@@ -487,25 +501,13 @@
                 <div class="gallery-grid">
                     
                 <div class="gallery-item">
-                    <picture>
-                <source srcset="../images/installations/Maipu-Chile-1.avif" type="image/avif">
-                <source srcset="../images/installations/Maipu-Chile-1.webp" type="image/webp">
-                <img src="../images/installations/Maipu-Chile-1.jpg" alt="Vibrent Fitness Area - Image 1" onclick="openModal(0)" loading="lazy">
-            </picture>
+                    <img src="../images/installations/Maipu-Chile-1.jpg" alt="New Fitness Area In Maipú - Image 1" loading="lazy" onclick="openModal(0)">
                 </div>
                 <div class="gallery-item">
-                    <picture>
-                <source srcset="../images/installations/Maipu-Chile-2.avif" type="image/avif">
-                <source srcset="../images/installations/Maipu-Chile-2.webp" type="image/webp">
-                <img src="../images/installations/Maipu-Chile-2.jpg" alt="Vibrent Fitness Area - Image 2" onclick="openModal(1)" loading="lazy">
-            </picture>
+                    <img src="../images/installations/Maipu-Chile-2.jpg" alt="New Fitness Area In Maipú - Image 2" loading="lazy" onclick="openModal(1)">
                 </div>
                 <div class="gallery-item">
-                    <picture>
-                <source srcset="../images/installations/Maipu-Chile-3.avif" type="image/avif">
-                <source srcset="../images/installations/Maipu-Chile-3.webp" type="image/webp">
-                <img src="../images/installations/Maipu-Chile-3.jpg" alt="Vibrent Fitness Area - Image 3" onclick="openModal(2)" loading="lazy">
-            </picture>
+                    <img src="../images/installations/Maipu-Chile-3.jpg" alt="New Fitness Area In Maipú - Image 3" loading="lazy" onclick="openModal(2)">
                 </div>
                 </div>
             </div>
@@ -516,25 +518,13 @@
                     <span class="close" onclick="closeModal()">&times;</span>
                     
                 <div class="modal-image" id="modal-img-0" style="display: block;">
-                    <picture>
-                <source srcset="../images/installations/Maipu-Chile-1.avif" type="image/avif">
-                <source srcset="../images/installations/Maipu-Chile-1.webp" type="image/webp">
-                <img src="../images/installations/Maipu-Chile-1.jpg" alt="Vibrent Fitness Area - Image 1" loading="lazy">
-            </picture>
+                    <img src="../images/installations/Maipu-Chile-1.jpg" alt="New Fitness Area In Maipú - Image 1" loading="lazy">
                 </div>
                 <div class="modal-image" id="modal-img-1" >
-                    <picture>
-                <source srcset="../images/installations/Maipu-Chile-2.avif" type="image/avif">
-                <source srcset="../images/installations/Maipu-Chile-2.webp" type="image/webp">
-                <img src="../images/installations/Maipu-Chile-2.jpg" alt="Vibrent Fitness Area - Image 2" loading="lazy">
-            </picture>
+                    <img src="../images/installations/Maipu-Chile-2.jpg" alt="New Fitness Area In Maipú - Image 2" loading="lazy">
                 </div>
                 <div class="modal-image" id="modal-img-2" >
-                    <picture>
-                <source srcset="../images/installations/Maipu-Chile-3.avif" type="image/avif">
-                <source srcset="../images/installations/Maipu-Chile-3.webp" type="image/webp">
-                <img src="../images/installations/Maipu-Chile-3.jpg" alt="Vibrent Fitness Area - Image 3" loading="lazy">
-            </picture>
+                    <img src="../images/installations/Maipu-Chile-3.jpg" alt="New Fitness Area In Maipú - Image 3" loading="lazy">
                 </div>
                     
                     <button class="nav-btn prev" onclick="changeImage(-1)">&#10094;</button>
