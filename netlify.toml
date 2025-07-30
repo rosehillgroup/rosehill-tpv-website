@@ -40,6 +40,12 @@
   to = "/installations.html"
   status = 200
 
+# Dynamic installation pages - serve from database
+[[redirects]]
+  from = "/installations/*.html"
+  to = "/installation-dynamic.html?slug=:splat"
+  status = 200
+
 [[redirects]]
   from = "/login"
   to = "/login.html"
