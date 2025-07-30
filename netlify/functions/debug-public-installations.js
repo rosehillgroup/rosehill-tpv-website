@@ -38,11 +38,11 @@ exports.handler = async (event, context) => {
         const { createClient } = require('@supabase/supabase-js');
         const supabase = createClient(supabaseUrl, supabaseKey);
         
-        // Try a simple query
+        // Try the exact same query as the real function
         const { data, error } = await supabase
             .from('installations')
-            .select('count')
-            .limit(1);
+            .select('id, title, location, date, application, description, images, slug')
+            .order('date', { ascending: false });
         
         return {
             statusCode: 200,

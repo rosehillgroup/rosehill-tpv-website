@@ -54,9 +54,10 @@ exports.handler = async (event, context) => {
         
         if (slug) {
             // Get specific installation
+            console.log('Fetching installation with slug:', slug);
             const { data: installation, error } = await supabase
                 .from('installations')
-                .select('*')
+                .select('id, title, location, date, application, description, images, slug')
                 .eq('slug', slug)
                 .single();
                 
@@ -79,7 +80,7 @@ exports.handler = async (event, context) => {
             console.log('Fetching all installations...');
             const { data: installations, error } = await supabase
                 .from('installations')
-                .select('*')
+                .select('id, title, location, date, application, description, images, slug')
                 .order('date', { ascending: false });
                 
             console.log('Query result:', {
