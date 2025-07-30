@@ -505,13 +505,11 @@
                     <label for="application">Application Type <span class="required">*</span></label>
                     <select id="application" name="application" required>
                         <option value="">Select application type...</option>
-                        <option value="playground">Playground Surfaces</option>
-                        <option value="muga">Multi-Use Games Areas</option>
-                        <option value="track">Running Tracks</option>
-                        <option value="pitch">Sports Pitches</option>
-                        <option value="footpath">Footpaths & Walkways</option>
-                        <option value="splashpark">Splash Parks & Water Play</option>
-                        <option value="other">Other</option>
+                        <option value="athletics">Athletics</option>
+                        <option value="playground">Playground</option>
+                        <option value="muga">MUGA</option>
+                        <option value="tennis">Tennis</option>
+                        <option value="fitness">Fitness</option>
                     </select>
                 </div>
 
@@ -772,10 +770,18 @@
                 
                 // Images to remove (for edit mode)
                 if (editingSlug) {
-                    // Find which images were removed from the original list
-                    const originalImages = (await fetch(`/.netlify/functions/get-installations?slug=${editingSlug}`).then(r => r.json())).installation.images;
-                    const imagesToRemove = originalImages.filter(img => !existingImages.includes(img));
-                    formData.append('imagesToRemove', JSON.stringify(imagesToRemove));
+                    try {
+                        // Find which images were removed from the original list
+                        const response = await fetch(`/.netlify/functions/get-installations?slug=${editingSlug}`);
+                        const data = await response.json();
+                        const originalImages = data.installation?.images || [];
+                        const imagesToRemove = originalImages.filter(img => !existingImages.includes(img));
+                        formData.append('imagesToRemove', JSON.stringify(imagesToRemove));
+                        console.log('Images to remove:', imagesToRemove);
+                    } catch (imageError) {
+                        console.error('Error processing images for removal:', imageError);
+                        formData.append('imagesToRemove', JSON.stringify([]));
+                    }
                 }
                 
                 // Send to appropriate endpoint
@@ -1074,7 +1080,19 @@
                 
                 // Switch to edit mode
                 editingSlug = slug;
-                existingImages = installation.images || [];
+                
+                // Safely handle existing images - ensure it's always an array
+                let currentImages = [];
+                if (installation.images) {
+                    if (Array.isArray(installation.images)) {
+                        currentImages = installation.images;
+                    } else if (typeof installation.images === 'object') {
+                        currentImages = Object.values(installation.images);
+                    }
+                }
+                existingImages = [...currentImages];
+                
+                console.log('Existing images loaded:', existingImages);
                 
                 // Update form title and button
                 document.getElementById('formTitle').textContent = 'Edit Installation';
@@ -1082,21 +1100,27 @@
                 document.getElementById('cancelEditButton').style.display = 'block';
                 
                 // Populate form fields
-                document.getElementById('title').value = installation.title;
-                document.getElementById('location').value = installation.location;
-                document.getElementById('date').value = installation.date;
-                document.getElementById('application').value = installation.application;
+                document.getElementById('title').value = installation.title || '';
+                document.getElementById('location').value = installation.location || '';
+                document.getElementById('date').value = installation.date || installation.installation_date || '';
+                document.getElementById('application').value = installation.application || '';
                 
                 // Clear and populate descriptions
                 const container = document.getElementById('descriptionInputs');
                 container.innerHTML = '';
                 descriptionCount = 0;
                 
-                installation.description.forEach((desc, index) => {
+                const descriptions = installation.description || [];
+                if (descriptions.length === 0) {
+                    // Add at least one empty description field
                     addDescriptionParagraph();
-                    const textareas = container.querySelectorAll('textarea');
-                    textareas[textareas.length - 1].value = desc;
-                });
+                } else {
+                    descriptions.forEach((desc, index) => {
+                        addDescriptionParagraph();
+                        const textareas = container.querySelectorAll('textarea');
+                        textareas[textareas.length - 1].value = desc || '';
+                    });
+                }
                 
                 // Display existing images
                 updateExistingImagePreview();

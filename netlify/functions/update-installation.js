@@ -257,11 +257,27 @@ exports.handler = async (event, context) => {
             descriptions = [formData.descriptions];
         }
         
-        // Handle image updates
-        let updatedImages = [...(existingData.images || [])];
+        // Handle image updates - ensure images is always an array
+        let currentImages = [];
+        if (existingData.images) {
+            // Handle both array and object formats
+            if (Array.isArray(existingData.images)) {
+                currentImages = existingData.images;
+            } else if (typeof existingData.images === 'object') {
+                // Convert object to array if needed
+                currentImages = Object.values(existingData.images);
+            }
+        }
+        let updatedImages = [...currentImages];
         
         // Parse images to remove (if any)
-        const imagesToRemove = formData.imagesToRemove ? JSON.parse(formData.imagesToRemove) : [];
+        let imagesToRemove = [];
+        try {
+            imagesToRemove = formData.imagesToRemove ? JSON.parse(formData.imagesToRemove) : [];
+        } catch (parseError) {
+            console.error('Error parsing imagesToRemove:', parseError);
+            imagesToRemove = [];
+        }
         
         // Remove specified images
         if (imagesToRemove.length > 0) {
