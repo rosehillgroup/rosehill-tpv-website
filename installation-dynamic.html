@@ -622,7 +622,15 @@
         // Get slug from URL parameters
         function getSlugFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('slug');
+            let slug = urlParams.get('slug');
+            
+            // Remove .html extension if present (for backwards compatibility)
+            if (slug && slug.endsWith('.html')) {
+                slug = slug.replace(/\.html$/, '');
+            }
+            
+            console.log('Extracted slug:', slug);
+            return slug;
         }
 
         // Format date
@@ -668,16 +676,26 @@
         async function loadInstallation() {
             const slug = getSlugFromURL();
             
+            console.log('Loading installation with slug:', slug);
+            
             if (!slug) {
+                console.error('No slug found in URL');
                 showError();
                 return;
             }
 
             try {
-                const response = await fetch(`/.netlify/functions/get-installations-public?slug=${encodeURIComponent(slug)}`);
+                const url = `/.netlify/functions/get-installations-public?slug=${encodeURIComponent(slug)}`;
+                console.log('Fetching from:', url);
+                
+                const response = await fetch(url);
                 const data = await response.json();
                 
+                console.log('Response status:', response.status);
+                console.log('Response data:', data);
+                
                 if (!response.ok || !data.installation) {
+                    console.error('Installation not found or response error');
                     showError();
                     return;
                 }

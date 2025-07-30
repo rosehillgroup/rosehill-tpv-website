@@ -42,8 +42,8 @@
 
 # Dynamic installation pages - serve from database
 [[redirects]]
-  from = "/installations/*.html"
-  to = "/installation-dynamic.html?slug=:splat"
+  from = "/installations/:slug.html"
+  to = "/installation-dynamic.html?slug=:slug"
   status = 200
 
 [[redirects]]
