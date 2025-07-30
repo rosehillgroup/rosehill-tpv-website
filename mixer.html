@@ -604,6 +604,65 @@
             color: #2196F3;
         }
 
+        .color-materials-breakdown {
+            margin: 10px 0;
+        }
+
+        .color-material-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .color-material-item:last-child {
+            border-bottom: none;
+            margin-bottom: 8px;
+        }
+
+        .color-material-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .color-material-swatch {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+            flex-shrink: 0;
+        }
+
+        .color-material-name {
+            font-weight: 500;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .color-material-quantity {
+            font-weight: 600;
+            color: #2196F3;
+            margin-right: 8px;
+        }
+
+        .color-material-percentage {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .material-total {
+            border-top: 2px solid #2196F3;
+            padding-top: 12px;
+            margin-top: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #2196F3;
+            text-align: center;
+        }
+
         .btn-pdf {
             background: #e74c3c;
             color: white;
@@ -1099,6 +1158,55 @@
             background: #616161;
         }
 
+        .tile-zoom-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 100;
+        }
+
+        .tile-zoom-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+        }
+
+        .tile-zoom-btn:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .tile-zoom-btn:active {
+            transform: translateY(0);
+        }
+
+        .tile-zoom-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .tile-zoom-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
         @media (max-width: 768px) {
             .tile-preview-container {
                 height: 200px;
@@ -1112,6 +1220,19 @@
             
             .tile-preview-info {
                 gap: 10px;
+            }
+
+            .tile-zoom-controls {
+                top: 8px;
+                right: 8px;
+                gap: 4px;
+            }
+
+            .tile-zoom-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 18px;
+                touch-action: manipulation;
             }
         }
 
@@ -1526,6 +1647,7 @@
                 const tileSceneRef = useRef(null);
                 const [tileLoading, setTileLoading] = useState(false);
                 const [tileError, setTileError] = useState(null);
+                const [tileZoomLevel, setTileZoomLevel] = useState(1);
 
                 // Initialize 3D scene
                 useEffect(() => {
@@ -1931,22 +2053,107 @@
                         tile.rotation.set(0, 0, 0);
                         controls.reset();
                         controls.forceUpdate(); // Ensure rendering happens
+                        setTileZoomLevel(1); // Reset zoom level state
                     }
                 }, []);
+
+                // 3D Tile Zoom Functions
+                const zoomIn3D = useCallback(() => {
+                    if (tileSceneRef.current) {
+                        const { controls } = tileSceneRef.current;
+                        const zoomFactor = 0.8; // Stronger zoom than mouse wheel
+                        
+                        // Apply zoom by scaling
+                        if (controls.camera.position.length() * zoomFactor > 50) { // Minimum distance
+                            controls.camera.position.multiplyScalar(zoomFactor);
+                            setTileZoomLevel(prev => Math.min(prev / zoomFactor, 4)); // Max 4x zoom
+                            controls.forceUpdate();
+                        }
+                    }
+                }, []);
+
+                const zoomOut3D = useCallback(() => {
+                    if (tileSceneRef.current) {
+                        const { controls } = tileSceneRef.current;
+                        const zoomFactor = 1.25; // Inverse of zoom in
+                        
+                        // Apply zoom by scaling
+                        if (controls.camera.position.length() * zoomFactor < 800) { // Maximum distance
+                            controls.camera.position.multiplyScalar(zoomFactor);
+                            setTileZoomLevel(prev => Math.max(prev / zoomFactor, 0.25)); // Min 0.25x zoom
+                            controls.forceUpdate();
+                        }
+                    }
+                }, []);
+
+                const resetZoom3D = useCallback(() => {
+                    if (tileSceneRef.current) {
+                        const { camera, controls } = tileSceneRef.current;
+                        camera.position.set(300, 200, 300); // Reset to default position
+                        setTileZoomLevel(1);
+                        controls.forceUpdate();
+                    }
+                }, []);
+
+                // Double-tap zoom functionality
+                const lastTapRef = useRef(0);
+                const handleDoubleTap = useCallback((event) => {
+                    const now = Date.now();
+                    const timeSince = now - lastTapRef.current;
+                    
+                    if (timeSince < 300 && timeSince > 0) {
+                        // Double tap detected
+                        event.preventDefault();
+                        zoomIn3D();
+                    }
+                    
+                    lastTapRef.current = now;
+                }, [zoomIn3D]);
+
+                // Add double-click for desktop
+                const handleDoubleClick = useCallback((event) => {
+                    event.preventDefault();
+                    zoomIn3D();
+                }, [zoomIn3D]);
 
                 return React.createElement('div', { className: 'tile-preview-section' },
                     React.createElement('h2', { className: 'palette-title' }, '3D Tile Preview'),
                     React.createElement('div', { 
                         className: 'tile-preview-container',
-                        ref: tileContainerRef
+                        ref: tileContainerRef,
+                        style: { position: 'relative' },
+                        onTouchEnd: handleDoubleTap,
+                        onDoubleClick: handleDoubleClick
                     },
                         tileLoading && React.createElement('div', { className: 'tile-preview-loading' }, 'Updating texture...'),
-                        tileError && React.createElement('div', { className: 'tile-preview-error' }, tileError)
+                        tileError && React.createElement('div', { className: 'tile-preview-error' }, tileError),
+                        !tileError && React.createElement('div', { className: 'tile-zoom-controls' },
+                            React.createElement('button', {
+                                className: 'tile-zoom-btn',
+                                onClick: zoomIn3D,
+                                disabled: tileZoomLevel >= 4,
+                                title: 'Zoom In',
+                                'aria-label': 'Zoom In 3D Tile'
+                            }, '+'),
+                            React.createElement('button', {
+                                className: 'tile-zoom-btn',
+                                onClick: zoomOut3D,
+                                disabled: tileZoomLevel <= 0.25,
+                                title: 'Zoom Out',
+                                'aria-label': 'Zoom Out 3D Tile'
+                            }, '−'),
+                            React.createElement('button', {
+                                className: 'tile-zoom-btn',
+                                onClick: resetZoom3D,
+                                title: 'Reset Zoom',
+                                'aria-label': 'Reset 3D Tile Zoom',
+                                style: { fontSize: '14px' }
+                            }, '↻')
+                        )
                     ),
                     React.createElement('div', { className: 'tile-preview-controls' },
                         React.createElement('div', { className: 'tile-preview-info' },
-                            React.createElement('span', null, '200×200×20mm tile • 1-4mm granules'),
-                            React.createElement('span', null, 'Drag to rotate • Scroll to zoom')
+                            React.createElement('span', null, '200×200×20mm tile • 1-4mm granules')
                         ),
                         React.createElement('button', {
                             className: 'tile-preview-reset',
@@ -2453,12 +2660,75 @@
                     if (isNaN(areaNum) || isNaN(depthNum) || areaNum <= 0 || depthNum <= 0) {
                         return 0;
                     }
-                    // Formula: (area * depth) / 2 = kg
-                    // Based on: 100m2 @ 10mm = 500kg, 15mm = 750kg, 20mm = 1000kg, 25mm = 1250kg
-                    return Math.round((areaNum * depthNum) / 2);
+                    
+                    // Material density lookup table based on real installation data
+                    const materialDensity = {
+                        10: 9.0,    // 9kg/m² at 10mm depth
+                        15: 14.5,   // 14.5kg/m² at 15mm depth
+                        20: 18.0,   // 18kg/m² at 20mm depth
+                        25: 23.5    // 23.5kg/m² at 25mm depth
+                    };
+                    
+                    // Get density for exact depths or interpolate for custom depths
+                    let densityPerM2;
+                    if (materialDensity[depthNum]) {
+                        densityPerM2 = materialDensity[depthNum];
+                    } else {
+                        // Linear interpolation for custom depths
+                        const depths = Object.keys(materialDensity).map(Number).sort((a, b) => a - b);
+                        
+                        if (depthNum < depths[0]) {
+                            // Extrapolate below minimum (use 10mm ratio)
+                            densityPerM2 = (depthNum / 10) * materialDensity[10];
+                        } else if (depthNum > depths[depths.length - 1]) {
+                            // Extrapolate above maximum (use 25mm ratio)
+                            densityPerM2 = (depthNum / 25) * materialDensity[25];
+                        } else {
+                            // Interpolate between known values
+                            let lowerDepth = depths[0];
+                            let upperDepth = depths[depths.length - 1];
+                            
+                            for (let i = 0; i < depths.length - 1; i++) {
+                                if (depthNum >= depths[i] && depthNum <= depths[i + 1]) {
+                                    lowerDepth = depths[i];
+                                    upperDepth = depths[i + 1];
+                                    break;
+                                }
+                            }
+                            
+                            const ratio = (depthNum - lowerDepth) / (upperDepth - lowerDepth);
+                            densityPerM2 = materialDensity[lowerDepth] + 
+                                          (materialDensity[upperDepth] - materialDensity[lowerDepth]) * ratio;
+                        }
+                    }
+                    
+                    return Math.round(areaNum * densityPerM2);
                 }, []);
 
                 const materialRequired = calculateMaterial(projectDetails.area, projectDetails.depth);
+
+                // Calculate individual color material requirements
+                const calculateColorMaterials = useCallback(() => {
+                    if (totalParts === 0 || materialRequired === 0) return [];
+                    
+                    return Array.from(parts.entries()).map(([colorIndex, count]) => {
+                        const color = PALETTE[colorIndex];
+                        const percentage = (count / totalParts) * 100;
+                        const quantity = Math.round((percentage / 100) * materialRequired);
+                        
+                        return {
+                            colorIndex,
+                            name: color.name,
+                            code: color.code,
+                            hex: color.hex,
+                            percentage: Math.round(percentage),
+                            quantity,
+                            parts: count
+                        };
+                    }).sort((a, b) => b.quantity - a.quantity); // Sort by quantity descending
+                }, [parts, totalParts, materialRequired]);
+
+                const colorMaterials = calculateColorMaterials();
 
                 // Generate PDF
                 const generatePDF = useCallback(() => {
@@ -2504,12 +2774,20 @@
                     doc.text('Project Details', 20, yPos);
                     yPos += 5;
                     
+                    // Calculate the height needed for project details box
+                    let projectDetailsHeight = 10; // Base padding
+                    if (projectDetails.name) projectDetailsHeight += 8;
+                    if (projectDetails.location) projectDetailsHeight += 8;
+                    if (projectDetails.area) projectDetailsHeight += 8;
+                    if (projectDetails.depth) projectDetailsHeight += 8;
+                    projectDetailsHeight += 5; // Bottom padding
+                    
                     // Light grey background for project details
                     doc.setFillColor(248, 249, 250);
-                    doc.rect(20, yPos, 170, 50, 'F');
+                    doc.rect(20, yPos, 170, projectDetailsHeight, 'F');
                     doc.setDrawColor(233, 236, 239);
                     doc.setLineWidth(0.5);
-                    doc.rect(20, yPos, 170, 50, 'S');
+                    doc.rect(20, yPos, 170, projectDetailsHeight, 'S');
                     
                     yPos += 10;
                     doc.setFont('helvetica', 'normal');
@@ -2543,16 +2821,8 @@
                         doc.text(`${projectDetails.depth} mm`, 70, yPos);
                         yPos += 8;
                     }
-                    if (materialRequired > 0) {
-                        doc.setFont('helvetica', 'bold');
-                        doc.text('Material Required:', 25, yPos);
-                        doc.setFont('helvetica', 'normal');
-                        doc.setTextColor(33, 150, 243);
-                        doc.text(`${materialRequired} kg`, 70, yPos);
-                        doc.setTextColor(0, 0, 0);
-                    }
                     
-                    yPos += 25;
+                    yPos += 15; // Space after project details box
                     
                     // Mix Preview (moved to appear after project details)
                     if (totalParts > 0 && canvasRef.current) {
@@ -2594,26 +2864,28 @@
                         doc.text('Colour Breakdown:', 20, yPos);
                         yPos += 8;
                         
-                        // Table headers (removed Hex column)
+                        // Table headers with Quantity column
                         doc.setFillColor(26, 54, 93);
                         doc.rect(20, yPos, 170, 8, 'F');
                         doc.setTextColor(255, 255, 255);
                         doc.setFont('helvetica', 'bold');
                         doc.setFontSize(10);
                         doc.text('Colour', 25, yPos + 5);
-                        doc.text('Code', 80, yPos + 5);
-                        doc.text('Percentage', 110, yPos + 5);
-                        doc.text('Parts', 140, yPos + 5);
+                        doc.text('Code', 60, yPos + 5);
+                        doc.text('%', 85, yPos + 5);
+                        doc.text('Parts', 105, yPos + 5);
+                        doc.text('Quantity (kg)', 130, yPos + 5);
                         doc.text('Swatch', 165, yPos + 5);
                         yPos += 10;
                         
                         doc.setTextColor(0, 0, 0);
                         
-                        // Color rows (without hex codes)
+                        // Color rows with quantity data
                         let rowIndex = 0;
                         Array.from(parts.entries()).forEach(([colourIndex, count]) => {
                             const colour = PALETTE[colourIndex];
                             const percentage = Math.round((count / totalParts) * 100);
+                            const quantity = Math.round((percentage / 100) * materialRequired);
                             
                             // Alternating row background
                             if (rowIndex % 2 === 0) {
@@ -2624,9 +2896,10 @@
                             doc.setFont('helvetica', 'normal');
                             doc.setFontSize(9);
                             doc.text(colour.name, 25, yPos + 3);
-                            doc.text(colour.code, 80, yPos + 3);
-                            doc.text(`${percentage}%`, 110, yPos + 3);
-                            doc.text(count.toString(), 140, yPos + 3);
+                            doc.text(colour.code, 60, yPos + 3);
+                            doc.text(`${percentage}%`, 85, yPos + 3);
+                            doc.text(count.toString(), 105, yPos + 3);
+                            doc.text(`${quantity} kg`, 130, yPos + 3);
                             
                             // Color swatch
                             drawColorSwatch(165, yPos, 15, 5, colour.hex);
@@ -2644,6 +2917,10 @@
                         doc.setFont('helvetica', 'bold');
                         doc.setFontSize(11);
                         doc.text(`Total Parts: ${totalParts}`, 20, yPos);
+                        yPos += 8;
+                        doc.setTextColor(33, 150, 243);
+                        doc.text(`Total Material Required: ${materialRequired} kg`, 20, yPos);
+                        doc.setTextColor(0, 0, 0);
                         yPos += 20;
                         
                         // Average blend colour with large swatch (moved after breakdown)
@@ -2737,11 +3014,12 @@
                     }
                     
                     // Save the PDF with British spelling
+                    const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
                     const fileName = projectDetails.name ? 
-                        `${projectDetails.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_colour_specification.pdf` : 
-                        'rosehill_tpv_colour_specification.pdf';
+                        `${projectDetails.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_colour_mix_${currentDate}.pdf` : 
+                        `rosehill_tpv_colour_mix_${currentDate}.pdf`;
                     doc.save(fileName);
-                }, [projectDetails, totalParts, parts, blendedColor, blendedRgb, materialRequired, canvasRef]);
+                }, [projectDetails, totalParts, parts, blendedColor, blendedRgb, materialRequired, colorMaterials, canvasRef]);
 
                 // Mouse handlers for panning
                 const handleMouseDown = useCallback((e) => {
@@ -2985,10 +3263,36 @@
                                     ),
                                     materialRequired > 0 && React.createElement('div', { className: 'material-calc' },
                                         React.createElement('h4', null, 'Material Calculation'),
-                                        React.createElement('div', { className: 'material-amount' },
-                                            `${materialRequired} kg required`
+                                        totalParts > 0 && colorMaterials.length > 0 && React.createElement('div', { className: 'color-materials-breakdown' },
+                                            colorMaterials.map(colorMaterial => 
+                                                React.createElement('div', { 
+                                                    key: colorMaterial.colorIndex,
+                                                    className: 'color-material-item'
+                                                },
+                                                    React.createElement('div', { className: 'color-material-info' },
+                                                        React.createElement('div', {
+                                                            className: 'color-material-swatch',
+                                                            style: { backgroundColor: colorMaterial.hex }
+                                                        }),
+                                                        React.createElement('span', { className: 'color-material-name' },
+                                                            `${colorMaterial.name} (${colorMaterial.code})`
+                                                        )
+                                                    ),
+                                                    React.createElement('div', null,
+                                                        React.createElement('span', { className: 'color-material-quantity' },
+                                                            `${colorMaterial.quantity} kg`
+                                                        ),
+                                                        React.createElement('span', { className: 'color-material-percentage' },
+                                                            `(${colorMaterial.percentage}%)`
+                                                        )
+                                                    )
+                                                )
+                                            )
                                         ),
-                                        React.createElement('div', { style: { fontSize: '0.85rem', color: '#666', marginTop: '5px' } },
+                                        React.createElement('div', { className: 'material-total' },
+                                            `Total Required: ${materialRequired} kg`
+                                        ),
+                                        React.createElement('div', { style: { fontSize: '0.85rem', color: '#666', marginTop: '8px', textAlign: 'center' } },
                                             `Based on ${projectDetails.area}m² area at ${projectDetails.depth}mm depth`
                                         )
                                     ),
