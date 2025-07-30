@@ -12,4 +12,10 @@ else
     echo "WARNING: GOOGLE_MAPS_API_KEY environment variable not set"
 fi
 
+# Install function dependencies
+echo "Installing function dependencies..."
+cd netlify/functions
+npm install
+cd ../..
+
 echo "Build completed successfully"
