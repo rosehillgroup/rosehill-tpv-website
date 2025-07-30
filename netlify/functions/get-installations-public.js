@@ -70,10 +70,13 @@ exports.handler = async (event, context) => {
                 };
             }
             
-            // Map installation_date to date for frontend compatibility
+            // Map installation_date to date and extract image URLs for frontend compatibility
             const mappedInstallation = {
                 ...installation,
-                date: installation.installation_date
+                date: installation.installation_date,
+                images: installation.images?.map(img => 
+                    typeof img === 'object' && img.url ? img.url : img
+                ) || []
             };
             
             return {
@@ -107,10 +110,13 @@ exports.handler = async (event, context) => {
                 };
             }
             
-            // Map installation_date to date for frontend compatibility
+            // Map installation_date to date and extract image URLs for frontend compatibility
             const mappedInstallations = installations?.map(installation => ({
                 ...installation,
-                date: installation.installation_date
+                date: installation.installation_date,
+                images: installation.images?.map(img => 
+                    typeof img === 'object' && img.url ? img.url : img
+                ) || []
             })) || [];
             
             console.log('Returning successful response with', mappedInstallations.length, 'installations');
