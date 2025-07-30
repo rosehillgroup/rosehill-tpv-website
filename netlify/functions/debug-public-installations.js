@@ -56,6 +56,7 @@ exports.handler = async (event, context) => {
                     dataCount: data ? data.length : 0,
                     sampleData: data && data.length > 0 ? {
                         title: data[0].title,
+                        slug: data[0].slug,
                         imagesType: typeof data[0].images,
                         imagesValue: data[0].images,
                         firstImageType: data[0].images && data[0].images.length > 0 ? typeof data[0].images[0] : 'none'
