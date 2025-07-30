@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add New Installation - Admin</title>
-    <link rel="canonical" href="https://tpv.rosehill.group/admin-add-installation.html">
+    <link rel="canonical" href="https://tpv.rosehill.group/admin/add-installation.html">
     <style>
         * {
             margin: 0;
@@ -372,10 +372,110 @@
             display: flex;
             gap: 0;
         }
+        
+        /* Authentication styles */
+        .auth-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f5f7fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .auth-box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .auth-box h2 {
+            color: #1a365d;
+            margin-bottom: 20px;
+        }
+        
+        .auth-box p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .auth-button {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .auth-button:hover {
+            transform: translateY(-1px);
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1a365d;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .logout-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 100;
+        }
+        
+        .logout-button:hover {
+            background: #c82333;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Authentication overlay -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-box">
+            <div class="loading-spinner" id="authSpinner"></div>
+            <h2>Admin Authentication Required</h2>
+            <p id="authMessage">Checking authentication status...</p>
+            <button class="auth-button hidden" id="loginButton" onclick="handleLogin()">Login with Netlify</button>
+        </div>
+    </div>
+    
+    <!-- Logout button -->
+    <button class="logout-button hidden" id="logoutButton" onclick="handleLogout()">Logout</button>
+    
+    <!-- Main content (hidden until authenticated) -->
+    <div class="container hidden" id="mainContent">
         <div class="header">
             <h1 id="formTitle">Add New Installation</h1>
             <p>Admin Interface - Rosehill TPV Installations</p>
@@ -467,6 +567,53 @@
     </div>
 
     <script>
+        // Authentication state
+        let authToken = null;
+        
+        // Check for stored auth token
+        window.addEventListener('load', () => {
+            authToken = localStorage.getItem('tpv_admin_token');
+            
+            if (authToken) {
+                // Verify token is still valid
+                verifyAuth();
+            } else {
+                // No token, redirect to login
+                window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+            }
+        });
+        
+        async function verifyAuth() {
+            try {
+                // Quick check - if token exists, show the page
+                // The actual validation happens when making API calls
+                document.getElementById('authContainer').classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+                document.getElementById('logoutButton').classList.remove('hidden');
+                
+                // Load installations
+                await loadExistingInstallations();
+            } catch (error) {
+                // Token invalid, redirect to login
+                localStorage.removeItem('tpv_admin_token');
+                window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+            }
+        }
+        
+        function handleLogout() {
+            localStorage.removeItem('tpv_admin_token');
+            window.location.href = '/';
+        }
+        
+        // Helper function to get auth headers
+        function getAuthHeaders() {
+            return {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            };
+        }
+        
+        // Form variables
         let selectedFiles = [];
         let descriptionCount = 1;
         let editingSlug = null;
@@ -704,7 +851,10 @@
             try {
                 const response = await fetch(endpoint, {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
                 });
                 
                 // Check if response is ok
@@ -779,7 +929,11 @@
         // Load and display existing installations
         async function loadExistingInstallations() {
             try {
-                const response = await fetch('/.netlify/functions/get-installations');
+                const response = await fetch('/.netlify/functions/get-installations', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
                 if (!response.ok) throw new Error('Failed to load installations');
                 
                 const data = await response.json();
@@ -864,6 +1018,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}`
                     },
                     body: JSON.stringify({ slug: slug })
                 });
@@ -905,7 +1060,11 @@
             try {
                 console.log('Editing installation with slug:', slug);
                 // Fetch installation data
-                const response = await fetch(`/.netlify/functions/get-installations?slug=${slug}`);
+                const response = await fetch(`/.netlify/functions/get-installations?slug=${slug}`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
                 if (!response.ok) throw new Error('Failed to load installation');
                 
                 const data = await response.json();
@@ -1027,8 +1186,7 @@
             resetForm();
         }
 
-        // Load installations when page loads
-        window.addEventListener('load', loadExistingInstallations);
+        // Note: Installations are now loaded after authentication in checkAdminAccess()
     </script>
 </body>
 </html>

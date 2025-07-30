@@ -40,11 +40,13 @@
   to = "/installations.html"
   status = 200
 
-# Admin page redirect (optional - for security)
 [[redirects]]
-  from = "/admin"
-  to = "/admin-add-installation.html"
+  from = "/login"
+  to = "/login.html"
   status = 200
+
+# Admin pages are protected by authentication in the application
+# No direct access control needed here
 
 # Form handling
 [[redirects]]

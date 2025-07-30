@@ -1,9 +1,10 @@
 const { createClient } = require('@supabase/supabase-js');
+const { verifyToken } = require('./utils/auth');
 
 exports.handler = async (event, context) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         'Access-Control-Allow-Methods': 'POST, OPTIONS',
         'Content-Type': 'application/json'
     };
@@ -17,6 +18,18 @@ exports.handler = async (event, context) => {
             statusCode: 405,
             headers,
             body: JSON.stringify({ error: 'Method not allowed' })
+        };
+    }
+    
+    // Check authentication
+    const authHeader = event.headers.authorization || event.headers.Authorization;
+    const authResult = verifyToken(authHeader);
+    
+    if (!authResult.valid) {
+        return {
+            statusCode: 401,
+            headers,
+            body: JSON.stringify({ success: false, error: authResult.error })
         };
     }
     

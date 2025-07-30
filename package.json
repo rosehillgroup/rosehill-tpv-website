@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
+    "bcryptjs": "^3.0.2",
     "dotenv": "^16.5.0",
     "imagemin": "^9.0.1",
     "imagemin-webp": "^8.0.0",

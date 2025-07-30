@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
-    "parse-multipart-data": "^1.5.0"
+    "parse-multipart-data": "^1.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3"
   }
 }
