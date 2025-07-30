@@ -674,6 +674,7 @@
             if (typeof image === 'object' && image !== null) {
                 console.log('Image object properties:', Object.keys(image));
                 console.log('Full image object:', image);
+                console.log('All object values:', Object.values(image));
                 
                 // Check for different possible properties
                 if (image.url) {
@@ -687,17 +688,14 @@
                     return `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/${image.name}`;
                 } else if (image.filename) {
                     console.log('Using object.filename:', image.filename);
-                    // Try different possible Supabase storage paths for older installations
-                    const possiblePaths = [
-                        `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/${image.filename}`,
-                        `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/images/${image.filename}`,
-                        `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/uploads/${image.filename}`,
-                        `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/${image.filename}`
-                    ];
-                    console.log('Trying multiple Supabase paths for older installation:', possiblePaths);
                     
-                    // For now, return the first path and let the error handler try others if needed
-                    return possiblePaths[0];
+                    // Check if this is a legacy installation that might use local images
+                    // Try legacy local path first for older installations
+                    const legacyImagePath = `/images/installations/${image.filename}`;
+                    console.log('Trying legacy local path:', legacyImagePath);
+                    
+                    // Return legacy path - older installations might use local images
+                    return legacyImagePath;
                 }
             }
             
@@ -844,6 +842,8 @@
                         // Try alternative paths for older installations
                         if (image && typeof image === 'object' && image.filename) {
                             const alternativePaths = [
+                                `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/${image.filename}`,
+                                `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/${image.filename}`,
                                 `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/images/${image.filename}`,
                                 `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/uploads/${image.filename}`,
                                 `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/${image.filename}`
@@ -888,6 +888,8 @@
                         // Try alternative paths for older installations
                         if (image && typeof image === 'object' && image.filename) {
                             const alternativePaths = [
+                                `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/${image.filename}`,
+                                `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/${image.filename}`,
                                 `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/images/${image.filename}`,
                                 `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/uploads/${image.filename}`,
                                 `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/${image.filename}`
