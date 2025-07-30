@@ -669,18 +669,24 @@
 
         // Get image URL
         function getImageUrl(image) {
+            console.log('Processing image for URL generation:', image, typeof image);
+            
             if (typeof image === 'object' && image.url) {
+                console.log('Using object.url:', image.url);
                 return image.url;
             }
             if (typeof image === 'string') {
                 // If it's already a full URL, use it
                 if (image.startsWith('http')) {
+                    console.log('Using full URL as-is:', image);
                     return image;
                 }
                 // For older installations, images might be stored as filenames
-                // Try both the new path and legacy path
-                return `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/${image}`;
+                const constructedUrl = `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/${image}`;
+                console.log('Constructed Supabase URL:', constructedUrl);
+                return constructedUrl;
             }
+            console.log('No valid image format found, returning empty string');
             return '';
         }
 
@@ -705,6 +711,7 @@
                 
                 console.log('Response status:', response.status);
                 console.log('Response data:', data);
+                console.log('Installation images:', data.installation?.images);
                 
                 if (!response.ok || !data.installation) {
                     console.error('Installation not found or response error');
@@ -767,13 +774,17 @@
             const galleryGrid = document.getElementById('gallery-grid');
             galleryGrid.innerHTML = '';
 
+            console.log('Rendering gallery with images:', installationImages);
+
             if (installationImages.length === 0) {
                 galleryGrid.innerHTML = '<p>No images available for this installation.</p>';
                 return;
             }
 
             installationImages.forEach((image, index) => {
+                console.log(`Processing image ${index}:`, image);
                 const imageUrl = getImageUrl(image);
+                console.log(`Generated URL for image ${index}:`, imageUrl);
                 if (!imageUrl) return;
 
                 const galleryItem = document.createElement('div');
