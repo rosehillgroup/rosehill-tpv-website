@@ -671,10 +671,26 @@
         function getImageUrl(image) {
             console.log('Processing image for URL generation:', image, typeof image);
             
-            if (typeof image === 'object' && image.url) {
-                console.log('Using object.url:', image.url);
-                return image.url;
+            if (typeof image === 'object' && image !== null) {
+                console.log('Image object properties:', Object.keys(image));
+                console.log('Full image object:', image);
+                
+                // Check for different possible properties
+                if (image.url) {
+                    console.log('Using object.url:', image.url);
+                    return image.url;
+                } else if (image.path) {
+                    console.log('Using object.path:', image.path);
+                    return `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/${image.path}`;
+                } else if (image.name) {
+                    console.log('Using object.name:', image.name);
+                    return `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/${image.name}`;
+                } else if (image.filename) {
+                    console.log('Using object.filename:', image.filename);
+                    return `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/${image.filename}`;
+                }
             }
+            
             if (typeof image === 'string') {
                 // If it's already a full URL, use it
                 if (image.startsWith('http')) {
