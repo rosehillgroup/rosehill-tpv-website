@@ -1092,7 +1092,7 @@
                 
                 return `
                     <div class="installation-card" data-application="${installation.application}">
-                        <div class="installation-image" onclick="handleInstallationClick('${slugUrl}', '${installation.title.replace(/'/g, "\\'")}')">
+                        <div class="installation-image" onclick="window.location.href='installations/${slugUrl}.html'">
                             ${firstImageUrl ? `<img src="${firstImageUrl}" alt="${installation.title}" loading="lazy">` : '<div class="no-image">No image available</div>'}
                             ${imageCount > 1 ? `<div class="image-overlay">+${imageCount - 1} more</div>` : ''}
                         </div>
@@ -1106,7 +1106,7 @@
                             <div class="installation-description">
                                 <p>${previewText}</p>
                             </div>
-                            <a href="#" onclick="event.preventDefault(); handleInstallationClick('${slugUrl}', '${installation.title.replace(/'/g, "\\'")}');" class="read-more-btn">
+                            <a href="installations/${slugUrl}.html" class="read-more-btn">
                                 Read More →
                             </a>
                         </div>
@@ -1230,33 +1230,6 @@
             return img;
         }
 
-        // Handle installation card clicks with 404 fallback
-        function handleInstallationClick(slug, title) {
-            const primaryUrl = `installations/${slug}.html`;
-            
-            // First try the primary URL
-            fetch(primaryUrl, { method: 'HEAD' })
-                .then(response => {
-                    if (response.ok) {
-                        // File exists, navigate to it
-                        window.location.href = primaryUrl;
-                    } else {
-                        // File doesn't exist, show error message
-                        showInstallationError(title, slug);
-                    }
-                })
-                .catch(error => {
-                    // Network error or other issue, try to navigate anyway
-                    console.warn('Error checking installation page:', error);
-                    window.location.href = primaryUrl;
-                });
-        }
-
-        // Show error when installation page is not found
-        function showInstallationError(title, slug) {
-            const message = `Sorry, the detailed page for "${title}" is not yet available.\n\nThis installation is recently added and its dedicated page is being prepared.\n\nPlease try again later or contact us for more information about this project.`;
-            alert(message);
-        }
 
         // Show installation details (placeholder)
         function showInstallationDetails(title) {
