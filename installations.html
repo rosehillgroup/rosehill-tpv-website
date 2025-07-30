@@ -1002,7 +1002,7 @@
         // Load installations data
         async function loadInstallations() {
             try {
-                const response = await fetch('/.netlify/functions/get-installations');
+                const response = await fetch('/.netlify/functions/get-installations-public');
                 const data = await response.json();
                 allInstallations = data.installations || [];
                 
