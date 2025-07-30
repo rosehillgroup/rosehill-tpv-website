@@ -510,7 +510,7 @@
     <header class="header">
         <div class="header-container">
             <a href="/" class="logo">
-                <img src="rosehill_tpv_logo.png" alt="Rosehill TPV">
+                <img src="/rosehill_tpv_logo.png" alt="Rosehill TPV">
             </a>
             <nav class="nav-menu">
                 <a href="/">Home</a>
@@ -597,7 +597,7 @@
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-logo">
-                <img src="rosehill_tpv_logo.png" alt="Rosehill TPV">
+                <img src="/rosehill_tpv_logo.png" alt="Rosehill TPV">
             </div>
             <p class="footer-text">Creating safer, more vibrant play and sports surfaces worldwide with our premium coloured rubber granules.</p>
             <nav class="footer-nav">
@@ -677,8 +677,9 @@
                 if (image.startsWith('http')) {
                     return image;
                 }
-                // Otherwise treat as filename
-                return `/images/installations/${image}`;
+                // For older installations, images might be stored as filenames
+                // Try both the new path and legacy path
+                return `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/${image}`;
             }
             return '';
         }
@@ -779,29 +780,49 @@
                 galleryItem.className = 'gallery-item';
                 galleryItem.onclick = () => openModal(index);
 
-                // Check if image URL is from Supabase (has query parameters for optimization)
-                if (imageUrl.includes('supabase.co') && imageUrl.includes('?')) {
-                    // Create picture element with WebP optimization
+                // Check if image URL is from Supabase
+                if (imageUrl.includes('supabase.co')) {
+                    // Create picture element with WebP optimization for Supabase images
                     const picture = document.createElement('picture');
                     
+                    // Add optimization parameters if not already present
+                    let optimizedUrl = imageUrl;
+                    if (!imageUrl.includes('?')) {
+                        optimizedUrl = `${imageUrl}?width=400&height=300&quality=75&resize=cover`;
+                    }
+                    
                     const webpSource = document.createElement('source');
-                    webpSource.srcset = `${imageUrl}&format=webp`;
+                    webpSource.srcset = `${optimizedUrl}&format=webp`;
                     webpSource.type = 'image/webp';
                     
                     const img = document.createElement('img');
-                    img.src = imageUrl;
+                    img.src = optimizedUrl;
                     img.alt = `Installation - Image ${index + 1}`;
                     img.loading = 'lazy';
+                    
+                    // Add error handling for missing images
+                    img.onerror = function() {
+                        console.log('Image failed to load:', optimizedUrl);
+                        this.src = '/images/placeholder-installation.jpg'; // Fallback if available
+                        this.style.display = 'none'; // Hide if no fallback
+                    };
                     
                     picture.appendChild(webpSource);
                     picture.appendChild(img);
                     galleryItem.appendChild(picture);
                 } else {
-                    // Regular image
+                    // Regular image or local path
                     const img = document.createElement('img');
                     img.src = imageUrl;
                     img.alt = `Installation - Image ${index + 1}`;
                     img.loading = 'lazy';
+                    
+                    // Add error handling
+                    img.onerror = function() {
+                        console.log('Image failed to load:', imageUrl);
+                        this.style.display = 'none';
+                    };
+                    
                     galleryItem.appendChild(img);
                 }
 
@@ -826,9 +847,14 @@
                 modalImage.id = `modal-img-${index}`;
                 modalImage.style.display = index === 0 ? 'block' : 'none';
 
-                if (imageUrl.includes('supabase.co') && imageUrl.includes('?')) {
+                if (imageUrl.includes('supabase.co')) {
                     // High resolution for modal
-                    const highResUrl = imageUrl.replace(/width=\d+&height=\d+/, 'width=1200&height=800');
+                    let highResUrl = imageUrl;
+                    if (imageUrl.includes('?')) {
+                        highResUrl = imageUrl.replace(/width=\d+&height=\d+/, 'width=1200&height=800');
+                    } else {
+                        highResUrl = `${imageUrl}?width=1200&height=800&quality=75&resize=cover`;
+                    }
                     
                     const picture = document.createElement('picture');
                     
