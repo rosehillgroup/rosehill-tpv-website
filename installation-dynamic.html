@@ -687,10 +687,17 @@
                     return `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/${image.name}`;
                 } else if (image.filename) {
                     console.log('Using object.filename:', image.filename);
-                    // Use the same path structure as working installations
-                    const constructedUrl = `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/${image.filename}`;
-                    console.log('Constructed Supabase URL:', constructedUrl);
-                    return constructedUrl;
+                    // Try different possible Supabase storage paths for older installations
+                    const possiblePaths = [
+                        `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/${image.filename}`,
+                        `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/images/${image.filename}`,
+                        `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/uploads/${image.filename}`,
+                        `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/${image.filename}`
+                    ];
+                    console.log('Trying multiple Supabase paths for older installation:', possiblePaths);
+                    
+                    // For now, return the first path and let the error handler try others if needed
+                    return possiblePaths[0];
                 }
             }
             
@@ -830,11 +837,38 @@
                     img.alt = `Installation - Image ${index + 1}`;
                     img.loading = 'lazy';
                     
-                    // Add error handling for missing images
+                    // Add error handling for missing images with path fallback
                     img.onerror = function() {
                         console.log('Image failed to load:', optimizedUrl);
-                        this.src = '/images/placeholder-installation.jpg'; // Fallback if available
-                        this.style.display = 'none'; // Hide if no fallback
+                        
+                        // Try alternative paths for older installations
+                        if (image && typeof image === 'object' && image.filename) {
+                            const alternativePaths = [
+                                `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/images/${image.filename}`,
+                                `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/uploads/${image.filename}`,
+                                `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/${image.filename}`
+                            ];
+                            
+                            // Try each alternative path
+                            let pathIndex = 0;
+                            const tryNextPath = () => {
+                                if (pathIndex < alternativePaths.length) {
+                                    const nextPath = alternativePaths[pathIndex];
+                                    console.log(`Trying alternative path ${pathIndex + 1}:`, nextPath);
+                                    this.onerror = () => {
+                                        pathIndex++;
+                                        tryNextPath();
+                                    };
+                                    this.src = nextPath + (nextPath.includes('?') ? '&' : '?') + 'width=400&height=300&quality=75&resize=cover';
+                                } else {
+                                    console.log('All paths failed, hiding image');
+                                    this.style.display = 'none';
+                                }
+                            };
+                            tryNextPath();
+                        } else {
+                            this.style.display = 'none';
+                        }
                     };
                     
                     picture.appendChild(webpSource);
@@ -847,10 +881,38 @@
                     img.alt = `Installation - Image ${index + 1}`;
                     img.loading = 'lazy';
                     
-                    // Add error handling
+                    // Add error handling with path fallback
                     img.onerror = function() {
                         console.log('Image failed to load:', imageUrl);
-                        this.style.display = 'none';
+                        
+                        // Try alternative paths for older installations
+                        if (image && typeof image === 'object' && image.filename) {
+                            const alternativePaths = [
+                                `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/images/${image.filename}`,
+                                `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/uploads/${image.filename}`,
+                                `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/${image.filename}`
+                            ];
+                            
+                            // Try each alternative path
+                            let pathIndex = 0;
+                            const tryNextPath = () => {
+                                if (pathIndex < alternativePaths.length) {
+                                    const nextPath = alternativePaths[pathIndex];
+                                    console.log(`Trying alternative path ${pathIndex + 1}:`, nextPath);
+                                    this.onerror = () => {
+                                        pathIndex++;
+                                        tryNextPath();
+                                    };
+                                    this.src = nextPath;
+                                } else {
+                                    console.log('All paths failed, hiding image');
+                                    this.style.display = 'none';
+                                }
+                            };
+                            tryNextPath();
+                        } else {
+                            this.style.display = 'none';
+                        }
                     };
                     
                     galleryItem.appendChild(img);
