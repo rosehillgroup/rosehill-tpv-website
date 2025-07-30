@@ -684,10 +684,13 @@
                     return `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/${image.path}`;
                 } else if (image.name) {
                     console.log('Using object.name:', image.name);
-                    return `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/${image.name}`;
+                    return `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/${image.name}`;
                 } else if (image.filename) {
                     console.log('Using object.filename:', image.filename);
-                    return `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/${image.filename}`;
+                    // Use the same path structure as working installations
+                    const constructedUrl = `https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/${image.filename}`;
+                    console.log('Constructed Supabase URL:', constructedUrl);
+                    return constructedUrl;
                 }
             }
             
