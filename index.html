@@ -1903,10 +1903,10 @@
                 const formattedDate = formatDate(installation.date);
                 const applicationName = capitalizeApplication(installation.application);
                 
-                const imageUrl = installation.images && installation.images.length > 0 ? installation.images[0] : '';
+                const imageUrl = installation.images && installation.images.length > 0 ? getImageUrl(installation.images[0]) : '';
                 
                 return `
-                    <div class="installation-card" onclick="window.location.href='installations/${slug}.html'">
+                    <div class="installation-card" onclick="handleInstallationClick('${slug}', '${installation.title.replace(/'/g, "\\'")}')">
                         <div class="installation-image">
                             ${imageUrl ? `<img src="${imageUrl}" alt="${installation.title}" loading="lazy">` : '<div class="no-image">No image available</div>'}
                         </div>
@@ -1976,6 +1976,47 @@
                 'tennis': 'Tennis Court'
             };
             return appMap[app] || app.charAt(0).toUpperCase() + app.slice(1);
+        }
+
+        // Helper function to get proper image URL
+        function getImageUrl(img) {
+            // Handle both string URLs and object formats
+            if (typeof img === 'string') {
+                return img;
+            } else if (img && typeof img === 'object' && img.url) {
+                return img.url;
+            } else if (img && typeof img === 'object' && img.filename) {
+                return `images/installations/${img.filename}`;
+            }
+            return img;
+        }
+
+        // Handle installation card clicks with 404 fallback
+        function handleInstallationClick(slug, title) {
+            const primaryUrl = `installations/${slug}.html`;
+            
+            // First try the primary URL
+            fetch(primaryUrl, { method: 'HEAD' })
+                .then(response => {
+                    if (response.ok) {
+                        // File exists, navigate to it
+                        window.location.href = primaryUrl;
+                    } else {
+                        // File doesn't exist, show error message
+                        showInstallationError(title, slug);
+                    }
+                })
+                .catch(error => {
+                    // Network error or other issue, try to navigate anyway
+                    console.warn('Error checking installation page:', error);
+                    window.location.href = primaryUrl;
+                });
+        }
+
+        // Show error when installation page is not found
+        function showInstallationError(title, slug) {
+            const message = `Sorry, the detailed page for "${title}" is not yet available.\n\nThis installation is recently added and its dedicated page is being prepared.\n\nPlease try again later or contact us for more information about this project.`;
+            alert(message);
         }
 
         // Cookie Consent Management
