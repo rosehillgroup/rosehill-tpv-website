@@ -1654,9 +1654,14 @@ Learn more: www.rosehilltpv.com`;
             let originalContent = '';
             
             if (installation.fullContent) {
-                // Static installation data format
-                originalContent = installation.fullContent;
-                console.log('Using fullContent:', originalContent);
+                // Handle fullContent as array or string
+                if (Array.isArray(installation.fullContent)) {
+                    originalContent = installation.fullContent.join(' ');
+                    console.log('Using fullContent array:', installation.fullContent, 'joined to:', originalContent);
+                } else {
+                    originalContent = installation.fullContent;
+                    console.log('Using fullContent string:', originalContent);
+                }
             } else if (installation.description) {
                 // Supabase format - description can be array or string
                 if (Array.isArray(installation.description)) {
