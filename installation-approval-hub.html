@@ -780,19 +780,30 @@
             card.dataset.installationId = installation.id;
             card.dataset.index = index;
 
-            const imageUrl = installation.images && installation.images.length > 0 
-                ? `images/installations/${installation.images[0]}` 
-                : '';
+            // Get the first image name, handling different data formats
+            let firstImageName = '';
+            if (installation.images && installation.images.length > 0) {
+                let imageName = installation.images[0];
+                if (typeof imageName === 'object' && imageName.url) {
+                    firstImageName = imageName.url;
+                } else if (typeof imageName === 'object' && imageName.name) {
+                    firstImageName = imageName.name;
+                } else if (typeof imageName === 'string') {
+                    firstImageName = imageName;
+                }
+            }
+            
+            const imageUrl = firstImageName ? `images/installations/${firstImageName}` : '';
 
             // Create optimized image HTML with multiple formats
             let imageHTML = '<div class="image-placeholder">📷</div>';
-            if (imageUrl) {
-                const baseImageName = installation.images[0].replace(/\.(jpg|jpeg|png|webp|avif)$/i, '');
+            if (firstImageName) {
+                const baseImageName = firstImageName.replace(/\.(jpg|jpeg|png|webp|avif)$/i, '');
                 imageHTML = `
                     <picture>
                         <source srcset="images/installations/${baseImageName}.avif" type="image/avif">
                         <source srcset="images/installations/${baseImageName}.webp" type="image/webp">
-                        <img src="${imageUrl}" 
+                        <img src="images/installations/${firstImageName}" 
                              alt="${installation.title}" 
                              loading="lazy"
                              onerror="this.parentElement.parentElement.innerHTML='<div class=\\'image-placeholder\\'>📷</div>'">
@@ -863,19 +874,28 @@
 
             modalTitle.textContent = installation.title;
             
-            const imageUrl = installation.images && installation.images.length > 0 
-                ? `images/installations/${installation.images[0]}` 
-                : '';
+            // Get the first image name for modal, handling different data formats  
+            let firstImageName = '';
+            if (installation.images && installation.images.length > 0) {
+                let imageName = installation.images[0];
+                if (typeof imageName === 'object' && imageName.url) {
+                    firstImageName = imageName.url;
+                } else if (typeof imageName === 'object' && imageName.name) {
+                    firstImageName = imageName.name;
+                } else if (typeof imageName === 'string') {
+                    firstImageName = imageName;
+                }
+            }
 
             // Create optimized image HTML for modal
             let modalImageHTML = '';
-            if (imageUrl) {
-                const baseImageName = installation.images[0].replace(/\.(jpg|jpeg|png|webp|avif)$/i, '');
+            if (firstImageName) {
+                const baseImageName = firstImageName.replace(/\.(jpg|jpeg|png|webp|avif)$/i, '');
                 modalImageHTML = `
                     <picture>
                         <source srcset="images/installations/${baseImageName}.avif" type="image/avif">
                         <source srcset="images/installations/${baseImageName}.webp" type="image/webp">
-                        <img src="${imageUrl}" 
+                        <img src="images/installations/${firstImageName}" 
                              alt="${installation.title}" 
                              class="modal-image"
                              onerror="this.style.display='none'">
