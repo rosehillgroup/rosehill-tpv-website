@@ -793,10 +793,10 @@
                 }
             }
 
-            // Create optimized image HTML - use full Supabase URLs directly
+            // Create optimized image HTML - support both Supabase and local images
             let imageHTML = '<div class="image-placeholder">📷</div>';
             if (firstImageUrl) {
-                // If it's already a full URL, use it directly
+                // If it's already a full URL (Supabase), use it directly
                 if (firstImageUrl.startsWith('http')) {
                     imageHTML = `
                         <img src="${firstImageUrl}" 
@@ -805,17 +805,15 @@
                              onerror="this.parentElement.innerHTML='<div class=\\'image-placeholder\\'>📷</div>'">
                     `;
                 } else {
-                    // For local images, use the old approach
+                    // For local images, try different formats with proper fallbacks
                     const baseImageName = firstImageUrl.replace(/\.(jpg|jpeg|png|webp|avif)$/i, '');
+                    
+                    // Try to fetch the image directly first to see if it exists
                     imageHTML = `
-                        <picture>
-                            <source srcset="images/installations/${baseImageName}.avif" type="image/avif">
-                            <source srcset="images/installations/${baseImageName}.webp" type="image/webp">
-                            <img src="images/installations/${firstImageUrl}" 
-                                 alt="${installation.title}" 
-                                 loading="lazy"
-                                 onerror="this.parentElement.parentElement.innerHTML='<div class=\\'image-placeholder\\'>📷</div>'">
-                        </picture>
+                        <img src="${firstImageUrl.startsWith('http') ? firstImageUrl : `images/installations/${firstImageUrl}`}" 
+                             alt="${installation.title}" 
+                             loading="lazy"
+                             onerror="this.onerror=null; this.src='images/installations/${baseImageName}.jpg'; this.onerror=function(){this.onerror=null; this.src='images/installations/${baseImageName}.webp'; this.onerror=function(){this.parentElement.innerHTML='<div class=\\'image-placeholder\\'>📷</div>'}}">
                     `;
                 }
             }
@@ -1116,21 +1114,36 @@ Usage suggestions:
         }
 
         // Fetch image with fallbacks for different formats
-        async function fetchImageWithFallbacks(imageName, installationTitle) {
+        async function fetchImageWithFallbacks(imageUrl, installationTitle) {
+            // If it's already a full Supabase URL, use it directly
+            if (imageUrl.startsWith('http')) {
+                try {
+                    const response = await fetch(imageUrl);
+                    if (response.ok) {
+                        console.log(`Successfully fetched Supabase image for ${installationTitle}`);
+                        return await response.blob();
+                    }
+                } catch (error) {
+                    console.warn(`Failed to fetch Supabase image ${imageUrl}:`, error);
+                }
+                return null;
+            }
+
+            // For local images, try different formats
             const formats = [
-                imageName, // Original format
-                imageName.replace(/\.[^/.]+$/, '.avif'),
-                imageName.replace(/\.[^/.]+$/, '.webp'),
-                imageName.replace(/\.[^/.]+$/, '.jpg'),
-                imageName.replace(/\.[^/.]+$/, '.jpeg'),
-                imageName.replace(/\.[^/.]+$/, '.png')
+                imageUrl, // Original format
+                imageUrl.replace(/\.[^/.]+$/, '.avif'),
+                imageUrl.replace(/\.[^/.]+$/, '.webp'),
+                imageUrl.replace(/\.[^/.]+$/, '.jpg'),
+                imageUrl.replace(/\.[^/.]+$/, '.jpeg'),
+                imageUrl.replace(/\.[^/.]+$/, '.png')
             ];
 
             for (const format of formats) {
                 try {
                     const response = await fetch(`images/installations/${format}`);
                     if (response.ok) {
-                        console.log(`Successfully fetched ${format} for ${installationTitle}`);
+                        console.log(`Successfully fetched local image ${format} for ${installationTitle}`);
                         return await response.blob();
                     }
                 } catch (error) {
@@ -1138,7 +1151,7 @@ Usage suggestions:
                 }
             }
 
-            console.warn(`Could not fetch any format of image: ${imageName} for ${installationTitle}`);
+            console.warn(`Could not fetch any format of image: ${imageUrl} for ${installationTitle}`);
             return null;
         }
 
