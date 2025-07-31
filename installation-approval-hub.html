@@ -786,6 +786,8 @@
                 let imageData = installation.images[0];
                 if (typeof imageData === 'object' && imageData.url) {
                     firstImageUrl = imageData.url;
+                } else if (typeof imageData === 'object' && imageData.filename) {
+                    firstImageUrl = imageData.filename;
                 } else if (typeof imageData === 'object' && imageData.name) {
                     firstImageUrl = imageData.name;
                 } else if (typeof imageData === 'string') {
@@ -1050,7 +1052,15 @@
                     // Add actual image files
                     if (installation.images && installation.images.length > 0) {
                         for (let index = 0; index < installation.images.length; index++) {
-                            const imageName = installation.images[index];
+                            const imageItem = installation.images[index];
+                            // Handle different image data formats
+                            let imageName = '';
+                            if (typeof imageItem === 'string') {
+                                imageName = imageItem;
+                            } else if (typeof imageItem === 'object') {
+                                imageName = imageItem.url || imageItem.filename || imageItem.name || '';
+                            }
+                            
                             exportStatus.textContent = `Loading images... ${processedImages + 1}/${totalImages}`;
                             
                             try {
