@@ -117,12 +117,16 @@ class InstallationParser {
                     .replace(' | Rosehill TPV Installation', '')
                     .replace('Rosehill TPV', '')
                     .trim();
+            } else {
+                installation.title = filename.replace('.html', '').replace(/-/g, ' ');
             }
 
             // Extract meta description
             const descElement = doc.querySelector('meta[name="description"]');
             if (descElement) {
                 installation.description = descElement.getAttribute('content');
+            } else {
+                installation.description = 'Rosehill TPV installation details featuring high-quality rubber granules for safe, vibrant surfaces.';
             }
 
             // Extract location from meta keywords or content
@@ -145,9 +149,23 @@ class InstallationParser {
                 }
             }
 
-            // Extract images from the gallery
+            // Extract images from multiple sources
             const images = [];
-            const imageElements = doc.querySelectorAll('.image-gallery img, .main-image');
+            
+            // Check main image in picture element
+            const mainImageElement = doc.querySelector('.main-image');
+            if (mainImageElement) {
+                const src = mainImageElement.getAttribute('src');
+                if (src && src.includes('images/installations/')) {
+                    const imageName = src.split('/').pop();
+                    if (!images.includes(imageName)) {
+                        images.push(imageName);
+                    }
+                }
+            }
+            
+            // Check image gallery
+            const imageElements = doc.querySelectorAll('.image-gallery img');
             imageElements.forEach(img => {
                 const src = img.getAttribute('src');
                 if (src && src.includes('images/installations/')) {
@@ -158,11 +176,12 @@ class InstallationParser {
                 }
             });
 
-            // Also check JavaScript for image arrays
+            // Check JavaScript for image arrays (most reliable method)
             const scripts = doc.querySelectorAll('script');
             scripts.forEach(script => {
                 const content = script.textContent;
-                const imageArrayMatch = content.match(/const images = \[(.*?)\]/);
+                // Look for const images = [...] pattern
+                const imageArrayMatch = content.match(/const images = \[(.*?)\]/s);
                 if (imageArrayMatch) {
                     const imageList = imageArrayMatch[1]
                         .split(',')
@@ -176,12 +195,14 @@ class InstallationParser {
                 }
             });
 
-            installation.images = images;
+            installation.images = images.length > 0 ? images : ['placeholder.jpg'];
 
             // Extract full content from project overview
             const contentSection = doc.querySelector('.content-section p, .project-overview p');
             if (contentSection) {
                 installation.fullContent = contentSection.textContent.trim();
+            } else {
+                installation.fullContent = installation.description;
             }
 
             // Categorize the installation
@@ -195,6 +216,18 @@ class InstallationParser {
             // Set default location if none found
             if (!installation.location) {
                 installation.location = this.extractLocationFromTitle(installation.title);
+            }
+
+            // Debug logging for first few installations
+            if (installation.id === 'award-winning-playground-small-town-of-trangi-new-zealand') {
+                console.log('Debug installation data:', {
+                    title: installation.title,
+                    description: installation.description,
+                    location: installation.location,
+                    date: installation.date,
+                    images: installation.images,
+                    category: installation.category
+                });
             }
 
             return installation;
@@ -217,21 +250,41 @@ class InstallationParser {
 
     // Extract location from keywords
     extractLocationFromKeywords(keywords) {
+        if (!keywords) return 'Location not specified';
+        
         const keywordArray = keywords.split(',').map(k => k.trim());
         
-        // Common location patterns
+        // Look for location patterns in keywords
         const locationPatterns = [
             /Australia/i, /New Zealand/i, /Spain/i, /Chile/i, /Belgium/i,
             /UK/i, /United Kingdom/i, /England/i, /Scotland/i, /Wales/i,
             /Barcelona/i, /Madrid/i, /Sydney/i, /Melbourne/i, /Perth/i,
-            /London/i, /Manchester/i, /Birmingham/i
+            /London/i, /Manchester/i, /Birmingham/i, /Hong Kong/i, /Serbia/i,
+            /Czech Republic/i, /Iraq/i, /Brazil/i, /Menorca/i
         ];
 
+        // First try to find country/region matches
         for (const keyword of keywordArray) {
             for (const pattern of locationPatterns) {
                 if (pattern.test(keyword)) {
                     return keyword;
                 }
+            }
+        }
+
+        // If no pattern match, look for keywords that contain place names
+        for (const keyword of keywordArray) {
+            if (keyword.length > 3 && 
+                !keyword.toLowerCase().includes('rosehill') &&
+                !keyword.toLowerCase().includes('tpv') &&
+                !keyword.toLowerCase().includes('rubber') &&
+                !keyword.toLowerCase().includes('surfacing') &&
+                !keyword.toLowerCase().includes('playground') &&
+                !keyword.toLowerCase().includes('safety') &&
+                (keyword.includes('Town') || keyword.includes('City') || 
+                 keyword.includes('.') || keyword.includes('Park') ||
+                 /^[A-Z][a-z]+\s[A-Z][a-z]+/.test(keyword))) {
+                return keyword;
             }
         }
 
