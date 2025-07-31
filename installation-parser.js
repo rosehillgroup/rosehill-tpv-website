@@ -220,6 +220,11 @@ class InstallationParser {
 
             // Debug logging for first few installations
             if (installation.id === 'award-winning-playground-small-town-of-trangi-new-zealand') {
+                console.log('Debug fetched HTML length:', html.length);
+                console.log('Debug HTML preview:', html.substring(0, 500));
+                console.log('Debug title element found:', doc.querySelector('title'));
+                console.log('Debug meta description found:', doc.querySelector('meta[name="description"]'));
+                console.log('Debug structured data found:', doc.querySelector('script[type="application/ld+json"]'));
                 console.log('Debug installation data:', {
                     title: installation.title,
                     description: installation.description,
