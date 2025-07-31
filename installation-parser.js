@@ -346,34 +346,40 @@ class InstallationParser {
         return 'other';
     }
 
-    // Parse all installation files
+    // Parse all installation files using the Netlify function
     async parseAllInstallations() {
         try {
-            await this.getInstallationFiles();
-            console.log(`Found ${this.installationFiles.length} installation files`);
-
-            const installations = [];
+            console.log('Fetching installations from Netlify function...');
             
-            // Parse files in batches to avoid overwhelming the browser
-            const batchSize = 10;
-            for (let i = 0; i < this.installationFiles.length; i += batchSize) {
-                const batch = this.installationFiles.slice(i, i + batchSize);
-                const batchPromises = batch.map(filename => this.parseInstallationFile(filename));
-                const batchResults = await Promise.all(batchPromises);
-                installations.push(...batchResults);
-                
-                // Show progress
-                console.log(`Parsed ${Math.min(i + batchSize, this.installationFiles.length)} of ${this.installationFiles.length} installations`);
-            }
+            // Use the same endpoint as installations.html
+            const response = await fetch('/.netlify/functions/get-installations-public');
+            const data = await response.json();
+            const installationsData = data.installations || [];
+            
+            console.log(`Found ${installationsData.length} installations from API`);
 
-            this.installations = installations.filter(inst => inst !== null);
+            // Convert the API data to our format
+            this.installations = installationsData.map(installation => {
+                return {
+                    id: installation.slug || installation.id,
+                    filename: `${installation.slug || installation.id}.html`,
+                    title: installation.title || 'Untitled Installation',
+                    description: installation.description || 'Installation details not available',
+                    location: installation.location || 'Location not specified',
+                    date: installation.date || 'Date not specified',
+                    images: installation.images || [],
+                    category: this.categorizeInstallation(installation.title || '', installation.description || ''),
+                    fullContent: installation.content || installation.description || 'Content not available'
+                };
+            });
+
             return this.installations;
 
         } catch (error) {
-            console.error('Error parsing installations:', error);
+            console.error('Error fetching installations from API:', error);
             
-            // Return empty array if parsing fails completely
-            console.log('Could not parse installations. Please check the installations directory.');
+            // Return empty array if API fails
+            console.log('Could not fetch installations from API. Please check the connection.');
             return [];
         }
     }
