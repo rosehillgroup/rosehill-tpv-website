@@ -886,12 +886,28 @@
                 
                 // Check if the operation was successful
                 if (!result.success) {
+                    // Handle token expiration
+                    if (result.error && (result.error.includes('Token expired') || result.error.includes('Invalid token'))) {
+                        localStorage.removeItem('tpv_admin_token');
+                        alert('Your session has expired. Please log in again.');
+                        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                        return;
+                    }
                     throw new Error(result.error || 'Unknown error occurred');
                 }
                 
                 return result;
             } catch (error) {
                 console.error('Submission error:', error);
+                
+                // Also check for 401 status codes in the error message
+                if (error.message.includes('HTTP 401') || error.message.includes('Token expired')) {
+                    localStorage.removeItem('tpv_admin_token');
+                    alert('Your session has expired. Please log in again.');
+                    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                    return;
+                }
+                
                 throw error;
             }
         }
@@ -1034,6 +1050,13 @@
                 const result = await response.json();
                 
                 if (!result.success) {
+                    // Handle token expiration
+                    if (result.error && (result.error.includes('Token expired') || result.error.includes('Invalid token'))) {
+                        localStorage.removeItem('tpv_admin_token');
+                        alert('Your session has expired. Please log in again.');
+                        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                        return;
+                    }
                     throw new Error(result.error || 'Unknown error occurred');
                 }
                 
@@ -1051,6 +1074,15 @@
                 
             } catch (error) {
                 console.error('Delete error:', error);
+                
+                // Check for token expiration in error message
+                if (error.message.includes('HTTP 401') || error.message.includes('Token expired')) {
+                    localStorage.removeItem('tpv_admin_token');
+                    alert('Your session has expired. Please log in again.');
+                    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                    return;
+                }
+                
                 button.disabled = false;
                 button.textContent = 'Delete';
                 button.classList.remove('confirm-delete');
