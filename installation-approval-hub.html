@@ -791,6 +791,16 @@
                 } else if (typeof imageData === 'string') {
                     firstImageUrl = imageData;
                 }
+                
+                // Debug logging to see what image data we're getting
+                if (installation.id === 'barcelona-s-parc-de-les-gl-ries-vibrent-transformation') {
+                    console.log('Debug image data for Barcelona installation:', {
+                        originalImages: installation.images,
+                        imageData: imageData,
+                        firstImageUrl: firstImageUrl,
+                        imageDataType: typeof imageData
+                    });
+                }
             }
 
             // Create optimized image HTML - support both Supabase and local images
@@ -805,15 +815,17 @@
                              onerror="this.parentElement.innerHTML='<div class=\\'image-placeholder\\'>📷</div>'">
                     `;
                 } else {
-                    // For local images, try different formats with proper fallbacks
-                    const baseImageName = firstImageUrl.replace(/\.(jpg|jpeg|png|webp|avif)$/i, '');
+                    // For local images, construct the proper path
+                    // Remove any existing path prefixes and construct clean path
+                    const cleanImageName = firstImageUrl.replace(/^(images\/installations\/|installations\/|images\/)/, '');
+                    const baseImageName = cleanImageName.replace(/\.(jpg|jpeg|png|webp|avif)$/i, '');
                     
-                    // Try to fetch the image directly first to see if it exists
+                    // Try the image with proper path construction
                     imageHTML = `
-                        <img src="${firstImageUrl.startsWith('http') ? firstImageUrl : `images/installations/${firstImageUrl}`}" 
+                        <img src="images/installations/${cleanImageName}" 
                              alt="${installation.title}" 
                              loading="lazy"
-                             onerror="this.onerror=null; this.src='images/installations/${baseImageName}.jpg'; this.onerror=function(){this.onerror=null; this.src='images/installations/${baseImageName}.webp'; this.onerror=function(){this.parentElement.innerHTML='<div class=\\'image-placeholder\\'>📷</div>'}}">
+                             onerror="this.onerror=null; this.src='images/installations/${baseImageName}.jpg'; this.onerror=function(){this.onerror=null; this.src='images/installations/${baseImageName}.webp'; this.onerror=function(){this.onerror=null; this.src='images/installations/${baseImageName}.jpeg'; this.onerror=function(){this.parentElement.innerHTML='<div class=\\'image-placeholder\\'>📷</div>'}}}">
                     `;
                 }
             }
