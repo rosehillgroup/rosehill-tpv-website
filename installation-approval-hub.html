@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TPV Installation Approval Hub | Rosehill TPV</title>
+    <title>Rosehill TPV Approval Hub | Rosehill TPV</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
@@ -556,13 +556,80 @@
         .shortcuts-help p {
             margin: 2px 0;
         }
+
+        /* Edit Content Styles */
+        .edit-content-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-family: 'Source Sans Pro', sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        .edit-content-textarea:focus {
+            outline: none;
+            border-color: #ff6b35;
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+
+        /* Visual indicators for edited content */
+        .installation-card.has-edits {
+            position: relative;
+        }
+
+        .installation-card.has-edits::after {
+            content: '✏️';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 107, 53, 0.9);
+            color: white;
+            padding: 4px 6px;
+            border-radius: 12px;
+            font-size: 10px;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Button layout improvements for modal */
+        .modal-button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .modal-button-group .btn {
+            flex: 0 0 auto;
+            min-width: 120px;
+        }
+
+        @media (max-width: 768px) {
+            .modal-button-group {
+                flex-direction: column;
+            }
+            
+            .modal-button-group .btn {
+                min-width: auto;
+            }
+            
+            .edit-content-textarea {
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+        }
     </style>
 </head>
 <body>
     <!-- Header -->
     <header class="header">
         <div class="header-container">
-            <div class="logo">TPV Installation Approval Hub</div>
+            <div class="logo">Rosehill TPV Approval Hub</div>
             <div class="header-stats">
                 <div class="stat-item">
                     <span class="stat-number" id="total-count">0</span>
@@ -620,7 +687,7 @@
         <!-- Export Section -->
         <div class="export-section">
             <h3>Export Approved Content</h3>
-            <p>Once you've approved installations, generate a ZIP file with all content ready for your intern to upload.</p>
+            <p>Once you've approved installations, generate a ZIP file with all content ready for upload to your website and social media.</p>
             <button class="btn btn-success" id="export-btn" disabled>
                 📦 Generate Export Package
             </button>
@@ -667,6 +734,7 @@
         let installations = [];
         let filteredInstallations = [];
         let approvedInstallations = new Set();
+        let editedContent = new Map();
         let currentFilter = 'all';
         let currentSearchTerm = '';
         let parser = null;
@@ -677,6 +745,7 @@
             loadInstallations();
             initializeEventListeners();
             loadApprovedState();
+            loadEditedContent();
         });
 
         // Initialize event listeners
@@ -776,7 +845,10 @@
         // Create installation card
         function createInstallationCard(installation, index) {
             const card = document.createElement('div');
-            card.className = `installation-card ${approvedInstallations.has(installation.id) ? 'approved' : ''}`;
+            const isApproved = approvedInstallations.has(installation.id);
+            const hasEdits = hasEditedContent(installation.id);
+            
+            card.className = `installation-card ${isApproved ? 'approved' : ''} ${hasEdits ? 'has-edits' : ''}`;
             card.dataset.installationId = installation.id;
             card.dataset.index = index;
 
@@ -840,7 +912,7 @@
                 <div class="card-content">
                     <h3 class="card-title">${installation.title}</h3>
                     <div class="card-location">📍 ${installation.location}</div>
-                    <p class="card-description">${installation.description}</p>
+                    <p class="card-description">${getContentForInstallation(installation).substring(0, 150)}${getContentForInstallation(installation).length > 150 ? '...' : ''}</p>
                     <div class="card-meta">
                         <span>📅 ${installation.date}</span>
                         <span>🏷️ ${installation.category}</span>
@@ -893,7 +965,22 @@
             const modalTitle = document.getElementById('modal-title');
             const modalBody = document.getElementById('modal-body');
 
-            modalTitle.textContent = installation.title;
+            // Update modal title with edit indicator
+            const hasEdits = hasEditedContent(installation.id);
+            modalTitle.innerHTML = `
+                ${installation.title}
+                ${hasEdits ? '<span style="color: #ff6b35; font-size: 0.8em; margin-left: 10px;">✏️ Edited</span>' : ''}
+            `;
+            
+            renderModalContent(installation, false); // Start in view mode
+
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Render modal content (view or edit mode)
+        function renderModalContent(installation, isEditMode = false) {
+            const modalBody = document.getElementById('modal-body');
             
             // Get the first image URL for modal, handling different data formats  
             let firstImageUrl = '';
@@ -935,26 +1022,127 @@
                 }
             }
 
-            modalBody.innerHTML = `
-                ${modalImageHTML}
-                <div style="margin-bottom: 15px;">
-                    <strong>📍 Location:</strong> ${installation.location}<br>
-                    <strong>📅 Date:</strong> ${installation.date}<br>
-                    <strong>🏷️ Category:</strong> ${installation.category}
-                </div>
-                <div style="margin-bottom: 20px;">
-                    <h4 style="margin-bottom: 10px;">Description:</h4>
-                    <p style="line-height: 1.6;">${installation.fullContent || installation.description}</p>
-                </div>
-                <div style="text-align: center; margin-top: 30px;">
-                    <button class="btn btn-approve" onclick="toggleApproval('${installation.id}'); closeModal();">
-                        ${approvedInstallations.has(installation.id) ? '✓ Approved' : '✓ Approve This Installation'}
-                    </button>
-                </div>
-            `;
+            const currentContent = getContentForInstallation(installation);
 
-            modal.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
+            if (isEditMode) {
+                // Edit mode - show textarea
+                modalBody.innerHTML = `
+                    ${modalImageHTML}
+                    <div style="margin-bottom: 15px;">
+                        <strong>📍 Location:</strong> ${installation.location}<br>
+                        <strong>📅 Date:</strong> ${installation.date}<br>
+                        <strong>🏷️ Category:</strong> ${installation.category}
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 10px;">Edit Description:</h4>
+                        <textarea id="edit-content-textarea" 
+                                  class="edit-content-textarea"
+                                  placeholder="Enter installation description...">${currentContent}</textarea>
+                    </div>
+                    <div style="text-align: center; margin-top: 30px; display: flex; gap: 10px; justify-content: center;">
+                        <button class="btn btn-success" onclick="saveContentEdit('${installation.id}');">
+                            💾 Save Changes
+                        </button>
+                        <button class="btn btn-secondary" onclick="cancelContentEdit('${installation.id}');">
+                            ❌ Cancel
+                        </button>
+                        ${hasEditedContent(installation.id) ? `
+                            <button class="btn btn-skip" onclick="clearContentEdit('${installation.id}');">
+                                🗑️ Reset to Original
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                
+                // Auto-resize textarea
+                const textarea = document.getElementById('edit-content-textarea');
+                autoResizeTextarea(textarea);
+            } else {
+                // View mode - show content with edit button
+                modalBody.innerHTML = `
+                    ${modalImageHTML}
+                    <div style="margin-bottom: 15px;">
+                        <strong>📍 Location:</strong> ${installation.location}<br>
+                        <strong>📅 Date:</strong> ${installation.date}<br>
+                        <strong>🏷️ Category:</strong> ${installation.category}
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 10px;">Description:</h4>
+                        <p style="line-height: 1.6;" id="content-display">${currentContent}</p>
+                    </div>
+                    <div style="text-align: center; margin-top: 30px; display: flex; gap: 10px; justify-content: center;">
+                        <button class="btn btn-preview" onclick="enterEditMode('${installation.id}');">
+                            ✏️ Edit Text
+                        </button>
+                        <button class="btn btn-approve" onclick="toggleApproval('${installation.id}'); closeModal();">
+                            ${approvedInstallations.has(installation.id) ? '✓ Approved' : '✓ Approve This Installation'}
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Enter edit mode
+        function enterEditMode(installationId) {
+            const installation = installations.find(inst => inst.id === installationId);
+            if (!installation) return;
+            renderModalContent(installation, true);
+        }
+
+        // Save content edit
+        function saveContentEdit(installationId) {
+            const textarea = document.getElementById('edit-content-textarea');
+            const newContent = textarea.value.trim();
+            
+            if (!newContent) {
+                alert('Content cannot be empty. Please enter some text.');
+                return;
+            }
+
+            saveEditedContentForInstallation(installationId, newContent);
+            
+            // Switch back to view mode
+            const installation = installations.find(inst => inst.id === installationId);
+            renderModalContent(installation, false);
+            
+            // Update modal title to show edit indicator
+            const modalTitle = document.getElementById('modal-title');
+            modalTitle.innerHTML = `
+                ${installation.title}
+                <span style="color: #ff6b35; font-size: 0.8em; margin-left: 10px;">✏️ Edited</span>
+            `;
+        }
+
+        // Cancel content edit
+        function cancelContentEdit(installationId) {
+            const installation = installations.find(inst => inst.id === installationId);
+            if (!installation) return;
+            renderModalContent(installation, false);
+        }
+
+        // Clear content edit (reset to original)
+        function clearContentEdit(installationId) {
+            if (confirm('Are you sure you want to reset this content to the original text? This cannot be undone.')) {
+                clearEditedContentForInstallation(installationId);
+                
+                const installation = installations.find(inst => inst.id === installationId);
+                renderModalContent(installation, false);
+                
+                // Update modal title to remove edit indicator
+                const modalTitle = document.getElementById('modal-title');
+                modalTitle.innerHTML = installation.title;
+            }
+        }
+
+        // Auto-resize textarea
+        function autoResizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.max(200, textarea.scrollHeight) + 'px';
+            
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.max(200, this.scrollHeight) + 'px';
+            });
         }
 
         // Close modal
@@ -1235,7 +1423,7 @@ If none of the URLs work, contact the TPV team for the image files.
 Generated: ${new Date().toLocaleDateString()}
 Approved Installations: ${approvedInstallations.size}
 
-INSTRUCTIONS FOR INTERN:
+USAGE INSTRUCTIONS:
 
 Each numbered folder contains content for one installation:
 
@@ -1261,8 +1449,33 @@ For questions, contact: info@rosehilltpv.com
 `;
         }
 
+        // Clean text formatting issues
+        function cleanText(text) {
+            if (!text) return '';
+            
+            return text
+                // Fix comma after period issue
+                .replace(/\.,/g, '. ')
+                // Fix multiple spaces
+                .replace(/\s+/g, ' ')
+                // Fix spacing around punctuation
+                .replace(/\s+\./g, '.')
+                .replace(/\s+,/g, ',')
+                .replace(/\s+!/g, '!')
+                .replace(/\s+\?/g, '?')
+                // Fix missing space after punctuation
+                .replace(/\.([A-Z])/g, '. $1')
+                .replace(/,([A-Z])/g, ', $1')
+                .replace(/!([A-Z])/g, '! $1')
+                .replace(/\?([A-Z])/g, '? $1')
+                // Clean up
+                .trim();
+        }
+
         // Generate content file
         function generateContentFile(installation) {
+            const content = getContentForInstallation(installation);
+            
             return `TITLE: ${installation.title}
 
 LOCATION: ${installation.location}
@@ -1270,7 +1483,7 @@ LOCATION: ${installation.location}
 DATE: ${installation.date}
 
 MAIN CONTENT:
-${installation.fullContent || installation.description}
+${content}
 
 SUGGESTED HASHTAGS:
 #RosehillTPV #PlaygroundSafety #SafetySurfacing #TPVInstallation #${installation.category.charAt(0).toUpperCase() + installation.category.slice(1)}
@@ -1322,9 +1535,10 @@ USAGE NOTES:
 
         // Generate social snippet
         function generateSocialSnippet(installation) {
-            const shortDesc = installation.description.length > 100 
-                ? installation.description.substring(0, 100) + '...' 
-                : installation.description;
+            const content = getContentForInstallation(installation);
+            const shortDesc = content.length > 100 
+                ? content.substring(0, 100) + '...' 
+                : content;
             
             return `🎯 NEW INSTALLATION SPOTLIGHT
 
@@ -1416,6 +1630,32 @@ Learn more: www.rosehilltpv.com`;
             help.classList.toggle('show');
         }
 
+        // Content management helper functions
+        function getContentForInstallation(installation) {
+            const editedText = editedContent.get(installation.id);
+            if (editedText) {
+                return editedText;
+            }
+            return cleanText(installation.fullContent || installation.description);
+        }
+
+        function hasEditedContent(installationId) {
+            return editedContent.has(installationId);
+        }
+
+        function saveEditedContentForInstallation(installationId, content) {
+            editedContent.set(installationId, content.trim());
+            saveEditedContentState();
+            // Update the display to reflect the change
+            displayInstallations();
+        }
+
+        function clearEditedContentForInstallation(installationId) {
+            editedContent.delete(installationId);
+            saveEditedContentState();
+            displayInstallations();
+        }
+
         // Save approved state to localStorage
         function saveApprovedState() {
             localStorage.setItem('tpv_approved_installations', JSON.stringify([...approvedInstallations]));
@@ -1426,6 +1666,24 @@ Learn more: www.rosehilltpv.com`;
             const saved = localStorage.getItem('tpv_approved_installations');
             if (saved) {
                 approvedInstallations = new Set(JSON.parse(saved));
+            }
+        }
+
+        // Save edited content state to localStorage
+        function saveEditedContentState() {
+            const editedContentObj = {};
+            for (let [key, value] of editedContent) {
+                editedContentObj[key] = value;
+            }
+            localStorage.setItem('tpv_edited_content', JSON.stringify(editedContentObj));
+        }
+
+        // Load edited content state from localStorage
+        function loadEditedContent() {
+            const saved = localStorage.getItem('tpv_edited_content');
+            if (saved) {
+                const editedContentObj = JSON.parse(saved);
+                editedContent = new Map(Object.entries(editedContentObj));
             }
         }
 
