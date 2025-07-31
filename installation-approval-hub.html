@@ -780,35 +780,44 @@
             card.dataset.installationId = installation.id;
             card.dataset.index = index;
 
-            // Get the first image name, handling different data formats
-            let firstImageName = '';
+            // Get the first image URL, handling different data formats
+            let firstImageUrl = '';
             if (installation.images && installation.images.length > 0) {
-                let imageName = installation.images[0];
-                if (typeof imageName === 'object' && imageName.url) {
-                    firstImageName = imageName.url;
-                } else if (typeof imageName === 'object' && imageName.name) {
-                    firstImageName = imageName.name;
-                } else if (typeof imageName === 'string') {
-                    firstImageName = imageName;
+                let imageData = installation.images[0];
+                if (typeof imageData === 'object' && imageData.url) {
+                    firstImageUrl = imageData.url;
+                } else if (typeof imageData === 'object' && imageData.name) {
+                    firstImageUrl = imageData.name;
+                } else if (typeof imageData === 'string') {
+                    firstImageUrl = imageData;
                 }
             }
-            
-            const imageUrl = firstImageName ? `images/installations/${firstImageName}` : '';
 
-            // Create optimized image HTML with multiple formats
+            // Create optimized image HTML - use full Supabase URLs directly
             let imageHTML = '<div class="image-placeholder">📷</div>';
-            if (firstImageName) {
-                const baseImageName = firstImageName.replace(/\.(jpg|jpeg|png|webp|avif)$/i, '');
-                imageHTML = `
-                    <picture>
-                        <source srcset="images/installations/${baseImageName}.avif" type="image/avif">
-                        <source srcset="images/installations/${baseImageName}.webp" type="image/webp">
-                        <img src="images/installations/${firstImageName}" 
+            if (firstImageUrl) {
+                // If it's already a full URL, use it directly
+                if (firstImageUrl.startsWith('http')) {
+                    imageHTML = `
+                        <img src="${firstImageUrl}" 
                              alt="${installation.title}" 
                              loading="lazy"
-                             onerror="this.parentElement.parentElement.innerHTML='<div class=\\'image-placeholder\\'>📷</div>'">
-                    </picture>
-                `;
+                             onerror="this.parentElement.innerHTML='<div class=\\'image-placeholder\\'>📷</div>'">
+                    `;
+                } else {
+                    // For local images, use the old approach
+                    const baseImageName = firstImageUrl.replace(/\.(jpg|jpeg|png|webp|avif)$/i, '');
+                    imageHTML = `
+                        <picture>
+                            <source srcset="images/installations/${baseImageName}.avif" type="image/avif">
+                            <source srcset="images/installations/${baseImageName}.webp" type="image/webp">
+                            <img src="images/installations/${firstImageUrl}" 
+                                 alt="${installation.title}" 
+                                 loading="lazy"
+                                 onerror="this.parentElement.parentElement.innerHTML='<div class=\\'image-placeholder\\'>📷</div>'">
+                        </picture>
+                    `;
+                }
             }
 
             card.innerHTML = `
@@ -874,33 +883,44 @@
 
             modalTitle.textContent = installation.title;
             
-            // Get the first image name for modal, handling different data formats  
-            let firstImageName = '';
+            // Get the first image URL for modal, handling different data formats  
+            let firstImageUrl = '';
             if (installation.images && installation.images.length > 0) {
-                let imageName = installation.images[0];
-                if (typeof imageName === 'object' && imageName.url) {
-                    firstImageName = imageName.url;
-                } else if (typeof imageName === 'object' && imageName.name) {
-                    firstImageName = imageName.name;
-                } else if (typeof imageName === 'string') {
-                    firstImageName = imageName;
+                let imageData = installation.images[0];
+                if (typeof imageData === 'object' && imageData.url) {
+                    firstImageUrl = imageData.url;
+                } else if (typeof imageData === 'object' && imageData.name) {
+                    firstImageUrl = imageData.name;
+                } else if (typeof imageData === 'string') {
+                    firstImageUrl = imageData;
                 }
             }
 
             // Create optimized image HTML for modal
             let modalImageHTML = '';
-            if (firstImageName) {
-                const baseImageName = firstImageName.replace(/\.(jpg|jpeg|png|webp|avif)$/i, '');
-                modalImageHTML = `
-                    <picture>
-                        <source srcset="images/installations/${baseImageName}.avif" type="image/avif">
-                        <source srcset="images/installations/${baseImageName}.webp" type="image/webp">
-                        <img src="images/installations/${firstImageName}" 
+            if (firstImageUrl) {
+                // If it's already a full URL, use it directly
+                if (firstImageUrl.startsWith('http')) {
+                    modalImageHTML = `
+                        <img src="${firstImageUrl}" 
                              alt="${installation.title}" 
                              class="modal-image"
                              onerror="this.style.display='none'">
-                    </picture>
-                `;
+                    `;
+                } else {
+                    // For local images, use the old approach
+                    const baseImageName = firstImageUrl.replace(/\.(jpg|jpeg|png|webp|avif)$/i, '');
+                    modalImageHTML = `
+                        <picture>
+                            <source srcset="images/installations/${baseImageName}.avif" type="image/avif">
+                            <source srcset="images/installations/${baseImageName}.webp" type="image/webp">
+                            <img src="images/installations/${firstImageUrl}" 
+                                 alt="${installation.title}" 
+                                 class="modal-image"
+                                 onerror="this.style.display='none'">
+                        </picture>
+                    `;
+                }
             }
 
             modalBody.innerHTML = `
