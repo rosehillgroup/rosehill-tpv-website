@@ -1637,26 +1637,47 @@ Learn more: www.rosehilltpv.com`;
                 return editedText;
             }
             
+            // Debug logging to see what we're getting
+            if (installation.id === installations[0]?.id) {
+                console.log('Debug first installation data:', {
+                    id: installation.id,
+                    title: installation.title,
+                    fullContent: installation.fullContent,
+                    description: installation.description,
+                    content: installation.content,
+                    descriptionType: typeof installation.description,
+                    isArray: Array.isArray(installation.description)
+                });
+            }
+            
             // Handle different content formats from Supabase vs static data
             let originalContent = '';
             
             if (installation.fullContent) {
                 // Static installation data format
                 originalContent = installation.fullContent;
+                console.log('Using fullContent:', originalContent);
             } else if (installation.description) {
                 // Supabase format - description can be array or string
                 if (Array.isArray(installation.description)) {
                     // Join array of descriptions with spaces
                     originalContent = installation.description.join(' ');
+                    console.log('Using description array:', installation.description, 'joined to:', originalContent);
                 } else {
                     originalContent = installation.description;
+                    console.log('Using description string:', originalContent);
                 }
             } else if (installation.content) {
                 // Alternative content field
                 originalContent = installation.content;
+                console.log('Using content:', originalContent);
+            } else {
+                console.log('No content found for installation:', installation.id);
             }
             
-            return cleanText(originalContent || '');
+            const cleaned = cleanText(originalContent || '');
+            console.log('Final cleaned content:', cleaned);
+            return cleaned;
         }
 
         function hasEditedContent(installationId) {
