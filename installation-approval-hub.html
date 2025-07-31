@@ -1637,9 +1637,26 @@ Learn more: www.rosehilltpv.com`;
                 return editedText;
             }
             
-            // Safely handle potentially null/undefined content
-            const originalContent = installation.fullContent || installation.description || installation.content || '';
-            return cleanText(originalContent);
+            // Handle different content formats from Supabase vs static data
+            let originalContent = '';
+            
+            if (installation.fullContent) {
+                // Static installation data format
+                originalContent = installation.fullContent;
+            } else if (installation.description) {
+                // Supabase format - description can be array or string
+                if (Array.isArray(installation.description)) {
+                    // Join array of descriptions with spaces
+                    originalContent = installation.description.join(' ');
+                } else {
+                    originalContent = installation.description;
+                }
+            } else if (installation.content) {
+                // Alternative content field
+                originalContent = installation.content;
+            }
+            
+            return cleanText(originalContent || '');
         }
 
         function hasEditedContent(installationId) {
