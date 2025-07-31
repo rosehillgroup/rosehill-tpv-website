@@ -98,7 +98,9 @@ class InstallationParser {
     // Parse a single installation HTML file
     async parseInstallationFile(filename) {
         try {
-            const response = await fetch(`installations/${filename}`);
+            // Use the correct URL structure for the live site
+            const baseUrl = window.location.origin;
+            const response = await fetch(`${baseUrl}/installations/${filename}`);
             const html = await response.text();
             
             const parser = new DOMParser();
