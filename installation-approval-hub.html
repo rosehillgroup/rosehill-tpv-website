@@ -901,6 +901,8 @@
                 let imageData = installation.images[0];
                 if (typeof imageData === 'object' && imageData.url) {
                     firstImageUrl = imageData.url;
+                } else if (typeof imageData === 'object' && imageData.filename) {
+                    firstImageUrl = imageData.filename;
                 } else if (typeof imageData === 'object' && imageData.name) {
                     firstImageUrl = imageData.name;
                 } else if (typeof imageData === 'string') {
@@ -911,7 +913,7 @@
             // Create optimized image HTML for modal
             let modalImageHTML = '';
             if (firstImageUrl) {
-                // If it's already a full URL, use it directly
+                // If it's already a full URL (Supabase), use it directly
                 if (firstImageUrl.startsWith('http')) {
                     modalImageHTML = `
                         <img src="${firstImageUrl}" 
@@ -920,17 +922,15 @@
                              onerror="this.style.display='none'">
                     `;
                 } else {
-                    // For local images, use the old approach
-                    const baseImageName = firstImageUrl.replace(/\.(jpg|jpeg|png|webp|avif)$/i, '');
+                    // For local images, construct the proper path
+                    const cleanImageName = firstImageUrl.replace(/^(images\/installations\/|installations\/|images\/)/, '');
+                    const baseImageName = cleanImageName.replace(/\.(jpg|jpeg|png|webp|avif)$/i, '');
+                    
                     modalImageHTML = `
-                        <picture>
-                            <source srcset="images/installations/${baseImageName}.avif" type="image/avif">
-                            <source srcset="images/installations/${baseImageName}.webp" type="image/webp">
-                            <img src="images/installations/${firstImageUrl}" 
-                                 alt="${installation.title}" 
-                                 class="modal-image"
-                                 onerror="this.style.display='none'">
-                        </picture>
+                        <img src="images/installations/${cleanImageName}" 
+                             alt="${installation.title}" 
+                             class="modal-image"
+                             onerror="this.onerror=null; this.src='images/installations/${baseImageName}.jpg'; this.onerror=function(){this.onerror=null; this.src='images/installations/${baseImageName}.webp'; this.onerror=function(){this.onerror=null; this.src='images/installations/${baseImageName}.jpeg'; this.onerror=function(){this.style.display='none'}}}">
                     `;
                 }
             }
