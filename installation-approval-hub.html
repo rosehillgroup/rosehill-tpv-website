@@ -1451,7 +1451,7 @@ For questions, contact: info@rosehilltpv.com
 
         // Clean text formatting issues
         function cleanText(text) {
-            if (!text) return '';
+            if (!text || typeof text !== 'string') return '';
             
             return text
                 // Fix comma after period issue
@@ -1636,7 +1636,10 @@ Learn more: www.rosehilltpv.com`;
             if (editedText) {
                 return editedText;
             }
-            return cleanText(installation.fullContent || installation.description);
+            
+            // Safely handle potentially null/undefined content
+            const originalContent = installation.fullContent || installation.description || installation.content || '';
+            return cleanText(originalContent);
         }
 
         function hasEditedContent(installationId) {
