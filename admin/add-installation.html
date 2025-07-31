@@ -936,11 +936,7 @@
         // Load and display existing installations
         async function loadExistingInstallations() {
             try {
-                const response = await fetch('/.netlify/functions/get-installations', {
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`
-                    }
-                });
+                const response = await fetch('/.netlify/functions/get-installations-public');
                 if (!response.ok) throw new Error('Failed to load installations');
                 
                 const data = await response.json();
