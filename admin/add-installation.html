@@ -1063,11 +1063,7 @@
             try {
                 console.log('Editing installation with slug:', slug);
                 // Fetch installation data
-                const response = await fetch(`/.netlify/functions/get-installations?slug=${slug}`, {
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`
-                    }
-                });
+                const response = await fetch(`/.netlify/functions/get-installations-public?slug=${slug}`);
                 if (!response.ok) throw new Error('Failed to load installation');
                 
                 const data = await response.json();
