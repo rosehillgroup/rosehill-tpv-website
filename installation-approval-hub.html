@@ -1561,7 +1561,7 @@ Learn more: www.rosehilltpv.com`;
 
         // Keyboard shortcuts
         function handleKeyboardShortcuts(e) {
-            if (e.target.tagName.toLowerCase() === 'input') return;
+            if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'textarea') return;
 
             const visibleCards = document.querySelectorAll('.installation-card');
             let currentIndex = -1;
@@ -1637,18 +1637,6 @@ Learn more: www.rosehilltpv.com`;
                 return editedText;
             }
             
-            // Debug logging to see what we're getting
-            if (installation.id === installations[0]?.id) {
-                console.log('Debug first installation data:', {
-                    id: installation.id,
-                    title: installation.title,
-                    fullContent: installation.fullContent,
-                    description: installation.description,
-                    content: installation.content,
-                    descriptionType: typeof installation.description,
-                    isArray: Array.isArray(installation.description)
-                });
-            }
             
             // Handle different content formats from Supabase vs static data
             let originalContent = '';
@@ -1657,32 +1645,23 @@ Learn more: www.rosehilltpv.com`;
                 // Handle fullContent as array or string
                 if (Array.isArray(installation.fullContent)) {
                     originalContent = installation.fullContent.join(' ');
-                    console.log('Using fullContent array:', installation.fullContent, 'joined to:', originalContent);
                 } else {
                     originalContent = installation.fullContent;
-                    console.log('Using fullContent string:', originalContent);
                 }
             } else if (installation.description) {
                 // Supabase format - description can be array or string
                 if (Array.isArray(installation.description)) {
                     // Join array of descriptions with spaces
                     originalContent = installation.description.join(' ');
-                    console.log('Using description array:', installation.description, 'joined to:', originalContent);
                 } else {
                     originalContent = installation.description;
-                    console.log('Using description string:', originalContent);
                 }
             } else if (installation.content) {
                 // Alternative content field
                 originalContent = installation.content;
-                console.log('Using content:', originalContent);
-            } else {
-                console.log('No content found for installation:', installation.id);
             }
             
-            const cleaned = cleanText(originalContent || '');
-            console.log('Final cleaned content:', cleaned);
-            return cleaned;
+            return cleanText(originalContent || '');
         }
 
         function hasEditedContent(installationId) {
