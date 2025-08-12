@@ -10,7 +10,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.39.0",
     "bcryptjs": "^3.0.2",
-    "cheerio": "^1.0.0-rc.12",
+    "cheerio": "1.0.0-rc.12",
     "dotenv": "^16.5.0",
     "imagemin": "^9.0.1",
     "imagemin-webp": "^8.0.0",
