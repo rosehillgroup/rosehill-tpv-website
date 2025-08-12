@@ -1,107 +1,77 @@
-# Netlify Configuration File
-
 [build]
-  # Replace environment variables in HTML files
-  command = "./build.sh"
-  publish = "/"
-  functions = "netlify/functions"
+  # Install dependencies and run translation - Updated for multilingual structure
+  command = "npm install && npm run translate"
   
+  # Publish directory (dist folder with all language versions)
+  publish = "dist"
+
 [build.environment]
-  NODE_VERSION = "18"
+  # DeepL API key for translation (set in Netlify dashboard)
+  # DEEPL_API_KEY = "your-key-here"
 
-# Pretty URLs - remove .html extension
+# Redirects for language paths
 [[redirects]]
-  from = "/about"
-  to = "/about.html"
+  from = "/fr/*"
+  to = "/fr/:splat"
   status = 200
 
 [[redirects]]
-  from = "/products"
-  to = "/products.html"
+  from = "/de/*"
+  to = "/de/:splat"
   status = 200
 
 [[redirects]]
-  from = "/applications"
-  to = "/applications.html"
+  from = "/es/*"
+  to = "/es/:splat"
   status = 200
 
+# Redirect root to English version
 [[redirects]]
-  from = "/colour"
-  to = "/colour.html"
+  from = "/"
+  to = "/en/"
   status = 200
 
-[[redirects]]
-  from = "/contact"
-  to = "/contact.html"
-  status = 200
-
-[[redirects]]
-  from = "/installations"
-  to = "/installations.html"
-  status = 200
-
-# Dynamic installation pages - serve from database (must come before general rules)
-[[redirects]]
-  from = "/installations/:slug.html"
-  to = "/installation-dynamic.html?slug=:slug"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/login"
-  to = "/login.html"
-  status = 200
-
-# Admin pages are protected by authentication in the application
-# No direct access control needed here
-
-# Form handling
-[[redirects]]
-  from = "/api/process-installation"
-  to = "/.netlify/functions/process-installation"
-  status = 200
-
-# Catch-all for installation pages that might be 404ing
-[[redirects]]
-  from = "/installations/*"
-  to = "/installation-dynamic.html?slug=:splat"
-  status = 200
-
-# Headers for security and performance
 [[headers]]
+  # Apply security headers to all pages
   for = "/*"
   [headers.values]
+    # Security headers
     X-Frame-Options = "DENY"
-    X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://unpkg.com https://cdnjs.cloudflare.com https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://www.google-analytics.com https://www.googletagmanager.com https://maps.gstatic.com https://*.googleapis.com https://*.supabase.co; connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://region1.analytics.google.com https://www.googletagmanager.com https://maps.googleapis.com https://*.supabase.co; frame-ancestors 'none';"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://www.google-analytics.com https://www.googletagmanager.com https://maps.gstatic.com https://*.googleapis.com; connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://region1.analytics.google.com https://www.googletagmanager.com https://maps.googleapis.com; frame-ancestors 'none';"
+    
+    # Cache static assets for 1 year
+    Cache-Control = "public, max-age=31536000"
 
 [[headers]]
-  for = "/assets/images/*"
+  # Don't cache HTML files
+  for = "/*.html"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
-  for = "/assets/css/*"
+  # Cache images for 1 month
+  for = "/*.jpg"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=2592000"
 
 [[headers]]
-  for = "/assets/js/*"
+  # Cache images for 1 month
+  for = "/*.png"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=2592000"
 
-# AVIF image optimization and MIME type
 [[headers]]
-  for = "*.avif"
+  # Cache SVGs for 1 month
+  for = "/*.svg"
   [headers.values]
-    Content-Type = "image/avif"
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=2592000"
 
-# Plugins for optimization
-[[plugins]]
-  package = "@netlify/plugin-lighthouse"
-  
-  [plugins.inputs]
-    output_path = "reports/lighthouse.html"
+[[headers]]
+  # Cache PDFs for 1 month
+  for = "/Case Studies/*.pdf"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+    Content-Type = "application/pdf"
