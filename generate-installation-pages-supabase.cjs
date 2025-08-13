@@ -1,10 +1,259 @@
-<!DOCTYPE html>
+const { createClient } = require('@supabase/supabase-js');
+const fs = require('fs');
+const path = require('path');
+
+// Initialize Supabase client
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing required environment variables:');
+    console.error('SUPABASE_URL:', !!supabaseUrl);
+    console.error('SUPABASE_SERVICE_ROLE_KEY or SUPABASE_ANON_KEY:', !!supabaseKey);
+    process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+/**
+ * Transform Supabase URL to use image transformations
+ * @param {string} originalUrl - Original Supabase storage URL
+ * @param {Object} options - Transformation options
+ * @returns {string} - Transformed URL
+ */
+function transformSupabaseUrl(originalUrl, options = {}) {
+    if (!originalUrl || !originalUrl.includes('supabase.co/storage')) {
+        return originalUrl;
+    }
+    
+    const transformParams = [];
+    
+    // Add width and height if specified
+    if (options.width) transformParams.push(`width=${options.width}`);
+    if (options.height) transformParams.push(`height=${options.height}`);
+    
+    // Add quality (default 80, optimized 75)
+    const quality = options.quality || 75;
+    transformParams.push(`quality=${quality}`);
+    
+    // Add resize mode
+    const resize = options.resize || 'cover';
+    transformParams.push(`resize=${resize}`);
+    
+    // Add format for WebP
+    if (options.format) {
+        transformParams.push(`format=${options.format}`);
+    }
+    
+    // Construct transform URL
+    const transformQuery = transformParams.join('&');
+    const transformUrl = `${originalUrl}?${transformQuery}`;
+    
+    return transformUrl;
+}
+
+/**
+ * Create optimized picture element with Supabase transformations
+ * @param {string} supabaseUrl - Original Supabase URL
+ * @param {string} altText - Alt text for image
+ * @param {Object} options - Size options
+ * @param {string} onclickHandler - Optional onclick handler
+ * @returns {string} - Picture element HTML
+ */
+function createOptimizedPictureElement(supabaseUrl, altText, options = {}, onclickHandler = '') {
+    if (!supabaseUrl || !supabaseUrl.includes('supabase.co/storage')) {
+        // Fallback for non-Supabase URLs
+        const onclickAttr = onclickHandler ? ` onclick="${onclickHandler}"` : '';
+        return `<img src="${supabaseUrl}" alt="${altText}" loading="lazy"${onclickAttr}>`;
+    }
+    
+    const webpUrl = transformSupabaseUrl(supabaseUrl, { ...options, format: 'webp' });
+    const optimizedJpeg = transformSupabaseUrl(supabaseUrl, options);
+    const onclickAttr = onclickHandler ? ` onclick="${onclickHandler}"` : '';
+    
+    return `<picture>
+                        <source srcset="${webpUrl}" type="image/webp">
+                        <img src="${optimizedJpeg}" alt="${altText}" loading="lazy"${onclickAttr}>
+                    </picture>`;
+}
+
+// Function to generate individual installation pages from Supabase data
+async function generateInstallationPages() {
+    try {
+        console.log('Fetching installations from Supabase...');
+        
+        // Get all installations from Supabase
+        const { data: installations, error } = await supabase
+            .from('installations')
+            .select('*')
+            .order('installation_date', { ascending: false });
+
+        if (error) {
+            throw new Error(`Failed to fetch installations: ${error.message}`);
+        }
+
+        console.log(`Found ${installations.length} installations in database`);
+
+        // Create installations directory if it doesn't exist
+        const installationsDir = path.join(__dirname, 'installations');
+        if (!fs.existsSync(installationsDir)) {
+            fs.mkdirSync(installationsDir, { recursive: true });
+        }
+
+        // Generate a page for each installation
+        for (const installation of installations) {
+            await generateInstallationPage(installation, installationsDir);
+        }
+
+        console.log('✅ All installation pages generated successfully!');
+
+    } catch (error) {
+        console.error('❌ Error generating installation pages:', error);
+        process.exit(1);
+    }
+}
+
+// Function to generate a single installation page
+async function generateInstallationPage(installation, outputDir) {
+    const { title, location, installation_date, application, description, images, slug } = installation;
+
+    console.log(`Generating page for: ${title}`);
+
+    // Format date
+    const date = new Date(installation_date);
+    const formattedDate = date.toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+
+    // Generate breadcrumb
+    const breadcrumb = `<a href="../installations.html">Installations</a> / ${title}`;
+
+    // Generate image gallery HTML
+    let imageGalleryHTML = '';
+    if (images && images.length > 0) {
+        const imageItems = images.map((img, index) => {
+            // Handle different image data structures
+            let imageUrl;
+            let filename;
+            
+            if (typeof img === 'string') {
+                // Old format: just a filename string
+                imageUrl = `../images/installations/${img}`;
+                filename = img;
+            } else if (img && typeof img === 'object') {
+                // New format: object with url and/or filename
+                if (img.url) {
+                    // Supabase Storage image - use the full URL
+                    imageUrl = img.url;
+                    filename = img.filename || 'image';
+                } else if (img.filename) {
+                    // Local image file - prepend images/installations/ path
+                    imageUrl = `../images/installations/${img.filename}`;
+                    filename = img.filename;
+                }
+            } else {
+                // Fallback
+                imageUrl = `../images/installations/${img}`;
+                filename = img;
+            }
+            
+            // Use optimized picture element for gallery thumbnails
+            const galleryImageOptions = { width: 400, height: 300 };
+            const pictureElement = createOptimizedPictureElement(
+                imageUrl, 
+                `${title} - Image ${index + 1}`, 
+                galleryImageOptions, 
+                `openModal(${index})`
+            );
+            
+            return `
+                <div class="gallery-item">
+                    ${pictureElement}
+                </div>`;
+        }).join('');
+
+        const modalImages = images.map((img, index) => {
+            // Handle different image data structures (same logic as above)
+            let imageUrl;
+            
+            if (typeof img === 'string') {
+                imageUrl = `../images/installations/${img}`;
+            } else if (img && typeof img === 'object') {
+                if (img.url) {
+                    imageUrl = img.url;
+                } else if (img.filename) {
+                    imageUrl = `../images/installations/${img.filename}`;
+                }
+            } else {
+                imageUrl = `../images/installations/${img}`;
+            }
+            
+            // Use optimized picture element for modal images (larger size)
+            const modalImageOptions = { width: 1200, height: 800 };
+            const pictureElement = createOptimizedPictureElement(
+                imageUrl, 
+                `${title} - Image ${index + 1}`, 
+                modalImageOptions
+            );
+            
+            return `
+                <div class="modal-image" id="modal-img-${index}" ${index === 0 ? 'style="display: block;"' : ''}>
+                    ${pictureElement}
+                </div>`;
+        }).join('');
+
+        imageGalleryHTML = `
+            <div class="image-gallery">
+                <h3>Project Images</h3>
+                <div class="gallery-grid">
+                    ${imageItems}
+                </div>
+            </div>
+
+            <!-- Modal for image viewing -->
+            <div id="imageModal" class="modal" onclick="closeModal()">
+                <div class="modal-content" onclick="event.stopPropagation()">
+                    <span class="close" onclick="closeModal()">&times;</span>
+                    ${modalImages}
+                    ${images.length > 1 ? `
+                    <button class="nav-btn prev" onclick="changeImage(-1)">&#10094;</button>
+                    <button class="nav-btn next" onclick="changeImage(1)">&#10095;</button>
+                    ` : ''}
+                </div>
+            </div>`;
+    }
+
+    // Generate description HTML
+    const descriptionHTML = Array.isArray(description) 
+        ? description.map(paragraph => `<p>${paragraph}</p>`).join('\n                ')
+        : `<p>${description}</p>`;
+
+    // Application type mapping
+    const applicationTypes = {
+        'playground': 'Playground Surfaces',
+        'muga': 'Multi-Use Games Areas',
+        'track': 'Running Tracks',
+        'pitch': 'Sports Pitches',
+        'footpath': 'Footpaths & Walkways',
+        'splashpark': 'Splash Parks & Water Play',
+        'tennis': 'Tennis Courts',
+        'athletics': 'Athletics Tracks',
+        'safety': 'Safety Surfaces',
+        'other': 'Other Applications'
+    };
+
+    const applicationDisplay = applicationTypes[application] || application;
+
+    // Generate the complete HTML page
+    const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fort Kinnaird Shopping Centre Playground Transformation - Rosehill TPV Installation</title>
-    <meta name="description" content="Fort Kinnaird Shopping Centre Playground Transformation in Edinburgh, Scotland. See how Rosehill TPV coloured rubber granules were used to create safe, vibrant surfaces for playground surfaces.">
+    <title>${title} - Rosehill TPV Installation</title>
+    <meta name="description" content="${title} in ${location}. See how Rosehill TPV coloured rubber granules were used to create safe, vibrant surfaces for ${applicationDisplay.toLowerCase()}.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
@@ -455,112 +704,43 @@
         <div class="container">
             <!-- Breadcrumb -->
             <div class="breadcrumb">
-                <a href="../installations.html">Installations</a> / Fort Kinnaird Shopping Centre Playground Transformation
+                ${breadcrumb}
             </div>
 
             <!-- Installation Header -->
             <div class="installation-header">
-                <h1>Fort Kinnaird Shopping Centre Playground Transformation</h1>
+                <h1>${title}</h1>
                 <div class="installation-meta">
                     <div class="meta-item">
                         <svg class="meta-icon" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
                         </svg>
                         <span class="meta-label">Location:</span>
-                        <span class="meta-value">Edinburgh, Scotland</span>
+                        <span class="meta-value">${location}</span>
                     </div>
                     <div class="meta-item">
                         <svg class="meta-icon" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
                         </svg>
                         <span class="meta-label">Date:</span>
-                        <span class="meta-value">11 July 2025</span>
+                        <span class="meta-value">${formattedDate}</span>
                     </div>
                     <div class="meta-item">
                         <svg class="meta-icon" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v8a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clip-rule="evenodd"></path>
                         </svg>
                         <span class="meta-label">Application:</span>
-                        <span class="meta-value">Playground Surfaces</span>
+                        <span class="meta-value">${applicationDisplay}</span>
                     </div>
                 </div>
             </div>
 
-            
-            <div class="image-gallery">
-                <h3>Project Images</h3>
-                <div class="gallery-grid">
-                    
-                <div class="gallery-item">
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1754394415985_1751315363483.jpeg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1754394415985_1751315363483.jpeg?width=400&height=300&quality=75&resize=cover" alt="Fort Kinnaird Shopping Centre Playground Transformation - Image 1" loading="lazy" onclick="openModal(0)">
-                    </picture>
-                </div>
-                <div class="gallery-item">
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1754394416824_1751315363575.jpeg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1754394416824_1751315363575.jpeg?width=400&height=300&quality=75&resize=cover" alt="Fort Kinnaird Shopping Centre Playground Transformation - Image 2" loading="lazy" onclick="openModal(1)">
-                    </picture>
-                </div>
-                <div class="gallery-item">
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1754394417613_1751315365432.jpeg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1754394417613_1751315365432.jpeg?width=400&height=300&quality=75&resize=cover" alt="Fort Kinnaird Shopping Centre Playground Transformation - Image 3" loading="lazy" onclick="openModal(2)">
-                    </picture>
-                </div>
-                <div class="gallery-item">
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1754394418457_1751315366557.jpeg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1754394418457_1751315366557.jpeg?width=400&height=300&quality=75&resize=cover" alt="Fort Kinnaird Shopping Centre Playground Transformation - Image 4" loading="lazy" onclick="openModal(3)">
-                    </picture>
-                </div>
-                </div>
-            </div>
-
-            <!-- Modal for image viewing -->
-            <div id="imageModal" class="modal" onclick="closeModal()">
-                <div class="modal-content" onclick="event.stopPropagation()">
-                    <span class="close" onclick="closeModal()">&times;</span>
-                    
-                <div class="modal-image" id="modal-img-0" style="display: block;">
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1754394415985_1751315363483.jpeg?width=1200&height=800&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1754394415985_1751315363483.jpeg?width=1200&height=800&quality=75&resize=cover" alt="Fort Kinnaird Shopping Centre Playground Transformation - Image 1" loading="lazy">
-                    </picture>
-                </div>
-                <div class="modal-image" id="modal-img-1" >
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1754394416824_1751315363575.jpeg?width=1200&height=800&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1754394416824_1751315363575.jpeg?width=1200&height=800&quality=75&resize=cover" alt="Fort Kinnaird Shopping Centre Playground Transformation - Image 2" loading="lazy">
-                    </picture>
-                </div>
-                <div class="modal-image" id="modal-img-2" >
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1754394417613_1751315365432.jpeg?width=1200&height=800&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1754394417613_1751315365432.jpeg?width=1200&height=800&quality=75&resize=cover" alt="Fort Kinnaird Shopping Centre Playground Transformation - Image 3" loading="lazy">
-                    </picture>
-                </div>
-                <div class="modal-image" id="modal-img-3" >
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1754394418457_1751315366557.jpeg?width=1200&height=800&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1754394418457_1751315366557.jpeg?width=1200&height=800&quality=75&resize=cover" alt="Fort Kinnaird Shopping Centre Playground Transformation - Image 4" loading="lazy">
-                    </picture>
-                </div>
-                    
-                    <button class="nav-btn prev" onclick="changeImage(-1)">&#10094;</button>
-                    <button class="nav-btn next" onclick="changeImage(1)">&#10095;</button>
-                    
-                </div>
-            </div>
+            ${imageGalleryHTML}
 
             <!-- Installation Content -->
             <div class="installation-content">
                 <h2>Project Overview</h2>
-                <p>Fort Kinnaird Shopping Centre, near Edinburgh — the UK’s second-largest retail park — is now home to a bold new example of how Rosehill TPV® can transform public play spaces.</p>
-                <p>As part of a recent renovation, the worn and faded surface of the existing play area was replaced with a vibrant new wetpour installation using Rosehill TPV®. The refreshed surface retains the original design but delivers a brighter, more durable finish that’s built to withstand Scotland’s unpredictable weather.</p>
-                <p>More than just visually impactful, the surface offers enhanced safety and longevity. With excellent impact-absorbing properties and industry-leading durability, Rosehill TPV® is designed for high-traffic environments — keeping children safer while maintaining its vivid colour and softness for years to come.</p>
-                <p>Thanks to Craig Howe</p>
+                ${descriptionHTML}
             </div>
 
             <!-- Call to Action -->
@@ -596,7 +776,7 @@
 
     <script>
         let currentImageIndex = 0;
-        const totalImages = 4;
+        const totalImages = ${images ? images.length : 0};
 
         function openModal(index) {
             currentImageIndex = index;
@@ -634,4 +814,19 @@
         });
     </script>
 </body>
-</html>
+</html>`;
+
+    // Write the HTML file
+    const fileName = `${slug}.html`;
+    const filePath = path.join(outputDir, fileName);
+    
+    fs.writeFileSync(filePath, htmlContent, 'utf8');
+    console.log(`✓ Generated: ${fileName}`);
+}
+
+// Run if called directly
+if (require.main === module) {
+    generateInstallationPages();
+}
+
+module.exports = { generateInstallationPages };
