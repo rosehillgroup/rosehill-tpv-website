@@ -17,12 +17,12 @@ const CONFIG = {
 };
 
 const DEEPL_API_KEY = process.env.DEEPL_API_KEY;
-const CACHE_FILE = path.join(__dirname, '../locales/cache.json');
+const CACHE_FILE = path.join(__dirname, 'translation-cache.json');
 
-// Ensure locales directory exists
-const localesDir = path.dirname(CACHE_FILE);
-if (!fs.existsSync(localesDir)) {
-  fs.mkdirSync(localesDir, { recursive: true });
+// Ensure cache directory exists
+const cacheDir = path.dirname(CACHE_FILE);
+if (!fs.existsSync(cacheDir)) {
+  fs.mkdirSync(cacheDir, { recursive: true });
 }
 
 // Load cache
@@ -38,6 +38,9 @@ if (fs.existsSync(CACHE_FILE)) {
 /**
  * Simple translate function
  */
+let translationCount = 0;
+const MAX_TRANSLATIONS = 200; // Limit translations per build
+
 async function translate(text, targetLang) {
   if (!text || text.trim().length === 0) return text;
   
@@ -47,11 +50,13 @@ async function translate(text, targetLang) {
   }
   
   if (!DEEPL_API_KEY) {
-    console.log('⚠️  No API key, using mock translation');
-    // Mock translation for testing
-    const mockTranslation = `[${targetLang.toUpperCase()}] ${text}`;
-    cache[cacheKey] = mockTranslation;
-    return mockTranslation;
+    console.log('⚠️  No API key, skipping translation');
+    return text; // Return original text instead of mock translation
+  }
+  
+  if (translationCount >= MAX_TRANSLATIONS) {
+    console.log(`⚠️  Translation limit reached (${MAX_TRANSLATIONS}), using original text`);
+    return text;
   }
   
   try {
@@ -72,6 +77,12 @@ async function translate(text, targetLang) {
     const data = await response.json();
     const translated = data.translations[0].text;
     cache[cacheKey] = translated;
+    translationCount++;
+    
+    if (translationCount % 10 === 0) {
+      console.log(`📝 Translated ${translationCount} items so far...`);
+    }
+    
     return translated;
     
   } catch (error) {
