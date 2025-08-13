@@ -11,6 +11,9 @@
 /mixer              /mixer.html             301!
 
 # Admin pages - protected by application-level authentication
+# Keep admin pages accessible at root level (English only)
+/installation-approval-hub.html   /installation-approval-hub.html   200!
+/admin/add-installation.html       /admin/add-installation.html       200!
 
 # Redirect www to non-www (update with your actual domain)
 # https://www.yourdomain.com/* https://yourdomain.com/:splat 301!

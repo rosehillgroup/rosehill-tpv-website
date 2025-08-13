@@ -25,6 +25,22 @@
   to = "/es/:splat"
   status = 200
 
+# Admin pages - keep at root level (English only)
+[[redirects]]
+  from = "/installation-approval-hub.html"
+  to = "/installation-approval-hub.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/add-installation.html"
+  to = "/admin/add-installation.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin/:splat"
+  status = 200
+
 # Redirect root to English version
 [[redirects]]
   from = "/"
