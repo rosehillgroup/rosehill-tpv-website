@@ -93,6 +93,20 @@ async function processFile(sourceFile, targetLang, isInstallationPage = false) {
   
   let translationCount = 0;
   
+  // Store scripts and styles to preserve them from translation
+  const scripts = [];
+  const styles = [];
+  
+  $('script').each((i, el) => {
+    scripts.push({ index: i, html: $.html(el) });
+    $(el).replaceWith(`<!-- SCRIPT_PLACEHOLDER_${i} -->`);
+  });
+  
+  $('style').each((i, el) => {
+    styles.push({ index: i, html: $.html(el) });
+    $(el).replaceWith(`<!-- STYLE_PLACEHOLDER_${i} -->`);
+  });
+  
   // Fix paths for installation pages
   if (isInstallationPage) {
     // Update relative paths to go up one more level
@@ -321,7 +335,20 @@ async function processFile(sourceFile, targetLang, isInstallationPage = false) {
   
   console.log(`  ✓ Translated ${translationCount} items`);
   
-  return $.html();
+  // Restore scripts and styles before returning HTML
+  let finalHTML = $.html();
+  
+  // Restore scripts
+  scripts.forEach(({ index, html }) => {
+    finalHTML = finalHTML.replace(`<!-- SCRIPT_PLACEHOLDER_${index} -->`, html);
+  });
+  
+  // Restore styles
+  styles.forEach(({ index, html }) => {
+    finalHTML = finalHTML.replace(`<!-- STYLE_PLACEHOLDER_${index} -->`, html);
+  });
+  
+  return finalHTML;
 }
 
 /**
