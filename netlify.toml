@@ -1,6 +1,6 @@
 [build]
-  # Install dependencies and run translation - Updated for multilingual structure
-  command = "npm install && npm run translate"
+  # Install dependencies for main project and functions, then run translation
+  command = "npm install && cd netlify/functions && npm install && cd ../.. && npm run translate"
   
   # Publish directory (dist folder with all language versions)
   publish = "dist"
