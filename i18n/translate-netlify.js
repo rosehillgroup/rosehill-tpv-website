@@ -39,7 +39,7 @@ if (fs.existsSync(CACHE_FILE)) {
  * Simple translate function
  */
 let translationCount = 0;
-const MAX_TRANSLATIONS = 200; // Limit translations per build
+const MAX_TRANSLATIONS = 2000; // Increased limit for complete website translation
 
 async function translate(text, targetLang) {
   if (!text || text.trim().length === 0) return text;
@@ -585,6 +585,8 @@ async function main() {
   // Final summary
   const elapsed = Math.round((Date.now() - startTime) / 1000);
   console.log(`\n✅ Build complete in ${elapsed}s`);
+  console.log(`📝 Total translations: ${translationCount}/${MAX_TRANSLATIONS}`);
+  console.log(`💾 Cache entries: ${Object.keys(cache).length}`);
   console.log(`📁 Output: dist/{${['en', ...CONFIG.languages].join(',')}}/ `);
   
   // Show final structure
