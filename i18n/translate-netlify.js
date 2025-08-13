@@ -84,7 +84,7 @@ async function translate(text, targetLang) {
 /**
  * Process a single HTML file
  */
-async function processFile(sourceFile, targetLang) {
+async function processFile(sourceFile, targetLang, isInstallationPage = false) {
   console.log(`📄 Processing ${path.basename(sourceFile)} for ${targetLang}`);
   
   const html = fs.readFileSync(sourceFile, 'utf8');
@@ -92,6 +92,38 @@ async function processFile(sourceFile, targetLang) {
   const currentPageName = path.basename(sourceFile);
   
   let translationCount = 0;
+  
+  // Fix paths for installation pages
+  if (isInstallationPage) {
+    // Update relative paths to go up one more level
+    $('img[src^="../"]').each((i, el) => {
+      const src = $(el).attr('src');
+      $(el).attr('src', '../' + src);
+    });
+    
+    $('link[href^="../"]').each((i, el) => {
+      const href = $(el).attr('href');
+      $(el).attr('href', '../' + href);
+    });
+    
+    $('a[href^="../"]').each((i, el) => {
+      const href = $(el).attr('href');
+      // Don't update navigation links, only asset links
+      if (!href.includes('.html')) {
+        $(el).attr('href', '../' + href);
+      }
+    });
+    
+    // Update navigation links to include language prefix
+    $('a[href$=".html"]').each((i, el) => {
+      const href = $(el).attr('href');
+      if (href.startsWith('../')) {
+        // Main navigation links
+        const page = href.replace('../', '');
+        $(el).attr('href', `../../${page}`);
+      }
+    });
+  }
   
   // Only translate if not English
   if (targetLang !== 'en') {
@@ -256,12 +288,13 @@ async function processFile(sourceFile, targetLang) {
   }
   
   // Add language switcher that preserves current page
+  const pagePathPrefix = isInstallationPage ? 'installations/' : '';
   const switcherHTML = `
     <div id="language-switcher" style="position:fixed;bottom:20px;right:20px;background:linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);padding:8px 12px;border-radius:25px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:9999;border:1px solid rgba(255,107,53,0.1);backdrop-filter:blur(10px);font-family:'Source Sans Pro', sans-serif;font-size:14px;font-weight:500;">
-      <a href="/en/${currentPageName}" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;${targetLang === 'en' ? 'background:#ff6b35;color:white;box-shadow:0 2px 8px rgba(255,107,53,0.3);' : ''}">EN</a>
-      <a href="/fr/${currentPageName}" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;${targetLang === 'fr' ? 'background:#ff6b35;color:white;box-shadow:0 2px 8px rgba(255,107,53,0.3);' : ''}">FR</a>
-      <a href="/de/${currentPageName}" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;${targetLang === 'de' ? 'background:#ff6b35;color:white;box-shadow:0 2px 8px rgba(255,107,53,0.3);' : ''}">DE</a>
-      <a href="/es/${currentPageName}" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;${targetLang === 'es' ? 'background:#ff6b35;color:white;box-shadow:0 2px 8px rgba(255,107,53,0.3);' : ''}">ES</a>
+      <a href="/en/${pagePathPrefix}${currentPageName}" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;${targetLang === 'en' ? 'background:#ff6b35;color:white;box-shadow:0 2px 8px rgba(255,107,53,0.3);' : ''}">EN</a>
+      <a href="/fr/${pagePathPrefix}${currentPageName}" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;${targetLang === 'fr' ? 'background:#ff6b35;color:white;box-shadow:0 2px 8px rgba(255,107,53,0.3);' : ''}">FR</a>
+      <a href="/de/${pagePathPrefix}${currentPageName}" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;${targetLang === 'de' ? 'background:#ff6b35;color:white;box-shadow:0 2px 8px rgba(255,107,53,0.3);' : ''}">DE</a>
+      <a href="/es/${pagePathPrefix}${currentPageName}" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;${targetLang === 'es' ? 'background:#ff6b35;color:white;box-shadow:0 2px 8px rgba(255,107,53,0.3);' : ''}">ES</a>
     </div>
   `;
   $('body').prepend(switcherHTML);
@@ -302,7 +335,6 @@ function copyAssets() {
     'images',        // Main images directory
     'Icons',         // SVG icons
     'Blends',        // Product blend images  
-    'installations', // Installation directory
     'favicon_io',    // Favicons
     'favicon.ico',   // Root favicon
     'robots.txt',    // SEO files
@@ -401,6 +433,43 @@ async function main() {
       // Save cache after each file
       fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
     }
+  }
+  
+  // Process installation pages
+  console.log('\n📄 Processing installation pages...');
+  const installationsDir = path.join(sourceDir, 'installations');
+  if (fs.existsSync(installationsDir)) {
+    const installationFiles = fs.readdirSync(installationsDir)
+      .filter(file => file.endsWith('.html') && !file.endsWith('.backup'));
+    
+    // Create installations directories for each language
+    ['en', ...CONFIG.languages].forEach(lang => {
+      const langInstallDir = path.join(rootDir, lang, 'installations');
+      if (!fs.existsSync(langInstallDir)) {
+        fs.mkdirSync(langInstallDir, { recursive: true });
+      }
+    });
+    
+    for (const installFile of installationFiles) {
+      const sourcePath = path.join(installationsDir, installFile);
+      
+      // Process English version
+      const englishHTML = await processFile(sourcePath, 'en', true);
+      const enPath = path.join(rootDir, 'en', 'installations', installFile);
+      fs.writeFileSync(enPath, englishHTML);
+      
+      // Process translations
+      for (const lang of CONFIG.languages) {
+        const translatedHTML = await processFile(sourcePath, lang, true);
+        const targetPath = path.join(rootDir, lang, 'installations', installFile);
+        fs.writeFileSync(targetPath, translatedHTML);
+        
+        // Save cache periodically
+        fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
+      }
+    }
+    
+    console.log(`✓ Processed ${installationFiles.length} installation pages`);
   }
   
   // Copy config files to root and language directories
