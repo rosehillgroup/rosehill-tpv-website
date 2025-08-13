@@ -13,6 +13,11 @@ const CONFIG = {
     'index.html', 'products.html', 'applications.html',
     'colour.html', 'about.html', 'contact.html',
     'mixer.html', 'installations.html', 'thank-you.html'
+  ],
+  // Admin pages that should be copied but not translated (English only)
+  adminPages: [
+    'installation-approval-hub.html',
+    'admin/add-installation.html'
   ]
 };
 
@@ -469,6 +474,32 @@ async function main() {
       
       // Save cache after each file
       fs.writeFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
+    }
+  }
+  
+  // Copy admin pages (English only - no translation needed)
+  console.log('\n🔐 Copying admin pages (English only)...');
+  for (const adminPage of CONFIG.adminPages) {
+    const sourcePath = path.join(sourceDir, adminPage);
+    
+    if (!fs.existsSync(sourcePath)) {
+      console.log(`⚠️  ${adminPage} not found`);
+      continue;
+    }
+    
+    // Copy to all language directories as-is (English only)
+    for (const lang of ['en', ...CONFIG.languages]) {
+      const targetPath = path.join(rootDir, lang, adminPage);
+      
+      // Ensure directory exists for nested admin pages
+      const targetDir = path.dirname(targetPath);
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
+      
+      // Copy file as-is (no translation)
+      fs.copyFileSync(sourcePath, targetPath);
+      console.log(`✓ Copied ${adminPage} to /${lang}/`);
     }
   }
   
