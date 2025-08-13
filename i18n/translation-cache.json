@@ -1,1 +1,14 @@
-{}
+{
+  "fr:Home": "Accueil",
+  "fr:Products": "Produits", 
+  "fr:About": "À propos",
+  "fr:Contact": "Contact",
+  "de:Home": "Startseite",
+  "de:Products": "Produkte",
+  "de:About": "Über uns", 
+  "de:Contact": "Kontakt",
+  "es:Home": "Inicio",
+  "es:Products": "Productos",
+  "es:About": "Acerca de",
+  "es:Contact": "Contacto"
+}
