@@ -448,7 +448,8 @@ async function main() {
   console.log('🔐 Copying admin pages to root level...');
   const adminPages = [
     'installation-approval-hub.html',
-    'admin/add-installation.html'
+    'admin/add-installation.html',
+    'installation-parser.js'
   ];
   
   for (const adminPage of adminPages) {
