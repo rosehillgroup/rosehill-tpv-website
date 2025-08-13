@@ -449,7 +449,8 @@ async function main() {
   const adminPages = [
     'installation-approval-hub.html',
     'admin/add-installation.html',
-    'installation-parser.js'
+    'installation-parser.js',
+    'login.html'
   ];
   
   for (const adminPage of adminPages) {

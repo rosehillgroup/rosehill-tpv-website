@@ -41,6 +41,11 @@
   to = "/admin/:splat"
   status = 200
 
+[[redirects]]
+  from = "/login.html"
+  to = "/login.html"
+  status = 200
+
 # Redirect root to English version
 [[redirects]]
   from = "/"
