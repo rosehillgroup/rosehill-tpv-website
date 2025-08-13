@@ -444,6 +444,33 @@ async function main() {
   console.log('📁 Copying assets...');
   copyAssets();
   
+  // Copy admin pages to root level only (English only)
+  console.log('🔐 Copying admin pages to root level...');
+  const adminPages = [
+    'installation-approval-hub.html',
+    'admin/add-installation.html'
+  ];
+  
+  for (const adminPage of adminPages) {
+    const sourcePath = path.join(sourceDir, adminPage);
+    const targetPath = path.join(rootDir, adminPage);
+    
+    if (!fs.existsSync(sourcePath)) {
+      console.log(`⚠️  ${adminPage} not found`);
+      continue;
+    }
+    
+    // Ensure directory exists for nested admin pages
+    const targetDir = path.dirname(targetPath);
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+    
+    // Copy file as-is (no translation)
+    fs.copyFileSync(sourcePath, targetPath);
+    console.log(`✓ Copied ${adminPage} to root level`);
+  }
+  
   // Process each priority page
   
   for (const pageFile of CONFIG.priorityPages) {
