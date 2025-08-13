@@ -1061,6 +1061,19 @@
 
     <script>
         // Global variables
+        // Detect current language from URL path
+        function getCurrentLanguage() {
+            const path = window.location.pathname;
+            const langMatch = path.match(/^\/(en|fr|de|es)\//);
+            return langMatch ? langMatch[1] : 'en'; // Default to English
+        }
+        
+        // Get language-aware installation URL
+        function getInstallationUrl(slug) {
+            const currentLang = getCurrentLanguage();
+            return `/${currentLang}/installations/${slug}.html`;
+        }
+        
         let allInstallations = [];
         let filteredInstallations = [];
         let currentFilter = 'all';
@@ -1109,7 +1122,7 @@
                         <div class="featured-description">
                             ${featured.description.map(paragraph => `<p>${paragraph}</p>`).join('')}
                         </div>
-                        <a href="installations/${slugUrl}.html" class="read-more-btn">
+                        <a href="${getInstallationUrl(slugUrl)}" class="read-more-btn">
                             View Full Details →
                         </a>
                     </div>
@@ -1160,7 +1173,7 @@
                 
                 return `
                     <div class="installation-card" data-application="${installation.application}">
-                        <div class="installation-image" onclick="window.location.href='installations/${slugUrl}.html'">
+                        <div class="installation-image" onclick="window.location.href='${getInstallationUrl(slugUrl)}'">
                             ${firstImageUrl ? `<img src="${firstImageUrl}" alt="${installation.title}" loading="lazy">` : '<div class="no-image">No image available</div>'}
                             ${imageCount > 1 ? `<div class="image-overlay">+${imageCount - 1} more</div>` : ''}
                         </div>
@@ -1174,7 +1187,7 @@
                             <div class="installation-description">
                                 <p>${previewText}</p>
                             </div>
-                            <a href="installations/${slugUrl}.html" class="read-more-btn">
+                            <a href="${getInstallationUrl(slugUrl)}" class="read-more-btn">
                                 Read More →
                             </a>
                         </div>
