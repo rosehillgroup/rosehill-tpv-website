@@ -15,6 +15,50 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Load customer URL mappings
+function loadCustomerUrls() {
+    try {
+        const customerUrlsPath = path.join(__dirname, 'customer-urls.json');
+        const customerUrlsData = fs.readFileSync(customerUrlsPath, 'utf8');
+        return JSON.parse(customerUrlsData);
+    } catch (error) {
+        console.warn('Could not load customer URLs:', error.message);
+        return {};
+    }
+}
+
+/**
+ * Convert customer company names to hyperlinks in text
+ * @param {string} text - Text that may contain customer company names
+ * @param {Object} customerUrls - Mapping of company names to URLs
+ * @returns {string} - Text with customer names converted to links
+ */
+function linkCustomerNames(text, customerUrls) {
+    if (!text || typeof text !== 'string') return text;
+    
+    let linkedText = text;
+    
+    // Sort company names by length (longest first) to avoid partial matches
+    const sortedCompanyNames = Object.keys(customerUrls).sort((a, b) => b.length - a.length);
+    
+    for (const companyName of sortedCompanyNames) {
+        const url = customerUrls[companyName];
+        if (!url) continue;
+        
+        // Create regex for case-insensitive matching, accounting for HTML entities
+        const escapedCompanyName = companyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Match the company name, handling both & and &amp; versions
+        const regex = new RegExp(`\\b${escapedCompanyName.replace(/&/g, '(&amp;|&)')}\\b`, 'gi');
+        
+        // Replace with linked version
+        linkedText = linkedText.replace(regex, (match) => {
+            return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #ff6b35; text-decoration: underline;">${match}</a>`;
+        });
+    }
+    
+    return linkedText;
+}
+
 /**
  * Transform Supabase URL to use image transformations
  * @param {string} originalUrl - Original Supabase storage URL
@@ -82,6 +126,10 @@ async function generateInstallationPages() {
     try {
         console.log('Fetching installations from Supabase...');
         
+        // Load customer URLs for linking
+        const customerUrls = loadCustomerUrls();
+        console.log(`Loaded ${Object.keys(customerUrls).length} customer URL mappings`);
+        
         // Get all installations from Supabase
         const { data: installations, error } = await supabase
             .from('installations')
@@ -102,7 +150,7 @@ async function generateInstallationPages() {
 
         // Generate a page for each installation
         for (const installation of installations) {
-            await generateInstallationPage(installation, installationsDir);
+            await generateInstallationPage(installation, installationsDir, customerUrls);
         }
 
         console.log('✅ All installation pages generated successfully!');
@@ -114,7 +162,7 @@ async function generateInstallationPages() {
 }
 
 // Function to generate a single installation page
-async function generateInstallationPage(installation, outputDir) {
+async function generateInstallationPage(installation, outputDir, customerUrls = {}) {
     const { title, location, installation_date, application, description, images, slug } = installation;
 
     console.log(`Generating page for: ${title}`);
@@ -225,10 +273,14 @@ async function generateInstallationPage(installation, outputDir) {
             </div>`;
     }
 
-    // Generate description HTML
+    // Generate description HTML with customer linking (only if not already linked)
     const descriptionHTML = Array.isArray(description) 
-        ? description.map(paragraph => `<p>${paragraph}</p>`).join('\n                ')
-        : `<p>${description}</p>`;
+        ? description.map(paragraph => {
+            // Only apply linking if paragraph doesn't already contain links
+            const linkedParagraph = paragraph.includes('<a href=') ? paragraph : linkCustomerNames(paragraph, customerUrls);
+            return `<p>${linkedParagraph}</p>`;
+        }).join('\n                ')
+        : `<p>${description.includes('<a href=') ? description : linkCustomerNames(description, customerUrls)}</p>`;
 
     // Application type mapping
     const applicationTypes = {
