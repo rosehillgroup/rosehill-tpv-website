@@ -658,10 +658,45 @@
 
     <!-- Language Switcher -->
     <div id="language-switcher" style="position:fixed;bottom:20px;right:20px;background:linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);padding:8px 12px;border-radius:25px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:9999;border:1px solid rgba(255,107,53,0.1);backdrop-filter:blur(10px);font-family:'Source Sans Pro', sans-serif;font-size:14px;font-weight:500;">
-        <a href="javascript:void(0)" onclick="switchLanguage('en')" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;background:#ff6b35;color:white;box-shadow:0 2px 8px rgba(255,107,53,0.3);">EN</a>
-        <a href="javascript:void(0)" onclick="switchLanguage('fr')" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;">FR</a>
-        <a href="javascript:void(0)" onclick="switchLanguage('de')" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;">DE</a>
-        <a href="javascript:void(0)" onclick="switchLanguage('es')" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;">ES</a>
+        <a href="javascript:void(0)" onclick="switchLanguage('en')" id="lang-en" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;">EN</a>
+        <a href="javascript:void(0)" onclick="switchLanguage('fr')" id="lang-fr" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;">FR</a>
+        <a href="javascript:void(0)" onclick="switchLanguage('de')" id="lang-de" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;">DE</a>
+        <a href="javascript:void(0)" onclick="switchLanguage('es')" id="lang-es" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;">ES</a>
     </div>
+    
+    <script>
+        // Set active language based on current URL
+        function setActiveLanguage() {
+            const currentPath = window.location.pathname;
+            const currentLang = currentPath.split('/')[1]; // Get current language from path
+            
+            // Default to 'en' if no language detected or invalid language
+            const activeLang = ['en', 'fr', 'de', 'es'].includes(currentLang) ? currentLang : 'en';
+            
+            // Reset all language buttons
+            ['en', 'fr', 'de', 'es'].forEach(lang => {
+                const element = document.getElementById('lang-' + lang);
+                if (element) {
+                    element.style.background = '';
+                    element.style.color = '#64748b';
+                    element.style.boxShadow = '';
+                }
+            });
+            
+            // Set active language button
+            const activeElement = document.getElementById('lang-' + activeLang);
+            if (activeElement) {
+                activeElement.style.background = '#ff6b35';
+                activeElement.style.color = 'white';
+                activeElement.style.boxShadow = '0 2px 8px rgba(255,107,53,0.3)';
+            }
+        }
+        
+        // Set active language on page load
+        document.addEventListener('DOMContentLoaded', setActiveLanguage);
+        
+        // Also set it immediately in case DOMContentLoaded already fired
+        setActiveLanguage();
+    </script>
 </body>
 </html>
