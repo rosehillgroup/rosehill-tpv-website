@@ -36,6 +36,9 @@ function loadCustomerUrls() {
 function linkCustomerNames(text, customerUrls) {
     if (!text || typeof text !== 'string') return text;
     
+    // Don't process text that already has links
+    if (text.includes('<a href=') || text.includes('href=')) return text;
+    
     let linkedText = text;
     
     // Sort company names by length (longest first) to avoid partial matches
@@ -50,8 +53,18 @@ function linkCustomerNames(text, customerUrls) {
         // Match the company name, handling both & and &amp; versions
         const regex = new RegExp(`\\b${escapedCompanyName.replace(/&/g, '(&amp;|&)')}\\b`, 'gi');
         
-        // Replace with linked version
-        linkedText = linkedText.replace(regex, (match) => {
+        // Replace with linked version (only if not already in a link)
+        linkedText = linkedText.replace(regex, (match, offset, string) => {
+            // Check if this match is already inside a link tag
+            const beforeMatch = string.substring(0, offset);
+            const openTags = (beforeMatch.match(/<a[^>]*>/gi) || []).length;
+            const closeTags = (beforeMatch.match(/<\/a>/gi) || []).length;
+            
+            // If we're inside an unclosed <a> tag, don't add another link
+            if (openTags > closeTags) {
+                return match;
+            }
+            
             return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #ff6b35; text-decoration: underline;">${match}</a>`;
         });
     }
