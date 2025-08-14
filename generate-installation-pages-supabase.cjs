@@ -128,7 +128,7 @@ async function generateInstallationPage(installation, outputDir) {
     });
 
     // Generate breadcrumb
-    const breadcrumb = `<a href="../installations.html">Installations</a> / ${title}`;
+    const breadcrumb = `<a href="/en/installations.html">Installations</a> / ${title}`;
 
     // Generate image gallery HTML
     let imageGalleryHTML = '';
@@ -684,17 +684,17 @@ async function generateInstallationPage(installation, outputDir) {
     <!-- Header -->
     <header class="header">
         <div class="header-container">
-            <a href="../index.html" class="logo">
-                <img src="../../rosehill_tpv_logo.png" alt="Rosehill TPV">
+            <a href="/en/" class="logo">
+                <img src="/rosehill_tpv_logo.png" alt="Rosehill TPV">
             </a>
             <nav class="nav-menu">
-                <a href="../index.html">Home</a>
-                <a href="../products.html">Products</a>
-                <a href="../applications.html">Applications</a>
-                <a href="../colour.html">Colour</a>
-                <a href="../installations.html" class="active">Installations</a>
-                <a href="../about.html">About Us</a>
-                <a href="../contact.html" class="contact-btn">Get in Touch</a>
+                <a href="/en/">Home</a>
+                <a href="/en/products.html">Products</a>
+                <a href="/en/applications.html">Applications</a>
+                <a href="/en/colour.html">Colour</a>
+                <a href="/en/installations.html" class="active">Installations</a>
+                <a href="/en/about.html">About Us</a>
+                <a href="/en/contact.html" class="contact-btn">Get in Touch</a>
             </nav>
         </div>
     </header>
@@ -747,7 +747,7 @@ async function generateInstallationPage(installation, outputDir) {
             <div class="cta-section">
                 <h3>Ready to Transform Your Space?</h3>
                 <p>Contact us today to discuss how Rosehill TPV can create safe, vibrant surfaces for your project.</p>
-                <a href="../contact.html" class="cta-button">Get Started</a>
+                <a href="/en/contact.html" class="cta-button">Get Started</a>
             </div>
         </div>
     </main>
@@ -756,17 +756,17 @@ async function generateInstallationPage(installation, outputDir) {
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-logo">
-                <img src="../../rosehill_tpv_logo.png" alt="Rosehill TPV">
+                <img src="/rosehill_tpv_logo.png" alt="Rosehill TPV">
             </div>
             <p class="footer-text">Creating safer, more vibrant play and sports surfaces worldwide with our premium coloured rubber granules.</p>
             <nav class="footer-nav">
-                <a href="../index.html">Home</a>
-                <a href="../products.html">Products</a>
-                <a href="../applications.html">Applications</a>
-                <a href="../colour.html">Colour</a>
-                <a href="../installations.html">Installations</a>
-                <a href="../about.html">About Us</a>
-                <a href="../contact.html">Get in Touch</a>
+                <a href="/en/">Home</a>
+                <a href="/en/products.html">Products</a>
+                <a href="/en/applications.html">Applications</a>
+                <a href="/en/colour.html">Colour</a>
+                <a href="/en/installations.html">Installations</a>
+                <a href="/en/about.html">About Us</a>
+                <a href="/en/contact.html">Get in Touch</a>
             </nav>
             <div class="footer-bottom">
                 <p>&copy; 2025 Rosehill TPV. All rights reserved.</p>
