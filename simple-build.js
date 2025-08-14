@@ -68,13 +68,40 @@ function addLanguageSwitcher(html, currentLang = 'en') {
             : 'display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;';
     };
     
+    // Add JavaScript to handle language switching while preserving current page
+    const languageSwitcherScript = `
+    <script>
+        function switchLanguage(targetLang) {
+            const currentPath = window.location.pathname;
+            const currentLang = currentPath.split('/')[1]; // Get current language from path
+            
+            // If we're already on the target language, do nothing
+            if (currentLang === targetLang) return;
+            
+            // Replace the current language in the path with the target language
+            let newPath;
+            if (currentLang && ['en', 'fr', 'de', 'es'].includes(currentLang)) {
+                // We're on a language-specific page, replace the language
+                newPath = currentPath.replace('/' + currentLang + '/', '/' + targetLang + '/');
+            } else {
+                // We're on the root, go to the target language root
+                newPath = '/' + targetLang + '/';
+            }
+            
+            window.location.href = newPath;
+        }
+    </script>`;
+    
     const languageSwitcherHtml = `
     <div id="language-switcher" style="position:fixed;bottom:20px;right:20px;background:linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);padding:8px 12px;border-radius:25px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:9999;border:1px solid rgba(255,107,53,0.1);backdrop-filter:blur(10px);font-family:'Source Sans Pro', sans-serif;font-size:14px;font-weight:500;">
-        <a href="/en/" style="${getActiveStyle('en')}">EN</a>
-        <a href="/fr/" style="${getActiveStyle('fr')}">FR</a>
-        <a href="/de/" style="${getActiveStyle('de')}">DE</a>
-        <a href="/es/" style="${getActiveStyle('es')}">ES</a>
+        <a href="javascript:void(0)" onclick="switchLanguage('en')" style="${getActiveStyle('en')}">EN</a>
+        <a href="javascript:void(0)" onclick="switchLanguage('fr')" style="${getActiveStyle('fr')}">FR</a>
+        <a href="javascript:void(0)" onclick="switchLanguage('de')" style="${getActiveStyle('de')}">DE</a>
+        <a href="javascript:void(0)" onclick="switchLanguage('es')" style="${getActiveStyle('es')}">ES</a>
     </div>`;
+    
+    // Add the script to the head
+    $('head').append(languageSwitcherScript);
     
     // Add language switcher before closing body tag
     $('body').append(languageSwitcherHtml);
