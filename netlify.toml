@@ -46,11 +46,12 @@
   to = "/login.html"
   status = 200
 
-# Redirect root to English version
+# Redirect root page only to English version (after static assets)
 [[redirects]]
   from = "/"
   to = "/en/"
-  status = 200
+  status = 302
+  force = false
 
 [[headers]]
   # Apply security headers to all pages
