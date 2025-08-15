@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 64 64">
+  <!-- Generator: Adobe Illustrator 28.7.1, SVG Export Plug-In . SVG Version: 1.2.0 Build 142)  -->
+  <g>
+    <g id="Glyph">
+      <g>
+        <rect x="20" y="7" width="24" height="6"/>
+        <rect x="9" y="21" width="8" height="4"/>
+        <rect x="47" y="21" width="8" height="4"/>
+        <path d="M45,27v3c0,.55273.44775,1,1,1h10c.55225,0,1-.44727,1-1v-3h-12Z"/>
+        <path d="M48,19h6v-7c0-2.75684-2.24316-5-5-5h-3v6h2v6Z"/>
+        <path d="M7,30c0,.55273.44775,1,1,1h10c.55225,0,1-.44727,1-1v-3H7v3Z"/>
+        <path d="M16,13h2v-6h-3c-2.75684,0-5,2.24316-5,5v7h6v-6Z"/>
+        <rect x="20" y="33" width="24" height="6"/>
+        <rect x="9" y="47" width="8" height="4"/>
+        <rect x="47" y="47" width="8" height="4"/>
+        <path d="M45,56c0,.55273.44775,1,1,1h10c.55225,0,1-.44727,1-1v-3h-12v3Z"/>
+        <path d="M49,33h-3v6h2v6h6v-7c0-2.75684-2.24316-5-5-5Z"/>
+        <path d="M7,56c0,.55273.44775,1,1,1h10c.55225,0,1-.44727,1-1v-3H7v3Z"/>
+        <path d="M18,39v-6h-3c-2.75684,0-5,2.24316-5,5v7h6v-6h2Z"/>
+      </g>
+    </g>
+  </g>
+</svg>

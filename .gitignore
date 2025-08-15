@@ -2,7 +2,7 @@
 node_modules/
 
 # Build outputs
-dist/
+# dist/  # Commented out - dist needs to be committed for deployment
 build/
 
 # Backup files
