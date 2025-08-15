@@ -98,7 +98,6 @@
             transform: translateY(-2px);
         }
 
-
         /* Main Content */
         .main-content {
             margin-top: 80px;
@@ -223,18 +222,11 @@
             transform: translateY(-5px);
         }
 
-        .gallery-item img,
-        .gallery-item picture {
+        .gallery-item img {
             width: 100%;
             height: 250px;
             object-fit: cover;
             display: block;
-        }
-        
-        .gallery-item picture img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
         }
 
         /* Modal Styles */
@@ -263,17 +255,10 @@
             text-align: center;
         }
 
-        .modal-image img,
-        .modal-image picture img {
+        .modal-image img {
             max-width: 100%;
             max-height: 70vh;
             object-fit: contain;
-        }
-        
-        .modal-image picture {
-            display: block;
-            max-width: 100%;
-            max-height: 70vh;
         }
 
         .close {
@@ -503,22 +488,13 @@
                 <div class="gallery-grid">
                     
                 <div class="gallery-item">
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1755099662289_1753773936932.jpeg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1755099662289_1753773936932.jpeg?width=400&height=300&quality=75&resize=cover" alt="Community Playground Installation - Image 1" loading="lazy" onclick="openModal(0)">
-                    </picture>
+                    <img src="../images/installations/1755099662289_1753773936932.jpeg" alt="Community Playground Installation - Image 1" loading="lazy" onclick="openModal(0)">
                 </div>
                 <div class="gallery-item">
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1755099663344_1753773937135.jpeg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1755099663344_1753773937135.jpeg?width=400&height=300&quality=75&resize=cover" alt="Community Playground Installation - Image 2" loading="lazy" onclick="openModal(1)">
-                    </picture>
+                    <img src="../images/installations/1755099663344_1753773937135.jpeg" alt="Community Playground Installation - Image 2" loading="lazy" onclick="openModal(1)">
                 </div>
                 <div class="gallery-item">
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1755099663900_1753773937142.jpeg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1755099663900_1753773937142.jpeg?width=400&height=300&quality=75&resize=cover" alt="Community Playground Installation - Image 3" loading="lazy" onclick="openModal(2)">
-                    </picture>
+                    <img src="../images/installations/1755099663900_1753773937142.jpeg" alt="Community Playground Installation - Image 3" loading="lazy" onclick="openModal(2)">
                 </div>
                 </div>
             </div>
@@ -529,22 +505,13 @@
                     <span class="close" onclick="closeModal()">&times;</span>
                     
                 <div class="modal-image" id="modal-img-0" style="display: block;">
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1755099662289_1753773936932.jpeg?width=1200&height=800&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1755099662289_1753773936932.jpeg?width=1200&height=800&quality=75&resize=cover" alt="Community Playground Installation - Image 1" loading="lazy">
-                    </picture>
+                    <img src="../images/installations/1755099662289_1753773936932.jpeg" alt="Community Playground Installation - Image 1" loading="lazy">
                 </div>
                 <div class="modal-image" id="modal-img-1" >
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1755099663344_1753773937135.jpeg?width=1200&height=800&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1755099663344_1753773937135.jpeg?width=1200&height=800&quality=75&resize=cover" alt="Community Playground Installation - Image 2" loading="lazy">
-                    </picture>
+                    <img src="../images/installations/1755099663344_1753773937135.jpeg" alt="Community Playground Installation - Image 2" loading="lazy">
                 </div>
                 <div class="modal-image" id="modal-img-2" >
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1755099663900_1753773937142.jpeg?width=1200&height=800&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1755099663900_1753773937142.jpeg?width=1200&height=800&quality=75&resize=cover" alt="Community Playground Installation - Image 3" loading="lazy">
-                    </picture>
+                    <img src="../images/installations/1755099663900_1753773937142.jpeg" alt="Community Playground Installation - Image 3" loading="lazy">
                 </div>
                     
                     <button class="nav-btn prev" onclick="changeImage(-1)">&#10094;</button>
@@ -634,18 +601,14 @@
         // Language switching functionality
         function switchLanguage(targetLang) {
             const currentPath = window.location.pathname;
-            const currentLang = currentPath.split('/')[1]; // Get current language from path
+            const currentLang = currentPath.split('/')[1];
             
-            // If we're already on the target language, do nothing
             if (currentLang === targetLang) return;
             
-            // Replace the current language in the path with the target language
             let newPath;
             if (currentLang && ['en', 'fr', 'de', 'es'].includes(currentLang)) {
-                // We're on a language-specific page, replace the language
                 newPath = currentPath.replace('/' + currentLang + '/', '/' + targetLang + '/');
             } else {
-                // We're on the root, go to the target language root
                 newPath = '/' + targetLang + '/';
             }
             
@@ -655,45 +618,23 @@
 
     <!-- Language Switcher -->
     <div id="language-switcher" style="position:fixed;bottom:20px;right:20px;background:linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);padding:8px 12px;border-radius:25px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:9999;border:1px solid rgba(255,107,53,0.1);backdrop-filter:blur(10px);font-family:'Source Sans Pro', sans-serif;font-size:14px;font-weight:500;">
-        <a href="javascript:void(0)" onclick="switchLanguage('en')" id="lang-en" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;">EN</a>
+        <a href="javascript:void(0)" onclick="switchLanguage('en')" id="lang-en" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;background:#ff6b35;color:white;box-shadow:0 2px 8px rgba(255,107,53,0.3);">EN</a>
         <a href="javascript:void(0)" onclick="switchLanguage('fr')" id="lang-fr" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;">FR</a>
         <a href="javascript:void(0)" onclick="switchLanguage('de')" id="lang-de" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;">DE</a>
         <a href="javascript:void(0)" onclick="switchLanguage('es')" id="lang-es" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;">ES</a>
     </div>
     
     <script>
-        // Set active language based on current URL
-        function setActiveLanguage() {
-            const currentPath = window.location.pathname;
-            const currentLang = currentPath.split('/')[1]; // Get current language from path
-            
-            // Default to 'en' if no language detected or invalid language
-            const activeLang = ['en', 'fr', 'de', 'es'].includes(currentLang) ? currentLang : 'en';
-            
-            // Reset all language buttons
-            ['en', 'fr', 'de', 'es'].forEach(lang => {
-                const element = document.getElementById('lang-' + lang);
-                if (element) {
-                    element.style.background = '';
-                    element.style.color = '#64748b';
-                    element.style.boxShadow = '';
-                }
-            });
-            
-            // Set active language button
-            const activeElement = document.getElementById('lang-' + activeLang);
-            if (activeElement) {
+        // Set active language on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentLang = 'en';
+            const activeElement = document.getElementById('lang-' + currentLang);
+            if (activeElement && !activeElement.style.background) {
                 activeElement.style.background = '#ff6b35';
                 activeElement.style.color = 'white';
                 activeElement.style.boxShadow = '0 2px 8px rgba(255,107,53,0.3)';
             }
-        }
-        
-        // Set active language on page load
-        document.addEventListener('DOMContentLoaded', setActiveLanguage);
-        
-        // Also set it immediately in case DOMContentLoaded already fired
-        setActiveLanguage();
+        });
     </script>
 </body>
 </html>
