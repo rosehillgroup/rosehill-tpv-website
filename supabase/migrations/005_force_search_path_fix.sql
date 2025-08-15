@@ -72,8 +72,8 @@ BEGIN
             url := 'https://otidaseqlgubqzsqazqt.supabase.co/functions/v1/translate-installation',
             headers := jsonb_build_object(
                 'Content-Type', 'application/json',
-                'Authorization', 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90aWRhc2VxbGd1YnF6c3FhenF0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MDc2OTMzNywiZXhwIjoyMDY2MzQ1MzM3fQ.G_r1wSqCcYD02W7OB3a47Ff5YSHZEz5_fWxlTp4CZJo',
-                'apikey', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90aWRhc2VxbGd1YnF6c3FhenF0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MDc2OTMzNywiZXhwIjoyMDY2MzQ1MzM3fQ.G_r1wSqCcYD02W7OB3a47Ff5YSHZEz5_fWxlTp4CZJo'
+                'Authorization', 'Bearer ' || current_setting('app.settings.service_role_key'),
+                'apikey', current_setting('app.settings.service_role_key')
             ),
             body := jsonb_build_object('id', installation_record.id::text)
         ) INTO request_id;
