@@ -77,7 +77,7 @@ exports.handler = async (event, context) => {
             application: requestData.application || 'other',
             description: descriptions,
             images: [], // For now, no images
-            slug: generateSlug(requestData.title || 'untitled-installation') + '-' + Date.now()
+            slug: generateSlug(requestData.title || 'untitled-installation')
         };
         
         // Save to database

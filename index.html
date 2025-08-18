@@ -93,6 +93,36 @@
             font-weight: 600;
         }
 
+        /* Language Switcher */
+        .language-switcher {
+            display: flex;
+            gap: 8px;
+            margin-left: 20px;
+            padding: 0 15px;
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .language-switcher a {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .language-switcher a:hover {
+            background: rgba(255, 107, 53, 0.2);
+            color: #ff6b35;
+        }
+
+        .language-switcher a.current {
+            background: rgba(255, 107, 53, 0.3);
+            color: #ff6b35;
+            font-weight: 600;
+        }
+
         .contact-btn {
             background: #ff6b35;
             padding: 12px 24px;
@@ -924,6 +954,31 @@
             border-bottom: none;
         }
 
+        /* Mobile Language Switcher */
+        .mobile-language-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px 0;
+            margin-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .mobile-language-switcher a {
+            color: rgba(255,255,255,0.8) !important;
+            font-weight: 500 !important;
+            padding: 8px 15px !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            border-radius: 6px !important;
+            font-size: 14px !important;
+        }
+
+        .mobile-language-switcher a.current {
+            background: rgba(255, 107, 53, 0.3) !important;
+            color: #ff6b35 !important;
+            border-color: #ff6b35 !important;
+        }
+
         /* Responsive */
         @media (max-width: 1024px) {
             .product-row .products-inner {
@@ -938,6 +993,10 @@
 
             .mobile-menu-toggle {
                 display: flex;
+            }
+
+            .language-switcher {
+                display: none;
             }
 
             .product-row .products-inner {
@@ -1297,6 +1356,12 @@
                     <li><a href="about.html">About Us</a></li>
                     <li><a href="contact.html" class="contact-btn">Get in Touch</a></li>
                 </ul>
+                <div class="language-switcher" id="language-switcher">
+                    <a href="/index.html" class="current">EN</a>
+                    <a href="/es/index.html">ES</a>
+                    <a href="/fr/index.html">FR</a>
+                    <a href="/de/index.html">DE</a>
+                </div>
                 <button class="mobile-menu-toggle" id="mobile-toggle">
                     <span></span>
                     <span></span>
@@ -1310,6 +1375,12 @@
                     <a href="installations.html">Installations</a>
                     <a href="about.html">About Us</a>
                     <a href="contact.html" class="contact-btn">Get in Touch</a>
+                    <div class="mobile-language-switcher" id="mobile-language-switcher">
+                        <a href="/index.html" class="current">EN</a>
+                        <a href="/es/index.html">ES</a>
+                        <a href="/fr/index.html">FR</a>
+                        <a href="/de/index.html">DE</a>
+                    </div>
                 </div>
             </nav>
         </div>
@@ -2178,6 +2249,75 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadLatestInstallations();
             initializeConsent();
+        });
+    </script>
+
+    <!-- Language Switcher -->
+    <script>
+        // Language switcher functionality
+        function initializeLanguageSwitcher() {
+            const currentPath = window.location.pathname;
+            const currentLang = detectCurrentLanguage();
+            
+            // Update current language indicators
+            updateLanguageSwitcherState(currentLang);
+            
+            // Update language switcher links to point to correct page
+            updateLanguageSwitcherUrls(currentPath);
+        }
+        
+        function detectCurrentLanguage() {
+            const path = window.location.pathname;
+            const langMatch = path.match(/^\/(fr|de|es)\//);
+            return langMatch ? langMatch[1] : 'en';
+        }
+        
+        function updateLanguageSwitcherState(currentLang) {
+            // Update desktop switcher
+            document.querySelectorAll('.language-switcher a').forEach(link => {
+                link.classList.remove('current');
+                if (link.textContent.toLowerCase() === currentLang) {
+                    link.classList.add('current');
+                }
+            });
+            
+            // Update mobile switcher  
+            document.querySelectorAll('.mobile-language-switcher a').forEach(link => {
+                link.classList.remove('current');
+                if (link.textContent.toLowerCase() === currentLang) {
+                    link.classList.add('current');
+                }
+            });
+        }
+        
+        function updateLanguageSwitcherUrls(currentPath) {
+            // Get the base page (remove any language prefix)
+            let basePage = currentPath;
+            if (basePage.match(/^\/(fr|de|es)\//)) {
+                basePage = basePage.replace(/^\/(fr|de|es)/, '');
+            }
+            if (basePage === '') basePage = '/index.html';
+            if (!basePage.endsWith('.html') && !basePage.endsWith('/')) basePage += '.html';
+            
+            // Update all language links
+            const updateSwitcher = (selector) => {
+                document.querySelectorAll(selector + ' a').forEach(link => {
+                    const lang = link.textContent.toLowerCase();
+                    if (lang === 'en') {
+                        link.href = basePage;
+                    } else {
+                        link.href = `/${lang}${basePage}`;
+                    }
+                });
+            };
+            
+            updateSwitcher('.language-switcher');
+            updateSwitcher('.mobile-language-switcher');
+        }
+        
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeLanguageSwitcher();
         });
     </script>
 

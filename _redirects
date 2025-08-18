@@ -24,6 +24,9 @@
 /login              /login.html             301!
 /mixer              /mixer.html             301!
 
+# Installation pages - serve from installations directory
+/installations/*    /installations/:splat   200
+
 # Admin pages - protected by application-level authentication
 # Keep admin pages accessible at root level (English only)
 /installation-approval-hub.html   /installation-approval-hub.html   200!

@@ -284,7 +284,7 @@ exports.handler = async (event, context) => {
                 .replace(/^-+|-+$/g, '');
         }
         
-        const slug = generateSlug(formData.title) + '-' + Date.now();
+        const slug = generateSlug(formData.title);
         
         // Create installation object
         const installationData = {
