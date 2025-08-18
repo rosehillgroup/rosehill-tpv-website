@@ -1,29 +1,29 @@
 [build]
-  # Static site - no build needed, dist folder already contains all files
-  command = "echo 'Static site deployed from dist folder'"
+  # Static site - no build needed, deploy from root
+  command = "echo 'Static site deployed from root folder'"
   
-  # Publish directory (dist folder with all language versions)
-  publish = "dist"
+  # Publish directory (root folder with client-side translations)
+  publish = "."
 
 [build.environment]
   # DeepL API key for translation (set in Netlify dashboard)
   # DEEPL_API_KEY = "your-key-here"
 
-# Redirects for language paths
-[[redirects]]
-  from = "/fr/*"
-  to = "/fr/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/de/*"
-  to = "/de/:splat"
-  status = 200
-
-[[redirects]]
-  from = "/es/*"
-  to = "/es/:splat"
-  status = 200
+# Redirects for language paths - handled by _redirects file
+# [[redirects]]
+#   from = "/fr/*"
+#   to = "/fr/:splat"
+#   status = 200
+#
+# [[redirects]]
+#   from = "/de/*"
+#   to = "/de/:splat"
+#   status = 200
+#
+# [[redirects]]
+#   from = "/es/*"
+#   to = "/es/:splat"
+#   status = 200
 
 # Admin pages - keep at root level (English only)
 [[redirects]]
@@ -47,11 +47,12 @@
   status = 200
 
 # Redirect root page only to English version (after static assets)
-[[redirects]]
-  from = "/"
-  to = "/en/"
-  status = 302
-  force = false
+# DISABLED - Emergency fix - remove /en/ redirect
+# [[redirects]]
+#   from = "/"
+#   to = "/en/"
+#   status = 302
+#   force = false
 
 [[headers]]
   # Apply security headers to all pages
