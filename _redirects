@@ -1,58 +1,12 @@
-# Netlify Redirects File - Client-side Translation System
+# Netlify Redirects File - Emergency Hotfix
 
-# Client-side translation routing
-# Route language-specific URLs to the root HTML files
-# The client-side JavaScript will detect the language from the URL and apply translations
+# Basic language routing - simplified for emergency deployment
+/es/* /:splat 200
+/fr/* /:splat 200  
+/de/* /:splat 200
 
-# Spanish routes
-/es/index.html /index.html 200
-/es/about.html /about.html 200
-/es/products.html /products.html 200
-/es/applications.html /applications.html 200
-/es/colour.html /colour.html 200
-/es/contact.html /contact.html 200
-/es/mixer.html /mixer.html 200
-/es/installations.html /installations.html 200
-/es/thank-you.html /thank-you.html 200
-
-# French routes
-/fr/index.html /index.html 200
-/fr/about.html /about.html 200
-/fr/products.html /products.html 200
-/fr/applications.html /applications.html 200
-/fr/colour.html /colour.html 200
-/fr/contact.html /contact.html 200
-/fr/mixer.html /mixer.html 200
-/fr/installations.html /installations.html 200
-/fr/thank-you.html /thank-you.html 200
-
-# German routes
-/de/index.html /index.html 200
-/de/about.html /about.html 200
-/de/products.html /products.html 200
-/de/applications.html /applications.html 200
-/de/colour.html /colour.html 200
-/de/contact.html /contact.html 200
-/de/mixer.html /mixer.html 200
-/de/installations.html /installations.html 200
-/de/thank-you.html /thank-you.html 200
-
-# Directory routes (without .html extension)
-/es/ /index.html 200
-/fr/ /index.html 200
-/de/ /index.html 200
-
-# Legacy English routes - redirect to root (no /en/ prefix needed)
-/en/index.html /index.html 301!
-/en/about.html /about.html 301!
-/en/products.html /products.html 301!
-/en/applications.html /applications.html 301!
-/en/colour.html /colour.html 301!
-/en/contact.html /contact.html 301!
-/en/mixer.html /mixer.html 301!
-/en/installations.html /installations.html 301!
-/en/thank-you.html /thank-you.html 301!
-/en/ / 301!
+# Legacy redirects
+/en/* /:splat 301!
 
 # Test page routes for development
 /es/translation-test.html /translation-test.html 200
