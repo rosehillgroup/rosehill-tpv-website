@@ -138,8 +138,6 @@ class TranslationLoader {
    * Update navigation links to preserve language
    */
   updateNavigation() {
-    if (this.currentLang === 'en') return;
-
     const links = document.querySelectorAll('a[href]');
     links.forEach(link => {
       const href = link.getAttribute('href');
@@ -149,15 +147,24 @@ class TranslationLoader {
         return;
       }
       
-      // Skip if already has language prefix
-      if (href.startsWith(`/${this.currentLang}/`)) {
-        return;
-      }
-      
-      // Add language prefix to relative links
-      if (href.startsWith('/') || href.endsWith('.html')) {
-        const newHref = href.startsWith('/') ? `/${this.currentLang}${href}` : `/${this.currentLang}/${href}`;
-        link.setAttribute('href', newHref);
+      // For non-English languages, add language prefix
+      if (this.currentLang !== 'en') {
+        // Skip if already has language prefix
+        if (href.startsWith(`/${this.currentLang}/`)) {
+          return;
+        }
+        
+        // Add language prefix to relative links
+        if (href.startsWith('/') || href.endsWith('.html')) {
+          const newHref = href.startsWith('/') ? `/${this.currentLang}${href}` : `/${this.currentLang}/${href}`;
+          link.setAttribute('href', newHref);
+        }
+      } else {
+        // For English, remove any language prefixes that might exist
+        if (href.startsWith('/en/')) {
+          const newHref = href.replace('/en/', '/');
+          link.setAttribute('href', newHref);
+        }
       }
     });
   }
