@@ -265,28 +265,95 @@ async function generateInstallationPage(installation, outputDir, customerUrls, l
         processedDescription = `<p>${linkedDesc}</p>`;
     }
 
+    /**
+     * Get the appropriate image path for an installation image
+     * Handles both Supabase storage URLs and local files
+     */
+    function getImagePath(image) {
+        // If the image has a Supabase URL, use it directly
+        if (image.url && image.url.includes('supabase.co')) {
+            return image.url;
+        }
+        
+        // For local files, check if they exist
+        if (image.filename) {
+            const fs = require('fs');
+            const path = require('path');
+            const imagesDir = path.join(__dirname, 'dist', 'images', 'installations');
+            
+            // First, check if the original filename exists locally
+            try {
+                if (fs.existsSync(path.join(imagesDir, image.filename))) {
+                    return `../images/installations/${image.filename}`;
+                }
+            } catch (error) {
+                // Continue with fallback logic
+            }
+            
+            // Check if filename has double timestamp pattern and try to find local equivalent
+            const doubleTimestampMatch = image.filename.match(/^(\d{13})_(\d{13})\.(.+)$/);
+            if (doubleTimestampMatch) {
+                const [, newerTimestamp, olderTimestamp, extension] = doubleTimestampMatch;
+                const candidateFilenames = [
+                    `${olderTimestamp}.${extension}`,
+                    `${newerTimestamp}.${extension}`,
+                    `${olderTimestamp.substring(0, 10)}.${extension}`,
+                    `${newerTimestamp.substring(0, 10)}.${extension}`
+                ];
+                
+                for (const candidate of candidateFilenames) {
+                    const candidatePath = path.join(imagesDir, candidate);
+                    try {
+                        if (fs.existsSync(candidatePath)) {
+                            console.log(`📸 Fixed local image path: ${image.filename} → ${candidate}`);
+                            return `../images/installations/${candidate}`;
+                        }
+                    } catch (error) {
+                        continue;
+                    }
+                }
+            }
+            
+            console.warn(`⚠️  Could not find local image for: ${image.filename}`);
+        }
+        
+        return null;
+    }
+
     // Generate image gallery HTML
     let galleryHTML = '';
     let modalHTML = '';
     let firstImageDisplay = 'block';
 
+    let validImageCount = 0; // Track total valid images for JavaScript
+    
     if (images && images.length > 0) {
-        images.forEach((image, index) => {
-            const imagePath = image.filename 
-                ? `../images/installations/${image.filename}`
-                : (image.url || `../images/installations/default-${index + 1}.jpg`);
+        let validImageIndex = 0; // Track valid images for modal indexing
+        
+        images.forEach((image) => {
+            // Get the appropriate image path (Supabase URL or local path)
+            const imagePath = getImagePath(image);
             
-            const altText = `${title} - Image ${index + 1}`;
+            // Skip this image if we couldn't determine a valid path
+            if (!imagePath) {
+                console.warn(`⚠️  Skipping image - no valid path found:`, image);
+                return;
+            }
+            
+            const altText = `${title} - Image ${validImageIndex + 1}`;
             
             galleryHTML += `
                 <div class="gallery-item">
-                    <img src="${imagePath}" alt="${altText}" loading="lazy" onclick="openModal(${index})">
+                    <img src="${imagePath}" alt="${altText}" loading="lazy" onclick="openModal(${validImageIndex})">
                 </div>`;
             
             modalHTML += `
-                <div class="modal-image" id="modal-img-${index}" ${index === 0 ? 'style="display: block;"' : ''}>
+                <div class="modal-image" id="modal-img-${validImageIndex}" ${validImageIndex === 0 ? 'style="display: block;"' : ''}>
                     <img src="${imagePath}" alt="${altText}" loading="lazy">
                 </div>`;
+            
+            validImageIndex++;
+            validImageCount++;
         });
     }
 
@@ -839,7 +906,7 @@ async function generateInstallationPage(installation, outputDir, customerUrls, l
 
     <script>
         let currentImageIndex = 0;
-        const totalImages = ${images.length};
+        const totalImages = ${validImageCount};
 
         function openModal(index) {
             currentImageIndex = index;
