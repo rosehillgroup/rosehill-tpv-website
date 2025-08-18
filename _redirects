@@ -1,11 +1,11 @@
-# Netlify Redirects File - Emergency Hotfix
+# Netlify Redirects File - Emergency Hotfix v2
 
-# Basic language routing - simplified for emergency deployment
-/es/* /:splat 200
-/fr/* /:splat 200  
-/de/* /:splat 200
+# Remove all language routing temporarily - English only
+# /es/* /:splat 200
+# /fr/* /:splat 200  
+# /de/* /:splat 200
 
-# Legacy redirects
+# Redirect any /en/ URLs to root
 /en/* /:splat 301!
 
 # Test page routes for development
