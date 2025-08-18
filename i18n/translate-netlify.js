@@ -638,8 +638,22 @@ async function main() {
 }
 
 // Run
+console.log('Debug - import.meta.url:', import.meta.url);
+console.log('Debug - process.argv[1]:', process.argv[1]);
+console.log('Debug - comparison:', import.meta.url === `file://${process.argv[1]}`);
+
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(console.error);
+  console.log('🚀 Starting translation script...');
+  main().catch(error => {
+    console.error('❌ Translation script failed:', error);
+    process.exit(1);
+  });
+} else {
+  console.log('Script not running as main module, forcing execution...');
+  main().catch(error => {
+    console.error('❌ Translation script failed:', error);
+    process.exit(1);
+  });
 }
 
 export { main };

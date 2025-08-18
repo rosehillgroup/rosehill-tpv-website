@@ -600,7 +600,11 @@ async function main() {
 }
 
 // Run
+console.log('🚀 Starting cached translation build...');
 if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(console.error);
+} else {
+  console.log('Forcing execution of cached build...');
   main().catch(console.error);
 }
 
