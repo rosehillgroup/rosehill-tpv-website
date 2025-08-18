@@ -81,24 +81,29 @@ async function processFile(sourceFile, targetLang, isInstallationPage = false) {
   
   // Fix paths for installation pages
   if (isInstallationPage) {
-    // Update relative paths to go up one more level
-    $('img[src^="../"]').each((i, el) => {
-      const src = $(el).attr('src');
-      $(el).attr('src', '../' + src);
-    });
-    
-    $('link[href^="../"]').each((i, el) => {
-      const href = $(el).attr('href');
-      $(el).attr('href', '../' + href);
-    });
-    
-    $('a[href^="../"]').each((i, el) => {
-      const href = $(el).attr('href');
-      // Don't update navigation links, only asset links
-      if (!href.includes('.html')) {
+    // Only update paths for non-English language versions
+    // English version stays in same relative position: /en/installations/
+    // Other languages need extra level: /fr/installations/, /de/installations/, etc.
+    if (targetLang !== 'en') {
+      // Update relative paths to go up one more level for language directories
+      $('img[src^="../"]').each((i, el) => {
+        const src = $(el).attr('src');
+        $(el).attr('src', '../' + src);
+      });
+      
+      $('link[href^="../"]').each((i, el) => {
+        const href = $(el).attr('href');
         $(el).attr('href', '../' + href);
-      }
-    });
+      });
+      
+      $('a[href^="../"]').each((i, el) => {
+        const href = $(el).attr('href');
+        // Don't update navigation links, only asset links
+        if (!href.includes('.html')) {
+          $(el).attr('href', '../' + href);
+        }
+      });
+    }
     
     // Update navigation links to include language prefix
     $('a[href$=".html"]').each((i, el) => {
@@ -463,10 +468,20 @@ async function main() {
     }
   }
   
-  // Process installation pages
-  console.log('\n📄 Processing installation pages...');
-  const installationsDir = path.join(sourceDir, 'installations');
-  if (fs.existsSync(installationsDir)) {
+  // Skip processing installation pages if they already exist with Supabase translations
+  console.log('\n📄 Checking installation pages...');
+  const installationsDir = path.join(sourceDir, 'installations'); 
+  
+  // Check if dist installation directories already exist with content
+  const distInstallationsExist = ['en', ...CONFIG.languages].every(lang => {
+    const langInstallDir = path.join(rootDir, lang, 'installations');
+    return fs.existsSync(langInstallDir) && fs.readdirSync(langInstallDir).length > 0;
+  });
+  
+  if (distInstallationsExist) {
+    console.log('✓ Installation pages already exist (likely from Supabase generation), skipping...');
+  } else if (fs.existsSync(installationsDir)) {
+    console.log('⚠️  Installation pages not found in dist, generating from source...');
     const installationFiles = fs.readdirSync(installationsDir)
       .filter(file => file.endsWith('.html') && !file.endsWith('.backup'));
     
