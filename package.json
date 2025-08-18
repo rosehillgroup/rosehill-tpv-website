@@ -5,6 +5,7 @@
   "description": "Rosehill TPV Sports & Recreation Surfaces Website",
   "scripts": {
     "build": "echo 'No build process needed'",
+    "build:cached": "node i18n/translate-netlify-cached.js",
     "translate": "node i18n/translate-netlify.js",
     "batch-translate": "node batch-translate-installations.js",
     "batch-translate:dry-run": "node batch-translate-installations.js --dry-run"

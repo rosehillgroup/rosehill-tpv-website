@@ -1,6 +1,6 @@
 [build]
-  # Install dependencies only (multilingual pages already generated)
-  command = "npm install && cd netlify/functions && npm install"
+  # Static site - no build needed, dist folder already contains all files
+  command = "echo 'Static site deployed from dist folder'"
   
   # Publish directory (dist folder with all language versions)
   publish = "dist"
