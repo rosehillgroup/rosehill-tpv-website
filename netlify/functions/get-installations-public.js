@@ -51,13 +51,23 @@ exports.handler = async (event, context) => {
         
         // Check if a specific installation slug is requested
         const slug = event.queryStringParameters?.slug;
+        const language = event.queryStringParameters?.lang || 'en';
+        
+        // Language-aware field selection
+        const getSelectFields = (lang) => {
+            const baseFields = 'id, title, location, installation_date, application, description, images, slug';
+            if (lang === 'en') return baseFields;
+            
+            const translatedFields = `title_${lang}, description_${lang}`;
+            return `${baseFields}, ${translatedFields}`;
+        };
         
         if (slug) {
             // Get specific installation
-            console.log('Fetching installation with slug:', slug);
+            console.log('Fetching installation with slug:', slug, 'language:', language);
             const { data: installation, error } = await supabase
                 .from('installations')
-                .select('id, title, location, installation_date, application, description, images, slug')
+                .select(getSelectFields(language))
                 .eq('slug', slug)
                 .single();
                 
@@ -70,9 +80,26 @@ exports.handler = async (event, context) => {
                 };
             }
             
-            // Map installation_date to date and extract image URLs for frontend compatibility
+            // Apply language-specific content and map fields for frontend compatibility
+            const getLocalizedContent = (installation, lang) => {
+                let title = installation.title;
+                let description = installation.description;
+                
+                if (lang !== 'en') {
+                    const titleKey = `title_${lang}`;
+                    const descKey = `description_${lang}`;
+                    title = installation[titleKey] || installation.title;
+                    description = installation[descKey] || installation.description;
+                }
+                
+                return { title, description };
+            };
+            
+            const localizedContent = getLocalizedContent(installation, language);
             const mappedInstallation = {
                 ...installation,
+                title: localizedContent.title,
+                description: localizedContent.description,
                 date: installation.installation_date,
                 images: installation.images?.map(img => 
                     typeof img === 'object' && img.url ? img.url : img
@@ -86,10 +113,10 @@ exports.handler = async (event, context) => {
             };
         } else {
             // Get all installations for public display
-            console.log('Fetching all installations...');
+            console.log('Fetching all installations for language:', language);
             const { data: installations, error } = await supabase
                 .from('installations')
-                .select('id, title, location, installation_date, application, description, images, slug')
+                .select(getSelectFields(language))
                 .order('installation_date', { ascending: false });
                 
             console.log('Query result:', {
@@ -110,14 +137,33 @@ exports.handler = async (event, context) => {
                 };
             }
             
-            // Map installation_date to date and extract image URLs for frontend compatibility
-            const mappedInstallations = installations?.map(installation => ({
-                ...installation,
-                date: installation.installation_date,
-                images: installation.images?.map(img => 
-                    typeof img === 'object' && img.url ? img.url : img
-                ) || []
-            })) || [];
+            // Apply language-specific content and map fields for frontend compatibility
+            const getLocalizedContent = (installation, lang) => {
+                let title = installation.title;
+                let description = installation.description;
+                
+                if (lang !== 'en') {
+                    const titleKey = `title_${lang}`;
+                    const descKey = `description_${lang}`;
+                    title = installation[titleKey] || installation.title;
+                    description = installation[descKey] || installation.description;
+                }
+                
+                return { title, description };
+            };
+            
+            const mappedInstallations = installations?.map(installation => {
+                const localizedContent = getLocalizedContent(installation, language);
+                return {
+                    ...installation,
+                    title: localizedContent.title,
+                    description: localizedContent.description,
+                    date: installation.installation_date,
+                    images: installation.images?.map(img => 
+                        typeof img === 'object' && img.url ? img.url : img
+                    ) || []
+                };
+            }) || [];
             
             console.log('Returning successful response with', mappedInstallations.length, 'installations');
             return {

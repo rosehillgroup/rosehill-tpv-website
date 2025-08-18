@@ -1,0 +1,636 @@
+{
+  "successful": [
+    {
+      "id": "f3f10545-08ce-45fd-ba67-ff7236cea683",
+      "originalSlug": "new-playground-at-bullion-lane-primary-school-1755098675715",
+      "newSlug": "new-playground-at-bullion-lane-primary-school",
+      "changes": [
+        "slug"
+      ]
+    },
+    {
+      "id": "b9a60f77-58ef-47d1-b574-da412bf359f8",
+      "originalSlug": "basketball-court-installation-in-nijmegen-1755099478336",
+      "newSlug": "basketball-court-installation-in-nijmegen",
+      "changes": [
+        "slug"
+      ]
+    },
+    {
+      "id": "613cf77a-029a-4cd2-af45-82c675ba8090",
+      "originalSlug": "community-playground-installation-1755099665139",
+      "newSlug": "community-playground-installation",
+      "changes": [
+        "slug"
+      ]
+    },
+    {
+      "id": "e8abfcf3-8f59-4e6a-a89a-2afbf174ad56",
+      "originalSlug": "fort-kinnaird-shopping-centre-playground-transformation-1754394418778",
+      "newSlug": "fort-kinnaird-shopping-centre-playground-transformation",
+      "changes": [
+        "slug"
+      ]
+    },
+    {
+      "id": "9bba85c4-a7b6-4e45-8fd7-7259e2ef14da",
+      "originalSlug": "new-pool-surround-1753871326765",
+      "newSlug": "new-pool-surround",
+      "changes": [
+        "slug"
+      ]
+    },
+    {
+      "id": "6db71c89-a89c-48d8-9648-d8776bf94d3b",
+      "originalSlug": "fully-complete-basketball-court-at-nikes-headquarters-1753440448948",
+      "newSlug": "fully-complete-basketball-court-at-nikes-headquarters",
+      "changes": [
+        "slug"
+      ]
+    },
+    {
+      "id": "9db03780-99fd-4264-b01e-afda33cc3315",
+      "originalSlug": "multiply-new-projects-from-across-chile-1753439763052",
+      "newSlug": "multiply-new-projects-from-across-chile",
+      "changes": [
+        "slug"
+      ]
+    },
+    {
+      "id": "4edb4822-e99b-4b14-9d37-b841898f77d3",
+      "originalSlug": "public-outdoor-gym-installation-at-hung-hom-bay-1753437923978",
+      "newSlug": "public-outdoor-gym-installation-at-hung-hom-bay",
+      "changes": [
+        "slug"
+      ]
+    },
+    {
+      "id": "224d89b8-bf61-4176-a013-6eadcdace2ad",
+      "originalSlug": "playground-installation-in-sulaymaniyah-1753435623123",
+      "newSlug": "playground-installation-in-sulaymaniyah",
+      "changes": [
+        "slug"
+      ]
+    },
+    {
+      "id": "2faaa22c-553b-4931-a7aa-9451f7761ba0",
+      "originalSlug": "standout-basketball-court-installation",
+      "newSlug": "standout-basketball-court-installation",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "afa24735-31b7-4670-bace-dcdb4bf72ee3",
+      "originalSlug": "vibrant-new-basketball-court",
+      "newSlug": "vibrant-new-basketball-court",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "0ab66bfd-7ade-4ac2-99dc-96772fb209f5",
+      "originalSlug": "barcelona-s-parc-de-les-gl-ries-vibrent-transformation",
+      "newSlug": "barcelona-s-parc-de-les-gl-ries-vibrent-transformation",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "54c6e16c-7b46-4944-baf6-d8cdcceed154",
+      "originalSlug": "new-play-area",
+      "newSlug": "new-play-area",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "499b3821-23db-49b7-86ea-a09df39fbfda",
+      "originalSlug": "vibrent-fitness-area",
+      "newSlug": "vibrent-fitness-area",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "cf922a0c-6a1a-4efb-81ce-b0587d60f8dd",
+      "originalSlug": "lingnan-university-s-new-outdoor-fitness-gym",
+      "newSlug": "lingnan-university-s-new-outdoor-fitness-gym",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "20275a55-18f0-48ed-a1ca-de0c6d61f1ae",
+      "originalSlug": "new-soft-fall-surface",
+      "newSlug": "new-soft-fall-surface",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "f628dd10-b43f-4b3f-a836-593b5f2f197d",
+      "originalSlug": "splash-of-fun",
+      "newSlug": "splash-of-fun",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "51e2accb-8000-4385-aa33-c872ba64eb35",
+      "originalSlug": "playground-transformations-across-araucan-a-region-of-chile",
+      "newSlug": "playground-transformations-across-araucan-a-region-of-chile",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "5b698c5b-36aa-4f6b-acd1-af74a358ea41",
+      "originalSlug": "new-park",
+      "newSlug": "new-park",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "b2aea624-dc4e-4a65-9b2f-2fdac0ce2f58",
+      "originalSlug": "vibrant-softfall-surface",
+      "newSlug": "vibrant-softfall-surface",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "4bf0c388-2e2e-46fe-b6e6-19ef916f267a",
+      "originalSlug": "exciting-renovation",
+      "newSlug": "exciting-renovation",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "d8c7b8bb-2d23-48f3-ba6b-62b3e29903f0",
+      "originalSlug": "rosehill-tpv-installation",
+      "newSlug": "rosehill-tpv-installation",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "df00dcec-1d5f-4c09-b176-f2f0dd54ad2c",
+      "originalSlug": "rosehill-tpv-softfall-surface",
+      "newSlug": "rosehill-tpv-softfall-surface",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "e88fe2ee-1947-40f7-8068-c297b94070fb",
+      "originalSlug": "playground-transformed",
+      "newSlug": "playground-transformed",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "9434f561-ebd1-4647-ab04-5aa498a5e9a8",
+      "originalSlug": "vibrant-splash-park",
+      "newSlug": "vibrant-splash-park",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "46de5cf4-371c-419a-a6cb-d9f9f7cd4782",
+      "originalSlug": "renovations",
+      "newSlug": "renovations",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "5dd68349-4beb-4d10-b70a-a9a0a7da435b",
+      "originalSlug": "hassell-park-caterpiller-playground",
+      "newSlug": "hassell-park-caterpiller-playground",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "dd37c6c1-46a5-42f0-8792-13688a5ab21a",
+      "originalSlug": "yellowwood-park-parkour-fitness-area",
+      "newSlug": "yellowwood-park-parkour-fitness-area",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "0f1a0877-15a7-4ce7-a77c-cd61d2d1d4b4",
+      "originalSlug": "public-fitness-area",
+      "newSlug": "public-fitness-area",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "692ecea7-f370-4035-ac40-2f381d0c100b",
+      "originalSlug": "vibrent-tpv-snake-addition-to-a-school",
+      "newSlug": "vibrent-tpv-snake-addition-to-a-school",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "3b8f7853-3681-4d74-b1b1-331e076f9336",
+      "originalSlug": "fitness-area-installed",
+      "newSlug": "fitness-area-installed",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "3c585683-ac4d-4844-8d48-80b445890bd1",
+      "originalSlug": "vibrant-new-water-park",
+      "newSlug": "vibrant-new-water-park",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "9d100968-d236-4d4b-b29e-0cabfcd07df0",
+      "originalSlug": "community-playground",
+      "newSlug": "community-playground",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "f64d4671-9208-4fc9-8c77-5a1e5883ad80",
+      "originalSlug": "second-stage-of-renovations",
+      "newSlug": "second-stage-of-renovations",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "7d044b8f-0eeb-4521-a27b-6fe4c5ff1d05",
+      "originalSlug": "new-fitness-area",
+      "newSlug": "new-fitness-area",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "34570776-cfd7-4f81-9793-94fd9d910ebf",
+      "originalSlug": "hillview-christian-school-vibrant-new-playground",
+      "newSlug": "hillview-christian-school-vibrant-new-playground",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "36816ad9-0045-4062-90cf-ac00930a3ddf",
+      "originalSlug": "playground-installation",
+      "newSlug": "playground-installation",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "e881b347-e040-4b4b-b938-0617b30a2941",
+      "originalSlug": "new-playground-surface",
+      "newSlug": "new-playground-surface",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "78d0a25a-6161-4969-aef3-f6f23de95e20",
+      "originalSlug": "kings-road-playground",
+      "newSlug": "kings-road-playground",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "aff02357-f063-40c7-97d3-2d3fb490ebc8",
+      "originalSlug": "latest-rosehill-tpv-installation",
+      "newSlug": "latest-rosehill-tpv-installation",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "5a525b4d-2053-49be-821c-b6b602ef503f",
+      "originalSlug": "skypark-playground",
+      "newSlug": "skypark-playground",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "417453e9-0b8f-46d4-8e27-13a1a451d455",
+      "originalSlug": "madrid-playground-transformation-with-rosehill-tpv",
+      "newSlug": "madrid-playground-transformation-with-rosehill-tpv",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "8a7c4bee-323a-4382-abf0-6a9f60a324bf",
+      "originalSlug": "blue-rosehill-tpv-surface-at-a-community-playground",
+      "newSlug": "blue-rosehill-tpv-surface-at-a-community-playground",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "c66ac6cf-91c8-4f95-81b6-8d86aef779ca",
+      "originalSlug": "recent-renovation-of-uncle-buck-s-play-parlour-at-the-buckley-s-entertainment-centre",
+      "newSlug": "recent-renovation-of-uncle-buck-s-play-parlour-at-the-buckley-s-entertainment-centre",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "251929e5-1924-42bc-b802-94ce13bbe85e",
+      "originalSlug": "new-softfall-surface",
+      "newSlug": "new-softfall-surface",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "9247c65b-5bba-49ea-8cae-55ca688a2cf8",
+      "originalSlug": "new-softfall-surface-being-installed-along-the-coastline-of-iquique",
+      "newSlug": "new-softfall-surface-being-installed-along-the-coastline-of-iquique",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "761d4776-2d0b-4a0a-bc22-686c444298f2",
+      "originalSlug": "kareela-reserve-playground",
+      "newSlug": "kareela-reserve-playground",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "d3271ac6-3c15-4bf3-8ef4-1b21ebd9906b",
+      "originalSlug": "renovation-featuring-rosehill-tpv",
+      "newSlug": "renovation-featuring-rosehill-tpv",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "f3128d97-bf98-4826-b7ed-68edd302c5c1",
+      "originalSlug": "marine-life-inspired-playground",
+      "newSlug": "marine-life-inspired-playground",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "e4fdb713-dd72-41bf-8922-656e43672d31",
+      "originalSlug": "safe-and-vibrant-school-play-area",
+      "newSlug": "safe-and-vibrant-school-play-area",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "490024be-6c9f-4353-8d37-1b23ff1f4e7e",
+      "originalSlug": "upgraded-indoor-play-area-inside-canberra-centre",
+      "newSlug": "upgraded-indoor-play-area-inside-canberra-centre",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "1490f62a-a0d7-4df5-b80f-2849ceacbff0",
+      "originalSlug": "award-winning-playground",
+      "newSlug": "award-winning-playground",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "23613c80-d6c8-4af2-ba16-e7acf1135b32",
+      "originalSlug": "vibrant-community-space",
+      "newSlug": "vibrant-community-space",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "f96f7b53-f7a0-466d-9d07-ea323078c2c9",
+      "originalSlug": "newly-installed-playground",
+      "newSlug": "newly-installed-playground",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "f2288d3e-509f-4462-adc5-34c6057282d9",
+      "originalSlug": "new-rosehill-tpv-softfall-surface",
+      "newSlug": "new-rosehill-tpv-softfall-surface",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "cec767b2-5267-41ed-a491-b689d8c050a4",
+      "originalSlug": "one-year-since-butlin-s-skegness-skypark-playground-officially-opened",
+      "newSlug": "one-year-since-butlin-s-skegness-skypark-playground-officially-opened",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "c2d66dba-40da-4a3e-8a19-cf27d3acd4f6",
+      "originalSlug": "new-playspace-featuring-rosehill-tpv",
+      "newSlug": "new-playspace-featuring-rosehill-tpv",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "0b85410f-3b12-41c6-a90d-3f73d580ba2e",
+      "originalSlug": "rosehill-tpv-featured",
+      "newSlug": "rosehill-tpv-featured",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "312534e1-8cfa-4d6d-adf9-0a06b3ea4ef3",
+      "originalSlug": "colourful-softfall-surface",
+      "newSlug": "colourful-softfall-surface",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "bfa97f2b-2e54-43b6-814a-49f609656bc0",
+      "originalSlug": "new-jungle-themed-play-area",
+      "newSlug": "new-jungle-themed-play-area",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "166fffcd-3572-4e76-93f3-cb702e7aad5e",
+      "originalSlug": "ysgol-cedewain-playground",
+      "newSlug": "ysgol-cedewain-playground",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "3383e3fb-8b7f-4c83-a4c9-51c7b7ac9812",
+      "originalSlug": "disability-friendly-play-space",
+      "newSlug": "disability-friendly-play-space",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "479b8c3c-9d44-4940-8ff7-469688078d71",
+      "originalSlug": "unique-play-area",
+      "newSlug": "unique-play-area",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "53084da7-edbc-4c74-9299-f675f6573cd6",
+      "originalSlug": "lowther-hall-school-playground-1754388958162",
+      "newSlug": "lowther-hall-school-playground",
+      "changes": [
+        "slug"
+      ]
+    },
+    {
+      "id": "697a6098-ce55-4127-90bd-2c21886ffdde",
+      "originalSlug": "recent-addition-of-an-obstacle-course",
+      "newSlug": "recent-addition-of-an-obstacle-course",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "14176722-efa7-409c-a147-08ffd4230461",
+      "originalSlug": "transformed-play-area",
+      "newSlug": "transformed-play-area",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "e6b1a4ff-50e1-4190-9173-297035e8af68",
+      "originalSlug": "earth-themed-play-space-located-outside-vall-d-hebron-children-s-hospital",
+      "newSlug": "earth-themed-play-space-located-outside-vall-d-hebron-children-s-hospital",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "c3b56df0-de60-4ee4-ae50-254f398eb2b8",
+      "originalSlug": "new-playground-installed",
+      "newSlug": "new-playground-installed",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "83d7e5dc-50c4-40ee-bed7-a275cea3b561",
+      "originalSlug": "rosehill-tpv-softfall-surface-installed",
+      "newSlug": "rosehill-tpv-softfall-surface-installed",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "7586393c-ea67-45e1-a5c3-3e01355ebb62",
+      "originalSlug": "playground-upgrade",
+      "newSlug": "playground-upgrade",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "e228e027-8085-4a80-80c7-5333363629ed",
+      "originalSlug": "shopping-centre-play-area",
+      "newSlug": "shopping-centre-play-area",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "883a1d58-c764-4042-b42e-ae802991797e",
+      "originalSlug": "beach-themed-play-area",
+      "newSlug": "beach-themed-play-area",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "b8bc39f6-862a-43d4-8689-ae65690567ff",
+      "originalSlug": "recent-upgrade-to-the-play-area",
+      "newSlug": "recent-upgrade-to-the-play-area",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "8ed38045-d7da-4413-8996-cb8d35cb5349",
+      "originalSlug": "recent-renovation",
+      "newSlug": "recent-renovation",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "1e38750b-e283-4ca8-b6b2-85dac45203ff",
+      "originalSlug": "rosehill-tpv-softfall-surfacing",
+      "newSlug": "rosehill-tpv-softfall-surfacing",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "d1121fb0-983d-4484-baf8-f5958fe56b74",
+      "originalSlug": "community-play-area-at-maunder-reserve",
+      "newSlug": "community-play-area-at-maunder-reserve",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "506db618-19ef-468e-9e93-2d4e0e48351f",
+      "originalSlug": "rosehill-tpv-softfall-surfacing-at-campo-castelo-park",
+      "newSlug": "rosehill-tpv-softfall-surfacing-at-campo-castelo-park",
+      "changes": [
+        "images"
+      ]
+    },
+    {
+      "id": "e22a1171-1404-4493-bf07-fb70085a959b",
+      "originalSlug": "full-renovation-of-memorial-park-playground",
+      "newSlug": "full-renovation-of-memorial-park-playground",
+      "changes": [
+        "images"
+      ]
+    }
+  ],
+  "failed": [],
+  "skipped": [
+    {
+      "id": "192c34e6-7a51-4f71-803a-e85bc020c238",
+      "slug": "new-playground-area",
+      "reason": "No changes needed"
+    }
+  ]
+}

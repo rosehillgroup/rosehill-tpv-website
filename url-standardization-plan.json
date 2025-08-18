@@ -1,0 +1,73 @@
+{
+  "strategy": "Remove timestamps to standardize on non-timestamped format",
+  "safeChanges": [
+    {
+      "current": "new-playground-at-bullion-lane-primary-school-1755098675715",
+      "proposed": "new-playground-at-bullion-lane-primary-school",
+      "title": "New Playground At Bullion Lane Primary School",
+      "id": "f3f10545-08ce-45fd-ba67-ff7236cea683"
+    },
+    {
+      "current": "basketball-court-installation-in-nijmegen-1755099478336",
+      "proposed": "basketball-court-installation-in-nijmegen",
+      "title": "Basketball Court Installation In Nijmegen",
+      "id": "b9a60f77-58ef-47d1-b574-da412bf359f8"
+    },
+    {
+      "current": "community-playground-installation-1755099665139",
+      "proposed": "community-playground-installation",
+      "title": "Community Playground Installation TEST2",
+      "id": "613cf77a-029a-4cd2-af45-82c675ba8090"
+    },
+    {
+      "current": "fort-kinnaird-shopping-centre-playground-transformation-1754394418778",
+      "proposed": "fort-kinnaird-shopping-centre-playground-transformation",
+      "title": "Fort Kinnaird Shopping Centre Playground Transformation",
+      "id": "e8abfcf3-8f59-4e6a-a89a-2afbf174ad56"
+    },
+    {
+      "current": "new-pool-surround-1753871326765",
+      "proposed": "new-pool-surround",
+      "title": "New Pool Surround",
+      "id": "9bba85c4-a7b6-4e45-8fd7-7259e2ef14da"
+    },
+    {
+      "current": "fully-complete-basketball-court-at-nikes-headquarters-1753440448948",
+      "proposed": "fully-complete-basketball-court-at-nikes-headquarters",
+      "title": "Fully Complete Basketball Court At Nike's Headquarters",
+      "id": "6db71c89-a89c-48d8-9648-d8776bf94d3b"
+    },
+    {
+      "current": "multiply-new-projects-from-across-chile-1753439763052",
+      "proposed": "multiply-new-projects-from-across-chile",
+      "title": "Multiple New Projects From Across Chile",
+      "id": "9db03780-99fd-4264-b01e-afda33cc3315"
+    },
+    {
+      "current": "public-outdoor-gym-installation-at-hung-hom-bay-1753437923978",
+      "proposed": "public-outdoor-gym-installation-at-hung-hom-bay",
+      "title": "Public Outdoor Gym Installation At Hung Hom Bay",
+      "id": "4edb4822-e99b-4b14-9d37-b841898f77d3"
+    },
+    {
+      "current": "playground-installation-in-sulaymaniyah-1753435623123",
+      "proposed": "playground-installation-in-sulaymaniyah",
+      "title": "Playground Installation In Sulaymaniyah",
+      "id": "224d89b8-bf61-4176-a013-6eadcdace2ad"
+    },
+    {
+      "current": "lowther-hall-school-playground-1754388958162",
+      "proposed": "lowther-hall-school-playground",
+      "title": "Lowther Hall School Playground",
+      "id": "53084da7-edbc-4c74-9299-f675f6573cd6"
+    }
+  ],
+  "conflicts": [],
+  "existingDuplicates": [],
+  "summary": {
+    "totalTimestamped": 10,
+    "safeToChange": 10,
+    "needsResolution": 0,
+    "existingDuplicates": 0
+  }
+}

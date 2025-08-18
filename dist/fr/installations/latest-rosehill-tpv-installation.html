@@ -483,6 +483,54 @@
             </div>
 
             
+            <div class="image-gallery">
+                <h3>Images du Projet</h3>
+                <div class="gallery-grid">
+                    
+                <div class="gallery-item">
+                    <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1725264615207-1.jpeg" alt="Installation d'une aire de jeux dans une école - Image 1" loading="lazy" onclick="openModal(0)">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1725264616302-1.jpeg" alt="Installation d'une aire de jeux dans une école - Image 2" loading="lazy" onclick="openModal(1)">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1725264615150-1.jpeg" alt="Installation d'une aire de jeux dans une école - Image 3" loading="lazy" onclick="openModal(2)">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1725264615149-1.jpeg" alt="Installation d'une aire de jeux dans une école - Image 4" loading="lazy" onclick="openModal(3)">
+                </div>
+                <div class="gallery-item">
+                    <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1725264614938-1.jpeg" alt="Installation d'une aire de jeux dans une école - Image 5" loading="lazy" onclick="openModal(4)">
+                </div>
+                </div>
+            </div>
+
+            <!-- Modal for image viewing -->
+            <div id="imageModal" class="modal" onclick="closeModal()">
+                <div class="modal-content" onclick="event.stopPropagation()">
+                    <span class="close" onclick="closeModal()">&times;</span>
+                    
+                <div class="modal-image" id="modal-img-0" style="display: block;">
+                    <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1725264615207-1.jpeg" alt="Installation d'une aire de jeux dans une école - Image 1" loading="lazy">
+                </div>
+                <div class="modal-image" id="modal-img-1" >
+                    <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1725264616302-1.jpeg" alt="Installation d'une aire de jeux dans une école - Image 2" loading="lazy">
+                </div>
+                <div class="modal-image" id="modal-img-2" >
+                    <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1725264615150-1.jpeg" alt="Installation d'une aire de jeux dans une école - Image 3" loading="lazy">
+                </div>
+                <div class="modal-image" id="modal-img-3" >
+                    <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1725264615149-1.jpeg" alt="Installation d'une aire de jeux dans une école - Image 4" loading="lazy">
+                </div>
+                <div class="modal-image" id="modal-img-4" >
+                    <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1725264614938-1.jpeg" alt="Installation d'une aire de jeux dans une école - Image 5" loading="lazy">
+                </div>
+                    
+                    <button class="nav-btn prev" onclick="changeImage(-1)">&#10094;</button>
+                    <button class="nav-btn next" onclick="changeImage(1)">&#10095;</button>
+                    
+                </div>
+            </div>
 
             <!-- Installation Content -->
             <div class="installation-content">
@@ -525,7 +573,7 @@
 
     <script>
         let currentImageIndex = 0;
-        const totalImages = 0;
+        const totalImages = 5;
 
         function openModal(index) {
             currentImageIndex = index;

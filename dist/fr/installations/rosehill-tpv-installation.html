@@ -483,6 +483,27 @@
             </div>
 
             
+            <div class="image-gallery">
+                <h3>Images du Projet</h3>
+                <div class="gallery-grid">
+                    
+                <div class="gallery-item">
+                    <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Canberra_Zoo_1.jpg" alt="Nouvelle aire de jeux du zoo de Canberra - Image 1" loading="lazy" onclick="openModal(0)">
+                </div>
+                </div>
+            </div>
+
+            <!-- Modal for image viewing -->
+            <div id="imageModal" class="modal" onclick="closeModal()">
+                <div class="modal-content" onclick="event.stopPropagation()">
+                    <span class="close" onclick="closeModal()">&times;</span>
+                    
+                <div class="modal-image" id="modal-img-0" style="display: block;">
+                    <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Canberra_Zoo_1.jpg" alt="Nouvelle aire de jeux du zoo de Canberra - Image 1" loading="lazy">
+                </div>
+                    
+                </div>
+            </div>
 
             <!-- Installation Content -->
             <div class="installation-content">
@@ -526,7 +547,7 @@
 
     <script>
         let currentImageIndex = 0;
-        const totalImages = 0;
+        const totalImages = 1;
 
         function openModal(index) {
             currentImageIndex = index;
