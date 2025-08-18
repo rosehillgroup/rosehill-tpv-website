@@ -93,34 +93,43 @@
             font-weight: 600;
         }
 
-        /* Language Switcher */
+        /* Desktop Language Switcher - Bottom Right */
         .language-switcher {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            padding: 8px 12px;
+            border-radius: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            z-index: 9999;
+            border: 1px solid rgba(255,107,53,0.1);
+            backdrop-filter: blur(10px);
             display: flex;
-            gap: 8px;
-            margin-left: 20px;
-            padding: 0 15px;
-            border-left: 1px solid rgba(255,255,255,0.2);
+            gap: 4px;
         }
 
         .language-switcher a {
-            color: rgba(255,255,255,0.8);
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 0 2px;
             text-decoration: none;
-            font-weight: 500;
-            padding: 6px 10px;
-            border-radius: 4px;
+            color: #64748b;
+            border-radius: 15px;
+            transition: all 0.2s ease;
             font-size: 14px;
-            transition: all 0.3s ease;
+            font-weight: 500;
         }
 
         .language-switcher a:hover {
-            background: rgba(255, 107, 53, 0.2);
+            background: rgba(255, 107, 53, 0.1);
             color: #ff6b35;
         }
 
         .language-switcher a.current {
-            background: rgba(255, 107, 53, 0.3);
-            color: #ff6b35;
-            font-weight: 600;
+            background: #ff6b35;
+            color: white;
+            box-shadow: 0 2px 8px rgba(255,107,53,0.3);
         }
 
         .contact-btn {
@@ -995,10 +1004,6 @@
                 display: flex;
             }
 
-            .language-switcher {
-                display: none;
-            }
-
             .product-row .products-inner {
                 grid-template-columns: 1fr;
                 gap: 30px;
@@ -1356,12 +1361,6 @@
                     <li><a href="about.html">About Us</a></li>
                     <li><a href="contact.html" class="contact-btn">Get in Touch</a></li>
                 </ul>
-                <div class="language-switcher" id="language-switcher">
-                    <a href="/index.html" class="current">EN</a>
-                    <a href="/es/index.html">ES</a>
-                    <a href="/fr/index.html">FR</a>
-                    <a href="/de/index.html">DE</a>
-                </div>
                 <button class="mobile-menu-toggle" id="mobile-toggle">
                     <span></span>
                     <span></span>
@@ -2252,6 +2251,14 @@
         });
     </script>
 
+    <!-- Desktop Language Switcher (Fixed Bottom-Right) -->
+    <div class="language-switcher" id="language-switcher">
+        <a href="/index.html" class="current">EN</a>
+        <a href="/es/index.html">ES</a>
+        <a href="/fr/index.html">FR</a>
+        <a href="/de/index.html">DE</a>
+    </div>
+
     <!-- Language Switcher -->
     <script>
         // Language switcher functionality
@@ -2296,7 +2303,7 @@
             if (basePage.match(/^\/(fr|de|es)\//)) {
                 basePage = basePage.replace(/^\/(fr|de|es)/, '');
             }
-            if (basePage === '') basePage = '/index.html';
+            if (basePage === '' || basePage === '/') basePage = '/index.html';
             if (!basePage.endsWith('.html') && !basePage.endsWith('/')) basePage += '.html';
             
             // Update all language links
@@ -2304,8 +2311,10 @@
                 document.querySelectorAll(selector + ' a').forEach(link => {
                     const lang = link.textContent.toLowerCase();
                     if (lang === 'en') {
+                        // For English, use the base page without any language prefix
                         link.href = basePage;
                     } else {
+                        // For other languages, add the language prefix
                         link.href = `/${lang}${basePage}`;
                     }
                 });
