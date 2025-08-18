@@ -1,9 +1,9 @@
 # Netlify Redirects File - Emergency Hotfix v2
 
-# Remove all language routing temporarily - English only
-# /es/* /:splat 200
-# /fr/* /:splat 200  
-# /de/* /:splat 200
+# Language routing - route language URLs to root files for client-side translation
+/es/* /:splat 200
+/fr/* /:splat 200  
+/de/* /:splat 200
 
 # Redirect any /en/ URLs to root
 /en/* /:splat 301!
