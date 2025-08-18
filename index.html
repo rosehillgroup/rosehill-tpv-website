@@ -2261,72 +2261,75 @@
 
     <!-- Language Switcher -->
     <script>
-        // Language switcher functionality
-        function initializeLanguageSwitcher() {
-            const currentPath = window.location.pathname;
-            const currentLang = detectCurrentLanguage();
-            
-            // Update current language indicators
-            updateLanguageSwitcherState(currentLang);
-            
-            // Update language switcher links to point to correct page
-            updateLanguageSwitcherUrls(currentPath);
-        }
-        
-        function detectCurrentLanguage() {
+        // Language switcher functionality - FIXED VERSION
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get current language from URL
             const path = window.location.pathname;
             const langMatch = path.match(/^\/(fr|de|es)\//);
-            return langMatch ? langMatch[1] : 'en';
-        }
-        
-        function updateLanguageSwitcherState(currentLang) {
-            // Update desktop switcher
-            document.querySelectorAll('.language-switcher a').forEach(link => {
-                link.classList.remove('current');
-                if (link.textContent.toLowerCase() === currentLang) {
-                    link.classList.add('current');
-                }
-            });
+            const currentLang = langMatch ? langMatch[1] : 'en';
             
-            // Update mobile switcher  
-            document.querySelectorAll('.mobile-language-switcher a').forEach(link => {
-                link.classList.remove('current');
-                if (link.textContent.toLowerCase() === currentLang) {
-                    link.classList.add('current');
-                }
-            });
-        }
-        
-        function updateLanguageSwitcherUrls(currentPath) {
-            // Get the base page (remove any language prefix)
-            let basePage = currentPath;
-            if (basePage.match(/^\/(fr|de|es)\//)) {
-                basePage = basePage.replace(/^\/(fr|de|es)/, '');
+            console.log('Current path:', path);
+            console.log('Detected language:', currentLang);
+            
+            // Get base page path (remove language prefix)
+            let basePage = path;
+            if (langMatch) {
+                basePage = path.replace(/^\/(fr|de|es)/, '');
             }
-            if (basePage === '' || basePage === '/') basePage = '/index.html';
-            if (!basePage.endsWith('.html') && !basePage.endsWith('/')) basePage += '.html';
+            if (basePage === '' || basePage === '/') {
+                basePage = '/index.html';
+            }
             
-            // Update all language links
-            const updateSwitcher = (selector) => {
+            console.log('Base page:', basePage);
+            
+            // Update all language switchers (desktop and mobile)
+            const updateLanguageSwitcher = (selector) => {
                 document.querySelectorAll(selector + ' a').forEach(link => {
-                    const lang = link.textContent.toLowerCase();
-                    if (lang === 'en') {
-                        // For English, use the base page without any language prefix
+                    const linkLang = link.textContent.toLowerCase();
+                    
+                    // Reset styles
+                    link.style.background = '';
+                    link.style.color = '#64748b';
+                    link.style.boxShadow = '';
+                    
+                    // Set correct URL for each language
+                    if (linkLang === 'en') {
                         link.href = basePage;
                     } else {
-                        // For other languages, add the language prefix
-                        link.href = `/${lang}${basePage}`;
+                        link.href = `/${linkLang}${basePage}`;
                     }
+                    
+                    // Highlight current language
+                    if (linkLang === currentLang) {
+                        link.style.background = '#ff6b35';
+                        link.style.color = 'white';
+                        link.style.boxShadow = '0 2px 8px rgba(255,107,53,0.3)';
+                    }
+                    
+                    console.log(`${linkLang.toUpperCase()} link set to:`, link.href);
                 });
             };
             
-            updateSwitcher('.language-switcher');
-            updateSwitcher('.mobile-language-switcher');
-        }
-        
-        // Initialize when DOM is loaded
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeLanguageSwitcher();
+            // Update both desktop and mobile switchers
+            updateLanguageSwitcher('.language-switcher');
+            updateLanguageSwitcher('.mobile-language-switcher');
+            
+            // Add hover effects to desktop switcher
+            document.querySelectorAll('.language-switcher a').forEach(link => {
+                link.addEventListener('mouseenter', function() {
+                    if (this.textContent.toLowerCase() !== currentLang) {
+                        this.style.background = 'rgba(255, 107, 53, 0.1)';
+                        this.style.color = '#ff6b35';
+                    }
+                });
+                
+                link.addEventListener('mouseleave', function() {
+                    if (this.textContent.toLowerCase() !== currentLang) {
+                        this.style.background = '';
+                        this.style.color = '#64748b';
+                    }
+                });
+            });
         });
     </script>
 
