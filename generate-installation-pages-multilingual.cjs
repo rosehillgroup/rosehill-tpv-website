@@ -797,7 +797,7 @@ async function generateInstallationPage(installation, outputDir, customerUrls, l
     <header class="header">
         <div class="header-container">
             <a href="${basePath}" class="logo">
-                <img src="../../rosehill_tpv_logo.png" alt="Rosehill TPV">
+                <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/branding/rosehill_tpv_logo.png" alt="Rosehill TPV">
             </a>
             <nav class="nav-menu">
                 <a href="${basePath}">${lang.navHome}</a>
@@ -886,7 +886,7 @@ async function generateInstallationPage(installation, outputDir, customerUrls, l
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-logo">
-                <img src="../../rosehill_tpv_logo.png" alt="Rosehill TPV">
+                <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/branding/rosehill_tpv_logo.png" alt="Rosehill TPV">
             </div>
             <p class="footer-text">${lang.footerText}</p>
             <nav class="footer-nav">
