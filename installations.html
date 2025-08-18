@@ -1064,14 +1064,18 @@
         // Detect current language from URL path
         function getCurrentLanguage() {
             const path = window.location.pathname;
-            const langMatch = path.match(/^\/(en|fr|de|es)\//);
-            return langMatch ? langMatch[1] : 'en'; // Default to English
+            const langMatch = path.match(/^\/(fr|de|es)\//);
+            return langMatch ? langMatch[1] : null; // Return null for English
         }
         
         // Get language-aware installation URL
         function getInstallationUrl(slug) {
             const currentLang = getCurrentLanguage();
-            return `/${currentLang}/installations/${slug}.html`;
+            if (currentLang) {
+                return `/${currentLang}/installations/${slug}.html`;
+            } else {
+                return `/installations/${slug}.html`; // English URLs have no prefix
+            }
         }
         
         let allInstallations = [];
