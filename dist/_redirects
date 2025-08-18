@@ -1,0 +1,22 @@
+# Netlify Redirects File
+
+# Pretty URLs - redirect to canonical .html version
+/about              /about.html             301!
+/products           /products.html          301!
+/applications       /applications.html      301!
+/colour             /colour.html            301!
+/contact            /contact.html           301!
+/installations      /installations.html     301!
+/login              /login.html             301!
+/mixer              /mixer.html             301!
+
+# Admin pages - protected by application-level authentication
+# Keep admin pages accessible at root level (English only)
+/installation-approval-hub.html   /installation-approval-hub.html   200!
+/admin/add-installation.html       /admin/add-installation.html       200!
+
+# Redirect www to non-www (update with your actual domain)
+# https://www.yourdomain.com/* https://yourdomain.com/:splat 301!
+
+# Force HTTPS
+# http://yourdomain.com/* https://yourdomain.com/:splat 301!
