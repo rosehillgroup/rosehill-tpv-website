@@ -2260,75 +2260,46 @@
     </div>
 
     <!-- Language Switcher -->
+    <script src="/language-switcher-script.js"></script>
+    
+    <!-- Mobile Language Switcher Handler -->
     <script>
-        // Language switcher functionality - FIXED VERSION
+        // Additional handler for mobile language switcher
         document.addEventListener('DOMContentLoaded', function() {
-            // Get current language from URL
             const path = window.location.pathname;
-            const langMatch = path.match(/^\/(fr|de|es)\//);
-            const currentLang = langMatch ? langMatch[1] : 'en';
+            const langMatch = path.match(/^\/(?:es|fr|de)\//);
+            const currentLang = langMatch ? langMatch[0].slice(1, -1) : 'en';
             
-            console.log('Current path:', path);
-            console.log('Detected language:', currentLang);
-            
-            // Get base page path (remove language prefix)
             let basePage = path;
             if (langMatch) {
-                basePage = path.replace(/^\/(fr|de|es)/, '');
+                basePage = path.substring(langMatch[0].length - 1);
             }
             if (basePage === '' || basePage === '/') {
                 basePage = '/index.html';
             }
             
-            console.log('Base page:', basePage);
-            
-            // Update all language switchers (desktop and mobile)
-            const updateLanguageSwitcher = (selector) => {
-                document.querySelectorAll(selector + ' a').forEach(link => {
-                    const linkLang = link.textContent.toLowerCase();
-                    
-                    // Reset styles
-                    link.style.background = '';
-                    link.style.color = '#64748b';
-                    link.style.boxShadow = '';
-                    
-                    // Set correct URL for each language
-                    if (linkLang === 'en') {
-                        link.href = basePage;
-                    } else {
-                        link.href = `/${linkLang}${basePage}`;
-                    }
-                    
-                    // Highlight current language
-                    if (linkLang === currentLang) {
-                        link.style.background = '#ff6b35';
-                        link.style.color = 'white';
-                        link.style.boxShadow = '0 2px 8px rgba(255,107,53,0.3)';
-                    }
-                    
-                    console.log(`${linkLang.toUpperCase()} link set to:`, link.href);
-                });
-            };
-            
-            // Update both desktop and mobile switchers
-            updateLanguageSwitcher('.language-switcher');
-            updateLanguageSwitcher('.mobile-language-switcher');
-            
-            // Add hover effects to desktop switcher
-            document.querySelectorAll('.language-switcher a').forEach(link => {
-                link.addEventListener('mouseenter', function() {
-                    if (this.textContent.toLowerCase() !== currentLang) {
-                        this.style.background = 'rgba(255, 107, 53, 0.1)';
-                        this.style.color = '#ff6b35';
-                    }
-                });
+            // Update mobile switcher with same logic
+            document.querySelectorAll('.mobile-language-switcher a').forEach(link => {
+                const linkLang = link.textContent.toLowerCase().trim();
                 
-                link.addEventListener('mouseleave', function() {
-                    if (this.textContent.toLowerCase() !== currentLang) {
-                        this.style.background = '';
-                        this.style.color = '#64748b';
-                    }
-                });
+                // Reset styles
+                link.style.background = '';
+                link.style.color = 'rgba(255,255,255,0.8)';
+                link.style.borderColor = 'rgba(255,255,255,0.2)';
+                
+                // Set URL
+                if (linkLang === 'en') {
+                    link.href = basePage;
+                } else {
+                    link.href = `/${linkLang}${basePage}`;
+                }
+                
+                // Highlight current
+                if (linkLang === currentLang) {
+                    link.style.background = 'rgba(255, 107, 53, 0.3)';
+                    link.style.color = '#ff6b35';
+                    link.style.borderColor = '#ff6b35';
+                }
             });
         });
     </script>
