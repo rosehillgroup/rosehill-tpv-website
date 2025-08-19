@@ -467,7 +467,7 @@
         }
         
         /* Hide content until loaded */
-        .installation-content { display: none; }
+        .installation-content { display: block; }
         .installation-content.loaded { display: block; }
 
         /* Mobile Menu */
@@ -767,12 +767,30 @@
             console.log('Loading installation:', slug, 'in language:', lang);
             
             if (slug) {
-                loadInstallationContent();
+                console.log('About to call loadInstallationContent()');
+                if (typeof loadInstallationContent === 'function') {
+                    loadInstallationContent();
+                } else {
+                    console.error('loadInstallationContent function not available');
+                    document.getElementById('loading-content').innerHTML = 
+                        '<p>Error: Function not loaded</p>';
+                }
             } else {
                 console.error('No installation slug found');
                 document.getElementById('loading-content').innerHTML = 
                     '<p>Error: Installation not found</p>';
             }
+            
+            // Fallback: hide loading after 5 seconds
+            setTimeout(() => {
+                const loadingEl = document.getElementById('loading-content');
+                const contentEl = document.getElementById('installation-content');
+                if (loadingEl && loadingEl.style.display !== 'none') {
+                    console.log('Fallback: hiding loading screen after timeout');
+                    loadingEl.style.display = 'none';
+                    if (contentEl) contentEl.classList.add('loaded');
+                }
+            }, 5000);
         });
         
         // Hide loading and show content when installation is loaded
