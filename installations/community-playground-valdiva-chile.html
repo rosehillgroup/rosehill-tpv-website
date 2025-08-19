@@ -568,6 +568,44 @@
         });
     </script>
 
+
+    <script>
+        // Update navigation links based on current language
+        document.addEventListener('DOMContentLoaded', function() {
+            const path = window.location.pathname;
+            const langMatch = path.match(/^\/(?:es|fr|de)\//);
+            
+            if (langMatch) {
+                const currentLang = langMatch[0].slice(1, -1);
+                
+                // Update all navigation links to include the current language
+                const navLinks = document.querySelectorAll('.nav-menu a:not(.contact-btn), .footer-nav a, .breadcrumb a');
+                navLinks.forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href && href.startsWith('/') && !href.startsWith('/' + currentLang + '/')) {
+                        // Add language prefix to root-relative URLs
+                        link.setAttribute('href', '/' + currentLang + href);
+                    }
+                });
+                
+                // Update logo link
+                const logoLinks = document.querySelectorAll('.logo');
+                logoLinks.forEach(link => {
+                    link.setAttribute('href', '/' + currentLang + '/');
+                });
+                
+                // Update contact button
+                const contactBtns = document.querySelectorAll('.contact-btn, .cta-button');
+                contactBtns.forEach(btn => {
+                    const href = btn.getAttribute('href');
+                    if (href && href.startsWith('/') && !href.startsWith('/' + currentLang + '/')) {
+                        btn.setAttribute('href', '/' + currentLang + href);
+                    }
+                });
+            }
+        });
+    </script>
+
     <!-- Language Switcher and Translation System -->
     <script src="/language-switcher-script.js"></script>
     <script src="/i18n/translate-client.js"></script>

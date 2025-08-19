@@ -446,17 +446,17 @@
     <!-- Header -->
     <header class="header">
         <div class="header-container">
-            <a href="/en/" class="logo">
+            <a href="/" class="logo">
                 <img src="../rosehill_tpv_logo.png" alt="Rosehill TPV">
             </a>
             <nav class="nav-menu">
-                <a href="/en/">Home</a>
-                <a href="/en/products.html">Products</a>
-                <a href="/en/applications.html">Applications</a>
-                <a href="/en/colour.html">Colour</a>
-                <a href="/en/installations.html" class="active">Installations</a>
-                <a href="/en/about.html">About Us</a>
-                <a href="/en/contact.html" class="contact-btn">Get in Touch</a>
+                <a href="/">Home</a>
+                <a href="/products.html">Products</a>
+                <a href="/applications.html">Applications</a>
+                <a href="/colour.html">Colour</a>
+                <a href="/installations.html" class="active">Installations</a>
+                <a href="/about.html">About Us</a>
+                <a href="/contact.html" class="contact-btn">Get in Touch</a>
             </nav>
         </div>
     </header>
@@ -466,7 +466,7 @@
         <div class="container">
             <!-- Breadcrumb -->
             <div class="breadcrumb">
-                <a href="/en/installations.html">Installations</a> / Playground Transformations Across Chile
+                <a href="/installations.html">Installations</a> / Playground Transformations Across Chile
             </div>
 
             <!-- Installation Header -->
@@ -567,7 +567,7 @@
             <div class="cta-section">
                 <h3>Ready to Transform Your Space?</h3>
                 <p>Contact us today to discuss how Rosehill TPV<sup>®</sup> can create safe, vibrant surfaces for your project.</p>
-                <a href="/en/contact.html" class="cta-button">Get Started</a>
+                <a href="/contact.html" class="cta-button">Get Started</a>
             </div>
         </div>
     </main>
@@ -580,13 +580,13 @@
             </div>
             <p class="footer-text">Creating safer, more vibrant play and sports surfaces worldwide with our premium coloured rubber granules.</p>
             <nav class="footer-nav">
-                <a href="/en/">Home</a>
-                <a href="/en/products.html">Products</a>
-                <a href="/en/applications.html">Applications</a>
-                <a href="/en/colour.html">Colour</a>
-                <a href="/en/installations.html">Installations</a>
-                <a href="/en/about.html">About Us</a>
-                <a href="/en/contact.html">Get in Touch</a>
+                <a href="/">Home</a>
+                <a href="/products.html">Products</a>
+                <a href="/applications.html">Applications</a>
+                <a href="/colour.html">Colour</a>
+                <a href="/installations.html">Installations</a>
+                <a href="/about.html">About Us</a>
+                <a href="/contact.html">Get in Touch</a>
             </nav>
             <div class="footer-bottom">
                 <p>&copy; 2025 Rosehill TPV<sup>®</sup>. All rights reserved.</p>
@@ -696,6 +696,44 @@
         
         // Also set it immediately in case DOMContentLoaded already fired
         setActiveLanguage();
+    </script>
+
+
+    <script>
+        // Update navigation links based on current language
+        document.addEventListener('DOMContentLoaded', function() {
+            const path = window.location.pathname;
+            const langMatch = path.match(/^\/(?:es|fr|de)\//);
+            
+            if (langMatch) {
+                const currentLang = langMatch[0].slice(1, -1);
+                
+                // Update all navigation links to include the current language
+                const navLinks = document.querySelectorAll('.nav-menu a:not(.contact-btn), .footer-nav a, .breadcrumb a');
+                navLinks.forEach(link => {
+                    const href = link.getAttribute('href');
+                    if (href && href.startsWith('/') && !href.startsWith('/' + currentLang + '/')) {
+                        // Add language prefix to root-relative URLs
+                        link.setAttribute('href', '/' + currentLang + href);
+                    }
+                });
+                
+                // Update logo link
+                const logoLinks = document.querySelectorAll('.logo');
+                logoLinks.forEach(link => {
+                    link.setAttribute('href', '/' + currentLang + '/');
+                });
+                
+                // Update contact button
+                const contactBtns = document.querySelectorAll('.contact-btn, .cta-button');
+                contactBtns.forEach(btn => {
+                    const href = btn.getAttribute('href');
+                    if (href && href.startsWith('/') && !href.startsWith('/' + currentLang + '/')) {
+                        btn.setAttribute('href', '/' + currentLang + href);
+                    }
+                });
+            }
+        });
     </script>
 
     <!-- Language Switcher and Translation System -->
