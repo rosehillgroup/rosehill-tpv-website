@@ -36,6 +36,9 @@ async function loadInstallationContent() {
         // Generate hreflang tags
         await generateHreflangTags(installation);
         
+        // Dispatch event to signal content is loaded
+        window.dispatchEvent(new Event('installationLoaded'));
+        
     } catch (error) {
         console.error('Error loading installation content:', error);
     }
@@ -361,11 +364,21 @@ function updateTwitterCardTags(installation) {
     
     let imageUrl = '';
     if (installation.images && installation.images.length > 0) {
-        const firstImage = installation.images[0];
-        if (firstImage.includes('http')) {
-            imageUrl = firstImage;
-        } else {
-            imageUrl = `${window.location.origin}/${firstImage}`;
+        let firstImage = installation.images[0];
+        
+        // Handle different image formats (string or object)
+        if (typeof firstImage === 'object' && firstImage !== null) {
+            firstImage = firstImage.url || firstImage.filename || '';
+        }
+        
+        // Convert to string and check if it's a valid image path
+        firstImage = String(firstImage);
+        if (firstImage) {
+            if (firstImage.includes('http')) {
+                imageUrl = firstImage;
+            } else {
+                imageUrl = `${window.location.origin}/${firstImage}`;
+            }
         }
     }
     

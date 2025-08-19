@@ -14,7 +14,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const LANGUAGES = ['fr', 'de', 'es'];
 
 // Read the installation template
-const TEMPLATE_PATH = './installation-template.html';
+const TEMPLATE_PATH = './installation-template-clean.html';
 
 async function generateTranslatedPages() {
     console.log('🌍 Generating translated installation pages...\n');
