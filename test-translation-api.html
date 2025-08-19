@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Translation API</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        #output {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Translation API Test</h1>
+    
+    <div>
+        <label>Installation ID: <input type="text" id="installationId" value="e228e027-8085-4a80-80c7-5333363629ed" style="width: 400px;"></label>
+    </div>
+    
+    <div>
+        <button onclick="testTranslation()">Test Translation API</button>
+        <button onclick="checkTranslations()">Check Existing Translations</button>
+        <button onclick="clearOutput()">Clear Output</button>
+    </div>
+    
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message, type = '') {
+            const timestamp = new Date().toISOString().substr(11, 8);
+            output.innerHTML += `<span class="${type}">[${timestamp}] ${message}</span>\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function clearOutput() {
+            output.innerHTML = '';
+        }
+        
+        async function testTranslation() {
+            const installationId = document.getElementById('installationId').value;
+            
+            log('=== Starting Translation Test ===');
+            log(`Installation ID: ${installationId}`);
+            
+            try {
+                log('Calling translation API...');
+                
+                const response = await fetch('/.netlify/functions/translate-installation', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        installation_id: installationId,
+                        languages: ['fr', 'de', 'es']
+                    })
+                });
+                
+                log(`Response status: ${response.status} ${response.statusText}`);
+                
+                const responseText = await response.text();
+                log('Raw response:');
+                log(responseText);
+                
+                if (response.ok) {
+                    try {
+                        const result = JSON.parse(responseText);
+                        log('\nParsed response:', 'success');
+                        log(JSON.stringify(result, null, 2));
+                        
+                        if (result.summary) {
+                            log(`\nSummary: ${result.summary.successful} successful, ${result.summary.failed} failed`, 
+                                result.summary.failed > 0 ? 'error' : 'success');
+                        }
+                        
+                        if (result.results) {
+                            log('\nDetailed results:');
+                            result.results.forEach(r => {
+                                log(`  ${r.lang}: ${r.success ? '✓' : '✗'} ${r.error || ''}`, 
+                                    r.success ? 'success' : 'error');
+                            });
+                        }
+                    } catch (parseError) {
+                        log('Failed to parse JSON response: ' + parseError.message, 'error');
+                    }
+                } else {
+                    log('API call failed', 'error');
+                }
+                
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+        
+        async function checkTranslations() {
+            const installationId = document.getElementById('installationId').value;
+            
+            log('=== Checking Existing Translations ===');
+            
+            const SUPABASE_URL = 'https://otidaseqlgubqzsqazqt.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90aWRhc2VxbGd1YnF6c3FhenF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA3NjkzMzcsImV4cCI6MjA2NjM0NTMzN30.IR9Q5NrJuNC4frTc0Q2Snjz-_oIlkzFb3izk2iBisp4';
+            
+            try {
+                const response = await fetch(
+                    `${SUPABASE_URL}/rest/v1/installation_i18n?installation_id=eq.${installationId}`,
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+                
+                const data = await response.json();
+                log(`Found ${data.length} translations:`);
+                
+                if (data.length > 0) {
+                    data.forEach(t => {
+                        log(`  ${t.lang}: "${t.title}" (${t.source})`, 'success');
+                    });
+                } else {
+                    log('  No translations found', 'error');
+                }
+                
+            } catch (error) {
+                log(`Error checking translations: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
