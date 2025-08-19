@@ -416,10 +416,19 @@ function updateStructuredData(installation) {
     let imageUrl = '';
     if (installation.images && installation.images.length > 0) {
         const firstImage = installation.images[0];
-        if (firstImage.includes('http')) {
-            imageUrl = firstImage;
-        } else {
-            imageUrl = `${window.location.origin}/${firstImage}`;
+        
+        // Handle different image formats (string or object)
+        let imageString = '';
+        if (typeof firstImage === 'string') {
+            imageString = firstImage;
+        } else if (typeof firstImage === 'object' && firstImage !== null) {
+            imageString = firstImage.url || firstImage.filename || '';
+        }
+        
+        if (imageString && imageString.includes('http')) {
+            imageUrl = imageString;
+        } else if (imageString) {
+            imageUrl = `${window.location.origin}/${imageString}`;
         }
     }
     
