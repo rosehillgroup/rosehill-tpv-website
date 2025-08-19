@@ -44,11 +44,407 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     
     <!-- CSS -->
-    <link rel="stylesheet" href="/css/main.css">
-    <link rel="stylesheet" href="/css/installation-page.css">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Loading state */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        .header, .site-header {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 15px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-container, .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 60px;
+        }
+
+        .nav-menu, .main-nav {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-menu a, .main-nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 6px;
+        }
+
+        .nav-menu a:hover, .main-nav a:hover {
+            background: rgba(255, 107, 53, 0.2);
+            color: #ff6b35;
+        }
+
+        .nav-menu a.active, .main-nav a.active {
+            background: rgba(255, 107, 53, 0.2);
+            color: #ff6b35;
+            font-weight: 600;
+        }
+
+        .contact-btn {
+            background: #ff6b35;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .contact-btn:hover {
+            background: #e55a2b !important;
+            transform: translateY(-2px);
+        }
+
+
+        /* Main Content */
+        .main-content, .installation-content, .installation-details .details-content {
+            margin-top: 80px;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .breadcrumb {
+            margin-bottom: 30px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .breadcrumb a {
+            color: #ff6b35;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .installation-header, .installation-hero {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+
+        .installation-header h1 {
+            font-size: 2.5rem;
+            color: #1a365d;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .installation-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .meta-icon {
+            width: 20px;
+            height: 20px;
+            color: #ff6b35;
+        }
+
+        .meta-label {
+            font-weight: 600;
+            color: #1a365d;
+        }
+
+        .meta-value {
+            color: #666;
+        }
+
+        .installation-content, .installation-details .details-content {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+
+        .installation-content h2 {
+            color: #1a365d;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .installation-content p {
+            margin-bottom: 20px;
+            color: #555;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        /* Image Gallery */
+        .image-gallery {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+        }
+
+        .image-gallery h3 {
+            color: #1a365d;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+        }
+
+        .gallery-grid, .installation-gallery .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .gallery-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .gallery-item img,
+        .gallery-item picture {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .gallery-item picture img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            cursor: pointer;
+        }
+
+        .modal-content {
+            position: relative;
+            margin: 5% auto;
+            max-width: 90%;
+            max-height: 80%;
+            cursor: default;
+        }
+
+        .modal-image {
+            display: none;
+            text-align: center;
+        }
+
+        .modal-image img,
+        .modal-image picture img {
+            max-width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+        }
+        
+        .modal-image picture {
+            display: block;
+            max-width: 100%;
+            max-height: 70vh;
+        }
+
+        .close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10001;
+        }
+
+        .close:hover {
+            opacity: 0.7;
+        }
+
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            font-size: 24px;
+            padding: 15px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .nav-btn.prev {
+            left: 20px;
+        }
+
+        .nav-btn.next {
+            right: 20px;
+        }
+
+        /* Call to Action */
+        .cta-section {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 60px 40px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .cta-section h3 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .cta-section p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: #ff6b35;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .cta-button:hover {
+            background: #e55a2b;
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        .footer, .site-footer {
+            background: #1a365d;
+            color: white;
+            padding: 60px 20px 30px;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-logo {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .footer-logo img {
+            height: 80px;
+        }
+
+        .footer-text {
+            font-size: 16px;
+            margin-bottom: 30px;
+            opacity: 0.8;
+        }
+
+        .footer-nav {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .footer-nav a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-nav a:hover {
+            color: #ff6b35;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 20px;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        /* Loading Styles */
         .loading-content {
             text-align: center;
             padding: 60px 20px;
@@ -73,6 +469,131 @@
         /* Hide content until loaded */
         .installation-content { display: none; }
         .installation-content.loaded { display: block; }
+
+        /* Mobile Menu */
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 8px;
+            background: none;
+            border: none;
+            z-index: 1001;
+        }
+
+        .mobile-menu-toggle span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 3px 0;
+            transition: 0.3s;
+            border-radius: 2px;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 6px);
+        }
+
+        .mobile-menu-toggle.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-toggle.active span:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -6px);
+        }
+
+        .mobile-nav-menu {
+            display: none;
+            position: fixed;
+            top: 70px;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 999;
+        }
+
+        .mobile-nav-menu.active {
+            display: flex;
+        }
+
+        .mobile-nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            transition: color 0.3s ease;
+        }
+
+        .mobile-nav-menu a:hover {
+            color: #ff6b35;
+        }
+
+        .mobile-nav-menu a.active {
+            color: #ff6b35;
+            font-weight: 600;
+        }
+
+        .mobile-nav-menu a:last-child {
+            border-bottom: none;
+        }
+
+        .mobile-lang-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding: 20px 0;
+            margin-top: 15px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .mobile-lang-switcher a {
+            color: rgba(255,255,255,0.8) !important;
+            font-weight: 500 !important;
+            padding: 8px 15px !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            border-radius: 6px !important;
+            font-size: 14px !important;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-menu, .main-nav {
+                display: none;
+            }
+
+            .mobile-menu-toggle {
+                display: flex;
+            }
+
+            .installation-header h1 {
+                font-size: 2rem;
+            }
+
+            .installation-meta {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .gallery-grid, .installation-gallery .container {
+                grid-template-columns: 1fr;
+            }
+
+            .installation-header,
+            .installation-content,
+            .image-gallery,
+            .cta-section {
+                padding: 20px;
+            }
+
+            .footer-nav {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
     </style>
 </head>
 <body data-installation-slug="" data-installation-lang="en">
@@ -81,19 +602,19 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <a href="/">
-                        <img src="/images/rosehill-logo.svg" alt="Rosehill TPV" height="40">
+                    <a href="../../">
+                        <img src="../../rosehill_tpv_logo.webp" alt="Rosehill TPV" height="40">
                     </a>
                 </div>
                 
                 <nav class="main-nav">
-                    <a href="/" data-i18n="nav_home">Home</a>
-                    <a href="/products.html" data-i18n="nav_products">Products</a>
-                    <a href="/applications.html" data-i18n="nav_applications">Applications</a>
-                    <a href="/colour.html" data-i18n="nav_colour">Colour</a>
-                    <a href="/installations.html" data-i18n="nav_installations">Installations</a>
-                    <a href="/about.html" data-i18n="nav_about">About Us</a>
-                    <a href="/contact.html" data-i18n="nav_contact">Contact</a>
+                    <a href="../../" data-i18n="nav_home">Home</a>
+                    <a href="../../products.html" data-i18n="nav_products">Products</a>
+                    <a href="../../applications.html" data-i18n="nav_applications">Applications</a>
+                    <a href="../../colour.html" data-i18n="nav_colour">Colour</a>
+                    <a href="../../installations.html" data-i18n="nav_installations">Installations</a>
+                    <a href="../../about.html" data-i18n="nav_about">About Us</a>
+                    <a href="../../contact.html" data-i18n="nav_contact">Contact</a>
                 </nav>
                 
                 <div class="header-actions">
@@ -115,13 +636,13 @@
         
         <!-- Mobile Menu -->
         <div class="mobile-nav-menu" id="mobile-menu">
-            <a href="/" data-i18n="nav_home">Home</a>
-            <a href="/products.html" data-i18n="nav_products">Products</a>
-            <a href="/applications.html" data-i18n="nav_applications">Applications</a>
-            <a href="/colour.html" data-i18n="nav_colour">Colour</a>
-            <a href="/installations.html" data-i18n="nav_installations">Installations</a>
-            <a href="/about.html" data-i18n="nav_about">About Us</a>
-            <a href="/contact.html" data-i18n="nav_contact">Contact</a>
+            <a href="../../" data-i18n="nav_home">Home</a>
+            <a href="../../products.html" data-i18n="nav_products">Products</a>
+            <a href="../../applications.html" data-i18n="nav_applications">Applications</a>
+            <a href="../../colour.html" data-i18n="nav_colour">Colour</a>
+            <a href="../../installations.html" data-i18n="nav_installations">Installations</a>
+            <a href="../../about.html" data-i18n="nav_about">About Us</a>
+            <a href="../../contact.html" data-i18n="nav_contact">Contact</a>
             
             <div class="mobile-lang-switcher">
                 <a href="#" class="lang-btn">EN</a>
@@ -143,9 +664,9 @@
         <!-- Breadcrumb -->
         <div class="breadcrumb">
             <div class="container">
-                <a href="/" data-i18n="nav_home">Home</a>
+                <a href="../../" data-i18n="nav_home">Home</a>
                 <span>/</span>
-                <a href="/installations.html" data-i18n="nav_installations">Installations</a>
+                <a href="../../installations.html" data-i18n="nav_installations">Installations</a>
                 <span>/</span>
                 <span class="current" data-i18n="loading">Loading...</span>
             </div>
@@ -166,7 +687,7 @@
         <section class="installation-gallery">
             <div class="container">
                 <div class="gallery-main">
-                    <img src="/images/placeholder.jpg" alt="" class="main-image" id="main-image">
+                    <img src="../../images/placeholder.jpg" alt="" class="main-image" id="main-image">
                 </div>
                 <div class="gallery-thumbnails" id="gallery-thumbnails">
                     <!-- Thumbnails will be loaded dynamically -->
@@ -230,10 +751,10 @@
     </footer>
     
     <!-- JavaScript -->
-    <script src="/js/supabase-client.js"></script>
-    <script src="/js/installation-page-loader.js"></script>
-    <script src="/language-switcher-enhanced.js"></script>
-    <script src="/i18n/translate-client.js"></script>
+    <script src="../../js/supabase-client.js"></script>
+    <script src="../../js/installation-page-loader.js"></script>
+    <script src="../../language-switcher-enhanced.js"></script>
+    <script src="../../i18n/translate-client.js"></script>
     
     <script>
         // Load installation content when page loads
@@ -259,6 +780,33 @@
             document.getElementById('loading-content').style.display = 'none';
             document.getElementById('installation-content').classList.add('loaded');
         });
+
+        // Mobile menu functionality
+        const mobileToggle = document.getElementById('mobile-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        if (mobileToggle && mobileMenu) {
+            mobileToggle.addEventListener('click', function() {
+                mobileToggle.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+            });
+
+            // Close mobile menu when clicking on menu items
+            document.querySelectorAll('.mobile-nav-menu a').forEach(link => {
+                link.addEventListener('click', function() {
+                    mobileToggle.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                });
+            });
+
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!mobileToggle.contains(event.target) && !mobileMenu.contains(event.target)) {
+                    mobileToggle.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                }
+            });
+        }
     </script>
 </body>
 </html>

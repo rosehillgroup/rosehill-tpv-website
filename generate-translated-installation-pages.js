@@ -84,7 +84,7 @@ async function generateTranslatedPages() {
                 const html = template
                     .replace(/data-installation-slug="[^"]*"/g, `data-installation-slug="${translation.slug}"`)
                     .replace(/data-installation-lang="[^"]*"/g, `data-installation-lang="${lang}"`)
-                    .replace(/<html lang="en">/g, `<html lang="${lang}">`);
+                    .replace(/(<html lang=")[^"]*(")/g, `$1${lang}$2`);
                 
                 fs.writeFileSync(filepath, html, 'utf8');
                 console.log(`  ✅ Created: ${filepath}`);
