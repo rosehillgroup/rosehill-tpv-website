@@ -693,6 +693,13 @@
             opacity: 0.8;
         }
 
+        /* Language Switcher Mobile Responsive */
+        @media (max-width: 768px) {
+            .language-switcher {
+                display: none !important;
+            }
+        }
+
         /* Mobile Menu */
         .mobile-menu-toggle {
             display: none;
@@ -1071,5 +1078,257 @@
 
     <script src="/language-switcher-script.js"></script>
     <script src="/i18n/translate-client.js"></script>
+    <script>
+        // Global variables
+        let allInstallations = [];
+        let filteredInstallations = [];
+        let currentFilter = 'all';
+        let currentPage = 1;
+        const installationsPerPage = 9;
+
+        // Supabase configuration
+        const SUPABASE_URL = 'https://otidaseqlgubqzsqazqt.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90aWRhc2VxbGd1YnF6c3FhenF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA3NjkzMzcsImV4cCI6MjA2NjM0NTMzN30.IR9Q5NrJuNC4frTc0Q2Snjz-_oIlkzFb3izk2iBisp4';
+
+        // Supabase client setup
+        const supabaseClient = {
+            from: (table) => {
+                return {
+                    select: (columns) => {
+                        const url = `${SUPABASE_URL}/rest/v1/${table}?select=${columns}`;
+                        return {
+                            order: (column, options) => {
+                                const orderUrl = url + `&order=${column}.${options.ascending ? 'asc' : 'desc'}`;
+                                return fetch(orderUrl, {
+                                    headers: {
+                                        'apikey': SUPABASE_ANON_KEY,
+                                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                                        'Content-Type': 'application/json'
+                                    }
+                                }).then(response => response.json());
+                            },
+                            then: (callback) => {
+                                return fetch(url, {
+                                    headers: {
+                                        'apikey': SUPABASE_ANON_KEY,
+                                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                                        'Content-Type': 'application/json'
+                                    }
+                                }).then(response => response.json()).then(data => callback({data}));
+                            }
+                        };
+                    }
+                };
+            }
+        };
+
+        // Load installations data from Supabase
+        async function loadInstallations() {
+            try {
+                console.log('Loading installations from Supabase...');
+                const response = await supabaseClient.from('installations').select('*');
+                const data = await response.order('installation_date', { ascending: false });
+                
+                allInstallations = data || [];
+                console.log('Loaded installations:', allInstallations.length);
+                
+                // Process installations for display
+                allInstallations.forEach(installation => {
+                    // Ensure images is an array and process image paths
+                    if (!installation.images) installation.images = [];
+                    if (typeof installation.images === 'string') {
+                        try {
+                            installation.images = JSON.parse(installation.images);
+                        } catch (e) {
+                            installation.images = [installation.images];
+                        }
+                    }
+                    
+                    // Process image URLs
+                    installation.images = installation.images.map(img => {
+                        if (typeof img === 'string') {
+                            return `images/installations/${img}`;
+                        } else if (img && typeof img === 'object') {
+                            if (img.url) {
+                                return img.url;
+                            } else if (img.filename) {
+                                return `images/installations/${img.filename}`;
+                            }
+                        }
+                        return `images/installations/${img}`;
+                    });
+                });
+                
+                filteredInstallations = [...allInstallations];
+                
+                renderInstallations();
+                updateStats();
+                
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+                
+            } catch (error) {
+                console.error('Error loading installations:', error);
+                document.getElementById('loading').innerHTML = '<p>Error loading installations. Please try again later.</p>';
+            }
+        }
+
+        // Get current language from URL
+        function getCurrentLanguage() {
+            const path = window.location.pathname;
+            const langMatch = path.match(/^\/(fr|de|es)\//); 
+            return langMatch ? langMatch[1] : null; // Return null for English
+        }
+
+        // Generate installation URL for current language
+        function getInstallationUrl(slug) {
+            const currentLang = getCurrentLanguage();
+            if (currentLang) {
+                return `/${currentLang}/installations/${slug}.html`;
+            } else {
+                return `/installations/${slug}.html`; // English URLs have no prefix
+            }
+        }
+
+        // Render installations grid
+        function renderInstallations() {
+            const grid = document.getElementById('installations-grid');
+            const startIndex = (currentPage - 1) * installationsPerPage;
+            const endIndex = startIndex + installationsPerPage;
+            const pageInstallations = filteredInstallations.slice(startIndex, endIndex);
+            
+            if (pageInstallations.length === 0) {
+                document.getElementById('empty-state').style.display = 'block';
+                grid.innerHTML = '';
+                return;
+            }
+            
+            document.getElementById('empty-state').style.display = 'none';
+            
+            grid.innerHTML = pageInstallations.map(installation => {
+                const imageUrl = installation.images && installation.images.length > 0 ? installation.images[0] : 'images/installations/placeholder.jpg';
+                const installationUrl = getInstallationUrl(installation.slug);
+                
+                return `
+                    <div class="installation-card" data-category="${installation.category}">
+                        <div class="installation-image" style="background-image: url('${imageUrl}');"></div>
+                        <div class="installation-content">
+                            <div class="installation-meta">
+                                <span class="location">${installation.location}</span>
+                                <span class="date">${new Date(installation.installation_date).toLocaleDateString('en-GB')}</span>
+                            </div>
+                            <h3>${installation.title}</h3>
+                            <p>${installation.description}</p>
+                            <a href="${installationUrl}" class="read-more-btn">Read More</a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            updatePagination();
+        }
+
+        // Update statistics
+        function updateStats() {
+            const stats = document.getElementById('stats-bar');
+            const total = filteredInstallations.length;
+            const totalAll = allInstallations.length;
+            
+            if (currentFilter === 'all') {
+                stats.textContent = `Showing ${total} installations`;
+            } else {
+                stats.textContent = `Showing ${total} of ${totalAll} installations (filtered by ${currentFilter})`;
+            }
+        }
+
+        // Update pagination
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredInstallations.length / installationsPerPage);
+            const paginationSection = document.getElementById('pagination-section');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const pageInfo = document.getElementById('page-info');
+            
+            if (totalPages <= 1) {
+                paginationSection.style.display = 'none';
+                return;
+            }
+            
+            paginationSection.style.display = 'block';
+            prevBtn.disabled = currentPage === 1;
+            nextBtn.disabled = currentPage === totalPages;
+            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+        }
+
+        // Filter installations
+        function filterInstallations(category) {
+            currentFilter = category;
+            currentPage = 1;
+            
+            if (category === 'all') {
+                filteredInstallations = [...allInstallations];
+            } else {
+                filteredInstallations = allInstallations.filter(installation => 
+                    installation.category && installation.category.toLowerCase().includes(category.toLowerCase())
+                );
+            }
+            
+            renderInstallations();
+            updateStats();
+            
+            // Update filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === category);
+            });
+        }
+
+        // Change page
+        function changePage(direction) {
+            const totalPages = Math.ceil(filteredInstallations.length / installationsPerPage);
+            const newPage = currentPage + direction;
+            
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                renderInstallations();
+                
+                // Scroll to top of installations
+                document.querySelector('.installations-section').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Mobile menu toggle
+        function initMobileMenu() {
+            const mobileToggle = document.getElementById('mobile-toggle');
+            const mobileMenu = document.getElementById('mobile-menu');
+            
+            if (mobileToggle && mobileMenu) {
+                mobileToggle.addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    mobileMenu.classList.toggle('active');
+                });
+                
+                // Close menu when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!mobileToggle.contains(e.target) && !mobileMenu.contains(e.target)) {
+                        mobileToggle.classList.remove('active');
+                        mobileMenu.classList.remove('active');
+                    }
+                });
+            }
+        }
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadInstallations();
+            initMobileMenu();
+            
+            // Add filter button event listeners
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    filterInstallations(this.dataset.filter);
+                });
+            });
+        });
+    </script>
 </body>
 </html>

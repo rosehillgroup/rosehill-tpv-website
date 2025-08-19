@@ -14,8 +14,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Get base page path by removing language prefix completely
     let basePage = path;
     if (langMatch) {
-        // Remove the language prefix (e.g., /es/ or /fr/)
-        basePage = path.substring(langMatch[0].length - 1); // Keep the trailing slash
+        // Remove the language prefix (e.g., /es/ becomes /)
+        basePage = path.replace(langMatch[0], '/');
     }
     
     // Ensure we have a proper page path
