@@ -1229,8 +1229,19 @@
                 const imageUrl = installation.images && installation.images.length > 0 ? installation.images[0] : 'images/installations/placeholder.jpg';
                 const installationUrl = getInstallationUrl(installation.slug);
                 // Create preview text - first 150 characters of description
-                const previewText = installation.description ? 
-                    (installation.description.substring(0, 150) + (installation.description.length > 150 ? '...' : '')) : 
+                // Handle description as either string or array
+                let descriptionText = '';
+                if (installation.description) {
+                    if (typeof installation.description === 'string') {
+                        descriptionText = installation.description;
+                    } else if (Array.isArray(installation.description)) {
+                        descriptionText = installation.description.join(' ');
+                    } else if (typeof installation.description === 'object') {
+                        descriptionText = JSON.stringify(installation.description);
+                    }
+                }
+                const previewText = descriptionText ? 
+                    (descriptionText.substring(0, 150) + (descriptionText.length > 150 ? '...' : '')) : 
                     'Click to learn more about this installation.';
                 // Format date nicely
                 const formattedDate = new Date(installation.installation_date).toLocaleDateString('en-GB', {
