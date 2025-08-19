@@ -118,10 +118,29 @@ function updatePageContent(installation) {
             descriptions.forEach(desc => {
                 if (desc.trim()) {
                     const p = document.createElement('p');
-                    p.textContent = desc.trim();
+                    // Strip any HTML tags from the description for security
+                    const cleanDesc = desc.trim().replace(/<[^>]*>/g, '');
+                    p.textContent = cleanDesc;
                     overviewSection.appendChild(p);
                 }
             });
+            
+            // Add "thanks to" attribution if available
+            if (installation.thanks_to_name) {
+                const thanksP = document.createElement('p');
+                thanksP.style.marginTop = '20px';
+                thanksP.style.fontStyle = 'italic';
+                
+                if (installation.thanks_to_url) {
+                    // Create a link if URL is provided
+                    thanksP.innerHTML = `Special thanks to <a href="${installation.thanks_to_url}" target="_blank" rel="noopener noreferrer" style="color: #ff6b35; text-decoration: underline;">${installation.thanks_to_name}</a> for this installation.`;
+                } else {
+                    // Just display as text if no URL
+                    thanksP.textContent = `Special thanks to ${installation.thanks_to_name} for this installation.`;
+                }
+                
+                overviewSection.appendChild(thanksP);
+            }
         }
     }
     

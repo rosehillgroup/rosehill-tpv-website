@@ -454,6 +454,18 @@
                             <textarea id="description" name="description" class="form-input" required 
                                       placeholder="Describe the installation project, including key features, materials used, and any special aspects..."></textarea>
                         </div>
+                        <div class="form-group">
+                            <label for="thanks_to_name">Thanks To (Optional)</label>
+                            <input type="text" id="thanks_to_name" name="thanks_to_name" class="form-input" 
+                                   placeholder="e.g., GCC Sport Surfaces">
+                            <small style="color: #64748b; margin-top: 5px; display: block;">Name of company/person to thank for the installation</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="thanks_to_url">Thanks To Website (Optional)</label>
+                            <input type="url" id="thanks_to_url" name="thanks_to_url" class="form-input" 
+                                   placeholder="e.g., https://gccsportsurfaces.nl">
+                            <small style="color: #64748b; margin-top: 5px; display: block;">Website URL for the thanks attribution link</small>
+                        </div>
                     </div>
                 </div>
 
@@ -708,6 +720,8 @@
                 installation_date: document.getElementById('installation_date').value,
                 category: document.getElementById('category').value,
                 description: document.getElementById('description').value.trim(),
+                thanks_to_name: document.getElementById('thanks_to_name').value.trim() || null,
+                thanks_to_url: document.getElementById('thanks_to_url').value.trim() || null,
                 images: selectedImages
             };
         }
@@ -742,6 +756,8 @@
                 installation_date: formData.installation_date,
                 category: formData.category,
                 description: formData.description,
+                thanks_to_name: formData.thanks_to_name,
+                thanks_to_url: formData.thanks_to_url,
                 slug: slug,
                 images: imageUrls
             };
