@@ -1,4 +1,4 @@
-// Language Switcher Script - COMPLETELY REWRITTEN
+// Language Switcher Script - Fixed Version
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🌐 Language Switcher: Initializing...');
     
@@ -7,15 +7,21 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Detect current language with more robust regex
     const langMatch = path.match(/^\/(?:es|fr|de)\//);
-    const currentLang = langMatch ? langMatch[0].slice(1, -1) : 'en'; // Remove leading / and trailing /
+    const currentLang = langMatch ? langMatch[0].slice(1, -1) : 'en';
     
     console.log('Detected language:', currentLang);
     
-    // Get base page path by removing language prefix completely
+    // Get base page path by removing ALL language prefixes
     let basePage = path;
-    if (langMatch) {
-        // Remove the language prefix (e.g., /es/ becomes /)
-        basePage = path.replace(langMatch[0], '/');
+    // Remove any language prefix repeatedly until none remain
+    basePage = basePage.replace(/^\/(?:es|fr|de|en)\//g, '/');
+    // If we still have a language prefix, force remove it
+    if (basePage.match(/^\/(?:es|fr|de|en)\//)) {
+        const parts = basePage.split('/');
+        if (['es', 'fr', 'de', 'en'].includes(parts[1])) {
+            parts.splice(1, 1); // Remove the language part
+            basePage = parts.join('/');
+        }
     }
     
     // Ensure we have a proper page path
@@ -38,11 +44,12 @@ document.addEventListener('DOMContentLoaded', function() {
         link.style.boxShadow = '';
         link.classList.remove('current', 'active');
         
-        // Generate correct URL for this language
+        // Generate ABSOLUTE URL for this language to avoid any relative URL issues
+        const origin = window.location.origin;
         if (linkLang === 'en') {
-            link.href = basePage;
+            link.href = origin + basePage;
         } else {
-            link.href = `/${linkLang}${basePage}`;
+            link.href = origin + '/' + linkLang + basePage;
         }
         
         console.log(`${linkLang.toUpperCase()} link: ${link.href}`);
@@ -56,12 +63,16 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log(`✓ Highlighted ${linkLang.toUpperCase()} as current`);
         }
         
-        // Remove any existing event listeners by cloning the element
-        const newLink = link.cloneNode(true);
-        link.parentNode.replaceChild(newLink, link);
+        // Instead of cloning, just remove all existing click handlers and add a new one
+        link.onclick = function(e) {
+            e.preventDefault();
+            // Use window.location.href for clean navigation
+            window.location.href = this.href;
+            return false;
+        };
         
-        // Add fresh hover effects
-        newLink.addEventListener('mouseenter', function() {
+        // Add hover effects
+        link.addEventListener('mouseenter', function() {
             const thisLang = this.textContent.toLowerCase().trim();
             if (thisLang !== currentLang) {
                 this.style.background = 'rgba(255, 107, 53, 0.1)';
@@ -69,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        newLink.addEventListener('mouseleave', function() {
+        link.addEventListener('mouseleave', function() {
             const thisLang = this.textContent.toLowerCase().trim();
             if (thisLang !== currentLang) {
                 this.style.background = '';
