@@ -580,19 +580,24 @@
         // Language switching functionality
         function switchLanguage(targetLang) {
             const currentPath = window.location.pathname;
-            const currentLang = currentPath.split('/')[1]; // Get current language from path
             
-            // If we're already on the target language, do nothing
-            if (currentLang === targetLang) return;
+            // Extract the installation page path (e.g., /installations/page.html)
+            let basePath = currentPath;
             
-            // Replace the current language in the path with the target language
+            // Remove any existing language prefix
+            const langMatch = currentPath.match(/^\/(?:en|fr|de|es)\//);
+            if (langMatch) {
+                basePath = currentPath.substring(langMatch[0].length - 1);
+            }
+            
+            // Build the new path
             let newPath;
-            if (currentLang && ['en', 'fr', 'de', 'es'].includes(currentLang)) {
-                // We're on a language-specific page, replace the language
-                newPath = currentPath.replace('/' + currentLang + '/', '/' + targetLang + '/');
+            if (targetLang === 'en') {
+                // English doesn't use a prefix for installation pages
+                newPath = basePath;
             } else {
-                // We're on the root, go to the target language root
-                newPath = '/' + targetLang + '/';
+                // Other languages get a prefix
+                newPath = '/' + targetLang + basePath;
             }
             
             window.location.href = newPath;
