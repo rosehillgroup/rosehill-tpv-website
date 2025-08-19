@@ -599,7 +599,7 @@
             <div class="header-content">
                 <div class="logo">
                     <a href="../../">
-                        <img src="../../images/rosehill-logo.svg" alt="Rosehill TPV" height="40">
+                        <img src="../../rosehill_tpv_logo.webp" alt="Rosehill TPV" height="40">
                     </a>
                 </div>
                 
@@ -763,7 +763,7 @@
             console.log('Loading installation:', slug, 'in language:', lang);
             
             if (slug) {
-                loadInstallationContent(slug, lang);
+                loadInstallationContent();
             } else {
                 console.error('No installation slug found');
                 document.getElementById('loading-content').innerHTML = 
