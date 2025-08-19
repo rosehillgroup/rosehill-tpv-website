@@ -257,6 +257,8 @@
             transition: all 0.3s ease;
             opacity: 0;
             transform: translateY(30px);
+            display: flex;
+            flex-direction: column;
         }
 
         .installation-card.visible {
@@ -271,9 +273,13 @@
 
         .installation-image {
             position: relative;
-            height: 280px;
+            height: 240px;
             overflow: hidden;
             cursor: pointer;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: transform 0.3s ease;
         }
 
         .installation-image img {
@@ -1222,18 +1228,30 @@
             grid.innerHTML = pageInstallations.map(installation => {
                 const imageUrl = installation.images && installation.images.length > 0 ? installation.images[0] : 'images/installations/placeholder.jpg';
                 const installationUrl = getInstallationUrl(installation.slug);
+                // Create preview text - first 150 characters of description
+                const previewText = installation.description ? 
+                    (installation.description.substring(0, 150) + (installation.description.length > 150 ? '...' : '')) : 
+                    'Click to learn more about this installation.';
+                // Format date nicely
+                const formattedDate = new Date(installation.installation_date).toLocaleDateString('en-GB', {
+                    month: 'short',
+                    year: 'numeric'
+                });
                 
                 return `
-                    <div class="installation-card" data-category="${installation.category}">
+                    <div class="installation-card" data-category="${installation.category || 'Playground'}">
                         <div class="installation-image" style="background-image: url('${imageUrl}');"></div>
                         <div class="installation-content">
                             <div class="installation-meta">
-                                <span class="location">${installation.location}</span>
-                                <span class="date">${new Date(installation.installation_date).toLocaleDateString('en-GB')}</span>
+                                <span class="installation-date">${formattedDate}</span>
+                                <span class="installation-application">${installation.category || 'Playground'}</span>
                             </div>
-                            <h3>${installation.title}</h3>
-                            <p>${installation.description}</p>
-                            <a href="${installationUrl}" class="read-more-btn">Read More</a>
+                            <h3 class="installation-title">${installation.title}</h3>
+                            <p class="installation-location">📍 ${installation.location}</p>
+                            <div class="installation-description">
+                                <p>${previewText}</p>
+                            </div>
+                            <a href="${installationUrl}" class="read-more-btn">Read More →</a>
                         </div>
                     </div>
                 `;
