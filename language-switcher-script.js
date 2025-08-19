@@ -31,8 +31,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('Base page:', basePage);
     
-    // Find all language switcher links
-    const languageLinks = document.querySelectorAll('.language-switcher a');
+    // Find all language switcher links (both desktop and mobile)
+    const languageLinks = document.querySelectorAll('.language-switcher a, .mobile-nav-menu .lang-btn');
     console.log('Found', languageLinks.length, 'language links');
     
     languageLinks.forEach(link => {

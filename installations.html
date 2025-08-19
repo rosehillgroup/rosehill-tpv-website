@@ -695,7 +695,7 @@
 
         /* Language Switcher Mobile Responsive */
         @media (max-width: 768px) {
-            .language-switcher {
+            #language-switcher {
                 display: none !important;
             }
         }
@@ -897,6 +897,12 @@
                     <a href="installations.html" class="active">Installations</a>
                     <a href="about.html">About Us</a>
                     <a href="contact.html" class="contact-btn">Get in Touch</a>
+                    <div style="display:flex;gap:10px;margin-top:20px;padding-top:20px;border-top:1px solid rgba(255,255,255,0.1);justify-content:center;">
+                        <a href="/installations.html" class="lang-btn" style="display:inline-block;padding:8px 16px;text-decoration:none;color:#fff;background:rgba(255,255,255,0.1);border-radius:8px;font-size:14px;">EN</a>
+                        <a href="/es/installations.html" class="lang-btn" style="display:inline-block;padding:8px 16px;text-decoration:none;color:#fff;background:rgba(255,255,255,0.1);border-radius:8px;font-size:14px;">ES</a>
+                        <a href="/fr/installations.html" class="lang-btn" style="display:inline-block;padding:8px 16px;text-decoration:none;color:#fff;background:rgba(255,255,255,0.1);border-radius:8px;font-size:14px;">FR</a>
+                        <a href="/de/installations.html" class="lang-btn" style="display:inline-block;padding:8px 16px;text-decoration:none;color:#fff;background:rgba(255,255,255,0.1);border-radius:8px;font-size:14px;">DE</a>
+                    </div>
                 </div>
             </nav>
         </div>
@@ -1126,8 +1132,16 @@
         async function loadInstallations() {
             try {
                 console.log('Loading installations from Supabase...');
-                const response = await supabaseClient.from('installations').select('*');
-                const data = await response.order('installation_date', { ascending: false });
+                // Fetch data with ordering in a single call
+                const url = `${SUPABASE_URL}/rest/v1/installations?select=*&order=installation_date.desc`;
+                const response = await fetch(url, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
                 
                 allInstallations = data || [];
                 console.log('Loaded installations:', allInstallations.length);
