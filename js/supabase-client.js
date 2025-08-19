@@ -99,29 +99,35 @@ async function fetchInstallationBySlug(slug, lang = 'en') {
             
             return data;
         } else {
-            // For other languages, check translation table first
+            // For other languages, first get the translation
             const { data: translation, error: transError } = await supabase
                 .from('installation_i18n')
-                .select(`
-                    *,
-                    installations:installation_id (*)
-                `)
+                .select('*')
                 .eq('slug', slug)
                 .eq('lang', lang)
                 .single();
                 
             if (translation && !transError) {
-                // Merge translation with original installation data
-                return {
-                    ...translation.installations,
-                    // Override with translated fields
-                    title: translation.title,
-                    description: translation.overview,
-                    location: translation.location,
-                    slug: translation.slug,
-                    lang: translation.lang,
-                    translation_source: translation.source
-                };
+                // Now get the original installation data
+                const { data: installation, error: installError } = await supabase
+                    .from('installations')
+                    .select('*')
+                    .eq('id', translation.installation_id)
+                    .single();
+                    
+                if (installation && !installError) {
+                    // Merge translation with original installation data
+                    return {
+                        ...installation,
+                        // Override with translated fields
+                        title: translation.title,
+                        description: translation.overview,
+                        location: translation.location,
+                        slug: translation.slug,
+                        lang: translation.lang,
+                        translation_source: translation.source
+                    };
+                }
             }
             
             // Fallback: try to find by English slug and return with warning
