@@ -767,7 +767,7 @@
             console.log('Loading installation:', slug, 'in language:', lang);
             
             if (slug) {
-                loadInstallationContent(slug, lang);
+                loadInstallationContent();
             } else {
                 console.error('No installation slug found');
                 document.getElementById('loading-content').innerHTML = 

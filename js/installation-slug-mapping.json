@@ -1,7 +1,10 @@
 {
   "community-playground-installation": {
     "id": "613cf77a-029a-4cd2-af45-82c675ba8090",
-    "en": "community-playground-installation"
+    "en": "community-playground-installation",
+    "de": "installation-eines-gemeinschaftsspielplatzes-test2",
+    "es": "instalacin-de-un-parque-infantil-comunitario-test2",
+    "fr": "installation-dune-aire-de-jeux-communautaire-test2"
   },
   "multiply-new-projects-from-across-chile": {
     "id": "9db03780-99fd-4264-b01e-afda33cc3315",
@@ -153,7 +156,10 @@
   },
   "basketball-court-installation-in-nijmegen": {
     "id": "b9a60f77-58ef-47d1-b574-da412bf359f8",
-    "en": "basketball-court-installation-in-nijmegen"
+    "en": "basketball-court-installation-in-nijmegen",
+    "de": "installation-eines-basketballplatzes-in-nijmegen",
+    "es": "instalacin-de-canchas-de-baloncesto-en-nimega",
+    "fr": "installation-dun-terrain-de-basket-nijmegen"
   },
   "one-year-since-butlin-s-skegness-skypark-playground-officially-opened": {
     "id": "cec767b2-5267-41ed-a491-b689d8c050a4",
