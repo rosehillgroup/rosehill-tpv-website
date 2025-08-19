@@ -34,8 +34,26 @@ function generateSlug(text) {
  * Translate text using DeepL API
  */
 async function translateText(text, targetLang) {
-  if (!text || text.trim().length === 0) {
+  // Handle different types of input
+  let textToTranslate = text;
+  
+  if (!text) {
     return text;
+  }
+  
+  // Convert arrays to string
+  if (Array.isArray(text)) {
+    textToTranslate = text.join(' ');
+  } 
+  // Convert objects to string (for JSONB)
+  else if (typeof text === 'object') {
+    textToTranslate = JSON.stringify(text);
+  }
+  
+  // Convert to string and check if empty
+  textToTranslate = String(textToTranslate);
+  if (textToTranslate.trim().length === 0) {
+    return textToTranslate;
   }
 
   try {
@@ -46,7 +64,7 @@ async function translateText(text, targetLang) {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        'text': text,
+        'text': textToTranslate,
         'target_lang': targetLang,
         'source_lang': 'EN',
         'formality': 'default',
