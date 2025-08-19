@@ -35,7 +35,7 @@ SELECT
     i.slug,
     i.location,
     i.installation_date,
-    i.category,
+    i.application,
     i.description,
     i.images,
     i.created_at,
