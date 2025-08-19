@@ -1149,42 +1149,6 @@
         let currentPage = 1;
         const installationsPerPage = 9;
 
-        // Supabase configuration
-        const SUPABASE_URL = 'https://otidaseqlgubqzsqazqt.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90aWRhc2VxbGd1YnF6c3FhenF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA3NjkzMzcsImV4cCI6MjA2NjM0NTMzN30.IR9Q5NrJuNC4frTc0Q2Snjz-_oIlkzFb3izk2iBisp4';
-
-        // Supabase client setup
-        const supabaseClient = {
-            from: (table) => {
-                return {
-                    select: (columns) => {
-                        const url = `${SUPABASE_URL}/rest/v1/${table}?select=${columns}`;
-                        return {
-                            order: (column, options) => {
-                                const orderUrl = url + `&order=${column}.${options.ascending ? 'asc' : 'desc'}`;
-                                return fetch(orderUrl, {
-                                    headers: {
-                                        'apikey': SUPABASE_ANON_KEY,
-                                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                                        'Content-Type': 'application/json'
-                                    }
-                                }).then(response => response.json());
-                            },
-                            then: (callback) => {
-                                return fetch(url, {
-                                    headers: {
-                                        'apikey': SUPABASE_ANON_KEY,
-                                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                                        'Content-Type': 'application/json'
-                                    }
-                                }).then(response => response.json()).then(data => callback({data}));
-                            }
-                        };
-                    }
-                };
-            }
-        };
-
         // Load installations data with translations from Supabase
         async function loadInstallations() {
             try {
