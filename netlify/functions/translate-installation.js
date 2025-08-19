@@ -5,7 +5,8 @@ import { createClient } from '@supabase/supabase-js';
 
 // DeepL API configuration
 const DEEPL_API_KEY = process.env.DEEPL_API_KEY || 'be41df2a-742b-4952-ac1c-f94c17f50a44';
-const DEEPL_API_URL = 'https://api-free.deepl.com/v2/translate';
+// Use the pro endpoint since the API key appears to be for the paid version
+const DEEPL_API_URL = 'https://api.deepl.com/v2/translate';
 
 // Target languages for translation
 const TARGET_LANGUAGES = {

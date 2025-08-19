@@ -2,7 +2,7 @@ const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
 
 async function translateText(text, targetLang, apiKey) {
-  const response = await fetch('https://api-free.deepl.com/v2/translate', {
+  const response = await fetch('https://api.deepl.com/v2/translate', {
     method: 'POST',
     headers: {
       'Authorization': `DeepL-Auth-Key ${apiKey}`,
