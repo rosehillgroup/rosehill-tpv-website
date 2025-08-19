@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Translation - Rosehill TPV Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        .admin-header {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .admin-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .admin-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .admin-nav {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-button {
+            padding: 10px 20px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #64748b;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .nav-button:hover {
+            border-color: #ff6b35;
+            color: #ff6b35;
+        }
+
+        .nav-button.active {
+            background: #ff6b35;
+            border-color: #ff6b35;
+            color: white;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .status-card h3 {
+            font-size: 14px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .status-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a365d;
+            margin-bottom: 10px;
+        }
+
+        .status-bar {
+            height: 8px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .status-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .status-fill.fr { background: linear-gradient(90deg, #3b82f6, #1d4ed8); }
+        .status-fill.de { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .status-fill.es { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+        .status-text {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .control-panel {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 30px;
+        }
+
+        .control-panel h2 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 20px;
+        }
+
+        .control-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .option-group {
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            transition: border-color 0.2s ease;
+        }
+
+        .option-group.selected {
+            border-color: #ff6b35;
+            background: #fef7f0;
+        }
+
+        .option-group h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 10px;
+        }
+
+        .option-group p {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .option-settings {
+            display: none;
+        }
+
+        .option-group.selected .option-settings {
+            display: block;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: #ff6b35;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #e55a2b;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .btn-secondary {
+            background: #64748b;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .translation-log {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            max-height: 400px;
+            overflow: hidden;
+        }
+
+        .log-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-content {
+            padding: 20px;
+            max-height: 320px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #374151;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+
+        .log-entry.info {
+            background: #f0f9ff;
+            color: #0369a1;
+        }
+
+        .log-entry.success {
+            background: #f0fdf4;
+            color: #166534;
+        }
+
+        .log-entry.error {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .log-entry.warning {
+            background: #fffbeb;
+            color: #92400e;
+        }
+
+        .progress-section {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .progress-section.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b35, #e55a2b);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .progress-stat {
+            text-align: center;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .progress-stat .value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a365d;
+        }
+
+        .progress-stat .label {
+            font-size: 12px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 20px 15px;
+            }
+
+            .control-options {
+                grid-template-columns: 1fr;
+            }
+
+            .progress-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="admin-header">
+        <div class="admin-container">
+            <h1>Bulk Translation</h1>
+            <p>Translate multiple installations automatically using AI</p>
+        </div>
+    </header>
+
+    <main class="admin-container">
+        <!-- Navigation -->
+        <nav class="admin-nav">
+            <a href="admin-translations.html" class="nav-button">Translation Dashboard</a>
+            <a href="admin-add-installation.html" class="nav-button">Add Installation</a>
+            <a href="#" class="nav-button active">Bulk Translate</a>
+            <a href="/installations.html" class="nav-button">View Site</a>
+        </nav>
+
+        <!-- Translation Status -->
+        <section class="status-grid" id="status-grid">
+            <div class="status-card">
+                <h3>French Translations</h3>
+                <div class="status-value" id="fr-count">-</div>
+                <div class="status-bar">
+                    <div class="status-fill fr" id="fr-bar"></div>
+                </div>
+                <div class="status-text" id="fr-text">Loading...</div>
+            </div>
+            <div class="status-card">
+                <h3>German Translations</h3>
+                <div class="status-value" id="de-count">-</div>
+                <div class="status-bar">
+                    <div class="status-fill de" id="de-bar"></div>
+                </div>
+                <div class="status-text" id="de-text">Loading...</div>
+            </div>
+            <div class="status-card">
+                <h3>Spanish Translations</h3>
+                <div class="status-value" id="es-count">-</div>
+                <div class="status-bar">
+                    <div class="status-fill es" id="es-bar"></div>
+                </div>
+                <div class="status-text" id="es-text">Loading...</div>
+            </div>
+        </section>
+
+        <!-- Control Panel -->
+        <section class="control-panel">
+            <h2>Translation Options</h2>
+            
+            <div class="control-options">
+                <div class="option-group" id="missing-option" onclick="selectOption('missing')">
+                    <h3>🎯 Translate Missing</h3>
+                    <p>Only translate installations that are missing translations in selected languages.</p>
+                    <div class="option-settings">
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="missing-fr" checked>
+                                <span>🇫🇷 French</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="missing-de" checked>
+                                <span>🇩🇪 German</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="missing-es" checked>
+                                <span>🇪🇸 Spanish</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="option-group" id="retranslate-option" onclick="selectOption('retranslate')">
+                    <h3>🔄 Re-translate All</h3>
+                    <p>Re-translate all installations, overwriting existing translations.</p>
+                    <div class="option-settings">
+                        <div class="checkbox-group">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="retranslate-fr">
+                                <span>🇫🇷 French</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="retranslate-de">
+                                <span>🇩🇪 German</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="retranslate-es">
+                                <span>🇪🇸 Spanish</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <button class="btn btn-primary" id="start-btn" onclick="startTranslation()">
+                    <span>🚀</span> Start Translation
+                </button>
+                <button class="btn btn-danger" id="stop-btn" onclick="stopTranslation()" disabled>
+                    <span>⏹️</span> Stop Translation
+                </button>
+                <button class="btn btn-secondary" onclick="refreshStatus()">
+                    <span>🔄</span> Refresh Status
+                </button>
+            </div>
+        </section>
+
+        <!-- Progress Section -->
+        <section class="progress-section" id="progress-section">
+            <h3>Translation Progress</h3>
+            <div class="progress-bar">
+                <div class="progress-fill" id="overall-progress"></div>
+            </div>
+            <p id="progress-text" style="text-align: center; margin: 10px 0; color: #64748b;"></p>
+            
+            <div class="progress-stats">
+                <div class="progress-stat">
+                    <div class="value" id="completed-count">0</div>
+                    <div class="label">Completed</div>
+                </div>
+                <div class="progress-stat">
+                    <div class="value" id="failed-count">0</div>
+                    <div class="label">Failed</div>
+                </div>
+                <div class="progress-stat">
+                    <div class="value" id="remaining-count">0</div>
+                    <div class="label">Remaining</div>
+                </div>
+                <div class="progress-stat">
+                    <div class="value" id="eta-time">-</div>
+                    <div class="label">ETA</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Translation Log -->
+        <section class="translation-log">
+            <div class="log-header">
+                <h3>Translation Log</h3>
+                <button class="btn btn-secondary" onclick="clearLog()">Clear Log</button>
+            </div>
+            <div class="log-content" id="log-content">
+                <div class="log-entry info">🚀 Ready to start bulk translation...</div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Include Supabase Client -->
+    <script src="/js/supabase-client.js"></script>
+    
+    <script>
+        // Global variables
+        let translationStats = {};
+        let selectedOption = 'missing';
+        let isTranslating = false;
+        let translationAborted = false;
+        let progressData = {
+            total: 0,
+            completed: 0,
+            failed: 0,
+            startTime: null
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            selectOption('missing');
+            loadTranslationStatus();
+        });
+
+        // Select translation option
+        function selectOption(option) {
+            selectedOption = option;
+            
+            // Update UI
+            document.querySelectorAll('.option-group').forEach(group => {
+                group.classList.remove('selected');
+            });
+            document.getElementById(`${option}-option`).classList.add('selected');
+        }
+
+        // Load translation status
+        async function loadTranslationStatus() {
+            try {
+                logMessage('📊 Loading translation status...', 'info');
+                
+                const supabase = await window.SupabaseClient.initSupabase();
+                
+                // Get total installations
+                const { data: installations } = await supabase
+                    .from('installations')
+                    .select('id');
+                
+                const totalInstallations = installations?.length || 0;
+                
+                // Get translation counts by language
+                const languages = ['fr', 'de', 'es'];
+                const stats = { total: totalInstallations };
+                
+                for (const lang of languages) {
+                    const { data: translations } = await supabase
+                        .from('installation_i18n')
+                        .select('id')
+                        .eq('lang', lang);
+                    
+                    stats[lang] = translations?.length || 0;
+                }
+                
+                translationStats = stats;
+                updateStatusDisplay();
+                
+                logMessage('✅ Translation status loaded successfully', 'success');
+                
+            } catch (error) {
+                console.error('Error loading status:', error);
+                logMessage(`❌ Error loading status: ${error.message}`, 'error');
+            }
+        }
+
+        // Update status display
+        function updateStatusDisplay() {
+            const languages = ['fr', 'de', 'es'];
+            
+            languages.forEach(lang => {
+                const count = translationStats[lang] || 0;
+                const total = translationStats.total || 0;
+                const percentage = total > 0 ? (count / total) * 100 : 0;
+                
+                document.getElementById(`${lang}-count`).textContent = `${count} / ${total}`;
+                document.getElementById(`${lang}-bar`).style.width = `${percentage}%`;
+                document.getElementById(`${lang}-text`).textContent = `${Math.round(percentage)}% complete`;
+            });
+        }
+
+        // Start translation process
+        async function startTranslation() {
+            if (isTranslating) return;
+            
+            const selectedLanguages = getSelectedLanguages();
+            
+            if (selectedLanguages.length === 0) {
+                alert('Please select at least one language to translate');
+                return;
+            }
+            
+            if (!confirm(`Start ${selectedOption === 'missing' ? 'missing' : 'bulk'} translation for ${selectedLanguages.join(', ')}?`)) {
+                return;
+            }
+            
+            isTranslating = true;
+            translationAborted = false;
+            
+            // Update UI
+            document.getElementById('start-btn').disabled = true;
+            document.getElementById('stop-btn').disabled = false;
+            document.getElementById('progress-section').classList.add('show');
+            
+            // Initialize progress
+            progressData = {
+                total: 0,
+                completed: 0,
+                failed: 0,
+                startTime: Date.now()
+            };
+            
+            try {
+                logMessage(`🚀 Starting ${selectedOption} translation for languages: ${selectedLanguages.join(', ')}`, 'info');
+                
+                // Get installations to translate
+                const installationsToTranslate = await getInstallationsToTranslate(selectedLanguages);
+                
+                if (installationsToTranslate.length === 0) {
+                    logMessage('ℹ️ No installations found that need translation', 'info');
+                    return;
+                }
+                
+                progressData.total = installationsToTranslate.length;
+                updateProgressDisplay();
+                
+                logMessage(`📋 Found ${installationsToTranslate.length} installations to translate`, 'info');
+                
+                // Process installations
+                for (let i = 0; i < installationsToTranslate.length && !translationAborted; i++) {
+                    const installation = installationsToTranslate[i];
+                    
+                    logMessage(`🔄 Translating: ${installation.title} (${i + 1}/${installationsToTranslate.length})`, 'info');
+                    
+                    try {
+                        const result = await translateInstallation(installation.id, selectedLanguages);
+                        
+                        if (result.summary.successful > 0) {
+                            logMessage(`✅ Successfully translated: ${installation.title}`, 'success');
+                            progressData.completed++;
+                        } else {
+                            logMessage(`❌ Failed to translate: ${installation.title}`, 'error');
+                            progressData.failed++;
+                        }
+                        
+                    } catch (error) {
+                        logMessage(`❌ Error translating ${installation.title}: ${error.message}`, 'error');
+                        progressData.failed++;
+                    }
+                    
+                    updateProgressDisplay();
+                    
+                    // Rate limiting
+                    if (i < installationsToTranslate.length - 1) {
+                        await sleep(2000);
+                    }
+                }
+                
+                if (translationAborted) {
+                    logMessage('⏹️ Translation process was stopped by user', 'warning');
+                } else {
+                    logMessage(`🎉 Translation completed! Success: ${progressData.completed}, Failed: ${progressData.failed}`, 'success');
+                }
+                
+                // Refresh status
+                await loadTranslationStatus();
+                
+            } catch (error) {
+                logMessage(`💥 Translation process failed: ${error.message}`, 'error');
+                console.error('Translation error:', error);
+            } finally {
+                // Reset UI
+                isTranslating = false;
+                document.getElementById('start-btn').disabled = false;
+                document.getElementById('stop-btn').disabled = true;
+            }
+        }
+
+        // Stop translation process
+        function stopTranslation() {
+            if (!isTranslating) return;
+            
+            translationAborted = true;
+            logMessage('⏹️ Stopping translation process...', 'warning');
+        }
+
+        // Get selected languages
+        function getSelectedLanguages() {
+            const prefix = selectedOption === 'missing' ? 'missing' : 'retranslate';
+            const languages = [];
+            
+            if (document.getElementById(`${prefix}-fr`).checked) languages.push('fr');
+            if (document.getElementById(`${prefix}-de`).checked) languages.push('de');
+            if (document.getElementById(`${prefix}-es`).checked) languages.push('es');
+            
+            return languages;
+        }
+
+        // Get installations that need translation
+        async function getInstallationsToTranslate(languages) {
+            const installations = await window.SupabaseClient.fetchInstallationsWithTranslations('en');
+            
+            if (selectedOption === 'retranslate') {
+                // Return all installations for re-translation
+                return installations;
+            } else {
+                // Return only installations missing translations
+                const installationsToTranslate = [];
+                
+                for (const installation of installations) {
+                    const existingTranslations = await window.SupabaseClient.checkTranslationAvailability(installation.id);
+                    const missingLanguages = languages.filter(lang => !existingTranslations.includes(lang));
+                    
+                    if (missingLanguages.length > 0) {
+                        installationsToTranslate.push({
+                            ...installation,
+                            missingLanguages
+                        });
+                    }
+                }
+                
+                return installationsToTranslate;
+            }
+        }
+
+        // Translate a single installation
+        async function translateInstallation(installationId, languages) {
+            const response = await fetch('/.netlify/functions/translate-installation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    installation_id: installationId,
+                    languages: languages
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+            }
+            
+            return await response.json();
+        }
+
+        // Update progress display
+        function updateProgressDisplay() {
+            const total = progressData.total;
+            const completed = progressData.completed;
+            const failed = progressData.failed;
+            const remaining = total - completed - failed;
+            
+            const percentage = total > 0 ? ((completed + failed) / total) * 100 : 0;
+            
+            document.getElementById('overall-progress').style.width = `${percentage}%`;
+            document.getElementById('progress-text').textContent = 
+                `${completed + failed} of ${total} installations processed (${Math.round(percentage)}%)`;
+            
+            document.getElementById('completed-count').textContent = completed;
+            document.getElementById('failed-count').textContent = failed;
+            document.getElementById('remaining-count').textContent = remaining;
+            
+            // Calculate ETA
+            if (progressData.startTime && completed + failed > 0) {
+                const elapsed = Date.now() - progressData.startTime;
+                const avgTimePerItem = elapsed / (completed + failed);
+                const eta = avgTimePerItem * remaining;
+                
+                if (eta > 0) {
+                    const minutes = Math.round(eta / 60000);
+                    document.getElementById('eta-time').textContent = `${minutes}m`;
+                } else {
+                    document.getElementById('eta-time').textContent = '-';
+                }
+            }
+        }
+
+        // Log message to console
+        function logMessage(message, type = 'info') {
+            const logContent = document.getElementById('log-content');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            
+            logContent.appendChild(logEntry);
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+
+        // Clear log
+        function clearLog() {
+            document.getElementById('log-content').innerHTML = '';
+            logMessage('🧹 Log cleared', 'info');
+        }
+
+        // Refresh status
+        async function refreshStatus() {
+            await loadTranslationStatus();
+        }
+
+        // Utility sleep function
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>

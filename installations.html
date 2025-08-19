@@ -3,9 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Latest Installations - Rosehill TPV® Sports & Play Surfaces Worldwide</title>
-    <link rel="canonical" href="https://tpv.rosehill.group/installations.html">
-    <meta name="description" content="Discover Rosehill TPV® installations worldwide. From Olympic venues to theme parks, see how our coloured rubber granules create exceptional sports and play surfaces.">
+    <title id="page-title">Latest Installations - Rosehill TPV® Sports & Play Surfaces Worldwide</title>
+    <link rel="canonical" href="https://tpv.rosehill.group/installations.html" id="canonical-link">
+    <meta name="description" content="Discover Rosehill TPV® installations worldwide. From Olympic venues to theme parks, see how our coloured rubber granules create exceptional sports and play surfaces." id="meta-description">
+    <meta name="keywords" content="Rosehill TPV, rubber surfacing, playground installations, sports surfacing, safety surfacing, worldwide installations">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="en" id="meta-language">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tpv.rosehill.group/installations.html" id="og-url">
+    <meta property="og:title" content="Latest Installations - Rosehill TPV® Sports & Play Surfaces Worldwide" id="og-title">
+    <meta property="og:description" content="Discover Rosehill TPV® installations worldwide. From Olympic venues to theme parks, see how our coloured rubber granules create exceptional sports and play surfaces." id="og-description">
+    <meta property="og:site_name" content="Rosehill TPV">
+    <meta property="og:locale" content="en_US" id="og-locale">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://tpv.rosehill.group/installations.html" id="twitter-url">
+    <meta name="twitter:title" content="Latest Installations - Rosehill TPV® Sports & Play Surfaces Worldwide" id="twitter-title">
+    <meta name="twitter:description" content="Discover Rosehill TPV® installations worldwide. From Olympic venues to theme parks, see how our coloured rubber granules create exceptional sports and play surfaces." id="twitter-description">
+    <meta name="twitter:site" content="@RosehillTPV">
+    
+    <!-- Hreflang tags will be added dynamically -->
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json" id="structured-data">
+    {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "Latest Installations - Rosehill TPV®",
+        "description": "Discover Rosehill TPV® installations worldwide. From Olympic venues to theme parks, see how our coloured rubber granules create exceptional sports and play surfaces.",
+        "url": "https://tpv.rosehill.group/installations.html",
+        "inLanguage": "en",
+        "about": {
+            "@type": "Product",
+            "name": "Rosehill TPV Rubber Surfacing",
+            "description": "Premium coloured rubber granules for sports and playground surfaces",
+            "brand": {
+                "@type": "Brand",
+                "name": "Rosehill TPV"
+            }
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Rosehill TPV",
+            "url": "https://tpv.rosehill.group",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://tpv.rosehill.group/rosehill_tpv_logo.png"
+            }
+        }
+    }
+    </script>
     <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
@@ -1088,6 +1138,7 @@
         <a href="/de/installations.html" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;font-size:14px;font-weight:500;">DE</a>
     </div>
 
+    <script src="/js/supabase-client.js"></script>
     <script src="/language-switcher-script.js"></script>
     <script src="/i18n/translate-client.js"></script>
     <script>
@@ -1134,38 +1185,35 @@
             }
         };
 
-        // Load installations data from Supabase
+        // Load installations data with translations from Supabase
         async function loadInstallations() {
             try {
                 console.log('Loading installations from Supabase...');
-                // Fetch data with ordering in a single call
-                const url = `${SUPABASE_URL}/rest/v1/installations?select=*&order=installation_date.desc`;
-                const response = await fetch(url, {
-                    headers: {
-                        'apikey': SUPABASE_ANON_KEY,
-                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                const data = await response.json();
                 
-                allInstallations = data || [];
-                console.log('Loaded installations:', allInstallations.length);
+                // Detect current language
+                const currentLang = getCurrentLanguage() || 'en';
+                console.log('Current language:', currentLang);
+                
+                // Use the Supabase client helper to fetch translated content
+                const installations = await window.SupabaseClient.fetchInstallationsWithTranslations(currentLang);
                 
                 // Process installations for display
-                allInstallations.forEach(installation => {
+                allInstallations = installations.map(installation => {
+                    // Format installation for display (handles translations)
+                    const formatted = window.SupabaseClient.formatInstallationForDisplay(installation);
+                    
                     // Ensure images is an array and process image paths
-                    if (!installation.images) installation.images = [];
-                    if (typeof installation.images === 'string') {
+                    if (!formatted.images) formatted.images = [];
+                    if (typeof formatted.images === 'string') {
                         try {
-                            installation.images = JSON.parse(installation.images);
+                            formatted.images = JSON.parse(formatted.images);
                         } catch (e) {
-                            installation.images = [installation.images];
+                            formatted.images = [formatted.images];
                         }
                     }
                     
                     // Process image URLs
-                    installation.images = installation.images.map(img => {
+                    formatted.images = formatted.images.map(img => {
                         if (typeof img === 'string') {
                             return `images/installations/${img}`;
                         } else if (img && typeof img === 'object') {
@@ -1177,7 +1225,11 @@
                         }
                         return `images/installations/${img}`;
                     });
+                    
+                    return formatted;
                 });
+                
+                console.log(`Loaded ${allInstallations.length} installations for language: ${currentLang}`);
                 
                 filteredInstallations = [...allInstallations];
                 
@@ -1189,7 +1241,57 @@
                 
             } catch (error) {
                 console.error('Error loading installations:', error);
-                document.getElementById('loading').innerHTML = '<p>Error loading installations. Please try again later.</p>';
+                
+                // Fallback to direct Supabase API call if helper fails
+                console.log('Falling back to direct API call...');
+                try {
+                    const url = `${SUPABASE_URL}/rest/v1/installations?select=*&order=installation_date.desc`;
+                    const response = await fetch(url, {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    const data = await response.json();
+                    
+                    allInstallations = data || [];
+                    console.log('Fallback loaded installations:', allInstallations.length);
+                    
+                    // Process installations for display (English only)
+                    allInstallations.forEach(installation => {
+                        if (!installation.images) installation.images = [];
+                        if (typeof installation.images === 'string') {
+                            try {
+                                installation.images = JSON.parse(installation.images);
+                            } catch (e) {
+                                installation.images = [installation.images];
+                            }
+                        }
+                        
+                        installation.images = installation.images.map(img => {
+                            if (typeof img === 'string') {
+                                return `images/installations/${img}`;
+                            } else if (img && typeof img === 'object') {
+                                if (img.url) {
+                                    return img.url;
+                                } else if (img.filename) {
+                                    return `images/installations/${img.filename}`;
+                                }
+                            }
+                            return `images/installations/${img}`;
+                        });
+                    });
+                    
+                    filteredInstallations = [...allInstallations];
+                    renderInstallations();
+                    updateStats();
+                    document.getElementById('loading').style.display = 'none';
+                    
+                } catch (fallbackError) {
+                    console.error('Fallback also failed:', fallbackError);
+                    document.getElementById('loading').innerHTML = '<p>Error loading installations. Please try again later.</p>';
+                }
             }
         }
 
@@ -1227,27 +1329,36 @@
             
             grid.innerHTML = pageInstallations.map(installation => {
                 const imageUrl = installation.images && installation.images.length > 0 ? installation.images[0] : 'images/installations/placeholder.jpg';
-                const installationUrl = getInstallationUrl(installation.slug);
+                
+                // Use translated fields if available
+                const title = installation.displayTitle || installation.title;
+                const location = installation.displayLocation || installation.location;
+                const slug = installation.displaySlug || installation.slug;
+                const description = installation.displayDescription || installation.description;
+                
+                const installationUrl = getInstallationUrl(slug);
+                
                 // Create preview text - first 150 characters of description
-                // Handle description as either string or array
                 let descriptionText = '';
-                if (installation.description) {
-                    if (typeof installation.description === 'string') {
-                        descriptionText = installation.description;
-                    } else if (Array.isArray(installation.description)) {
-                        descriptionText = installation.description.join(' ');
-                    } else if (typeof installation.description === 'object') {
-                        descriptionText = JSON.stringify(installation.description);
+                if (description) {
+                    if (typeof description === 'string') {
+                        descriptionText = description;
+                    } else if (Array.isArray(description)) {
+                        descriptionText = description.join(' ');
+                    } else if (typeof description === 'object') {
+                        descriptionText = JSON.stringify(description);
                     }
                 }
                 const previewText = descriptionText ? 
                     (descriptionText.substring(0, 150) + (descriptionText.length > 150 ? '...' : '')) : 
                     'Click to learn more about this installation.';
-                // Format date nicely
-                const formattedDate = new Date(installation.installation_date).toLocaleDateString('en-GB', {
-                    month: 'short',
-                    year: 'numeric'
-                });
+                
+                // Use formatted date if available, otherwise format it
+                const formattedDate = installation.formattedDate || 
+                    new Date(installation.installation_date).toLocaleDateString('en-GB', {
+                        month: 'short',
+                        year: 'numeric'
+                    });
                 
                 return `
                     <div class="installation-card" data-category="${installation.category || 'Playground'}">
@@ -1257,8 +1368,8 @@
                                 <span class="installation-date">${formattedDate}</span>
                                 <span class="installation-application">${installation.category || 'Playground'}</span>
                             </div>
-                            <h3 class="installation-title">${installation.title}</h3>
-                            <p class="installation-location">📍 ${installation.location}</p>
+                            <h3 class="installation-title">${title}</h3>
+                            <p class="installation-location">📍 ${location}</p>
                             <div class="installation-description">
                                 <p>${previewText}</p>
                             </div>
@@ -1369,8 +1480,134 @@
             }
         }
 
+        // Update SEO tags based on current language
+        function updatePageSEO() {
+            const currentLang = getCurrentLanguage() || 'en';
+            const baseUrl = window.location.origin;
+            
+            // Localized content
+            const seoContent = {
+                'en': {
+                    title: 'Latest Installations - Rosehill TPV® Sports & Play Surfaces Worldwide',
+                    description: 'Discover Rosehill TPV® installations worldwide. From Olympic venues to theme parks, see how our coloured rubber granules create exceptional sports and play surfaces.',
+                    locale: 'en_US'
+                },
+                'fr': {
+                    title: 'Dernières Installations - Surfaces Sportives et de Jeu Rosehill TPV® dans le Monde',
+                    description: 'Découvrez les installations Rosehill TPV® dans le monde entier. Des sites olympiques aux parcs à thème, voyez comment nos granulés de caoutchouc coloré créent des surfaces sportives et de jeu exceptionnelles.',
+                    locale: 'fr_FR'
+                },
+                'de': {
+                    title: 'Neueste Installationen - Rosehill TPV® Sport- und Spieloberflächen Weltweit',
+                    description: 'Entdecken Sie Rosehill TPV® Installationen weltweit. Von olympischen Stätten bis zu Freizeitparks, sehen Sie, wie unsere farbigen Gummigranulate außergewöhnliche Sport- und Spieloberflächen schaffen.',
+                    locale: 'de_DE'
+                },
+                'es': {
+                    title: 'Últimas Instalaciones - Superficies Deportivas y de Juego Rosehill TPV® en Todo el Mundo',
+                    description: 'Descubra las instalaciones de Rosehill TPV® en todo el mundo. Desde lugares olímpicos hasta parques temáticos, vea cómo nuestros gránulos de caucho coloreado crean superficies deportivas y de juego excepcionales.',
+                    locale: 'es_ES'
+                }
+            };
+            
+            const content = seoContent[currentLang] || seoContent['en'];
+            
+            // Update page title
+            document.title = content.title;
+            document.getElementById('page-title').textContent = content.title;
+            
+            // Update meta description
+            document.getElementById('meta-description').content = content.description;
+            
+            // Update language meta tag
+            document.getElementById('meta-language').content = currentLang;
+            
+            // Update canonical URL
+            const canonicalPath = currentLang === 'en' ? '/installations.html' : `/${currentLang}/installations.html`;
+            document.getElementById('canonical-link').href = `${baseUrl}${canonicalPath}`;
+            
+            // Update Open Graph tags
+            document.getElementById('og-url').content = `${baseUrl}${canonicalPath}`;
+            document.getElementById('og-title').content = content.title;
+            document.getElementById('og-description').content = content.description;
+            document.getElementById('og-locale').content = content.locale;
+            
+            // Update Twitter tags
+            document.getElementById('twitter-url').content = `${baseUrl}${canonicalPath}`;
+            document.getElementById('twitter-title').content = content.title;
+            document.getElementById('twitter-description').content = content.description;
+            
+            // Update structured data
+            updateStructuredDataForPage(content, currentLang, canonicalPath);
+            
+            // Generate hreflang tags
+            generatePageHreflangTags();
+        }
+        
+        // Update structured data for the installations page
+        function updateStructuredDataForPage(content, lang, path) {
+            const structuredData = {
+                "@context": "https://schema.org",
+                "@type": "CollectionPage",
+                "name": content.title,
+                "description": content.description,
+                "url": `${window.location.origin}${path}`,
+                "inLanguage": lang,
+                "about": {
+                    "@type": "Product",
+                    "name": "Rosehill TPV Rubber Surfacing",
+                    "description": "Premium coloured rubber granules for sports and playground surfaces",
+                    "brand": {
+                        "@type": "Brand",
+                        "name": "Rosehill TPV"
+                    }
+                },
+                "publisher": {
+                    "@type": "Organization",
+                    "name": "Rosehill TPV",
+                    "url": "https://tpv.rosehill.group",
+                    "logo": {
+                        "@type": "ImageObject",
+                        "url": `${window.location.origin}/rosehill_tpv_logo.png`
+                    }
+                }
+            };
+            
+            document.getElementById('structured-data').textContent = JSON.stringify(structuredData, null, 2);
+        }
+        
+        // Generate hreflang tags for the installations page
+        function generatePageHreflangTags() {
+            // Remove existing hreflang tags
+            document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(tag => tag.remove());
+            
+            const baseUrl = window.location.origin;
+            const languages = ['en', 'fr', 'de', 'es'];
+            
+            languages.forEach(lang => {
+                const link = document.createElement('link');
+                link.rel = 'alternate';
+                link.hreflang = lang;
+                
+                if (lang === 'en') {
+                    link.href = `${baseUrl}/installations.html`;
+                } else {
+                    link.href = `${baseUrl}/${lang}/installations.html`;
+                }
+                
+                document.head.appendChild(link);
+            });
+            
+            // Add x-default pointing to English
+            const defaultLink = document.createElement('link');
+            defaultLink.rel = 'alternate';
+            defaultLink.hreflang = 'x-default';
+            defaultLink.href = `${baseUrl}/installations.html`;
+            document.head.appendChild(defaultLink);
+        }
+
         // Initialize everything when page loads
         document.addEventListener('DOMContentLoaded', function() {
+            updatePageSEO();
             loadInstallations();
             initMobileMenu();
             
