@@ -204,7 +204,7 @@
         window.addEventListener('load', () => {
             // Get redirect URL from query parameter
             const urlParams = new URLSearchParams(window.location.search);
-            redirectUrl = urlParams.get('redirect') || '/admin/add-installation.html';
+            redirectUrl = urlParams.get('redirect') || '/admin/translations.html';
             
             // Check if already authenticated
             const token = localStorage.getItem('tpv_admin_token');
