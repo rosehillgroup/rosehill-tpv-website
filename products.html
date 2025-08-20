@@ -509,8 +509,8 @@
         .recommendation-card {
             background: linear-gradient(135deg, #1a365d 0%, #2d4a71 100%);
             color: white;
-            border-radius: 15px;
-            padding: 25px;
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 20px;
             position: relative;
             overflow: hidden;
@@ -522,15 +522,78 @@
             position: absolute;
             top: 0;
             right: 0;
-            width: 60px;
+            width: 50px;
             height: 100%;
             background: linear-gradient(45deg, #ff6b35, #f7931e);
-            clip-path: polygon(30% 0%, 100% 0%, 100% 100%, 0% 100%);
+            clip-path: polygon(40% 0%, 100% 0%, 100% 100%, 0% 100%);
         }
 
         .recommendation-card:hover {
-            transform: translateY(-3px);
+            transform: translateY(-5px);
             box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+
+        .binder-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .binder-type {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-block;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .binder-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .detail-item {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            opacity: 1;
+        }
+
+        .binder-description {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            z-index: 2;
+            opacity: 0.9;
+        }
+
+        .match-score {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            float: right;
+            position: relative;
+            z-index: 2;
         }
 
         .rec-header {
@@ -650,6 +713,23 @@
             background: rgba(255, 255, 255, 0.3);
             border-color: rgba(255, 255, 255, 0.5);
             transform: translateY(-1px);
+        }
+        
+        .btn-download {
+            display: block;
+            width: 100%;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .no-recommendations {
+            text-align: center;
+            color: #6c757d;
+            font-size: 1.1rem;
+            padding: 40px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px dashed #dee2e6;
         }
 
         /* Technical Specs Section */
@@ -1757,52 +1837,702 @@
                 }
             });
             
-            // Form submission handler
-            binderForm.addEventListener('submit', function(e) {
-                e.preventDefault();
+            // Real Flexilon Binder Database (Global scope for PDF generation)
+            const binderData = {
+                    'FX457': {
+                        name: 'FLEXILON 457',
+                        type: 'Compression Moulding Binder',
+                        viscosity: '1300-1600',
+                        cureSpeed: 'medium',
+                        climate: ['temperate', 'warm'],
+                        application: ['compression'],
+                        surfaceType: ['solid-products'],
+                        usage: '6%',
+                        description: 'Low viscosity binder for solid rubber products using rubber fines. Ideal for wheels, traffic-calming devices and cattle mats.',
+                        uvSensitive: true
+                    },
+                    'FX1102': {
+                        name: 'FLEXILON 1102',
+                        type: 'Slow Curing Binder',
+                        viscosity: '2500-3500',
+                        cureSpeed: 'slow',
+                        climate: ['warm', 'very-warm'],
+                        application: ['wet-pour', 'paver'],
+                        surfaceType: ['safety', 'athletic', 'shock-pad'],
+                        usage: '10-12% (paver), 12-20% (wet pour)',
+                        description: 'Slow curing binder for warm climates. Available in both wet pour and paver versions.',
+                        uvSensitive: true,
+                        uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                    },
+                    'FX1103': {
+                        name: 'FLEXILON 1103',
+                        type: 'Wet Pour Primer',
+                        viscosity: '230-600',
+                        cureSpeed: 'medium',
+                        climate: ['temperate', 'warm', 'cold'],
+                        application: ['wet-pour'],
+                        surfaceType: ['safety', 'athletic'],
+                        usage: '2-3 m²/kg',
+                        description: 'Low viscosity primer for use on asphalt and base layers before wearing layer installation.',
+                        uvSensitive: false
+                    },
+                    'FX1110': {
+                        name: 'FLEXILON 1110',
+                        type: 'Fast Curing Binder',
+                        viscosity: '1900-2300',
+                        cureSpeed: 'fast',
+                        climate: ['cold', 'temperate'],
+                        application: ['wet-pour'],
+                        surfaceType: ['safety'],
+                        usage: '12-20%',
+                        description: 'Fast curing, moisture tolerant binder. Faster version of FLEXILON 1263.',
+                        uvSensitive: true,
+                        moistureTolerant: true,
+                        uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                    },
+                    'FX1117': {
+                        name: 'FLEXILON 1117',
+                        type: 'Pre-Treatment',
+                        viscosity: '900-1100',
+                        cureSpeed: 'fast',
+                        climate: ['cold', 'dry'],
+                        application: ['wet-pour'],
+                        surfaceType: ['safety', 'athletic'],
+                        usage: '1-2%',
+                        description: 'Rubber pre-treatment for cold or dry conditions. Increases cure speed of other binders.',
+                        uvSensitive: false
+                    },
+                    'FX1118': {
+                        name: 'FLEXILON 1118',
+                        type: 'Medium Curing Binder',
+                        viscosity: '1800-2500',
+                        cureSpeed: 'medium',
+                        climate: ['temperate', 'warm'],
+                        application: ['wet-pour'],
+                        surfaceType: ['safety', 'athletic'],
+                        usage: '12-20%',
+                        description: 'Medium curing binder. FLEXILON 1180 is similar with faster cure rate.',
+                        uvSensitive: true,
+                        uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                    },
+                    'FX1142': {
+                        name: 'FLEXILON 1142',
+                        type: 'Slow-Medium Curing Binder',
+                        viscosity: '1400-1800',
+                        cureSpeed: 'slow',
+                        climate: ['warm'],
+                        application: ['wet-pour'],
+                        surfaceType: ['safety', 'athletic'],
+                        usage: '12-20%',
+                        description: 'Slow-medium curing for warmer climates. Good for athletic tracks and safety surfaces.',
+                        uvSensitive: true,
+                        uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                    },
+                    'FX1180': {
+                        name: 'FLEXILON 1180',
+                        type: 'Fast Curing Binder',
+                        viscosity: '1800-2500',
+                        cureSpeed: 'fast',
+                        climate: ['cold', 'temperate'],
+                        application: ['wet-pour'],
+                        surfaceType: ['safety', 'athletic'],
+                        usage: '12-20%',
+                        description: 'Fast curing for cooler climates. Similar to FLEXILON 1118 but with faster cure rate.',
+                        uvSensitive: true,
+                        uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                    },
+                    'FX1230': {
+                        name: 'FLEXILON 1230',
+                        type: 'Very Slow Curing Binder',
+                        viscosity: '2500-3500',
+                        cureSpeed: 'very-slow',
+                        climate: ['warm', 'very-warm'],
+                        application: ['wet-pour', 'paver'],
+                        surfaceType: ['safety', 'athletic', 'shock-pad'],
+                        usage: '10-12% (paver), 12-20% (wet pour)',
+                        description: 'Very slow curing for warm climates. FLEXILON 1102 is slightly faster version.',
+                        uvSensitive: true,
+                        uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                    },
+                    'FX1248S': {
+                        name: 'FLEXILON 1248S',
+                        type: 'Very Slow Curing Binder',
+                        viscosity: '3400-4600',
+                        cureSpeed: 'very-slow',
+                        climate: ['warm', 'very-warm'],
+                        application: ['wet-pour'],
+                        surfaceType: ['safety', 'athletic'],
+                        usage: '12-20%',
+                        description: 'High viscosity, very slow curing for warm climates. FLEXILON 1248W is faster with lower viscosity.',
+                        uvSensitive: true,
+                        uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                    },
+                    'FX1248W': {
+                        name: 'FLEXILON 1248W',
+                        type: 'Slow Curing Binder',
+                        viscosity: '1950-2750',
+                        cureSpeed: 'slow',
+                        climate: ['warm'],
+                        application: ['wet-pour'],
+                        surfaceType: ['safety', 'athletic'],
+                        usage: '12-20%',
+                        description: 'Slow curing for warm climates. Lower viscosity than FLEXILON 1248S.',
+                        uvSensitive: true,
+                        uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                    },
+                    'FX1258': {
+                        name: 'FLEXILON 1258',
+                        type: 'Very Slow Curing Binder',
+                        viscosity: '4500-6000',
+                        cureSpeed: 'very-slow',
+                        climate: ['very-warm'],
+                        application: ['wet-pour'],
+                        surfaceType: ['safety', 'athletic'],
+                        usage: '12-20%',
+                        description: 'Very high viscosity, very slow curing for very warm climates.',
+                        uvSensitive: true,
+                        uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                    },
+                    'FX1263': {
+                        name: 'FLEXILON 1263',
+                        type: 'Medium Curing Binder',
+                        viscosity: '1900-3200',
+                        cureSpeed: 'medium',
+                        climate: ['temperate', 'warm'],
+                        application: ['wet-pour'],
+                        surfaceType: ['safety', 'athletic'],
+                        usage: '12-20%',
+                        description: 'Medium curing, moisture tolerant binder. Slower version of FLEXILON 1110.',
+                        uvSensitive: true,
+                        moistureTolerant: true,
+                        uvNote: 'Yellowing can occur when exposed to strong UV light, most evident with blue, grey, white and cream colours. Consider FLEXILON 1231 UV stabilised binder for light colours.'
+                    },
+                    'FX1231': {
+                        name: 'FLEXILON 1231',
+                        type: 'UV Stabilised Binder',
+                        viscosity: '1800-2500',
+                        cureSpeed: 'medium',
+                        climate: ['temperate', 'warm'],
+                        application: ['wet-pour'],
+                        surfaceType: ['safety', 'athletic'],
+                        usage: '12-20%',
+                        description: 'UV stabilised binder with improved resistance to early discolouration. Retards yellowing process, especially during curing. Ideal for light-coloured rubber installations.',
+                        uvSensitive: false,
+                        uvStabilized: true,
+                        uvNote: 'Yellowing can still occur eventually when exposed to strong UV light. The UV stabiliser package retards the yellowing process (especially during curing) but does not totally eliminate it.'
+                    }
+                };
                 
-                // Generate recommendations based on selections
+                // Map simplified surface types to database categories
+                function mapSurfaceType(selectedSurface) {
+                    const surfaceMapping = {
+                        'playground': 'safety',
+                        'muga': 'safety',
+                        'athletic': 'athletic',
+                        'trail': 'safety',
+                        'athletic-pro': 'athletic',
+                        'sports-court': 'athletic',
+                        'industrial': 'solid-products',
+                        'tiles': 'solid-products',
+                        'gym': 'solid-products',
+                        'acoustic': 'solid-products'
+                    };
+                    return surfaceMapping[selectedSurface] || selectedSurface;
+                }
+                
+                // Smart recommendation scoring system
+                function findRecommendations(climate, application, surfaceType, cureSpeed) {
+                    const mappedSurfaceType = mapSurfaceType(surfaceType);
+                    const binders = [];
+                    const primers = [];
+                    const pretreatments = [];
+                    
+                    // Handle mixed climate - search across all climate types
+                    const climateList = climate === 'mixed' ? ['cold', 'temperate', 'warm', 'very-warm'] : [climate];
+                    
+                    for (const [code, product] of Object.entries(binderData)) {
+                        let score = 0;
+                        let reasons = [];
+                        
+                        // Required: Climate compatibility
+                        const hasClimateMatch = climateList.some(clim => product.climate.includes(clim));
+                        if (!hasClimateMatch) continue;
+                        
+                        // Required: Application compatibility  
+                        if (!product.application.includes(application)) continue;
+                        
+                        // Base compatibility score
+                        score += 10;
+                        reasons.push('Compatible with climate and application');
+                        
+                        // Bonus for surface type match
+                        if (product.surfaceType.includes(mappedSurfaceType)) {
+                            score += 5;
+                            reasons.push('Suitable for surface type');
+                        }
+                        
+                        // Bonus for cure speed match
+                        if (product.cureSpeed === cureSpeed) {
+                            score += 5;
+                            reasons.push('Optimal cure speed');
+                        } else if ((cureSpeed === 'fast' && product.cureSpeed === 'medium') ||
+                                   (cureSpeed === 'medium' && ['fast', 'slow'].includes(product.cureSpeed)) ||
+                                   (cureSpeed === 'slow' && product.cureSpeed === 'medium')) {
+                            score += 2;
+                            reasons.push('Good cure speed match');
+                        }
+                        
+                        // Bonus for moisture tolerance in cold/variable climates
+                        if (product.moistureTolerant && (climate === 'cold' || climate === 'mixed')) {
+                            score += 3;
+                            reasons.push('Moisture tolerant');
+                        }
+                        
+                        // Bonus for UV stabilization
+                        if (product.uvStabilized) {
+                            score += 2;
+                            reasons.push('UV stabilised');
+                        }
+                        
+                        // Bonus for mixed climate versatility
+                        if (climate === 'mixed' && product.climate.length > 1) {
+                            score += 3;
+                            reasons.push('Versatile across climate conditions');
+                        }
+                        
+                        const recommendation = {
+                            code,
+                            product,
+                            score,
+                            reasons
+                        };
+                        
+                        // Categorize products
+                        if (product.type.includes('Primer')) {
+                            primers.push(recommendation);
+                        } else if (product.type.includes('Pre-Treatment')) {
+                            pretreatments.push(recommendation);
+                        } else {
+                            binders.push(recommendation);
+                        }
+                    }
+                    
+                    // Sort by score (highest first)
+                    binders.sort((a, b) => b.score - a.score);
+                    primers.sort((a, b) => b.score - a.score);
+                    pretreatments.sort((a, b) => b.score - a.score);
+                    
+                    return { binders, primers, pretreatments };
+                }
+                
+                // Form submission handler
+                binderForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    // Get form values
+                    const climate = climateSelect.value;
+                    const application = applicationSelect.value;
+                    const surfaceType = surfaceTypeSelect.value;
+                    const cureSpeed = cureSpeedSelect.value;
+                    
+                    // Generate recommendations
+                    const recommendations = findRecommendations(climate, application, surfaceType, cureSpeed);
+                
+                    let html = '<h3 style="color: #1a365d; font-size: 1.5rem; margin-bottom: 25px; text-align: center;">Recommended Products</h3>';
+                
+                    // Display primary binders
+                    if (recommendations.binders.length > 0) {
+                    html += `<h3 style="color: #1a365d; font-size: 1.3rem; margin: 30px 0 15px 0; border-bottom: 2px solid #ff6b35; padding-bottom: 5px;">🔧 Primary Binders</h3>`;
+                    recommendations.binders.slice(0, 3).forEach(rec => {
+                        const matchPercentage = Math.round((rec.score / 25) * 100); // Max possible score is around 25
+                        html += `
+                            <div class="recommendation-card">
+                                <div class="binder-name">
+                                    ${rec.product.name}
+                                    <span class="match-score">${matchPercentage}% Match</span>
+                                </div>
+                                <div class="binder-type">${rec.product.type}</div>
+                                
+                                <div class="binder-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Viscosity:</span> ${rec.product.viscosity} cP
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Usage Rate:</span> ${rec.product.usage}
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Cure Speed:</span> ${rec.product.cureSpeed.charAt(0).toUpperCase() + rec.product.cureSpeed.slice(1)}
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Product Code:</span> ${rec.code}
+                                    </div>
+                                </div>
+                                
+                                <div class="binder-description">
+                                    ${rec.product.description}
+                                </div>
+                                
+                                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.2);">
+                                    <button class="btn-download" onclick="downloadTDS('${rec.code}', '${rec.product.name}')">
+                                        📄 Download Technical Data Sheet
+                                    </button>
+                                </div>
+                                
+                                ${rec.product.uvStabilized ? 
+                                    '<div style="margin-top: 10px; padding: 10px; background: #d4edda; border-radius: 5px; font-size: 0.9rem; color: #155724;">✅ UV Stabilised - Reduces yellowing with light colours</div>' : 
+                                    rec.product.uvNote ? 
+                                    '<div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px; font-size: 0.9rem; color: #856404;">⚠️ UV Note: ' + rec.product.uvNote + '</div>' : 
+                                    ''
+                                }
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Display primers
+                if (recommendations.primers.length > 0) {
+                    html += `<h3 style="color: #1a365d; font-size: 1.3rem; margin: 30px 0 15px 0; border-bottom: 2px solid #ff6b35; padding-bottom: 5px;">⚡ Primers</h3>`;
+                    recommendations.primers.forEach(rec => {
+                        const matchPercentage = Math.round((rec.score / 25) * 100);
+                        html += `
+                            <div class="recommendation-card">
+                                <div class="binder-name">
+                                    ${rec.product.name}
+                                    <span class="match-score">${matchPercentage}% Match</span>
+                                </div>
+                                <div class="binder-type">${rec.product.type}</div>
+                                
+                                <div class="binder-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Coverage:</span> ${rec.product.usage}
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Viscosity:</span> ${rec.product.viscosity} cP
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Cure Speed:</span> ${rec.product.cureSpeed.charAt(0).toUpperCase() + rec.product.cureSpeed.slice(1)}
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Product Code:</span> ${rec.code}
+                                    </div>
+                                </div>
+                                
+                                <div class="binder-description">
+                                    ${rec.product.description}
+                                </div>
+                                
+                                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.2);">
+                                    <button class="btn-download" onclick="downloadTDS('${rec.code}', '${rec.product.name}')">
+                                        📄 Download Technical Data Sheet
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                // Display pre-treatments
+                if (recommendations.pretreatments.length > 0 && (climate === 'cold' || climate === 'mixed')) {
+                    html += `<h3 style="color: #1a365d; font-size: 1.3rem; margin: 30px 0 15px 0; border-bottom: 2px solid #ff6b35; padding-bottom: 5px;">❄️ Pre-treatments</h3>`;
+                    
+                    const needsPretreatment = climate === 'cold' || climate === 'mixed';
+                    if (needsPretreatment) {
+                        html += `<div style="background: #fff3cd; border-left: 4px solid #ff6b35; padding: 12px; border-radius: 0 8px 8px 0; margin-bottom: 15px; font-size: 0.9rem; color: #856404;">
+                            <strong>Recommended for your conditions:</strong> Pre-treatment is advised for cold or variable climate conditions to improve cure speed and performance.
+                        </div>`;
+                    }
+                    
+                    recommendations.pretreatments.forEach(rec => {
+                        const matchPercentage = Math.round((rec.score / 25) * 100);
+                        html += `
+                            <div class="recommendation-card">
+                                <div class="binder-name">
+                                    ${rec.product.name}
+                                    <span class="match-score">${matchPercentage}% Match</span>
+                                </div>
+                                <div class="binder-type">${rec.product.type}</div>
+                                
+                                <div class="binder-details">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Usage Rate:</span> ${rec.product.usage}
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Viscosity:</span> ${rec.product.viscosity} cP
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Purpose:</span> Cure speed booster
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Product Code:</span> ${rec.code}
+                                    </div>
+                                </div>
+                                
+                                <div class="binder-description">
+                                    ${rec.product.description}
+                                </div>
+                                
+                                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.2);">
+                                    <button class="btn-download" onclick="downloadTDS('${rec.code}', '${rec.product.name}')">
+                                        📄 Download Technical Data Sheet
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                // No results message
+                if (recommendations.binders.length === 0 && recommendations.primers.length === 0 && recommendations.pretreatments.length === 0) {
+                    html += `
+                        <div class="no-recommendations">
+                            <p>No suitable binders found for the selected criteria. Please try different options or contact our technical team for assistance.</p>
+                        </div>
+                    `;
+                }
+                
+                resultsDiv.innerHTML = html;
+                resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
+            
+            // PDF Generation Function
+            window.downloadTDS = function(binderCode, binderName) {
+                // Check if jsPDF is available
+                if (typeof window.jspdf === 'undefined') {
+                    alert('PDF generation not available. Please contact Rosehill TPV for technical data sheets.');
+                    return;
+                }
+                
+                const product = binderData[binderCode];
+                if (!product) {
+                    alert('Product data not available. Please contact Rosehill TPV for the complete data sheet.');
+                    return;
+                }
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Get user's project details
                 const climate = climateSelect.value;
                 const application = applicationSelect.value;
                 const surfaceType = surfaceTypeSelect.value;
                 const cureSpeed = cureSpeedSelect.value;
                 
-                // Sample recommendations logic (you can expand this)
-                let recommendations = '<h3>Recommended Products</h3>';
-                recommendations += '<div class="recommendation-grid">';
+                // Header with TPV branding
+                doc.setFillColor(26, 54, 93);
+                doc.rect(0, 0, 210, 30, 'F');
                 
-                // Generate recommendations based on criteria
-                if (climate === 'cold' && cureSpeed === 'fast') {
-                    recommendations += `
-                        <div class="recommendation-card">
-                            <h4>Flexilon® F-200</h4>
-                            <p>Fast-curing binder optimized for cold climates</p>
-                            <ul>
-                                <li>Cure time: 4-6 hours</li>
-                                <li>Temperature range: -10°C to 30°C</li>
-                                <li>UV stable</li>
-                            </ul>
-                        </div>
-                    `;
+                doc.setTextColor(255, 255, 255);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(18);
+                doc.text("Rosehill TPV", 105, 12, { align: "center" });
+                
+                doc.setFontSize(14);
+                doc.text("Flexilon® Binder Technical Data Sheet", 105, 22, { align: "center" });
+                
+                // Reset text colour
+                doc.setTextColor(0, 0, 0);
+                
+                let yPos = 45;
+                
+                // Product name and type
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(16);
+                doc.setTextColor(26, 54, 93);
+                doc.text(binderName, 14, yPos);
+                
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(12);
+                doc.setTextColor(255, 107, 53);
+                doc.text(`Product Code: ${binderCode}`, 14, yPos + 8);
+                doc.text(product.type, 14, yPos + 16);
+                
+                yPos += 30;
+                
+                // Project requirements section
+                doc.setFillColor(248, 249, 250);
+                doc.rect(10, yPos, 190, 35, 'F');
+                
+                doc.setTextColor(0, 0, 0);
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(12);
+                doc.text("Your Project Requirements", 14, yPos + 8);
+                
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10);
+                const projectDetails = [
+                    `Climate: ${getDisplayText(climate)}`,
+                    `Application: ${getDisplayText(application)}`,
+                    `Surface Type: ${getDisplayText(surfaceType)}`,
+                    `Cure Speed: ${getDisplayText(cureSpeed)}`
+                ];
+                
+                projectDetails.forEach((detail, index) => {
+                    const col = index < 2 ? 0 : 95;
+                    const row = index % 2;
+                    doc.text(detail, 14 + col, yPos + 18 + (row * 7));
+                });
+                
+                yPos += 45;
+                
+                // Product specifications
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(14);
+                doc.setTextColor(26, 54, 93);
+                doc.text("Product Specifications", 14, yPos);
+                yPos += 12;
+                
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(11);
+                doc.setTextColor(0, 0, 0);
+                
+                const specifications = [
+                    ['Product Name:', binderName],
+                    ['Product Code:', binderCode],
+                    ['Type:', product.type],
+                    ['Viscosity @ 25°C:', `${product.viscosity} cP`],
+                    ['Cure Speed:', product.cureSpeed],
+                    ['Usage Rate:', product.usage],
+                    ['Climate Suitability:', product.climate.join(', ')],
+                    ['Application Methods:', product.application.join(', ')],
+                    ['Surface Types:', product.surfaceType.join(', ')],
+                    ['Moisture Tolerant:', product.moistureTolerant ? 'Yes' : 'No'],
+                    ['UV Stabilized:', product.uvStabilized ? 'Yes' : 'No']
+                ];
+                
+                specifications.forEach(([label, value]) => {
+                    doc.setFont("helvetica", "bold");
+                    doc.text(label, 14, yPos);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(String(value), 75, yPos);
+                    yPos += 8;
+                });
+                
+                yPos += 10;
+                
+                // Product description
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(14);
+                doc.setTextColor(26, 54, 93);
+                doc.text("Product Description", 14, yPos);
+                yPos += 8;
+                
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                const descLines = doc.splitTextToSize(product.description, 180);
+                doc.text(descLines, 14, yPos);
+                yPos += descLines.length * 5 + 15;
+                
+                // UV considerations if applicable
+                if (product.uvNote) {
+                    // Check if we need a new page
+                    if (yPos > 220) {
+                        doc.addPage();
+                        yPos = 20;
+                    }
+                    
+                    doc.setFillColor(255, 243, 205);
+                    const noteHeight = Math.max(25, Math.ceil(product.uvNote.length / 80) * 5 + 15);
+                    doc.rect(10, yPos - 2, 190, noteHeight, 'F');
+                    
+                    doc.setFont("helvetica", "bold");
+                    doc.setFontSize(11);
+                    doc.setTextColor(133, 100, 4);
+                    doc.text("UV Considerations", 14, yPos + 5);
+                    
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(9);
+                    const uvLines = doc.splitTextToSize(product.uvNote, 180);
+                    doc.text(uvLines, 14, yPos + 12);
+                    yPos += noteHeight + 10;
                 }
                 
-                // Add more recommendation logic here
-                recommendations += `
-                    <div class="recommendation-card">
-                        <h4>Flexilon® Universal</h4>
-                        <p>All-purpose binder suitable for most applications</p>
-                        <ul>
-                            <li>Versatile formulation</li>
-                            <li>Excellent adhesion</li>
-                            <li>Long-term durability</li>
-                        </ul>
-                    </div>
-                `;
+                // Check if we need a new page for footer
+                if (yPos > 220) {
+                    doc.addPage();
+                    yPos = 20;
+                }
                 
-                recommendations += '</div>';
-                resultsDiv.innerHTML = recommendations;
-                resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            });
+                // Important notes section
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(12);
+                doc.setTextColor(26, 54, 93);
+                doc.text("Important Notes", 14, yPos);
+                yPos += 8;
+                
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                const importantNotes = [
+                    "• Store in cool, dry place away from moisture and heat sources",
+                    "• Containers must be resealed immediately after use",
+                    "• Follow all health and safety guidelines when handling",
+                    "• Contact technical support for application guidance",
+                    "• This is a simplified data sheet - full technical documentation available on request"
+                ];
+                
+                importantNotes.forEach(note => {
+                    doc.text(note, 14, yPos);
+                    yPos += 6;
+                });
+                
+                yPos += 15;
+                
+                // Company footer
+                doc.setFillColor(248, 249, 250);
+                doc.rect(10, yPos, 190, 30, 'F');
+                
+                doc.setFont("helvetica", "bold");
+                doc.setFontSize(11);
+                doc.setTextColor(26, 54, 93);
+                doc.text("Rosehill Sports & Play, A Division of Rosehill Group", 14, yPos + 8);
+                
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(9);
+                doc.setTextColor(0, 0, 0);
+                doc.text("Spring Bank Mills, Watson Mill Lane, Sowerby Bridge, West Yorkshire, HX6 3BW", 14, yPos + 16);
+                doc.text("Phone: +44 (0)1422 839 456 | Email: info@rosehillgroup.com", 14, yPos + 22);
+                
+                // Disclaimer
+                yPos += 40;
+                doc.setFont("helvetica", "italic");
+                doc.setFontSize(8);
+                doc.setTextColor(100, 100, 100);
+                doc.text("This information is provided in good faith. Users must ensure by thorough testing that products perform adequately in each specific application.", 105, yPos, { align: "center" });
+                doc.text(`Generated: ${new Date().toLocaleDateString('en-GB')} | tpv.rosehill.group`, 105, yPos + 6, { align: "center" });
+                
+                // Save the PDF
+                doc.save(`${binderName.replace(/[^a-zA-Z0-9]/g, '_')}_${binderCode}_Technical_Data_Sheet.pdf`);
+            };
+            
+            // Helper function for display text mapping
+            function getDisplayText(value) {
+                const displayMap = {
+                    'cold': 'Cold Climate (< 15°C)',
+                    'temperate': 'Temperate Climate (15-25°C)',
+                    'warm': 'Warm Climate (25-35°C)',
+                    'very-warm': 'Very Warm Climate (> 35°C)',
+                    'mixed': 'Mixed Climate (Variable)',
+                    'wet-pour': 'Wet Pour Installation',
+                    'paver': 'Paver Machine Installation',
+                    'compression': 'Compression Moulding',
+                    'playground': 'Playground Safety Surface',
+                    'muga': 'Multi-Use Games Area (MUGA)',
+                    'athletic': 'Athletic Track',
+                    'trail': 'Walking/Cycling Trail',
+                    'athletic-pro': 'Professional Athletic Track',
+                    'sports-court': 'Sports Court Surface',
+                    'industrial': 'Industrial Flooring',
+                    'tiles': 'Safety Tiles',
+                    'gym': 'Gym Flooring',
+                    'acoustic': 'Acoustic Flooring',
+                    'fast': 'Fast Curing',
+                    'medium': 'Medium Curing',
+                    'slow': 'Slow Curing',
+                    'very-slow': 'Very Slow Curing'
+                };
+                return displayMap[value] || value;
+            }
         });
     </script>
     

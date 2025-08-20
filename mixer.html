@@ -1843,7 +1843,7 @@
                             
                             // Force a render update
                             if (controls) {
-                                controls.forceUpdate();
+                                controls.update();
                             }
                         }
                         return;
@@ -1888,7 +1888,7 @@
 
                             // Force a render update since texture has changed
                             if (tileSceneRef.current.controls) {
-                                tileSceneRef.current.controls.forceUpdate();
+                                tileSceneRef.current.controls.update();
                             }
 
                             setTileLoading(false);
@@ -1905,7 +1905,7 @@
                         camera.position.set(300, 200, 300);
                         tile.rotation.set(0, 0, 0);
                         controls.reset();
-                        controls.forceUpdate(); // Ensure rendering happens
+                        controls.update(); // Ensure rendering happens
                         setTileZoomLevel(1); // Reset zoom level state
                     }
                 }, []);
@@ -1920,7 +1920,7 @@
                         if (controls.camera.position.length() * zoomFactor > 50) { // Minimum distance
                             controls.camera.position.multiplyScalar(zoomFactor);
                             setTileZoomLevel(prev => Math.min(prev / zoomFactor, 4)); // Max 4x zoom
-                            controls.forceUpdate();
+                            controls.update();
                         }
                     }
                 }, []);
@@ -1934,7 +1934,7 @@
                         if (controls.camera.position.length() * zoomFactor < 800) { // Maximum distance
                             controls.camera.position.multiplyScalar(zoomFactor);
                             setTileZoomLevel(prev => Math.max(prev / zoomFactor, 0.25)); // Min 0.25x zoom
-                            controls.forceUpdate();
+                            controls.update();
                         }
                     }
                 }, []);
@@ -1944,7 +1944,7 @@
                         const { camera, controls } = tileSceneRef.current;
                         camera.position.set(300, 200, 300); // Reset to default position
                         setTileZoomLevel(1);
-                        controls.forceUpdate();
+                        controls.update();
                     }
                 }, []);
 
