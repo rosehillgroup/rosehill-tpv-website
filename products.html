@@ -1648,6 +1648,164 @@
     <!-- jsPDF Library for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
+    <!-- Binder Selector JavaScript -->
+    <script>
+        // Binder Selector Functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const climateSelect = document.getElementById('climate');
+            const applicationSelect = document.getElementById('application');
+            const surfaceTypeSelect = document.getElementById('surface-type');
+            const cureSpeedSelect = document.getElementById('cure-speed');
+            const binderForm = document.getElementById('binderForm');
+            const resultsDiv = document.getElementById('results');
+            
+            // Progress step indicators
+            const step1 = document.getElementById('step1');
+            const step2 = document.getElementById('step2');
+            const step3 = document.getElementById('step3');
+            const step4 = document.getElementById('step4');
+            
+            // Enable/disable form groups
+            function enableGroup(groupId) {
+                const group = document.getElementById(groupId);
+                const select = group.querySelector('select');
+                group.classList.remove('disabled');
+                select.disabled = false;
+            }
+            
+            function disableGroup(groupId) {
+                const group = document.getElementById(groupId);
+                const select = group.querySelector('select');
+                group.classList.add('disabled');
+                select.disabled = true;
+                select.value = '';
+            }
+            
+            // Update progress indicators
+            function updateProgress(stepNumber) {
+                // Remove active class from all steps
+                [step1, step2, step3, step4].forEach(step => step.classList.remove('active'));
+                
+                // Add active class up to current step
+                if (stepNumber >= 1) step1.classList.add('active');
+                if (stepNumber >= 2) step2.classList.add('active');
+                if (stepNumber >= 3) step3.classList.add('active');
+                if (stepNumber >= 4) step4.classList.add('active');
+            }
+            
+            // Climate selection handler
+            climateSelect.addEventListener('change', function() {
+                if (this.value) {
+                    enableGroup('application-group');
+                    updateProgress(2);
+                } else {
+                    disableGroup('application-group');
+                    disableGroup('surface-type-group');
+                    disableGroup('cure-speed-group');
+                    updateProgress(1);
+                }
+                // Reset downstream selections
+                surfaceTypeSelect.value = '';
+                cureSpeedSelect.value = '';
+            });
+            
+            // Application method selection handler
+            applicationSelect.addEventListener('change', function() {
+                if (this.value) {
+                    enableGroup('surface-type-group');
+                    updateProgress(3);
+                    
+                    // Populate surface type options based on application method
+                    surfaceTypeSelect.innerHTML = '<option value="">Select surface type...</option>';
+                    
+                    if (this.value === 'wet-pour') {
+                        surfaceTypeSelect.innerHTML += `
+                            <option value="playground">Playground Safety Surface</option>
+                            <option value="muga">Multi-Use Games Area (MUGA)</option>
+                            <option value="athletic">Athletic Track</option>
+                            <option value="trail">Walking/Cycling Trail</option>
+                        `;
+                    } else if (this.value === 'paver') {
+                        surfaceTypeSelect.innerHTML += `
+                            <option value="athletic-pro">Professional Athletic Track</option>
+                            <option value="sports-court">Sports Court Surface</option>
+                            <option value="industrial">Industrial Flooring</option>
+                        `;
+                    } else if (this.value === 'compression') {
+                        surfaceTypeSelect.innerHTML += `
+                            <option value="tiles">Safety Tiles</option>
+                            <option value="gym">Gym Flooring</option>
+                            <option value="acoustic">Acoustic Flooring</option>
+                        `;
+                    }
+                } else {
+                    disableGroup('surface-type-group');
+                    disableGroup('cure-speed-group');
+                    updateProgress(2);
+                }
+                cureSpeedSelect.value = '';
+            });
+            
+            // Surface type selection handler
+            surfaceTypeSelect.addEventListener('change', function() {
+                if (this.value) {
+                    enableGroup('cure-speed-group');
+                    updateProgress(4);
+                } else {
+                    disableGroup('cure-speed-group');
+                    updateProgress(3);
+                }
+            });
+            
+            // Form submission handler
+            binderForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Generate recommendations based on selections
+                const climate = climateSelect.value;
+                const application = applicationSelect.value;
+                const surfaceType = surfaceTypeSelect.value;
+                const cureSpeed = cureSpeedSelect.value;
+                
+                // Sample recommendations logic (you can expand this)
+                let recommendations = '<h3>Recommended Products</h3>';
+                recommendations += '<div class="recommendation-grid">';
+                
+                // Generate recommendations based on criteria
+                if (climate === 'cold' && cureSpeed === 'fast') {
+                    recommendations += `
+                        <div class="recommendation-card">
+                            <h4>Flexilon® F-200</h4>
+                            <p>Fast-curing binder optimized for cold climates</p>
+                            <ul>
+                                <li>Cure time: 4-6 hours</li>
+                                <li>Temperature range: -10°C to 30°C</li>
+                                <li>UV stable</li>
+                            </ul>
+                        </div>
+                    `;
+                }
+                
+                // Add more recommendation logic here
+                recommendations += `
+                    <div class="recommendation-card">
+                        <h4>Flexilon® Universal</h4>
+                        <p>All-purpose binder suitable for most applications</p>
+                        <ul>
+                            <li>Versatile formulation</li>
+                            <li>Excellent adhesion</li>
+                            <li>Long-term durability</li>
+                        </ul>
+                    </div>
+                `;
+                
+                recommendations += '</div>';
+                resultsDiv.innerHTML = recommendations;
+                resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
+        });
+    </script>
+    
     <!-- Cookie Consent Management -->
     <script src="cookie-consent.js"></script>
     
