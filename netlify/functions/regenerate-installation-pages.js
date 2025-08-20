@@ -75,17 +75,24 @@ exports.handler = async (event, context) => {
         const { execSync } = require('child_process');
         
         try {
-            const scriptPath = path.join(__dirname, '../../generate-installation-pages-supabase.cjs');
+            // In Netlify functions, the working directory is different
+            const scriptPath = path.resolve(__dirname, '../../generate-installation-pages-supabase.cjs');
+            const workingDir = path.resolve(__dirname, '../..');
+            
+            console.log('Script path:', scriptPath);
+            console.log('Working directory:', workingDir);
+            console.log('Script exists:', require('fs').existsSync(scriptPath));
+            
             const env = {
                 ...process.env,
                 SUPABASE_URL: supabaseUrl,
                 SUPABASE_ANON_KEY: supabaseKey
             };
             
-            const result = execSync(`node ${scriptPath}`, { 
+            const result = execSync(`node generate-installation-pages-supabase.cjs`, { 
                 env,
                 encoding: 'utf8',
-                cwd: path.join(__dirname, '../..')
+                cwd: workingDir
             });
             
             console.log('Script output:', result);
