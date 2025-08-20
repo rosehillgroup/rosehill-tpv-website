@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rosehill TPV Products - Technical Specifications & Guidance</title>
+    <title>Rosehill TPV® Products - Technical Specifications & Guidance</title>
     <meta name="description" content="Technical specifications for Rosehill TPV® rubber granules and Flexilon® polyurethane binders. Product data sheets, installation guidance, and technical support information.">
     <link rel="canonical" href="https://tpv.rosehill.group/products.html">
     <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
@@ -1232,7 +1232,7 @@
             <a href="index.html" class="logo">
                 <picture>
                 <source srcset="rosehill_tpv_logo.webp" type="image/webp">
-                <img src="rosehill_tpv_logo.png" alt="Rosehill TPV" style="height: 60px;" loading="lazy">
+                <img src="rosehill_tpv_logo.png" alt="Rosehill TPV®" style="height: 60px;" loading="lazy">
             </picture>
             </a>
             <nav>
@@ -1323,7 +1323,7 @@
     <section class="benefits-section" id="benefits">
         <div class="container">
             <h2 class="section-title">Key Benefits</h2>
-            <p class="section-subtitle">Innovative TPV technology delivering superior performance for sports and play surfaces</p>
+            <p class="section-subtitle">Innovative Rosehill TPV<sup>®</sup> technology delivering superior performance for sports and play surfaces</p>
             
             <div class="benefits-grid">
                 <div class="benefit-item">
@@ -1521,7 +1521,7 @@
                         </svg>
                     </div>
                     <h3 class="spec-title">Chemical Composition</h3>
-                    <p class="spec-description">All Flexilon<sup>®</sup> binders are MDI-based polyurethane systems that are TDI-free and solvent-free. TPV<sup>®</sup> granules use premium virgin polymers without sulphur, clay fillers, heavy metals like zinc, or phthalate plasticisers.</p>
+                    <p class="spec-description">All Flexilon<sup>®</sup> binders are MDI-based polyurethane systems that are TDI-free and solvent-free. Rosehill TPV<sup>®</sup> granules use premium virgin polymers without sulphur, clay fillers, heavy metals like zinc, or phthalate plasticisers.</p>
                 </div>
 
                 <div class="spec-category">
@@ -2298,13 +2298,13 @@
             window.downloadTDS = function(binderCode, binderName) {
                 // Check if jsPDF is available
                 if (typeof window.jspdf === 'undefined') {
-                    alert('PDF generation not available. Please contact Rosehill TPV for technical data sheets.');
+                    alert('PDF generation not available. Please contact Rosehill TPV® for technical data sheets.');
                     return;
                 }
                 
                 const product = binderData[binderCode];
                 if (!product) {
-                    alert('Product data not available. Please contact Rosehill TPV for the complete data sheet.');
+                    alert('Product data not available. Please contact Rosehill TPV® for the complete data sheet.');
                     return;
                 }
                 
@@ -2317,14 +2317,14 @@
                 const surfaceType = surfaceTypeSelect.value;
                 const cureSpeed = cureSpeedSelect.value;
                 
-                // Header with TPV branding
+                // Header with Rosehill TPV® branding
                 doc.setFillColor(26, 54, 93);
                 doc.rect(0, 0, 210, 30, 'F');
                 
                 doc.setTextColor(255, 255, 255);
                 doc.setFont("helvetica", "bold");
                 doc.setFontSize(18);
-                doc.text("Rosehill TPV", 105, 12, { align: "center" });
+                doc.text("Rosehill TPV®", 105, 12, { align: "center" });
                 
                 doc.setFontSize(14);
                 doc.text("Flexilon® Binder Technical Data Sheet", 105, 22, { align: "center" });

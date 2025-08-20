@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="img-src 'self' data: blob: https://www.google-analytics.com https://www.googletagmanager.com https://maps.gstatic.com https://*.googleapis.com https://otidaseqlgubqzsqazqt.supabase.co;">
     <title>Add Installation - Rosehill TPV Admin</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1029,7 +1030,7 @@
                 location: formData.location,
                 installation_date: formData.installation_date,
                 application: formData.application,
-                overview: formData.description, // Store as array of paragraphs
+                description: formData.description, // Store as array of paragraphs
                 thanks_to_name: formData.thanks_to_name,
                 thanks_to_url: formData.thanks_to_url,
                 slug: slug,
@@ -1145,13 +1146,54 @@
                 document.getElementById('title').value = installation.title || '';
                 document.getElementById('location').value = installation.location || '';
                 document.getElementById('installation_date').value = installation.installation_date || '';
-                document.getElementById('application').value = installation.application || '';
+                
+                // Handle application - map database values to form options
+                const application = installation.application || '';
+                let formApplication = '';
+                
+                // Map database values to form values
+                switch(application.toLowerCase()) {
+                    case 'athletics':
+                        formApplication = 'Athletics';
+                        break;
+                    case 'playground':
+                        formApplication = 'Playground';
+                        break;
+                    case 'muga':
+                        formApplication = 'MUGA';
+                        break;
+                    case 'tennis':
+                        formApplication = 'Tennis';
+                        break;
+                    case 'fitness':
+                        formApplication = 'Fitness';
+                        break;
+                    case 'water':
+                        formApplication = 'Water';
+                        break;
+                    case 'other':
+                        formApplication = 'Other';
+                        break;
+                    default:
+                        formApplication = 'Other';
+                }
+                
+                document.getElementById('application').value = formApplication;
+                
                 document.getElementById('thanks_to_name').value = installation.thanks_to_name || '';
                 document.getElementById('thanks_to_url').value = installation.thanks_to_url || '';
                 
-                // Handle existing images
+                // Handle existing images - extract URLs from the image objects
                 if (installation.images && Array.isArray(installation.images)) {
-                    existingImages = [...installation.images];
+                    existingImages = installation.images.map(img => {
+                        if (typeof img === 'string') {
+                            return img; // Already a URL
+                        } else if (img && typeof img === 'object' && img.url) {
+                            return img.url; // Extract URL from object
+                        } else {
+                            return null;
+                        }
+                    }).filter(url => url !== null);
                 } else {
                     existingImages = [];
                 }
@@ -1161,7 +1203,7 @@
                 container.innerHTML = '';
                 descriptionCount = 0;
                 
-                const descriptions = installation.overview || [];
+                const descriptions = installation.description || [];
                 if (descriptions.length === 0) {
                     // Add at least one empty description field
                     addDescriptionParagraph();
@@ -1256,7 +1298,7 @@
                 location: formData.location,
                 installation_date: formData.installation_date,
                 application: formData.application,
-                overview: formData.description, // Store as array of paragraphs
+                description: formData.description, // Store as array of paragraphs
                 thanks_to_name: formData.thanks_to_name,
                 thanks_to_url: formData.thanks_to_url,
                 slug: newSlug,

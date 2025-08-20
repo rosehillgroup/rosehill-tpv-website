@@ -738,7 +738,7 @@
             <a href="index.html" class="logo">
                 <picture>
                 <source srcset="rosehill_tpv_logo.webp" type="image/webp">
-                <img src="rosehill_tpv_logo.png" alt="Rosehill TPV" style="height: 60px;" loading="lazy">
+                <img src="rosehill_tpv_logo.png" alt="Rosehill TPV®" style="height: 60px;" loading="lazy">
             </picture>
             </a>
             <nav>
@@ -773,7 +773,7 @@
     <section class="hero">
         <div class="hero-content">
             <h1>Professional Applications<br>Proven Performance</h1>
-            <p>From international venues to local playgrounds, Rosehill TPV delivers exceptional performance across diverse sports and recreation environments worldwide.</p>
+            <p>From international venues to local playgrounds, Rosehill TPV<sup>®</sup> delivers exceptional performance across diverse sports and recreation environments worldwide.</p>
         </div>
     </section>
 
@@ -784,7 +784,7 @@
             <div class="application-inner">
                 <div class="application-content">
                     <h3>Playground Surfaces</h3>
-                    <p class="application-overview">Create safe, engaging play environments with TPV surfaces that exceed safety standards whilst inspiring creative play through vibrant colour combinations.</p>
+                    <p class="application-overview">Create safe, engaging play environments with Rosehill TPV<sup>®</sup> surfaces that exceed safety standards whilst inspiring creative play through vibrant colour combinations.</p>
                     
                     <div class="tabs-container">
                         <div class="tabs-nav">
@@ -830,7 +830,7 @@
                     <picture>
                 <source srcset="playground.avif" type="image/avif">
                 <source srcset="playground.webp" type="image/webp">
-                <img src="playground.jpg" alt="TPV Playground Surface Installation" loading="lazy">
+                <img src="playground.jpg" alt="Rosehill TPV® Playground Surface Installation" loading="lazy">
             </picture>
                 </div>
             </div>
@@ -887,7 +887,7 @@
                     <picture>
                 <source srcset="muga.avif" type="image/avif">
                 <source srcset="muga.webp" type="image/webp">
-                <img src="muga.jpg" alt="Multi-Use Games Area with TPV Surface" loading="lazy">
+                <img src="muga.jpg" alt="Multi-Use Games Area with Rosehill TPV® Surface" loading="lazy">
             </picture>
                 </div>
             </div>
@@ -944,7 +944,7 @@
                     <picture>
                 <source srcset="track.avif" type="image/avif">
                 <source srcset="track.webp" type="image/webp">
-                <img src="track.jpg" alt="Professional Running Track with TPV Surface" loading="lazy">
+                <img src="track.jpg" alt="Professional Running Track with Rosehill TPV® Surface" loading="lazy">
             </picture>
                 </div>
             </div>
@@ -1001,7 +1001,7 @@
                     <picture>
                 <source srcset="pitch.avif" type="image/avif">
                 <source srcset="pitch.webp" type="image/webp">
-                <img src="pitch.jpg" alt="Synthetic Sports Pitch with TPV Base" loading="lazy">
+                <img src="pitch.jpg" alt="Synthetic Sports Pitch with Rosehill TPV® Base" loading="lazy">
             </picture>
                 </div>
             </div>
@@ -1058,7 +1058,7 @@
                     <picture>
                 <source srcset="footpath.avif" type="image/avif">
                 <source srcset="footpath.webp" type="image/webp">
-                <img src="footpath.jpg" alt="TPV Footpath in Park Setting" loading="lazy">
+                <img src="footpath.jpg" alt="Rosehill TPV® Footpath in Park Setting" loading="lazy">
             </picture>
                 </div>
             </div>
@@ -1115,7 +1115,7 @@
                     <picture>
                 <source srcset="splashpark.avif" type="image/avif">
                 <source srcset="splashpark.webp" type="image/webp">
-                <img src="splashpark.jpg" alt="Splash Park with Colorful TPV Surface" loading="lazy">
+                <img src="splashpark.jpg" alt="Splash Park with Colorful Rosehill TPV® Surface" loading="lazy">
             </picture>
                 </div>
             </div>
@@ -1220,6 +1220,48 @@
 
     <!-- Analytics Language Enhancement -->
     <script src="/analytics-language-enhancer.js"></script>
+
+    <script>
+        // Tab functionality
+        function showTab(event, tabId) {
+            // Get the parent tabs container
+            const tabContainer = event.target.closest('.tabs-container');
+            
+            // Hide all tab contents in this container
+            const tabContents = tabContainer.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tab buttons in this container
+            const tabButtons = tabContainer.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show the selected tab content
+            const selectedTab = tabContainer.querySelector('#' + tabId);
+            if (selectedTab) {
+                selectedTab.classList.add('active');
+            }
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        // Mobile menu functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileToggle = document.getElementById('mobile-toggle');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            if (mobileToggle && mobileMenu) {
+                mobileToggle.addEventListener('click', function() {
+                    mobileToggle.classList.toggle('active');
+                    mobileMenu.classList.toggle('active');
+                });
+            }
+        });
+    </script>
 
     <!-- Desktop Language Switcher (Fixed Bottom-Right) -->
     <div class="language-switcher" id="language-switcher" style="position:fixed;bottom:20px;right:20px;background:linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);padding:8px 12px;border-radius:25px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:9999;border:1px solid rgba(255,107,53,0.1);backdrop-filter:blur(10px);display:flex;gap:4px;">
