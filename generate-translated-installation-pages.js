@@ -153,6 +153,10 @@ async function generateTranslatedPages() {
         
         console.log(`Found ${translations.length} translations\n`);
         
+        // First create the slug mapping
+        console.log('📋 Creating slug mapping file...');
+        const slugMapping = await createSlugMappingFile(translations);
+        
         // Process each translation
         for (const translation of translations) {
             const lang = translation.lang;
@@ -165,12 +169,8 @@ async function generateTranslatedPages() {
             
             console.log(`📝 Processing ${translation.title} (${lang.toUpperCase()})`);
             
-            await generateTranslatedInstallationPage(translation, installation, lang);
+            await generateTranslatedInstallationPage(translation, installation, lang, slugMapping);
         }
-        
-        // Create slug mapping file
-        console.log('\n📋 Creating slug mapping file...');
-        await createSlugMappingFile(translations);
         
         console.log('\n✨ Done! Generated complete pages for all translated installations.');
         
@@ -180,7 +180,18 @@ async function generateTranslatedPages() {
     }
 }
 
-async function generateTranslatedInstallationPage(translation, installation, lang) {
+// Helper function to get language-specific slug
+function getLangSlug(targetLang, installationId, slugMapping) {
+    // Find the installation in the slug mapping
+    for (const [englishSlug, data] of Object.entries(slugMapping)) {
+        if (data.id === installationId) {
+            return data[targetLang] || englishSlug;
+        }
+    }
+    return '';
+}
+
+async function generateTranslatedInstallationPage(translation, installation, lang, slugMapping) {
     const labels = LANGUAGES[lang].labels;
     
     // Create language directory structure
@@ -748,13 +759,13 @@ async function generateTranslatedInstallationPage(translation, installation, lan
                 <img src="../../rosehill_tpv_logo.webp" alt="Rosehill TPV">
             </a>
             <nav class="nav-menu">
-                <a href="../../index.html">${labels.home}</a>
-                <a href="../../products.html">${labels.products}</a>
-                <a href="../../applications.html">${labels.applications}</a>
-                <a href="../../colour.html">${labels.colour}</a>
-                <a href="../../installations.html" class="active">${labels.installations}</a>
-                <a href="../../about.html">${labels.about}</a>
-                <a href="../../contact.html" class="contact-btn">${labels.contact}</a>
+                <a href="../../${lang}/index.html">${labels.home}</a>
+                <a href="../../${lang}/products.html">${labels.products}</a>
+                <a href="../../${lang}/applications.html">${labels.applications}</a>
+                <a href="../../${lang}/colour.html">${labels.colour}</a>
+                <a href="../../${lang}/installations.html" class="active">${labels.installations}</a>
+                <a href="../../${lang}/about.html">${labels.about}</a>
+                <a href="../../${lang}/contact.html" class="contact-btn">${labels.contact}</a>
             </nav>
         </div>
     </header>
@@ -764,7 +775,7 @@ async function generateTranslatedInstallationPage(translation, installation, lan
         <div class="container">
             <!-- Breadcrumb -->
             <div class="breadcrumb">
-                <a href="../../index.html">${labels.home}</a> / <a href="../../installations.html">${labels.installations}</a> / ${translation.title}
+                <a href="../../${lang}/index.html">${labels.home}</a> / <a href="../../${lang}/installations.html">${labels.installations}</a> / ${translation.title}
             </div>
 
             <!-- Installation Header -->
@@ -807,7 +818,7 @@ async function generateTranslatedInstallationPage(translation, installation, lan
             <div class="cta-section">
                 <h3>${labels.readyToTransform}</h3>
                 <p>${labels.contactToday}</p>
-                <a href="../../contact.html" class="cta-button">${labels.getStarted}</a>
+                <a href="../../${lang}/contact.html" class="cta-button">${labels.getStarted}</a>
             </div>
         </div>
     </main>
@@ -820,13 +831,13 @@ async function generateTranslatedInstallationPage(translation, installation, lan
             </div>
             <p class="footer-text">${labels.companyDescription}</p>
             <nav class="footer-nav">
-                <a href="../../index.html">${labels.home}</a>
-                <a href="../../products.html">${labels.products}</a>
-                <a href="../../applications.html">${labels.applications}</a>
-                <a href="../../colour.html">${labels.colour}</a>
-                <a href="../../installations.html">${labels.installations}</a>
-                <a href="../../about.html">${labels.about}</a>
-                <a href="../../contact.html">${labels.contact}</a>
+                <a href="../../${lang}/index.html">${labels.home}</a>
+                <a href="../../${lang}/products.html">${labels.products}</a>
+                <a href="../../${lang}/applications.html">${labels.applications}</a>
+                <a href="../../${lang}/colour.html">${labels.colour}</a>
+                <a href="../../${lang}/installations.html">${labels.installations}</a>
+                <a href="../../${lang}/about.html">${labels.about}</a>
+                <a href="../../${lang}/contact.html">${labels.contact}</a>
             </nav>
             <div class="footer-bottom">
                 <p>&copy; 2025 Rosehill TPV. ${labels.allRightsReserved}</p>
@@ -873,6 +884,14 @@ async function generateTranslatedInstallationPage(translation, installation, lan
             }
         });
     </script>
+
+    <!-- Language Switcher (Fixed Bottom-Right) -->
+    <div class="language-switcher" id="language-switcher" style="position:fixed;bottom:20px;right:20px;background:linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);padding:8px 12px;border-radius:25px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:9999;border:1px solid rgba(255,107,53,0.1);backdrop-filter:blur(10px);display:flex;gap:4px;">
+        <a href="../../installations/${installation.slug}.html" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;font-size:14px;font-weight:500;">EN</a>
+        <a href="../../es/installations/${getLangSlug('es', installation.id, slugMapping)}.html" ${lang === 'es' ? 'class="current"' : ''} style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:${lang === 'es' ? '#ff6b35' : '#64748b'};border-radius:15px;transition:all 0.2s ease;font-size:14px;font-weight:500;${lang === 'es' ? 'background:rgba(255,107,53,0.1);' : ''}">ES</a>
+        <a href="../../fr/installations/${getLangSlug('fr', installation.id, slugMapping)}.html" ${lang === 'fr' ? 'class="current"' : ''} style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:${lang === 'fr' ? '#ff6b35' : '#64748b'};border-radius:15px;transition:all 0.2s ease;font-size:14px;font-weight:500;${lang === 'fr' ? 'background:rgba(255,107,53,0.1);' : ''}">FR</a>
+        <a href="../../de/installations/${getLangSlug('de', installation.id, slugMapping)}.html" ${lang === 'de' ? 'class="current"' : ''} style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:${lang === 'de' ? '#ff6b35' : '#64748b'};border-radius:15px;transition:all 0.2s ease;font-size:14px;font-weight:500;${lang === 'de' ? 'background:rgba(255,107,53,0.1);' : ''}">DE</a>
+    </div>
 </body>
 </html>`;
 
@@ -912,6 +931,8 @@ async function createSlugMappingFile(translations) {
         'utf8'
     );
     console.log('  ✅ Created: ./js/installation-slug-mapping.json');
+    
+    return slugMapping;
 }
 
 // Run the generator
