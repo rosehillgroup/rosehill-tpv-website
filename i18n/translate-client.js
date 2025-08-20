@@ -104,7 +104,29 @@ class TranslationLoader {
       }
     });
 
+    // Handle special cases for HTML content with inline elements
+    this.translateHtmlElements();
+    
     console.log(`✓ Translated ${translatedCount} text elements to ${this.currentLang}`);
+  }
+
+  /**
+   * Translate elements containing HTML (like <sup> tags) that can't be handled by text node processing
+   */
+  translateHtmlElements() {
+    if (this.currentLang === 'en') return;
+
+    // Find elements that contain HTML markup that needs special handling
+    const elementsToTranslate = document.querySelectorAll('.spec-description');
+    
+    elementsToTranslate.forEach(element => {
+      const originalHtml = element.innerHTML;
+      const translatedHtml = this.translate(originalHtml);
+      
+      if (translatedHtml !== originalHtml) {
+        element.innerHTML = translatedHtml;
+      }
+    });
   }
 
   /**
