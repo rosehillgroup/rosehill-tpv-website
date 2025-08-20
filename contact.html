@@ -1210,6 +1210,8 @@
             // Handle script load error
             script.onerror = function() {
                 console.error('Failed to load Google Maps API script');
+                console.error('API URL:', script.src);
+                console.error('This usually indicates: API key invalid, billing not enabled, or API not enabled');
                 showFallbackMap();
             };
             
