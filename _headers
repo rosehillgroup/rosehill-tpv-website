@@ -1,7 +1,0 @@
-# Disable CSP entirely for admin pages to allow blob URLs
-/admin/*
-  Content-Security-Policy: 
-
-# More permissive CSP for all other pages
-/*
-  Content-Security-Policy: img-src 'self' data: blob: https: *; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; connect-src 'self' https:
