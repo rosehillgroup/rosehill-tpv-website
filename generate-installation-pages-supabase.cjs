@@ -139,9 +139,16 @@ async function generateInstallationPage(installation, outputDir) {
             let filename;
             
             if (typeof img === 'string') {
-                // Old format: just a filename string
-                imageUrl = `../images/installations/${img}`;
-                filename = img;
+                // Check if it's already a full URL (Supabase Storage) or just a filename
+                if (img.startsWith('http')) {
+                    // Full URL - use as is
+                    imageUrl = img;
+                    filename = img.split('/').pop() || 'image';
+                } else {
+                    // Old format: just a filename string
+                    imageUrl = `../images/installations/${img}`;
+                    filename = img;
+                }
             } else if (img && typeof img === 'object') {
                 // New format: object with url and/or filename
                 if (img.url) {
@@ -179,7 +186,14 @@ async function generateInstallationPage(installation, outputDir) {
             let imageUrl;
             
             if (typeof img === 'string') {
-                imageUrl = `../images/installations/${img}`;
+                // Check if it's already a full URL (Supabase Storage) or just a filename
+                if (img.startsWith('http')) {
+                    // Full URL - use as is
+                    imageUrl = img;
+                } else {
+                    // Old format: just a filename string
+                    imageUrl = `../images/installations/${img}`;
+                }
             } else if (img && typeof img === 'object') {
                 if (img.url) {
                     imageUrl = img.url;
