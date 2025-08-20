@@ -1093,6 +1093,103 @@
     </footer>
 
 
+    <!-- Google Maps API -->
+    <script async defer src="https://maps.googleapis.com/js/api?key=GOOGLE_MAPS_API_KEY&callback=initMap&libraries=places"></script>
+    
+    <script>
+        // Initialize Google Map
+        function initMap() {
+            // Rosehill TPV Location: Spring Bank Mills, Watson Mill Lane, Sowerby Bridge, West Yorkshire HX6 3BW
+            const rosehillLocation = { lat: 53.7089, lng: -1.9308 };
+            
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 15,
+                center: rosehillLocation,
+                mapTypeControl: true,
+                streetViewControl: true,
+                fullscreenControl: true,
+                zoomControl: true,
+                styles: [
+                    {
+                        featureType: "poi",
+                        elementType: "labels",
+                        stylers: [{ visibility: "on" }]
+                    }
+                ]
+            });
+            
+            // Add marker for Rosehill TPV
+            const marker = new google.maps.Marker({
+                position: rosehillLocation,
+                map: map,
+                title: "Rosehill Sports & Play - TPV Manufacturing",
+                animation: google.maps.Animation.DROP
+            });
+            
+            // Info window with company details
+            const infoWindow = new google.maps.InfoWindow({
+                content: `
+                    <div style="max-width: 300px; font-family: 'Source Sans Pro', sans-serif;">
+                        <h3 style="color: #1a365d; margin: 0 0 10px 0; font-size: 1.1rem;">Rosehill Sports & Play</h3>
+                        <p style="color: #666; margin: 0 0 8px 0; font-size: 0.9rem;">A Division of Rosehill Group</p>
+                        <p style="color: #333; margin: 0 0 8px 0; font-size: 0.85rem; line-height: 1.4;">
+                            <strong>Address:</strong><br>
+                            Spring Bank Mills<br>
+                            Watson Mill Lane<br>
+                            Sowerby Bridge<br>
+                            West Yorkshire HX6 3BW<br>
+                            United Kingdom
+                        </p>
+                        <p style="color: #333; margin: 0 0 8px 0; font-size: 0.85rem;">
+                            <strong>Phone:</strong> <a href="tel:+441422839456" style="color: #ff6b35; text-decoration: none;">+44 (0)1422 839 456</a><br>
+                            <strong>Email:</strong> <a href="mailto:info@rosehilltpv.com" style="color: #ff6b35; text-decoration: none;">info@rosehilltpv.com</a>
+                        </p>
+                        <div style="text-align: center; margin-top: 12px;">
+                            <a href="https://www.google.com/maps/dir//Spring+Bank+Mills,+Watson+Mill+Ln,+Sowerby+Bridge+HX6+3BW,+UK" 
+                               target="_blank" 
+                               style="background: #ff6b35; color: white; padding: 6px 12px; border-radius: 4px; text-decoration: none; font-size: 0.8rem; display: inline-block;">
+                                Get Directions
+                            </a>
+                        </div>
+                    </div>
+                `
+            });
+            
+            // Show info window when marker is clicked
+            marker.addListener("click", () => {
+                infoWindow.open(map, marker);
+            });
+            
+            // Show info window by default after a short delay
+            setTimeout(() => {
+                infoWindow.open(map, marker);
+            }, 1000);
+        }
+        
+        // Fallback if Google Maps fails to load
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const mapElement = document.getElementById('map');
+                if (!mapElement.hasChildNodes() || mapElement.children.length === 0) {
+                    mapElement.innerHTML = `
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #6c757d; text-align: center; padding: 40px;">
+                            <svg width="64" height="64" fill="currentColor" style="margin-bottom: 16px; opacity: 0.5;">
+                                <path d="M32 4C20.9 4 12 12.9 12 24c0 18 20 36 20 36s20-18 20-36c0-11.1-8.9-20-20-20zm0 28c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/>
+                            </svg>
+                            <h3 style="color: #1a365d; margin: 0 0 8px 0;">Visit Our Manufacturing Facility</h3>
+                            <p style="margin: 0 0 16px 0; font-size: 0.95rem;">Spring Bank Mills, Watson Mill Lane<br>Sowerby Bridge, West Yorkshire HX6 3BW</p>
+                            <a href="https://www.google.com/maps/dir//Spring+Bank+Mills,+Watson+Mill+Ln,+Sowerby+Bridge+HX6+3BW,+UK" 
+                               target="_blank"
+                               style="background: #ff6b35; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                                View on Google Maps
+                            </a>
+                        </div>
+                    `;
+                }
+            }, 3000); // Wait 3 seconds for Google Maps to load
+        });
+    </script>
+
     <!-- Client-side translation system -->
 
     <!-- Desktop Language Switcher (Fixed Bottom-Right) -->
