@@ -15,63 +15,6 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Load customer URL mappings
-function loadCustomerUrls() {
-    try {
-        const customerUrlsPath = path.join(__dirname, 'customer-urls.json');
-        const customerUrlsData = fs.readFileSync(customerUrlsPath, 'utf8');
-        return JSON.parse(customerUrlsData);
-    } catch (error) {
-        console.warn('Could not load customer URLs:', error.message);
-        return {};
-    }
-}
-
-/**
- * Convert customer company names to hyperlinks in text
- * @param {string} text - Text that may contain customer company names
- * @param {Object} customerUrls - Mapping of company names to URLs
- * @returns {string} - Text with customer names converted to links
- */
-function linkCustomerNames(text, customerUrls) {
-    if (!text || typeof text !== 'string') return text;
-    
-    // Don't process text that already has links
-    if (text.includes('<a href=') || text.includes('href=')) return text;
-    
-    let linkedText = text;
-    
-    // Sort company names by length (longest first) to avoid partial matches
-    const sortedCompanyNames = Object.keys(customerUrls).sort((a, b) => b.length - a.length);
-    
-    for (const companyName of sortedCompanyNames) {
-        const url = customerUrls[companyName];
-        if (!url) continue;
-        
-        // Create regex for case-insensitive matching, accounting for HTML entities
-        const escapedCompanyName = companyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        // Match the company name, handling both & and &amp; versions
-        const regex = new RegExp(`\\b${escapedCompanyName.replace(/&/g, '(&amp;|&)')}\\b`, 'gi');
-        
-        // Replace with linked version (only if not already in a link)
-        linkedText = linkedText.replace(regex, (match, offset, string) => {
-            // Check if this match is already inside a link tag
-            const beforeMatch = string.substring(0, offset);
-            const openTags = (beforeMatch.match(/<a[^>]*>/gi) || []).length;
-            const closeTags = (beforeMatch.match(/<\/a>/gi) || []).length;
-            
-            // If we're inside an unclosed <a> tag, don't add another link
-            if (openTags > closeTags) {
-                return match;
-            }
-            
-            return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #ff6b35; text-decoration: underline;">${match}</a>`;
-        });
-    }
-    
-    return linkedText;
-}
-
 /**
  * Transform Supabase URL to use image transformations
  * @param {string} originalUrl - Original Supabase storage URL
@@ -139,10 +82,6 @@ async function generateInstallationPages() {
     try {
         console.log('Fetching installations from Supabase...');
         
-        // Load customer URLs for linking
-        const customerUrls = loadCustomerUrls();
-        console.log(`Loaded ${Object.keys(customerUrls).length} customer URL mappings`);
-        
         // Get all installations from Supabase
         const { data: installations, error } = await supabase
             .from('installations')
@@ -163,7 +102,7 @@ async function generateInstallationPages() {
 
         // Generate a page for each installation
         for (const installation of installations) {
-            await generateInstallationPage(installation, installationsDir, customerUrls);
+            await generateInstallationPage(installation, installationsDir);
         }
 
         console.log('✅ All installation pages generated successfully!');
@@ -175,7 +114,7 @@ async function generateInstallationPages() {
 }
 
 // Function to generate a single installation page
-async function generateInstallationPage(installation, outputDir, customerUrls = {}) {
+async function generateInstallationPage(installation, outputDir) {
     const { title, location, installation_date, application, description, images, slug } = installation;
 
     console.log(`Generating page for: ${title}`);
@@ -189,7 +128,7 @@ async function generateInstallationPage(installation, outputDir, customerUrls = 
     });
 
     // Generate breadcrumb
-    const breadcrumb = `<a href="/en/installations.html">Installations</a> / ${title}`;
+    const breadcrumb = `<a href="../installations.html">Installations</a> / ${title}`;
 
     // Generate image gallery HTML
     let imageGalleryHTML = '';
@@ -286,14 +225,10 @@ async function generateInstallationPage(installation, outputDir, customerUrls = 
             </div>`;
     }
 
-    // Generate description HTML with customer linking (only if not already linked)
+    // Generate description HTML
     const descriptionHTML = Array.isArray(description) 
-        ? description.map(paragraph => {
-            // Only apply linking if paragraph doesn't already contain links
-            const linkedParagraph = paragraph.includes('<a href=') ? paragraph : linkCustomerNames(paragraph, customerUrls);
-            return `<p>${linkedParagraph}</p>`;
-        }).join('\n                ')
-        : `<p>${description.includes('<a href=') ? description : linkCustomerNames(description, customerUrls)}</p>`;
+        ? description.map(paragraph => `<p>${paragraph}</p>`).join('\n                ')
+        : `<p>${description}</p>`;
 
     // Application type mapping
     const applicationTypes = {
@@ -317,12 +252,8 @@ async function generateInstallationPage(installation, outputDir, customerUrls = 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title} - Rosehill TPV® Installation</title>
-    <meta name="description" content="${title} in ${location}. See how Rosehill TPV® coloured rubber granules were used to create safe, vibrant surfaces for ${applicationDisplay.toLowerCase()}.">
-    <link rel="apple-touch-icon" sizes="180x180" href="../favicon_io/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="../favicon_io/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="../favicon_io/favicon-16x16.png">
-    <link rel="manifest" href="../favicon_io/site.webmanifest">
+    <title>${title} - Rosehill TPV Installation</title>
+    <meta name="description" content="${title} in ${location}. See how Rosehill TPV coloured rubber granules were used to create safe, vibrant surfaces for ${applicationDisplay.toLowerCase()}.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
@@ -393,12 +324,6 @@ async function generateInstallationPage(installation, outputDir, customerUrls = 
             color: #ff6b35;
         }
 
-        .nav-menu a.active {
-            background: rgba(255, 107, 53, 0.2);
-            color: #ff6b35;
-            font-weight: 600;
-        }
-
         .contact-btn {
             background: #ff6b35;
             padding: 12px 24px;
@@ -411,7 +336,6 @@ async function generateInstallationPage(installation, outputDir, customerUrls = 
             background: #e55a2b !important;
             transform: translateY(-2px);
         }
-
 
         /* Main Content */
         .main-content {
@@ -760,17 +684,17 @@ async function generateInstallationPage(installation, outputDir, customerUrls = 
     <!-- Header -->
     <header class="header">
         <div class="header-container">
-            <a href="/en/" class="logo">
+            <a href="../index.html" class="logo">
                 <img src="../rosehill_tpv_logo.png" alt="Rosehill TPV">
             </a>
             <nav class="nav-menu">
-                <a href="/en/">Home</a>
-                <a href="/en/products.html">Products</a>
-                <a href="/en/applications.html">Applications</a>
-                <a href="/en/colour.html">Colour</a>
-                <a href="/en/installations.html" class="active">Installations</a>
-                <a href="/en/about.html">About Us</a>
-                <a href="/en/contact.html" class="contact-btn">Get in Touch</a>
+                <a href="../index.html">Home</a>
+                <a href="../products.html">Products</a>
+                <a href="../applications.html">Applications</a>
+                <a href="../colour.html">Colour</a>
+                <a href="../installations.html" class="active">Installations</a>
+                <a href="../about.html">About Us</a>
+                <a href="../contact.html" class="contact-btn">Get in Touch</a>
             </nav>
         </div>
     </header>
@@ -811,19 +735,19 @@ async function generateInstallationPage(installation, outputDir, customerUrls = 
                 </div>
             </div>
 
-            ${imageGalleryHTML}
-
             <!-- Installation Content -->
             <div class="installation-content">
                 <h2>Project Overview</h2>
                 ${descriptionHTML}
             </div>
 
+            ${imageGalleryHTML}
+
             <!-- Call to Action -->
             <div class="cta-section">
                 <h3>Ready to Transform Your Space?</h3>
-                <p>Contact us today to discuss how Rosehill TPV<sup>®</sup> can create safe, vibrant surfaces for your project.</p>
-                <a href="/en/contact.html" class="cta-button">Get Started</a>
+                <p>Contact us today to discuss how Rosehill TPV can create safe, vibrant surfaces for your project.</p>
+                <a href="../contact.html" class="cta-button">Get Started</a>
             </div>
         </div>
     </main>
@@ -836,16 +760,16 @@ async function generateInstallationPage(installation, outputDir, customerUrls = 
             </div>
             <p class="footer-text">Creating safer, more vibrant play and sports surfaces worldwide with our premium coloured rubber granules.</p>
             <nav class="footer-nav">
-                <a href="/en/">Home</a>
-                <a href="/en/products.html">Products</a>
-                <a href="/en/applications.html">Applications</a>
-                <a href="/en/colour.html">Colour</a>
-                <a href="/en/installations.html">Installations</a>
-                <a href="/en/about.html">About Us</a>
-                <a href="/en/contact.html">Get in Touch</a>
+                <a href="../index.html">Home</a>
+                <a href="../products.html">Products</a>
+                <a href="../applications.html">Applications</a>
+                <a href="../colour.html">Colour</a>
+                <a href="../installations.html">Installations</a>
+                <a href="../about.html">About Us</a>
+                <a href="../contact.html">Get in Touch</a>
             </nav>
             <div class="footer-bottom">
-                <p>&copy; 2025 Rosehill TPV<sup>®</sup>. All rights reserved.</p>
+                <p>&copy; 2025 Rosehill TPV. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -888,70 +812,6 @@ async function generateInstallationPage(installation, outputDir, customerUrls = 
                 changeImage(1);
             }
         });
-
-        // Language switching functionality
-        function switchLanguage(targetLang) {
-            const currentPath = window.location.pathname;
-            const currentLang = currentPath.split('/')[1]; // Get current language from path
-            
-            // If we're already on the target language, do nothing
-            if (currentLang === targetLang) return;
-            
-            // Replace the current language in the path with the target language
-            let newPath;
-            if (currentLang && ['en', 'fr', 'de', 'es'].includes(currentLang)) {
-                // We're on a language-specific page, replace the language
-                newPath = currentPath.replace('/' + currentLang + '/', '/' + targetLang + '/');
-            } else {
-                // We're on the root, go to the target language root
-                newPath = '/' + targetLang + '/';
-            }
-            
-            window.location.href = newPath;
-        }
-    </script>
-
-    <!-- Language Switcher -->
-    <div id="language-switcher" style="position:fixed;bottom:20px;right:20px;background:linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);padding:8px 12px;border-radius:25px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:9999;border:1px solid rgba(255,107,53,0.1);backdrop-filter:blur(10px);font-family:'Source Sans Pro', sans-serif;font-size:14px;font-weight:500;">
-        <a href="javascript:void(0)" onclick="switchLanguage('en')" id="lang-en" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;">EN</a>
-        <a href="javascript:void(0)" onclick="switchLanguage('fr')" id="lang-fr" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;">FR</a>
-        <a href="javascript:void(0)" onclick="switchLanguage('de')" id="lang-de" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;">DE</a>
-        <a href="javascript:void(0)" onclick="switchLanguage('es')" id="lang-es" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;">ES</a>
-    </div>
-    
-    <script>
-        // Set active language based on current URL
-        function setActiveLanguage() {
-            const currentPath = window.location.pathname;
-            const currentLang = currentPath.split('/')[1]; // Get current language from path
-            
-            // Default to 'en' if no language detected or invalid language
-            const activeLang = ['en', 'fr', 'de', 'es'].includes(currentLang) ? currentLang : 'en';
-            
-            // Reset all language buttons
-            ['en', 'fr', 'de', 'es'].forEach(lang => {
-                const element = document.getElementById('lang-' + lang);
-                if (element) {
-                    element.style.background = '';
-                    element.style.color = '#64748b';
-                    element.style.boxShadow = '';
-                }
-            });
-            
-            // Set active language button
-            const activeElement = document.getElementById('lang-' + activeLang);
-            if (activeElement) {
-                activeElement.style.background = '#ff6b35';
-                activeElement.style.color = 'white';
-                activeElement.style.boxShadow = '0 2px 8px rgba(255,107,53,0.3)';
-            }
-        }
-        
-        // Set active language on page load
-        document.addEventListener('DOMContentLoaded', setActiveLanguage);
-        
-        // Also set it immediately in case DOMContentLoaded already fired
-        setActiveLanguage();
     </script>
 </body>
 </html>`;

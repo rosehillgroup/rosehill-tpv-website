@@ -1179,18 +1179,29 @@
                         }
                     }
                     
-                    // Process image URLs
+                    // Process image URLs - preserve Supabase URLs, only add prefix for local images
                     formatted.images = formatted.images.map(img => {
                         if (typeof img === 'string') {
+                            // If it's already a full URL (starts with http), keep it as is
+                            if (img.startsWith('http')) {
+                                return img;
+                            }
+                            // Otherwise, treat as local image
                             return `images/installations/${img}`;
                         } else if (img && typeof img === 'object') {
                             if (img.url) {
                                 return img.url;
                             } else if (img.filename) {
+                                // If filename is a full URL, use it directly
+                                if (img.filename.startsWith('http')) {
+                                    return img.filename;
+                                }
                                 return `images/installations/${img.filename}`;
                             }
                         }
-                        return `images/installations/${img}`;
+                        // Fallback - if it starts with http, use as is, otherwise add prefix
+                        const imgStr = String(img);
+                        return imgStr.startsWith('http') ? imgStr : `images/installations/${imgStr}`;
                     });
                     
                     return formatted;
@@ -1238,15 +1249,26 @@
                         
                         installation.images = installation.images.map(img => {
                             if (typeof img === 'string') {
+                                // If it's already a full URL (starts with http), keep it as is
+                                if (img.startsWith('http')) {
+                                    return img;
+                                }
+                                // Otherwise, treat as local image
                                 return `images/installations/${img}`;
                             } else if (img && typeof img === 'object') {
                                 if (img.url) {
                                     return img.url;
                                 } else if (img.filename) {
+                                    // If filename is a full URL, use it directly
+                                    if (img.filename.startsWith('http')) {
+                                        return img.filename;
+                                    }
                                     return `images/installations/${img.filename}`;
                                 }
                             }
-                            return `images/installations/${img}`;
+                            // Fallback - if it starts with http, use as is, otherwise add prefix
+                            const imgStr = String(img);
+                            return imgStr.startsWith('http') ? imgStr : `images/installations/${imgStr}`;
                         });
                     });
                     
