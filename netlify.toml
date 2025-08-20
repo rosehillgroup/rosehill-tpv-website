@@ -1,13 +1,14 @@
 [build]
-  # Static site - no build needed, deploy from root
-  command = "echo 'Static site deployed from root folder'"
+  # Run build script to replace API keys and install function dependencies
+  command = "chmod +x build.sh && ./build.sh"
   
   # Publish directory (root folder with client-side translations)
   publish = "."
 
 [build.environment]
-  # DeepL API key for translation (set in Netlify dashboard)
+  # API keys for translation and maps (set in Netlify dashboard)
   # DEEPL_API_KEY = "your-key-here"
+  # GOOGLE_MAPS_API_KEY = "your-key-here"
 
 # Redirects for language paths - handled by _redirects file
 # [[redirects]]
