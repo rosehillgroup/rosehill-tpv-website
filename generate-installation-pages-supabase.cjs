@@ -115,7 +115,7 @@ async function generateInstallationPages() {
 
 // Function to generate a single installation page
 async function generateInstallationPage(installation, outputDir) {
-    const { title, location, installation_date, application, description, images, slug } = installation;
+    const { title, location, installation_date, application, description, images, slug, thanks_to_name, thanks_to_url } = installation;
 
     console.log(`Generating page for: ${title}`);
 
@@ -243,6 +243,28 @@ async function generateInstallationPage(installation, outputDir) {
     const descriptionHTML = Array.isArray(description) 
         ? description.map(paragraph => `<p>${paragraph}</p>`).join('\n                ')
         : `<p>${description}</p>`;
+
+    // Generate thanks section HTML
+    let thanksSectionHTML = '';
+    if (thanks_to_name && thanks_to_name.trim()) {
+        const thanksName = thanks_to_name.trim();
+        const thanksUrl = thanks_to_url && thanks_to_url.trim() ? thanks_to_url.trim() : null;
+        
+        if (thanksUrl) {
+            thanksSectionHTML = `
+            <div class="thanks-section">
+                <h3>Special Thanks</h3>
+                <p>We would like to thank the following partner for their contribution to this project:</p>
+                <a href="${thanksUrl}" target="_blank" rel="noopener noreferrer" class="thanks-link">${thanksName}</a>
+            </div>`;
+        } else {
+            thanksSectionHTML = `
+            <div class="thanks-section">
+                <h3>Special Thanks</h3>
+                <p>We would like to thank <strong>${thanksName}</strong> for their contribution to this project.</p>
+            </div>`;
+        }
+    }
 
     // Application type mapping
     const applicationTypes = {
@@ -569,6 +591,45 @@ async function generateInstallationPage(installation, outputDir) {
             right: 20px;
         }
 
+        /* Thanks Section */
+        .thanks-section {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .thanks-section h3 {
+            color: #1a365d;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .thanks-section p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .thanks-link {
+            display: inline-block;
+            color: #ff6b35;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 10px 20px;
+            border: 2px solid #ff6b35;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .thanks-link:hover {
+            background: #ff6b35;
+            color: white;
+            transform: translateY(-2px);
+        }
+
         /* Call to Action */
         .cta-section {
             background: linear-gradient(135deg, #1a365d, #2d4a71);
@@ -683,6 +744,7 @@ async function generateInstallationPage(installation, outputDir) {
             .installation-header,
             .installation-content,
             .image-gallery,
+            .thanks-section,
             .cta-section {
                 padding: 20px;
             }
@@ -756,6 +818,8 @@ async function generateInstallationPage(installation, outputDir) {
             </div>
 
             ${imageGalleryHTML}
+
+            ${thanksSectionHTML}
 
             <!-- Call to Action -->
             <div class="cta-section">

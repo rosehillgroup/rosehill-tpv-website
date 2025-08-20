@@ -306,6 +306,45 @@
             right: 20px;
         }
 
+        /* Thanks Section */
+        .thanks-section {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .thanks-section h3 {
+            color: #1a365d;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .thanks-section p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .thanks-link {
+            display: inline-block;
+            color: #ff6b35;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 10px 20px;
+            border: 2px solid #ff6b35;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .thanks-link:hover {
+            background: #ff6b35;
+            color: white;
+            transform: translateY(-2px);
+        }
+
         /* Call to Action */
         .cta-section {
             background: linear-gradient(135deg, #1a365d, #2d4a71);
@@ -420,6 +459,7 @@
             .installation-header,
             .installation-content,
             .image-gallery,
+            .thanks-section,
             .cta-section {
                 padding: 20px;
             }
@@ -519,6 +559,13 @@
                 </div>
                     
                 </div>
+            </div>
+
+            
+            <div class="thanks-section">
+                <h3>Special Thanks</h3>
+                <p>We would like to thank the following partner for their contribution to this project:</p>
+                <a href="https://tpv.rosehill.group/" target="_blank" rel="noopener noreferrer" class="thanks-link">Test</a>
             </div>
 
             <!-- Call to Action -->
