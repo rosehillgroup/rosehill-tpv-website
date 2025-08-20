@@ -31,6 +31,10 @@
 # Keep admin pages accessible at root level (English only)
 /installation-approval-hub.html   /installation-approval-hub.html   200!
 /admin/add-installation.html       /admin/add-installation.html       200!
+/admin/add-installation-v2.html    /admin/add-installation-v2.html    200!
+/admin/translations.html           /admin/translations.html           200!
+/admin/manage-installations.html   /admin/manage-installations.html   200!
+/admin/bulk-translate.html         /admin/bulk-translate.html         200!
 
 # Redirect www to non-www (update with your actual domain)
 # https://www.yourdomain.com/* https://yourdomain.com/:splat 301!

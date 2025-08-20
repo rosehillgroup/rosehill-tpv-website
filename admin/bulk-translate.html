@@ -354,6 +354,92 @@
             letter-spacing: 0.5px;
         }
 
+        /* Authentication styles */
+        .auth-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f5f7fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .auth-box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .auth-box h2 {
+            color: #1a365d;
+            margin-bottom: 20px;
+        }
+        
+        .auth-box p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .auth-button {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .auth-button:hover {
+            transform: translateY(-1px);
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1a365d;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .logout-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 100;
+        }
+        
+        .logout-button:hover {
+            background: #c82333;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+
         @media (max-width: 768px) {
             .admin-container {
                 padding: 20px 15px;
@@ -370,155 +456,220 @@
     </style>
 </head>
 <body>
-    <header class="admin-header">
-        <div class="admin-container">
-            <h1>Bulk Translation</h1>
-            <p>Translate multiple installations automatically using AI</p>
+    <!-- Authentication overlay -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-box">
+            <div class="loading-spinner" id="authSpinner"></div>
+            <h2>Admin Authentication Required</h2>
+            <p id="authMessage">Checking authentication status...</p>
+            <button class="auth-button hidden" id="loginButton" onclick="redirectToLogin()">Go to Login</button>
         </div>
-    </header>
+    </div>
+    
+    <!-- Logout button -->
+    <button class="logout-button hidden" id="logoutButton" onclick="handleLogout()">Logout</button>
 
-    <main class="admin-container">
-        <!-- Navigation -->
-        <nav class="admin-nav">
-            <a href="admin-translations.html" class="nav-button">Translation Dashboard</a>
-            <a href="admin-add-installation.html" class="nav-button">Add Installation</a>
-            <a href="#" class="nav-button active">Bulk Translate</a>
-            <a href="/installations.html" class="nav-button">View Site</a>
-        </nav>
+    <!-- Main content (hidden until authenticated) -->
+    <div class="admin-container hidden" id="mainContent">
+        <header class="admin-header">
+            <div class="admin-container">
+                <h1>Bulk Translation</h1>
+                <p>Translate multiple installations automatically using AI</p>
+            </div>
+        </header>
 
-        <!-- Translation Status -->
-        <section class="status-grid" id="status-grid">
-            <div class="status-card">
-                <h3>French Translations</h3>
-                <div class="status-value" id="fr-count">-</div>
-                <div class="status-bar">
-                    <div class="status-fill fr" id="fr-bar"></div>
-                </div>
-                <div class="status-text" id="fr-text">Loading...</div>
-            </div>
-            <div class="status-card">
-                <h3>German Translations</h3>
-                <div class="status-value" id="de-count">-</div>
-                <div class="status-bar">
-                    <div class="status-fill de" id="de-bar"></div>
-                </div>
-                <div class="status-text" id="de-text">Loading...</div>
-            </div>
-            <div class="status-card">
-                <h3>Spanish Translations</h3>
-                <div class="status-value" id="es-count">-</div>
-                <div class="status-bar">
-                    <div class="status-fill es" id="es-bar"></div>
-                </div>
-                <div class="status-text" id="es-text">Loading...</div>
-            </div>
-        </section>
+        <main class="admin-container">
+            <!-- Navigation -->
+            <nav class="admin-nav">
+                <a href="translations.html" class="nav-button">Translation Dashboard</a>
+                <a href="add-installation-v2.html" class="nav-button">Add Installation</a>
+                <a href="manage-installations.html" class="nav-button">Manage Installations</a>
+                <a href="bulk-translate.html" class="nav-button active">Bulk Translate</a>
+                <a href="/installations.html" class="nav-button">View Site</a>
+            </nav>
 
-        <!-- Control Panel -->
-        <section class="control-panel">
-            <h2>Translation Options</h2>
-            
-            <div class="control-options">
-                <div class="option-group" id="missing-option" onclick="selectOption('missing')">
-                    <h3>🎯 Translate Missing</h3>
-                    <p>Only translate installations that are missing translations in selected languages.</p>
-                    <div class="option-settings">
-                        <div class="checkbox-group">
-                            <label class="checkbox-item">
-                                <input type="checkbox" id="missing-fr" checked>
-                                <span>🇫🇷 French</span>
-                            </label>
-                            <label class="checkbox-item">
-                                <input type="checkbox" id="missing-de" checked>
-                                <span>🇩🇪 German</span>
-                            </label>
-                            <label class="checkbox-item">
-                                <input type="checkbox" id="missing-es" checked>
-                                <span>🇪🇸 Spanish</span>
-                            </label>
+            <!-- Translation Status -->
+            <section class="status-grid" id="status-grid">
+                <div class="status-card">
+                    <h3>French Translations</h3>
+                    <div class="status-value" id="fr-count">-</div>
+                    <div class="status-bar">
+                        <div class="status-fill fr" id="fr-bar"></div>
+                    </div>
+                    <div class="status-text" id="fr-text">Loading...</div>
+                </div>
+                <div class="status-card">
+                    <h3>German Translations</h3>
+                    <div class="status-value" id="de-count">-</div>
+                    <div class="status-bar">
+                        <div class="status-fill de" id="de-bar"></div>
+                    </div>
+                    <div class="status-text" id="de-text">Loading...</div>
+                </div>
+                <div class="status-card">
+                    <h3>Spanish Translations</h3>
+                    <div class="status-value" id="es-count">-</div>
+                    <div class="status-bar">
+                        <div class="status-fill es" id="es-bar"></div>
+                    </div>
+                    <div class="status-text" id="es-text">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Control Panel -->
+            <section class="control-panel">
+                <h2>Translation Options</h2>
+                
+                <div class="control-options">
+                    <div class="option-group" id="missing-option" onclick="selectOption('missing')">
+                        <h3>🎯 Translate Missing</h3>
+                        <p>Only translate installations that are missing translations in selected languages.</p>
+                        <div class="option-settings">
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="missing-fr" checked>
+                                    <span>🇫🇷 French</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="missing-de" checked>
+                                    <span>🇩🇪 German</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="missing-es" checked>
+                                    <span>🇪🇸 Spanish</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="option-group" id="retranslate-option" onclick="selectOption('retranslate')">
+                        <h3>🔄 Re-translate All</h3>
+                        <p>Re-translate all installations, overwriting existing translations.</p>
+                        <div class="option-settings">
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="retranslate-fr">
+                                    <span>🇫🇷 French</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="retranslate-de">
+                                    <span>🇩🇪 German</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="retranslate-es">
+                                    <span>🇪🇸 Spanish</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="option-group" id="retranslate-option" onclick="selectOption('retranslate')">
-                    <h3>🔄 Re-translate All</h3>
-                    <p>Re-translate all installations, overwriting existing translations.</p>
-                    <div class="option-settings">
-                        <div class="checkbox-group">
-                            <label class="checkbox-item">
-                                <input type="checkbox" id="retranslate-fr">
-                                <span>🇫🇷 French</span>
-                            </label>
-                            <label class="checkbox-item">
-                                <input type="checkbox" id="retranslate-de">
-                                <span>🇩🇪 German</span>
-                            </label>
-                            <label class="checkbox-item">
-                                <input type="checkbox" id="retranslate-es">
-                                <span>🇪🇸 Spanish</span>
-                            </label>
-                        </div>
+                <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn btn-primary" id="start-btn" onclick="startTranslation()">
+                        <span>🚀</span> Start Translation
+                    </button>
+                    <button class="btn btn-danger" id="stop-btn" onclick="stopTranslation()" disabled>
+                        <span>⏹️</span> Stop Translation
+                    </button>
+                    <button class="btn btn-secondary" onclick="refreshStatus()">
+                        <span>🔄</span> Refresh Status
+                    </button>
+                </div>
+            </section>
+
+            <!-- Progress Section -->
+            <section class="progress-section" id="progress-section">
+                <h3>Translation Progress</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="overall-progress"></div>
+                </div>
+                <p id="progress-text" style="text-align: center; margin: 10px 0; color: #64748b;"></p>
+                
+                <div class="progress-stats">
+                    <div class="progress-stat">
+                        <div class="value" id="completed-count">0</div>
+                        <div class="label">Completed</div>
+                    </div>
+                    <div class="progress-stat">
+                        <div class="value" id="failed-count">0</div>
+                        <div class="label">Failed</div>
+                    </div>
+                    <div class="progress-stat">
+                        <div class="value" id="remaining-count">0</div>
+                        <div class="label">Remaining</div>
+                    </div>
+                    <div class="progress-stat">
+                        <div class="value" id="eta-time">-</div>
+                        <div class="label">ETA</div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                <button class="btn btn-primary" id="start-btn" onclick="startTranslation()">
-                    <span>🚀</span> Start Translation
-                </button>
-                <button class="btn btn-danger" id="stop-btn" onclick="stopTranslation()" disabled>
-                    <span>⏹️</span> Stop Translation
-                </button>
-                <button class="btn btn-secondary" onclick="refreshStatus()">
-                    <span>🔄</span> Refresh Status
-                </button>
-            </div>
-        </section>
-
-        <!-- Progress Section -->
-        <section class="progress-section" id="progress-section">
-            <h3>Translation Progress</h3>
-            <div class="progress-bar">
-                <div class="progress-fill" id="overall-progress"></div>
-            </div>
-            <p id="progress-text" style="text-align: center; margin: 10px 0; color: #64748b;"></p>
-            
-            <div class="progress-stats">
-                <div class="progress-stat">
-                    <div class="value" id="completed-count">0</div>
-                    <div class="label">Completed</div>
+            <!-- Translation Log -->
+            <section class="translation-log">
+                <div class="log-header">
+                    <h3>Translation Log</h3>
+                    <button class="btn btn-secondary" onclick="clearLog()">Clear Log</button>
                 </div>
-                <div class="progress-stat">
-                    <div class="value" id="failed-count">0</div>
-                    <div class="label">Failed</div>
+                <div class="log-content" id="log-content">
+                    <div class="log-entry info">🚀 Ready to start bulk translation...</div>
                 </div>
-                <div class="progress-stat">
-                    <div class="value" id="remaining-count">0</div>
-                    <div class="label">Remaining</div>
-                </div>
-                <div class="progress-stat">
-                    <div class="value" id="eta-time">-</div>
-                    <div class="label">ETA</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Translation Log -->
-        <section class="translation-log">
-            <div class="log-header">
-                <h3>Translation Log</h3>
-                <button class="btn btn-secondary" onclick="clearLog()">Clear Log</button>
-            </div>
-            <div class="log-content" id="log-content">
-                <div class="log-entry info">🚀 Ready to start bulk translation...</div>
-            </div>
-        </section>
-    </main>
+            </section>
+        </main>
+    </div>
 
     <!-- Include Supabase Client -->
     <script src="/js/supabase-client.js"></script>
     
     <script>
+        // Authentication state
+        let authToken = null;
+        
+        // Check for stored auth token
+        window.addEventListener('load', () => {
+            authToken = localStorage.getItem('tpv_admin_token');
+            
+            if (authToken) {
+                // Verify token is still valid
+                verifyAuth();
+            } else {
+                // No token, show login message
+                showLoginMessage();
+            }
+        });
+        
+        async function verifyAuth() {
+            try {
+                // Quick check - if token exists, show the page
+                document.getElementById('authContainer').classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+                document.getElementById('logoutButton').classList.remove('hidden');
+                
+                // Initialize the page
+                selectOption('missing');
+                loadTranslationStatus();
+            } catch (error) {
+                // Token invalid, show login message
+                localStorage.removeItem('tpv_admin_token');
+                showLoginMessage();
+            }
+        }
+        
+        function showLoginMessage() {
+            document.getElementById('authSpinner').style.display = 'none';
+            document.getElementById('authMessage').textContent = 'Please log in to access the bulk translation tool.';
+            document.getElementById('loginButton').classList.remove('hidden');
+        }
+        
+        function redirectToLogin() {
+            window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+        }
+        
+        function handleLogout() {
+            localStorage.removeItem('tpv_admin_token');
+            window.location.href = '/';
+        }
+
         // Global variables
         let translationStats = {};
         let selectedOption = 'missing';
@@ -530,12 +681,6 @@
             failed: 0,
             startTime: null
         };
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            selectOption('missing');
-            loadTranslationStatus();
-        });
 
         // Select translation option
         function selectOption(option) {

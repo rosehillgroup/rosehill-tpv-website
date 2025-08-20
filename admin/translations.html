@@ -397,6 +397,87 @@
             color: #64748b;
         }
 
+        /* Authentication styles */
+        .auth-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f5f7fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .auth-box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .auth-box h2 {
+            color: #1a365d;
+            margin-bottom: 20px;
+        }
+        
+        .auth-box p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .auth-button {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        
+        .auth-button:hover {
+            transform: translateY(-1px);
+        }
+        
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #1a365d;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        .logout-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 100;
+        }
+        
+        .logout-button:hover {
+            background: #c82333;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+
         @media (max-width: 768px) {
             .admin-container {
                 padding: 20px 15px;
@@ -431,128 +512,145 @@
     </style>
 </head>
 <body>
-    <header class="admin-header">
-        <div class="admin-container">
-            <h1>Translation Management</h1>
-            <p>Manage multilingual content for TPV installations</p>
+    <!-- Authentication overlay -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-box">
+            <div class="loading-spinner" id="authSpinner"></div>
+            <h2>Admin Authentication Required</h2>
+            <p id="authMessage">Checking authentication status...</p>
+            <button class="auth-button hidden" id="loginButton" onclick="redirectToLogin()">Go to Login</button>
         </div>
-    </header>
+    </div>
+    
+    <!-- Logout button -->
+    <button class="logout-button hidden" id="logoutButton" onclick="handleLogout()">Logout</button>
 
-    <main class="admin-container">
-        <!-- Navigation -->
-        <nav class="admin-nav">
-            <a href="#" class="nav-button active">Translation Dashboard</a>
-            <a href="admin-add-installation.html" class="nav-button">Add Installation</a>
-            <a href="admin-bulk-translate.html" class="nav-button">Bulk Translate</a>
-            <a href="/installations.html" class="nav-button">View Site</a>
-        </nav>
+    <!-- Main content (hidden until authenticated) -->
+    <div class="admin-container hidden" id="mainContent">
+        <header class="admin-header">
+            <div class="admin-container">
+                <h1>Translation Management</h1>
+                <p>Manage multilingual content for TPV installations</p>
+            </div>
+        </header>
 
-        <!-- Statistics -->
-        <section class="stats-grid">
-            <div class="stat-card">
-                <h3>Total Installations</h3>
-                <div class="stat-value" id="total-installations">-</div>
-                <div class="stat-change">Loading...</div>
-            </div>
-            <div class="stat-card">
-                <h3>French Translations</h3>
-                <div class="stat-value" id="french-translations">-</div>
-                <div class="stat-change" id="french-percent">Loading...</div>
-            </div>
-            <div class="stat-card">
-                <h3>German Translations</h3>
-                <div class="stat-value" id="german-translations">-</div>
-                <div class="stat-change" id="german-percent">Loading...</div>
-            </div>
-            <div class="stat-card">
-                <h3>Spanish Translations</h3>
-                <div class="stat-value" id="spanish-translations">-</div>
-                <div class="stat-change" id="spanish-percent">Loading...</div>
-            </div>
-        </section>
+        <main class="admin-container">
+            <!-- Navigation -->
+            <nav class="admin-nav">
+                <a href="translations.html" class="nav-button active">Translation Dashboard</a>
+                <a href="add-installation-v2.html" class="nav-button">Add Installation</a>
+                <a href="manage-installations.html" class="nav-button">Manage Installations</a>
+                <a href="bulk-translate.html" class="nav-button">Bulk Translate</a>
+                <a href="/installations.html" class="nav-button">View Site</a>
+            </nav>
 
-        <!-- Filters and Actions -->
-        <section class="filters-section">
-            <div class="filters-grid">
-                <div class="filter-group">
-                    <label for="search">Search Installations</label>
-                    <input type="text" id="search" class="filter-input" placeholder="Search by title or location...">
+            <!-- Statistics -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <h3>Total Installations</h3>
+                    <div class="stat-value" id="total-installations">-</div>
+                    <div class="stat-change">Loading...</div>
                 </div>
-                <div class="filter-group">
-                    <label for="language-filter">Translation Status</label>
-                    <select id="language-filter" class="filter-input">
-                        <option value="">All Installations</option>
-                        <option value="missing-fr">Missing French</option>
-                        <option value="missing-de">Missing German</option>
-                        <option value="missing-es">Missing Spanish</option>
-                        <option value="complete">Fully Translated</option>
-                        <option value="partial">Partially Translated</option>
-                    </select>
+                <div class="stat-card">
+                    <h3>French Translations</h3>
+                    <div class="stat-value" id="french-translations">-</div>
+                    <div class="stat-change" id="french-percent">Loading...</div>
                 </div>
-                <div class="filter-group">
-                    <label for="sort">Sort By</label>
-                    <select id="sort" class="filter-input">
-                        <option value="date-desc">Newest First</option>
-                        <option value="date-asc">Oldest First</option>
-                        <option value="title-asc">Title A-Z</option>
-                        <option value="title-desc">Title Z-A</option>
-                    </select>
+                <div class="stat-card">
+                    <h3>German Translations</h3>
+                    <div class="stat-value" id="german-translations">-</div>
+                    <div class="stat-change" id="german-percent">Loading...</div>
                 </div>
-                <div class="action-buttons">
-                    <button class="btn btn-primary" onclick="bulkTranslateSelected()">
-                        <span>🌍</span> Translate Selected
-                    </button>
-                    <button class="btn btn-secondary" onclick="refreshData()">
-                        <span>🔄</span> Refresh
-                    </button>
+                <div class="stat-card">
+                    <h3>Spanish Translations</h3>
+                    <div class="stat-value" id="spanish-translations">-</div>
+                    <div class="stat-change" id="spanish-percent">Loading...</div>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- Progress Bar (hidden by default) -->
-        <div id="progress-container" style="display: none;">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progress-fill"></div>
-            </div>
-            <p id="progress-text" style="text-align: center; margin-top: 10px; color: #64748b;"></p>
-        </div>
-
-        <!-- Installations Table -->
-        <section class="installations-table">
-            <div class="table-header">
-                <h2>Installations</h2>
-                <div class="action-buttons">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                        <input type="checkbox" id="select-all" onchange="toggleSelectAll()">
-                        <span>Select All</span>
-                    </label>
+            <!-- Filters and Actions -->
+            <section class="filters-section">
+                <div class="filters-grid">
+                    <div class="filter-group">
+                        <label for="search">Search Installations</label>
+                        <input type="text" id="search" class="filter-input" placeholder="Search by title or location...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="language-filter">Translation Status</label>
+                        <select id="language-filter" class="filter-input">
+                            <option value="">All Installations</option>
+                            <option value="missing-fr">Missing French</option>
+                            <option value="missing-de">Missing German</option>
+                            <option value="missing-es">Missing Spanish</option>
+                            <option value="complete">Fully Translated</option>
+                            <option value="partial">Partially Translated</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="sort">Sort By</label>
+                        <select id="sort" class="filter-input">
+                            <option value="date-desc">Newest First</option>
+                            <option value="date-asc">Oldest First</option>
+                            <option value="title-asc">Title A-Z</option>
+                            <option value="title-desc">Title Z-A</option>
+                        </select>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="bulkTranslateSelected()">
+                            <span>🌍</span> Translate Selected
+                        </button>
+                        <button class="btn btn-secondary" onclick="refreshData()">
+                            <span>🔄</span> Refresh
+                        </button>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th width="40">Select</th>
-                            <th width="300">Installation</th>
-                            <th width="150">Location</th>
-                            <th width="100">Date</th>
-                            <th width="200">Translation Status</th>
-                            <th width="150">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="installations-tbody">
-                        <!-- Data will be loaded here -->
-                    </tbody>
-                </table>
+            </section>
+
+            <!-- Progress Bar (hidden by default) -->
+            <div id="progress-container" style="display: none;">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <p id="progress-text" style="text-align: center; margin-top: 10px; color: #64748b;"></p>
             </div>
 
-            <div class="loading" id="loading">
-                <div class="spinner"></div>
-                <p>Loading installations...</p>
-            </div>
-        </section>
-    </main>
+            <!-- Installations Table -->
+            <section class="installations-table">
+                <div class="table-header">
+                    <h2>Installations</h2>
+                    <div class="action-buttons">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="select-all" onchange="toggleSelectAll()">
+                            <span>Select All</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th width="40">Select</th>
+                                <th width="300">Installation</th>
+                                <th width="150">Location</th>
+                                <th width="100">Date</th>
+                                <th width="200">Translation Status</th>
+                                <th width="150">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="installations-tbody">
+                            <!-- Data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Loading installations...</p>
+                </div>
+            </section>
+        </main>
+    </div>
 
     <!-- Translation Modal -->
     <div id="translation-modal" class="modal">
@@ -571,16 +669,66 @@
     <script src="/js/supabase-client.js"></script>
     
     <script>
+        // Authentication state
+        let authToken = null;
+        
+        // Check for stored auth token
+        window.addEventListener('load', () => {
+            authToken = localStorage.getItem('tpv_admin_token');
+            
+            if (authToken) {
+                // Verify token is still valid
+                verifyAuth();
+            } else {
+                // No token, show login message
+                showLoginMessage();
+            }
+        });
+        
+        async function verifyAuth() {
+            try {
+                // Quick check - if token exists, show the page
+                // The actual validation happens when making API calls
+                document.getElementById('authContainer').classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+                document.getElementById('logoutButton').classList.remove('hidden');
+                
+                // Load data
+                loadData();
+            } catch (error) {
+                // Token invalid, show login message
+                localStorage.removeItem('tpv_admin_token');
+                showLoginMessage();
+            }
+        }
+        
+        function showLoginMessage() {
+            document.getElementById('authSpinner').style.display = 'none';
+            document.getElementById('authMessage').textContent = 'Please log in to access the translation dashboard.';
+            document.getElementById('loginButton').classList.remove('hidden');
+        }
+        
+        function redirectToLogin() {
+            window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+        }
+        
+        function handleLogout() {
+            localStorage.removeItem('tpv_admin_token');
+            window.location.href = '/';
+        }
+        
+        // Helper function to get auth headers
+        function getAuthHeaders() {
+            return {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            };
+        }
+
         // Global variables
         let allInstallations = [];
         let filteredInstallations = [];
         let translationStats = {};
-
-        // Initialize the dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            loadData();
-            setupEventListeners();
-        });
 
         // Setup event listeners
         function setupEventListeners() {
@@ -602,6 +750,7 @@
                 
                 filterInstallations();
                 updateStatsDisplay();
+                setupEventListeners();
                 
             } catch (error) {
                 console.error('Error loading data:', error);
