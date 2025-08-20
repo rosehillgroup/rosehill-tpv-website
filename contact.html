@@ -1094,11 +1094,11 @@
 
 
     <!-- Google Maps API -->
-    <script async defer src="https://maps.googleapis.com/js/api?key=GOOGLE_MAPS_API_KEY&callback=initMap&libraries=places"></script>
-    
     <script>
-        // Initialize Google Map
-        function initMap() {
+        // Global callback function that must be available before the API loads
+        window.initMap = function() {
+            console.log('initMap called successfully');
+            try {
             // Rosehill TPV Location: Spring Bank Mills, Watson Mill Lane, Sowerby Bridge, West Yorkshire HX6 3BW
             const rosehillLocation = { lat: 53.7089, lng: -1.9308 };
             
@@ -1164,29 +1164,76 @@
             setTimeout(() => {
                 infoWindow.open(map, marker);
             }, 1000);
+            
+            console.log('Google Maps initialized successfully');
+            } catch (error) {
+                console.error('Error initializing Google Maps:', error);
+                // Trigger fallback
+                setTimeout(() => {
+                    const mapElement = document.getElementById('map');
+                    if (mapElement && (!mapElement.hasChildNodes() || mapElement.children.length === 0)) {
+                        showFallbackMap();
+                    }
+                }, 100);
+            }
+        };
+        
+        // Function to show fallback map
+        function showFallbackMap() {
+            const mapElement = document.getElementById('map');
+            if (mapElement) {
+                mapElement.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #6c757d; text-align: center; padding: 40px;">
+                        <svg width="64" height="64" fill="currentColor" style="margin-bottom: 16px; opacity: 0.5;">
+                            <path d="M32 4C20.9 4 12 12.9 12 24c0 18 20 36 20 36s20-18 20-36c0-11.1-8.9-20-20-20zm0 28c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/>
+                        </svg>
+                        <h3 style="color: #1a365d; margin: 0 0 8px 0;">Visit Our Manufacturing Facility</h3>
+                        <p style="margin: 0 0 16px 0; font-size: 0.95rem;">Spring Bank Mills, Watson Mill Lane<br>Sowerby Bridge, West Yorkshire HX6 3BW</p>
+                        <a href="https://www.google.com/maps/dir//Spring+Bank+Mills,+Watson+Mill+Ln,+Sowerby+Bridge+HX6+3BW,+UK" 
+                           target="_blank"
+                           style="background: #ff6b35; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                            View on Google Maps
+                        </a>
+                    </div>
+                `;
+            }
         }
         
-        // Fallback if Google Maps fails to load
+        // Load Google Maps API with error handling
+        function loadGoogleMaps() {
+            console.log('Loading Google Maps API...');
+            const script = document.createElement('script');
+            script.src = 'https://maps.googleapis.com/js/api?key=GOOGLE_MAPS_API_KEY&callback=initMap&libraries=places';
+            script.async = true;
+            script.defer = true;
+            
+            // Handle script load error
+            script.onerror = function() {
+                console.error('Failed to load Google Maps API script');
+                showFallbackMap();
+            };
+            
+            // Handle script load success (but API might still fail)
+            script.onload = function() {
+                console.log('Google Maps API script loaded');
+            };
+            
+            document.head.appendChild(script);
+        }
+        
+        // Fallback timer if Google Maps doesn't initialize
         window.addEventListener('load', function() {
+            // Load the maps script
+            loadGoogleMaps();
+            
+            // Set a fallback timer
             setTimeout(function() {
                 const mapElement = document.getElementById('map');
-                if (!mapElement.hasChildNodes() || mapElement.children.length === 0) {
-                    mapElement.innerHTML = `
-                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #6c757d; text-align: center; padding: 40px;">
-                            <svg width="64" height="64" fill="currentColor" style="margin-bottom: 16px; opacity: 0.5;">
-                                <path d="M32 4C20.9 4 12 12.9 12 24c0 18 20 36 20 36s20-18 20-36c0-11.1-8.9-20-20-20zm0 28c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/>
-                            </svg>
-                            <h3 style="color: #1a365d; margin: 0 0 8px 0;">Visit Our Manufacturing Facility</h3>
-                            <p style="margin: 0 0 16px 0; font-size: 0.95rem;">Spring Bank Mills, Watson Mill Lane<br>Sowerby Bridge, West Yorkshire HX6 3BW</p>
-                            <a href="https://www.google.com/maps/dir//Spring+Bank+Mills,+Watson+Mill+Ln,+Sowerby+Bridge+HX6+3BW,+UK" 
-                               target="_blank"
-                               style="background: #ff6b35; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600;">
-                                View on Google Maps
-                            </a>
-                        </div>
-                    `;
+                if (!mapElement || !mapElement.hasChildNodes() || mapElement.children.length === 0 || mapElement.innerHTML.trim() === '') {
+                    console.log('Google Maps failed to load, showing fallback');
+                    showFallbackMap();
                 }
-            }, 3000); // Wait 3 seconds for Google Maps to load
+            }, 5000); // Wait 5 seconds for Google Maps to load
         });
     </script>
 
