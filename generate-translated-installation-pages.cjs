@@ -276,9 +276,23 @@ async function generateInstallationPage(translation, installation, outputDir, la
     htmlContent = htmlContent.replace(/<div class="gallery-grid">[\s\S]*?<\/div>/m, `<div class="gallery-grid">${imageGalleryHTML}
                 </div>`);
     
-    // Replace project overview content
+    // Replace project overview content - more robust approach
     const overviewContent = translation.overview || '';
-    htmlContent = htmlContent.replace(/(<h2>Project Overview<\/h2>[\s\S]*?<p>)[\s\S]*?(<p>Thanks to)/, `$1${overviewContent}$2`);
+    
+    // Replace the entire content section between h2 and the thanks paragraph
+    htmlContent = htmlContent.replace(
+        /(<h2>Project Overview<\/h2>\s*<p>)[\s\S]*?(<p>Thanks to <a href="https:\/\/www\.fullurbano\.com\/" target="_blank" rel="noopener noreferrer">Full urbano<\/a><\/p>)/m,
+        `$1${overviewContent}</p>
+                $2`
+    );
+    
+    // Fallback: if no "Thanks to" section, replace everything between h2 and </div>
+    if (htmlContent.includes('Rosehill TPV® was the perfect soft-fall surface')) {
+        htmlContent = htmlContent.replace(
+            /(<h2>Project Overview<\/h2>\s*)<p>Rosehill TPV®[\s\S]*?<\/p>\s*<p>With a palette[\s\S]*?<\/p>\s*<p>Made from[\s\S]*?<\/p>(\s*<p>Thanks to)/m,
+            `$1<p>${overviewContent}</p>$2`
+        );
+    }
     
     // Replace modal content
     htmlContent = htmlContent.replace(/(<span class="close"[\s\S]*?<div class="modal-content"[^>]*>)[\s\S]*?(<button class="nav-btn prev")/, `$1${modalImagesHTML}
