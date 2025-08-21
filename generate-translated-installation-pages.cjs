@@ -274,9 +274,9 @@ async function generateInstallationPage(translation, installation, outputDir, la
     htmlContent = htmlContent.replace('<span class="meta-label">Application:</span>', `<span class="meta-label">${labels.application}:</span>`);
     htmlContent = htmlContent.replace('<span class="meta-value">Playground Surfaces</span>', `<span class="meta-value">${installation.application || 'playground'}</span>`);
     
-    // Replace image gallery content - match the entire image-gallery section including any trailing whitespace/divs
+    // Replace image gallery content - match flexible structure with any h3 text
     htmlContent = htmlContent.replace(
-        /<div class="image-gallery">[\s\S]*?<\/div>\s*<\/div>\s*(?=\n\s*<)/m,
+        /<div class="image-gallery">\s*<h3>[^<]*<\/h3>\s*<div class="gallery-grid">[\s\S]*?<\/div>\s*<\/div>/m,
         `<div class="image-gallery">
                 <h3>${labels.projectImages}</h3>
                 <div class="gallery-grid">${imageGalleryHTML}
