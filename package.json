@@ -4,7 +4,7 @@
   "type": "module",
   "description": "Rosehill TPV Sports & Recreation Surfaces Website",
   "scripts": {
-    "build": "cd site-astro && npm run build",
+    "build": "cd site-astro && npm ci && npm run build",
     "dev:studio": "cd studio-rosehill-tpv && npm run dev",
     "dev:site": "cd site-astro && npm run dev", 
     "migrate": "node migrate-supabase-to-sanity.js",

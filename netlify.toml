@@ -1,21 +1,12 @@
 [build]
-  # Build settings for the new CMS architecture
   publish = "site-astro/dist"
   command = "npm run build"
 
 [build.environment]
-  # Node version for builds
   NODE_VERSION = "18"
-  # Enable legacy peer deps for compatibility
-  NPM_FLAGS = "--legacy-peer-deps"
 
 [functions]
-  # Serverless functions directory
   directory = "netlify/functions"
-
-[functions."translate-installation"]
-  # Translation function timeout (30 seconds)
-  timeout = 30
 
 # Redirects for multilingual routing
 [[redirects]]
