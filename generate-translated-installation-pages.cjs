@@ -35,7 +35,9 @@ const LANGUAGES = {
             readyToTransform: 'Prêt à Transformer Votre Espace?',
             contactToday: 'Contactez-nous aujourd\'hui pour discuter de la façon dont Rosehill TPV<sup>®</sup> peut créer des surfaces sûres et dynamiques pour votre projet.',
             getStarted: 'Commencer',
-            allRightsReserved: 'Tous droits réservés.'
+            allRightsReserved: 'Tous droits réservés.',
+            specialThanks: 'Remerciements Spéciaux',
+            thanksMessage: 'Nous tenons à remercier le partenaire suivant pour sa contribution à ce projet :'
         }
     },
     'de': { 
@@ -57,7 +59,9 @@ const LANGUAGES = {
             readyToTransform: 'Bereit, Ihren Raum zu Transformieren?',
             contactToday: 'Kontaktieren Sie uns noch heute, um zu besprechen, wie Rosehill TPV<sup>®</sup> sichere, lebendige Oberflächen für Ihr Projekt schaffen kann.',
             getStarted: 'Loslegen',
-            allRightsReserved: 'Alle Rechte vorbehalten.'
+            allRightsReserved: 'Alle Rechte vorbehalten.',
+            specialThanks: 'Besonderer Dank',
+            thanksMessage: 'Wir möchten dem folgenden Partner für seinen Beitrag zu diesem Projekt danken:'
         }
     },
     'es': { 
@@ -79,7 +83,9 @@ const LANGUAGES = {
             readyToTransform: '¿Listo para Transformar tu Espacio?',
             contactToday: 'Contáctenos hoy para hablar sobre cómo Rosehill TPV<sup>®</sup> puede crear superficies seguras y vibrantes para su proyecto.',
             getStarted: 'Comenzar',
-            allRightsReserved: 'Todos los derechos reservados.'
+            allRightsReserved: 'Todos los derechos reservados.',
+            specialThanks: 'Agradecimientos Especiales',
+            thanksMessage: 'Queremos agradecer al siguiente socio por su contribución a este proyecto:'
         }
     }
 };
@@ -280,26 +286,98 @@ async function generateInstallationPage(translation, installation, outputDir, la
             </div>`
     );
     
-    // Replace project overview content BEFORE changing the heading - more robust approach
-    const overviewContent = translation.overview || '';
+    // Process project overview content with paragraph breaks and thanks extraction
+    const rawOverview = translation.overview || '';
     
-    // Replace the entire content section between h2 and the thanks paragraph
-    htmlContent = htmlContent.replace(
-        /(<h2>Project Overview<\/h2>\s*<p>)[\s\S]*?(<p>Thanks to <a href="https:\/\/www\.fullurbano\.com\/" target="_blank" rel="noopener noreferrer">Full urbano<\/a><\/p>)/m,
-        `$1${overviewContent}
-                $2`
-    );
+    // Extract thanks information from overview if present
+    let cleanOverview = rawOverview;
+    let thanksText = '';
+    let thanksLink = '';
     
-    // Fallback: if no "Thanks to" section, replace everything between h2 and </div>
-    if (htmlContent.includes('Rosehill TPV® was the perfect soft-fall surface')) {
-        htmlContent = htmlContent.replace(
-            /(<h2>Project Overview<\/h2>\s*)<p>Rosehill TPV®[\s\S]*?<\/p>\s*<p>With a palette[\s\S]*?<\/p>\s*<p>Made from[\s\S]*?<\/p>(\s*<p>Thanks to)/m,
-            `$1<p>${overviewContent}</p>$2`
-        );
+    // Look for "Thanks to" or "Grâce à" patterns and extract them
+    const thanksPatterns = [
+        /(.+?)\s*(?:Thanks to|Grâce à|Dank|Gracias a)\s*<a[^>]*href="([^"]*)"[^>]*>([^<]+)<\/a>\s*$/i,
+        /(.+?)\s*(?:Thanks to|Grâce à|Dank|Gracias a)\s+([^<]+)\s*$/i
+    ];
+    
+    for (const pattern of thanksPatterns) {
+        const match = rawOverview.match(pattern);
+        if (match) {
+            cleanOverview = match[1].trim();
+            if (match[2] && match[3]) {
+                // Has link
+                thanksLink = match[2];
+                thanksText = match[3];
+            } else if (match[2]) {
+                // Just text
+                thanksText = match[2];
+            }
+            break;
+        }
     }
+    
+    // Split overview into paragraphs (roughly every 2-3 sentences)
+    const sentences = cleanOverview.split(/(?<=[.!?])\s+/).filter(s => s.trim());
+    const paragraphs = [];
+    let currentParagraph = '';
+    
+    for (let i = 0; i < sentences.length; i++) {
+        currentParagraph += (currentParagraph ? ' ' : '') + sentences[i];
+        
+        // Create paragraph break every 2-3 sentences or at logical breaks
+        if ((i + 1) % 2 === 0 || i === sentences.length - 1 || 
+            sentences[i].includes('TPV®') && sentences[i + 1] && sentences[i + 1].includes('With')) {
+            paragraphs.push(currentParagraph.trim());
+            currentParagraph = '';
+        }
+    }
+    
+    // Generate paragraph HTML
+    const overviewHTML = paragraphs.map(p => `<p>${p}</p>`).join('\n                ');
+    
+    // Replace the entire installation content section
+    htmlContent = htmlContent.replace(
+        /(<div class="installation-content">\s*<h2>Project Overview<\/h2>\s*)[\s\S]*?(<\/div>)/m,
+        `$1${overviewHTML}
+            $2`
+    );
     
     // Now replace the heading after content replacement
     htmlContent = htmlContent.replace('<h2>Project Overview</h2>', `<h2>${labels.projectOverview}</h2>`);
+    
+    // Handle thanks section replacement
+    if (thanksText || installation.thanks_to) {
+        // Use database thanks_to if available, otherwise use extracted thanks
+        const finalThanksText = installation.thanks_to || thanksText;
+        const finalThanksLink = installation.thanks_to_link || thanksLink;
+        
+        let thanksHTML = `<div class="thanks-section">
+                <h3>${labels.specialThanks}</h3>
+                <p>${labels.thanksMessage}</p>`;
+        
+        if (finalThanksLink) {
+            thanksHTML += `
+                <a href="${finalThanksLink}" target="_blank" rel="noopener noreferrer" class="thanks-link">${finalThanksText}</a>`;
+        } else {
+            thanksHTML += `
+                <span class="thanks-link">${finalThanksText}</span>`;
+        }
+        
+        thanksHTML += `
+            </div>`;
+        
+        // Replace the thanks section
+        htmlContent = htmlContent.replace(
+            /<div class="thanks-section">[\s\S]*?<\/div>/m,
+            thanksHTML
+        );
+    } else {
+        // Remove thanks section if no thanks data
+        htmlContent = htmlContent.replace(
+            /\s*<!-- Thanks Section - Appears after project overview -->\s*<div class="thanks-section">[\s\S]*?<\/div>\s*/m,
+            ''
+        );
+    }
     
     // Replace modal content
     htmlContent = htmlContent.replace(/(<span class="close"[\s\S]*?<div class="modal-content"[^>]*>)[\s\S]*?(<button class="nav-btn prev")/, `$1${modalImagesHTML}
