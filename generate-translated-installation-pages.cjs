@@ -277,13 +277,11 @@ async function generateInstallationPage(translation, installation, outputDir, la
     // Section headings
     htmlContent = htmlContent.replace('<h3>Project Images</h3>', `<h3>${labels.projectImages}</h3>`);
     
-    // Replace image gallery content - need to match the complete gallery-grid section
+    // Replace image gallery content - only close the gallery-grid div
     htmlContent = htmlContent.replace(
-        /<div class="gallery-grid">\s*\n?([\s\S]*?)\n?\s*<\/div>\s*<\/div>\s*<\/div>/m,
+        /<div class="gallery-grid">\s*\n?([\s\S]*?)\n?\s*<\/div>/m,
         `<div class="gallery-grid">${imageGalleryHTML}
-                </div>
-            </div>
-            </div>`
+                </div>`
     );
     
     // Process project overview content with paragraph breaks and thanks extraction
