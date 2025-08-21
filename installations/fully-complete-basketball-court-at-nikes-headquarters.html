@@ -3,8 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fully Complete Basketball Court At Nike's Headquarters - Rosehill TPV Installation</title>
-    <meta name="description" content="Fully Complete Basketball Court At Nike's Headquarters in Laakdal, Belgium. See how Rosehill TPV coloured rubber granules were used to create safe, vibrant surfaces for multi-use games areas.">
+    <title>{{TITLE}} - {{LOCATION}} | Rosehill TPV Installation</title>
+    <link rel="canonical" href="https://tpv.rosehill.group/installation-template.html">
+    <meta name="description" content="{{META_DESCRIPTION}}">
+    <meta name="keywords" content="{{KEYWORDS}}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://rosehilltpv.com/installations/{{URL_SLUG}}/">
+    <meta property="og:title" content="{{TITLE}} - {{LOCATION}}">
+    <meta property="og:description" content="{{META_DESCRIPTION}}">
+    <meta property="og:image" content="https://rosehilltpv.com/images/installations/{{FIRST_IMAGE}}">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://rosehilltpv.com/installations/{{URL_SLUG}}/">
+    <meta property="twitter:title" content="{{TITLE}} - {{LOCATION}}">
+    <meta property="twitter:description" content="{{META_DESCRIPTION}}">
+    <meta property="twitter:image" content="https://rosehilltpv.com/images/installations/{{FIRST_IMAGE}}">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": "{{TITLE}} - {{LOCATION}}",
+        "description": "{{META_DESCRIPTION}}",
+        "image": "https://rosehilltpv.com/images/installations/{{FIRST_IMAGE}}",
+        "datePublished": "{{DATE}}",
+        "author": {
+            "@type": "Organization",
+            "name": "Rosehill TPV"
+        },
+        "publisher": {
+            "@type": "Organization",
+            "name": "Rosehill TPV",
+            "logo": {
+                "@type": "ImageObject",
+                "url": "https://rosehilltpv.com/logo.png"
+            }
+        }
+    }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
@@ -44,14 +85,9 @@
         }
 
         .logo {
-            color: white;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-        }
-
-        .logo img {
-            height: 60px;
+            font-size: 1.8rem;
+            font-weight: 600;
+            font-family: 'Source Sans Pro', sans-serif;
         }
 
         .nav-menu {
@@ -91,196 +127,200 @@
         /* Main Content */
         .main-content {
             margin-top: 80px;
-            padding: 40px 20px;
+            min-height: calc(100vh - 80px);
         }
 
-        .container {
+        /* Breadcrumb */
+        .breadcrumb {
+            background: white;
+            padding: 20px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .breadcrumb-container {
             max-width: 1200px;
             margin: 0 auto;
+            padding: 0 20px;
         }
 
-        .breadcrumb {
-            margin-bottom: 30px;
+        .breadcrumb-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
             font-size: 14px;
             color: #666;
         }
 
-        .breadcrumb a {
-            color: #ff6b35;
+        .breadcrumb-nav a {
+            color: #1a365d;
             text-decoration: none;
         }
 
-        .breadcrumb a:hover {
-            text-decoration: underline;
+        .breadcrumb-nav a:hover {
+            color: #ff6b35;
         }
 
-        .installation-header {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        .breadcrumb-nav span {
+            color: #999;
+        }
+
+        /* Article Content */
+        .article-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .article-header {
+            text-align: center;
             margin-bottom: 40px;
         }
 
-        .installation-header h1 {
+        .article-title {
             font-size: 2.5rem;
+            font-weight: 700;
             color: #1a365d;
-            margin-bottom: 20px;
-            font-weight: 600;
+            margin-bottom: 10px;
+            font-family: 'Overpass', sans-serif;
         }
 
-        .installation-meta {
+        .article-meta {
             display: flex;
-            flex-wrap: wrap;
+            justify-content: center;
             gap: 30px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
         .meta-item {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            color: #666;
+            font-size: 14px;
         }
 
         .meta-icon {
-            width: 20px;
-            height: 20px;
-            color: #ff6b35;
-        }
-
-        .meta-label {
-            font-weight: 600;
-            color: #1a365d;
-        }
-
-        .meta-value {
-            color: #666;
-        }
-
-        .installation-content {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            margin-bottom: 40px;
-        }
-
-        .installation-content h2 {
-            color: #1a365d;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-        }
-
-        .installation-content p {
-            margin-bottom: 20px;
-            color: #555;
-            font-size: 16px;
-            line-height: 1.8;
+            width: 16px;
+            height: 16px;
+            fill: #ff6b35;
         }
 
         /* Image Gallery */
         .image-gallery {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             margin-bottom: 40px;
         }
 
-        .image-gallery h3 {
-            color: #1a365d;
-            margin-bottom: 30px;
-            font-size: 1.8rem;
-        }
-
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .gallery-item {
-            position: relative;
+        .main-image {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
             border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             cursor: pointer;
-            transition: transform 0.3s ease;
+            margin-bottom: 20px;
         }
 
-        .gallery-item:hover {
-            transform: translateY(-5px);
+        .thumbnail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
         }
 
-        .gallery-item img,
-        .gallery-item picture {
+        .thumbnail {
             width: 100%;
-            height: 250px;
+            height: 120px;
             object-fit: cover;
-            display: block;
-        }
-        
-        .gallery-item picture img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.3s ease;
         }
 
-        /* Modal Styles */
-        .modal {
+        .thumbnail:hover,
+        .thumbnail.active {
+            border-color: #ff6b35;
+            transform: translateY(-2px);
+        }
+
+        /* Content Sections */
+        .content-section {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+
+        .content-section h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 20px;
+            font-family: 'Overpass', sans-serif;
+        }
+
+        .content-section p {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .content-section p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Application Badge */
+        .application-badge {
+            display: inline-block;
+            background: #ff6b35;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Lightbox */
+        .lightbox {
             display: none;
             position: fixed;
-            z-index: 10000;
+            z-index: 2000;
             left: 0;
             top: 0;
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.9);
-            cursor: pointer;
+            padding: 20px;
         }
 
-        .modal-content {
+        .lightbox-content {
             position: relative;
-            margin: 5% auto;
             max-width: 90%;
-            max-height: 80%;
-            cursor: default;
-        }
-
-        .modal-image {
-            display: none;
-            text-align: center;
-        }
-
-        .modal-image img,
-        .modal-image picture img {
-            max-width: 100%;
-            max-height: 70vh;
-            object-fit: contain;
-        }
-        
-        .modal-image picture {
+            max-height: 90%;
+            margin: auto;
             display: block;
-            max-width: 100%;
-            max-height: 70vh;
+            border-radius: 8px;
         }
 
-        .close {
+        .lightbox-close {
             position: absolute;
-            top: -40px;
-            right: 0;
-            color: white;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
             font-size: 40px;
             font-weight: bold;
             cursor: pointer;
-            z-index: 10001;
         }
 
-        .close:hover {
-            opacity: 0.7;
+        .lightbox-close:hover {
+            color: #ff6b35;
         }
 
-        .nav-btn {
+        .lightbox-nav {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
@@ -288,185 +328,69 @@
             color: white;
             border: none;
             font-size: 24px;
-            padding: 15px 20px;
+            padding: 10px 15px;
             cursor: pointer;
-            border-radius: 5px;
-            transition: background 0.3s ease;
+            border-radius: 4px;
+            transition: all 0.3s ease;
         }
 
-        .nav-btn:hover {
-            background: rgba(255,255,255,0.4);
+        .lightbox-nav:hover {
+            background: rgba(255,107,53,0.8);
         }
 
-        .nav-btn.prev {
+        .lightbox-prev {
             left: 20px;
         }
 
-        .nav-btn.next {
+        .lightbox-next {
             right: 20px;
-        }
-
-        /* Thanks Section */
-        .thanks-section {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            margin-bottom: 40px;
-            text-align: center;
-        }
-
-        .thanks-section h3 {
-            color: #1a365d;
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-        }
-
-        .thanks-section p {
-            color: #666;
-            margin-bottom: 20px;
-        }
-
-        .thanks-link {
-            display: inline-block;
-            color: #ff6b35;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1.1rem;
-            padding: 10px 20px;
-            border: 2px solid #ff6b35;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .thanks-link:hover {
-            background: #ff6b35;
-            color: white;
-            transform: translateY(-2px);
-        }
-
-        /* Call to Action */
-        .cta-section {
-            background: linear-gradient(135deg, #1a365d, #2d4a71);
-            color: white;
-            padding: 60px 40px;
-            border-radius: 12px;
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .cta-section h3 {
-            font-size: 2rem;
-            margin-bottom: 20px;
-        }
-
-        .cta-section p {
-            font-size: 18px;
-            margin-bottom: 30px;
-            opacity: 0.9;
-        }
-
-        .cta-button {
-            display: inline-block;
-            background: #ff6b35;
-            color: white;
-            padding: 15px 30px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 18px;
-            transition: all 0.3s ease;
-        }
-
-        .cta-button:hover {
-            background: #e55a2b;
-            transform: translateY(-2px);
         }
 
         /* Footer */
         .footer {
             background: #1a365d;
             color: white;
-            padding: 60px 20px 30px;
             text-align: center;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .footer-logo {
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: center;
-        }
-
-        .footer-logo img {
-            height: 80px;
-        }
-
-        .footer-text {
-            font-size: 16px;
-            margin-bottom: 30px;
-            opacity: 0.8;
-        }
-
-        .footer-nav {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        .footer-nav a {
-            color: white;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .footer-nav a:hover {
-            color: #ff6b35;
-        }
-
-        .footer-bottom {
-            border-top: 1px solid rgba(255,255,255,0.2);
-            padding-top: 20px;
-            font-size: 14px;
-            opacity: 0.7;
+            padding: 40px 20px;
+            margin-top: 60px;
         }
 
         /* Responsive Design */
         @media (max-width: 768px) {
-            .nav-menu {
-                display: none;
+            .header-container {
+                flex-direction: column;
+                gap: 15px;
             }
 
-            .installation-header h1 {
+            .nav-menu {
+                gap: 15px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .article-title {
                 font-size: 2rem;
             }
 
-            .installation-meta {
+            .article-meta {
                 flex-direction: column;
-                gap: 15px;
+                gap: 10px;
             }
 
-            .gallery-grid {
-                grid-template-columns: 1fr;
+            .content-section {
+                padding: 25px;
             }
 
-            .installation-header,
-            .installation-content,
-            .image-gallery,
-            .thanks-section,
-            .cta-section {
-                padding: 20px;
+            .main-image {
+                height: 250px;
             }
 
-            .footer-nav {
-                flex-direction: column;
-                gap: 15px;
+            .thumbnail-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+
+            .thumbnail {
+                height: 80px;
             }
         }
     </style>
@@ -475,203 +399,173 @@
     <!-- Header -->
     <header class="header">
         <div class="header-container">
-            <a href="../index.html" class="logo">
-                <img src="../rosehill_tpv_logo.png" alt="Rosehill TPV">
-            </a>
-            <nav class="nav-menu">
-                <a href="../index.html">Home</a>
-                <a href="../products.html">Products</a>
-                <a href="../applications.html">Applications</a>
-                <a href="../colour.html">Colour</a>
-                <a href="../installations.html" class="active">Installations</a>
-                <a href="../about.html">About Us</a>
-                <a href="../contact.html" class="contact-btn">Get in Touch</a>
+            <div class="logo">Rosehill TPV</div>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="../products.html">Products</a></li>
+                    <li><a href="../installations.html">Installations</a></li>
+                    <li><a href="../about.html">About</a></li>
+                    <li><a href="../contact.html" class="contact-btn">Contact</a></li>
+                </ul>
             </nav>
         </div>
     </header>
 
     <!-- Main Content -->
     <main class="main-content">
-        <div class="container">
-            <!-- Breadcrumb -->
-            <div class="breadcrumb">
-                <a href="../installations.html">Installations</a> / Fully Complete Basketball Court At Nike's Headquarters
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <div class="breadcrumb-container">
+                <nav class="breadcrumb-nav">
+                    <a href="../index.html">Home</a>
+                    <span>›</span>
+                    <a href="../installations.html">Installations</a>
+                    <span>›</span>
+                    <span>{{TITLE}}</span>
+                </nav>
             </div>
+        </div>
 
-            <!-- Installation Header -->
-            <div class="installation-header">
-                <h1>Fully Complete Basketball Court At Nike's Headquarters</h1>
-                <div class="installation-meta">
+        <!-- Article Container -->
+        <div class="article-container">
+            <!-- Article Header -->
+            <header class="article-header">
+                <h1 class="article-title">{{TITLE}}</h1>
+                <div class="article-meta">
                     <div class="meta-item">
-                        <svg class="meta-icon" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                        <svg class="meta-icon" viewBox="0 0 24 24">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                         </svg>
-                        <span class="meta-label">Location:</span>
-                        <span class="meta-value">Laakdal, Belgium</span>
+                        <span>{{LOCATION}}</span>
                     </div>
                     <div class="meta-item">
-                        <svg class="meta-icon" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                        <svg class="meta-icon" viewBox="0 0 24 24">
+                            <path d="M9 11H7v6h2v-6zm4 0h-2v6h2v-6zm4 0h-2v6h2v-6zm2.5-9H20v2h-1v16c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2V4H4V2h3.5l1-1h7l1 1z"/>
                         </svg>
-                        <span class="meta-label">Date:</span>
-                        <span class="meta-value">3 July 2025</span>
+                        <span>{{DATE}}</span>
                     </div>
                     <div class="meta-item">
-                        <svg class="meta-icon" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v8a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clip-rule="evenodd"></path>
-                        </svg>
-                        <span class="meta-label">Application:</span>
-                        <span class="meta-value">Multi-Use Games Areas</span>
+                        <span class="application-badge">{{APPLICATION}}</span>
                     </div>
                 </div>
-            </div>
+            </header>
 
-            <!-- Installation Content -->
-            <div class="installation-content">
+            <!-- Image Gallery -->
+            <section class="image-gallery">
+                <img src="../images/installations/{{FIRST_IMAGE}}" alt="{{TITLE}} - Main Image" class="main-image" onclick="openLightbox(0)">
+                {{THUMBNAIL_GRID}}
+            </section>
+
+            <!-- Content -->
+            <section class="content-section">
                 <h2>Project Overview</h2>
-                <p>The newly completed surface at Nike’s headquarters in Belgium is a stunning showcase of craftsmanship from the team.</p>
-                <p>Made using custom blends of Rosehill TPV®, the bold, vibrant court highlights how our high-performance granules bring together creativity, safety, and durability — all in one surface.</p>
-                <p>Ideal for basketball courts and multi-use games areas, Rosehill TPV® offers consistent impact absorption and cushioning to reduce injury risk. Its tactile finish and industry-leading UV stability mean it stays soft and bright, even in challenging climates.</p>
-                <p>Thanks to <a href="https://www.rubbervloer.be/en/" target="_blank" rel="noopener noreferrer">Flexidal</a></p>
-            </div>
-
-            
-            <div class="image-gallery">
-                <h3>Project Images</h3>
-                <div class="gallery-grid">
-                    
-                <div class="gallery-item">
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1753440447885_NikeFinishedImages-2.jpg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1753440447885_NikeFinishedImages-2.jpg?width=400&height=300&quality=75&resize=cover" alt="Fully Complete Basketball Court At Nike's Headquarters - Image 1" loading="lazy" onclick="openModal(0)">
-                    </picture>
-                </div>
-                <div class="gallery-item">
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1753440471002_NikeFinishedImages-4.jpg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1753440471002_NikeFinishedImages-4.jpg?width=400&height=300&quality=75&resize=cover" alt="Fully Complete Basketball Court At Nike's Headquarters - Image 2" loading="lazy" onclick="openModal(1)">
-                    </picture>
-                </div>
-                <div class="gallery-item">
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1753440483531_NikeFinishedImages-1.jpg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1753440483531_NikeFinishedImages-1.jpg?width=400&height=300&quality=75&resize=cover" alt="Fully Complete Basketball Court At Nike's Headquarters - Image 3" loading="lazy" onclick="openModal(2)">
-                    </picture>
-                </div>
-                <div class="gallery-item">
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1753440495783_NikeFinishedImages-5.jpg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1753440495783_NikeFinishedImages-5.jpg?width=400&height=300&quality=75&resize=cover" alt="Fully Complete Basketball Court At Nike's Headquarters - Image 4" loading="lazy" onclick="openModal(3)">
-                    </picture>
-                </div>
-                </div>
-            </div>
-
-            <!-- Modal for image viewing -->
-            <div id="imageModal" class="modal" onclick="closeModal()">
-                <div class="modal-content" onclick="event.stopPropagation()">
-                    <span class="close" onclick="closeModal()">&times;</span>
-                    
-                <div class="modal-image" id="modal-img-0" style="display: block;">
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1753440447885_NikeFinishedImages-2.jpg?width=1200&height=800&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1753440447885_NikeFinishedImages-2.jpg?width=1200&height=800&quality=75&resize=cover" alt="Fully Complete Basketball Court At Nike's Headquarters - Image 1" loading="lazy">
-                    </picture>
-                </div>
-                <div class="modal-image" id="modal-img-1" >
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1753440471002_NikeFinishedImages-4.jpg?width=1200&height=800&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1753440471002_NikeFinishedImages-4.jpg?width=1200&height=800&quality=75&resize=cover" alt="Fully Complete Basketball Court At Nike's Headquarters - Image 2" loading="lazy">
-                    </picture>
-                </div>
-                <div class="modal-image" id="modal-img-2" >
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1753440483531_NikeFinishedImages-1.jpg?width=1200&height=800&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1753440483531_NikeFinishedImages-1.jpg?width=1200&height=800&quality=75&resize=cover" alt="Fully Complete Basketball Court At Nike's Headquarters - Image 3" loading="lazy">
-                    </picture>
-                </div>
-                <div class="modal-image" id="modal-img-3" >
-                    <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1753440495783_NikeFinishedImages-5.jpg?width=1200&height=800&quality=75&resize=cover&format=webp" type="image/webp">
-                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1753440495783_NikeFinishedImages-5.jpg?width=1200&height=800&quality=75&resize=cover" alt="Fully Complete Basketball Court At Nike's Headquarters - Image 4" loading="lazy">
-                    </picture>
-                </div>
-                    
-                    <button class="nav-btn prev" onclick="changeImage(-1)">&#10094;</button>
-                    <button class="nav-btn next" onclick="changeImage(1)">&#10095;</button>
-                    
-                </div>
-            </div>
-
-            
-
-            <!-- Call to Action -->
-            <div class="cta-section">
-                <h3>Ready to Transform Your Space?</h3>
-                <p>Contact us today to discuss how Rosehill TPV can create safe, vibrant surfaces for your project.</p>
-                <a href="../contact.html" class="cta-button">Get Started</a>
-            </div>
+                {{CONTENT_PARAGRAPHS}}
+            </section>
         </div>
     </main>
 
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <img id="lightbox-img" class="lightbox-content" onclick="event.stopPropagation()">
+        <button class="lightbox-nav lightbox-prev" onclick="changeImage(-1); event.stopPropagation()">&#10094;</button>
+        <button class="lightbox-nav lightbox-next" onclick="changeImage(1); event.stopPropagation()">&#10095;</button>
+    </div>
+
     <!-- Footer -->
     <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-logo">
-                <img src="../rosehill_tpv_logo.png" alt="Rosehill TPV">
-            </div>
-            <p class="footer-text">Creating safer, more vibrant play and sports surfaces worldwide with our premium coloured rubber granules.</p>
-            <nav class="footer-nav">
-                <a href="../index.html">Home</a>
-                <a href="../products.html">Products</a>
-                <a href="../applications.html">Applications</a>
-                <a href="../colour.html">Colour</a>
-                <a href="../installations.html">Installations</a>
-                <a href="../about.html">About Us</a>
-                <a href="../contact.html">Get in Touch</a>
-            </nav>
-            <div class="footer-bottom">
-                <p>&copy; 2025 Rosehill TPV. All rights reserved.</p>
-            </div>
-        </div>
+        <p>&copy; 2024 Rosehill TPV. All rights reserved.</p>
     </footer>
 
     <script>
+        // Image data for lightbox
+        const images = [{{IMAGE_ARRAY}}];
         let currentImageIndex = 0;
-        const totalImages = 4;
 
-        function openModal(index) {
+        // Thumbnail functionality
+        function setMainImage(index) {
+            const mainImg = document.querySelector('.main-image');
+            const thumbnails = document.querySelectorAll('.thumbnail');
+            
+            mainImg.src = `../images/installations/${images[index]}`;
+            
+            thumbnails.forEach((thumb, i) => {
+                thumb.classList.toggle('active', i === index);
+            });
+            
             currentImageIndex = index;
-            document.getElementById('imageModal').style.display = 'block';
-            showImage(index);
         }
 
-        function closeModal() {
-            document.getElementById('imageModal').style.display = 'none';
+        // Lightbox functionality
+        function openLightbox(index) {
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            
+            currentImageIndex = index;
+            lightboxImg.src = `../images/installations/${images[index]}`;
+            lightbox.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            const lightbox = document.getElementById('lightbox');
+            lightbox.style.display = 'none';
+            document.body.style.overflow = 'auto';
         }
 
         function changeImage(direction) {
             currentImageIndex += direction;
-            if (currentImageIndex >= totalImages) currentImageIndex = 0;
-            if (currentImageIndex < 0) currentImageIndex = totalImages - 1;
-            showImage(currentImageIndex);
+            
+            if (currentImageIndex >= images.length) {
+                currentImageIndex = 0;
+            } else if (currentImageIndex < 0) {
+                currentImageIndex = images.length - 1;
+            }
+            
+            const lightboxImg = document.getElementById('lightbox-img');
+            lightboxImg.src = `../images/installations/${images[currentImageIndex]}`;
         }
 
-        function showImage(index) {
-            const images = document.querySelectorAll('.modal-image');
-            images.forEach((img, i) => {
-                img.style.display = i === index ? 'block' : 'none';
-            });
-        }
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            const lightbox = document.getElementById('lightbox');
+            if (lightbox.style.display === 'flex') {
+                if (e.key === 'Escape') {
+                    closeLightbox();
+                } else if (e.key === 'ArrowLeft') {
+                    changeImage(-1);
+                } else if (e.key === 'ArrowRight') {
+                    changeImage(1);
+                }
+            }
+        });
 
-        // Close modal with Escape key
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeModal();
-            } else if (event.key === 'ArrowLeft') {
-                changeImage(-1);
-            } else if (event.key === 'ArrowRight') {
-                changeImage(1);
+        // Initialize first thumbnail as active
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstThumbnail = document.querySelector('.thumbnail');
+            if (firstThumbnail) {
+                firstThumbnail.classList.add('active');
+            }
+        });
+    </script>
+
+    <!-- Supabase and Translation System -->
+    <script src="/js/supabase-client.js"></script>
+    <script src="/js/installation-page-loader.js"></script>
+    <script src="/language-switcher-enhanced.js"></script>
+    <script src="/i18n/translate-client.js"></script>
+    
+    <script>
+        // Load installation content when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get slug from data attribute or URL
+            const slug = document.body.getAttribute('data-installation-slug') || 
+                        window.location.pathname.match(/\/([^/]+)\.html$/)?.[1];
+            const lang = document.body.getAttribute('data-installation-lang') || 'en';
+            
+            if (slug) {
+                loadInstallationContent(slug, lang);
             }
         });
     </script>

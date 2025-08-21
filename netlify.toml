@@ -1,6 +1,6 @@
 [build]
   publish = "."
-  command = "echo 'Temporarily reverting to original site'"
+  command = "npm run build"
 
 [build.environment]
   NODE_VERSION = "18"
