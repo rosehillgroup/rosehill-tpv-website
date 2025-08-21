@@ -1,5 +1,5 @@
-// Generate complete static HTML pages for translated installations
-// This creates complete pages from the installation_i18n table
+// Generate translated installation pages by copying English template and replacing content
+// This ensures perfect layout consistency across all languages
 
 const { createClient } = require('@supabase/supabase-js');
 const fs = require('fs');
@@ -10,6 +10,9 @@ const SUPABASE_URL = process.env.SUPABASE_URL || 'https://otidaseqlgubqzsqazqt.s
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90aWRhc2VxbGd1YnF6c3FhenF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA3NjkzMzcsImV4cCI6MjA2NjM0NTMzN30.IR9Q5NrJuNC4frTc0Q2Snjz-_oIlkzFb3izk2iBisp4';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Path to English template
+const ENGLISH_TEMPLATE_PATH = path.join(__dirname, 'installations', 'new-soft-fall-surface.html');
 
 // Languages and their labels
 const LANGUAGES = {
@@ -48,32 +51,32 @@ const LANGUAGES = {
             contact: 'Kontakt',
             projectOverview: 'Projektübersicht',
             projectImages: 'Projektbilder',
-            location: 'Standort',
+            location: 'Ort',
             date: 'Datum',
             application: 'Anwendung',
-            readyToTransform: 'Bereit, Ihren Raum zu Verwandeln?',
-            contactToday: 'Kontaktieren Sie uns heute, um zu besprechen, wie Rosehill TPV<sup>®</sup> sichere, lebendige Oberflächen für Ihr Projekt schaffen kann.',
+            readyToTransform: 'Bereit, Ihren Raum zu Transformieren?',
+            contactToday: 'Kontaktieren Sie uns noch heute, um zu besprechen, wie Rosehill TPV<sup>®</sup> sichere, lebendige Oberflächen für Ihr Projekt schaffen kann.',
             getStarted: 'Loslegen',
             allRightsReserved: 'Alle Rechte vorbehalten.'
         }
     },
     'es': { 
         name: 'Spanish',
-        code: 'es',
+        code: 'es', 
         labels: {
             home: 'Inicio',
             products: 'Productos',
             applications: 'Aplicaciones',
-            colour: 'Color', 
+            colour: 'Color',
             installations: 'Instalaciones',
             about: 'Acerca de',
             contact: 'Contacto',
-            projectOverview: 'Resumen del Proyecto',
+            projectOverview: 'Descripción del Proyecto',
             projectImages: 'Imágenes del Proyecto',
             location: 'Ubicación',
             date: 'Fecha',
             application: 'Aplicación',
-            readyToTransform: '¿Listo para Transformar su Espacio?',
+            readyToTransform: '¿Listo para Transformar tu Espacio?',
             contactToday: 'Contáctenos hoy para hablar sobre cómo Rosehill TPV<sup>®</sup> puede crear superficies seguras y vibrantes para su proyecto.',
             getStarted: 'Comenzar',
             allRightsReserved: 'Todos los derechos reservados.'
@@ -151,10 +154,13 @@ function formatDate(dateString, lang) {
 }
 
 /**
- * Generate a single installation page
+ * Generate a single installation page by copying English template and replacing content
  */
 async function generateInstallationPage(translation, installation, outputDir, lang) {
     const labels = LANGUAGES[lang].labels;
+    
+    // Read English template
+    let htmlContent = fs.readFileSync(ENGLISH_TEMPLATE_PATH, 'utf8');
     
     // Process images
     let images = installation.images || [];
@@ -166,7 +172,7 @@ async function generateInstallationPage(translation, installation, outputDir, la
         }
     }
     
-    // Process image URLs
+    // Process image URLs to match English format
     const processedImages = images.map(img => {
         let imageUrl = '';
         if (typeof img === 'string') {
@@ -176,20 +182,18 @@ async function generateInstallationPage(translation, installation, outputDir, la
                 imageUrl = `../images/installations/${img}`;
             }
         } else if (img && typeof img === 'object') {
-            if (img.url) {
+            if (img.url && img.url.startsWith('http')) {
                 imageUrl = img.url;
             } else if (img.filename) {
-                if (img.filename.startsWith('http')) {
-                    imageUrl = img.filename;
-                } else {
-                    imageUrl = `../images/installations/${img.filename}`;
-                }
+                imageUrl = `../images/installations/${img.filename}`;
+            } else if (img.url) {
+                imageUrl = `../images/installations/${img.url}`;
             }
         }
         return imageUrl;
     }).filter(url => url);
 
-    // Generate image gallery HTML
+    // Build gallery HTML and modal HTML exactly like English template
     let imageGalleryHTML = '';
     let modalImagesHTML = '';
     
@@ -198,7 +202,6 @@ async function generateInstallationPage(translation, installation, outputDir, la
             const isSupabaseUrl = imageUrl.includes('supabase.co/storage');
             
             if (isSupabaseUrl) {
-                // Optimized Supabase images
                 const thumbnailElement = createOptimizedPictureElement(
                     imageUrl,
                     `${translation.title} - Image ${index + 1}`,
@@ -213,708 +216,93 @@ async function generateInstallationPage(translation, installation, outputDir, la
                 const fullSizeElement = createOptimizedPictureElement(
                     imageUrl,
                     `${translation.title} - Image ${index + 1}`,
-                    { width: 1200, quality: 85 }
+                    { width: 1200, height: 800, quality: 75 }
                 );
-                modalImagesHTML += fullSizeElement.replace('<img', `<img class="modal-image" style="${index === 0 ? '' : 'display:none;'}"`);
+                const displayStyle = index === 0 ? 'style="display: block;"' : '';
+                modalImagesHTML += `
+                <div class="modal-image" id="modal-img-${index}" ${displayStyle}>
+                    ${fullSizeElement}
+                </div>`;
             } else {
-                // Regular images
                 imageGalleryHTML += `
                 <div class="gallery-item">
-                    <img src="${imageUrl}" alt="${translation.title} - Image ${index + 1}" onclick="openModal(${index})" loading="lazy">
+                    <img src="${imageUrl}" alt="${translation.title} - Image ${index + 1}" loading="lazy" onclick="openModal(${index})">
                 </div>`;
-                modalImagesHTML += `<img src="${imageUrl}" alt="${translation.title} - Image ${index + 1}" class="modal-image" style="${index === 0 ? '' : 'display:none;'}">`;
+                const displayStyle = index === 0 ? 'style="display: block;"' : '';
+                modalImagesHTML += `
+                <div class="modal-image" id="modal-img-${index}" ${displayStyle}>
+                    <img src="${imageUrl}" alt="${translation.title} - Image ${index + 1}" loading="lazy">
+                </div>`;
             }
         });
     }
 
-    // Generate HTML content using exact English template structure
-    const htmlContent = `<!DOCTYPE html>
-<html lang="${lang}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${translation.title} - Rosehill TPV Installation</title>
-    <meta name="description" content="${translation.overview ? translation.overview.substring(0, 155) : ''}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Source Sans Pro', sans-serif;
-            background: #f8f9fa;
-            color: #333;
-            line-height: 1.6;
-        }
-
-        /* Header Styles */
-        .header {
-            background: linear-gradient(135deg, #1a365d, #2d4a71);
-            color: white;
-            padding: 15px 0;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .header-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            color: white;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-        }
-
-        .logo img {
-            height: 60px;
-        }
-
-        .nav-menu {
-            display: flex;
-            list-style: none;
-            gap: 30px;
-            align-items: center;
-        }
-
-        .nav-menu a {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            padding: 8px 16px;
-            border-radius: 6px;
-        }
-
-        .nav-menu a:hover {
-            background: rgba(255, 107, 53, 0.2);
-            color: #ff6b35;
-        }
-
-        .contact-btn {
-            background: #ff6b35;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            margin-left: 10px;
-        }
-
-        .contact-btn:hover {
-            background: #e55a2b !important;
-            transform: translateY(-2px);
-        }
-
-        /* Main Content */
-        .main-content {
-            margin-top: 80px;
-            padding: 40px 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .breadcrumb {
-            margin-bottom: 30px;
-            font-size: 14px;
-            color: #666;
-        }
-
-        .breadcrumb a {
-            color: #ff6b35;
-            text-decoration: none;
-        }
-
-        .breadcrumb a:hover {
-            text-decoration: underline;
-        }
-
-        .installation-header {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            margin-bottom: 40px;
-        }
-
-        .installation-header h1 {
-            font-size: 2.5rem;
-            color: #1a365d;
-            margin-bottom: 20px;
-            font-weight: 600;
-        }
-
-        .installation-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        .meta-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .meta-icon {
-            width: 20px;
-            height: 20px;
-            color: #ff6b35;
-        }
-
-        .meta-label {
-            font-weight: 600;
-            color: #1a365d;
-        }
-
-        .meta-value {
-            color: #666;
-        }
-
-        .installation-content {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            margin-bottom: 40px;
-        }
-
-        .installation-content h2 {
-            color: #1a365d;
-            margin-bottom: 20px;
-            font-size: 1.8rem;
-        }
-
-        .installation-content p {
-            margin-bottom: 20px;
-            color: #555;
-            font-size: 16px;
-            line-height: 1.8;
-        }
-
-        /* Image Gallery */
-        .image-gallery {
-            background: white;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            margin-bottom: 40px;
-        }
-
-        .image-gallery h3 {
-            color: #1a365d;
-            margin-bottom: 30px;
-            font-size: 1.8rem;
-        }
-
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .gallery-item {
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: transform 0.3s ease;
-        }
-
-        .gallery-item:hover {
-            transform: translateY(-5px);
-        }
-
-        .gallery-item img {
-            width: 100%;
-            height: 250px;
-            object-fit: cover;
-        }
-
-        /* CTA Section */
-        .cta-section {
-            background: linear-gradient(135deg, #ff6b35, #e55a2b);
-            color: white;
-            padding: 60px 40px;
-            border-radius: 12px;
-            text-align: center;
-            margin-bottom: 40px;
-        }
-
-        .cta-section h3 {
-            font-size: 2rem;
-            margin-bottom: 20px;
-            font-weight: 700;
-        }
-
-        .cta-section p {
-            font-size: 1.1rem;
-            margin-bottom: 30px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .cta-button {
-            display: inline-block;
-            background: white;
-            color: #ff6b35;
-            padding: 15px 40px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
-        }
-
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-
-        /* Footer */
-        .footer {
-            background: #1a365d;
-            color: white;
-            padding: 60px 20px 30px;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .footer-logo {
-            margin-bottom: 30px;
-        }
-
-        .footer-logo img {
-            height: 60px;
-        }
-
-        .footer-text {
-            font-size: 1.1rem;
-            margin-bottom: 40px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            opacity: 0.9;
-        }
-
-        .footer-nav {
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            margin-bottom: 40px;
-            flex-wrap: wrap;
-        }
-
-        .footer-nav a {
-            color: white;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            padding: 8px 0;
-        }
-
-        .footer-nav a:hover {
-            color: #ff6b35;
-        }
-
-        .footer-bottom {
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-top: 30px;
-            opacity: 0.7;
-            font-size: 0.9rem;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.9);
-        }
-
-        .modal-content {
-            margin: auto;
-            display: block;
-            max-width: 90%;
-            max-height: 90%;
-            margin-top: 50px;
-            position: relative;
-        }
-
-        .modal-image {
-            width: 100%;
-            height: auto;
-            object-fit: contain;
-        }
-
-        .close {
-            position: absolute;
-            top: 15px;
-            right: 35px;
-            color: #f1f1f1;
-            font-size: 40px;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 2001;
-        }
-
-        .close:hover {
-            color: #ff6b35;
-        }
-
-        .nav-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            color: white;
-            background: rgba(0,0,0,0.5);
-            border: none;
-            font-size: 24px;
-            padding: 15px 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            z-index: 2001;
-        }
-
-        .nav-btn:hover {
-            background: rgba(255, 107, 53, 0.8);
-        }
-
-        .prev {
-            left: 20px;
-        }
-
-        .next {
-            right: 20px;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .nav-menu {
-                display: none;
-            }
-
-            .installation-header h1 {
-                font-size: 2rem;
-            }
-
-            .installation-meta {
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .gallery-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .installation-header,
-            .installation-content,
-            .image-gallery,
-            .cta-section {
-                padding: 20px;
-            }
-
-            .footer-nav {
-                flex-direction: column;
-                gap: 15px;
-            }
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.9);
-        }
-
-        .modal-content {
-            margin: auto;
-            display: block;
-            max-width: 90%;
-            max-height: 90%;
-            margin-top: 50px;
-        }
-
-        .modal-image {
-            width: 100%;
-            height: auto;
-            object-fit: contain;
-        }
-
-        .close {
-            position: absolute;
-            top: 15px;
-            right: 35px;
-            color: #f1f1f1;
-            font-size: 40px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close:hover {
-            color: #ff6b35;
-        }
-
-        .modal-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            color: white;
-            font-size: 30px;
-            cursor: pointer;
-            padding: 10px;
-            background: rgba(0,0,0,0.5);
-            user-select: none;
-        }
-
-        .prev {
-            left: 10px;
-        }
-
-        .next {
-            right: 10px;
-        }
-
-        /* CTA Section */
-        .cta-section {
-            background: linear-gradient(135deg, #ff6b35, #ff8c61);
-            color: white;
-            padding: 60px 40px;
-            border-radius: 12px;
-            text-align: center;
-            margin-top: 50px;
-        }
-
-        .cta-title {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            font-family: 'Overpass', sans-serif;
-        }
-
-        .cta-text {
-            font-size: 18px;
-            margin-bottom: 30px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .cta-button {
-            display: inline-block;
-            background: white;
-            color: #ff6b35;
-            padding: 15px 40px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 18px;
-            transition: transform 0.3s ease;
-        }
-
-        .cta-button:hover {
-            transform: translateY(-2px);
-        }
-
-        /* Footer */
-        .footer {
-            background: #1a365d;
-            color: white;
-            padding: 40px 20px 20px;
-            margin-top: 80px;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .nav-menu {
-                display: none;
-            }
-
-            .installation-title {
-                font-size: 28px;
-            }
-
-            .overview-section {
-                padding: 25px;
-            }
-
-            .image-gallery {
-                grid-template-columns: 1fr;
-            }
-
-            .modal-content {
-                margin-top: 100px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header-container">
-            <a href="/${lang}/" class="logo">
-                <img src="/rosehill_tpv_logo.png" alt="Rosehill TPV®">
-                <span class="logo-text">Rosehill TPV<sup>®</sup></span>
-            </a>
-            <nav>
-                <ul class="nav-menu">
-                    <li><a href="/${lang}/">${labels.home}</a></li>
-                    <li><a href="/${lang}/products.html">${labels.products}</a></li>
-                    <li><a href="/${lang}/applications.html">${labels.applications}</a></li>
-                    <li><a href="/${lang}/colour.html">${labels.colour}</a></li>
-                    <li><a href="/${lang}/installations.html">${labels.installations}</a></li>
-                    <li><a href="/${lang}/about.html">${labels.about}</a></li>
-                    <li><a href="/${lang}/contact.html">${labels.contact}</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Breadcrumb -->
-        <div class="breadcrumb">
-            <a href="/${lang}/">${labels.home}</a> / 
-            <a href="/${lang}/installations.html">${labels.installations}</a> / 
-            ${translation.title}
-        </div>
-
-        <!-- Installation Header -->
-        <div class="installation-header">
-            <h1 class="installation-title">${translation.title}</h1>
-            <div class="installation-meta">
-                <div class="meta-item">
-                    <strong>${labels.location}:</strong> ${translation.location}
-                </div>
-                <div class="meta-item">
-                    <strong>${labels.date}:</strong> ${formatDate(installation.installation_date, lang)}
-                </div>
-                ${installation.application ? `
-                <div class="meta-item">
-                    <strong>${labels.application}:</strong> ${installation.application}
-                </div>` : ''}
-            </div>
-        </div>
-
-        <!-- Image Gallery -->
-        ${processedImages.length > 0 ? `
-        <section class="gallery-section">
-            <h2 class="section-title">${labels.projectImages}</h2>
-            <div class="image-gallery">
-                ${imageGalleryHTML}
-            </div>
-        </section>` : ''}
-
-        <!-- Project Overview -->
-        <section class="overview-section">
-            <h2 class="section-title">${labels.projectOverview}</h2>
-            <div class="overview-content">
-                ${translation.overview || ''}
-            </div>
-        </section>
-
-        <!-- CTA Section -->
-        <section class="cta-section">
-            <h2 class="cta-title">${labels.readyToTransform}</h2>
-            <p class="cta-text">${labels.contactToday}</p>
-            <a href="/${lang}/contact.html" class="cta-button">${labels.getStarted}</a>
-        </section>
-    </main>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="footer-content">
-            <p>&copy; 2025 Rosehill TPV<sup>®</sup>. ${labels.allRightsReserved}</p>
-        </div>
-    </footer>
-
-    <!-- Modal -->
-    <div id="imageModal" class="modal">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <span class="modal-nav prev" onclick="changeImage(-1)">&#10094;</span>
-        <span class="modal-nav next" onclick="changeImage(1)">&#10095;</span>
-        <div class="modal-content">
-            ${modalImagesHTML}
-        </div>
-    </div>
-
-    <script>
-        let currentImageIndex = 0;
-        const totalImages = ${processedImages.length};
-
-        function openModal(index) {
-            currentImageIndex = index;
-            document.getElementById('imageModal').style.display = 'block';
-            showImage(index);
-        }
-
-        function closeModal() {
-            document.getElementById('imageModal').style.display = 'none';
-        }
-
-        function changeImage(direction) {
-            currentImageIndex += direction;
-            if (currentImageIndex >= totalImages) currentImageIndex = 0;
-            if (currentImageIndex < 0) currentImageIndex = totalImages - 1;
-            showImage(currentImageIndex);
-        }
-
-        function showImage(index) {
-            const images = document.querySelectorAll('.modal-image');
-            images.forEach((img, i) => {
-                img.style.display = i === index ? 'block' : 'none';
-            });
-        }
-
-        // Keyboard navigation
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                closeModal();
-            } else if (event.key === 'ArrowLeft') {
-                changeImage(-1);
-            } else if (event.key === 'ArrowRight') {
-                changeImage(1);
-            }
-        });
-    </script>
-</body>
-</html>`;
+    // Perform selective replacements
+    
+    // Language and basic meta
+    htmlContent = htmlContent.replace('lang="en"', `lang="${lang}"`);
+    htmlContent = htmlContent.replace('Nursery\'s New Soft-Fall Surface - Rosehill TPV Installation', `${translation.title} - Rosehill TPV Installation`);
+    htmlContent = htmlContent.replace(/content="Nursery's New Soft-Fall Surface[^"]*"/, `content="${translation.overview ? translation.overview.substring(0, 155) : ''}"`);
+    
+    // Navigation links and labels
+    htmlContent = htmlContent.replace('href="../index.html">Home</a>', `href="/${lang}/">${labels.home}</a>`);
+    htmlContent = htmlContent.replace('href="../products.html">Products</a>', `href="/${lang}/products.html">${labels.products}</a>`);
+    htmlContent = htmlContent.replace('href="../applications.html">Applications</a>', `href="/${lang}/applications.html">${labels.applications}</a>`);
+    htmlContent = htmlContent.replace('href="../colour.html">Colour</a>', `href="/${lang}/colour.html">${labels.colour}</a>`);
+    htmlContent = htmlContent.replace('href="../installations.html" class="active">Installations</a>', `href="/${lang}/installations.html" class="active">${labels.installations}</a>`);
+    htmlContent = htmlContent.replace('href="../about.html">About Us</a>', `href="/${lang}/about.html">${labels.about}</a>`);
+    htmlContent = htmlContent.replace('href="../contact.html" class="contact-btn">Get in Touch</a>', `href="/${lang}/contact.html" class="contact-btn">${labels.contact}</a>`);
+
+    // Logo link
+    htmlContent = htmlContent.replace('href="../index.html" class="logo"', `href="/${lang}/" class="logo"`);
+    
+    // Breadcrumb
+    htmlContent = htmlContent.replace('<a href="../installations.html">Installations</a> / Nursery\'s New Soft-Fall Surface', `<a href="/${lang}/installations.html">${labels.installations}</a> / ${translation.title}`);
+    
+    // Installation title and meta
+    htmlContent = htmlContent.replace('<h1>Nursery\'s New Soft-Fall Surface</h1>', `<h1>${translation.title}</h1>`);
+    htmlContent = htmlContent.replace('<span class="meta-label">Location:</span>', `<span class="meta-label">${labels.location}:</span>`);
+    htmlContent = htmlContent.replace('<span class="meta-value">Los Ángeles, Chile</span>', `<span class="meta-value">${translation.location}</span>`);
+    htmlContent = htmlContent.replace('<span class="meta-label">Date:</span>', `<span class="meta-label">${labels.date}:</span>`);
+    htmlContent = htmlContent.replace('<span class="meta-value">23 March 2025</span>', `<span class="meta-value">${formatDate(installation.installation_date, lang)}</span>`);
+    htmlContent = htmlContent.replace('<span class="meta-label">Application:</span>', `<span class="meta-label">${labels.application}:</span>`);
+    htmlContent = htmlContent.replace('<span class="meta-value">Playground Surfaces</span>', `<span class="meta-value">${installation.application || 'playground'}</span>`);
+    
+    // Section headings
+    htmlContent = htmlContent.replace('<h3>Project Images</h3>', `<h3>${labels.projectImages}</h3>`);
+    htmlContent = htmlContent.replace('<h2>Project Overview</h2>', `<h2>${labels.projectOverview}</h2>`);
+    
+    // Replace image gallery content
+    htmlContent = htmlContent.replace(/<div class="gallery-grid">[\s\S]*?<\/div>/m, `<div class="gallery-grid">${imageGalleryHTML}
+                </div>`);
+    
+    // Replace project overview content
+    const overviewContent = translation.overview || '';
+    htmlContent = htmlContent.replace(/(<h2>Project Overview<\/h2>[\s\S]*?<p>)[\s\S]*?(<p>Thanks to)/, `$1${overviewContent}$2`);
+    
+    // Replace modal content
+    htmlContent = htmlContent.replace(/(<span class="close"[\s\S]*?<div class="modal-content"[^>]*>)[\s\S]*?(<button class="nav-btn prev")/, `$1${modalImagesHTML}
+                    $2`);
+    
+    // Update total images in JavaScript
+    htmlContent = htmlContent.replace('const totalImages = 3;', `const totalImages = ${processedImages.length};`);
+    
+    // CTA section
+    htmlContent = htmlContent.replace('<h3>Ready to Transform Your Space?</h3>', `<h3>${labels.readyToTransform}</h3>`);
+    htmlContent = htmlContent.replace('Contact us today to discuss how Rosehill TPV can create safe, vibrant surfaces for your project.', labels.contactToday);
+    htmlContent = htmlContent.replace('href="../contact.html" class="cta-button">Get Started</a>', `href="/${lang}/contact.html" class="cta-button">${labels.getStarted}</a>`);
+    
+    // Footer navigation
+    htmlContent = htmlContent.replace(/<nav class="footer-nav">[\s\S]*?<\/nav>/, `<nav class="footer-nav">
+                <a href="/${lang}/">${labels.home}</a>
+                <a href="/${lang}/products.html">${labels.products}</a>
+                <a href="/${lang}/applications.html">${labels.applications}</a>
+                <a href="/${lang}/colour.html">${labels.colour}</a>
+                <a href="/${lang}/installations.html">${labels.installations}</a>
+                <a href="/${lang}/about.html">${labels.about}</a>
+                <a href="/${lang}/contact.html">${labels.contact}</a>
+            </nav>`);
+    htmlContent = htmlContent.replace('&copy; 2025 Rosehill TPV. All rights reserved.', `&copy; 2025 Rosehill TPV<sup>®</sup>. ${labels.allRightsReserved}`);
 
     // Write the file
     const filePath = path.join(outputDir, `${translation.slug}.html`);

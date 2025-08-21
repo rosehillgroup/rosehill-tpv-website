@@ -200,6 +200,7 @@
         }
 
         .gallery-item {
+            position: relative;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -211,15 +212,142 @@
             transform: translateY(-5px);
         }
 
-        .gallery-item img {
+        .gallery-item img,
+        .gallery-item picture {
             width: 100%;
             height: 250px;
             object-fit: cover;
+            display: block;
+        }
+        
+        .gallery-item picture img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
-        /* CTA Section */
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            cursor: pointer;
+        }
+
+        .modal-content {
+            position: relative;
+            margin: 5% auto;
+            max-width: 90%;
+            max-height: 80%;
+            cursor: default;
+        }
+
+        .modal-image {
+            display: none;
+            text-align: center;
+        }
+
+        .modal-image img,
+        .modal-image picture img {
+            max-width: 100%;
+            max-height: 70vh;
+            object-fit: contain;
+        }
+        
+        .modal-image picture {
+            display: block;
+            max-width: 100%;
+            max-height: 70vh;
+        }
+
+        .close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10001;
+        }
+
+        .close:hover {
+            opacity: 0.7;
+        }
+
+        .nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            font-size: 24px;
+            padding: 15px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .nav-btn.prev {
+            left: 20px;
+        }
+
+        .nav-btn.next {
+            right: 20px;
+        }
+
+        /* Thanks Section */
+        .thanks-section {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .thanks-section h3 {
+            color: #1a365d;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .thanks-section p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .thanks-link {
+            display: inline-block;
+            color: #ff6b35;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            padding: 10px 20px;
+            border: 2px solid #ff6b35;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .thanks-link:hover {
+            background: #ff6b35;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Call to Action */
         .cta-section {
-            background: linear-gradient(135deg, #ff6b35, #e55a2b);
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
             color: white;
             padding: 60px 40px;
             border-radius: 12px;
@@ -230,32 +358,29 @@
         .cta-section h3 {
             font-size: 2rem;
             margin-bottom: 20px;
-            font-weight: 700;
         }
 
         .cta-section p {
-            font-size: 1.1rem;
+            font-size: 18px;
             margin-bottom: 30px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
+            opacity: 0.9;
         }
 
         .cta-button {
             display: inline-block;
-            background: white;
-            color: #ff6b35;
-            padding: 15px 40px;
+            background: #ff6b35;
+            color: white;
+            padding: 15px 30px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 600;
-            font-size: 1.1rem;
+            font-size: 18px;
             transition: all 0.3s ease;
         }
 
         .cta-button:hover {
+            background: #e55a2b;
             transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
         }
 
         /* Footer */
@@ -263,45 +388,42 @@
             background: #1a365d;
             color: white;
             padding: 60px 20px 30px;
+            text-align: center;
         }
 
         .footer-content {
             max-width: 1200px;
             margin: 0 auto;
-            text-align: center;
         }
 
         .footer-logo {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
         }
 
         .footer-logo img {
-            height: 60px;
+            height: 80px;
         }
 
         .footer-text {
-            font-size: 1.1rem;
-            margin-bottom: 40px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-            opacity: 0.9;
+            font-size: 16px;
+            margin-bottom: 30px;
+            opacity: 0.8;
         }
 
         .footer-nav {
             display: flex;
             justify-content: center;
-            gap: 40px;
-            margin-bottom: 40px;
             flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 30px;
         }
 
         .footer-nav a {
             color: white;
             text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            padding: 8px 0;
+            transition: color 0.3s ease;
         }
 
         .footer-nav a:hover {
@@ -309,81 +431,13 @@
         }
 
         .footer-bottom {
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 20px;
+            font-size: 14px;
             opacity: 0.7;
-            font-size: 0.9rem;
         }
 
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.9);
-        }
-
-        .modal-content {
-            margin: auto;
-            display: block;
-            max-width: 90%;
-            max-height: 90%;
-            margin-top: 50px;
-            position: relative;
-        }
-
-        .modal-image {
-            width: 100%;
-            height: auto;
-            object-fit: contain;
-        }
-
-        .close {
-            position: absolute;
-            top: 15px;
-            right: 35px;
-            color: #f1f1f1;
-            font-size: 40px;
-            font-weight: bold;
-            cursor: pointer;
-            z-index: 2001;
-        }
-
-        .close:hover {
-            color: #ff6b35;
-        }
-
-        .nav-btn {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            color: white;
-            background: rgba(0,0,0,0.5);
-            border: none;
-            font-size: 24px;
-            padding: 15px 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            z-index: 2001;
-        }
-
-        .nav-btn:hover {
-            background: rgba(255, 107, 53, 0.8);
-        }
-
-        .prev {
-            left: 20px;
-        }
-
-        .next {
-            right: 20px;
-        }
-
-        /* Mobile Responsive */
+        /* Responsive Design */
         @media (max-width: 768px) {
             .nav-menu {
                 display: none;
@@ -405,6 +459,7 @@
             .installation-header,
             .installation-content,
             .image-gallery,
+            .thanks-section,
             .cta-section {
                 padding: 20px;
             }
@@ -414,144 +469,6 @@
                 gap: 15px;
             }
         }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.9);
-        }
-
-        .modal-content {
-            margin: auto;
-            display: block;
-            max-width: 90%;
-            max-height: 90%;
-            margin-top: 50px;
-        }
-
-        .modal-image {
-            width: 100%;
-            height: auto;
-            object-fit: contain;
-        }
-
-        .close {
-            position: absolute;
-            top: 15px;
-            right: 35px;
-            color: #f1f1f1;
-            font-size: 40px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .close:hover {
-            color: #ff6b35;
-        }
-
-        .modal-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            color: white;
-            font-size: 30px;
-            cursor: pointer;
-            padding: 10px;
-            background: rgba(0,0,0,0.5);
-            user-select: none;
-        }
-
-        .prev {
-            left: 10px;
-        }
-
-        .next {
-            right: 10px;
-        }
-
-        /* CTA Section */
-        .cta-section {
-            background: linear-gradient(135deg, #ff6b35, #ff8c61);
-            color: white;
-            padding: 60px 40px;
-            border-radius: 12px;
-            text-align: center;
-            margin-top: 50px;
-        }
-
-        .cta-title {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            font-family: 'Overpass', sans-serif;
-        }
-
-        .cta-text {
-            font-size: 18px;
-            margin-bottom: 30px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .cta-button {
-            display: inline-block;
-            background: white;
-            color: #ff6b35;
-            padding: 15px 40px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 18px;
-            transition: transform 0.3s ease;
-        }
-
-        .cta-button:hover {
-            transform: translateY(-2px);
-        }
-
-        /* Footer */
-        .footer {
-            background: #1a365d;
-            color: white;
-            padding: 40px 20px 20px;
-            margin-top: 80px;
-        }
-
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .nav-menu {
-                display: none;
-            }
-
-            .installation-title {
-                font-size: 28px;
-            }
-
-            .overview-section {
-                padding: 25px;
-            }
-
-            .image-gallery {
-                grid-template-columns: 1fr;
-            }
-
-            .modal-content {
-                margin-top: 100px;
-            }
-        }
     </style>
 </head>
 <body>
@@ -559,55 +476,60 @@
     <header class="header">
         <div class="header-container">
             <a href="/es/" class="logo">
-                <img src="/rosehill_tpv_logo.png" alt="Rosehill TPV®">
-                <span class="logo-text">Rosehill TPV<sup>®</sup></span>
+                <img src="../rosehill_tpv_logo.png" alt="Rosehill TPV">
             </a>
-            <nav>
-                <ul class="nav-menu">
-                    <li><a href="/es/">Inicio</a></li>
-                    <li><a href="/es/products.html">Productos</a></li>
-                    <li><a href="/es/applications.html">Aplicaciones</a></li>
-                    <li><a href="/es/colour.html">Color</a></li>
-                    <li><a href="/es/installations.html">Instalaciones</a></li>
-                    <li><a href="/es/about.html">Acerca de</a></li>
-                    <li><a href="/es/contact.html">Contacto</a></li>
-                </ul>
+            <nav class="nav-menu">
+                <a href="/es/">Inicio</a>
+                <a href="/es/products.html">Productos</a>
+                <a href="/es/applications.html">Aplicaciones</a>
+                <a href="/es/colour.html">Color</a>
+                <a href="/es/installations.html" class="active">Instalaciones</a>
+                <a href="/es/about.html">Acerca de</a>
+                <a href="/es/contact.html" class="contact-btn">Contacto</a>
             </nav>
         </div>
     </header>
 
     <!-- Main Content -->
     <main class="main-content">
-        <!-- Breadcrumb -->
-        <div class="breadcrumb">
-            <a href="/es/">Inicio</a> / 
-            <a href="/es/installations.html">Instalaciones</a> / 
-            Parque infantil Hassell Park Caterpiller
-        </div>
+        <div class="container">
+            <!-- Breadcrumb -->
+            <div class="breadcrumb">
+                <a href="/es/installations.html">Instalaciones</a> / Parque infantil Hassell Park Caterpiller
+            </div>
 
-        <!-- Installation Header -->
-        <div class="installation-header">
-            <h1 class="installation-title">Parque infantil Hassell Park Caterpiller</h1>
-            <div class="installation-meta">
-                <div class="meta-item">
-                    <strong>Ubicación:</strong> Nueva Gales del Sur, Australia
-                </div>
-                <div class="meta-item">
-                    <strong>Fecha:</strong> 4 de diciembre de 2024
-                </div>
-                
-                <div class="meta-item">
-                    <strong>Aplicación:</strong> playground
+            <!-- Installation Header -->
+            <div class="installation-header">
+                <h1>Parque infantil Hassell Park Caterpiller</h1>
+                <div class="installation-meta">
+                    <div class="meta-item">
+                        <svg class="meta-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="meta-label">Ubicación:</span>
+                        <span class="meta-value">Nueva Gales del Sur, Australia</span>
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="meta-label">Fecha:</span>
+                        <span class="meta-value">4 de diciembre de 2024</span>
+                    </div>
+                    <div class="meta-item">
+                        <svg class="meta-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v8a1 1 0 01-1 1H4a1 1 0 01-1-1V8z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="meta-label">Aplicación:</span>
+                        <span class="meta-value">playground</span>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Image Gallery -->
-        
-        <section class="gallery-section">
-            <h2 class="section-title">Imágenes del Proyecto</h2>
+            <!-- Image Gallery - Now appears first -->
             <div class="image-gallery">
-                
+                <h3>Imágenes del Proyecto</h3>
+                <div class="gallery-grid">
                 <div class="gallery-item">
                     <picture>
                         <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1733299759343.jpeg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
@@ -626,50 +548,93 @@
                         <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1733299759877.jpeg?width=400&height=300&quality=75&resize=cover" alt="Parque infantil Hassell Park Caterpiller - Image 3" loading="lazy" onclick="openModal(2)">
                     </picture>
                 </div>
+                </div>
+                <div class="gallery-item">
+                    <picture>
+                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1742568794475.jpeg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
+                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1742568794475.jpeg?width=400&height=300&quality=75&resize=cover" alt="Nursery's New Soft-Fall Surface - Image 2" loading="lazy" onclick="openModal(1)">
+                    </picture>
+                </div>
+                <div class="gallery-item">
+                    <picture>
+                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1742568794598.jpeg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
+                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1742568794598.jpeg?width=400&height=300&quality=75&resize=cover" alt="Nursery's New Soft-Fall Surface - Image 3" loading="lazy" onclick="openModal(2)">
+                    </picture>
+                </div>
+                </div>
             </div>
-        </section>
 
-        <!-- Project Overview -->
-        <section class="overview-section">
-            <h2 class="section-title">Resumen del Proyecto</h2>
-            <div class="overview-content">
-                El nuevo parque infantil de Hassell Park, en Nueva Gales del Sur, cuenta ahora con una superficie Rosehill TPV® softfall inspirada en la naturaleza que complementa a la perfección los juegos de orugas y el bosque circundante. Esta superficie vibrante no sólo mejora la seguridad, sino que también añade un toque de color que mantendrá el atractivo del parque infantil durante años. El TPV® de Rosehill es famoso por su versatilidad, lo que lo convierte en la opción perfecta para todo tipo de instalaciones, desde parques infantiles hasta instalaciones deportivas. Con una excepcional resistencia a los rayos UV, conserva tanto su color como su suavidad, lo que resulta ideal para soportar el exigente clima de Australia. Gracias a , Pty Ltd y
+            <!-- Installation Content - Now appears after images -->
+            <div class="installation-content">
+                <h2>Descripción del Proyecto</h2>
+                <p>Rosehill TPV® was the perfect soft-fall surface for this nursery in Los Ángeles, Chile, offering a durable, high-performance solution to reduce the risk of slips and falls. Combined with colourful balancing blocks, the tactile, grippy surface of our wet-pour rubber keeps little adventurers safe while they play.</p>
+                <p>With a palette of 21 vibrant colours and the ability to create custom blends, Rosehill TPV® allows for truly unique and engaging designs. Its outstanding UV stability ensures colours stay bright and surfaces remain soft, even in challenging climates, year after year.</p>
+                <p>Made from a non-toxic formulation, Rosehill TPV® meets the highest international standards for safety and environmental responsibility—making it a trusted choice for playgrounds around the world.</p>
+                <p>Thanks to <a href="https://www.fullurbano.com/" target="_blank" rel="noopener noreferrer">Full urbano</a></p>
             </div>
-        </section>
 
-        <!-- CTA Section -->
-        <section class="cta-section">
-            <h2 class="cta-title">¿Listo para Transformar su Espacio?</h2>
-            <p class="cta-text">Contáctenos hoy para hablar sobre cómo Rosehill TPV<sup>®</sup> puede crear superficies seguras y vibrantes para su proyecto.</p>
-            <a href="/es/contact.html" class="cta-button">Comenzar</a>
-        </section>
+            <!-- Modal for image viewing -->
+            <div id="imageModal" class="modal" onclick="closeModal()">
+                <div class="modal-content" onclick="event.stopPropagation()">
+                    <span class="close" onclick="closeModal()">&times;</span>
+                    
+                <div class="modal-image" id="modal-img-0" style="display: block;">
+                    <picture>
+                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1742568794283.jpeg?width=1200&height=800&quality=75&resize=cover&format=webp" type="image/webp">
+                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1742568794283.jpeg?width=1200&height=800&quality=75&resize=cover" alt="Nursery's New Soft-Fall Surface - Image 1" loading="lazy">
+                    </picture>
+                </div>
+                <div class="modal-image" id="modal-img-1" >
+                    <picture>
+                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1742568794475.jpeg?width=1200&height=800&quality=75&resize=cover&format=webp" type="image/webp">
+                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1742568794475.jpeg?width=1200&height=800&quality=75&resize=cover" alt="Nursery's New Soft-Fall Surface - Image 2" loading="lazy">
+                    </picture>
+                </div>
+                <div class="modal-image" id="modal-img-2" >
+                    <picture>
+                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1742568794598.jpeg?width=1200&height=800&quality=75&resize=cover&format=webp" type="image/webp">
+                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1742568794598.jpeg?width=1200&height=800&quality=75&resize=cover" alt="Nursery's New Soft-Fall Surface - Image 3" loading="lazy">
+                    </picture>
+                </div>
+                    
+                    <button class="nav-btn prev" onclick="changeImage(-1)">&#10094;</button>
+                    <button class="nav-btn next" onclick="changeImage(1)">&#10095;</button>
+                    
+                </div>
+            </div>
+
+            
+
+            <!-- Call to Action -->
+            <div class="cta-section">
+                <h3>¿Listo para Transformar tu Espacio?</h3>
+                <p>Contáctenos hoy para hablar sobre cómo Rosehill TPV<sup>®</sup> puede crear superficies seguras y vibrantes para su proyecto.</p>
+                <a href="/es/contact.html" class="cta-button">Comenzar</a>
+            </div>
+        </div>
     </main>
 
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-content">
-            <p>&copy; 2025 Rosehill TPV<sup>®</sup>. Todos los derechos reservados.</p>
+            <div class="footer-logo">
+                <img src="../rosehill_tpv_logo.png" alt="Rosehill TPV">
+            </div>
+            <p class="footer-text">Creating safer, more vibrant play and sports surfaces worldwide with our premium coloured rubber granules.</p>
+            <nav class="footer-nav">
+                <a href="/es/">Inicio</a>
+                <a href="/es/products.html">Productos</a>
+                <a href="/es/applications.html">Aplicaciones</a>
+                <a href="/es/colour.html">Color</a>
+                <a href="/es/installations.html">Instalaciones</a>
+                <a href="/es/about.html">Acerca de</a>
+                <a href="/es/contact.html">Contacto</a>
+            </nav>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Rosehill TPV<sup>®</sup>. Todos los derechos reservados.</p>
+            </div>
         </div>
     </footer>
-
-    <!-- Modal -->
-    <div id="imageModal" class="modal">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <span class="modal-nav prev" onclick="changeImage(-1)">&#10094;</span>
-        <span class="modal-nav next" onclick="changeImage(1)">&#10095;</span>
-        <div class="modal-content">
-            <picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1733299759343.jpeg?width=1200&quality=85&resize=cover&format=webp" type="image/webp">
-                        <img class="modal-image" style="" src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1733299759343.jpeg?width=1200&quality=85&resize=cover" alt="Parque infantil Hassell Park Caterpiller - Image 1" loading="lazy">
-                    </picture><picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1733299759621.jpeg?width=1200&quality=85&resize=cover&format=webp" type="image/webp">
-                        <img class="modal-image" style="display:none;" src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1733299759621.jpeg?width=1200&quality=85&resize=cover" alt="Parque infantil Hassell Park Caterpiller - Image 2" loading="lazy">
-                    </picture><picture>
-                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1733299759877.jpeg?width=1200&quality=85&resize=cover&format=webp" type="image/webp">
-                        <img class="modal-image" style="display:none;" src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/1733299759877.jpeg?width=1200&quality=85&resize=cover" alt="Parque infantil Hassell Park Caterpiller - Image 3" loading="lazy">
-                    </picture>
-        </div>
-    </div>
 
     <script>
         let currentImageIndex = 0;
@@ -699,7 +664,7 @@
             });
         }
 
-        // Keyboard navigation
+        // Close modal with Escape key
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeModal();
