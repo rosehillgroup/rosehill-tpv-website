@@ -811,13 +811,13 @@ async function generateInstallationPage(installation, outputDir) {
                 </div>
             </div>
 
+            ${imageGalleryHTML}
+
             <!-- Installation Content -->
             <div class="installation-content">
                 <h2>Project Overview</h2>
                 ${descriptionHTML}
             </div>
-
-            ${imageGalleryHTML}
 
             ${thanksSectionHTML}
 
