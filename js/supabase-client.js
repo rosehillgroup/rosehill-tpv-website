@@ -15,7 +15,15 @@ async function initSupabase() {
     if (supabaseClient) return supabaseClient;
     
     try {
-        // Import Supabase from CDN
+        // Check if Supabase is already loaded globally (via script tag)
+        if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+            console.log('Using globally loaded Supabase');
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            return supabaseClient;
+        }
+        
+        // Fallback: Import Supabase from CDN (for pages without script tag)
+        console.log('Loading Supabase from CDN...');
         const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
         supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         return supabaseClient;
