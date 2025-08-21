@@ -20,8 +20,11 @@ cd ../..
 
 # Generate installation pages if Supabase credentials are available
 if [ -n "$SUPABASE_URL" ] && [ -n "$SUPABASE_ANON_KEY" ]; then
-    echo "Generating installation pages..."
-    node generate-installation-pages-supabase.cjs || echo "Warning: Installation page generation failed (this is non-critical)"
+    echo "Generating English installation pages..."
+    node generate-installation-pages-supabase.cjs || echo "Warning: English installation page generation failed (this is non-critical)"
+    
+    echo "Generating translated installation pages..."
+    node generate-translated-installation-pages.cjs || echo "Warning: Translation page generation failed (this is non-critical)"
 else
     echo "Skipping installation page generation (Supabase credentials not available)"
 fi

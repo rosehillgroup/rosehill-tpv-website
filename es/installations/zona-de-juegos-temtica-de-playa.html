@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zona de juegos temática de playa - Rosehill TPV®</title>
+    <meta name="description" content="El cualificado equipo de Rosehill TPV® ha completado recientemente la instalación de una zona de juegos con temática playera en Goomalling, Australia, en l">
+    <link rel="canonical" href="https://tpv.rosehill.group/es/installations/zona-de-juegos-temtica-de-playa.html">
+    
+    <!-- Language alternates -->
+    <link rel="alternate" hreflang="en" href="https://tpv.rosehill.group/installations/beach-themed-play-area.html">
+    <link rel="alternate" hreflang="fr" href="https://tpv.rosehill.group/fr/installations/zona-de-juegos-temtica-de-playa.html">
+    <link rel="alternate" hreflang="de" href="https://tpv.rosehill.group/de/installations/zona-de-juegos-temtica-de-playa.html">
+    <link rel="alternate" hreflang="es" href="https://tpv.rosehill.group/es/installations/zona-de-juegos-temtica-de-playa.html">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 15px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            color: white;
+        }
+
+        .logo img {
+            height: 40px;
+            margin-right: 15px;
+        }
+
+        .logo-text {
+            font-size: 24px;
+            font-weight: 700;
+            font-family: 'Overpass', sans-serif;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-menu a:hover {
+            opacity: 0.8;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-top: 80px;
+            padding: 40px 20px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .breadcrumb {
+            margin-bottom: 30px;
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .breadcrumb a {
+            color: #ff6b35;
+            text-decoration: none;
+        }
+
+        .installation-header {
+            margin-bottom: 40px;
+        }
+
+        .installation-title {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1a365d;
+            margin-bottom: 20px;
+            font-family: 'Overpass', sans-serif;
+        }
+
+        .installation-meta {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            color: #64748b;
+            font-size: 16px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .meta-item strong {
+            color: #1a365d;
+        }
+
+        /* Image Gallery */
+        .gallery-section {
+            margin-bottom: 50px;
+        }
+
+        .section-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 25px;
+            font-family: 'Overpass', sans-serif;
+        }
+
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .gallery-item {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+
+        /* Project Overview */
+        .overview-section {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 50px;
+        }
+
+        .overview-content {
+            font-size: 18px;
+            line-height: 1.8;
+            color: #374151;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+        }
+
+        .modal-content {
+            margin: auto;
+            display: block;
+            max-width: 90%;
+            max-height: 90%;
+            margin-top: 50px;
+        }
+
+        .modal-image {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #ff6b35;
+        }
+
+        .modal-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            padding: 10px;
+            background: rgba(0,0,0,0.5);
+            user-select: none;
+        }
+
+        .prev {
+            left: 10px;
+        }
+
+        .next {
+            right: 10px;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            background: linear-gradient(135deg, #ff6b35, #ff8c61);
+            color: white;
+            padding: 60px 40px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .cta-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            font-family: 'Overpass', sans-serif;
+        }
+
+        .cta-text {
+            font-size: 18px;
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: white;
+            color: #ff6b35;
+            padding: 15px 40px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        .footer {
+            background: #1a365d;
+            color: white;
+            padding: 40px 20px 20px;
+            margin-top: 80px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .installation-title {
+                font-size: 28px;
+            }
+
+            .overview-section {
+                padding: 25px;
+            }
+
+            .image-gallery {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                margin-top: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <a href="/es/" class="logo">
+                <img src="/rosehill_tpv_logo.png" alt="Rosehill TPV®">
+                <span class="logo-text">Rosehill TPV<sup>®</sup></span>
+            </a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="/es/">Inicio</a></li>
+                    <li><a href="/es/products.html">Productos</a></li>
+                    <li><a href="/es/applications.html">Aplicaciones</a></li>
+                    <li><a href="/es/colour.html">Color</a></li>
+                    <li><a href="/es/installations.html">Instalaciones</a></li>
+                    <li><a href="/es/about.html">Acerca de</a></li>
+                    <li><a href="/es/contact.html">Contacto</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+            <a href="/es/">Inicio</a> / 
+            <a href="/es/installations.html">Instalaciones</a> / 
+            Zona de juegos temática de playa
+        </div>
+
+        <!-- Installation Header -->
+        <div class="installation-header">
+            <h1 class="installation-title">Zona de juegos temática de playa</h1>
+            <div class="installation-meta">
+                <div class="meta-item">
+                    <strong>Ubicación:</strong> Goomalling, Australia Occidental
+                </div>
+                <div class="meta-item">
+                    <strong>Fecha:</strong> 29 de enero de 2024
+                </div>
+                
+                <div class="meta-item">
+                    <strong>Aplicación:</strong> playground
+                </div>
+            </div>
+        </div>
+
+        <!-- Image Gallery -->
+        
+        <section class="gallery-section">
+            <h2 class="section-title">Imágenes del Proyecto</h2>
+            <div class="image-gallery">
+                
+                <div class="gallery-item">
+                    <picture>
+                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Goomalling_Playground_2.jpeg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
+                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Goomalling_Playground_2.jpeg?width=400&height=300&quality=75&resize=cover" alt="Zona de juegos temática de playa - Image 1" loading="lazy" onclick="openModal(0)">
+                    </picture>
+                </div>
+                <div class="gallery-item">
+                    <picture>
+                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Goomalling_Playground_5.jpeg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
+                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Goomalling_Playground_5.jpeg?width=400&height=300&quality=75&resize=cover" alt="Zona de juegos temática de playa - Image 2" loading="lazy" onclick="openModal(1)">
+                    </picture>
+                </div>
+                <div class="gallery-item">
+                    <picture>
+                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Goomalling_Playground_1.jpeg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
+                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Goomalling_Playground_1.jpeg?width=400&height=300&quality=75&resize=cover" alt="Zona de juegos temática de playa - Image 3" loading="lazy" onclick="openModal(2)">
+                    </picture>
+                </div>
+                <div class="gallery-item">
+                    <picture>
+                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Goomalling_Playground_3.jpeg?width=400&height=300&quality=75&resize=cover&format=webp" type="image/webp">
+                        <img src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Goomalling_Playground_3.jpeg?width=400&height=300&quality=75&resize=cover" alt="Zona de juegos temática de playa - Image 4" loading="lazy" onclick="openModal(3)">
+                    </picture>
+                </div>
+            </div>
+        </section>
+
+        <!-- Project Overview -->
+        <section class="overview-section">
+            <h2 class="section-title">Resumen del Proyecto</h2>
+            <div class="overview-content">
+                El cualificado equipo de Rosehill TPV® ha completado recientemente la instalación de una zona de juegos con temática playera en Goomalling, Australia, en la que se ha utilizado el revestimiento de caídas blandas TPV® de Rosehill. Empleando una técnica de mezcla en húmedo, han creado ingeniosamente un efecto de olas oceánicas en la superficie, añadiendo profundidad visual a la vez que garantizan la protección contra los accidentes habituales en las zonas de juego. Con el TPV® de Rosehill, cualquier área de juego obtiene una capa suave que protege de resbalones, tropiezos y caídas. Nuestra solución wetpour ofrece una excelente estabilidad frente a los rayos UV y ayuda a conservar el color y la suavidad de la superficie en cualquier clima, haciendo que los espacios de juego sean duraderos y seguros. Gracias a <a href="https://perthplaygroundandrubber.com.au/" target="_blank" rel="noopener noreferrer">Perth Playground & Rubber</a> y <a href="https://www.surfacedesigns.com.au/" target="_blank" rel="noopener noreferrer">Surface Designs TPV</a>.
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <h2 class="cta-title">¿Listo para Transformar su Espacio?</h2>
+            <p class="cta-text">Contáctenos hoy para hablar sobre cómo Rosehill TPV<sup>®</sup> puede crear superficies seguras y vibrantes para su proyecto.</p>
+            <a href="/es/contact.html" class="cta-button">Comenzar</a>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 Rosehill TPV<sup>®</sup>. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Modal -->
+    <div id="imageModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <span class="modal-nav prev" onclick="changeImage(-1)">&#10094;</span>
+        <span class="modal-nav next" onclick="changeImage(1)">&#10095;</span>
+        <div class="modal-content">
+            <picture>
+                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Goomalling_Playground_2.jpeg?width=1200&quality=85&resize=cover&format=webp" type="image/webp">
+                        <img class="modal-image" style="" src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Goomalling_Playground_2.jpeg?width=1200&quality=85&resize=cover" alt="Zona de juegos temática de playa - Image 1" loading="lazy">
+                    </picture><picture>
+                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Goomalling_Playground_5.jpeg?width=1200&quality=85&resize=cover&format=webp" type="image/webp">
+                        <img class="modal-image" style="display:none;" src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Goomalling_Playground_5.jpeg?width=1200&quality=85&resize=cover" alt="Zona de juegos temática de playa - Image 2" loading="lazy">
+                    </picture><picture>
+                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Goomalling_Playground_1.jpeg?width=1200&quality=85&resize=cover&format=webp" type="image/webp">
+                        <img class="modal-image" style="display:none;" src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Goomalling_Playground_1.jpeg?width=1200&quality=85&resize=cover" alt="Zona de juegos temática de playa - Image 3" loading="lazy">
+                    </picture><picture>
+                        <source srcset="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Goomalling_Playground_3.jpeg?width=1200&quality=85&resize=cover&format=webp" type="image/webp">
+                        <img class="modal-image" style="display:none;" src="https://otidaseqlgubqzsqazqt.supabase.co/storage/v1/object/public/installation-images/installations/Goomalling_Playground_3.jpeg?width=1200&quality=85&resize=cover" alt="Zona de juegos temática de playa - Image 4" loading="lazy">
+                    </picture>
+        </div>
+    </div>
+
+    <script>
+        let currentImageIndex = 0;
+        const totalImages = 4;
+
+        function openModal(index) {
+            currentImageIndex = index;
+            document.getElementById('imageModal').style.display = 'block';
+            showImage(index);
+        }
+
+        function closeModal() {
+            document.getElementById('imageModal').style.display = 'none';
+        }
+
+        function changeImage(direction) {
+            currentImageIndex += direction;
+            if (currentImageIndex >= totalImages) currentImageIndex = 0;
+            if (currentImageIndex < 0) currentImageIndex = totalImages - 1;
+            showImage(currentImageIndex);
+        }
+
+        function showImage(index) {
+            const images = document.querySelectorAll('.modal-image');
+            images.forEach((img, i) => {
+                img.style.display = i === index ? 'block' : 'none';
+            });
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            } else if (event.key === 'ArrowLeft') {
+                changeImage(-1);
+            } else if (event.key === 'ArrowRight') {
+                changeImage(1);
+            }
+        });
+    </script>
+</body>
+</html>
