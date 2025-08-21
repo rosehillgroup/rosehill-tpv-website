@@ -12,7 +12,10 @@
 [functions]
   # Serverless functions directory
   directory = "netlify/functions"
-  # Extend timeout for translation function
+
+[[functions]]
+  # Translation function timeout
+  path = "translate-installation"
   timeout = 30
 
 # Redirects for multilingual routing
