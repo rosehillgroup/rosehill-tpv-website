@@ -1,6 +1,6 @@
 [build]
-  publish = "site-astro/dist"
-  command = "npm run build"
+  publish = "."
+  command = "echo 'Temporarily reverting to original site'"
 
 [build.environment]
   NODE_VERSION = "18"
