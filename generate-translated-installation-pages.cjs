@@ -274,14 +274,14 @@ async function generateInstallationPage(translation, installation, outputDir, la
     htmlContent = htmlContent.replace('<span class="meta-label">Application:</span>', `<span class="meta-label">${labels.application}:</span>`);
     htmlContent = htmlContent.replace('<span class="meta-value">Playground Surfaces</span>', `<span class="meta-value">${installation.application || 'playground'}</span>`);
     
-    // Section headings
-    htmlContent = htmlContent.replace('<h3>Project Images</h3>', `<h3>${labels.projectImages}</h3>`);
-    
-    // Replace image gallery content - only close the gallery-grid div
+    // Replace image gallery content - match the entire image-gallery section
     htmlContent = htmlContent.replace(
-        /<div class="gallery-grid">\s*\n?([\s\S]*?)\n?\s*<\/div>/m,
-        `<div class="gallery-grid">${imageGalleryHTML}
-                </div>`
+        /<div class="image-gallery">\s*\n\s*<h3>Project Images<\/h3>\s*\n\s*<div class="gallery-grid">\s*\n?([\s\S]*?)\n?\s*<\/div>\s*\n?\s*<\/div>/m,
+        `<div class="image-gallery">
+                <h3>${labels.projectImages}</h3>
+                <div class="gallery-grid">${imageGalleryHTML}
+                </div>
+            </div>`
     );
     
     // Process project overview content with paragraph breaks and thanks extraction
