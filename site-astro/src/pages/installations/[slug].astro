@@ -1,0 +1,231 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getInstallations, getInstallationBySlug, getLocalizedField, getLocalizedSlug } from '../../lib/sanity';
+
+export async function getStaticPaths() {
+  const installations = await getInstallations('en');
+  
+  return installations.map((installation) => ({
+    params: { 
+      slug: getLocalizedSlug(installation.slug, 'en')
+    },
+    props: { installation }
+  }));
+}
+
+const { installation } = Astro.props;
+const locale = 'en';
+
+// Get localized content
+const title = getLocalizedField(installation.title, locale);
+const overview = getLocalizedField(installation.overview, locale);
+const city = getLocalizedField(installation.location?.city, locale);
+const country = getLocalizedField(installation.location?.country, locale);
+const metaTitle = getLocalizedField(installation.seo?.metaTitle, locale) || title;
+const metaDescription = getLocalizedField(installation.seo?.metaDescription, locale) || overview;
+---
+
+<Layout title={`${title} - Rosehill TPV Installation`} description={metaDescription} locale={locale}>
+  <article class="installation">
+    <header class="installation-header">
+      <h1>{title}</h1>
+      <div class="installation-meta">
+        <div class="meta-item">
+          <strong>Location:</strong> {city}, {country}
+        </div>
+        <div class="meta-item">
+          <strong>Date:</strong> {new Date(installation.installationDate).toLocaleDateString('en-US')}
+        </div>
+        <div class="meta-item">
+          <strong>Application:</strong> {installation.application}
+        </div>
+      </div>
+    </header>
+
+    <section class="installation-content">
+      <h2>Project Overview</h2>
+      <p>{overview}</p>
+      
+      {installation.thanksTo?.company && (
+        <div class="thanks">
+          <p>Thanks to <a href={installation.thanksTo.url} target="_blank" rel="noopener noreferrer">{installation.thanksTo.company}</a></p>
+        </div>
+      )}
+    </section>
+
+    <div class="cta-section">
+      <h3>Ready to Transform Your Space?</h3>
+      <p>Contact us today to discuss how Rosehill TPV® can create safe, vibrant surfaces for your project.</p>
+      <a href="/contact" class="cta-button">Get Started</a>
+    </div>
+
+    <nav class="language-switcher">
+      <h4>View in other languages:</h4>
+      <ul>
+        {installation.publishedLocales.includes('fr') && (
+          <li><a href={`/fr/installations/${getLocalizedSlug(installation.slug, 'fr')}`}>Français</a></li>
+        )}
+        {installation.publishedLocales.includes('de') && (
+          <li><a href={`/de/installations/${getLocalizedSlug(installation.slug, 'de')}`}>Deutsch</a></li>
+        )}
+        {installation.publishedLocales.includes('es') && (
+          <li><a href={`/es/installations/${getLocalizedSlug(installation.slug, 'es')}`}>Español</a></li>
+        )}
+      </ul>
+    </nav>
+  </article>
+</Layout>
+
+<style>
+  .installation {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .installation-header {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+  }
+  
+  .installation-header h1 {
+    color: #1a365d;
+    margin-bottom: 1rem;
+    font-size: 2.5rem;
+  }
+  
+  .installation-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+  }
+  
+  .meta-item {
+    color: #666;
+  }
+  
+  .meta-item strong {
+    color: #1a365d;
+  }
+  
+  .installation-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+  }
+  
+  .installation-content h2 {
+    color: #1a365d;
+    margin-bottom: 1rem;
+  }
+  
+  .installation-content p {
+    line-height: 1.8;
+    color: #555;
+  }
+  
+  .thanks {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #eee;
+  }
+  
+  .thanks a {
+    color: #ff6b35;
+    text-decoration: none;
+  }
+  
+  .thanks a:hover {
+    text-decoration: underline;
+  }
+  
+  .cta-section {
+    background: linear-gradient(135deg, #1a365d, #2d4a71);
+    color: white;
+    padding: 3rem 2rem;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .cta-section h3 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .cta-section p {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+  }
+  
+  .cta-button {
+    display: inline-block;
+    background: #ff6b35;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+  }
+  
+  .cta-button:hover {
+    background: #e55a2b;
+    transform: translateY(-2px);
+  }
+  
+  .language-switcher {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+  
+  .language-switcher h4 {
+    color: #1a365d;
+    margin-bottom: 1rem;
+  }
+  
+  .language-switcher ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .language-switcher a {
+    color: #ff6b35;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border: 1px solid #ff6b35;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+  }
+  
+  .language-switcher a:hover {
+    background: #ff6b35;
+    color: white;
+  }
+  
+  @media (max-width: 768px) {
+    .installation-header h1 {
+      font-size: 2rem;
+    }
+    
+    .installation-meta {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .language-switcher ul {
+      flex-direction: column;
+    }
+  }
+</style>

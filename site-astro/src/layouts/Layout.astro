@@ -1,0 +1,54 @@
+---
+export interface Props {
+  title: string;
+  description?: string;
+  locale?: string;
+}
+
+const { title, description = '', locale = 'en' } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang={locale}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+    
+    <!-- Language alternatives -->
+    {locale === 'en' && (
+      <>
+        <link rel="alternate" hreflang="fr" href={`/fr${Astro.url.pathname}`} />
+        <link rel="alternate" hreflang="de" href={`/de${Astro.url.pathname}`} />
+        <link rel="alternate" hreflang="es" href={`/es${Astro.url.pathname}`} />
+      </>
+    )}
+    {locale !== 'en' && (
+      <>
+        <link rel="alternate" hreflang="en" href={Astro.url.pathname.replace(`/${locale}`, '') || '/'} />
+        <link rel="canonical" href={`${Astro.site}${Astro.url.pathname}`} />
+      </>
+    )}
+  </head>
+  <body>
+    <main>
+      <slot />
+    </main>
+  </body>
+</html>
+
+<style>
+  html {
+    font-family: system-ui, sans-serif;
+  }
+  body {
+    margin: 0;
+    padding: 20px;
+  }
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+</style>

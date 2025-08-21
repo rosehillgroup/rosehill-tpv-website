@@ -1,0 +1,118 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getInstallations, getLocalizedField, getLocalizedSlug } from '../../lib/sanity';
+
+// Get installations for French locale
+const installations = await getInstallations('fr');
+---
+
+<Layout title="Installations Rosehill TPV" description="Derniers projets d'installation utilisant les surfaces Rosehill TPV" locale="fr">
+  <h1>Installations Rosehill TPV</h1>
+  
+  <div class="installations-grid">
+    {installations.map((installation) => (
+      <article class="installation-card">
+        <h2>
+          <a href={`/fr/installations/${getLocalizedSlug(installation.slug, 'fr')}`}>
+            {getLocalizedField(installation.title, 'fr')}
+          </a>
+        </h2>
+        <p class="location">
+          {getLocalizedField(installation.location?.city, 'fr')}, {getLocalizedField(installation.location?.country, 'fr')}
+        </p>
+        <p class="date">{new Date(installation.installationDate).toLocaleDateString('fr-FR')}</p>
+        <p class="overview">{getLocalizedField(installation.overview, 'fr')}</p>
+      </article>
+    ))}
+  </div>
+  
+  <nav class="language-switcher">
+    <h3>Autres langues:</h3>
+    <ul>
+      <li><a href="/">English</a></li>
+      <li><a href="/de/">Deutsch</a></li>
+      <li><a href="/es/">Español</a></li>
+    </ul>
+  </nav>
+</Layout>
+
+<style>
+  .installations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+  
+  .installation-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    background: white;
+  }
+  
+  .installation-card h2 {
+    margin: 0 0 1rem 0;
+  }
+  
+  .installation-card h2 a {
+    color: #1a365d;
+    text-decoration: none;
+  }
+  
+  .installation-card h2 a:hover {
+    color: #ff6b35;
+  }
+  
+  .location {
+    color: #666;
+    font-weight: 600;
+    margin: 0.5rem 0;
+  }
+  
+  .date {
+    color: #999;
+    font-size: 0.9rem;
+    margin: 0.5rem 0;
+  }
+  
+  .overview {
+    line-height: 1.6;
+    margin-top: 1rem;
+  }
+  
+  .language-switcher {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin-top: 3rem;
+  }
+  
+  .language-switcher h3 {
+    color: #1a365d;
+    margin-bottom: 1rem;
+  }
+  
+  .language-switcher ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 1rem;
+  }
+  
+  .language-switcher a {
+    color: #ff6b35;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border: 1px solid #ff6b35;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+  }
+  
+  .language-switcher a:hover {
+    background: #ff6b35;
+    color: white;
+  }
+</style>

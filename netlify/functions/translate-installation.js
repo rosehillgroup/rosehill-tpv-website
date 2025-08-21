@@ -1,62 +1,54 @@
-// Supabase Edge Function for translating installation content
-// This function translates installation content using DeepL API and stores in installation_i18n table
+// Sanity CMS webhook for translating installation content
+// This function translates installation content using DeepL API and updates Sanity documents
 
-import { createClient } from '@supabase/supabase-js';
+import {createClient} from '@sanity/client'
+
+// Initialize Sanity client
+const sanityClient = createClient({
+  projectId: '68ola3dd',
+  dataset: 'production',
+  useCdn: false, // We need to write, so no CDN
+  token: process.env.SANITY_WRITE_TOKEN, // Set this in Netlify env vars
+  apiVersion: '2023-05-03',
+})
 
 // DeepL API configuration
-const DEEPL_API_KEY = process.env.DEEPL_API_KEY || 'be41df2a-742b-4952-ac1c-f94c17f50a44';
-// Use the pro endpoint since the API key appears to be for the paid version
-const DEEPL_API_URL = 'https://api.deepl.com/v2/translate';
+const DEEPL_API_KEY = process.env.DEEPL_API_KEY || 'be41df2a-742b-4952-ac1c-f94c17f50a44'
+const DEEPL_API_URL = 'https://api.deepl.com/v2/translate'
 
-// Target languages for translation
-const TARGET_LANGUAGES = {
-  'fr': 'FR',    // French
-  'de': 'DE',    // German  
-  'es': 'ES',    // Spanish
-};
-
-// Supabase configuration
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://otidaseqlgubqzsqazqt.supabase.co';
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90aWRhc2VxbGd1YnF6c3FhenF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA3NjkzMzcsImV4cCI6MjA2NjM0NTMzN30.IR9Q5NrJuNC4frTc0Q2Snjz-_oIlkzFb3izk2iBisp4';
-
-/**
- * Generate a URL-friendly slug from text
- */
-function generateSlug(text) {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '') // Remove special characters
-    .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
-    .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+// Language mapping: Sanity locale -> DeepL language code
+const DEEPL_LANGUAGE_MAP = {
+  'fr': 'FR',
+  'de': 'DE', 
+  'es': 'ES',
 }
 
-/**
- * Translate text using DeepL API
- */
-async function translateText(text, targetLang) {
-  // Handle different types of input
-  let textToTranslate = text;
-  
-  if (!text) {
-    return text;
-  }
-  
-  // Convert arrays to string
-  if (Array.isArray(text)) {
-    textToTranslate = text.join(' ');
-  } 
-  // Convert objects to string (for JSONB)
-  else if (typeof text === 'object') {
-    textToTranslate = JSON.stringify(text);
-  }
-  
-  // Convert to string and check if empty
-  textToTranslate = String(textToTranslate);
-  if (textToTranslate.trim().length === 0) {
-    return textToTranslate;
-  }
+// Brand terms and technical terms that should not be translated
+const PROTECTED_TERMS = [
+  'Rosehill TPV®',
+  'TPV®',
+  'Flexilon®',
+  'Rosehill',
+  'TPV',
+  'Flexilon',
+  'RH01', 'RH02', 'RH10', 'RH11', 'RH12', 'RH20', 'RH21', 'RH22', 'RH23', 'RH26', 'RH30', 'RH31', 'RH32', 'RH33', 'RH40', 'RH41', 'RH50', 'RH60', 'RH61', 'RH65', 'RH70', 'RH90'
+]
 
+// Translate text using DeepL API
+async function translateText(text, targetLang) {
+  if (!text || typeof text !== 'string' || !text.trim()) return text
+  
+  // Protect brand terms by replacing with placeholders
+  let protectedText = text
+  const placeholders = {}
+  
+  PROTECTED_TERMS.forEach((term, index) => {
+    const placeholder = `__PROTECTED_${index}__`
+    const regex = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+    protectedText = protectedText.replace(regex, placeholder)
+    placeholders[placeholder] = term
+  })
+  
   try {
     const response = await fetch(DEEPL_API_URL, {
       method: 'POST',
@@ -65,210 +57,169 @@ async function translateText(text, targetLang) {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        'text': textToTranslate,
-        'target_lang': targetLang,
-        'source_lang': 'EN',
-        'formality': 'default',
-        'preserve_formatting': 'true'
-      })
-    });
-
+        text: protectedText,
+        target_lang: DEEPL_LANGUAGE_MAP[targetLang],
+        source_lang: 'EN',
+        preserve_formatting: '1',
+      }),
+    })
+    
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`DeepL API error: ${response.status} - ${errorText}`);
+      throw new Error(`DeepL API error: ${response.status}`)
     }
-
-    const data = await response.json();
-    return data.translations[0].text;
+    
+    const data = await response.json()
+    let translatedText = data.translations[0].text
+    
+    // Restore protected terms
+    Object.entries(placeholders).forEach(([placeholder, term]) => {
+      translatedText = translatedText.replace(new RegExp(placeholder, 'g'), term)
+    })
+    
+    return translatedText
   } catch (error) {
-    console.error(`Translation error for ${targetLang}:`, error);
-    throw error;
+    console.error(`Translation error for ${targetLang}:`, error)
+    return text // Return original on error
   }
 }
 
-/**
- * Main handler function
- */
-export const handler = async (event, context) => {
-  // Handle CORS preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS'
-      },
-      body: ''
-    };
-  }
+// Generate slug from title
+function generateSlug(title) {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim()
+    .replace(/^-|-$/g, '')
+}
 
-  // Only allow POST requests
+// Main handler
+export const handler = async (event, context) => {
+  // Only handle POST requests
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
+      body: JSON.stringify({error: 'Method not allowed'}),
+    }
   }
-
+  
   try {
-    // Parse request body
-    const { installation_id, languages } = JSON.parse(event.body || '{}');
-
-    if (!installation_id) {
+    const {documentId, targetLocales} = JSON.parse(event.body)
+    
+    if (!documentId || !targetLocales || !Array.isArray(targetLocales)) {
       return {
         statusCode: 400,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ error: 'installation_id is required' })
-      };
+        body: JSON.stringify({error: 'Missing documentId or targetLocales'}),
+      }
     }
-
-    // Validate UUID format
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(installation_id)) {
-      return {
-        statusCode: 400,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ error: 'installation_id must be a valid UUID' })
-      };
-    }
-
-    // Default to all languages if none specified
-    const targetLangs = languages || Object.keys(TARGET_LANGUAGES);
-
-    // Initialize Supabase client
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // Fetch the installation data
-    const { data: installation, error: fetchError } = await supabase
-      .from('installations')
-      .select('id, title, description, location')
-      .eq('id', installation_id)
-      .single();
-
-    if (fetchError || !installation) {
+    
+    // Fetch the document from Sanity
+    const document = await sanityClient.getDocument(documentId)
+    
+    if (!document) {
       return {
         statusCode: 404,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ error: 'Installation not found' })
-      };
-    }
-
-    console.log(`Translating installation: ${installation.title}`);
-
-    const results = [];
-
-    // Translate for each target language
-    for (const lang of targetLangs) {
-      if (!TARGET_LANGUAGES[lang]) {
-        console.warn(`Unsupported language: ${lang}`);
-        continue;
+        body: JSON.stringify({error: 'Document not found'}),
       }
-
-      try {
-        console.log(`Translating to ${lang}...`);
-
-        // Translate each field
-        const [translatedTitle, translatedOverview, translatedLocation] = await Promise.all([
-          translateText(installation.title, TARGET_LANGUAGES[lang]),
-          translateText(installation.description, TARGET_LANGUAGES[lang]),
-          translateText(installation.location, TARGET_LANGUAGES[lang])
-        ]);
-
+    }
+    
+    // Prepare update payload
+    const updates = {}
+    
+    for (const locale of targetLocales) {
+      if (locale === 'en') continue // Skip English (source language)
+      
+      console.log(`Translating to ${locale}...`)
+      
+      // Translate title
+      if (document.title?.en && !document.title?.[locale]) {
+        const translatedTitle = await translateText(document.title.en, locale)
+        if (!updates.title) updates.title = {...document.title}
+        updates.title[locale] = translatedTitle
+        
         // Generate slug from translated title
-        const translatedSlug = generateSlug(translatedTitle);
-
-        // Insert or update translation in database
-        const { data: translationData, error: insertError } = await supabase
-          .from('installation_i18n')
-          .upsert({
-            installation_id: installation.id,
-            lang: lang,
-            slug: translatedSlug,
-            title: translatedTitle,
-            overview: translatedOverview,
-            location: translatedLocation,
-            source: 'mt',
-            updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'installation_id,lang'
-          });
-
-        if (insertError) {
-          console.error(`Error saving translation for ${lang}:`, insertError);
-          results.push({
-            lang,
-            success: false,
-            error: insertError.message
-          });
-        } else {
-          console.log(`✓ Successfully translated to ${lang}`);
-          results.push({
-            lang,
-            success: true,
-            title: translatedTitle,
-            overview: translatedOverview.substring(0, 100) + '...',
-            location: translatedLocation,
-            slug: translatedSlug
-          });
+        if (!updates.slug) updates.slug = {...document.slug}
+        updates.slug[locale] = {
+          _type: 'slug',
+          current: generateSlug(translatedTitle)
         }
-
-        // Add small delay to respect rate limits
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-      } catch (error) {
-        console.error(`Error translating to ${lang}:`, error);
-        results.push({
-          lang,
-          success: false,
-          error: error.message
-        });
+      }
+      
+      // Translate overview
+      if (document.overview?.en && !document.overview?.[locale]) {
+        const translatedOverview = await translateText(document.overview.en, locale)
+        if (!updates.overview) updates.overview = {...document.overview}
+        updates.overview[locale] = translatedOverview
+      }
+      
+      // Translate location fields
+      if (document.location?.city?.en && !document.location?.city?.[locale]) {
+        if (!updates.location) updates.location = {...document.location}
+        if (!updates.location.city) updates.location.city = {...document.location.city}
+        updates.location.city[locale] = await translateText(document.location.city.en, locale)
+      }
+      
+      if (document.location?.country?.en && !document.location?.country?.[locale]) {
+        if (!updates.location) updates.location = {...document.location}
+        if (!updates.location.country) updates.location.country = {...document.location.country}
+        updates.location.country[locale] = await translateText(document.location.country.en, locale)
+      }
+      
+      // Generate SEO fields
+      if (updates.title?.[locale]) {
+        if (!updates.seo) updates.seo = {...document.seo}
+        if (!updates.seo.metaTitle) updates.seo.metaTitle = {}
+        if (!updates.seo.metaDescription) updates.seo.metaDescription = {}
+        
+        updates.seo.metaTitle[locale] = `${updates.title[locale]} - Installation Rosehill TPV`
+        updates.seo.metaDescription[locale] = updates.overview?.[locale]?.substring(0, 155) || ''
+      }
+      
+      // Update translation status
+      if (!updates.translationStatus) updates.translationStatus = {...document.translationStatus}
+      updates.translationStatus[locale] = 'machine-translated'
+      
+      // Add to published locales if not already there
+      const currentPublishedLocales = document.publishedLocales || ['en']
+      if (!currentPublishedLocales.includes(locale)) {
+        updates.publishedLocales = [...currentPublishedLocales, locale]
       }
     }
-
+    
+    // Update the document in Sanity if we have translations
+    if (Object.keys(updates).length > 0) {
+      await sanityClient
+        .patch(documentId)
+        .set(updates)
+        .commit()
+      
+      console.log(`Successfully translated document ${documentId} to ${targetLocales.join(', ')}`)
+    }
+    
+    // Trigger Netlify build hook (if configured)
+    if (process.env.NETLIFY_BUILD_HOOK) {
+      await fetch(process.env.NETLIFY_BUILD_HOOK, {method: 'POST'})
+    }
+    
     return {
       statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json'
-      },
       body: JSON.stringify({
-        installation_id,
-        installation_title: installation.title,
-        results,
-        summary: {
-          total: results.length,
-          successful: results.filter(r => r.success).length,
-          failed: results.filter(r => !r.success).length
-        }
-      })
-    };
-
+        success: true,
+        documentId,
+        translatedLocales: targetLocales,
+        message: 'Translation completed successfully'
+      }),
+    }
+    
   } catch (error) {
-    console.error('Handler error:', error);
+    console.error('Translation function error:', error)
     return {
       statusCode: 500,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-        error: 'Internal server error',
-        details: error.message 
-      })
-    };
+      body: JSON.stringify({
+        error: 'Translation failed',
+        message: error.message
+      }),
+    }
   }
-};
+}

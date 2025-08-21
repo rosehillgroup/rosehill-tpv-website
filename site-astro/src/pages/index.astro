@@ -1,0 +1,74 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getInstallations, getLocalizedField, getLocalizedSlug } from '../lib/sanity';
+
+// Get installations for English locale
+const installations = await getInstallations('en');
+---
+
+<Layout title="Rosehill TPV Installations" description="Latest installation projects using Rosehill TPV surfaces">
+  <h1>Rosehill TPV Installations</h1>
+  
+  <div class="installations-grid">
+    {installations.map((installation) => (
+      <article class="installation-card">
+        <h2>
+          <a href={`/installations/${getLocalizedSlug(installation.slug, 'en')}`}>
+            {getLocalizedField(installation.title, 'en')}
+          </a>
+        </h2>
+        <p class="location">
+          {getLocalizedField(installation.location?.city, 'en')}, {getLocalizedField(installation.location?.country, 'en')}
+        </p>
+        <p class="date">{new Date(installation.installationDate).toLocaleDateString('en-US')}</p>
+        <p class="overview">{getLocalizedField(installation.overview, 'en')}</p>
+      </article>
+    ))}
+  </div>
+</Layout>
+
+<style>
+  .installations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+  
+  .installation-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    background: white;
+  }
+  
+  .installation-card h2 {
+    margin: 0 0 1rem 0;
+  }
+  
+  .installation-card h2 a {
+    color: #1a365d;
+    text-decoration: none;
+  }
+  
+  .installation-card h2 a:hover {
+    color: #ff6b35;
+  }
+  
+  .location {
+    color: #666;
+    font-weight: 600;
+    margin: 0.5rem 0;
+  }
+  
+  .date {
+    color: #999;
+    font-size: 0.9rem;
+    margin: 0.5rem 0;
+  }
+  
+  .overview {
+    line-height: 1.6;
+    margin-top: 1rem;
+  }
+</style>
