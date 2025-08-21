@@ -270,19 +270,23 @@ async function generateInstallationPage(translation, installation, outputDir, la
     
     // Section headings
     htmlContent = htmlContent.replace('<h3>Project Images</h3>', `<h3>${labels.projectImages}</h3>`);
-    htmlContent = htmlContent.replace('<h2>Project Overview</h2>', `<h2>${labels.projectOverview}</h2>`);
     
-    // Replace image gallery content
-    htmlContent = htmlContent.replace(/<div class="gallery-grid">[\s\S]*?<\/div>/m, `<div class="gallery-grid">${imageGalleryHTML}
-                </div>`);
+    // Replace image gallery content - need to match the complete gallery-grid section
+    htmlContent = htmlContent.replace(
+        /<div class="gallery-grid">\s*\n?([\s\S]*?)\n?\s*<\/div>\s*<\/div>\s*<\/div>/m,
+        `<div class="gallery-grid">${imageGalleryHTML}
+                </div>
+            </div>
+            </div>`
+    );
     
-    // Replace project overview content - more robust approach
+    // Replace project overview content BEFORE changing the heading - more robust approach
     const overviewContent = translation.overview || '';
     
     // Replace the entire content section between h2 and the thanks paragraph
     htmlContent = htmlContent.replace(
         /(<h2>Project Overview<\/h2>\s*<p>)[\s\S]*?(<p>Thanks to <a href="https:\/\/www\.fullurbano\.com\/" target="_blank" rel="noopener noreferrer">Full urbano<\/a><\/p>)/m,
-        `$1${overviewContent}</p>
+        `$1${overviewContent}
                 $2`
     );
     
@@ -293,6 +297,9 @@ async function generateInstallationPage(translation, installation, outputDir, la
             `$1<p>${overviewContent}</p>$2`
         );
     }
+    
+    // Now replace the heading after content replacement
+    htmlContent = htmlContent.replace('<h2>Project Overview</h2>', `<h2>${labels.projectOverview}</h2>`);
     
     // Replace modal content
     htmlContent = htmlContent.replace(/(<span class="close"[\s\S]*?<div class="modal-content"[^>]*>)[\s\S]*?(<button class="nav-btn prev")/, `$1${modalImagesHTML}
