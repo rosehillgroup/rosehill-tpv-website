@@ -1340,7 +1340,8 @@
             document.getElementById('empty-state').style.display = 'none';
             
             grid.innerHTML = pageInstallations.map(installation => {
-                const imageUrl = installation.images && installation.images.length > 0 ? installation.images[0] : 'images/installations/placeholder.jpg';
+                const rawImageUrl = installation.images && installation.images.length > 0 ? installation.images[0] : 'images/installations/placeholder.jpg';
+                const safeImageUrl = String(rawImageUrl).replace(/'/g, "\\'");
                 
                 // Debug image URL selection (simplified to prevent syntax errors)
                 
@@ -1371,7 +1372,7 @@
                     });
                 
                 return '<div class="installation-card" data-category="' + (installation.category || 'Playground') + '">' +
-                    '<div class="installation-image" style="background-image: url(' + imageUrl + ');"></div>' +
+                    '<div class="installation-image" style="background-image: url(\'' + safeImageUrl + '\');"></div>' +
                     '<div class="installation-content">' +
                         '<div class="installation-meta">' +
                             '<span class="installation-date">' + formattedDate + '</span>' +
