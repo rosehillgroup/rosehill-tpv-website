@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanity Admin Test - Rosehill TPV</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        h1 {
+            color: #1a365d;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .test-section h2 {
+            color: #374151;
+            margin-bottom: 15px;
+        }
+
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .test-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .test-error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .test-info {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+
+        button {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: 500;
+        }
+
+        button:hover {
+            background: #e55a2b;
+        }
+
+        button:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+        }
+
+        .log {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 15px;
+            border-radius: 4px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sanity Admin System Test</h1>
+        
+        <!-- Connection Test -->
+        <div class="test-section">
+            <h2>1. Sanity Connection Test</h2>
+            <button onclick="testConnection()">Test Connection</button>
+            <div id="connection-result" class="test-result" style="display: none;"></div>
+        </div>
+
+        <!-- CRUD Operations Test -->
+        <div class="test-section">
+            <h2>2. CRUD Operations Test</h2>
+            <button onclick="testCRUD()">Test CRUD Operations</button>
+            <div id="crud-result" class="test-result" style="display: none;"></div>
+        </div>
+
+        <!-- Image Upload Test -->
+        <div class="test-section">
+            <h2>3. Image Upload Test</h2>
+            <input type="file" id="test-image" accept="image/*">
+            <button onclick="testImageUpload()">Test Image Upload</button>
+            <div id="image-result" class="test-result" style="display: none;"></div>
+        </div>
+
+        <!-- Form Validation Test -->
+        <div class="test-section">
+            <h2>4. Form Validation Test</h2>
+            <form id="test-form">
+                <div class="form-group">
+                    <label>Title (required)</label>
+                    <input type="text" name="title" id="test-title">
+                </div>
+                <div class="form-group">
+                    <label>Overview (min 10 chars)</label>
+                    <textarea name="overview" id="test-overview"></textarea>
+                </div>
+                <button type="button" onclick="testValidation()">Test Validation</button>
+            </form>
+            <div id="validation-result" class="test-result" style="display: none;"></div>
+        </div>
+
+        <!-- Query Test -->
+        <div class="test-section">
+            <h2>5. Query and Statistics Test</h2>
+            <button onclick="testQueries()">Test Queries</button>
+            <div id="query-result" class="test-result" style="display: none;"></div>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="test-section">
+            <h2>Test Log</h2>
+            <div id="test-log" class="log"></div>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/sanity-client.js"></script>
+    <script src="js/image-upload.js"></script>
+    <script src="js/form-validation.js"></script>
+    <script>
+        let testInstallationId = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async function() {
+            log('Test page loaded');
+            await setupAuth();
+        });
+
+        async function setupAuth() {
+            let token = localStorage.getItem('sanity_token');
+            
+            if (!token) {
+                token = prompt('Enter your Sanity API token for testing:');
+                if (!token) {
+                    log('ERROR: No API token provided');
+                    return;
+                }
+                localStorage.setItem('sanity_token', token);
+            }
+
+            sanityClient.setToken(token);
+            log('API token configured');
+        }
+
+        // Test connection
+        async function testConnection() {
+            const resultDiv = document.getElementById('connection-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                log('Testing Sanity connection...');
+                
+                const result = await sanityClient.query('*[_type == "installation"][0]._id');
+                
+                resultDiv.className = 'test-result test-success';
+                resultDiv.textContent = '✓ Connection successful! Found installation: ' + (result || 'None');
+                log('SUCCESS: Connection test passed');
+                
+            } catch (error) {
+                resultDiv.className = 'test-result test-error';
+                resultDiv.textContent = '✗ Connection failed: ' + error.message;
+                log('ERROR: Connection test failed - ' + error.message);
+            }
+        }
+
+        // Test CRUD operations
+        async function testCRUD() {
+            const resultDiv = document.getElementById('crud-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'test-result test-info';
+            resultDiv.textContent = 'Running CRUD tests...';
+            
+            try {
+                log('Starting CRUD tests...');
+                
+                // CREATE
+                log('Testing CREATE operation...');
+                const testData = {
+                    title: 'Test Installation ' + Date.now(),
+                    city: 'Test City',
+                    country: 'Test Country',
+                    installationDate: new Date().toISOString().split('T')[0],
+                    application: 'playground',
+                    overview: 'This is a test installation created by the automated test system.'
+                };
+                
+                const created = await sanityClient.createInstallation(testData);
+                testInstallationId = created.document._id;
+                log('CREATE success: ' + testInstallationId);
+                
+                // READ
+                log('Testing READ operation...');
+                const installation = await sanityClient.getInstallation(testInstallationId);
+                if (!installation) throw new Error('Installation not found after creation');
+                log('READ success: Found installation');
+                
+                // UPDATE
+                log('Testing UPDATE operation...');
+                await sanityClient.updateInstallation(testInstallationId, {
+                    title: testData.title + ' (Updated)',
+                    overview: testData.overview + ' Updated via test.'
+                });
+                log('UPDATE success');
+                
+                // LIST
+                log('Testing LIST operation...');
+                const installations = await sanityClient.getInstallations({ limit: 5 });
+                log('LIST success: Found ' + installations.length + ' installations');
+                
+                resultDiv.className = 'test-result test-success';
+                resultDiv.textContent = '✓ All CRUD operations successful!';
+                log('SUCCESS: All CRUD tests passed');
+                
+            } catch (error) {
+                resultDiv.className = 'test-result test-error';
+                resultDiv.textContent = '✗ CRUD test failed: ' + error.message;
+                log('ERROR: CRUD test failed - ' + error.message);
+            }
+        }
+
+        // Test image upload
+        async function testImageUpload() {
+            const resultDiv = document.getElementById('image-result');
+            const fileInput = document.getElementById('test-image');
+            
+            resultDiv.style.display = 'block';
+            
+            if (!fileInput.files[0]) {
+                resultDiv.className = 'test-result test-error';
+                resultDiv.textContent = '✗ Please select an image file first';
+                return;
+            }
+            
+            try {
+                log('Testing image upload...');
+                resultDiv.className = 'test-result test-info';
+                resultDiv.textContent = 'Uploading image...';
+                
+                const file = fileInput.files[0];
+                const asset = await sanityClient.uploadImage(file, 'test-image-' + Date.now());
+                
+                resultDiv.className = 'test-result test-success';
+                resultDiv.textContent = '✓ Image uploaded successfully! Asset ID: ' + asset.document._id;
+                log('SUCCESS: Image upload test passed - ' + asset.document._id);
+                
+                // Clean up - delete the test asset
+                setTimeout(async () => {
+                    try {
+                        await sanityClient.deleteAsset(asset.document._id);
+                        log('Cleaned up test image asset');
+                    } catch (e) {
+                        log('Warning: Could not clean up test asset - ' + e.message);
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                resultDiv.className = 'test-result test-error';
+                resultDiv.textContent = '✗ Image upload failed: ' + error.message;
+                log('ERROR: Image upload test failed - ' + error.message);
+            }
+        }
+
+        // Test form validation
+        async function testValidation() {
+            const resultDiv = document.getElementById('validation-result');
+            resultDiv.style.display = 'block';
+            
+            try {
+                log('Testing form validation...');
+                
+                // Setup validation on test form
+                const form = document.getElementById('test-form');
+                const validator = new SanityFormValidation(form);
+                validator.required('title')
+                        .minLength('overview', 10);
+                
+                // Test with empty values
+                const isValid1 = validator.validateForm();
+                if (isValid1) throw new Error('Validation should have failed for empty form');
+                log('Empty form validation: PASS (correctly failed)');
+                
+                // Test with valid values
+                document.getElementById('test-title').value = 'Test Title';
+                document.getElementById('test-overview').value = 'This is a test overview with more than 10 characters';
+                
+                const isValid2 = validator.validateForm();
+                if (!isValid2) throw new Error('Validation should have passed for valid form');
+                log('Valid form validation: PASS (correctly succeeded)');
+                
+                resultDiv.className = 'test-result test-success';
+                resultDiv.textContent = '✓ Form validation working correctly!';
+                log('SUCCESS: Form validation test passed');
+                
+            } catch (error) {
+                resultDiv.className = 'test-result test-error';
+                resultDiv.textContent = '✗ Validation test failed: ' + error.message;
+                log('ERROR: Form validation test failed - ' + error.message);
+            }
+        }
+
+        // Test queries and statistics
+        async function testQueries() {
+            const resultDiv = document.getElementById('query-result');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'test-result test-info';
+            resultDiv.textContent = 'Running query tests...';
+            
+            try {
+                log('Testing queries and statistics...');
+                
+                // Test basic query
+                log('Testing basic installations query...');
+                const installations = await sanityClient.getInstallations({ limit: 3 });
+                log('Basic query success: ' + installations.length + ' installations');
+                
+                // Test search query
+                log('Testing search query...');
+                const searchResults = await sanityClient.getInstallations({ 
+                    search: 'playground',
+                    limit: 5 
+                });
+                log('Search query success: ' + searchResults.length + ' results');
+                
+                // Test statistics
+                log('Testing statistics query...');
+                const stats = await sanityClient.getStatistics();
+                log('Statistics success: ' + JSON.stringify(stats, null, 2));
+                
+                resultDiv.className = 'test-result test-success';
+                resultDiv.textContent = '✓ All query tests successful!';
+                log('SUCCESS: Query tests passed');
+                
+            } catch (error) {
+                resultDiv.className = 'test-result test-error';
+                resultDiv.textContent = '✗ Query test failed: ' + error.message;
+                log('ERROR: Query test failed - ' + error.message);
+            }
+        }
+
+        // Cleanup test data
+        async function cleanupTestData() {
+            if (testInstallationId) {
+                try {
+                    log('Cleaning up test installation...');
+                    await sanityClient.deleteInstallation(testInstallationId);
+                    log('Test installation deleted');
+                    testInstallationId = null;
+                } catch (error) {
+                    log('Warning: Could not delete test installation - ' + error.message);
+                }
+            }
+        }
+
+        // Run all tests
+        async function runAllTests() {
+            log('=== Starting comprehensive test suite ===');
+            await testConnection();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testCRUD();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testQueries();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testValidation();
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            await cleanupTestData();
+            log('=== Test suite completed ===');
+        }
+
+        // Utility functions
+        function log(message) {
+            const logDiv = document.getElementById('test-log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('test-log').innerHTML = '';
+        }
+
+        // Add button for running all tests
+        window.addEventListener('load', function() {
+            const container = document.querySelector('.container');
+            const runAllBtn = document.createElement('button');
+            runAllBtn.textContent = 'Run All Tests';
+            runAllBtn.onclick = runAllTests;
+            runAllBtn.style.display = 'block';
+            runAllBtn.style.margin = '20px auto';
+            runAllBtn.style.padding = '15px 30px';
+            runAllBtn.style.fontSize = '16px';
+            container.insertBefore(runAllBtn, container.firstChild.nextSibling);
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', cleanupTestData);
+    </script>
+</body>
+</html>

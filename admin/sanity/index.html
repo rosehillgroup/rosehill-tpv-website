@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rosehill TPV Admin - Sanity CMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        .admin-header {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .admin-header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .admin-header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: -20px auto 0;
+            padding: 0 20px 40px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            background: #ff6b35;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 4px;
+        }
+
+        .card-subtitle {
+            font-size: 14px;
+            color: #64748b;
+        }
+
+        .card-description {
+            color: #64748b;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: #ff6b35;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #e55a2b;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #f8fafc;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+
+        .btn-secondary:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        /* Stats Cards */
+        .stats-section {
+            margin-bottom: 40px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #ff6b35;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .stat-change {
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .stat-change.positive {
+            color: #10b981;
+        }
+
+        .stat-change.negative {
+            color: #ef4444;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 40px;
+        }
+
+        .quick-actions h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 20px;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .quick-action {
+            padding: 15px 20px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #374151;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .quick-action:hover {
+            background: #f1f5f9;
+            border-color: #ff6b35;
+            color: #ff6b35;
+            transform: translateX(4px);
+        }
+
+        .quick-action-icon {
+            width: 20px;
+            height: 20px;
+            color: #64748b;
+        }
+
+        .quick-action:hover .quick-action-icon {
+            color: #ff6b35;
+        }
+
+        /* System Status */
+        .system-status {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+        }
+
+        .system-status h2 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 20px;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .status-label {
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .status-value {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-online {
+            background: #10b981;
+        }
+
+        .status-offline {
+            background: #ef4444;
+        }
+
+        .status-warning {
+            background: #f59e0b;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-header {
+                padding: 30px 20px;
+            }
+
+            .admin-header h1 {
+                font-size: 28px;
+            }
+
+            .admin-header p {
+                font-size: 16px;
+            }
+
+            .admin-container {
+                padding: 0 15px 30px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .actions-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="admin-header">
+        <h1>Rosehill TPV Admin</h1>
+        <p>Content Management System powered by Sanity</p>
+        <div class="version-badge">Sanity CMS v2.0</div>
+    </header>
+
+    <main class="admin-container">
+        <!-- Statistics -->
+        <section class="stats-section">
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-installations">-</div>
+                    <div class="stat-label">Total Installations</div>
+                    <div class="stat-change positive" id="installations-change">Loading...</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="published-translations">-</div>
+                    <div class="stat-label">Published Translations</div>
+                    <div class="stat-change positive" id="translations-change">Loading...</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="recent-uploads">-</div>
+                    <div class="stat-label">This Month</div>
+                    <div class="stat-change" id="uploads-change">Loading...</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="active-languages">4</div>
+                    <div class="stat-label">Active Languages</div>
+                    <div class="stat-change">EN, FR, DE, ES</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Actions -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="card-title">Add Installation</div>
+                        <div class="card-subtitle">Create new showcase</div>
+                    </div>
+                </div>
+                <div class="card-description">
+                    Create a new installation showcase with images, descriptions, and multilingual support. The form includes image upload, location mapping, and automatic slug generation.
+                </div>
+                <div class="card-actions">
+                    <a href="add-installation.html" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+                        </svg>
+                        New Installation
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="card-title">Manage Installations</div>
+                        <div class="card-subtitle">Edit, delete, organize</div>
+                    </div>
+                </div>
+                <div class="card-description">
+                    View all installations in a searchable, filterable table. Edit existing installations, manage translations, and perform bulk operations. Includes advanced search and sorting options.
+                </div>
+                <div class="card-actions">
+                    <a href="manage-installations.html" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+                        </svg>
+                        Manage
+                    </a>
+                    <a href="manage-installations.html" class="btn btn-secondary">View List</a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12.87,15.07L15.27,12.67L16.68,14.08L17.39,13.37L15.27,11.25L12.87,13.65L10.47,11.25L9.06,12.66L12.87,16.47L16.68,12.66L15.27,11.25L12.87,13.65L12.87,15.07Z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="card-title">Translation Management</div>
+                        <div class="card-subtitle">DeepL integration</div>
+                    </div>
+                </div>
+                <div class="card-description">
+                    Manage translations for all installations across French, German, and Spanish. Uses DeepL API for machine translation with human review workflow and publishing controls.
+                </div>
+                <div class="card-actions">
+                    <a href="translations.html" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12.87,15.07L15.27,12.67L16.68,14.08L17.39,13.37L15.27,11.25L12.87,13.65L10.47,11.25L9.06,12.66L12.87,16.47L16.68,12.66L15.27,11.25L12.87,13.65L12.87,15.07Z" />
+                        </svg>
+                        Manage Translations
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,5V19H5V5H19Z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="card-title">System Test</div>
+                        <div class="card-subtitle">Verify functionality</div>
+                    </div>
+                </div>
+                <div class="card-description">
+                    Run comprehensive tests to verify Sanity connection, CRUD operations, image uploads, form validation, and queries. Essential for troubleshooting and system verification.
+                </div>
+                <div class="card-actions">
+                    <a href="test.html" class="btn btn-secondary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,5V19H5V5H19Z" />
+                        </svg>
+                        Run Tests
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <h2>Quick Actions</h2>
+            <div class="actions-grid">
+                <a href="add-installation.html" class="quick-action">
+                    <svg class="quick-action-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+                    </svg>
+                    Add New Installation
+                </a>
+                <a href="translations.html?bulk=true" class="quick-action">
+                    <svg class="quick-action-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12.87,15.07L15.27,12.67L16.68,14.08L17.39,13.37L15.27,11.25L12.87,13.65L10.47,11.25L9.06,12.66L12.87,16.47L16.68,12.66L15.27,11.25L12.87,13.65L12.87,15.07Z" />
+                    </svg>
+                    Bulk Translate
+                </a>
+                <a href="../../installations.html" target="_blank" class="quick-action">
+                    <svg class="quick-action-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M14,3V5H17.59L7.76,14.83L9.17,16.24L19,6.41V10H21V3M19,19H5V5H12V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V12H19V19Z" />
+                    </svg>
+                    View Live Site
+                </a>
+                <a href="https://68ola3dd.sanity.studio" target="_blank" class="quick-action">
+                    <svg class="quick-action-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4Z" />
+                    </svg>
+                    Sanity Studio
+                </a>
+                <a href="../add-installation-v2.html" class="quick-action">
+                    <svg class="quick-action-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4Z" />
+                    </svg>
+                    Legacy Admin (Supabase)
+                </a>
+                <a href="test.html" class="quick-action">
+                    <svg class="quick-action-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,16.5L6.5,12L7.91,10.59L11,13.67L16.59,8.09L18,9.5L11,16.5Z" />
+                    </svg>
+                    System Health Check
+                </a>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="system-status">
+            <h2>System Status</h2>
+            <div class="status-item">
+                <div class="status-label">Sanity CMS Connection</div>
+                <div class="status-value" id="sanity-status">
+                    <div class="status-dot status-offline"></div>
+                    <span>Checking...</span>
+                </div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Image Upload Service</div>
+                <div class="status-value" id="upload-status">
+                    <div class="status-dot status-offline"></div>
+                    <span>Checking...</span>
+                </div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Translation Service</div>
+                <div class="status-value" id="translation-status">
+                    <div class="status-dot status-offline"></div>
+                    <span>Checking...</span>
+                </div>
+            </div>
+            <div class="status-item">
+                <div class="status-label">Static Site Generation</div>
+                <div class="status-value" id="generation-status">
+                    <div class="status-dot status-online"></div>
+                    <span>Operational</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="js/sanity-client.js"></script>
+    <script>
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initializeDashboard();
+        });
+
+        async function initializeDashboard() {
+            // Check if we need to set up authentication
+            let token = localStorage.getItem('sanity_token');
+            
+            if (token) {
+                sanityClient.setToken(token);
+                await loadDashboardData();
+                await checkSystemStatus();
+            } else {
+                // Show setup message
+                updateSystemStatus('sanity-status', 'offline', 'API token required');
+                updateSystemStatus('upload-status', 'offline', 'Configure API token first');
+                updateSystemStatus('translation-status', 'offline', 'Configure API token first');
+            }
+        }
+
+        async function loadDashboardData() {
+            try {
+                const stats = await sanityClient.getStatistics();
+                
+                // Update statistics
+                document.getElementById('total-installations').textContent = stats.total || 0;
+                
+                const totalTranslations = (stats.translationStats?.french || 0) + 
+                                         (stats.translationStats?.german || 0) + 
+                                         (stats.translationStats?.spanish || 0);
+                document.getElementById('published-translations').textContent = totalTranslations;
+                
+                // Calculate recent installations (this month)
+                const currentMonth = new Date().toISOString().substring(0, 7);
+                const recentCount = stats.recentInstallations?.filter(inst => 
+                    inst.installationDate?.startsWith(currentMonth)
+                ).length || 0;
+                document.getElementById('recent-uploads').textContent = recentCount;
+                
+                // Update change indicators
+                document.getElementById('installations-change').textContent = `${stats.total || 0} total`;
+                document.getElementById('translations-change').textContent = `${totalTranslations} published`;
+                document.getElementById('uploads-change').textContent = `${recentCount} this month`;
+
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                // Set error states
+                document.getElementById('total-installations').textContent = '?';
+                document.getElementById('published-translations').textContent = '?';
+                document.getElementById('recent-uploads').textContent = '?';
+                document.getElementById('installations-change').textContent = 'Error loading';
+                document.getElementById('translations-change').textContent = 'Error loading';
+                document.getElementById('uploads-change').textContent = 'Error loading';
+            }
+        }
+
+        async function checkSystemStatus() {
+            // Check Sanity connection
+            try {
+                await sanityClient.query('*[_type == "installation"][0]._id');
+                updateSystemStatus('sanity-status', 'online', 'Connected');
+            } catch (error) {
+                updateSystemStatus('sanity-status', 'offline', 'Connection failed');
+            }
+
+            // Check image upload capability
+            try {
+                // Test if we can access the upload endpoint
+                const response = await fetch(`https://68ola3dd.api.sanity.io/v2023-05-03/assets/images/production`, {
+                    method: 'HEAD',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('sanity_token')}`
+                    }
+                });
+                
+                if (response.status === 405) { // Method not allowed is expected for HEAD request
+                    updateSystemStatus('upload-status', 'online', 'Available');
+                } else {
+                    updateSystemStatus('upload-status', 'warning', 'Limited access');
+                }
+            } catch (error) {
+                updateSystemStatus('upload-status', 'offline', 'Not available');
+            }
+
+            // Check translation service
+            try {
+                const response = await fetch('/.netlify/functions/translate-installation', {
+                    method: 'HEAD'
+                });
+                
+                if (response.status !== 404) {
+                    updateSystemStatus('translation-status', 'online', 'Available');
+                } else {
+                    updateSystemStatus('translation-status', 'offline', 'Function not deployed');
+                }
+            } catch (error) {
+                updateSystemStatus('translation-status', 'warning', 'Check deployment');
+            }
+        }
+
+        function updateSystemStatus(elementId, status, message) {
+            const element = document.getElementById(elementId);
+            const dot = element.querySelector('.status-dot');
+            const text = element.querySelector('span');
+            
+            // Update status class
+            dot.className = `status-dot status-${status}`;
+            text.textContent = message;
+        }
+
+        // Setup authentication if needed
+        function setupAuth() {
+            const token = prompt('Please enter your Sanity API token to access the admin interface:');
+            if (token) {
+                localStorage.setItem('sanity_token', token);
+                window.location.reload();
+            }
+        }
+
+        // Add setup button if no token
+        if (!localStorage.getItem('sanity_token')) {
+            const setupBtn = document.createElement('button');
+            setupBtn.textContent = 'Setup API Token';
+            setupBtn.className = 'btn btn-primary';
+            setupBtn.style.position = 'fixed';
+            setupBtn.style.bottom = '20px';
+            setupBtn.style.right = '20px';
+            setupBtn.style.zIndex = '1000';
+            setupBtn.onclick = setupAuth;
+            document.body.appendChild(setupBtn);
+        }
+    </script>
+</body>
+</html>

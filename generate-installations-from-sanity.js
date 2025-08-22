@@ -37,7 +37,7 @@ function getLocalizedSlug(slug, locale = 'en') {
   return localeSlug?.current || ''
 }
 
-// Generate HTML for a single installation
+// Generate HTML for a single installation using the exact template structure
 function generateInstallationHTML(installation, locale = 'en') {
   if (!fs.existsSync(TEMPLATE_PATH)) {
     throw new Error(`Template file not found: ${TEMPLATE_PATH}`)
@@ -58,32 +58,125 @@ function generateInstallationHTML(installation, locale = 'en') {
     overviewText = overview.join(' ')
   }
   
-  // Replace placeholders in your existing template
-  template = template
-    .replace(/{{title}}/g, title)
-    .replace(/{{overview}}/g, overviewText)
-    .replace(/{{city}}/g, city)
-    .replace(/{{country}}/g, country)
-    .replace(/{{location}}/g, `${city}, ${country}`)
-    .replace(/{{date}}/g, new Date(installation.installationDate).toLocaleDateString('en-US'))
-    .replace(/{{application}}/g, installation.application || '')
-    .replace(/{{slug}}/g, slug)
+  // Format location
+  const location = [city, country].filter(Boolean).join(', ')
   
-  // Add language switcher if this installation has multiple languages
-  if (installation.publishedLocales && installation.publishedLocales.length > 1) {
-    let languageSwitcher = '<div class="language-switcher"><h4>View in other languages:</h4><ul>'
-    
-    installation.publishedLocales.forEach(lang => {
-      if (lang !== locale) {
-        const langSlug = getLocalizedSlug(installation.slug, lang)
-        const langDir = lang === 'en' ? '' : `${lang}/`
-        languageSwitcher += `<li><a href="/${langDir}installations/${langSlug}/">${getLangName(lang)}</a></li>`
-      }
-    })
-    
-    languageSwitcher += '</ul></div>'
-    template = template.replace('</body>', `${languageSwitcher}</body>`)
+  // Format date - handle potential null/undefined dates
+  let formattedDate = 'Date not available'
+  if (installation.installationDate) {
+    try {
+      formattedDate = new Date(installation.installationDate).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    } catch (e) {
+      console.warn(`Invalid date for ${title}: ${installation.installationDate}`)
+    }
   }
+  
+  // Get application type or default to 'Playground'
+  const application = installation.application || 'Playground'
+  
+  // Create meta description (first 155 characters of overview)
+  const metaDescription = overviewText ? 
+    overviewText.substring(0, 155).replace(/"/g, '&quot;') : 
+    `${title} installation in ${location}. Rosehill TPV® surface installation.`
+  
+  // Generate keywords
+  const keywords = `Rosehill TPV, ${application}, ${location}, rubber surfacing, ${title}`
+  
+  // Handle images - for now use placeholder since Sanity images are null
+  // TODO: Update when Sanity schema includes proper image handling
+  let images = installation.images || []
+  if (!Array.isArray(images)) images = [images]
+  if (images.length === 0) {
+    // Use a default placeholder image for now
+    images = [`placeholder-${installation.application?.toLowerCase() || 'playground'}.jpg`]
+  }
+  
+  // Filter out null/undefined images
+  images = images.filter(img => img && typeof img === 'string')
+  
+  // Get first image for meta tags
+  const firstImage = images[0] || 'placeholder.jpg'
+  
+  // Create thumbnail grid HTML
+  let thumbnailGrid = ''
+  if (images.length > 1) {
+    thumbnailGrid = '<div class="thumbnail-grid">'
+    images.slice(1).forEach((img, index) => {
+      thumbnailGrid += `
+        <img src="../images/installations/${img}" 
+             alt="${title} - Image ${index + 2}" 
+             class="thumbnail" 
+             onclick="setMainImage(${index + 1})">`
+    })
+    thumbnailGrid += '</div>'
+  }
+  
+  // Create image array for JavaScript
+  const imageArray = images.map(img => `'${img}'`).join(', ')
+  
+  // Split overview into paragraphs
+  let contentParagraphs = ''
+  if (overviewText) {
+    // Split by double newlines or periods followed by capital letters
+    const paragraphs = overviewText
+      .split(/\n\n|(?<=[.!?])\s+(?=[A-Z])/)
+      .filter(p => p.trim())
+    
+    paragraphs.forEach(paragraph => {
+      contentParagraphs += `<p>${paragraph.trim()}</p>\n                `
+    })
+  } else {
+    contentParagraphs = '<p>This installation showcases the quality and durability of Rosehill TPV® surfaces.</p>'
+  }
+  
+  // Add thanks to section if present
+  if (installation.thanksTo?.company) {
+    contentParagraphs += `
+            </section>
+            <section class="content-section">
+                <h2>Special Thanks</h2>
+                <p>We would like to thank ${installation.thanksTo.company} for their collaboration on this project.</p>`
+  }
+  
+  // Replace all placeholders in template
+  template = template
+    .replace(/{{TITLE}}/g, title)
+    .replace(/{{LOCATION}}/g, location)
+    .replace(/{{DATE}}/g, formattedDate)
+    .replace(/{{APPLICATION}}/g, application)
+    .replace(/{{META_DESCRIPTION}}/g, metaDescription)
+    .replace(/{{KEYWORDS}}/g, keywords)
+    .replace(/{{FIRST_IMAGE}}/g, firstImage)
+    .replace(/{{URL_SLUG}}/g, slug)
+    .replace(/{{THUMBNAIL_GRID}}/g, thumbnailGrid)
+    .replace(/{{CONTENT_PARAGRAPHS}}/g, contentParagraphs)
+    .replace(/{{IMAGE_ARRAY}}/g, imageArray)
+  
+  // Update navigation links based on locale
+  if (locale !== 'en') {
+    // Update navigation links for non-English pages
+    template = template
+      .replace(/href="\.\.\/index\.html"/g, `href="../../index.html"`)
+      .replace(/href="\.\.\/products\.html"/g, `href="../../products.html"`)
+      .replace(/href="\.\.\/installations\.html"/g, `href="../../${locale}/installations.html"`)
+      .replace(/href="\.\.\/about\.html"/g, `href="../../about.html"`)
+      .replace(/href="\.\.\/contact\.html"/g, `href="../../contact.html"`)
+      .replace(/src="\.\.\/images\//g, `src="../../images/`)
+      .replace(/<a href="\.\.\/\.\.\/index\.html">Home<\/a>/g, '<a href="../../index.html">Home</a>')
+      .replace(/<a href="\.\.\/\.\.\/installations\.html">Installations<\/a>/g, `<a href="../../${locale}/installations.html">Installations</a>`)
+  }
+  
+  // Remove Supabase scripts and add Sanity data attributes
+  template = template
+    .replace(/<script src="\/js\/supabase-client\.js"><\/script>/, '<!-- Supabase removed - using Sanity -->')
+    .replace(/<script src="\/js\/installation-page-loader\.js"><\/script>/, '<!-- Page loader removed - content is static -->')
+  
+  // Add data attributes for the installation
+  template = template.replace('<body>', `<body data-installation-id="${installation._id}" data-installation-lang="${locale}" data-installation-slug="${slug}">`)
   
   return template
 }
@@ -108,7 +201,11 @@ async function generateAllInstallations() {
         installationDate,
         application,
         publishedLocales,
-        translationStatus
+        translationStatus,
+        images,
+        coverImage,
+        gallery,
+        thanksTo
       }
     `)
     
