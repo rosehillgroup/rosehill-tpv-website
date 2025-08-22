@@ -65,47 +65,52 @@ class SanityAdminClient {
      * Create a new installation document
      */
     async createInstallation(data) {
+        // Create a basic document first to test
         const document = {
             _type: 'installation',
             title: { en: data.title },
-            slug: { en: { _type: 'slug', current: this.generateSlug(data.title, data.location) } },
             overview: { en: data.overview },
             location: {
                 city: { en: data.city },
-                country: { en: data.country },
-                coordinates: data.coordinates || null
+                country: { en: data.country }
             },
             installationDate: data.installationDate,
-            application: data.application,
-            coverImage: data.coverImage || null,
-            gallery: data.gallery || [],
-            tags: data.tags || [],
-            thanksTo: data.thanksTo || null,
+            application: data.application || 'playground',
             publishedLocales: ['en'],
             translationStatus: {
                 en: 'published',
                 fr: 'not-started',
-                de: 'not-started',
+                de: 'not-started',  
                 es: 'not-started'
             }
         };
 
+        // Add slug if we can generate one
+        if (data.title && data.city) {
+            document.slug = { 
+                en: { 
+                    _type: 'slug', 
+                    current: this.generateSlug(data.title, data.city) 
+                } 
+            };
+        }
+
+        console.log('Creating document:', JSON.stringify(document, null, 2));
+
         const mutations = [{
             create: document
         }];
+
+        console.log('Sending mutation:', JSON.stringify({ mutations }, null, 2));
 
         const result = await this.apiRequest(`/data/mutate/${this.dataset}`, {
             method: 'POST',
             body: JSON.stringify({ mutations })
         });
 
-        // Handle Sanity mutation response structure
-        if (result.results && result.results[0]) {
-            return result.results[0];
-        } else {
-            // Return the full result if structure is different
-            return result;
-        }
+        console.log('Mutation result:', JSON.stringify(result, null, 2));
+
+        return result;
     }
 
     /**
