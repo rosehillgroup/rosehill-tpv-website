@@ -20,8 +20,8 @@ const sanity = createClient({
   apiVersion: '2023-05-03',
 })
 
-// Read your existing installation template
-const TEMPLATE_PATH = './installation-template-updated.html'
+// Read the new professional installation template
+const TEMPLATE_PATH = './installation-template-professional.html'
 
 // Helper to get localized content with fallback to English
 function getLocalizedField(field, locale = 'en') {
@@ -63,13 +63,16 @@ function generateInstallationHTML(installation, locale = 'en') {
   
   // Format date - handle potential null/undefined dates
   let formattedDate = 'Date not available'
+  let dateISO = new Date().toISOString()
   if (installation.installationDate) {
     try {
-      formattedDate = new Date(installation.installationDate).toLocaleDateString('en-US', {
+      const date = new Date(installation.installationDate)
+      formattedDate = date.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
       })
+      dateISO = date.toISOString()
     } catch (e) {
       console.warn(`Invalid date for ${title}: ${installation.installationDate}`)
     }
@@ -91,7 +94,9 @@ function generateInstallationHTML(installation, locale = 'en') {
   
   // Try imageReferences first (migrated from Supabase)
   if (installation.imageReferences && Array.isArray(installation.imageReferences) && installation.imageReferences.length > 0) {
-    images = installation.imageReferences.filter(img => img && typeof img === 'string')
+    images = installation.imageReferences
+      .filter(img => img && typeof img === 'string')
+      .map(img => img.startsWith('images/installations/') ? img.replace('images/installations/', '') : img)
   }
   // Try coverImage (Sanity asset)
   else if (installation.coverImage && installation.coverImage.asset && installation.coverImage.asset.url) {
@@ -116,18 +121,20 @@ function generateInstallationHTML(installation, locale = 'en') {
   // Get first image for meta tags
   const firstImage = images[0] || 'placeholder.jpg'
   
-  // Create thumbnail grid HTML
+  // Create thumbnail grid HTML for professional template
   let thumbnailGrid = ''
   if (images.length > 1) {
-    thumbnailGrid = '<div class="thumbnail-grid">'
+    thumbnailGrid = `
+                        <div class="thumbnail-grid">`
     images.slice(1).forEach((img, index) => {
       thumbnailGrid += `
-        <img src="../images/installations/${img}" 
-             alt="${title} - Image ${index + 2}" 
-             class="thumbnail" 
-             onclick="setMainImage(${index + 1})">`
+                            <img src="../images/installations/${img}" 
+                                 alt="${title} - Image ${index + 2}" 
+                                 class="thumbnail" 
+                                 onclick="setMainImage(${index + 1})">`
     })
-    thumbnailGrid += '</div>'
+    thumbnailGrid += `
+                        </div>`
   }
   
   // Create image array for JavaScript
@@ -148,13 +155,32 @@ function generateInstallationHTML(installation, locale = 'en') {
     contentParagraphs = '<p>This installation showcases the quality and durability of Rosehill TPV® surfaces.</p>'
   }
   
-  // Add thanks to section if present
+  // Create thanks section for professional template
+  let thanksSection = ''
   if (installation.thanksTo?.company) {
-    contentParagraphs += `
-            </section>
-            <section class="content-section">
-                <h2>Special Thanks</h2>
-                <p>We would like to thank ${installation.thanksTo.company} for their collaboration on this project.</p>`
+    thanksSection = `
+                    <div class="thanks-section">
+                        <h3>Special Thanks</h3>
+                        <p>We would like to thank <strong>${installation.thanksTo.company}</strong> for their collaboration on this project.</p>
+                    </div>`
+  }
+
+  // Create summary text for hero section
+  const summaryText = overviewText ? 
+    overviewText.split('.')[0] + '.' : 
+    `Discover this exceptional ${application.toLowerCase()} installation featuring Rosehill TPV® surfaces in ${location}.`
+
+  // Create hero background image (use first image or default)
+  const heroBackgroundImage = images.length > 0 ? `../images/installations/${images[0]}` : '../hero_background.jpg'
+
+  // Create project details extra section
+  let projectDetailsExtra = ''
+  if (installation.thanksTo?.company) {
+    projectDetailsExtra += `
+                    <div class="detail-item">
+                        <span class="detail-label">Partner</span>
+                        <span class="detail-value">${installation.thanksTo.company}</span>
+                    </div>`
   }
   
   // Replace all placeholders in template
@@ -162,6 +188,7 @@ function generateInstallationHTML(installation, locale = 'en') {
     .replace(/{{TITLE}}/g, title)
     .replace(/{{LOCATION}}/g, location)
     .replace(/{{DATE}}/g, formattedDate)
+    .replace(/{{DATE_ISO}}/g, dateISO)
     .replace(/{{APPLICATION}}/g, application)
     .replace(/{{META_DESCRIPTION}}/g, metaDescription)
     .replace(/{{KEYWORDS}}/g, keywords)
@@ -170,6 +197,11 @@ function generateInstallationHTML(installation, locale = 'en') {
     .replace(/{{THUMBNAIL_GRID}}/g, thumbnailGrid)
     .replace(/{{CONTENT_PARAGRAPHS}}/g, contentParagraphs)
     .replace(/{{IMAGE_ARRAY}}/g, imageArray)
+    .replace(/{{SUMMARY_TEXT}}/g, summaryText)
+    .replace(/{{HERO_BACKGROUND_IMAGE}}/g, heroBackgroundImage)
+    .replace(/{{THANKS_SECTION}}/g, thanksSection)
+    .replace(/{{PROJECT_DETAILS_EXTRA}}/g, projectDetailsExtra)
+    .replace(/{{IMAGE_COUNT}}/g, images.length)
   
   // Update navigation links based on locale
   if (locale !== 'en') {
