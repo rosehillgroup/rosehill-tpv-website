@@ -371,10 +371,6 @@ class SanityAdminClient {
     async getStatistics() {
         const query = `{
             "total": count(*[_type == "installation"]),
-            "byApplication": *[_type == "installation"] | {
-                "application": application,
-                "count": count(*)
-            } | group(application),
             "recentInstallations": *[_type == "installation"] | order(installationDate desc)[0...5]{
                 title.en,
                 location.city.en,
@@ -389,6 +385,21 @@ class SanityAdminClient {
         }`;
 
         return this.query(query);
+    }
+
+    /**
+     * Get statistics by application type
+     */
+    async getApplicationStats() {
+        const applications = ['playground', 'sports-court', 'fitness', 'water-park', 'track-field', 'pool-surround'];
+        const stats = {};
+        
+        for (const app of applications) {
+            const count = await this.query(`count(*[_type == "installation" && application == "${app}"])`);
+            stats[app] = count;
+        }
+        
+        return stats;
     }
 
     /**

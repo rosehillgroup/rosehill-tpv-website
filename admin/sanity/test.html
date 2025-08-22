@@ -256,9 +256,20 @@
                 
                 const created = await sanityClient.createInstallation(testData);
                 // Handle different response structures from Sanity
-                testInstallationId = created.document?._id || created.id || created._id;
+                console.log('Full create response:', created);
+                
+                // Try multiple possible response structures
+                if (created.results && created.results[0]) {
+                    testInstallationId = created.results[0].document?._id || created.results[0].id || created.results[0]._id;
+                } else if (created.document) {
+                    testInstallationId = created.document._id;
+                } else {
+                    testInstallationId = created.id || created._id;
+                }
+                
                 if (!testInstallationId) {
-                    console.log('Full create response:', created);
+                    console.log('Could not find ID in response. Response keys:', Object.keys(created));
+                    if (created.results) console.log('Results array:', created.results);
                     throw new Error('Could not extract installation ID from response');
                 }
                 log('CREATE success: ' + testInstallationId);
