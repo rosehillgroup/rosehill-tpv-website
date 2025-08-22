@@ -1203,10 +1203,10 @@
                     'seo' +
                 '}';
                 
-                const response = await fetch(`https://${SANITY_PROJECT_ID}.api.sanity.io/v${SANITY_API_VERSION}/data/query/${SANITY_DATASET}?query=${encodeURIComponent(query)}`);
+                const response = await fetch('https://' + SANITY_PROJECT_ID + '.api.sanity.io/v' + SANITY_API_VERSION + '/data/query/' + SANITY_DATASET + '?query=' + encodeURIComponent(query));
                 
                 if (!response.ok) {
-                    throw new Error(`Sanity API error: ${response.status}`);
+                    throw new Error('Sanity API error: ' + response.status);
                 }
                 
                 const data = await response.json();
@@ -1263,8 +1263,8 @@
                         id: installation._id,
                         title: title,
                         displayTitle: title,
-                        location: `${city}, ${country}`.replace(/^, |, $/, ''),
-                        displayLocation: `${city}, ${country}`.replace(/^, |, $/, ''),
+                        location: (city + ', ' + country).replace(/^, |, $/, ''),
+                        displayLocation: (city + ', ' + country).replace(/^, |, $/, ''),
                         slug: slug,
                         displaySlug: slug,
                         description: overviewText,
@@ -1318,9 +1318,9 @@
         function getInstallationUrl(slug) {
             const currentLang = getCurrentLanguage();
             if (currentLang) {
-                return `/${currentLang}/installations/${slug}.html`;
+                return '/' + currentLang + '/installations/' + slug + '.html';
             } else {
-                return `/installations/${slug}.html`; // English URLs have no prefix
+                return '/installations/' + slug + '.html'; // English URLs have no prefix
             }
         }
 
@@ -1370,23 +1370,21 @@
                         year: 'numeric'
                     });
                 
-                return `
-                    <div class="installation-card" data-category="${installation.category || 'Playground'}">
-                        <div class="installation-image" style="background-image: url('${imageUrl}');"></div>
-                        <div class="installation-content">
-                            <div class="installation-meta">
-                                <span class="installation-date">${formattedDate}</span>
-                                <span class="installation-application">${installation.category || 'Playground'}</span>
-                            </div>
-                            <h3 class="installation-title">${title}</h3>
-                            <p class="installation-location">📍 ${location}</p>
-                            <div class="installation-description">
-                                <p>${previewText}</p>
-                            </div>
-                            <a href="${installationUrl}" class="read-more-btn">Read More →</a>
-                        </div>
-                    </div>
-                `;
+                return '<div class="installation-card" data-category="' + (installation.category || 'Playground') + '">' +
+                    '<div class="installation-image" style="background-image: url(' + imageUrl + ');"></div>' +
+                    '<div class="installation-content">' +
+                        '<div class="installation-meta">' +
+                            '<span class="installation-date">' + formattedDate + '</span>' +
+                            '<span class="installation-application">' + (installation.category || 'Playground') + '</span>' +
+                        '</div>' +
+                        '<h3 class="installation-title">' + title + '</h3>' +
+                        '<p class="installation-location">📍 ' + location + '</p>' +
+                        '<div class="installation-description">' +
+                            '<p>' + previewText + '</p>' +
+                        '</div>' +
+                        '<a href="' + installationUrl + '" class="read-more-btn">Read More →</a>' +
+                    '</div>' +
+                '</div>';
             }).join('');
             
             updatePagination();
@@ -1408,9 +1406,9 @@
             const totalAll = allInstallations.length;
             
             if (currentFilter === 'all') {
-                stats.textContent = `Showing ${total} installations`;
+                stats.textContent = 'Showing ' + total + ' installations';
             } else {
-                stats.textContent = `Showing ${total} of ${totalAll} installations (filtered by ${currentFilter})`;
+                stats.textContent = 'Showing ' + total + ' of ' + totalAll + ' installations (filtered by ' + currentFilter + ')';
             }
         }
 
@@ -1430,7 +1428,7 @@
             paginationSection.style.display = 'block';
             prevBtn.disabled = currentPage === 1;
             nextBtn.disabled = currentPage === totalPages;
-            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+            pageInfo.textContent = 'Page ' + currentPage + ' of ' + totalPages;
         }
 
         // Filter installations
@@ -1532,17 +1530,17 @@
             document.getElementById('meta-language').content = currentLang;
             
             // Update canonical URL
-            const canonicalPath = currentLang === 'en' ? '/installations.html' : `/${currentLang}/installations.html`;
-            document.getElementById('canonical-link').href = `${baseUrl}${canonicalPath}`;
+            const canonicalPath = currentLang === 'en' ? '/installations.html' : '/' + currentLang + '/installations.html';
+            document.getElementById('canonical-link').href = baseUrl + canonicalPath;
             
             // Update Open Graph tags
-            document.getElementById('og-url').content = `${baseUrl}${canonicalPath}`;
+            document.getElementById('og-url').content = baseUrl + canonicalPath;
             document.getElementById('og-title').content = content.title;
             document.getElementById('og-description').content = content.description;
             document.getElementById('og-locale').content = content.locale;
             
             // Update Twitter tags
-            document.getElementById('twitter-url').content = `${baseUrl}${canonicalPath}`;
+            document.getElementById('twitter-url').content = baseUrl + canonicalPath;
             document.getElementById('twitter-title').content = content.title;
             document.getElementById('twitter-description').content = content.description;
             
@@ -1560,7 +1558,7 @@
                 "@type": "CollectionPage",
                 "name": content.title,
                 "description": content.description,
-                "url": `${window.location.origin}${path}`,
+                "url": window.location.origin + path,
                 "inLanguage": lang,
                 "about": {
                     "@type": "Product",
@@ -1577,7 +1575,7 @@
                     "url": "https://tpv.rosehill.group",
                     "logo": {
                         "@type": "ImageObject",
-                        "url": `${window.location.origin}/rosehill_tpv_logo.png`
+                        "url": window.location.origin + "/rosehill_tpv_logo.png"
                     }
                 }
             };
@@ -1599,9 +1597,9 @@
                 link.hreflang = lang;
                 
                 if (lang === 'en') {
-                    link.href = `${baseUrl}/installations.html`;
+                    link.href = baseUrl + '/installations.html';
                 } else {
-                    link.href = `${baseUrl}/${lang}/installations.html`;
+                    link.href = baseUrl + '/' + lang + '/installations.html';
                 }
                 
                 document.head.appendChild(link);
@@ -1611,7 +1609,7 @@
             const defaultLink = document.createElement('link');
             defaultLink.rel = 'alternate';
             defaultLink.hreflang = 'x-default';
-            defaultLink.href = `${baseUrl}/installations.html`;
+            defaultLink.href = baseUrl + '/installations.html';
             document.head.appendChild(defaultLink);
         }
 
