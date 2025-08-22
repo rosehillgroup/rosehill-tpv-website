@@ -1259,7 +1259,7 @@
                     
                     // Debug logging for problematic installations
                     if (processedImages.length === 0 || processedImages[0] === 'images/installations/placeholder.jpg') {
-                        console.log(`Image debug for "${title}":`, {
+                        console.log('Image debug for "' + title + '":', {
                             imageReferences: installation.imageReferences,
                             coverImage: installation.coverImage,
                             gallery: installation.gallery,
@@ -1292,7 +1292,7 @@
                     };
                 });
                 
-                console.log(`Loaded ${allInstallations.length} installations for language: ${currentLang}`);
+                console.log('Loaded ' + allInstallations.length + ' installations for language: ' + currentLang);
                 
                 // Debug image sources summary
                 const imageSources = {};
@@ -1355,9 +1355,9 @@
                 
                 // Debug image URL selection
                 if (installation.imageSource === 'placeholder') {
-                    console.log(`Using placeholder for "${installation.title}" - no images found`);
+                    console.log('Using placeholder for "' + installation.title + '" - no images found');
                 } else {
-                    console.log(`Using ${installation.imageSource} for "${installation.title}": ${imageUrl}`);
+                    console.log('Using ' + installation.imageSource + ' for "' + installation.title + '": ' + imageUrl);
                 }
                 
                 const title = installation.displayTitle || installation.title;
