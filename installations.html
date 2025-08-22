@@ -1242,7 +1242,9 @@
                     }
                     // Try gallery (Sanity assets)
                     else if (installation.gallery && installation.gallery.length > 0) {
-                        processedImages = installation.gallery.map(img => img.asset?.url).filter(Boolean);
+                        processedImages = installation.gallery
+                            .map(function (img) { return (img && img.asset && img.asset.url) ? img.asset.url : null; })
+                            .filter(Boolean);
                         imageSource = 'gallery';
                     }
                     // Try coverImagePath (legacy)
@@ -1341,7 +1343,7 @@
             
             grid.innerHTML = pageInstallations.map(installation => {
                 const rawImageUrl = installation.images && installation.images.length > 0 ? installation.images[0] : 'images/installations/placeholder.jpg';
-                const safeImageUrl = String(rawImageUrl).replace(/'/g, "\\'");
+                const safeImageUrl = String(rawImageUrl).split("'").join("\\'");
                 
                 // Debug image URL selection (simplified to prevent syntax errors)
                 
