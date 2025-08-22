@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sanity Admin Test - Rosehill TPV</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts removed due to CSP restrictions -->
     <style>
         * {
             margin: 0;
@@ -15,7 +13,7 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
             background: #f8fafc;
             color: #1e293b;
             line-height: 1.6;
@@ -269,6 +267,7 @@
                 
                 if (!testInstallationId) {
                     console.log('Could not find ID in response. Response keys:', Object.keys(created));
+                    console.log('Full response structure:', JSON.stringify(created, null, 2));
                     if (created.results) console.log('Results array:', created.results);
                     throw new Error('Could not extract installation ID from response');
                 }

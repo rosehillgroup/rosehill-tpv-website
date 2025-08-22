@@ -372,9 +372,9 @@ class SanityAdminClient {
         const query = `{
             "total": count(*[_type == "installation"]),
             "recentInstallations": *[_type == "installation"] | order(installationDate desc)[0...5]{
-                title.en,
-                location.city.en,
-                installationDate
+                "title": title.en,
+                "city": location.city.en,
+                "installationDate": installationDate
             },
             "translationStats": {
                 "english": count(*[_type == "installation" && "en" in publishedLocales]),
