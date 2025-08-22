@@ -99,7 +99,13 @@ class SanityAdminClient {
             body: JSON.stringify({ mutations })
         });
 
-        return result.results[0];
+        // Handle Sanity mutation response structure
+        if (result.results && result.results[0]) {
+            return result.results[0];
+        } else {
+            // Return the full result if structure is different
+            return result;
+        }
     }
 
     /**
@@ -202,12 +208,14 @@ class SanityAdminClient {
         }
 
         // Add pagination
-        if (offset) query += `[${offset}...`;
-        if (limit) query += `${offset || ''}${limit}]`;
-        else if (offset) query += ']';
+        if (offset && limit) {
+            query += `[${offset}...${parseInt(offset) + parseInt(limit)}]`;
+        } else if (limit) {
+            query += `[0...${limit}]`;
+        }
 
         // Select fields
-        query += `{
+        query += ` {
             _id,
             title,
             slug,

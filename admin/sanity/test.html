@@ -255,7 +255,12 @@
                 };
                 
                 const created = await sanityClient.createInstallation(testData);
-                testInstallationId = created.document._id;
+                // Handle different response structures from Sanity
+                testInstallationId = created.document?._id || created.id || created._id;
+                if (!testInstallationId) {
+                    console.log('Full create response:', created);
+                    throw new Error('Could not extract installation ID from response');
+                }
                 log('CREATE success: ' + testInstallationId);
                 
                 // READ
