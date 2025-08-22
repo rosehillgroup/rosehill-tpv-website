@@ -1263,8 +1263,10 @@
         // Get current language from URL
         function getCurrentLanguage() {
             const path = window.location.pathname;
-            const langMatch = path.match(/^\/(fr|de|es)\//); 
-            return langMatch ? langMatch[1] : null; // Return null for English
+            if (path.startsWith('/fr/')) return 'fr';
+            if (path.startsWith('/de/')) return 'de';
+            if (path.startsWith('/es/')) return 'es';
+            return null; // Return null for English
         }
 
         // Generate installation URL for current language
