@@ -103,7 +103,7 @@ class SanityAdminClient {
 
         console.log('Sending mutation:', JSON.stringify({ mutations }, null, 2));
 
-        const result = await this.apiRequest(`/data/mutate/${this.dataset}`, {
+        const result = await this.apiRequest(`/data/mutate/${this.dataset}?returnIds=true&returnDocuments=true`, {
             method: 'POST',
             body: JSON.stringify({ mutations })
         });
@@ -124,7 +124,7 @@ class SanityAdminClient {
             }
         }];
 
-        const result = await this.apiRequest(`/data/mutate/${this.dataset}`, {
+        const result = await this.apiRequest(`/data/mutate/${this.dataset}?returnIds=true&returnDocuments=true`, {
             method: 'POST',
             body: JSON.stringify({ mutations })
         });
@@ -161,7 +161,7 @@ class SanityAdminClient {
             delete: { id: id }
         }];
 
-        const result = await this.apiRequest(`/data/mutate/${this.dataset}`, {
+        const result = await this.apiRequest(`/data/mutate/${this.dataset}?returnIds=true`, {
             method: 'POST',
             body: JSON.stringify({ mutations })
         });
@@ -298,7 +298,7 @@ class SanityAdminClient {
             delete: { id: assetId }
         }];
 
-        const result = await this.apiRequest(`/data/mutate/${this.dataset}`, {
+        const result = await this.apiRequest(`/data/mutate/${this.dataset}?returnIds=true`, {
             method: 'POST',
             body: JSON.stringify({ mutations })
         });
@@ -332,7 +332,7 @@ class SanityAdminClient {
             }
         }];
 
-        const result = await this.apiRequest(`/data/mutate/${this.dataset}`, {
+        const result = await this.apiRequest(`/data/mutate/${this.dataset}?returnIds=true&returnDocuments=true`, {
             method: 'POST',
             body: JSON.stringify({ mutations })
         });
@@ -362,7 +362,7 @@ class SanityAdminClient {
             }
         }];
 
-        const result = await this.apiRequest(`/data/mutate/${this.dataset}`, {
+        const result = await this.apiRequest(`/data/mutate/${this.dataset}?returnIds=true&returnDocuments=true`, {
             method: 'POST',
             body: JSON.stringify({ mutations })
         });

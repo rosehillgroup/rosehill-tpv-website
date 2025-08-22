@@ -256,9 +256,10 @@
                 // Handle different response structures from Sanity
                 console.log('Full create response:', created);
                 
-                // Try multiple possible response structures
+                // With returnIds=true&returnDocuments=true, response should have:
+                // { results: [{ id: "doc-id", document: { _id: "doc-id", ... } }] }
                 if (created.results && created.results[0]) {
-                    testInstallationId = created.results[0].document?._id || created.results[0].id || created.results[0]._id;
+                    testInstallationId = created.results[0].id || created.results[0].document?._id || created.results[0]._id;
                 } else if (created.document) {
                     testInstallationId = created.document._id;
                 } else {
