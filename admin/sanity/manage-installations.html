@@ -744,7 +744,7 @@
                     new Date(installation.installationDate).toLocaleDateString() : 'No date';
                 
                 // Check both old fields (gallery/coverImage) and new fields (imageReferences/imageCount)
-                const imageCount = installation.imageCount || 
+                const imageCount = installation.imageCount !== undefined ? installation.imageCount :
                     (installation.gallery && installation.gallery.length ? installation.gallery.length : 0) + 
                     (installation.coverImage ? 1 : 0) ||
                     (installation.imageReferences ? installation.imageReferences.length : 0);

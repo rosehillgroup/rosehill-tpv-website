@@ -149,6 +149,11 @@ class SanityAdminClient {
         if (data.tags !== undefined) payload.tags = data.tags;
         if (data.thanksTo !== undefined) payload.thanksTo = data.thanksTo;
         if (data.coordinates !== undefined) payload['location.coordinates'] = data.coordinates;
+        
+        // New image fields for legacy installation support
+        if (data.imageReferences !== undefined) payload.imageReferences = data.imageReferences;
+        if (data.imageCount !== undefined) payload.imageCount = data.imageCount;
+        if (data.coverImagePath !== undefined) payload.coverImagePath = data.coverImagePath;
 
         return payload;
     }
@@ -255,6 +260,9 @@ class SanityAdminClient {
             application,
             coverImage,
             gallery,
+            imageReferences,
+            imageCount,
+            coverImagePath,
             tags,
             thanksTo,
             publishedLocales,

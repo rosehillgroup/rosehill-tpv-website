@@ -1183,25 +1183,25 @@
                 console.log('Current language:', currentLang);
                 
                 // Fetch installations from Sanity
-                const query = `*[_type == "installation" && "${currentLang}" in publishedLocales] | order(installationDate desc) {
-                    _id,
-                    title,
-                    slug,
-                    overview,
-                    location,
-                    installationDate,
-                    application,
-                    coverImage,
-                    gallery,
-                    imageReferences,
-                    imageCount,
-                    coverImagePath,
-                    tags,
-                    thanksTo,
-                    publishedLocales,
-                    translationStatus,
-                    seo
-                }`;
+                const query = '*[_type == "installation" && "' + currentLang + '" in publishedLocales] | order(installationDate desc) {' +
+                    '_id,' +
+                    'title,' +
+                    'slug,' +
+                    'overview,' +
+                    'location,' +
+                    'installationDate,' +
+                    'application,' +
+                    'coverImage,' +
+                    'gallery,' +
+                    'imageReferences,' +
+                    'imageCount,' +
+                    'coverImagePath,' +
+                    'tags,' +
+                    'thanksTo,' +
+                    'publishedLocales,' +
+                    'translationStatus,' +
+                    'seo' +
+                '}';
                 
                 const response = await fetch(`https://${SANITY_PROJECT_ID}.api.sanity.io/v${SANITY_API_VERSION}/data/query/${SANITY_DATASET}?query=${encodeURIComponent(query)}`);
                 
