@@ -230,6 +230,9 @@ class SanityAdminClient {
             application,
             coverImage,
             gallery[0...3],
+            imageReferences,
+            imageCount,
+            coverImagePath,
             publishedLocales,
             translationStatus,
             _updatedAt

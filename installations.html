@@ -1193,6 +1193,9 @@
                     application,
                     coverImage,
                     gallery,
+                    imageReferences,
+                    imageCount,
+                    coverImagePath,
                     tags,
                     thanksTo,
                     publishedLocales,
@@ -1236,7 +1239,11 @@
                         installation_date: installation.installationDate,
                         category: installation.application || 'Playground',
                         application: installation.application || 'Playground',
-                        images: installation.coverImage && installation.coverImage.asset ? [installation.coverImage.asset.url || 'images/installations/placeholder.jpg'] : ['images/installations/placeholder.jpg'],
+                        images: installation.imageReferences || 
+                                (installation.coverImage && installation.coverImage.asset ? [installation.coverImage.asset.url] : null) ||
+                                (installation.gallery && installation.gallery.length > 0 ? installation.gallery.map(img => img.asset?.url).filter(Boolean) : null) ||
+                                [installation.coverImagePath] ||
+                                ['images/installations/placeholder.jpg'],
                         formattedDate: new Date(installation.installationDate).toLocaleDateString('en-GB', {
                             month: 'short',
                             year: 'numeric'
