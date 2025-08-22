@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Images to Sanity Installations</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            margin: 20px; 
+            background: #f8fafc; 
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: white; 
+            padding: 30px; 
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        h1 { color: #1a365d; margin-bottom: 20px; }
+        .log { 
+            background: #f0f8ff; 
+            padding: 15px; 
+            border-radius: 4px; 
+            margin: 10px 0; 
+            height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            border: 1px solid #e2e8f0;
+        }
+        .success { background: #f0fff4; border-color: #4caf50; }
+        .error { background: #fffbf0; border-color: #f44336; }
+        button { 
+            background: #ff6b35; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: 500;
+            margin: 10px 5px;
+        }
+        button:hover { background: #e55a2b; }
+        button:disabled { background: #d1d5db; cursor: not-allowed; }
+        .installation-match {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+        .match-title { font-weight: 600; color: #1e293b; }
+        .match-images { 
+            font-size: 12px; 
+            color: #64748b; 
+            margin-top: 4px; 
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        .stat-number { font-size: 24px; font-weight: 600; color: #ff6b35; }
+        .stat-label { font-size: 12px; color: #64748b; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ Add Images to Sanity Installations</h1>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="total-installations">-</div>
+                <div class="stat-label">Total Installations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="with-images">-</div>
+                <div class="stat-label">With Images</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="matched">-</div>
+                <div class="stat-label">Matched Files</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="updated">-</div>
+                <div class="stat-label">Updated</div>
+            </div>
+        </div>
+        
+        <div>
+            <button onclick="analyzeImages()">🔍 Analyze Image Matches</button>
+            <button onclick="addImagesToSanity()" id="update-btn" disabled>
+                ⬆️ Add Images to Sanity
+            </button>
+        </div>
+        
+        <div id="matches" style="margin: 20px 0;"></div>
+        
+        <div id="log" class="log">Ready to analyze images...</div>
+    </div>
+
+    <script src="js/sanity-client.js"></script>
+    <script>
+        let imageMatches = [];
+        let totalUpdated = 0;
+        
+        // Sample installation-to-images mapping based on our analysis
+        const knownImages = {
+            // Real installations with actual images
+            'basketball-court-installation-in-nijmegen': [
+                '1755099476834_1754301783006.jpeg',
+                '1755099477889_1754301783381.jpeg',
+                '1755099476834_1754301783006.jpeg',
+                '1755099477889_1754301783381.jpeg'
+            ],
+            'beach-themed-play-area-goomalling': [
+                'Goomalling_Playground_2.jpeg',
+                'Goomalling_Playground_5.jpeg', 
+                'Goomalling_Playground_1.jpeg',
+                'Goomalling_Playground_3.jpeg'
+            ],
+            'barcelona-parc-de-les-glries': [
+                'Barcelona_1.jpg',
+                'Barcelona_2.jpg',
+                'Barcelona_3.jpg',
+                'Barcelona_4.jpg'
+            ],
+            'nike-basketball-court': [
+                'NIKE_Basketball_Court_1.jpg',
+                'NIKE_Basketball_Court_2.jpg', 
+                'NIKE_Basketball_Court_3.jpg'
+            ],
+            'canberra-zoo-playground': [
+                'Canberra_Zoo_1.jpg',
+                'Canberra_Zoo_2.jpg'
+            ],
+            'lowther-hall-school': [
+                'Lowther-Hall-Anglican-Grammar-School-1.jpeg',
+                'Lowther-Hall-Anglican-Grammar-School-2.jpeg',
+                'Lowther-Hall-Anglican-Grammar-School-3.jpeg',
+                'Lowther-Hall-Anglican-Grammar-School-4.jpeg'
+            ],
+            'piney-lakes-sensory-playground': [
+                'Piney_Lakes_Sensory_Playground1.jpeg',
+                'Piney_Lakes_Sensory_Playground2.jpeg',
+                'Piney_Lakes_Sensory_Playground3.jpeg'
+            ],
+            'cheltenham-primary-school': [
+                'Cheltenham_School_1.jpg',
+                'Cheltenham_School_2.jpg',
+                'Cheltenham_School_3.jpg',
+                'Cheltenham_School_4.jpg'
+            ]
+        };
+
+        // Initialize with stored token
+        document.addEventListener('DOMContentLoaded', async function() {
+            const token = localStorage.getItem('sanity_token');
+            if (token) {
+                sanityClient.setToken(token);
+                log('✓ Using saved API token');
+            } else {
+                const newToken = prompt('Enter your Sanity API token:');
+                if (newToken) {
+                    sanityClient.setToken(newToken);
+                    localStorage.setItem('sanity_token', newToken);
+                    log('✓ API token configured');
+                } else {
+                    log('❌ No API token provided');
+                }
+            }
+        });
+
+        async function analyzeImages() {
+            log('🔍 Starting image analysis...');
+            
+            try {
+                // Get all installations from Sanity
+                const installations = await sanityClient.getInstallations({ limit: 100 });
+                log(`📊 Found ${installations.length} installations in Sanity`);
+                
+                document.getElementById('total-installations').textContent = installations.length;
+                
+                // Count installations that already have images
+                const withImages = installations.filter(inst => 
+                    (inst.gallery && inst.gallery.length > 0) || inst.coverImage
+                ).length;
+                
+                document.getElementById('with-images').textContent = withImages;
+                
+                // Match installations to known image sets
+                imageMatches = [];
+                
+                installations.forEach(installation => {
+                    const title = installation.title?.en || '';
+                    const slug = installation.slug?.en?.current || '';
+                    
+                    // Try to match by slug or title
+                    for (const [key, images] of Object.entries(knownImages)) {
+                        const keyNormalized = key.toLowerCase().replace(/-/g, ' ');
+                        const titleNormalized = title.toLowerCase().replace(/[^a-z0-9\\s]/g, '').replace(/\\s+/g, ' ');
+                        const slugNormalized = slug.toLowerCase();
+                        
+                        if (slugNormalized.includes(key) || 
+                            titleNormalized.includes(keyNormalized) ||
+                            keyNormalized.includes(titleNormalized.substring(0, 20))) {
+                            
+                            imageMatches.push({
+                                installation: installation,
+                                images: images,
+                                matchKey: key
+                            });
+                            break;
+                        }
+                    }
+                });
+                
+                document.getElementById('matched').textContent = imageMatches.length;
+                
+                // Display matches
+                displayMatches();
+                
+                if (imageMatches.length > 0) {
+                    document.getElementById('update-btn').disabled = false;
+                    log(`✅ Analysis complete! Found ${imageMatches.length} installations ready for image updates`);
+                } else {
+                    log('⚠️ No matches found. Check installation titles and known image mappings.');
+                }
+                
+            } catch (error) {
+                log(`❌ Analysis failed: ${error.message}`);
+            }
+        }
+        
+        function displayMatches() {
+            const matchesDiv = document.getElementById('matches');
+            if (imageMatches.length === 0) {
+                matchesDiv.innerHTML = '<p>No matches found yet. Click "Analyze Image Matches" first.</p>';
+                return;
+            }
+            
+            matchesDiv.innerHTML = '<h3>📋 Image Matches Found:</h3>' + 
+                imageMatches.map((match, i) => `
+                    <div class="installation-match">
+                        <div class="match-title">
+                            ${i + 1}. ${match.installation.title?.en || 'Untitled'}
+                        </div>
+                        <div class="match-images">
+                            📸 ${match.images.length} images: ${match.images.slice(0, 2).join(', ')}${match.images.length > 2 ? '...' : ''}
+                        </div>
+                    </div>
+                `).join('');
+        }
+        
+        async function addImagesToSanity() {
+            if (imageMatches.length === 0) {
+                log('❌ No matches to update. Run analysis first.');
+                return;
+            }
+            
+            log(`🚀 Starting to add images to ${imageMatches.length} installations...`);
+            document.getElementById('update-btn').disabled = true;
+            totalUpdated = 0;
+            
+            for (let i = 0; i < imageMatches.length; i++) {
+                const match = imageMatches[i];
+                const installation = match.installation;
+                
+                try {
+                    log(`[${i + 1}/${imageMatches.length}] Updating: ${installation.title?.en || 'Untitled'}`);
+                    
+                    // For now, we'll add image paths as string references
+                    // Later these could be converted to proper Sanity image assets
+                    const imageReferences = match.images.map(img => `images/installations/${img}`);
+                    
+                    await sanityClient.updateInstallation(installation._id, {
+                        // Add temporary fields that we can query
+                        imageReferences: imageReferences,
+                        coverImagePath: imageReferences[0],
+                        imageCount: imageReferences.length
+                    });
+                    
+                    log(`  ✅ Added ${match.images.length} images`);
+                    totalUpdated++;
+                    document.getElementById('updated').textContent = totalUpdated;
+                    
+                    // Small delay to avoid rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                } catch (error) {
+                    log(`  ❌ Failed to update ${installation.title?.en}: ${error.message}`);
+                }
+            }
+            
+            log(`🎉 Update complete! Successfully updated ${totalUpdated} installations with image data.`);
+            document.getElementById('update-btn').disabled = false;
+        }
+        
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+    </script>
+</body>
+</html>
