@@ -163,6 +163,29 @@ export const installation = defineType({
       ],
     }),
 
+    // Additional image reference fields for admin interface
+    defineField({
+      name: 'imageReferences',
+      title: 'Image References',
+      description: 'Array of image file paths for legacy installations',
+      type: 'array',
+      of: [{type: 'string'}],
+    }),
+
+    defineField({
+      name: 'imageCount',
+      title: 'Image Count',
+      description: 'Total number of images for this installation',
+      type: 'number',
+    }),
+
+    defineField({
+      name: 'coverImagePath',
+      title: 'Cover Image Path',
+      description: 'Path to the main cover image file',
+      type: 'string',
+    }),
+
     defineField({
       name: 'tags',
       title: 'Tags',
