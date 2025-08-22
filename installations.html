@@ -1141,12 +1141,13 @@
         <a href="/de/installations.html" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;font-size:14px;font-weight:500;">DE</a>
     </div>
 
-    <!-- Load Supabase library directly for faster initialization -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/js/supabase-client.js"></script>
+    <!-- Supabase removed - now using Sanity -->
+    <!-- Supabase client removed - now using Sanity -->
     <script src="/language-switcher-script.js"></script>
     <script src="/i18n/translate-client.js"></script>
     <script>
+        
+        
         // Global variables
         let allInstallations = [];
         let filteredInstallations = [];
@@ -1154,59 +1155,94 @@
         let currentPage = 1;
         const installationsPerPage = 9;
 
-        // Load installations data with translations from Supabase
+        // Sanity client configuration
+        const SANITY_PROJECT_ID = '68ola3dd';
+        const SANITY_DATASET = 'production';
+        const SANITY_API_VERSION = '2023-05-03';
+
+        // Helper to get localized content
+        function getLocalizedField(field, locale = 'en') {
+            if (!field) return '';
+            if (typeof field === 'string') return field;
+            return field[locale] || field.en || '';
+        }
+
+        // Helper for slug fields
+        function getLocalizedSlug(slug, locale = 'en') {
+            if (!slug) return '';
+            const localeSlug = slug[locale] || slug.en;
+            return localeSlug?.current || '';
+        }
+
+        // Load installations data from Sanity
         async function loadInstallations() {
             try {
-                console.log('Loading installations from Supabase...');
+                console.log('Loading installations from Sanity...');
                 
                 // Detect current language
                 const currentLang = getCurrentLanguage() || 'en';
                 console.log('Current language:', currentLang);
                 
-                // Use the Supabase client helper to fetch translated content
-                const installations = await window.SupabaseClient.fetchInstallationsWithTranslations(currentLang);
+                // Fetch installations from Sanity
+                const query = `*[_type == "installation" && "${currentLang}" in publishedLocales] | order(installationDate desc) {
+                    _id,
+                    title,
+                    slug,
+                    overview,
+                    location,
+                    installationDate,
+                    application,
+                    coverImage,
+                    gallery,
+                    tags,
+                    thanksTo,
+                    publishedLocales,
+                    translationStatus,
+                    seo
+                }`;
+                
+                const response = await fetch(`https://${SANITY_PROJECT_ID}.api.sanity.io/v${SANITY_API_VERSION}/data/query/${SANITY_DATASET}?query=${encodeURIComponent(query)}`);
+                
+                if (!response.ok) {
+                    throw new Error(`Sanity API error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const installations = data.result || [];
                 
                 // Process installations for display
                 allInstallations = installations.map(installation => {
-                    // Format installation for display (handles translations)
-                    const formatted = window.SupabaseClient.formatInstallationForDisplay(installation);
+                    const title = getLocalizedField(installation.title, currentLang);
+                    const overview = getLocalizedField(installation.overview, currentLang);
+                    const city = getLocalizedField(installation.location?.city, currentLang);
+                    const country = getLocalizedField(installation.location?.country, currentLang);
+                    const slug = getLocalizedSlug(installation.slug, currentLang);
                     
-                    // Ensure images is an array and process image paths
-                    if (!formatted.images) formatted.images = [];
-                    if (typeof formatted.images === 'string') {
-                        try {
-                            formatted.images = JSON.parse(formatted.images);
-                        } catch (e) {
-                            formatted.images = [formatted.images];
-                        }
+                    // Handle overview array (if it's a rich text field)
+                    let overviewText = overview;
+                    if (Array.isArray(overview)) {
+                        overviewText = overview.join(' ');
                     }
                     
-                    // Process image URLs - preserve Supabase URLs, only add prefix for local images
-                    formatted.images = formatted.images.map(img => {
-                        if (typeof img === 'string') {
-                            // If it's already a full URL (starts with http), keep it as is
-                            if (img.startsWith('http')) {
-                                return img;
-                            }
-                            // Otherwise, treat as local image
-                            return `images/installations/${img}`;
-                        } else if (img && typeof img === 'object') {
-                            if (img.url) {
-                                return img.url;
-                            } else if (img.filename) {
-                                // If filename is a full URL, use it directly
-                                if (img.filename.startsWith('http')) {
-                                    return img.filename;
-                                }
-                                return `images/installations/${img.filename}`;
-                            }
-                        }
-                        // Fallback - if it starts with http, use as is, otherwise add prefix
-                        const imgStr = String(img);
-                        return imgStr.startsWith('http') ? imgStr : `images/installations/${imgStr}`;
-                    });
-                    
-                    return formatted;
+                    return {
+                        id: installation._id,
+                        title: title,
+                        displayTitle: title,
+                        location: `${city}, ${country}`.replace(/^, |, $/, ''),
+                        displayLocation: `${city}, ${country}`.replace(/^, |, $/, ''),
+                        slug: slug,
+                        displaySlug: slug,
+                        description: overviewText,
+                        displayDescription: overviewText,
+                        installation_date: installation.installationDate,
+                        category: installation.application || 'Playground',
+                        application: installation.application || 'Playground',
+                        images: installation.coverImage ? [installation.coverImage.asset?.url || 'images/installations/placeholder.jpg'] : ['images/installations/placeholder.jpg'],
+                        formattedDate: new Date(installation.installationDate).toLocaleDateString('en-GB', {
+                            month: 'short',
+                            year: 'numeric'
+                        })
+                    };
                 });
                 
                 console.log(`Loaded ${allInstallations.length} installations for language: ${currentLang}`);
@@ -1220,76 +1256,15 @@
                 document.getElementById('loading').style.display = 'none';
                 
             } catch (error) {
-                console.error('Error loading installations:', error);
-                
-                // Fallback to direct Supabase API call if helper fails
-                console.log('Falling back to direct API call...');
-                try {
-                    const url = `${SUPABASE_URL}/rest/v1/installations?select=*&order=installation_date.desc`;
-                    const response = await fetch(url, {
-                        headers: {
-                            'apikey': SUPABASE_ANON_KEY,
-                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    const data = await response.json();
-                    
-                    allInstallations = data || [];
-                    console.log('Fallback loaded installations:', allInstallations.length);
-                    
-                    // Process installations for display (English only)
-                    allInstallations.forEach(installation => {
-                        if (!installation.images) installation.images = [];
-                        if (typeof installation.images === 'string') {
-                            try {
-                                installation.images = JSON.parse(installation.images);
-                            } catch (e) {
-                                installation.images = [installation.images];
-                            }
-                        }
-                        
-                        installation.images = installation.images.map(img => {
-                            if (typeof img === 'string') {
-                                // If it's already a full URL (starts with http), keep it as is
-                                if (img.startsWith('http')) {
-                                    return img;
-                                }
-                                // Otherwise, treat as local image
-                                return `images/installations/${img}`;
-                            } else if (img && typeof img === 'object') {
-                                if (img.url) {
-                                    return img.url;
-                                } else if (img.filename) {
-                                    // If filename is a full URL, use it directly
-                                    if (img.filename.startsWith('http')) {
-                                        return img.filename;
-                                    }
-                                    return `images/installations/${img.filename}`;
-                                }
-                            }
-                            // Fallback - if it starts with http, use as is, otherwise add prefix
-                            const imgStr = String(img);
-                            return imgStr.startsWith('http') ? imgStr : `images/installations/${imgStr}`;
-                        });
-                    });
-                    
-                    filteredInstallations = [...allInstallations];
-                    renderInstallations();
-                    updateStats();
-                    document.getElementById('loading').style.display = 'none';
-                    
-                } catch (fallbackError) {
-                    console.error('Fallback also failed:', fallbackError);
-                    document.getElementById('loading').innerHTML = '<p>Error loading installations. Please try again later.</p>';
-                }
+                console.error('Error loading installations from Sanity:', error);
+                document.getElementById('loading').innerHTML = '<p>Error loading installations. Please try again later.</p>';
             }
         }
 
         // Get current language from URL
         function getCurrentLanguage() {
             const path = window.location.pathname;
-            const langMatch = path.match(/^\/(fr|de|es)\//); 
+            const langMatch = path.match(/^/(fr|de|es)//); 
             return langMatch ? langMatch[1] : null; // Return null for English
         }
 
@@ -1303,7 +1278,7 @@
             }
         }
 
-        // Render installations grid
+        // Render installations grid (keeping exact same HTML structure)
         function renderInstallations() {
             const grid = document.getElementById('installations-grid');
             const startIndex = (currentPage - 1) * installationsPerPage;
@@ -1321,7 +1296,6 @@
             grid.innerHTML = pageInstallations.map(installation => {
                 const imageUrl = installation.images && installation.images.length > 0 ? installation.images[0] : 'images/installations/placeholder.jpg';
                 
-                // Use translated fields if available
                 const title = installation.displayTitle || installation.title;
                 const location = installation.displayLocation || installation.location;
                 const slug = installation.displaySlug || installation.slug;
@@ -1336,15 +1310,12 @@
                         descriptionText = description;
                     } else if (Array.isArray(description)) {
                         descriptionText = description.join(' ');
-                    } else if (typeof description === 'object') {
-                        descriptionText = JSON.stringify(description);
                     }
                 }
                 const previewText = descriptionText ? 
                     (descriptionText.substring(0, 150) + (descriptionText.length > 150 ? '...' : '')) : 
                     'Click to learn more about this installation.';
                 
-                // Use formatted date if available, otherwise format it
                 const formattedDate = installation.formattedDate || 
                     new Date(installation.installation_date).toLocaleDateString('en-GB', {
                         month: 'short',
@@ -1450,7 +1421,7 @@
             }
         }
 
-        // Mobile menu toggle
+        // Mobile menu toggle (keeping existing functionality)
         function initMobileMenu() {
             const mobileToggle = document.getElementById('mobile-toggle');
             const mobileMenu = document.getElementById('mobile-menu');
@@ -1471,7 +1442,7 @@
             }
         }
 
-        // Update SEO tags based on current language
+        // Update SEO tags based on current language (keeping existing functionality)
         function updatePageSEO() {
             const currentLang = getCurrentLanguage() || 'en';
             const baseUrl = window.location.origin;
