@@ -1170,7 +1170,7 @@
         function getLocalizedSlug(slug, locale = 'en') {
             if (!slug) return '';
             const localeSlug = slug[locale] || slug.en;
-            return localeSlug?.current || '';
+            return localeSlug && localeSlug.current ? localeSlug.current : '';
         }
 
         // Load installations data from Sanity
@@ -1213,8 +1213,8 @@
                 allInstallations = installations.map(installation => {
                     const title = getLocalizedField(installation.title, currentLang);
                     const overview = getLocalizedField(installation.overview, currentLang);
-                    const city = getLocalizedField(installation.location?.city, currentLang);
-                    const country = getLocalizedField(installation.location?.country, currentLang);
+                    const city = getLocalizedField(installation.location && installation.location.city ? installation.location.city : null, currentLang);
+                    const country = getLocalizedField(installation.location && installation.location.country ? installation.location.country : null, currentLang);
                     const slug = getLocalizedSlug(installation.slug, currentLang);
                     
                     // Handle overview array (if it's a rich text field)
@@ -1236,7 +1236,7 @@
                         installation_date: installation.installationDate,
                         category: installation.application || 'Playground',
                         application: installation.application || 'Playground',
-                        images: installation.coverImage ? [installation.coverImage.asset?.url || 'images/installations/placeholder.jpg'] : ['images/installations/placeholder.jpg'],
+                        images: installation.coverImage && installation.coverImage.asset ? [installation.coverImage.asset.url || 'images/installations/placeholder.jpg'] : ['images/installations/placeholder.jpg'],
                         formattedDate: new Date(installation.installationDate).toLocaleDateString('en-GB', {
                             month: 'short',
                             year: 'numeric'
