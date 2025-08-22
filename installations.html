@@ -1257,18 +1257,7 @@
                         imageSource = 'placeholder';
                     }
                     
-                    // Debug logging for problematic installations
-                    if (processedImages.length === 0 || processedImages[0] === 'images/installations/placeholder.jpg') {
-                        console.log('Image debug for "' + title + '":', {
-                            imageReferences: installation.imageReferences,
-                            coverImage: installation.coverImage,
-                            gallery: installation.gallery,
-                            coverImagePath: installation.coverImagePath,
-                            imageCount: installation.imageCount,
-                            imageSource: imageSource,
-                            processedImages: processedImages
-                        });
-                    }
+                    // Debug logging removed to prevent syntax errors
                     
                     return {
                         id: installation._id,
@@ -1292,7 +1281,7 @@
                     };
                 });
                 
-                console.log('Loaded ' + allInstallations.length + ' installations for language: ' + currentLang);
+                console.log('Loaded', allInstallations.length, 'installations for language:', currentLang);
                 
                 // Debug image sources summary
                 const imageSources = {};
@@ -1353,12 +1342,7 @@
             grid.innerHTML = pageInstallations.map(installation => {
                 const imageUrl = installation.images && installation.images.length > 0 ? installation.images[0] : 'images/installations/placeholder.jpg';
                 
-                // Debug image URL selection
-                if (installation.imageSource === 'placeholder') {
-                    console.log('Using placeholder for "' + installation.title + '" - no images found');
-                } else {
-                    console.log('Using ' + installation.imageSource + ' for "' + installation.title + '": ' + imageUrl);
-                }
+                // Debug image URL selection (simplified to prevent syntax errors)
                 
                 const title = installation.displayTitle || installation.title;
                 const location = installation.displayLocation || installation.location;
