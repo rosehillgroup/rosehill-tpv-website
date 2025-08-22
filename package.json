@@ -4,7 +4,7 @@
   "type": "module",
   "description": "Rosehill TPV Sports & Recreation Surfaces Website",
   "scripts": {
-    "build": "node generate-installations-from-sanity.js && node update-installations-page-from-sanity.js",
+    "build": "node generate-installations-from-sanity.js",
     "build:full-site": "cd site-astro && npm ci && npm run build",
     "dev:studio": "cd studio-rosehill-tpv && npm run dev",
     "dev:site": "cd site-astro && npm run dev", 
