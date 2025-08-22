@@ -21,7 +21,7 @@ const sanity = createClient({
 })
 
 // Read your existing installation template
-const TEMPLATE_PATH = './installation-template.html'
+const TEMPLATE_PATH = './installation-template-updated.html'
 
 // Helper to get localized content with fallback to English
 function getLocalizedField(field, locale = 'en') {
@@ -86,17 +86,32 @@ function generateInstallationHTML(installation, locale = 'en') {
   // Generate keywords
   const keywords = `Rosehill TPV, ${application}, ${location}, rubber surfacing, ${title}`
   
-  // Handle images - for now use placeholder since Sanity images are null
-  // TODO: Update when Sanity schema includes proper image handling
-  let images = installation.images || []
-  if (!Array.isArray(images)) images = [images]
-  if (images.length === 0) {
-    // Use a default placeholder image for now
-    images = [`placeholder-${installation.application?.toLowerCase() || 'playground'}.jpg`]
+  // Handle images using same logic as main installations page
+  let images = []
+  
+  // Try imageReferences first (migrated from Supabase)
+  if (installation.imageReferences && Array.isArray(installation.imageReferences) && installation.imageReferences.length > 0) {
+    images = installation.imageReferences.filter(img => img && typeof img === 'string')
+  }
+  // Try coverImage (Sanity asset)
+  else if (installation.coverImage && installation.coverImage.asset && installation.coverImage.asset.url) {
+    images = [installation.coverImage.asset.url]
+  }
+  // Try gallery (Sanity assets)  
+  else if (installation.gallery && Array.isArray(installation.gallery) && installation.gallery.length) {
+    images = installation.gallery
+      .map(img => (img && img.asset && img.asset.url) ? img.asset.url : null)
+      .filter(Boolean)
+  }
+  // Try coverImagePath (legacy)
+  else if (installation.coverImagePath) {
+    images = [installation.coverImagePath]
   }
   
-  // Filter out null/undefined images
-  images = images.filter(img => img && typeof img === 'string')
+  // Fallback to placeholder
+  if (images.length === 0) {
+    images = [`placeholder-${installation.application?.toLowerCase() || 'playground'}.jpg`]
+  }
   
   // Get first image for meta tags
   const firstImage = images[0] || 'placeholder.jpg'
@@ -202,7 +217,9 @@ async function generateAllInstallations() {
         application,
         publishedLocales,
         translationStatus,
-        images,
+        imageReferences,
+        imageCount,
+        coverImagePath,
         coverImage,
         gallery,
         thanksTo
