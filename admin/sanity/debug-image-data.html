@@ -79,12 +79,43 @@
                     }
                 `);
                 
-                results.innerHTML = installations.map(installation => {
+                // Calculate summary statistics
+                let withOldImages = 0;
+                let withNewImages = 0;
+                let withBothImages = 0;
+                let withNoImages = 0;
+                
+                installations.forEach(installation => {
+                    const hasOld = installation.coverImage || (installation.gallery && installation.gallery.length > 0);
+                    const hasNew = installation.imageReferences && installation.imageReferences.length > 0;
+                    
+                    if (hasOld && hasNew) withBothImages++;
+                    else if (hasOld) withOldImages++;
+                    else if (hasNew) withNewImages++;
+                    else withNoImages++;
+                });
+                
+                results.innerHTML = `
+                    <div style="background: #e3f2fd; padding: 15px; border-radius: 6px; margin-bottom: 20px;">
+                        <h3 style="margin: 0 0 10px 0; color: #1565c0;">📊 Image Data Summary</h3>
+                        <div><strong>Total Installations:</strong> ${installations.length}</div>
+                        <div><strong>With Legacy Images Only (coverImage/gallery):</strong> ${withOldImages}</div>
+                        <div><strong>With New Images Only (imageReferences):</strong> ${withNewImages}</div>
+                        <div><strong>With Both Image Types:</strong> ${withBothImages}</div>
+                        <div><strong>With No Images:</strong> ${withNoImages}</div>
+                        <div style="margin-top: 10px; color: ${withNewImages > 0 ? '#2e7d32' : '#d32f2f'};">
+                            <strong>Migration Status:</strong> ${withNewImages > 0 ? '✅ Images migrated successfully!' : '❌ No migrated images found'}
+                        </div>
+                    </div>
+                ` + installations.map(installation => {
                     const title = installation.title?.en || 'Untitled';
+                    const hasOld = installation.coverImage || (installation.gallery && installation.gallery.length > 0);
+                    const hasNew = installation.imageReferences && installation.imageReferences.length > 0;
+                    const className = hasNew ? 'has-images' : hasOld ? 'no-images' : 'no-images';
                     
                     return `
-                        <div class="installation">
-                            <div class="title">${title}</div>
+                        <div class="installation ${className}">
+                            <div class="title">${title} ${hasNew ? '✅' : hasOld ? '⚠️' : '❌'}</div>
                             <div class="field">
                                 <span class="field-name">coverImage:</span> 
                                 <span class="field-value">${installation.coverImage ? '✅ Present' : '❌ null'}</span>
@@ -106,12 +137,10 @@
                                 <span class="field-value">${installation.coverImagePath ? `✅ ${installation.coverImagePath}` : '❌ null'}</span>
                             </div>
                             <div class="field">
-                                <span class="field-name">Calculated Count:</span> 
-                                <span class="field-value">${
-                                    installation.imageCount !== undefined ? installation.imageCount :
-                                    (installation.gallery ? installation.gallery.length : 0) + (installation.coverImage ? 1 : 0) ||
-                                    (installation.imageReferences ? installation.imageReferences.length : 0)
-                                }</span>
+                                <span class="field-name">Status:</span> 
+                                <span class="field-value" style="font-weight: bold; color: ${hasNew ? '#2e7d32' : hasOld ? '#ef6c00' : '#d32f2f'};">
+                                    ${hasNew ? 'Migrated ✅' : hasOld ? 'Needs Migration ⚠️' : 'No Images ❌'}
+                                </span>
                             </div>
                         </div>
                     `;

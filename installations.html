@@ -1226,6 +1226,50 @@
                         overviewText = overview.join(' ');
                     }
                     
+                    // Enhanced image processing with debugging
+                    let processedImages = [];
+                    let imageSource = 'none';
+                    
+                    // Try imageReferences first (migrated from Supabase)
+                    if (installation.imageReferences && Array.isArray(installation.imageReferences) && installation.imageReferences.length > 0) {
+                        processedImages = installation.imageReferences.filter(img => img && typeof img === 'string');
+                        imageSource = 'imageReferences';
+                    }
+                    // Try coverImage (Sanity asset)
+                    else if (installation.coverImage && installation.coverImage.asset) {
+                        processedImages = [installation.coverImage.asset.url];
+                        imageSource = 'coverImage';
+                    }
+                    // Try gallery (Sanity assets)
+                    else if (installation.gallery && installation.gallery.length > 0) {
+                        processedImages = installation.gallery.map(img => img.asset?.url).filter(Boolean);
+                        imageSource = 'gallery';
+                    }
+                    // Try coverImagePath (legacy)
+                    else if (installation.coverImagePath) {
+                        processedImages = [installation.coverImagePath];
+                        imageSource = 'coverImagePath';
+                    }
+                    
+                    // Fallback to placeholder
+                    if (processedImages.length === 0) {
+                        processedImages = ['images/installations/placeholder.jpg'];
+                        imageSource = 'placeholder';
+                    }
+                    
+                    // Debug logging for problematic installations
+                    if (processedImages.length === 0 || processedImages[0] === 'images/installations/placeholder.jpg') {
+                        console.log(`Image debug for "${title}":`, {
+                            imageReferences: installation.imageReferences,
+                            coverImage: installation.coverImage,
+                            gallery: installation.gallery,
+                            coverImagePath: installation.coverImagePath,
+                            imageCount: installation.imageCount,
+                            imageSource: imageSource,
+                            processedImages: processedImages
+                        });
+                    }
+                    
                     return {
                         id: installation._id,
                         title: title,
@@ -1239,11 +1283,8 @@
                         installation_date: installation.installationDate,
                         category: installation.application || 'Playground',
                         application: installation.application || 'Playground',
-                        images: installation.imageReferences || 
-                                (installation.coverImage && installation.coverImage.asset ? [installation.coverImage.asset.url] : null) ||
-                                (installation.gallery && installation.gallery.length > 0 ? installation.gallery.map(img => img.asset?.url).filter(Boolean) : null) ||
-                                [installation.coverImagePath] ||
-                                ['images/installations/placeholder.jpg'],
+                        images: processedImages,
+                        imageSource: imageSource, // For debugging
                         formattedDate: new Date(installation.installationDate).toLocaleDateString('en-GB', {
                             month: 'short',
                             year: 'numeric'
@@ -1252,6 +1293,14 @@
                 });
                 
                 console.log(`Loaded ${allInstallations.length} installations for language: ${currentLang}`);
+                
+                // Debug image sources summary
+                const imageSources = {};
+                allInstallations.forEach(install => {
+                    const source = install.imageSource || 'unknown';
+                    imageSources[source] = (imageSources[source] || 0) + 1;
+                });
+                console.log('Image sources summary:', imageSources);
                 
                 filteredInstallations = [...allInstallations];
                 
@@ -1303,6 +1352,13 @@
             
             grid.innerHTML = pageInstallations.map(installation => {
                 const imageUrl = installation.images && installation.images.length > 0 ? installation.images[0] : 'images/installations/placeholder.jpg';
+                
+                // Debug image URL selection
+                if (installation.imageSource === 'placeholder') {
+                    console.log(`Using placeholder for "${installation.title}" - no images found`);
+                } else {
+                    console.log(`Using ${installation.imageSource} for "${installation.title}": ${imageUrl}`);
+                }
                 
                 const title = installation.displayTitle || installation.title;
                 const location = installation.displayLocation || installation.location;
