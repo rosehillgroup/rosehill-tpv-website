@@ -743,7 +743,7 @@
                 const date = installation.installationDate ? 
                     new Date(installation.installationDate).toLocaleDateString() : 'No date';
                 
-                const imageCount = (installation.gallery?.length || 0) + (installation.coverImage ? 1 : 0);
+                const imageCount = (installation.gallery && installation.gallery.length ? installation.gallery.length : 0) + (installation.coverImage ? 1 : 0);
                 const imageThumbs = getImageThumbnails(installation);
                 
                 const publishedLocales = installation.publishedLocales || ['en'];
