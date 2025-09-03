@@ -81,7 +81,7 @@ function generateSafeFilename(originalName) {
 /**
  * Main handler
  */
-export async function handler(event, context) {
+export default async (event, context) => {
   safeLog('Upload image request received', {
     method: event.httpMethod,
     headers: Object.keys(event.headers)

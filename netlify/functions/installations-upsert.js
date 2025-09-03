@@ -187,7 +187,7 @@ function calculateContentHash(data) {
 /**
  * Main handler
  */
-export async function handler(event, context) {
+export default async (event, context) => {
   safeLog('Upsert installation request', {
     method: event.httpMethod
   });

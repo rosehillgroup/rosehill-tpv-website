@@ -16,7 +16,7 @@ const sanity = sanityClient({
 /**
  * Main handler
  */
-export async function handler(event, context) {
+export default async (event, context) => {
   safeLog('Get installation request', {
     method: event.httpMethod,
     params: event.queryStringParameters
