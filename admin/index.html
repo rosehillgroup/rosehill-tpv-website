@@ -259,9 +259,9 @@
             const user = adminAuth.getUser();
             
             const info = `
-                <p><strong>User:</strong> ${user.email}</p>
-                <p><strong>Role:</strong> ${user.app_metadata?.roles?.join(', ') || 'None'}</p>
-                <p><strong>Dataset:</strong> ${process.env.SANITY_DATASET || 'production'}</p>
+                <p><strong>User:</strong> ${user?.email || 'Unknown'}</p>
+                <p><strong>Role:</strong> Editor</p>
+                <p><strong>Dataset:</strong> production</p>
                 <p><strong>Translation Service:</strong> DeepL API</p>
                 <p><strong>Supported Languages:</strong> English, Spanish, French, German</p>
                 <p><strong>Max Images per Installation:</strong> 12</p>

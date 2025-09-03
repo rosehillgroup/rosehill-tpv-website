@@ -187,7 +187,7 @@ function calculateContentHash(data) {
 /**
  * Main handler
  */
-export default async function handler(event, context) {
+export async function handler(event, context) {
   safeLog('Upsert installation request', {
     method: event.httpMethod
   });
@@ -198,7 +198,7 @@ export default async function handler(event, context) {
   }
   
   // Validate authentication
-  const auth = requireEditorRole(event, process.env.ALLOWED_ORIGIN);
+  const auth = await requireEditorRole(event, process.env.ALLOWED_ORIGIN);
   if (!auth.ok) {
     return errorResponse(auth.msg, auth.status);
   }
