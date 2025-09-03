@@ -188,6 +188,17 @@ function calculateContentHash(data) {
  * Main handler
  */
 export default async (event, context) => {
+  const headers = {
+    'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  };
+  
+  // Handle preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return new Response(null, { status: 200, headers });
+  }
+  
   safeLog('Upsert installation request', {
     method: event.httpMethod
   });
