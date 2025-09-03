@@ -6,6 +6,22 @@
     
     let auth0Client = null;
     let currentUser = null;
+    let auth0Config = null;
+    
+    // Load Auth0 configuration from Netlify function
+    async function loadAuth0Config() {
+        try {
+            const response = await fetch('/.netlify/functions/auth-config');
+            if (!response.ok) {
+                throw new Error(`Failed to load Auth0 configuration: ${response.status}`);
+            }
+            auth0Config = await response.json();
+            return auth0Config;
+        } catch (error) {
+            console.error('Config load error:', error);
+            throw error;
+        }
+    }
     
     // Initialize Auth0
     async function initAuth0() {
@@ -16,13 +32,18 @@
                 throw new Error('Auth0 SDK not loaded');
             }
             
+            // Load configuration first
+            if (!auth0Config) {
+                auth0Config = await loadAuth0Config();
+            }
+            
             // Create Auth0 client
             auth0Client = await auth0.createAuth0Client({
-                domain: window.AUTH0_DOMAIN,
-                clientId: window.AUTH0_CLIENT_ID,
+                domain: auth0Config.domain,
+                clientId: auth0Config.clientId,
                 authorizationParams: {
-                    redirect_uri: window.location.origin + '/admin/',
-                    audience: window.AUTH0_AUDIENCE
+                    redirect_uri: window.location.origin + '/admin/login.html',
+                    audience: auth0Config.audience
                 }
             });
             
