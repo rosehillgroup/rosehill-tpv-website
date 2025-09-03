@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Installations - Rosehill TPV Admin</title>
+    
+    <!-- Auth0 SDK -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <script src="js/auth0-config.js"></script>
+    
+    <!-- Admin Styles -->
+    <link rel="stylesheet" href="css/admin.css">
+    
+    <style>
+        /* Page-specific styles */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        
+        .search-container {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .controls-right {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .sort-select {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: var(--surface);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .installations-table {
+            width: 100%;
+        }
+        
+        .installations-table th {
+            position: sticky;
+            top: 0;
+            background: var(--surface);
+            z-index: 1;
+        }
+        
+        .translation-badges {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .badge-success {
+            background: #dcfce7;
+            color: var(--success-color);
+        }
+        
+        .badge-error {
+            background: #fee2e2;
+            color: var(--error-color);
+        }
+        
+        .badge-warning {
+            background: #fef3c7;
+            color: var(--warning-color);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-top: 24px;
+            padding: 20px;
+        }
+        
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination .current-page {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .stats-bar {
+                flex-wrap: wrap;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Check -->
+    <script src="js/auth.js"></script>
+    <script src="js/admin-common.js"></script>
+    
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="header-content">
+            <div class="header-title">Installations</div>
+            <nav class="header-nav">
+                <a href="installations.html" class="active">Installations</a>
+                <a href="add-installation.html">Add New</a>
+                <a href="/" target="_blank">View Site</a>
+                <a href="#" data-logout>Logout</a>
+            </nav>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <div class="admin-container">
+        <!-- Statistics -->
+        <div id="statsBar" class="stats-bar" style="display:none;">
+            <div class="stat">
+                <div class="stat-value" id="totalCount">0</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="englishCount">0</div>
+                <div class="stat-label">English</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="translatedCount">0</div>
+                <div class="stat-label">Fully Translated</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="partialCount">0</div>
+                <div class="stat-label">Partial</div>
+            </div>
+        </div>
+        
+        <!-- Controls -->
+        <div class="controls">
+            <div class="search-container">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    placeholder="Search installations..." 
+                    id="searchInput"
+                >
+            </div>
+            <div class="controls-right">
+                <select class="sort-select" id="sortSelect">
+                    <option value="date-desc">Latest First</option>
+                    <option value="date-asc">Oldest First</option>
+                    <option value="title-asc">Title A-Z</option>
+                    <option value="title-desc">Title Z-A</option>
+                    <option value="location-asc">Location A-Z</option>
+                </select>
+                <a href="add-installation.html" class="btn btn-primary">+ Add New</a>
+            </div>
+        </div>
+        
+        <!-- Installations Table -->
+        <div class="card">
+            <div class="table-container">
+                <div id="loadingState" style="text-align:center; padding:60px;">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top:16px; color:var(--text-secondary);">Loading installations...</p>
+                </div>
+                
+                <table class="installations-table" id="installationsTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Title</th>
+                            <th>Location</th>
+                            <th>Type</th>
+                            <th>Images</th>
+                            <th>Languages</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="installationsBody">
+                    </tbody>
+                </table>
+                
+                <div id="emptyState" class="empty-state" style="display:none;">
+                    <h3>No installations found</h3>
+                    <p>Try adjusting your search or add a new installation to get started.</p>
+                    <div style="margin-top:20px;">
+                        <a href="add-installation.html" class="btn btn-primary">Add First Installation</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="pagination" id="pagination" style="display:none;">
+            <button id="prevBtn" onclick="changePage(-1)">← Previous</button>
+            <span class="current-page" id="pageInfo"></span>
+            <button id="nextBtn" onclick="changePage(1)">Next →</button>
+        </div>
+    </div>
+    
+    <script>
+        // State management
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentSearch = '';
+        let currentSort = 'date-desc';
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            loadInstallations();
+        });
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Search with debounce
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', AdminUtils.debounce((e) => {
+                currentSearch = e.target.value;
+                currentPage = 1;
+                loadInstallations();
+            }, 300));
+            
+            // Sort change
+            document.getElementById('sortSelect').addEventListener('change', (e) => {
+                currentSort = e.target.value;
+                currentPage = 1;
+                loadInstallations();
+            });
+        }
+        
+        // Load installations from API
+        async function loadInstallations() {
+            try {
+                showLoading();
+                
+                const params = new URLSearchParams({
+                    page: currentPage,
+                    limit: 20,
+                    search: currentSearch,
+                    sortBy: currentSort.split('-')[0],
+                    sortOrder: currentSort.split('-')[1]
+                });
+                
+                const response = await adminAuth.apiCall(`/.netlify/functions/installations-list?${params}`);
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to load installations');
+                }
+                
+                const data = await response.json();
+                displayInstallations(data);
+                updatePagination(data.pagination);
+                updateStats(data);
+                
+            } catch (error) {
+                console.error('Load error:', error);
+                AdminUtils.showToast(error.message, 'error');
+                showEmpty();
+            }
+        }
+        
+        // Display installations in table
+        function displayInstallations(data) {
+            const tbody = document.getElementById('installationsBody');
+            
+            if (!data.items || data.items.length === 0) {
+                showEmpty();
+                return;
+            }
+            
+            tbody.innerHTML = data.items.map(item => `
+                <tr>
+                    <td>${AdminUtils.formatDate(item.installationDate)}</td>
+                    <td>
+                        <strong>${item.title}</strong>
+                    </td>
+                    <td>${[item.city, item.country].filter(Boolean).join(', ') || '—'}</td>
+                    <td>${item.application || 'Other'}</td>
+                    <td>${item.imageCount}</td>
+                    <td>
+                        <div class="translation-badges">
+                            <span class="badge badge-success">EN</span>
+                            ${item.hasTranslations.es ? '<span class="badge badge-success">ES</span>' : '<span class="badge badge-error">ES</span>'}
+                            ${item.hasTranslations.fr ? '<span class="badge badge-success">FR</span>' : '<span class="badge badge-error">FR</span>'}
+                            ${item.hasTranslations.de ? '<span class="badge badge-success">DE</span>' : '<span class="badge badge-error">DE</span>'}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="edit-installation.html?id=${encodeURIComponent(item.id)}" class="btn btn-secondary btn-small">Edit</a>
+                            <a href="/installations/${item.slug}.html" class="btn btn-secondary btn-small" target="_blank">View</a>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Show table and hide loading/empty states
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('installationsTable').style.display = 'table';
+            document.getElementById('statsBar').style.display = 'flex';
+        }
+        
+        // Show loading state
+        function showLoading() {
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('installationsTable').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('pagination').style.display = 'none';
+        }
+        
+        // Show empty state
+        function showEmpty() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('installationsTable').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('pagination').style.display = 'none';
+            document.getElementById('statsBar').style.display = 'none';
+        }
+        
+        // Update pagination controls
+        function updatePagination(pagination) {
+            if (!pagination || pagination.pages <= 1) {
+                document.getElementById('pagination').style.display = 'none';
+                return;
+            }
+            
+            currentPage = pagination.page;
+            totalPages = pagination.pages;
+            
+            document.getElementById('pageInfo').textContent = 
+                `Page ${pagination.page} of ${pagination.pages} (${pagination.total} total)`;
+            
+            document.getElementById('prevBtn').disabled = !pagination.hasPrev;
+            document.getElementById('nextBtn').disabled = !pagination.hasNext;
+            
+            document.getElementById('pagination').style.display = 'flex';
+        }
+        
+        // Update statistics
+        function updateStats(data) {
+            const items = data.items || [];
+            
+            // Calculate stats
+            const total = data.pagination?.total || items.length;
+            const english = total; // All have English
+            const fullyTranslated = items.filter(item => 
+                item.hasTranslations.es && item.hasTranslations.fr && item.hasTranslations.de
+            ).length;
+            const partial = items.filter(item => {
+                const hasAny = item.hasTranslations.es || item.hasTranslations.fr || item.hasTranslations.de;
+                const hasAll = item.hasTranslations.es && item.hasTranslations.fr && item.hasTranslations.de;
+                return hasAny && !hasAll;
+            }).length;
+            
+            // Update display
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('englishCount').textContent = english;
+            document.getElementById('translatedCount').textContent = fullyTranslated;
+            document.getElementById('partialCount').textContent = partial;
+        }
+        
+        // Change page
+        function changePage(direction) {
+            const newPage = currentPage + direction;
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                loadInstallations();
+            }
+        }
+        
+        // Initialize URL params
+        function initializeFromUrl() {
+            const params = AdminUtils.getQueryParams();
+            
+            if (params.search) {
+                document.getElementById('searchInput').value = params.search;
+                currentSearch = params.search;
+            }
+            
+            if (params.sort) {
+                document.getElementById('sortSelect').value = params.sort;
+                currentSort = params.sort;
+            }
+            
+            if (params.page) {
+                currentPage = parseInt(params.page) || 1;
+            }
+        }
+        
+        // Update URL when filters change
+        function updateUrl() {
+            AdminUtils.updateQueryParams({
+                search: currentSearch || null,
+                sort: currentSort !== 'date-desc' ? currentSort : null,
+                page: currentPage > 1 ? currentPage : null
+            });
+        }
+        
+        // Override load function to update URL
+        const originalLoad = loadInstallations;
+        loadInstallations = function() {
+            updateUrl();
+            return originalLoad();
+        };
+        
+        // Initialize from URL on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFromUrl();
+        });
+    </script>
+</body>
+</html>

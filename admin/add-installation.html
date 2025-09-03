@@ -3,1239 +3,482 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add New Installation - Admin</title>
-    <link rel="canonical" href="https://tpv.rosehill.group/admin/add-installation.html">
+    <title>Add Installation - Rosehill TPV Admin</title>
+    
+    <!-- Auth0 SDK -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <script src="js/auth0-config.js"></script>
+    
+    <!-- Admin Styles -->
+    <link rel="stylesheet" href="css/admin.css">
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* Page-specific styles */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
         }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background: #f5f7fa;
-            color: #333;
-            line-height: 1.6;
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
         }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
+        
+        .paragraph-list {
+            margin-bottom: 16px;
         }
-
-        .header {
-            background: linear-gradient(135deg, #1a365d, #2d4a71);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            font-size: 2rem;
+        
+        .paragraph-item {
+            display: flex;
+            gap: 10px;
             margin-bottom: 10px;
         }
-
-        .header p {
-            opacity: 0.9;
-        }
-
-        .form-container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .form-group {
-            margin-bottom: 25px;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #1a365d;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e1e8ed;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #ff6b35;
-        }
-
-        .form-group textarea {
-            height: 120px;
-            resize: vertical;
-        }
-
-        .description-inputs {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .description-paragraph {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .description-paragraph textarea {
+        
+        .paragraph-item textarea {
             flex: 1;
-            height: 80px;
         }
-
-        .remove-paragraph {
-            background: #dc3545;
-            color: white;
-            border: none;
+        
+        .paragraph-item .btn-danger {
+            flex-shrink: 0;
             padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
         }
-
-        .remove-paragraph:hover {
-            background: #c82333;
-        }
-
-        .add-paragraph {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
+        
+        .add-paragraph-btn {
             margin-top: 10px;
         }
-
-        .add-paragraph:hover {
-            background: #218838;
-        }
-
-        .file-upload-area {
-            border: 2px dashed #ccc;
-            border-radius: 8px;
-            padding: 40px;
-            text-align: center;
-            background: #f8f9fa;
-            transition: all 0.3s ease;
-        }
-
-        .file-upload-area:hover {
-            border-color: #ff6b35;
-            background: #fff;
-        }
-
-        .file-upload-area.dragover {
-            border-color: #ff6b35;
-            background: #fff5f0;
-        }
-
-        .file-input {
-            display: none;
-        }
-
-        .upload-text {
-            color: #666;
-            margin-bottom: 10px;
-        }
-
-        .upload-button {
-            background: #ff6b35;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .upload-button:hover {
-            background: #e55a2b;
-        }
-
-        .image-preview {
+        
+        .form-actions {
             display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .image-item {
-            position: relative;
-            border: 2px solid #e1e8ed;
-            border-radius: 8px;
-            overflow: hidden;
-            background: white;
-        }
-
-        .image-item img {
-            width: 150px;
-            height: 100px;
-            object-fit: cover;
-            display: block;
-        }
-
-        .image-filename {
-            padding: 8px;
-            font-size: 12px;
-            color: #666;
-            border-top: 1px solid #e1e8ed;
-            word-break: break-all;
-        }
-
-        .remove-image {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: rgba(220, 53, 69, 0.9);
-            color: white;
-            border: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .remove-image:hover {
-            background: rgba(200, 35, 51, 1);
-        }
-
-        .submit-button {
-            background: linear-gradient(135deg, #1a365d, #2d4a71);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 20px;
-            transition: transform 0.2s ease;
-        }
-
-        .submit-button:hover {
-            transform: translateY(-2px);
-        }
-
-        .submit-button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .status-message {
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-            display: none;
-        }
-
-        .status-message.success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-
-        .status-message.error {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
-
-        .help-text {
-            font-size: 14px;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        .required {
-            color: #dc3545;
-        }
-
-        /* Installation List Styles */
-        .installation-item {
-            border: 1px solid #e1e8ed;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            background: #f8f9fa;
-            display: flex;
+            gap: 16px;
             justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            margin-top: 32px;
         }
-
-        .installation-item:hover {
-            background: #ffffff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .installation-info {
-            flex: 1;
-        }
-
-        .installation-title {
-            font-weight: bold;
-            color: #1a365d;
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-
-        .installation-meta {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-
-        .installation-images {
-            color: #888;
-            font-size: 12px;
-        }
-
-        .delete-btn, .edit-btn {
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            margin-left: 10px;
-        }
-
-        .delete-btn {
-            background: #dc3545;
-            color: white;
-        }
-
-        .delete-btn:hover {
-            background: #c82333;
-            transform: translateY(-1px);
-        }
-
-        .delete-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .edit-btn {
-            background: #28a745;
-            color: white;
-        }
-
-        .edit-btn:hover {
-            background: #218838;
-            transform: translateY(-1px);
-        }
-
-        .edit-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .confirm-delete {
-            background: #ffc107;
-            color: #000;
-        }
-
-        .confirm-delete:hover {
-            background: #e0a800;
-        }
-
-        .installation-actions {
+        
+        .form-actions .left {
             display: flex;
-            gap: 0;
+            gap: 16px;
         }
         
-        /* Authentication styles */
-        .auth-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: #f5f7fa;
+        .success-links {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 8px;
+        }
+        
+        .success-links h3 {
+            color: var(--success-color);
+            margin-bottom: 12px;
+        }
+        
+        .success-links .link-list {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
+            flex-direction: column;
+            gap: 8px;
         }
         
-        .auth-box {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            text-align: center;
-            max-width: 400px;
-            width: 90%;
+        .success-links a {
+            color: var(--primary-color);
+            text-decoration: none;
         }
         
-        .auth-box h2 {
-            color: #1a365d;
-            margin-bottom: 20px;
-        }
-        
-        .auth-box p {
-            color: #666;
-            margin-bottom: 20px;
-        }
-        
-        .auth-button {
-            background: linear-gradient(135deg, #1a365d, #2d4a71);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-        
-        .auth-button:hover {
-            transform: translateY(-1px);
-        }
-        
-        .loading-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #1a365d;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .logout-button {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            z-index: 100;
-        }
-        
-        .logout-button:hover {
-            background: #c82333;
-        }
-        
-        .hidden {
-            display: none !important;
+        .success-links a:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
-    <!-- Authentication overlay -->
-    <div class="auth-container" id="authContainer">
-        <div class="auth-box">
-            <div class="loading-spinner" id="authSpinner"></div>
-            <h2>Admin Authentication Required</h2>
-            <p id="authMessage">Checking authentication status...</p>
-            <button class="auth-button hidden" id="loginButton" onclick="handleLogin()">Login with Netlify</button>
-        </div>
-    </div>
+    <!-- Auth Check -->
+    <script src="js/auth.js"></script>
+    <script src="js/admin-common.js"></script>
     
-    <!-- Logout button -->
-    <button class="logout-button hidden" id="logoutButton" onclick="handleLogout()">Logout</button>
-    
-    <!-- Main content (hidden until authenticated) -->
-    <div class="container hidden" id="mainContent">
-        <div class="header">
-            <h1 id="formTitle">Add New Installation</h1>
-            <p>Admin Interface - Rosehill TPV Installations</p>
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="header-content">
+            <div class="header-title">Add Installation</div>
+            <nav class="header-nav">
+                <a href="installations.html">Installations</a>
+                <a href="add-installation.html" class="active">Add New</a>
+                <a href="/" target="_blank">View Site</a>
+                <a href="#" data-logout>Logout</a>
+            </nav>
         </div>
-
-        <div class="form-container">
-            <form id="installationForm">
-                <div class="form-group">
-                    <label for="title">Installation Title <span class="required">*</span></label>
-                    <input type="text" id="title" name="title" required placeholder="e.g., New Playground at Central Park">
-                    <div class="help-text">This will be the main heading for the installation page</div>
+    </header>
+    
+    <!-- Main Content -->
+    <div class="admin-container">
+        <form id="installationForm" class="card">
+            <div class="card-header">
+                <h2 class="card-title">New Installation</h2>
+                <p class="card-subtitle">Add a new installation to the website. English content will be automatically translated to Spanish, French, and German.</p>
+            </div>
+            
+            <!-- Basic Information -->
+            <div class="form-section">
+                <h3 class="form-section-title">Basic Information</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">
+                            Title <span class="required">*</span>
+                        </label>
+                        <input type="text" class="form-input" name="title" required>
+                        <span class="form-help">The name of this installation project</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Slug</label>
+                        <input type="text" class="form-input" name="slug">
+                        <span class="form-help">URL-friendly version (auto-generated if blank)</span>
+                    </div>
                 </div>
-
-                <div class="form-group">
-                    <label for="location">Location <span class="required">*</span></label>
-                    <input type="text" id="location" name="location" required placeholder="e.g., New York, USA">
-                    <div class="help-text">City, State/Region, Country</div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">
+                            Installation Date <span class="required">*</span>
+                        </label>
+                        <input type="date" class="form-input" name="installationDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Application Type</label>
+                        <select class="form-select" name="application">
+                            <option value="">Select type...</option>
+                            <option value="playground">Playground</option>
+                            <option value="sports">Sports Court</option>
+                            <option value="athletics">Athletics Track</option>
+                            <option value="tennis">Tennis Court</option>
+                            <option value="fitness">Fitness Area</option>
+                            <option value="water">Water Park</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
                 </div>
-
-                <div class="form-group">
-                    <label for="date">Installation Date <span class="required">*</span></label>
-                    <input type="date" id="date" name="date" required>
-                    <div class="help-text">When was this installation completed?</div>
+            </div>
+            
+            <!-- Location -->
+            <div class="form-section">
+                <h3 class="form-section-title">Location</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">City</label>
+                        <input type="text" class="form-input" name="city">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Country</label>
+                        <input type="text" class="form-input" name="country">
+                    </div>
                 </div>
-
+            </div>
+            
+            <!-- Content -->
+            <div class="form-section">
+                <h3 class="form-section-title">Content</h3>
+                
                 <div class="form-group">
-                    <label for="application">Application Type <span class="required">*</span></label>
-                    <select id="application" name="application" required>
-                        <option value="">Select application type...</option>
-                        <option value="athletics">Athletics</option>
-                        <option value="playground">Playground</option>
-                        <option value="muga">MUGA</option>
-                        <option value="tennis">Tennis</option>
-                        <option value="fitness">Fitness</option>
-                        <option value="water">Water</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Description Paragraphs <span class="required">*</span></label>
-                    <div class="help-text">Add multiple paragraphs to describe the installation. Each paragraph should be substantial content.</div>
-                    <div class="description-inputs" id="descriptionInputs">
-                        <div class="description-paragraph">
-                            <textarea placeholder="Enter the first paragraph describing the installation..." required></textarea>
-                            <button type="button" class="remove-paragraph" onclick="removeDescriptionParagraph(this)">×</button>
+                    <label class="form-label">Overview</label>
+                    <div id="overviewParagraphs" class="paragraph-list">
+                        <div class="paragraph-item">
+                            <textarea class="form-textarea" name="overview[]" placeholder="Enter paragraph text..."></textarea>
                         </div>
                     </div>
-                    <button type="button" class="add-paragraph" onclick="addDescriptionParagraph()">+ Add Another Paragraph</button>
+                    <button type="button" class="btn btn-secondary add-paragraph-btn" onclick="addParagraph('overview')">
+                        + Add Paragraph
+                    </button>
                 </div>
-
+                
                 <div class="form-group">
-                    <label>Installation Images <span class="required">*</span></label>
-                    <div class="help-text">Upload multiple high-quality images of the installation. Supported formats: JPG, JPEG, PNG</div>
-                    <div class="file-upload-area" id="fileUploadArea">
-                        <div class="upload-text">Drag and drop images here, or click to select files</div>
-                        <button type="button" class="upload-button" onclick="document.getElementById('fileInput').click()">Choose Files</button>
-                        <input type="file" id="fileInput" class="file-input" multiple accept="image/*">
+                    <label class="form-label">Thanks To</label>
+                    <div id="thanksToParagraphs" class="paragraph-list">
+                        <div class="paragraph-item">
+                            <textarea class="form-textarea" name="thanksTo[]" placeholder="Enter acknowledgments..."></textarea>
+                        </div>
                     </div>
-                    <div class="image-preview" id="imagePreview"></div>
-                </div>
-
-                <div style="display: flex; gap: 15px; margin-top: 20px;">
-                    <button type="submit" class="submit-button" id="submitButton" style="flex: 1; margin-top: 0;">
-                        Create Installation Page
-                    </button>
-                    <button type="button" class="submit-button" id="cancelEditButton" onclick="cancelEdit()" style="background: #6c757d; flex: 0 0 auto; margin-top: 0; display: none;">
-                        Cancel Edit
+                    <button type="button" class="btn btn-secondary add-paragraph-btn" onclick="addParagraph('thanksTo')">
+                        + Add Paragraph
                     </button>
                 </div>
-            </form>
-
-            <div class="status-message" id="statusMessage"></div>
-        </div>
-
-        <!-- Manage Existing Installations Section -->
-        <div class="form-container" style="margin-top: 40px;">
-            <h2 style="color: #1a365d; margin-bottom: 20px; font-size: 1.8rem;">Manage Existing Installations</h2>
-            <div class="help-text" style="margin-bottom: 20px;">View and delete existing installations. Changes will be reflected on the website immediately.</div>
-            
-            <div class="loading-message" id="loadingInstallations" style="text-align: center; padding: 20px; color: #666;">
-                Loading installations...
             </div>
             
-            <div class="installations-list" id="installationsList" style="display: none;">
-                <!-- Installations will be loaded here -->
+            <!-- Images -->
+            <div class="form-section">
+                <h3 class="form-section-title">Images</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        Cover Image <span class="required">*</span>
+                    </label>
+                    <div class="image-upload" id="coverUpload" onclick="document.getElementById('coverInput').click()">
+                        <div id="coverPlaceholder">
+                            <p>Click to upload or drag and drop</p>
+                            <p class="form-help">JPG, PNG, GIF, or WebP (max 12MB)</p>
+                        </div>
+                        <div id="coverPreview" style="display:none;"></div>
+                    </div>
+                    <input type="file" id="coverInput" accept="image/*" style="display:none;" onchange="handleCoverUpload(this.files[0])">
+                    <input type="hidden" name="coverAssetId" id="coverAssetId" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Gallery Images</label>
+                    <div class="image-upload" id="galleryUpload" onclick="document.getElementById('galleryInput').click()">
+                        <p>Click to upload or drag and drop</p>
+                        <p class="form-help">Upload multiple images (max 12 images)</p>
+                    </div>
+                    <input type="file" id="galleryInput" accept="image/*" multiple style="display:none;" onchange="handleGalleryUpload(this.files)">
+                    <div id="galleryPreview" class="image-preview"></div>
+                </div>
+            </div>
+            
+            <!-- SEO -->
+            <div class="form-section">
+                <h3 class="form-section-title">SEO Settings</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">SEO Title</label>
+                    <input type="text" class="form-input" name="seoTitle">
+                    <span class="form-help">Leave blank to use installation title</span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">SEO Description</label>
+                    <textarea class="form-textarea" name="seoDescription" rows="3"></textarea>
+                    <span class="form-help">Brief description for search engines</span>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <div class="left">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        Save Installation
+                    </button>
+                    <a href="installations.html" class="btn btn-secondary">Cancel</a>
+                </div>
+            </div>
+        </form>
+        
+        <!-- Success Message (hidden by default) -->
+        <div id="successMessage" class="success-links" style="display:none;">
+            <h3>✓ Installation saved successfully!</h3>
+            <div class="link-list">
+                <a id="viewEn" href="#" target="_blank">View English →</a>
+                <a id="viewEs" href="#" target="_blank">View Spanish →</a>
+                <a id="viewFr" href="#" target="_blank">View French →</a>
+                <a id="viewDe" href="#" target="_blank">View German →</a>
             </div>
         </div>
     </div>
-
+    
     <script>
-        // Authentication state
-        let authToken = null;
+        // Store uploaded images
+        let coverImage = null;
+        let galleryImages = [];
         
-        // Check for stored auth token
-        window.addEventListener('load', () => {
-            authToken = localStorage.getItem('tpv_admin_token');
+        // Add paragraph function
+        function addParagraph(type) {
+            const container = document.getElementById(type + 'Paragraphs');
+            const item = document.createElement('div');
+            item.className = 'paragraph-item';
+            item.innerHTML = `
+                <textarea class="form-textarea" name="${type}[]" placeholder="Enter paragraph text..."></textarea>
+                <button type="button" class="btn btn-danger" onclick="removeParagraph(this)">Remove</button>
+            `;
+            container.appendChild(item);
+        }
+        
+        // Remove paragraph function
+        function removeParagraph(button) {
+            button.parentElement.remove();
+        }
+        
+        // Handle cover image upload
+        async function handleCoverUpload(file) {
+            if (!file) return;
             
-            if (authToken) {
-                // Verify token is still valid
-                verifyAuth();
-            } else {
-                // No token, redirect to login
-                window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-            }
-        });
-        
-        async function verifyAuth() {
             try {
-                // Quick check - if token exists, show the page
-                // The actual validation happens when making API calls
-                document.getElementById('authContainer').classList.add('hidden');
-                document.getElementById('mainContent').classList.remove('hidden');
-                document.getElementById('logoutButton').classList.remove('hidden');
+                AdminUtils.showLoading('Uploading cover image...');
+                const result = await AdminUtils.handleImageUpload(file);
                 
-                // Load installations
-                await loadExistingInstallations();
+                coverImage = result;
+                document.getElementById('coverAssetId').value = result.assetId;
+                
+                // Show preview
+                document.getElementById('coverPlaceholder').style.display = 'none';
+                document.getElementById('coverPreview').innerHTML = `
+                    <img src="${result.url}" alt="Cover preview" style="max-width:100%; height:200px; object-fit:cover;">
+                `;
+                document.getElementById('coverPreview').style.display = 'block';
+                
+                AdminUtils.hideLoading();
+                AdminUtils.showToast('Cover image uploaded', 'success');
+                
             } catch (error) {
-                // Token invalid, redirect to login
-                localStorage.removeItem('tpv_admin_token');
-                window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
+                AdminUtils.hideLoading();
+                AdminUtils.showToast(error.message, 'error');
             }
         }
         
-        function handleLogout() {
-            localStorage.removeItem('tpv_admin_token');
-            window.location.href = '/';
-        }
-        
-        // Helper function to get auth headers
-        function getAuthHeaders() {
-            return {
-                'Authorization': `Bearer ${authToken}`,
-                'Content-Type': 'application/json'
-            };
-        }
-        
-        // Form variables
-        let selectedFiles = [];
-        let descriptionCount = 1;
-        let editingSlug = null;
-        let existingImages = [];
-
-        // File upload handling
-        const fileInput = document.getElementById('fileInput');
-        const fileUploadArea = document.getElementById('fileUploadArea');
-        const imagePreview = document.getElementById('imagePreview');
-
-        fileInput.addEventListener('change', handleFileSelect);
-
-        // Drag and drop functionality
-        fileUploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            fileUploadArea.classList.add('dragover');
-        });
-
-        fileUploadArea.addEventListener('dragleave', () => {
-            fileUploadArea.classList.remove('dragover');
-        });
-
-        fileUploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            fileUploadArea.classList.remove('dragover');
-            const files = Array.from(e.dataTransfer.files);
-            addFiles(files);
-        });
-
-        fileUploadArea.addEventListener('click', (e) => {
-            if (e.target === fileUploadArea || e.target.closest('.upload-text') || e.target.closest('.upload-button')) {
-                fileInput.click();
-            }
-        });
-
-        function handleFileSelect(e) {
-            const files = Array.from(e.target.files);
-            addFiles(files);
-        }
-
-        function addFiles(files) {
-            const validFiles = files.filter(file => {
-                return file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024; // 10MB limit
-            });
-
-            selectedFiles = [...selectedFiles, ...validFiles];
-            updateImagePreview();
-        }
-
-        function updateImagePreview() {
-            if (editingSlug) {
-                // In edit mode, use the specialized preview that shows existing and new images
-                updateExistingImagePreview();
+        // Handle gallery upload
+        async function handleGalleryUpload(files) {
+            if (!files || files.length === 0) return;
+            
+            const maxImages = 12;
+            const remaining = maxImages - galleryImages.length;
+            
+            if (remaining <= 0) {
+                AdminUtils.showToast(`Maximum ${maxImages} gallery images allowed`, 'warning');
                 return;
             }
             
-            // Original function for create mode
-            imagePreview.innerHTML = '';
+            const filesToUpload = Array.from(files).slice(0, remaining);
             
-            selectedFiles.forEach((file, index) => {
-                const imageItem = document.createElement('div');
-                imageItem.className = 'image-item';
+            try {
+                AdminUtils.showLoading(`Uploading ${filesToUpload.length} images...`);
                 
-                const img = document.createElement('img');
-                img.src = URL.createObjectURL(file);
+                for (const file of filesToUpload) {
+                    const result = await AdminUtils.handleImageUpload(file);
+                    galleryImages.push(result);
+                }
                 
-                const filename = document.createElement('div');
-                filename.className = 'image-filename';
-                filename.textContent = file.name;
+                updateGalleryPreview();
+                AdminUtils.hideLoading();
+                AdminUtils.showToast(`${filesToUpload.length} images uploaded`, 'success');
                 
-                const removeBtn = document.createElement('button');
-                removeBtn.className = 'remove-image';
-                removeBtn.textContent = '×';
-                removeBtn.onclick = () => removeImage(index);
-                
-                imageItem.appendChild(img);
-                imageItem.appendChild(filename);
-                imageItem.appendChild(removeBtn);
-                imagePreview.appendChild(imageItem);
-            });
-        }
-
-        function removeImage(index) {
-            selectedFiles.splice(index, 1);
-            updateImagePreview();
-        }
-
-        // Description paragraph management
-        function addDescriptionParagraph() {
-            descriptionCount++;
-            const container = document.getElementById('descriptionInputs');
-            
-            const paragraphDiv = document.createElement('div');
-            paragraphDiv.className = 'description-paragraph';
-            
-            paragraphDiv.innerHTML = `
-                <textarea placeholder="Enter another paragraph describing the installation..."></textarea>
-                <button type="button" class="remove-paragraph" onclick="removeDescriptionParagraph(this)">×</button>
-            `;
-            
-            container.appendChild(paragraphDiv);
-        }
-
-        function removeDescriptionParagraph(button) {
-            const container = document.getElementById('descriptionInputs');
-            if (container.children.length > 1) {
-                button.parentElement.remove();
-                descriptionCount--;
+            } catch (error) {
+                AdminUtils.hideLoading();
+                AdminUtils.showToast(error.message, 'error');
             }
         }
-
-        // Form submission
+        
+        // Update gallery preview
+        function updateGalleryPreview() {
+            const preview = document.getElementById('galleryPreview');
+            preview.innerHTML = galleryImages.map((img, index) => `
+                <div class="image-item">
+                    <img src="${img.url}" alt="Gallery image ${index + 1}">
+                    <button type="button" class="remove-btn" onclick="removeGalleryImage(${index})">×</button>
+                </div>
+            `).join('');
+        }
+        
+        // Remove gallery image
+        function removeGalleryImage(index) {
+            galleryImages.splice(index, 1);
+            updateGalleryPreview();
+        }
+        
+        // Setup drag and drop
+        AdminUtils.setupDragDrop(document.getElementById('coverUpload'), (files) => {
+            handleCoverUpload(files[0]);
+        });
+        
+        AdminUtils.setupDragDrop(document.getElementById('galleryUpload'), (files) => {
+            handleGalleryUpload(files);
+        });
+        
+        // Handle form submission
         document.getElementById('installationForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const submitButton = document.getElementById('submitButton');
-            const statusMessage = document.getElementById('statusMessage');
+            const formData = new FormData(e.target);
             
-            // Validate form
-            if (!validateForm()) {
+            // Validate required fields
+            if (!formData.get('title')) {
+                AdminUtils.showToast('Title is required', 'error');
                 return;
             }
             
-            submitButton.disabled = true;
-            submitButton.textContent = editingSlug ? 'Updating Installation...' : 'Creating Installation...';
-            
-            try {
-                // Collect form data
-                const formData = new FormData();
-                
-                // Basic fields
-                formData.append('title', document.getElementById('title').value);
-                formData.append('location', document.getElementById('location').value);
-                formData.append('date', document.getElementById('date').value);
-                formData.append('application', document.getElementById('application').value);
-                
-                // Add slug for edit mode
-                if (editingSlug) {
-                    console.log('Editing slug:', editingSlug);
-                    formData.append('slug', editingSlug);
-                }
-                
-                // Description paragraphs
-                const descriptions = [];
-                document.querySelectorAll('.description-paragraph textarea').forEach(textarea => {
-                    if (textarea.value.trim()) {
-                        descriptions.push(textarea.value.trim());
-                    }
-                });
-                formData.append('descriptions', JSON.stringify(descriptions));
-                
-                // Images (new files)
-                selectedFiles.forEach((file, index) => {
-                    formData.append(`image_${index}`, file);
-                });
-                
-                // Images to remove (for edit mode)
-                if (editingSlug) {
-                    try {
-                        // Find which images were removed from the original list
-                        const response = await fetch(`/.netlify/functions/get-installations?slug=${editingSlug}`);
-                        const data = await response.json();
-                        const originalImages = data.installation?.images || [];
-                        const imagesToRemove = originalImages.filter(img => !existingImages.includes(img));
-                        formData.append('imagesToRemove', JSON.stringify(imagesToRemove));
-                        console.log('Images to remove:', imagesToRemove);
-                    } catch (imageError) {
-                        console.error('Error processing images for removal:', imageError);
-                        formData.append('imagesToRemove', JSON.stringify([]));
-                    }
-                }
-                
-                // Send to appropriate endpoint
-                const endpoint = editingSlug ? 
-                    '/.netlify/functions/update-installation' : 
-                    '/.netlify/functions/process-installation-final';
-                
-                console.log('Using endpoint:', endpoint);
-                console.log('FormData entries:');
-                for (let [key, value] of formData.entries()) {
-                    if (typeof value === 'string') {
-                        console.log(key, ':', value.substring(0, 50) + '...');
-                    } else {
-                        console.log(key, ':', 'File -', value.name);
-                    }
-                }
-                    
-                await simulateSubmission(formData, endpoint);
-                
-                const successMessage = editingSlug ? 
-                    'Installation updated successfully! Changes have been saved.' : 
-                    'Installation created successfully! The page has been generated and added to the website.';
-                showStatus(successMessage, 'success');
-                
-                if (editingSlug) {
-                    // Exit edit mode and reload list
-                    cancelEdit();
-                    loadExistingInstallations();
-                } else {
-                    resetForm();
-                }
-                
-            } catch (error) {
-                showStatus('Error creating installation: ' + error.message, 'error');
-            } finally {
-                submitButton.disabled = false;
-                submitButton.textContent = editingSlug ? 'Update Installation' : 'Create Installation Page';
-            }
-        });
-
-        function validateForm() {
-            const title = document.getElementById('title').value.trim();
-            const location = document.getElementById('location').value.trim();
-            const date = document.getElementById('date').value;
-            const application = document.getElementById('application').value;
-            
-            const descriptions = [];
-            document.querySelectorAll('.description-paragraph textarea').forEach(textarea => {
-                if (textarea.value.trim()) {
-                    descriptions.push(textarea.value.trim());
-                }
-            });
-            
-            if (!title || !location || !date || !application) {
-                showStatus('Please fill in all required fields.', 'error');
-                return false;
-            }
-            
-            if (descriptions.length === 0) {
-                showStatus('Please add at least one description paragraph.', 'error');
-                return false;
-            }
-            
-            if (selectedFiles.length === 0 && (!editingSlug || existingImages.length === 0)) {
-                showStatus('Please upload at least one image.', 'error');
-                return false;
-            }
-            
-            return true;
-        }
-
-        async function simulateSubmission(formData, endpoint = '/.netlify/functions/process-installation-final') {
-            try {
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`
-                    }
-                });
-                
-                // Check if response is ok
-                if (!response.ok) {
-                    const text = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${text}`);
-                }
-                
-                // Check if response has content
-                const text = await response.text();
-                if (!text) {
-                    throw new Error('Empty response from server');
-                }
-                
-                // Try to parse JSON
-                let result;
-                try {
-                    result = JSON.parse(text);
-                } catch (e) {
-                    throw new Error('Server returned invalid JSON: ' + text.substring(0, 200));
-                }
-                
-                // Check if the operation was successful
-                if (!result.success) {
-                    // Handle token expiration
-                    if (result.error && (result.error.includes('Token expired') || result.error.includes('Invalid token'))) {
-                        localStorage.removeItem('tpv_admin_token');
-                        alert('Your session has expired. Please log in again.');
-                        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-                        return;
-                    }
-                    throw new Error(result.error || 'Unknown error occurred');
-                }
-                
-                return result;
-            } catch (error) {
-                console.error('Submission error:', error);
-                
-                // Also check for 401 status codes in the error message
-                if (error.message.includes('HTTP 401') || error.message.includes('Token expired')) {
-                    localStorage.removeItem('tpv_admin_token');
-                    alert('Your session has expired. Please log in again.');
-                    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-                    return;
-                }
-                
-                throw error;
-            }
-        }
-
-        function showStatus(message, type) {
-            const statusMessage = document.getElementById('statusMessage');
-            statusMessage.textContent = message;
-            statusMessage.className = `status-message ${type}`;
-            statusMessage.style.display = 'block';
-            
-            // Auto-hide success messages after 5 seconds
-            if (type === 'success') {
-                setTimeout(() => {
-                    statusMessage.style.display = 'none';
-                }, 5000);
-            }
-        }
-
-        function resetForm() {
-            document.getElementById('installationForm').reset();
-            selectedFiles = [];
-            existingImages = [];
-            editingSlug = null;
-            updateImagePreview();
-            
-            // Reset description paragraphs to just one
-            const container = document.getElementById('descriptionInputs');
-            container.innerHTML = `
-                <div class="description-paragraph">
-                    <textarea placeholder="Enter the first paragraph describing the installation..." required></textarea>
-                    <button type="button" class="remove-paragraph" onclick="removeDescriptionParagraph(this)">×</button>
-                </div>
-            `;
-            descriptionCount = 1;
-            
-            // Reset form UI to create mode
-            document.getElementById('formTitle').textContent = 'Add New Installation';
-            document.getElementById('submitButton').textContent = 'Create Installation Page';
-            document.getElementById('cancelEditButton').style.display = 'none';
-        }
-
-        // Load and display existing installations
-        async function loadExistingInstallations() {
-            try {
-                const response = await fetch('/.netlify/functions/get-installations-public');
-                if (!response.ok) throw new Error('Failed to load installations');
-                
-                const data = await response.json();
-                const installations = data.installations || [];
-                
-                displayInstallations(installations);
-                
-            } catch (error) {
-                console.error('Error loading installations:', error);
-                document.getElementById('loadingInstallations').innerHTML = '<p style="color: #dc3545;">Error loading installations. Please refresh the page.</p>';
-            }
-        }
-
-        function displayInstallations(installations) {
-            const loadingDiv = document.getElementById('loadingInstallations');
-            const listDiv = document.getElementById('installationsList');
-            
-            loadingDiv.style.display = 'none';
-            listDiv.style.display = 'block';
-            
-            if (installations.length === 0) {
-                listDiv.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">No installations found.</p>';
+            if (!formData.get('installationDate')) {
+                AdminUtils.showToast('Installation date is required', 'error');
                 return;
             }
-
-            // Sort by date (newest first)
-            installations.sort((a, b) => new Date(b.date) - new Date(a.date));
             
-            const installationsHtml = installations.map(installation => {
-                const imageCount = installation.images ? installation.images.length : 0;
-                const date = new Date(installation.date).toLocaleDateString('en-GB');
-                console.log('Installation in list:', installation.title, 'Slug:', installation.slug);
-                
-                return `
-                    <div class="installation-item" data-id="${installation.slug}">
-                        <div class="installation-info">
-                            <div class="installation-title">${installation.title}</div>
-                            <div class="installation-meta">📍 ${installation.location} • 📅 ${date} • 🏷️ ${installation.application}</div>
-                            <div class="installation-images">🖼️ ${imageCount} image${imageCount !== 1 ? 's' : ''}</div>
-                        </div>
-                        <div class="installation-actions">
-                            <button class="edit-btn" onclick="editInstallation('${installation.slug}')">
-                                Edit
-                            </button>
-                            <button class="delete-btn" onclick="confirmDelete('${installation.slug}', '${installation.title.replace(/'/g, "\\'")}')">
-                                Delete
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            listDiv.innerHTML = installationsHtml;
-        }
-
-        function confirmDelete(slug, title) {
-            const button = document.querySelector(`[data-id="${slug}"] .delete-btn`);
-            
-            if (button.classList.contains('confirm-delete')) {
-                // Second click - actually delete
-                deleteInstallation(slug, title);
-            } else {
-                // First click - show confirmation
-                button.textContent = 'Click Again to Confirm';
-                button.classList.add('confirm-delete');
-                
-                // Reset after 3 seconds if no second click
-                setTimeout(() => {
-                    button.textContent = 'Delete';
-                    button.classList.remove('confirm-delete');
-                }, 3000);
+            if (!coverImage) {
+                AdminUtils.showToast('Cover image is required', 'error');
+                return;
             }
-        }
-
-        async function deleteInstallation(slug, title) {
-            const button = document.querySelector(`[data-id="${slug}"] .delete-btn`);
-            button.disabled = true;
-            button.textContent = 'Deleting...';
+            
+            // Prepare data
+            const data = {
+                title: formData.get('title'),
+                slug: formData.get('slug'),
+                installationDate: formData.get('installationDate'),
+                application: formData.get('application'),
+                location: {
+                    city: formData.get('city'),
+                    country: formData.get('country')
+                },
+                overview: formData.getAll('overview[]').filter(text => text.trim()),
+                thanksTo: formData.getAll('thanksTo[]').filter(text => text.trim()),
+                coverAssetId: coverImage.assetId,
+                galleryAssetIds: galleryImages.map(img => img.assetId),
+                seo: {
+                    title: formData.get('seoTitle'),
+                    description: formData.get('seoDescription')
+                }
+            };
             
             try {
-                const response = await fetch('/.netlify/functions/delete-installation', {
+                document.getElementById('submitBtn').disabled = true;
+                AdminUtils.showLoading('Saving installation and translating...');
+                
+                const response = await adminAuth.apiCall('/.netlify/functions/installations-upsert', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}`
+                        'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ slug: slug })
+                    body: JSON.stringify(data)
                 });
                 
                 if (!response.ok) {
-                    const text = await response.text();
-                    throw new Error(`HTTP ${response.status}: ${text}`);
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to save installation');
                 }
                 
                 const result = await response.json();
                 
-                if (!result.success) {
-                    // Handle token expiration
-                    if (result.error && (result.error.includes('Token expired') || result.error.includes('Invalid token'))) {
-                        localStorage.removeItem('tpv_admin_token');
-                        alert('Your session has expired. Please log in again.');
-                        window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-                        return;
-                    }
-                    throw new Error(result.error || 'Unknown error occurred');
-                }
+                AdminUtils.hideLoading();
+                AdminUtils.showToast('Installation saved successfully!', 'success');
                 
-                // Remove the item from the display
-                const item = document.querySelector(`[data-id="${slug}"]`);
-                item.style.transition = 'all 0.3s ease';
-                item.style.opacity = '0';
-                item.style.transform = 'translateX(-100%)';
+                // Show success links
+                const successMsg = document.getElementById('successMessage');
+                successMsg.style.display = 'block';
                 
+                // Set view links
+                document.getElementById('viewEn').href = result.viewUrls.en || '#';
+                document.getElementById('viewEs').href = result.viewUrls.es || '#';
+                document.getElementById('viewFr').href = result.viewUrls.fr || '#';
+                document.getElementById('viewDe').href = result.viewUrls.de || '#';
+                
+                // Disable unavailable languages
+                if (!result.viewUrls.es) document.getElementById('viewEs').style.display = 'none';
+                if (!result.viewUrls.fr) document.getElementById('viewFr').style.display = 'none';
+                if (!result.viewUrls.de) document.getElementById('viewDe').style.display = 'none';
+                
+                // Reset form for new entry
                 setTimeout(() => {
-                    item.remove();
-                }, 300);
-                
-                showStatus(`Installation "${title}" deleted successfully!`, 'success');
-                
-            } catch (error) {
-                console.error('Delete error:', error);
-                
-                // Check for token expiration in error message
-                if (error.message.includes('HTTP 401') || error.message.includes('Token expired')) {
-                    localStorage.removeItem('tpv_admin_token');
-                    alert('Your session has expired. Please log in again.');
-                    window.location.href = '/login?redirect=' + encodeURIComponent(window.location.pathname);
-                    return;
-                }
-                
-                button.disabled = false;
-                button.textContent = 'Delete';
-                button.classList.remove('confirm-delete');
-                showStatus(`Error deleting installation: ${error.message}`, 'error');
-            }
-        }
-
-        // Edit installation functionality
-        async function editInstallation(slug) {
-            try {
-                console.log('Editing installation with slug:', slug);
-                // Fetch installation data
-                const response = await fetch(`/.netlify/functions/get-installations-public?slug=${slug}`);
-                if (!response.ok) throw new Error('Failed to load installation');
-                
-                const data = await response.json();
-                console.log('Fetched installation data:', data);
-                console.log('Installation slug from DB:', data.installation?.slug);
-                const installation = data.installation;
-                
-                // Switch to edit mode
-                editingSlug = slug;
-                
-                // Safely handle existing images - ensure it's always an array
-                let currentImages = [];
-                if (installation.images) {
-                    if (Array.isArray(installation.images)) {
-                        currentImages = installation.images;
-                    } else if (typeof installation.images === 'object') {
-                        currentImages = Object.values(installation.images);
+                    if (confirm('Add another installation?')) {
+                        window.location.reload();
+                    } else {
+                        window.location.href = 'installations.html';
                     }
-                }
-                existingImages = [...currentImages];
-                
-                console.log('Existing images loaded:', existingImages);
-                
-                // Update form title and button
-                document.getElementById('formTitle').textContent = 'Edit Installation';
-                document.getElementById('submitButton').textContent = 'Update Installation';
-                document.getElementById('cancelEditButton').style.display = 'block';
-                
-                // Populate form fields
-                document.getElementById('title').value = installation.title || '';
-                document.getElementById('location').value = installation.location || '';
-                document.getElementById('date').value = installation.date || installation.installation_date || '';
-                document.getElementById('application').value = installation.application || '';
-                
-                // Clear and populate descriptions
-                const container = document.getElementById('descriptionInputs');
-                container.innerHTML = '';
-                descriptionCount = 0;
-                
-                const descriptions = installation.description || [];
-                if (descriptions.length === 0) {
-                    // Add at least one empty description field
-                    addDescriptionParagraph();
-                } else {
-                    descriptions.forEach((desc, index) => {
-                        addDescriptionParagraph();
-                        const textareas = container.querySelectorAll('textarea');
-                        textareas[textareas.length - 1].value = desc || '';
-                    });
-                }
-                
-                // Display existing images
-                updateExistingImagePreview();
-                
-                // Clear new file selection
-                selectedFiles = [];
-                updateImagePreview();
-                
-                // Scroll to form
-                document.querySelector('.form-container').scrollIntoView({ behavior: 'smooth' });
+                }, 2000);
                 
             } catch (error) {
-                showStatus('Error loading installation for edit: ' + error.message, 'error');
+                AdminUtils.hideLoading();
+                AdminUtils.showToast(error.message, 'error');
+                document.getElementById('submitBtn').disabled = false;
             }
-        }
-        
-        function updateExistingImagePreview() {
-            const imagePreview = document.getElementById('imagePreview');
-            
-            // Clear current preview
-            imagePreview.innerHTML = '';
-            
-            // Add existing images
-            existingImages.forEach((imageUrl, index) => {
-                const imageItem = document.createElement('div');
-                imageItem.className = 'image-item';
-                imageItem.style.border = '2px solid #28a745'; // Green border for existing images
-                
-                const img = document.createElement('img');
-                img.src = imageUrl;
-                
-                const filename = document.createElement('div');
-                filename.className = 'image-filename';
-                filename.textContent = `Existing: ${imageUrl.split('/').pop()}`;
-                filename.style.background = '#d4edda';
-                filename.style.color = '#155724';
-                
-                const removeBtn = document.createElement('button');
-                removeBtn.className = 'remove-image';
-                removeBtn.textContent = '×';
-                removeBtn.onclick = () => removeExistingImage(index);
-                
-                imageItem.appendChild(img);
-                imageItem.appendChild(filename);
-                imageItem.appendChild(removeBtn);
-                imagePreview.appendChild(imageItem);
-            });
-            
-            // Add new images after existing ones
-            selectedFiles.forEach((file, index) => {
-                const imageItem = document.createElement('div');
-                imageItem.className = 'image-item';
-                imageItem.style.border = '2px solid #007bff'; // Blue border for new images
-                
-                const img = document.createElement('img');
-                img.src = URL.createObjectURL(file);
-                
-                const filename = document.createElement('div');
-                filename.className = 'image-filename';
-                filename.textContent = `New: ${file.name}`;
-                filename.style.background = '#d1ecf1';
-                filename.style.color = '#0c5460';
-                
-                const removeBtn = document.createElement('button');
-                removeBtn.className = 'remove-image';
-                removeBtn.textContent = '×';
-                removeBtn.onclick = () => removeImage(index);
-                
-                imageItem.appendChild(img);
-                imageItem.appendChild(filename);
-                imageItem.appendChild(removeBtn);
-                imagePreview.appendChild(imageItem);
-            });
-        }
-        
-        function removeExistingImage(index) {
-            existingImages.splice(index, 1);
-            updateExistingImagePreview();
-        }
-        
-        function cancelEdit() {
-            editingSlug = null;
-            existingImages = [];
-            document.getElementById('formTitle').textContent = 'Add New Installation';
-            document.getElementById('submitButton').textContent = 'Create Installation Page';
-            document.getElementById('cancelEditButton').style.display = 'none';
-            resetForm();
-        }
-
-        // Note: Installations are now loaded after authentication in checkAdminAccess()
+        });
     </script>
 </body>
 </html>

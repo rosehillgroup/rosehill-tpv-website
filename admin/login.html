@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Rosehill TPV</title>
+    
+    <!-- Auth0 SDK -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .logo {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            border-radius: 24px;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+        }
+        
+        h1 {
+            color: #1a365d;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .login-button {
+            background: linear-gradient(135deg, #ff6b35, #ff8255);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 107, 53, 0.3);
+        }
+        
+        .login-button:active {
+            transform: translateY(0);
+        }
+        
+        .info-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .info-box h3 {
+            color: #475569;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .info-box p {
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .error-message {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .success-message {
+            background: #dcfce7;
+            color: #16a34a;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            color: #64748b;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        
+        .loading::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+        
+        .back-link {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 14px;
+            margin-top: 20px;
+            display: inline-block;
+        }
+        
+        .back-link:hover {
+            color: #1a365d;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">RT</div>
+        
+        <h1>Admin Access</h1>
+        <p class="subtitle">Rosehill TPV Installation Manager</p>
+        
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+        
+        <button class="login-button" id="loginButton" onclick="loginWithAuth0()">
+            Sign In with Auth0
+        </button>
+        
+        <div class="loading" id="loading">Authenticating</div>
+        
+        <div class="info-box">
+            <h3>Access Required</h3>
+            <p>You need editor access to manage installations. If you don't have access, please contact the site administrator.</p>
+        </div>
+        
+        <a href="/" class="back-link">← Back to Site</a>
+    </div>
+    
+    <script>
+        // Auth0 configuration - these will be populated by the Auth0 Netlify extension
+        window.AUTH0_DOMAIN = '{{AUTH0_DOMAIN}}'; // Replace with your Auth0 domain
+        window.AUTH0_CLIENT_ID = '{{AUTH0_CLIENT_ID}}'; // Replace with your client ID
+        window.AUTH0_AUDIENCE = '{{AUTH0_AUDIENCE}}'; // Replace with your API audience
+        
+        let auth0Client = null;
+        
+        // Initialize Auth0
+        async function initAuth0() {
+            try {
+                showLoading();
+                
+                auth0Client = await auth0.createAuth0Client({
+                    domain: window.AUTH0_DOMAIN,
+                    clientId: window.AUTH0_CLIENT_ID,
+                    authorizationParams: {
+                        redirect_uri: window.location.origin + '/admin/login.html',
+                        audience: window.AUTH0_AUDIENCE
+                    }
+                });
+                
+                // Check for Auth0 callback
+                const query = window.location.search;
+                if (query.includes('code=') || query.includes('state=')) {
+                    try {
+                        await auth0Client.handleRedirectCallback();
+                        // Clear URL parameters
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        // Check authentication after callback
+                        await checkAuthentication();
+                        return;
+                    } catch (error) {
+                        console.error('Auth0 callback error:', error);
+                        showError('Authentication failed. Please try again.');
+                        hideLoading();
+                        return;
+                    }
+                }
+                
+                // Check if already authenticated
+                await checkAuthentication();
+                
+            } catch (error) {
+                console.error('Auth0 initialization error:', error);
+                showError('Failed to initialize authentication. Please refresh the page.');
+                hideLoading();
+            }
+        }
+        
+        // Check authentication status
+        async function checkAuthentication() {
+            try {
+                const isAuthenticated = await auth0Client.isAuthenticated();
+                
+                if (isAuthenticated) {
+                    const user = await auth0Client.getUser();
+                    const token = await auth0Client.getTokenSilently();
+                    
+                    // Check for editor role in token
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    const roles = payload['https://tpv.rosehill.group/roles'] || [];
+                    
+                    if (roles.includes('editor')) {
+                        showSuccess('Login successful! Redirecting...');
+                        setTimeout(() => {
+                            const params = new URLSearchParams(window.location.search);
+                            const redirect = params.get('redirect') || '/admin/';
+                            window.location.href = redirect;
+                        }, 1000);
+                    } else {
+                        showError('You need editor access to use the admin panel.');
+                        await auth0Client.logout({ logoutParams: { returnTo: window.location.origin } });
+                    }
+                } else {
+                    hideLoading();
+                }
+                
+            } catch (error) {
+                console.error('Authentication check error:', error);
+                showError('Authentication check failed. Please try logging in.');
+                hideLoading();
+            }
+        }
+        
+        // Login with Auth0
+        async function loginWithAuth0() {
+            try {
+                showLoading();
+                await auth0Client.loginWithRedirect();
+            } catch (error) {
+                console.error('Login error:', error);
+                showError('Login failed. Please try again.');
+                hideLoading();
+            }
+        }
+        
+        // Utility functions
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+            hideSuccess();
+        }
+        
+        function showSuccess(message) {
+            const successEl = document.getElementById('successMessage');
+            successEl.textContent = message;
+            successEl.style.display = 'block';
+            hideError();
+        }
+        
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+        
+        function hideSuccess() {
+            document.getElementById('successMessage').style.display = 'none';
+        }
+        
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('loginButton').disabled = true;
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('loginButton').disabled = false;
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initAuth0);
+    </script>
+</body>
+</html>

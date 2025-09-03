@@ -7,6 +7,15 @@
 
 [functions]
   directory = "netlify/functions"
+  external_node_modules = ["formidable"]
+  node_bundler = "esbuild"
+
+# Admin redirects - serve index.html for all admin routes (SPA behavior)
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin/index.html"
+  status = 200
+  force = true
 
 # Redirects for multilingual routing
 [[redirects]]

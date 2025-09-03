@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Installation - Rosehill TPV® Sports & Play Surfaces</title>
+    <link rel="canonical" href="" id="canonical-link">
+    <meta name="description" content="" id="meta-description">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="en" id="meta-language">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="" id="og-url">
+    <meta property="og:title" content="" id="og-title">
+    <meta property="og:description" content="" id="og-description">
+    <meta property="og:site_name" content="Rosehill TPV®">
+    <meta property="og:image" content="" id="og-image">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="" id="twitter-url">
+    <meta property="twitter:title" content="" id="twitter-title">
+    <meta property="twitter:description" content="" id="twitter-description">
+    <meta property="twitter:image" content="" id="twitter-image">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json" id="structured-data"></script>
+    
+    <!-- Favicons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="../favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="../favicon_io/site.webmanifest">
+    
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-5565Z2W7');</script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header Styles (same as main site) */
+        .header {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 15px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ff6b35;
+        }
+
+        .nav {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .nav a:hover {
+            color: #ff6b35;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(rgba(26, 54, 93, 0.7), rgba(26, 54, 93, 0.7));
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 120px 0 80px;
+            margin-top: 70px;
+            text-align: center;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .hero .meta {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+        }
+
+        /* Content Layout */
+        .content-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 20px;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 60px;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 100px;
+            height: fit-content;
+        }
+
+        .project-details {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .details-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .detail-value {
+            color: #333;
+            text-align: right;
+        }
+
+        /* Image Gallery */
+        .image-gallery {
+            margin: 40px 0;
+        }
+
+        .gallery-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 30px;
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .gallery-image {
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .gallery-image:hover {
+            transform: scale(1.05);
+        }
+
+        .gallery-image img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+        }
+
+        .lightbox img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+        }
+
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+            color: #666;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f1f3f4;
+            border-top-color: #ff6b35;
+            border-radius: 50%;
+            margin-right: 16px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Error State */
+        .error-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            .content-wrapper {
+                grid-template-columns: 1fr;
+                gap: 40px;
+                padding: 40px 20px;
+            }
+
+            .sidebar {
+                position: static;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 28px;
+            }
+
+            .main-content {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5565Z2W7"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">Rosehill TPV®</div>
+            <nav class="nav">
+                <a href="../index.html">Home</a>
+                <a href="../products.html">Products</a>
+                <a href="../applications.html">Applications</a>
+                <a href="../colour.html">Colour</a>
+                <a href="../installations.html">Installations</a>
+                <a href="../about.html">About Us</a>
+                <a href="../contact.html">Contact</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Loading State -->
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+        <span>Loading installation...</span>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="error-state" style="display:none;">
+        <h2>Installation Not Found</h2>
+        <p>The requested installation could not be found.</p>
+        <a href="../installations.html" style="color:#ff6b35; text-decoration:none; margin-top:20px; display:inline-block;">← Back to Installations</a>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content" style="display:none;">
+        <!-- Hero Section -->
+        <section class="hero" id="hero-section">
+            <div class="hero-content">
+                <h1 id="installation-title">Installation Title</h1>
+                <div class="meta">
+                    <div class="meta-item">
+                        <span>📍</span>
+                        <span id="installation-location">Location</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>📅</span>
+                        <span id="installation-date">Date</span>
+                    </div>
+                    <div class="meta-item">
+                        <span>🏗️</span>
+                        <span id="installation-application">Application</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content -->
+        <div class="content-wrapper">
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Overview -->
+                <div id="installation-overview"></div>
+
+                <!-- Image Gallery -->
+                <div class="image-gallery" id="gallery-section" style="display:none;">
+                    <h2 class="gallery-title">Project Gallery</h2>
+                    <div class="gallery-grid" id="gallery-grid"></div>
+                </div>
+
+                <!-- Thanks Section -->
+                <div id="thanks-section" style="display:none;">
+                    <h2>Acknowledgments</h2>
+                    <div id="installation-thanks"></div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="sidebar">
+                <div class="project-details">
+                    <h3 class="details-title">Project Details</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">Installation Date</span>
+                        <span class="detail-value" id="detail-date">—</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Application</span>
+                        <span class="detail-value" id="detail-application">—</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Location</span>
+                        <span class="detail-value" id="detail-location">—</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Images</span>
+                        <span class="detail-value" id="detail-images">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+        <span class="close">&times;</span>
+        <img id="lightbox-img" src="" alt="">
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/sanity-client.js"></script>
+    <script>
+        // Get slug from URL
+        function getSlugFromUrl() {
+            const path = window.location.pathname;
+            const match = path.match(/\/installations\/(.+)\.html$/);
+            return match ? match[1] : null;
+        }
+
+        // Load and display installation
+        async function loadInstallation() {
+            const slug = getSlugFromUrl();
+            
+            if (!slug) {
+                showError();
+                return;
+            }
+
+            try {
+                const installation = await sanityClient.getInstallationBySlug(slug);
+                
+                if (!installation) {
+                    showError();
+                    return;
+                }
+
+                displayInstallation(installation);
+                
+            } catch (error) {
+                console.error('Error loading installation:', error);
+                showError();
+            }
+        }
+
+        // Display installation data
+        function displayInstallation(installation) {
+            // Update meta tags
+            updateMetaTags(installation);
+            
+            // Update hero section
+            document.getElementById('installation-title').textContent = installation.title;
+            document.getElementById('installation-location').textContent = 
+                [installation.location?.city, installation.location?.country].filter(Boolean).join(', ') || 'Location TBD';
+            document.getElementById('installation-date').textContent = 
+                sanityClient.formatDate(installation.installationDate);
+            document.getElementById('installation-application').textContent = 
+                installation.application || 'Installation';
+            
+            // Set hero background image
+            if (installation.coverImage?.url) {
+                document.getElementById('hero-section').style.backgroundImage = 
+                    `linear-gradient(rgba(26, 54, 93, 0.7), rgba(26, 54, 93, 0.7)), url('${installation.coverImage.url}')`;
+            }
+            
+            // Update sidebar details
+            document.getElementById('detail-date').textContent = sanityClient.formatDate(installation.installationDate);
+            document.getElementById('detail-application').textContent = installation.application || '—';
+            document.getElementById('detail-location').textContent = 
+                [installation.location?.city, installation.location?.country].filter(Boolean).join(', ') || '—';
+            
+            // Overview content
+            if (installation.overview) {
+                document.getElementById('installation-overview').innerHTML = 
+                    sanityClient.portableTextToHtml(installation.overview);
+            }
+            
+            // Thanks content
+            if (installation.thanksTo && installation.thanksTo.length > 0) {
+                document.getElementById('installation-thanks').innerHTML = 
+                    sanityClient.portableTextToHtml(installation.thanksTo);
+                document.getElementById('thanks-section').style.display = 'block';
+            }
+            
+            // Gallery
+            if (installation.gallery && installation.gallery.length > 0) {
+                displayGallery(installation.gallery);
+                const totalImages = 1 + installation.gallery.length; // cover + gallery
+                document.getElementById('detail-images').textContent = totalImages;
+                document.getElementById('gallery-section').style.display = 'block';
+            } else if (installation.coverImage) {
+                document.getElementById('detail-images').textContent = '1';
+            }
+            
+            // Show content and hide loading
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+        }
+
+        // Display gallery images
+        function displayGallery(gallery) {
+            const grid = document.getElementById('gallery-grid');
+            grid.innerHTML = gallery.map((image, index) => `
+                <div class="gallery-image" onclick="openLightbox('${image.url}')">
+                    <img src="${image.url}" alt="${image.alt || `Gallery image ${index + 1}`}" loading="lazy">
+                </div>
+            `).join('');
+        }
+
+        // Update meta tags and structured data
+        function updateMetaTags(installation) {
+            const title = `${installation.title} - ${[installation.location?.city, installation.location?.country].filter(Boolean).join(', ')}`;
+            const description = installation.seo?.description || `${installation.title} installation featuring Rosehill TPV® surfaces.`;
+            const url = window.location.href;
+            const imageUrl = installation.coverImage?.url || '';
+            
+            // Page title
+            document.getElementById('page-title').textContent = title + ' | Rosehill TPV® Installation';
+            
+            // Meta tags
+            document.getElementById('meta-description').content = description;
+            document.getElementById('canonical-link').href = url;
+            
+            // Open Graph
+            document.getElementById('og-url').content = url;
+            document.getElementById('og-title').content = title;
+            document.getElementById('og-description').content = description;
+            document.getElementById('og-image').content = imageUrl;
+            
+            // Twitter
+            document.getElementById('twitter-url').content = url;
+            document.getElementById('twitter-title').content = title;
+            document.getElementById('twitter-description').content = description;
+            document.getElementById('twitter-image').content = imageUrl;
+            
+            // Structured data
+            const structuredData = {
+                "@context": "https://schema.org",
+                "@type": "Article",
+                "headline": title,
+                "description": description,
+                "image": imageUrl,
+                "datePublished": installation.installationDate + 'T00:00:00Z',
+                "author": {
+                    "@type": "Organization",
+                    "name": "Rosehill TPV®"
+                },
+                "publisher": {
+                    "@type": "Organization",
+                    "name": "Rosehill TPV®",
+                    "logo": {
+                        "@type": "ImageObject",
+                        "url": "https://tpv.rosehill.group/rosehill_tpv_logo.png"
+                    }
+                }
+            };
+            
+            document.getElementById('structured-data').textContent = JSON.stringify(structuredData, null, 2);
+        }
+
+        // Show error state
+        function showError() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error-state').style.display = 'block';
+        }
+
+        // Lightbox functions
+        function openLightbox(imageSrc) {
+            document.getElementById('lightbox-img').src = imageSrc;
+            document.getElementById('lightbox').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Keyboard navigation for lightbox
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeLightbox();
+            }
+        });
+
+        // Load installation on page load
+        document.addEventListener('DOMContentLoaded', loadInstallation);
+    </script>
+</body>
+</html>

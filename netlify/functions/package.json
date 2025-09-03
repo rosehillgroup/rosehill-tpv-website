@@ -2,9 +2,8 @@
   "name": "netlify-functions",
   "version": "1.0.0",
   "dependencies": {
-    "@supabase/supabase-js": "^2.39.0",
-    "parse-multipart-data": "^1.5.0",
-    "jsonwebtoken": "^9.0.2",
-    "bcryptjs": "^2.4.3"
+    "formidable": "^3.5.1",
+    "@sanity/client": "^6.22.7",
+    "jose": "^5.2.0"
   }
 }

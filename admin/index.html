@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Rosehill TPV</title>
+    
+    <!-- Auth0 SDK -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <script src="js/auth0-config.js"></script>
+    
+    <!-- Admin Styles -->
+    <link rel="stylesheet" href="css/admin.css">
+    
+    <style>
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+        
+        .dashboard-card {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--accent-color);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+        
+        .card-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .stats-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+        
+        .stat-card {
+            background: var(--surface);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        
+        .welcome-section {
+            background: linear-gradient(135deg, var(--primary-color), #2d4a71);
+            color: white;
+            padding: 32px;
+            border-radius: 12px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+        
+        .welcome-section h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        
+        .welcome-section p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Check -->
+    <script src="js/auth.js"></script>
+    <script src="js/admin-common.js"></script>
+    
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="header-content">
+            <div class="header-title">Admin Dashboard</div>
+            <nav class="header-nav">
+                <a href="installations.html">Installations</a>
+                <a href="add-installation.html">Add New</a>
+                <a href="/" target="_blank">View Site</a>
+                <a href="#" data-logout>Logout</a>
+            </nav>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <div class="admin-container">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+            <h1>Welcome to Rosehill TPV Admin</h1>
+            <p>Manage installations with automatic multilingual translation</p>
+        </div>
+        
+        <!-- Statistics Overview -->
+        <div class="stats-overview" id="statsOverview">
+            <div class="stat-card">
+                <div class="stat-number" id="totalInstallations">-</div>
+                <div class="stat-label">Total Installations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="recentInstallations">-</div>
+                <div class="stat-label">This Month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="translatedInstallations">-</div>
+                <div class="stat-label">Fully Translated</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="pendingTranslations">-</div>
+                <div class="stat-label">Pending Translations</div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="dashboard-grid">
+            <div class="dashboard-card" onclick="window.location.href='add-installation.html'">
+                <div class="card-icon">+</div>
+                <div class="card-title">Add Installation</div>
+                <div class="card-description">
+                    Create a new installation with automatic translation to Spanish, French, and German.
+                </div>
+            </div>
+            
+            <div class="dashboard-card" onclick="window.location.href='installations.html'">
+                <div class="card-icon">📋</div>
+                <div class="card-title">Manage Installations</div>
+                <div class="card-description">
+                    View, edit, and organize all installations. Search and filter by location or type.
+                </div>
+            </div>
+            
+            <div class="dashboard-card" onclick="window.location.href='/'">
+                <div class="card-icon">🌐</div>
+                <div class="card-title">View Public Site</div>
+                <div class="card-description">
+                    Preview the public website to see how installations appear to visitors.
+                </div>
+            </div>
+            
+            <div class="dashboard-card" onclick="showSystemInfo()">
+                <div class="card-icon">⚙️</div>
+                <div class="card-title">System Information</div>
+                <div class="card-description">
+                    View system status, translation settings, and configuration details.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Info Modal -->
+    <div id="systemModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;">
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:32px; border-radius:12px; max-width:500px; width:90%;">
+            <h3 style="margin-bottom:16px; color:var(--primary-color);">System Information</h3>
+            <div id="systemInfo"></div>
+            <div style="margin-top:20px; text-align:right;">
+                <button class="btn btn-primary" onclick="hideSystemInfo()">Close</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Load dashboard data
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadDashboardStats();
+        });
+        
+        // Load dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                const response = await adminAuth.apiCall('/.netlify/functions/installations-list?limit=1000');
+                
+                if (!response.ok) {
+                    console.error('Failed to load stats');
+                    return;
+                }
+                
+                const data = await response.json();
+                updateDashboardStats(data);
+                
+            } catch (error) {
+                console.error('Stats error:', error);
+            }
+        }
+        
+        // Update dashboard statistics
+        function updateDashboardStats(data) {
+            const items = data.items || [];
+            const total = data.pagination?.total || items.length;
+            
+            // Calculate stats
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            
+            const recentCount = items.filter(item => {
+                const installDate = new Date(item.installationDate);
+                return installDate >= startOfMonth;
+            }).length;
+            
+            const fullyTranslated = items.filter(item => 
+                item.hasTranslations.es && item.hasTranslations.fr && item.hasTranslations.de
+            ).length;
+            
+            const pending = total - fullyTranslated;
+            
+            // Update UI
+            document.getElementById('totalInstallations').textContent = total;
+            document.getElementById('recentInstallations').textContent = recentCount;
+            document.getElementById('translatedInstallations').textContent = fullyTranslated;
+            document.getElementById('pendingTranslations').textContent = pending;
+        }
+        
+        // Show system information
+        function showSystemInfo() {
+            const user = adminAuth.getUser();
+            
+            const info = `
+                <p><strong>User:</strong> ${user.email}</p>
+                <p><strong>Role:</strong> ${user.app_metadata?.roles?.join(', ') || 'None'}</p>
+                <p><strong>Dataset:</strong> ${process.env.SANITY_DATASET || 'production'}</p>
+                <p><strong>Translation Service:</strong> DeepL API</p>
+                <p><strong>Supported Languages:</strong> English, Spanish, French, German</p>
+                <p><strong>Max Images per Installation:</strong> 12</p>
+                <p><strong>Max Image Size:</strong> 12MB</p>
+                <p><strong>Last Updated:</strong> ${new Date().toLocaleDateString()}</p>
+            `;
+            
+            document.getElementById('systemInfo').innerHTML = info;
+            document.getElementById('systemModal').style.display = 'block';
+        }
+        
+        // Hide system information
+        function hideSystemInfo() {
+            document.getElementById('systemModal').style.display = 'none';
+        }
+        
+        // Close modal on outside click
+        document.getElementById('systemModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                hideSystemInfo();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Installation - Rosehill TPV Admin</title>
+    
+    <!-- Auth0 SDK -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <script src="js/auth0-config.js"></script>
+    
+    <!-- Admin Styles -->
+    <link rel="stylesheet" href="css/admin.css">
+    
+    <style>
+        /* Page-specific styles */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .paragraph-list {
+            margin-bottom: 16px;
+        }
+        
+        .paragraph-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .paragraph-item textarea {
+            flex: 1;
+        }
+        
+        .paragraph-item .btn-danger {
+            flex-shrink: 0;
+            padding: 8px 12px;
+        }
+        
+        .add-paragraph-btn {
+            margin-top: 10px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: space-between;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            margin-top: 32px;
+        }
+        
+        .form-actions .left {
+            display: flex;
+            gap: 16px;
+        }
+        
+        .edit-warning {
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            color: #92400e;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+        
+        .edit-warning h3 {
+            margin-bottom: 8px;
+        }
+        
+        .success-links {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 8px;
+        }
+        
+        .success-links h3 {
+            color: var(--success-color);
+            margin-bottom: 12px;
+        }
+        
+        .success-links .link-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .success-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .success-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .loading-form {
+            text-align: center;
+            padding: 60px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Check -->
+    <script src="js/auth.js"></script>
+    <script src="js/admin-common.js"></script>
+    
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="header-content">
+            <div class="header-title">Edit Installation</div>
+            <nav class="header-nav">
+                <a href="installations.html">Installations</a>
+                <a href="add-installation.html">Add New</a>
+                <a href="/" target="_blank">View Site</a>
+                <a href="#" data-logout>Logout</a>
+            </nav>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <div class="admin-container">
+        <!-- Loading State -->
+        <div id="loadingState" class="card loading-form">
+            <div class="loading-spinner"></div>
+            <p>Loading installation...</p>
+        </div>
+        
+        <!-- Edit Form -->
+        <div id="editForm" style="display:none;">
+            <!-- Warning about re-translation -->
+            <div class="edit-warning">
+                <h3>⚠️ Translation Notice</h3>
+                <p>Saving changes will automatically re-translate the content to Spanish, French, and German. Any manual translation edits will be overwritten.</p>
+            </div>
+            
+            <form id="installationForm" class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Edit Installation</h2>
+                    <p class="card-subtitle">Update installation details. Changes will trigger automatic translation.</p>
+                </div>
+                
+                <!-- Hidden ID field -->
+                <input type="hidden" name="id" id="installationId">
+                
+                <!-- Basic Information -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Basic Information</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">
+                                Title <span class="required">*</span>
+                            </label>
+                            <input type="text" class="form-input" name="title" id="title" required>
+                            <span class="form-help">The name of this installation project</span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Slug</label>
+                            <input type="text" class="form-input" name="slug" id="slug">
+                            <span class="form-help">URL-friendly version</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">
+                                Installation Date <span class="required">*</span>
+                            </label>
+                            <input type="date" class="form-input" name="installationDate" id="installationDate" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Application Type</label>
+                            <select class="form-select" name="application" id="application">
+                                <option value="">Select type...</option>
+                                <option value="playground">Playground</option>
+                                <option value="sports">Sports Court</option>
+                                <option value="athletics">Athletics Track</option>
+                                <option value="tennis">Tennis Court</option>
+                                <option value="fitness">Fitness Area</option>
+                                <option value="water">Water Park</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Location -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Location</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">City</label>
+                            <input type="text" class="form-input" name="city" id="city">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Country</label>
+                            <input type="text" class="form-input" name="country" id="country">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Content -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Content</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Overview</label>
+                        <div id="overviewParagraphs" class="paragraph-list"></div>
+                        <button type="button" class="btn btn-secondary add-paragraph-btn" onclick="addParagraph('overview')">
+                            + Add Paragraph
+                        </button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Thanks To</label>
+                        <div id="thanksToParagraphs" class="paragraph-list"></div>
+                        <button type="button" class="btn btn-secondary add-paragraph-btn" onclick="addParagraph('thanksTo')">
+                            + Add Paragraph
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Images -->
+                <div class="form-section">
+                    <h3 class="form-section-title">Images</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            Cover Image <span class="required">*</span>
+                        </label>
+                        <div class="image-upload" id="coverUpload" onclick="document.getElementById('coverInput').click()">
+                            <div id="coverPlaceholder">
+                                <p>Click to upload or drag and drop</p>
+                                <p class="form-help">JPG, PNG, GIF, or WebP (max 12MB)</p>
+                            </div>
+                            <div id="coverPreview" style="display:none;"></div>
+                        </div>
+                        <input type="file" id="coverInput" accept="image/*" style="display:none;" onchange="handleCoverUpload(this.files[0])">
+                        <input type="hidden" name="coverAssetId" id="coverAssetId" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Gallery Images</label>
+                        <div class="image-upload" id="galleryUpload" onclick="document.getElementById('galleryInput').click()">
+                            <p>Click to upload or drag and drop</p>
+                            <p class="form-help">Upload multiple images (max 12 images)</p>
+                        </div>
+                        <input type="file" id="galleryInput" accept="image/*" multiple style="display:none;" onchange="handleGalleryUpload(this.files)">
+                        <div id="galleryPreview" class="image-preview"></div>
+                    </div>
+                </div>
+                
+                <!-- SEO -->
+                <div class="form-section">
+                    <h3 class="form-section-title">SEO Settings</h3>
+                    
+                    <div class="form-group">
+                        <label class="form-label">SEO Title</label>
+                        <input type="text" class="form-input" name="seoTitle" id="seoTitle">
+                        <span class="form-help">Leave blank to use installation title</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">SEO Description</label>
+                        <textarea class="form-textarea" name="seoDescription" id="seoDescription" rows="3"></textarea>
+                        <span class="form-help">Brief description for search engines</span>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <div class="left">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            Update Installation
+                        </button>
+                        <a href="installations.html" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </div>
+            </form>
+            
+            <!-- Success Message (hidden by default) -->
+            <div id="successMessage" class="success-links" style="display:none;">
+                <h3>✓ Installation updated successfully!</h3>
+                <div class="link-list">
+                    <a id="viewEn" href="#" target="_blank">View English →</a>
+                    <a id="viewEs" href="#" target="_blank">View Spanish →</a>
+                    <a id="viewFr" href="#" target="_blank">View French →</a>
+                    <a id="viewDe" href="#" target="_blank">View German →</a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Error State -->
+        <div id="errorState" class="card" style="display:none;">
+            <div class="card-header">
+                <h2 class="card-title">Error Loading Installation</h2>
+            </div>
+            <p id="errorMessage"></p>
+            <div style="margin-top:20px;">
+                <a href="installations.html" class="btn btn-primary">Back to Installations</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Store uploaded images
+        let coverImage = null;
+        let galleryImages = [];
+        
+        // Load installation on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            const params = AdminUtils.getQueryParams();
+            const installationId = params.id;
+            
+            if (!installationId) {
+                showError('No installation ID provided');
+                return;
+            }
+            
+            await loadInstallation(installationId);
+        });
+        
+        // Load installation data
+        async function loadInstallation(id) {
+            try {
+                const response = await adminAuth.apiCall(`/.netlify/functions/installations-get?id=${encodeURIComponent(id)}`);
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to load installation');
+                }
+                
+                const installation = await response.json();
+                populateForm(installation);
+                
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('editForm').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Load error:', error);
+                showError(error.message);
+            }
+        }
+        
+        // Populate form with installation data
+        function populateForm(data) {
+            document.getElementById('installationId').value = data.id;
+            document.getElementById('title').value = data.title || '';
+            document.getElementById('slug').value = data.slug || '';
+            document.getElementById('installationDate').value = data.installationDate || '';
+            document.getElementById('application').value = data.application || '';
+            document.getElementById('city').value = data.location?.city || '';
+            document.getElementById('country').value = data.location?.country || '';
+            document.getElementById('seoTitle').value = data.seo?.title || '';
+            document.getElementById('seoDescription').value = data.seo?.description || '';
+            
+            // Populate overview paragraphs
+            const overviewContainer = document.getElementById('overviewParagraphs');
+            overviewContainer.innerHTML = '';
+            (data.overview || ['']).forEach((text, index) => {
+                const item = document.createElement('div');
+                item.className = 'paragraph-item';
+                item.innerHTML = `
+                    <textarea class="form-textarea" name="overview[]" placeholder="Enter paragraph text...">${text}</textarea>
+                    ${index > 0 ? '<button type="button" class="btn btn-danger" onclick="removeParagraph(this)">Remove</button>' : ''}
+                `;
+                overviewContainer.appendChild(item);
+            });
+            
+            // Populate thanksTo paragraphs
+            const thanksContainer = document.getElementById('thanksToParagraphs');
+            thanksContainer.innerHTML = '';
+            (data.thanksTo || ['']).forEach((text, index) => {
+                const item = document.createElement('div');
+                item.className = 'paragraph-item';
+                item.innerHTML = `
+                    <textarea class="form-textarea" name="thanksTo[]" placeholder="Enter acknowledgments...">${text}</textarea>
+                    ${index > 0 ? '<button type="button" class="btn btn-danger" onclick="removeParagraph(this)">Remove</button>' : ''}
+                `;
+                thanksContainer.appendChild(item);
+            });
+            
+            // Set up existing cover image
+            if (data.coverImage) {
+                coverImage = {
+                    assetId: data.coverImage.assetId,
+                    url: data.coverImage.url
+                };
+                document.getElementById('coverAssetId').value = data.coverImage.assetId;
+                document.getElementById('coverPlaceholder').style.display = 'none';
+                document.getElementById('coverPreview').innerHTML = `
+                    <img src="${data.coverImage.url}" alt="Cover preview" style="max-width:100%; height:200px; object-fit:cover;">
+                    <p style="margin-top:8px; font-size:12px; color:var(--text-secondary);">Current image - upload new to replace</p>
+                `;
+                document.getElementById('coverPreview').style.display = 'block';
+            }
+            
+            // Set up existing gallery images
+            if (data.gallery) {
+                galleryImages = data.gallery.map(img => ({
+                    assetId: img.assetId,
+                    url: img.url,
+                    existing: true
+                }));
+                updateGalleryPreview();
+            }
+        }
+        
+        // Show error state
+        function showError(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('errorState').style.display = 'block';
+        }
+        
+        // Add paragraph function
+        function addParagraph(type) {
+            const container = document.getElementById(type + 'Paragraphs');
+            const item = document.createElement('div');
+            item.className = 'paragraph-item';
+            item.innerHTML = `
+                <textarea class="form-textarea" name="${type}[]" placeholder="Enter paragraph text..."></textarea>
+                <button type="button" class="btn btn-danger" onclick="removeParagraph(this)">Remove</button>
+            `;
+            container.appendChild(item);
+        }
+        
+        // Remove paragraph function
+        function removeParagraph(button) {
+            button.parentElement.remove();
+        }
+        
+        // Handle cover image upload (replacement)
+        async function handleCoverUpload(file) {
+            if (!file) return;
+            
+            try {
+                AdminUtils.showLoading('Uploading new cover image...');
+                const result = await AdminUtils.handleImageUpload(file);
+                
+                coverImage = result;
+                document.getElementById('coverAssetId').value = result.assetId;
+                
+                // Show preview
+                document.getElementById('coverPlaceholder').style.display = 'none';
+                document.getElementById('coverPreview').innerHTML = `
+                    <img src="${result.url}" alt="Cover preview" style="max-width:100%; height:200px; object-fit:cover;">
+                    <p style="margin-top:8px; font-size:12px; color:var(--success-color);">New image uploaded - will replace current on save</p>
+                `;
+                document.getElementById('coverPreview').style.display = 'block';
+                
+                AdminUtils.hideLoading();
+                AdminUtils.showToast('New cover image uploaded', 'success');
+                
+            } catch (error) {
+                AdminUtils.hideLoading();
+                AdminUtils.showToast(error.message, 'error');
+            }
+        }
+        
+        // Handle gallery upload
+        async function handleGalleryUpload(files) {
+            if (!files || files.length === 0) return;
+            
+            const maxImages = 12;
+            const remaining = maxImages - galleryImages.length;
+            
+            if (remaining <= 0) {
+                AdminUtils.showToast(`Maximum ${maxImages} gallery images allowed`, 'warning');
+                return;
+            }
+            
+            const filesToUpload = Array.from(files).slice(0, remaining);
+            
+            try {
+                AdminUtils.showLoading(`Uploading ${filesToUpload.length} images...`);
+                
+                for (const file of filesToUpload) {
+                    const result = await AdminUtils.handleImageUpload(file);
+                    galleryImages.push({
+                        ...result,
+                        existing: false
+                    });
+                }
+                
+                updateGalleryPreview();
+                AdminUtils.hideLoading();
+                AdminUtils.showToast(`${filesToUpload.length} images uploaded`, 'success');
+                
+            } catch (error) {
+                AdminUtils.hideLoading();
+                AdminUtils.showToast(error.message, 'error');
+            }
+        }
+        
+        // Update gallery preview
+        function updateGalleryPreview() {
+            const preview = document.getElementById('galleryPreview');
+            preview.innerHTML = galleryImages.map((img, index) => `
+                <div class="image-item">
+                    <img src="${img.url}" alt="Gallery image ${index + 1}">
+                    <button type="button" class="remove-btn" onclick="removeGalleryImage(${index})">×</button>
+                    ${img.existing ? '<div style="position:absolute; top:8px; left:8px; background:green; color:white; font-size:10px; padding:2px 4px; border-radius:3px;">Current</div>' : 
+                                    '<div style="position:absolute; top:8px; left:8px; background:blue; color:white; font-size:10px; padding:2px 4px; border-radius:3px;">New</div>'}
+                </div>
+            `).join('');
+        }
+        
+        // Remove gallery image
+        function removeGalleryImage(index) {
+            galleryImages.splice(index, 1);
+            updateGalleryPreview();
+        }
+        
+        // Setup drag and drop
+        AdminUtils.setupDragDrop(document.getElementById('coverUpload'), (files) => {
+            handleCoverUpload(files[0]);
+        });
+        
+        AdminUtils.setupDragDrop(document.getElementById('galleryUpload'), (files) => {
+            handleGalleryUpload(files);
+        });
+        
+        // Handle form submission
+        document.getElementById('installationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            
+            // Validate required fields
+            if (!formData.get('title')) {
+                AdminUtils.showToast('Title is required', 'error');
+                return;
+            }
+            
+            if (!formData.get('installationDate')) {
+                AdminUtils.showToast('Installation date is required', 'error');
+                return;
+            }
+            
+            if (!coverImage) {
+                AdminUtils.showToast('Cover image is required', 'error');
+                return;
+            }
+            
+            // Prepare data
+            const data = {
+                id: document.getElementById('installationId').value,
+                title: formData.get('title'),
+                slug: formData.get('slug'),
+                installationDate: formData.get('installationDate'),
+                application: formData.get('application'),
+                location: {
+                    city: formData.get('city'),
+                    country: formData.get('country')
+                },
+                overview: formData.getAll('overview[]').filter(text => text.trim()),
+                thanksTo: formData.getAll('thanksTo[]').filter(text => text.trim()),
+                coverAssetId: coverImage.assetId,
+                galleryAssetIds: galleryImages.map(img => img.assetId),
+                seo: {
+                    title: formData.get('seoTitle'),
+                    description: formData.get('seoDescription')
+                }
+            };
+            
+            try {
+                document.getElementById('submitBtn').disabled = true;
+                AdminUtils.showLoading('Updating installation and re-translating...');
+                
+                const response = await adminAuth.apiCall('/.netlify/functions/installations-upsert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to update installation');
+                }
+                
+                const result = await response.json();
+                
+                AdminUtils.hideLoading();
+                AdminUtils.showToast('Installation updated successfully!', 'success');
+                
+                // Show success links
+                const successMsg = document.getElementById('successMessage');
+                successMsg.style.display = 'block';
+                
+                // Set view links
+                document.getElementById('viewEn').href = result.viewUrls.en || '#';
+                document.getElementById('viewEs').href = result.viewUrls.es || '#';
+                document.getElementById('viewFr').href = result.viewUrls.fr || '#';
+                document.getElementById('viewDe').href = result.viewUrls.de || '#';
+                
+                // Disable unavailable languages
+                if (!result.viewUrls.es) document.getElementById('viewEs').style.display = 'none';
+                if (!result.viewUrls.fr) document.getElementById('viewFr').style.display = 'none';
+                if (!result.viewUrls.de) document.getElementById('viewDe').style.display = 'none';
+                
+                // Option to continue editing or go back
+                setTimeout(() => {
+                    if (confirm('Continue editing this installation?')) {
+                        window.location.reload();
+                    } else {
+                        window.location.href = 'installations.html';
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                AdminUtils.hideLoading();
+                AdminUtils.showToast(error.message, 'error');
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

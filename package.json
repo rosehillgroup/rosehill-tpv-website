@@ -4,28 +4,13 @@
   "type": "module",
   "description": "Rosehill TPV Sports & Recreation Surfaces Website",
   "scripts": {
-    "build": "node generate-installations-from-sanity.js",
-    "build:full-site": "cd site-astro && npm ci && npm run build",
-    "dev:studio": "cd studio-rosehill-tpv && npm run dev",
-    "dev:site": "cd site-astro && npm run dev", 
-    "migrate": "node migrate-supabase-to-sanity.js",
-    "build:cached": "node i18n/translate-netlify-cached.js",
-    "translate": "node i18n/translate-netlify.js",
-    "batch-translate": "node batch-translate-installations.js",
-    "batch-translate:dry-run": "node batch-translate-installations.js --dry-run"
+    "test": "echo 'Admin interface available at /admin/' && echo 'Visit https://tpv.rosehill.group/admin/ to manage installations'",
+    "dev": "echo 'This is a static site - open HTML files directly or serve via a local server'",
+    "deploy": "echo 'Site deploys automatically via Netlify when pushed to main branch'"
   },
   "dependencies": {
     "@sanity/client": "^6.22.7",
-    "@supabase/supabase-js": "^2.39.0",
-    "bcryptjs": "^3.0.2",
-    "cheerio": "1.0.0-rc.12",
-    "dotenv": "^16.5.0",
-    "imagemin": "^9.0.1",
-    "imagemin-webp": "^8.0.0",
-    "jsonwebtoken": "^9.0.2",
-    "node-fetch": "^2.6.7",
-    "parse-multipart-data": "^1.5.0",
-    "sharp": "^0.34.3"
+    "formidable": "^3.5.1"
   },
   "engines": {
     "node": "18.x"

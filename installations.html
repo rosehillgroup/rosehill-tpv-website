@@ -1129,6 +1129,7 @@
     <!-- Client-side translation system -->
 
     <!-- Analytics Language Enhancement -->
+    <script src="/js/sanity-client.js"></script>
     <script src="/analytics-language-enhancer.js"></script>
 
     <!-- Desktop Language Switcher (Fixed Bottom-Right) -->
@@ -1186,66 +1187,50 @@ function getInstallationUrl(slug) {
 
 // --- Data load ---
 async function loadInstallations() {
-  const currentLang = getCurrentLanguage() || 'en';
   try {
-    const query = `*[_type == "installation" && "${currentLang}" in publishedLocales]
-      | order(installationDate desc) {
-        _id, title, slug, overview, location, installationDate, application,
-        coverImage, gallery, imageReferences, imageCount, coverImagePath,
-        tags, thanksTo, publishedLocales, translationStatus, seo
-      }`;
-
-    const url = `https://${SANITY_PROJECT_ID}.api.sanity.io/v${SANITY_API_VERSION}/data/query/${SANITY_DATASET}?query=${encodeURIComponent(query)}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Sanity API error: ${res.status}`);
-    const data = await res.json();
-    const items = Array.isArray(data.result) ? data.result : [];
-
-    allInstallations = items.map((installation) => {
-      const title = getLocalizedField(installation.title, currentLang);
-      const overview = getLocalizedField(installation.overview, currentLang);
-      const city = getLocalizedField(installation.location && installation.location.city ? installation.location.city : null, currentLang);
-      const country = getLocalizedField(installation.location && installation.location.country ? installation.location.country : null, currentLang);
-      const slug = getLocalizedSlug(installation.slug, currentLang);
-
-      let overviewText = overview;
-      if (Array.isArray(overview)) overviewText = overview.join(' ');
-
-      // Image pipeline (no optional chaining, no regex)
-      let images = [];
-      if (installation.imageReferences && Array.isArray(installation.imageReferences) && installation.imageReferences.length) {
-        images = installation.imageReferences.filter((x) => typeof x === 'string' && x);
-      } else if (installation.coverImage && installation.coverImage.asset && installation.coverImage.asset.url) {
-        images = [installation.coverImage.asset.url];
-      } else if (installation.gallery && Array.isArray(installation.gallery) && installation.gallery.length) {
-        images = installation.gallery
-          .map((img) => (img && img.asset && img.asset.url) ? img.asset.url : null)
-          .filter(Boolean);
-      } else if (installation.coverImagePath) {
-        images = [installation.coverImagePath];
+    // Use the new Sanity client
+    const installations = await sanityClient.getAllInstallations();
+    
+    // Transform data to match existing display format
+    allInstallations = installations.map(installation => {
+      // Convert Portable Text overview to plain text
+      let overviewText = '';
+      if (installation.overview && Array.isArray(installation.overview)) {
+        overviewText = sanityClient.portableTextToHtml(installation.overview);
       }
-      if (!images.length) images = ['images/installations/placeholder.jpg'];
-
-      const loc = [city, country].filter(Boolean).join(', ');
-
+      
+      // Build image array (coverImage + gallery)
+      let images = [];
+      if (installation.coverImage?.url) {
+        images.push(installation.coverImage.url);
+      }
+      if (installation.gallery && Array.isArray(installation.gallery)) {
+        images.push(...installation.gallery.map(img => img.url).filter(Boolean));
+      }
+      if (images.length === 0) {
+        images = ['images/installations/placeholder.jpg'];
+      }
+      
+      // Build location string
+      const location = [installation.location?.city, installation.location?.country]
+        .filter(Boolean)
+        .join(', ');
+      
       return {
         id: installation._id,
-        title,
-        displayTitle: title,
-        location: loc,
-        displayLocation: loc,
-        slug,
-        displaySlug: slug,
+        title: installation.title,
+        displayTitle: installation.title,
+        location: location,
+        displayLocation: location,
+        slug: installation.slug,
+        displaySlug: installation.slug,
         description: overviewText,
         displayDescription: overviewText,
         installation_date: installation.installationDate,
         category: installation.application || 'Playground',
         application: installation.application || 'Playground',
-        images,
-        formattedDate: new Date(installation.installationDate).toLocaleDateString('en-GB', {
-          month: 'short',
-          year: 'numeric'
-        })
+        images: images,
+        formattedDate: sanityClient.formatDate(installation.installationDate)
       };
     });
 

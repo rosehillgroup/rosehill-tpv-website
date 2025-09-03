@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth0 Integration Test - Rosehill TPV</title>
+    
+    <!-- Auth0 SDK -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        
+        .test-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #1a365d;
+            margin-bottom: 20px;
+        }
+        
+        .test-step {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        
+        .test-step h3 {
+            color: #475569;
+            margin-bottom: 10px;
+        }
+        
+        .button {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 10px 10px 10px 0;
+        }
+        
+        .button:hover {
+            background: #e55a2b;
+        }
+        
+        .button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+        
+        .output {
+            background: #f1f5f9;
+            padding: 16px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .success {
+            border-left: 4px solid #10b981;
+            background: #ecfdf5;
+        }
+        
+        .error {
+            border-left: 4px solid #ef4444;
+            background: #fef2f2;
+        }
+        
+        .warning {
+            border-left: 4px solid #f59e0b;
+            background: #fffbeb;
+        }
+        
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .status.success { background: #dcfce7; color: #166534; }
+        .status.error { background: #fee2e2; color: #dc2626; }
+        .status.pending { background: #fef3c7; color: #d97706; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Auth0 Integration Test</h1>
+        <p>This page tests the complete Auth0 authentication flow for the TPV admin system.</p>
+        
+        <div class="test-step">
+            <h3>Step 1: Load Auth0 Configuration <span class="status pending" id="configStatus">Pending</span></h3>
+            <button class="button" onclick="loadConfig()" id="loadConfigBtn">Load Configuration</button>
+            <div class="output" id="configOutput"></div>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 2: Initialize Auth0 Client <span class="status pending" id="initStatus">Pending</span></h3>
+            <button class="button" onclick="initAuth0()" id="initBtn" disabled>Initialize Auth0</button>
+            <div class="output" id="initOutput"></div>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 3: Authenticate User <span class="status pending" id="authStatus">Pending</span></h3>
+            <button class="button" onclick="authenticate()" id="authBtn" disabled>Login with Auth0</button>
+            <div class="output" id="authOutput"></div>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 4: Get Access Token <span class="status pending" id="tokenStatus">Pending</span></h3>
+            <button class="button" onclick="getToken()" id="tokenBtn" disabled>Get Access Token</button>
+            <div class="output" id="tokenOutput"></div>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 5: Test Protected Function <span class="status pending" id="functionStatus">Pending</span></h3>
+            <button class="button" onclick="testFunction()" id="functionBtn" disabled>Call whoami Function</button>
+            <div class="output" id="functionOutput"></div>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 6: Decode Token <span class="status pending" id="decodeStatus">Pending</span></h3>
+            <button class="button" onclick="decodeToken()" id="decodeBtn" disabled>Decode Token</button>
+            <div class="output" id="decodeOutput"></div>
+        </div>
+    </div>
+    
+    <script>
+        let auth0Client = null;
+        let auth0Config = null;
+        let accessToken = null;
+        
+        // Step 1: Load Auth0 Configuration
+        async function loadConfig() {
+            try {
+                setStatus('configStatus', 'pending', 'Loading...');
+                
+                const response = await fetch('/.netlify/functions/auth-config');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                auth0Config = await response.json();
+                
+                document.getElementById('configOutput').textContent = 
+                    'Configuration loaded successfully:\n' + 
+                    JSON.stringify(auth0Config, null, 2);
+                
+                setStatus('configStatus', 'success', 'Loaded');
+                document.getElementById('initBtn').disabled = false;
+                
+            } catch (error) {
+                const output = `Failed to load Auth0 configuration:\n${error.message}`;
+                document.getElementById('configOutput').textContent = output;
+                document.getElementById('configOutput').className = 'output error';
+                setStatus('configStatus', 'error', 'Failed');
+            }
+        }
+        
+        // Step 2: Initialize Auth0
+        async function initAuth0() {
+            try {
+                setStatus('initStatus', 'pending', 'Initializing...');
+                
+                if (!auth0Config) {
+                    throw new Error('Configuration not loaded');
+                }
+                
+                auth0Client = await auth0.createAuth0Client({
+                    domain: auth0Config.domain,
+                    clientId: auth0Config.clientId,
+                    authorizationParams: {
+                        redirect_uri: window.location.origin + '/admin/test.html',
+                        audience: auth0Config.audience
+                    },
+                    cacheLocation: 'localstorage'
+                });
+                
+                document.getElementById('initOutput').textContent = 
+                    'Auth0 client initialized successfully\n' +
+                    `Domain: ${auth0Config.domain}\n` +
+                    `Client ID: ${auth0Config.clientId}\n` +
+                    `Audience: ${auth0Config.audience}`;
+                
+                setStatus('initStatus', 'success', 'Ready');
+                document.getElementById('authBtn').disabled = false;
+                
+                // Check if already authenticated
+                const isAuth = await auth0Client.isAuthenticated();
+                if (isAuth) {
+                    document.getElementById('authOutput').textContent = 'Already authenticated';
+                    setStatus('authStatus', 'success', 'Authenticated');
+                    document.getElementById('tokenBtn').disabled = false;
+                }
+                
+            } catch (error) {
+                const output = `Failed to initialize Auth0:\n${error.message}`;
+                document.getElementById('initOutput').textContent = output;
+                document.getElementById('initOutput').className = 'output error';
+                setStatus('initStatus', 'error', 'Failed');
+            }
+        }
+        
+        // Step 3: Authenticate
+        async function authenticate() {
+            try {
+                setStatus('authStatus', 'pending', 'Authenticating...');
+                
+                // Check if callback from Auth0
+                const query = window.location.search;
+                if (query.includes('code=') || query.includes('state=')) {
+                    await auth0Client.handleRedirectCallback();
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+                
+                const isAuthenticated = await auth0Client.isAuthenticated();
+                
+                if (!isAuthenticated) {
+                    await auth0Client.loginWithRedirect();
+                    return;
+                }
+                
+                const user = await auth0Client.getUser();
+                
+                document.getElementById('authOutput').textContent = 
+                    'Authentication successful!\n' +
+                    JSON.stringify(user, null, 2);
+                
+                setStatus('authStatus', 'success', 'Authenticated');
+                document.getElementById('tokenBtn').disabled = false;
+                
+            } catch (error) {
+                const output = `Authentication failed:\n${error.message}`;
+                document.getElementById('authOutput').textContent = output;
+                document.getElementById('authOutput').className = 'output error';
+                setStatus('authStatus', 'error', 'Failed');
+            }
+        }
+        
+        // Step 4: Get Access Token
+        async function getToken() {
+            try {
+                setStatus('tokenStatus', 'pending', 'Getting token...');
+                
+                accessToken = await auth0Client.getTokenSilently({
+                    authorizationParams: {
+                        audience: auth0Config.audience
+                    }
+                });
+                
+                document.getElementById('tokenOutput').textContent = 
+                    'Access Token obtained successfully!\n' +
+                    `Length: ${accessToken.length} characters\n` +
+                    `First 60 chars: ${accessToken.slice(0, 60)}...\n` +
+                    `Last 20 chars: ...${accessToken.slice(-20)}`;
+                
+                setStatus('tokenStatus', 'success', 'Obtained');
+                document.getElementById('functionBtn').disabled = false;
+                document.getElementById('decodeBtn').disabled = false;
+                
+            } catch (error) {
+                const output = `Failed to get access token:\n${error.message}`;
+                document.getElementById('tokenOutput').textContent = output;
+                document.getElementById('tokenOutput').className = 'output error';
+                setStatus('tokenStatus', 'error', 'Failed');
+            }
+        }
+        
+        // Step 5: Test Protected Function
+        async function testFunction() {
+            try {
+                setStatus('functionStatus', 'pending', 'Testing...');
+                
+                if (!accessToken) {
+                    throw new Error('No access token available');
+                }
+                
+                const response = await fetch('/.netlify/functions/whoami', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${data.error || data.message || 'Unknown error'}`);
+                }
+                
+                document.getElementById('functionOutput').textContent = 
+                    'whoami function test successful!\n' +
+                    JSON.stringify(data, null, 2);
+                
+                document.getElementById('functionOutput').className = 'output success';
+                setStatus('functionStatus', 'success', 'Success');
+                
+            } catch (error) {
+                const output = `Function test failed:\n${error.message}`;
+                document.getElementById('functionOutput').textContent = output;
+                document.getElementById('functionOutput').className = 'output error';
+                setStatus('functionStatus', 'error', 'Failed');
+            }
+        }
+        
+        // Step 6: Decode Token
+        async function decodeToken() {
+            try {
+                setStatus('decodeStatus', 'pending', 'Decoding...');
+                
+                if (!accessToken) {
+                    throw new Error('No access token available');
+                }
+                
+                // Decode JWT (simple base64 decode, no verification)
+                const parts = accessToken.split('.');
+                if (parts.length !== 3) {
+                    throw new Error('Invalid JWT format');
+                }
+                
+                const header = JSON.parse(atob(parts[0]));
+                const payload = JSON.parse(atob(parts[1]));
+                
+                document.getElementById('decodeOutput').textContent = 
+                    'Token decoded successfully!\n\n' +
+                    'HEADER:\n' + JSON.stringify(header, null, 2) + '\n\n' +
+                    'PAYLOAD:\n' + JSON.stringify(payload, null, 2) + '\n\n' +
+                    'KEY CHECKS:\n' +
+                    `✓ Issuer: ${payload.iss}\n` +
+                    `✓ Audience: ${JSON.stringify(payload.aud)}\n` +
+                    `✓ Roles: ${JSON.stringify(payload['https://tpv.rosehill.group/roles'] || [])}\n` +
+                    `✓ Expires: ${new Date(payload.exp * 1000).toLocaleString()}\n` +
+                    `✓ Subject: ${payload.sub}`;
+                
+                document.getElementById('decodeOutput').className = 'output success';
+                setStatus('decodeStatus', 'success', 'Decoded');
+                
+            } catch (error) {
+                const output = `Failed to decode token:\n${error.message}`;
+                document.getElementById('decodeOutput').textContent = output;
+                document.getElementById('decodeOutput').className = 'output error';
+                setStatus('decodeStatus', 'error', 'Failed');
+            }
+        }
+        
+        // Helper function to update status indicators
+        function setStatus(elementId, status, text) {
+            const element = document.getElementById(elementId);
+            element.className = `status ${status}`;
+            element.textContent = text;
+        }
+        
+        // Auto-load configuration on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for Auth0 callback
+            const query = window.location.search;
+            if (query.includes('code=') || query.includes('state=')) {
+                // We're in a callback, need to initialize first
+                loadConfig().then(() => {
+                    setTimeout(initAuth0, 500);
+                });
+            } else {
+                // Normal page load
+                loadConfig();
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Auth0 Integration Test</h1>
+        <p><strong>Purpose:</strong> Verify that Auth0 JWT authentication is working correctly with your Netlify Functions.</p>
+        <p><strong>Expected:</strong> All steps should complete successfully with green "Success" indicators.</p>
+        
+        <div class="test-step">
+            <h3>Step 1: Load Auth0 Configuration <span class="status pending" id="configStatus">Pending</span></h3>
+            <p>Loads Auth0 domain, client ID, and audience from your Netlify environment variables.</p>
+            <button class="button" onclick="loadConfig()" id="loadConfigBtn">Load Configuration</button>
+            <div class="output" id="configOutput">Click "Load Configuration" to start...</div>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 2: Initialize Auth0 Client <span class="status pending" id="initStatus">Pending</span></h3>
+            <p>Creates Auth0 SPA client with your configuration.</p>
+            <button class="button" onclick="initAuth0()" id="initBtn" disabled>Initialize Auth0</button>
+            <div class="output" id="initOutput">Complete step 1 first...</div>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 3: Authenticate User <span class="status pending" id="authStatus">Pending</span></h3>
+            <p>Redirects to Auth0 Universal Login and handles callback.</p>
+            <button class="button" onclick="authenticate()" id="authBtn" disabled>Login with Auth0</button>
+            <div class="output" id="authOutput">Complete step 2 first...</div>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 4: Get Access Token <span class="status pending" id="tokenStatus">Pending</span></h3>
+            <p>Requests an access token for your API audience.</p>
+            <button class="button" onclick="getToken()" id="tokenBtn" disabled>Get Access Token</button>
+            <div class="output" id="tokenOutput">Complete step 3 first...</div>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 5: Test Protected Function <span class="status pending" id="functionStatus">Pending</span></h3>
+            <p>Calls the whoami function with the access token to verify JWT validation works.</p>
+            <button class="button" onclick="testFunction()" id="functionBtn" disabled>Call whoami Function</button>
+            <div class="output" id="functionOutput">Complete step 4 first...</div>
+        </div>
+        
+        <div class="test-step">
+            <h3>Step 6: Decode Token (Debug) <span class="status pending" id="decodeStatus">Pending</span></h3>
+            <p>Decodes the JWT to inspect claims and verify role assignment.</p>
+            <button class="button" onclick="decodeToken()" id="decodeBtn" disabled>Decode Token</button>
+            <div class="output" id="decodeOutput">Complete step 4 first...</div>
+        </div>
+    </div>
+</body>
+</html>
