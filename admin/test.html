@@ -294,7 +294,7 @@
                     throw new Error('No access token available');
                 }
                 
-                const response = await fetch('/.netlify/functions/debug-whoami', {
+                const response = await fetch('/.netlify/functions/whoami', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${accessToken}`,

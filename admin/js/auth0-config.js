@@ -15,7 +15,10 @@
         window.AUTH0_CLIENT_ID = config.clientId;
         window.AUTH0_AUDIENCE = config.audience;
         
-        console.log('Auth0 configuration loaded successfully');
+        console.log('Auth0 configuration loaded successfully:', config);
+        
+        // Set a flag to indicate config is ready
+        window.AUTH0_CONFIG_READY = true;
         
     } catch (error) {
         console.error('Failed to load Auth0 configuration:', error);

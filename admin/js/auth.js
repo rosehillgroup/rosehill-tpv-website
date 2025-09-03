@@ -157,9 +157,14 @@
         // If auth0-config.js is being used, wait for it to load
         if (document.querySelector('script[src*="auth0-config.js"]')) {
             let attempts = 0;
-            while (!window.AUTH0_DOMAIN && attempts < 50) {
+            while (!window.AUTH0_CONFIG_READY && attempts < 50) {
                 await new Promise(resolve => setTimeout(resolve, 100));
                 attempts++;
+            }
+            if (!window.AUTH0_CONFIG_READY) {
+                console.error('Auth0 config not loaded after timeout');
+                window.location.href = '/admin/login.html';
+                return;
             }
         }
         initAuth0();

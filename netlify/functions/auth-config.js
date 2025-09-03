@@ -26,8 +26,12 @@ export async function handler(event) {
   }
   
   // Return public Auth0 configuration
+  // Extract domain from issuer URL, removing protocol and trailing slash
+  let domain = process.env.AUTH0_ISSUER_BASE_URL || process.env.AUTH0_DOMAIN || '';
+  domain = domain.replace('https://', '').replace('http://', '').replace(/\/$/, '');
+  
   const config = {
-    domain: process.env.AUTH0_ISSUER_BASE_URL?.replace('https://', '') || process.env.AUTH0_DOMAIN,
+    domain: domain,
     clientId: process.env.AUTH0_CLIENT_ID,
     audience: process.env.AUTH0_AUDIENCE
   };
