@@ -217,7 +217,9 @@
                     authorizationParams: {
                         redirect_uri: window.location.origin + '/admin/login.html',
                         audience: auth0Config.audience
-                    }
+                    },
+                    cacheLocation: 'localstorage',
+                    useRefreshTokens: true
                 });
                 
                 // Check for Auth0 callback

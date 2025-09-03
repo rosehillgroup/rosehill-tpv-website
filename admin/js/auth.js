@@ -32,19 +32,27 @@
                 throw new Error('Auth0 SDK not loaded');
             }
             
-            // Load configuration first
-            if (!auth0Config) {
+            // Load configuration - check if already loaded as globals first
+            if (window.AUTH0_DOMAIN && window.AUTH0_CLIENT_ID) {
+                auth0Config = {
+                    domain: window.AUTH0_DOMAIN,
+                    clientId: window.AUTH0_CLIENT_ID,
+                    audience: window.AUTH0_AUDIENCE
+                };
+            } else if (!auth0Config) {
                 auth0Config = await loadAuth0Config();
             }
             
-            // Create Auth0 client
+            // Create Auth0 client with localStorage to persist auth between pages
             auth0Client = await auth0.createAuth0Client({
                 domain: auth0Config.domain,
                 clientId: auth0Config.clientId,
                 authorizationParams: {
                     redirect_uri: window.location.origin + '/admin/login.html',
                     audience: auth0Config.audience
-                }
+                },
+                cacheLocation: 'localstorage',
+                useRefreshTokens: true
             });
             
             // Check if user is authenticated
@@ -153,8 +161,20 @@
         }
     };
     
-    // Initialize on load
-    initAuth0();
+    // Initialize on load - wait for config to be ready
+    async function waitForConfigAndInit() {
+        // If auth0-config.js is being used, wait for it to load
+        if (document.querySelector('script[src*="auth0-config.js"]')) {
+            let attempts = 0;
+            while (!window.AUTH0_DOMAIN && attempts < 50) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+        }
+        initAuth0();
+    }
+    
+    waitForConfigAndInit();
     
     // Add logout handler to any logout buttons
     document.addEventListener('DOMContentLoaded', function() {
