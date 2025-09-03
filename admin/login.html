@@ -7,6 +7,7 @@
     
     <!-- Auth0 SDK -->
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <script src="js/auth0-client.js"></script>
     
     <style>
         * {
@@ -183,50 +184,16 @@
     </div>
     
     <script>
-        let auth0Client = null;
-        let auth0Config = null;
-        
-        // Load Auth0 configuration from Netlify function
-        async function loadAuth0Config() {
-            try {
-                const response = await fetch('/.netlify/functions/auth-config');
-                if (!response.ok) {
-                    throw new Error(`Failed to load Auth0 configuration: ${response.status}`);
-                }
-                auth0Config = await response.json();
-                return auth0Config;
-            } catch (error) {
-                console.error('Config load error:', error);
-                throw error;
-            }
-        }
-        
-        // Initialize Auth0
+        // Initialize Auth0 using shared client
         async function initAuth0() {
             try {
                 showLoading();
-                
-                // Load configuration first
-                if (!auth0Config) {
-                    auth0Config = await loadAuth0Config();
-                }
-                
-                auth0Client = await auth0.createAuth0Client({
-                    domain: auth0Config.domain,
-                    clientId: auth0Config.clientId,
-                    authorizationParams: {
-                        redirect_uri: window.location.origin + '/admin/login.html',
-                        audience: auth0Config.audience
-                    },
-                    cacheLocation: 'localstorage',
-                    useRefreshTokens: true
-                });
                 
                 // Check for Auth0 callback
                 const query = window.location.search;
                 if (query.includes('code=') || query.includes('state=')) {
                     try {
-                        await auth0Client.handleRedirectCallback();
+                        await window.sharedAuth0.handleRedirectCallback();
                         // Clear URL parameters
                         window.history.replaceState({}, document.title, window.location.pathname);
                         // Check authentication after callback
@@ -243,12 +210,6 @@
                 // Check if already authenticated
                 await checkAuthentication();
                 
-                console.log('Login page initialized with config:', {
-                    domain: auth0Config.domain,
-                    clientId: auth0Config.clientId,
-                    audience: auth0Config.audience
-                });
-                
             } catch (error) {
                 console.error('Auth0 initialization error:', error);
                 showError(`Failed to initialize authentication: ${error.message}`);
@@ -259,12 +220,12 @@
         // Check authentication status
         async function checkAuthentication() {
             try {
-                const isAuthenticated = await auth0Client.isAuthenticated();
+                const isAuthenticated = await window.sharedAuth0.isAuthenticated();
                 console.log('Login page - isAuthenticated:', isAuthenticated);
                 
                 if (isAuthenticated) {
-                    const user = await auth0Client.getUser();
-                    const token = await auth0Client.getTokenSilently();
+                    const user = await window.sharedAuth0.getUser();
+                    const token = await window.sharedAuth0.getTokenSilently();
                     
                     // Check for editor role in token
                     const payload = JSON.parse(atob(token.split('.')[1]));
@@ -279,7 +240,7 @@
                         }, 1000);
                     } else {
                         showError('You need editor access to use the admin panel.');
-                        await auth0Client.logout({ logoutParams: { returnTo: window.location.origin } });
+                        await window.sharedAuth0.logout();
                     }
                 } else {
                     hideLoading();
@@ -296,7 +257,7 @@
         async function loginWithAuth0() {
             try {
                 showLoading();
-                await auth0Client.loginWithRedirect();
+                await window.sharedAuth0.loginWithRedirect();
             } catch (error) {
                 console.error('Login error:', error);
                 showError('Login failed. Please try again.');
