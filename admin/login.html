@@ -243,6 +243,12 @@
                 // Check if already authenticated
                 await checkAuthentication();
                 
+                console.log('Login page initialized with config:', {
+                    domain: auth0Config.domain,
+                    clientId: auth0Config.clientId,
+                    audience: auth0Config.audience
+                });
+                
             } catch (error) {
                 console.error('Auth0 initialization error:', error);
                 showError(`Failed to initialize authentication: ${error.message}`);
@@ -254,6 +260,7 @@
         async function checkAuthentication() {
             try {
                 const isAuthenticated = await auth0Client.isAuthenticated();
+                console.log('Login page - isAuthenticated:', isAuthenticated);
                 
                 if (isAuthenticated) {
                     const user = await auth0Client.getUser();

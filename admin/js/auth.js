@@ -55,31 +55,22 @@
                 useRefreshTokens: true
             });
             
+            console.log('Auth.js initialized with config:', {
+                domain: auth0Config.domain,
+                clientId: auth0Config.clientId,
+                audience: auth0Config.audience
+            });
+            
             // Check if user is authenticated
             const isAuthenticated = await auth0Client.isAuthenticated();
+            console.log('Auth0 isAuthenticated:', isAuthenticated);
             
             if (!isAuthenticated) {
-                // Check for callback from Auth0
-                const query = window.location.search;
-                if (query.includes('code=') || query.includes('state=')) {
-                    try {
-                        await auth0Client.handleRedirectCallback();
-                        // Clear URL parameters
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                        // Reload to restart auth check
-                        window.location.reload();
-                        return;
-                    } catch (error) {
-                        console.error('Auth0 callback error:', error);
-                        window.location.href = '/admin/login.html';
-                        return;
-                    }
-                } else {
-                    // Not logged in, redirect to login
-                    const currentPath = window.location.pathname + window.location.search;
-                    window.location.href = `/admin/login.html?redirect=${encodeURIComponent(currentPath)}`;
-                    return;
-                }
+                console.log('User not authenticated, redirecting to login...');
+                // Not logged in, redirect to login
+                const currentPath = window.location.pathname + window.location.search;
+                window.location.href = `/admin/login.html?redirect=${encodeURIComponent(currentPath)}`;
+                return;
             }
             
             // Get user info
