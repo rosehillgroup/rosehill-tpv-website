@@ -3,9 +3,12 @@
 
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
-const ISSUER = process.env.AUTH0_ISSUER_BASE_URL;
+// Normalize issuer URL - Auth0 tokens include trailing slash
+const ISSUER = process.env.AUTH0_ISSUER_BASE_URL?.endsWith('/') 
+  ? process.env.AUTH0_ISSUER_BASE_URL 
+  : process.env.AUTH0_ISSUER_BASE_URL + '/';
 const AUDIENCE = process.env.AUTH0_AUDIENCE;
-const JWKS = createRemoteJWKSet(new URL(`${ISSUER}/.well-known/jwks.json`));
+const JWKS = createRemoteJWKSet(new URL(`${ISSUER}.well-known/jwks.json`));
 
 /**
  * Validate that the request has a valid Auth0 JWT token with editor role

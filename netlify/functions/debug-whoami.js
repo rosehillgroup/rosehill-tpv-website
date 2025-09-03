@@ -56,8 +56,14 @@ export async function handler(event) {
     
     // Step 4: Try creating JWKS
     let jwks;
+    let normalizedIssuer;
     try {
-      const jwksUrl = `${process.env.AUTH0_ISSUER_BASE_URL}/.well-known/jwks.json`;
+      // Normalize issuer URL - Auth0 tokens include trailing slash
+      normalizedIssuer = process.env.AUTH0_ISSUER_BASE_URL?.endsWith('/') 
+        ? process.env.AUTH0_ISSUER_BASE_URL 
+        : process.env.AUTH0_ISSUER_BASE_URL + '/';
+      
+      const jwksUrl = `${normalizedIssuer}.well-known/jwks.json`;
       jwks = joseImport.createRemoteJWKSet(new URL(jwksUrl));
     } catch (jwksError) {
       return {
@@ -67,7 +73,7 @@ export async function handler(event) {
           step: 'jwks_creation',
           error: `JWKS creation failed: ${jwksError.message}`,
           envVars,
-          jwksUrl: `${process.env.AUTH0_ISSUER_BASE_URL}/.well-known/jwks.json`
+          jwksUrl: `${normalizedIssuer}.well-known/jwks.json`
         })
       };
     }
@@ -75,7 +81,7 @@ export async function handler(event) {
     // Step 5: Try JWT verification
     try {
       const { payload } = await joseImport.jwtVerify(token, jwks, {
-        issuer: process.env.AUTH0_ISSUER_BASE_URL,
+        issuer: normalizedIssuer,
         audience: process.env.AUTH0_AUDIENCE
       });
       
