@@ -21,6 +21,19 @@ const sanity = sanityClient({
   useCdn: false
 });
 
+/**
+ * Generate CORS headers with proper origin handling
+ */
+function corsHeaders(origin) {
+  const allowed = process.env.ALLOWED_ORIGIN || origin || '*';
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Vary': 'Origin',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Authorization, Content-Type'
+  };
+}
+
 // Validation constants
 const MAX_FILE_SIZE = 12 * 1024 * 1024; // 12MB
 const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
@@ -82,15 +95,11 @@ function generateSafeFilename(originalName) {
  * Main handler
  */
 export default async (event, context) => {
-  const headers = {
-    'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  };
+  const headers = corsHeaders(event.headers.origin);
   
   // Handle preflight
   if (event.httpMethod === 'OPTIONS') {
-    return new Response(null, { status: 200, headers });
+    return new Response(null, { status: 204, headers });
   }
   
   safeLog('Upload image request received', {
@@ -100,28 +109,28 @@ export default async (event, context) => {
   
   // Only accept POST
   if (event.httpMethod !== 'POST') {
-    return errorResponse('Method not allowed', 405);
+    return new Response('Method Not Allowed', { status: 405, headers });
   }
   
   // Validate authentication
   const auth = await requireEditorRole(event, process.env.ALLOWED_ORIGIN);
   if (!auth.ok) {
-    return errorResponse(auth.msg, auth.status);
+    return new Response(auth.msg, { status: auth.status, headers });
   }
   
   // Rate limiting
   const rateLimit = checkRateLimit(auth.user.id);
   if (!rateLimit.ok) {
-    return errorResponse(
+    return new Response(
       `Rate limit exceeded. Try again in ${rateLimit.retryAfter} seconds`,
-      429
+      { status: 429, headers }
     );
   }
   
   // Check for multipart content type
   const contentType = event.headers['content-type'] || '';
   if (!contentType.includes('multipart/form-data')) {
-    return errorResponse('Content-Type must be multipart/form-data', 400);
+    return new Response('Expected multipart/form-data', { status: 400, headers });
   }
   
   try {
@@ -152,13 +161,13 @@ export default async (event, context) => {
     const file = files.file || files.image || Object.values(files)[0];
     
     if (!file) {
-      return errorResponse('No file uploaded', 400);
+      return new Response('No file part', { status: 400, headers });
     }
     
     // Validate file
     const validation = validateFile(file);
     if (!validation.valid) {
-      return errorResponse(validation.error, 400);
+      return new Response(validation.error, { status: 400, headers });
     }
     
     // Generate safe filename
@@ -187,7 +196,7 @@ export default async (event, context) => {
     safeLog('Upload successful', { assetId: asset._id });
     
     // Return asset information
-    return successResponse({
+    return new Response(JSON.stringify({
       assetId: asset._id,
       url: asset.url,
       filename: safeFilename,
@@ -196,20 +205,23 @@ export default async (event, context) => {
         width: asset.metadata?.dimensions?.width,
         height: asset.metadata?.dimensions?.height
       }
+    }), {
+      status: 200,
+      headers: { ...headers, 'Content-Type': 'application/json' }
     });
     
   } catch (error) {
     safeLog('Upload error', { error: error.message });
     
-    // Handle specific errors
+    // Handle specific errors with CORS headers
     if (error.message?.includes('network')) {
-      return errorResponse('Network error connecting to storage service', 503);
+      return new Response('Network error connecting to storage service', { status: 503, headers });
     }
     
     if (error.message?.includes('token')) {
-      return errorResponse('Storage service authentication error', 500);
+      return new Response('Storage service authentication error', { status: 500, headers });
     }
     
-    return errorResponse('Failed to upload image: ' + error.message, 500);
+    return new Response(`Upload failed: ${error.message}`, { status: 500, headers });
   }
 }

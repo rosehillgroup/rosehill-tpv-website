@@ -14,6 +14,19 @@ const sanity = sanityClient({
   useCdn: false
 });
 
+/**
+ * Generate CORS headers with proper origin handling
+ */
+function corsHeaders(origin) {
+  const allowed = process.env.ALLOWED_ORIGIN || origin || '*';
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Vary': 'Origin',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Authorization, Content-Type'
+  };
+}
+
 // DeepL configuration
 const DEEPL_API_KEY = process.env.DEEPL_KEY;
 const DEEPL_API_URL = 'https://api.deepl.com/v2/translate';
@@ -188,15 +201,11 @@ function calculateContentHash(data) {
  * Main handler
  */
 export default async (event, context) => {
-  const headers = {
-    'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  };
+  const headers = corsHeaders(event.headers.origin);
   
   // Handle preflight
   if (event.httpMethod === 'OPTIONS') {
-    return new Response(null, { status: 200, headers });
+    return new Response(null, { status: 204, headers });
   }
   
   safeLog('Upsert installation request', {
@@ -205,13 +214,13 @@ export default async (event, context) => {
   
   // Only accept POST
   if (event.httpMethod !== 'POST') {
-    return errorResponse('Method not allowed', 405);
+    return errorResponse('Method not allowed', 405, headers);
   }
   
   // Validate authentication
   const auth = await requireEditorRole(event, process.env.ALLOWED_ORIGIN);
   if (!auth.ok) {
-    return errorResponse(auth.msg, auth.status);
+    return errorResponse(auth.msg, auth.status, headers);
   }
   
   // Rate limiting
@@ -219,7 +228,8 @@ export default async (event, context) => {
   if (!rateLimit.ok) {
     return errorResponse(
       `Rate limit exceeded. Try again in ${rateLimit.retryAfter} seconds`,
-      429
+      429,
+      headers
     );
   }
   
@@ -228,12 +238,12 @@ export default async (event, context) => {
   try {
     data = JSON.parse(event.body);
   } catch (error) {
-    return errorResponse('Invalid JSON in request body', 400);
+    return errorResponse('Invalid JSON in request body', 400, headers);
   }
   
   // Validate required fields
   if (!data.title || !data.installationDate || !data.coverAssetId) {
-    return errorResponse('Missing required fields: title, installationDate, and coverAssetId are required', 400);
+    return errorResponse('Missing required fields: title, installationDate, and coverAssetId are required', 400, headers);
   }
   
   try {
@@ -417,10 +427,10 @@ export default async (event, context) => {
         fr: successfulTranslations.includes('fr') ? `/fr/installations/${slug}.html` : null,
         de: successfulTranslations.includes('de') ? `/de/installations/${slug}.html` : null
       }
-    });
+    }, 200, headers);
     
   } catch (error) {
     safeLog('Upsert error', { error: error.message });
-    return errorResponse('Failed to save installation: ' + error.message, 500);
+    return errorResponse('Failed to save installation: ' + error.message, 500, headers);
   }
 }

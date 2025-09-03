@@ -14,18 +14,27 @@ const sanity = sanityClient({
 });
 
 /**
+ * Generate CORS headers with proper origin handling
+ */
+function corsHeaders(origin) {
+  const allowed = process.env.ALLOWED_ORIGIN || origin || '*';
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Vary': 'Origin',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Authorization, Content-Type'
+  };
+}
+
+/**
  * Main handler
  */
 export default async (event, context) => {
-  const headers = {
-    'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  };
+  const headers = corsHeaders(event.headers.origin);
   
   // Handle preflight
   if (event.httpMethod === 'OPTIONS') {
-    return new Response(null, { status: 200, headers });
+    return new Response(null, { status: 204, headers });
   }
   
   safeLog('Get installation request', {
@@ -35,20 +44,20 @@ export default async (event, context) => {
   
   // Only accept GET
   if (event.httpMethod !== 'GET') {
-    return errorResponse('Method not allowed', 405);
+    return errorResponse('Method not allowed', 405, headers);
   }
   
   // Validate authentication
   const auth = await requireEditorRole(event, process.env.ALLOWED_ORIGIN);
   if (!auth.ok) {
-    return errorResponse(auth.msg, auth.status);
+    return errorResponse(auth.msg, auth.status, headers);
   }
   
   // Get installation ID from query params
   const { id } = event.queryStringParameters || {};
   
   if (!id) {
-    return errorResponse('Installation ID is required', 400);
+    return errorResponse('Installation ID is required', 400, headers);
   }
   
   try {
@@ -87,7 +96,7 @@ export default async (event, context) => {
     const installation = await sanity.fetch(query, { id });
     
     if (!installation) {
-      return errorResponse('Installation not found', 404);
+      return errorResponse('Installation not found', 404, headers);
     }
     
     safeLog('Installation retrieved', { 
@@ -123,7 +132,7 @@ export default async (event, context) => {
       translationStatus: installation.translationStatus || {}
     };
     
-    return successResponse(formData);
+    return successResponse(formData, 200, headers);
     
   } catch (error) {
     safeLog('Error fetching installation', { 
@@ -131,6 +140,6 @@ export default async (event, context) => {
       id 
     });
     
-    return errorResponse('Failed to fetch installation: ' + error.message, 500);
+    return errorResponse('Failed to fetch installation: ' + error.message, 500, headers);
   }
 }

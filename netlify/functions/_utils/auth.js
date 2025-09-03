@@ -137,14 +137,15 @@ setInterval(() => {
 /**
  * Create standard error response
  */
-export function errorResponse(message, status = 500) {
+export function errorResponse(message, status = 500, corsHeaders = {}) {
   return new Response(
     JSON.stringify({ error: message }),
     {
       status,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'no-store'
+        'Cache-Control': 'no-store',
+        ...corsHeaders
       }
     }
   );
@@ -153,14 +154,15 @@ export function errorResponse(message, status = 500) {
 /**
  * Create standard success response
  */
-export function successResponse(data, status = 200) {
+export function successResponse(data, status = 200, corsHeaders = {}) {
   return new Response(
     JSON.stringify(data),
     {
       status,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'no-store'
+        'Cache-Control': 'no-store',
+        ...corsHeaders
       }
     }
   );
