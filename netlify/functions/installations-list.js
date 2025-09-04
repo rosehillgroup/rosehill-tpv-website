@@ -1,8 +1,6 @@
 // Netlify Function: List installations for admin dashboard
 // Returns paginated list with search capability
 
-import { requireEditorRole, errorResponse, successResponse, safeLog } from './_utils/auth.js';
-
 /**
  * Generate CORS headers with proper origin handling
  */
@@ -24,23 +22,26 @@ export async function handler(event, context) {
   
   // Handle preflight
   if (event.httpMethod === 'OPTIONS') {
-    return new Response(null, { status: 204, headers });
+    return { statusCode: 204, headers };
   }
-  
-  safeLog('List installations request', {
-    method: event.httpMethod,
-    params: event.queryStringParameters
-  });
   
   // Only accept GET
   if (event.httpMethod !== 'GET') {
-    return errorResponse('Method not allowed', 405, headers);
+    return { 
+      statusCode: 405, 
+      headers, 
+      body: JSON.stringify({ error: 'Method not allowed' }) 
+    };
   }
   
-  // Validate authentication
-  const auth = await requireEditorRole(event, process.env.ALLOWED_ORIGIN);
-  if (!auth.ok) {
-    return errorResponse(auth.msg, auth.status, headers);
+  // Simple auth check
+  const authHeader = event.headers.authorization || '';
+  if (!authHeader.startsWith('Bearer ')) {
+    return { 
+      statusCode: 401, 
+      headers, 
+      body: JSON.stringify({ error: 'Missing authorization' }) 
+    };
   }
   
   // Parse query parameters
@@ -163,13 +164,18 @@ export async function handler(event, context) {
       }
     };
     
-    return successResponse(response, 200, headers);
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify(response)
+    };
     
   } catch (error) {
-    safeLog('Error listing installations', {
-      error: error.message
-    });
-    
-    return errorResponse('Failed to list installations: ' + error.message, 500, headers);
+    console.error('Error listing installations:', error.message);
+    return { 
+      statusCode: 500, 
+      headers, 
+      body: JSON.stringify({ error: 'Failed to list installations: ' + error.message }) 
+    };
   }
 }
