@@ -7,11 +7,6 @@ import fs from 'fs';
 import path from 'path';
 import { requireEditorRole, checkRateLimit, errorResponse, successResponse, safeLog } from './_utils/auth.js';
 
-// Configure for Node.js runtime (required for formidable)
-export const config = {
-  runtime: 'nodejs18.x'
-};
-
 // Initialize Sanity client
 const sanity = sanityClient({
   projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
@@ -95,21 +90,32 @@ function generateSafeFilename(originalName) {
  * Main handler
  */
 export default async (event, context) => {
-  const headers = corsHeaders(event.headers.origin);
-  
-  // Handle preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return new Response(null, { status: 204, headers });
-  }
+  try {
+    const headers = corsHeaders(event.headers?.origin);
+    
+    // Log the actual method received
+    console.log('Upload handler - Method received:', event.httpMethod);
+    console.log('Upload handler - Content-Type:', event.headers?.['content-type']);
+    
+    // Handle preflight (case insensitive)
+    if (event.httpMethod?.toUpperCase() === 'OPTIONS') {
+      return new Response(null, { status: 204, headers });
+    }
   
   safeLog('Upload image request received', {
     method: event.httpMethod,
     headers: Object.keys(event.headers)
   });
   
-  // Only accept POST
-  if (event.httpMethod !== 'POST') {
-    return new Response('Method Not Allowed', { status: 405, headers });
+  // Only accept POST (case insensitive)
+  if (event.httpMethod?.toUpperCase() !== 'POST') {
+    console.log('Method not POST, returning 405. Actual method:', event.httpMethod);
+    return new Response(JSON.stringify({ 
+      error: `Method Not Allowed. Expected POST but received ${event.httpMethod}` 
+    }), { 
+      status: 405, 
+      headers: { ...headers, 'Content-Type': 'application/json' }
+    });
   }
   
   // Validate authentication
@@ -223,5 +229,18 @@ export default async (event, context) => {
     }
     
     return new Response(`Upload failed: ${error.message}`, { status: 500, headers });
+  }
+  } catch (outerError) {
+    // Fallback error handler if something goes wrong in the function itself
+    console.error('Function error:', outerError);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Authorization, Content-Type'
+      }
+    });
   }
 }
