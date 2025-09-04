@@ -1,11 +1,11 @@
 // Netlify Function: Get single installation for editing
 // Returns English fields only
 
-import { createClient } from '@sanity/client';
+import sanityClient from '@sanity/client';
 import { requireEditorRole, errorResponse, successResponse, safeLog } from './_utils/auth.js';
 
 // Initialize Sanity client
-const sanity = createClient({
+const sanity = sanityClient({
   projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
   dataset: process.env.SANITY_DATASET || 'production',
   apiVersion: '2023-05-03',

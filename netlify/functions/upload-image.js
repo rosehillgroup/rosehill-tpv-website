@@ -1,13 +1,13 @@
 // Netlify Function: Upload image to Sanity Assets
 // Handles base64 encoded image uploads via JSON
 
-import { createClient } from '@sanity/client';
+import sanityClient from '@sanity/client';
 import { requireEditorRole, checkRateLimit, safeLog } from './_utils/auth.js';
 
 // Initialize Sanity client with error handling
 let sanity;
 try {
-  sanity = createClient({
+  sanity = sanityClient({
     projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
     dataset: process.env.SANITY_DATASET || 'production',
     apiVersion: '2023-05-03',
