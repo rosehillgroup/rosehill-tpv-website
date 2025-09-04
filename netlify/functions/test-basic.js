@@ -44,14 +44,20 @@ export async function handler(event, context) {
     };
   }
   
-  // Just return success without doing anything
+  // Return expected data structure to match what admin form expects
   return {
     statusCode: 200,
     headers,
     body: JSON.stringify({
-      success: true,
-      message: 'Basic test successful',
-      receivedData: { title: data.title }
+      id: 'test-id',
+      slug: 'test-slug',
+      publishedLocales: ['en'],
+      viewUrls: {
+        en: `/installations/test-slug.html`,
+        es: null,
+        fr: null,
+        de: null
+      }
     })
   };
 }
