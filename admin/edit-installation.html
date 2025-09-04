@@ -230,8 +230,8 @@
                     <div class="form-group">
                         <label class="form-label">Thanks To</label>
                         <div id="thanksToParagraphs" class="paragraph-list"></div>
-                        <button type="button" class="btn btn-secondary add-paragraph-btn" onclick="addParagraph('thanksTo')">
-                            + Add Paragraph
+                        <button type="button" class="btn btn-secondary add-paragraph-btn" onclick="addThanksToParagraph()">
+                            + Add Attribution
                         </button>
                     </div>
                 </div>
@@ -383,15 +383,22 @@
                 overviewContainer.appendChild(item);
             });
             
-            // Populate thanksTo paragraphs
+            // Populate thanksTo paragraphs with URLs
             const thanksContainer = document.getElementById('thanksToParagraphs');
             thanksContainer.innerHTML = '';
-            (data.thanksTo || ['']).forEach((text, index) => {
+            const thanksToData = data.thanksTo || [''];
+            const thanksToUrlsData = data.thanksToUrls || [];
+            
+            thanksToData.forEach((text, index) => {
                 const item = document.createElement('div');
                 item.className = 'paragraph-item';
+                const url = thanksToUrlsData[index] || '';
                 item.innerHTML = `
-                    <textarea class="form-textarea" name="thanksTo[]" placeholder="Enter acknowledgments...">${text}</textarea>
-                    ${index > 0 ? '<button type="button" class="btn btn-danger" onclick="removeParagraph(this)">Remove</button>' : ''}
+                    <div style="display: flex; flex-direction: column; gap: 10px; flex: 1;">
+                        <textarea class="form-textarea" name="thanksTo[]" placeholder="Enter acknowledgments..." style="margin-bottom: 0;">${text}</textarea>
+                        <input type="url" class="form-input" name="thanksToUrl[]" placeholder="Optional website URL (e.g. https://example.com)" value="${url}">
+                    </div>
+                    <button type="button" class="btn btn-danger" onclick="removeThanksToParagraph(this)" style="align-self: flex-start;">Remove</button>
                 `;
                 thanksContainer.appendChild(item);
             });
@@ -443,6 +450,26 @@
         
         // Remove paragraph function
         function removeParagraph(button) {
+            button.parentElement.remove();
+        }
+
+        // Add Thanks To paragraph function
+        function addThanksToParagraph() {
+            const container = document.getElementById('thanksToParagraphs');
+            const item = document.createElement('div');
+            item.className = 'paragraph-item';
+            item.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 10px; flex: 1;">
+                    <textarea class="form-textarea" name="thanksTo[]" placeholder="Enter acknowledgments..." style="margin-bottom: 0;"></textarea>
+                    <input type="url" class="form-input" name="thanksToUrl[]" placeholder="Optional website URL (e.g. https://example.com)">
+                </div>
+                <button type="button" class="btn btn-danger" onclick="removeThanksToParagraph(this)" style="align-self: flex-start;">Remove</button>
+            `;
+            container.appendChild(item);
+        }
+
+        // Remove Thanks To paragraph function
+        function removeThanksToParagraph(button) {
             button.parentElement.remove();
         }
         
@@ -572,6 +599,7 @@
                 },
                 overview: formData.getAll('overview[]').filter(text => text.trim()),
                 thanksTo: formData.getAll('thanksTo[]').filter(text => text.trim()),
+                thanksToUrls: formData.getAll('thanksToUrl[]'),
                 coverAssetId: coverImage.assetId,
                 galleryAssetIds: galleryImages.map(img => img.assetId),
                 seo: {
