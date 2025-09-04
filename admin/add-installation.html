@@ -446,26 +446,8 @@
                 
                 const result = await response.json();
                 
-                // Automatically generate static pages
-                AdminUtils.showLoading('Generating static pages...');
-                try {
-                    const pagesResponse = await fetch('/.netlify/functions/generate-pages-webhook', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ trigger: 'installation_saved' })
-                    });
-                    
-                    if (pagesResponse.ok) {
-                        const pagesResult = await pagesResponse.json();
-                        console.log('Pages generated:', pagesResult);
-                    }
-                } catch (pageError) {
-                    console.error('Page generation failed:', pageError);
-                    // Don't fail the whole save if page generation fails
-                }
-                
                 AdminUtils.hideLoading();
-                AdminUtils.showToast('Installation saved and pages generated successfully!', 'success');
+                AdminUtils.showToast('Installation saved successfully! Pages will be live in ~2 minutes.', 'success');
                 
                 // Show success links
                 const successMsg = document.getElementById('successMessage');
