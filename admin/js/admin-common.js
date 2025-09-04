@@ -210,15 +210,31 @@ const AdminUtils = {
             throw new Error(`File too large. Maximum size is ${maxSize / 1024 / 1024}MB.`);
         }
         
-        // Create FormData for v2 API
-        const formData = new FormData();
-        formData.append('file', file);
+        // Convert file to base64 for reliable JSON upload
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                // Remove data URL prefix (e.g., "data:image/png;base64,")
+                const base64 = reader.result.split(',')[1];
+                resolve(base64);
+            };
+            reader.onerror = reject;
+        });
         
-        // Upload to server with FormData (v2 API compatible)
+        const base64Image = await toBase64(file);
+        
+        // Upload to server as JSON (v1 API compatible)
         const response = await adminAuth.apiCall('/.netlify/functions/upload-image', {
             method: 'POST',
-            body: formData
-            // DO NOT set Content-Type - browser will set it with boundary for FormData
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                image: base64Image,
+                filename: file.name,
+                mimeType: file.type
+            })
         });
         
         if (!response.ok) {
