@@ -214,15 +214,22 @@ const AdminUtils = {
         const formData = new FormData();
         formData.append('file', file);
         
-        // Upload to server
+        // Upload to server - explicitly set method and don't set Content-Type
         const response = await adminAuth.apiCall('/.netlify/functions/upload-image', {
             method: 'POST',
             body: formData
+            // DO NOT set Content-Type - browser will set it with boundary for FormData
         });
         
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Upload failed');
+            // Try to read as text first since error might not be JSON
+            const errorText = await response.text();
+            try {
+                const errorJson = JSON.parse(errorText);
+                throw new Error(errorJson.error || 'Upload failed');
+            } catch {
+                throw new Error(errorText || 'Upload failed');
+            }
         }
         
         return await response.json();

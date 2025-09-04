@@ -93,30 +93,45 @@ export default async (event, context) => {
   try {
     const headers = corsHeaders(event.headers?.origin);
     
-    // Log the actual method received
-    console.log('Upload handler - Method received:', event.httpMethod);
-    console.log('Upload handler - Content-Type:', event.headers?.['content-type']);
+    // Log what we're receiving for debugging
+    console.log('Upload handler called with:', {
+      method: event.httpMethod,
+      headers: event.headers ? Object.keys(event.headers) : 'no headers',
+      hasBody: !!event.body
+    });
     
-    // Handle preflight (case insensitive)
-    if (event.httpMethod?.toUpperCase() === 'OPTIONS') {
+    // Handle preflight
+    if (event.httpMethod === 'OPTIONS') {
       return new Response(null, { status: 204, headers });
     }
+    
+    // Diagnostic GET handler
+    if (event.httpMethod === 'GET') {
+      return new Response(JSON.stringify({
+        message: 'Upload endpoint is working',
+        expectedMethod: 'POST',
+        receivedMethod: event.httpMethod
+      }), {
+        status: 200,
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      });
+    }
   
-  safeLog('Upload image request received', {
-    method: event.httpMethod,
-    headers: Object.keys(event.headers)
-  });
-  
-  // Only accept POST (case insensitive)
-  if (event.httpMethod?.toUpperCase() !== 'POST') {
-    console.log('Method not POST, returning 405. Actual method:', event.httpMethod);
-    return new Response(JSON.stringify({ 
-      error: `Method Not Allowed. Expected POST but received ${event.httpMethod}` 
-    }), { 
-      status: 405, 
-      headers: { ...headers, 'Content-Type': 'application/json' }
+    // Only accept POST
+    if (event.httpMethod !== 'POST') {
+      console.log('Method not POST, returning 405. Actual method:', event.httpMethod);
+      return new Response(JSON.stringify({ 
+        error: `Method Not Allowed. Expected POST but received ${event.httpMethod || 'undefined'}` 
+      }), { 
+        status: 405, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    safeLog('Upload image POST request received', {
+      method: event.httpMethod,
+      headers: Object.keys(event.headers)
     });
-  }
   
   // Validate authentication
   const auth = await requireEditorRole(event, process.env.ALLOWED_ORIGIN);
