@@ -2011,7 +2011,7 @@
         // Load latest installations
         async function loadLatestInstallations() {
             try {
-                const response = await fetch('/.netlify/functions/get-installations-public');
+                const response = await fetch('/.netlify/functions/installations-public');
                 if (!response.ok) throw new Error('Failed to load installations');
                 
                 const data = await response.json();
@@ -2019,7 +2019,7 @@
                 
                 // Sort by date (most recent first) and take first 3
                 const latestInstallations = installations
-                    .sort((a, b) => new Date(b.date) - new Date(a.date))
+                    .sort((a, b) => new Date(b.installationDate) - new Date(a.installationDate))
                     .slice(0, 3);
                 
                 displayLatestInstallations(latestInstallations);
@@ -2037,12 +2037,20 @@
             const grid = document.getElementById('latest-installations-grid');
             
             const installationsHtml = installations.map(installation => {
-                const slug = installation.slug || createSlug(installation.title, installation.location);
-                const previewText = installation.description[0].substring(0, 120) + '...';
-                const formattedDate = formatDate(installation.date);
+                // Format location like installations.html does
+                const location = `${installation.location?.city || ''}, ${installation.location?.country || ''}`.replace(/^, |, $/, '');
+                const slug = installation.slug || createSlug(installation.title, location);
+                
+                // Convert overview blocks to text
+                const overviewText = installation.overview?.map(block => 
+                    block.children?.map(child => child.text).join('') || ''
+                ).join(' ') || '';
+                const previewText = overviewText.substring(0, 120) + '...';
+                
+                const formattedDate = formatDate(installation.installationDate);
                 const applicationName = capitalizeApplication(installation.application);
                 
-                const imageUrl = installation.images && installation.images.length > 0 ? getImageUrl(installation.images[0]) : '';
+                const imageUrl = installation.coverImage?.url || '';
                 
                 return `
                     <div class="installation-card" onclick="window.location.href='installations/${slug}.html'">
@@ -2055,7 +2063,7 @@
                                 <span class="installation-application">${applicationName}</span>
                             </div>
                             <h3 class="installation-title">${installation.title}</h3>
-                            <p class="installation-location">📍 ${installation.location}</p>
+                            <p class="installation-location">📍 ${location}</p>
                             <div class="installation-description">
                                 <p>${previewText}</p>
                             </div>
