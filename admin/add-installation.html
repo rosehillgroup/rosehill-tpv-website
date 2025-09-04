@@ -431,7 +431,7 @@
                 document.getElementById('submitBtn').disabled = true;
                 AdminUtils.showLoading('Saving installation and translating...');
                 
-                const response = await adminAuth.apiCall('/.netlify/functions/installations-upsert-simple', {
+                const response = await adminAuth.apiCall('/.netlify/functions/test-basic', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
