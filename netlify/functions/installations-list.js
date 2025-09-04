@@ -124,7 +124,7 @@ export async function handler(event, context) {
     // Calculate pagination metadata
     const totalPages = Math.ceil(totalCount / limitNum);
     
-    safeLog('Installations listed', {
+    console.log('Installations listed:', {
       total: totalCount,
       page: pageNum,
       returned: items.length
