@@ -15,13 +15,13 @@ function generateDocumentId() {
   return `installation.${crypto.randomUUID()}`;
 }
 
-// DeepL Pro configuration - check multiple possible env var names
-const DEEPL_API_KEY = process.env.DEEPL_KEY || process.env.DEEPL_API_KEY || process.env.DEEPL_AUTH_KEY;
+// DeepL Pro configuration
+const DEEPL_API_KEY = process.env.DEEPL_API_KEY;
 const DEEPL_API_URL = 'https://api.deepl.com/v2/translate';
 
 console.log('DeepL config check:', {
   hasKey: !!DEEPL_API_KEY,
-  keyPrefix: DEEPL_API_KEY?.substring(0, 8) + '...'
+  keyLength: DEEPL_API_KEY?.length
 });
 
 // Simple DeepL translation helper
