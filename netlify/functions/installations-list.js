@@ -1,17 +1,7 @@
 // Netlify Function: List installations for admin dashboard
 // Returns paginated list with search capability
 
-import sanityClient from '@sanity/client';
 import { requireEditorRole, errorResponse, successResponse, safeLog } from './_utils/auth.js';
-
-// Initialize Sanity client
-const sanity = sanityClient({
-  projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
-  dataset: process.env.SANITY_DATASET || 'production',
-  apiVersion: '2023-05-03',
-  token: process.env.SANITY_TOKEN,
-  useCdn: false
-});
 
 /**
  * Generate CORS headers with proper origin handling
@@ -67,6 +57,16 @@ export async function handler(event, context) {
   const offset = (pageNum - 1) * limitNum;
   
   try {
+    // Create Sanity client
+    const { createClient } = await import('@sanity/client');
+    const sanity = createClient({
+      projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
+      dataset: process.env.SANITY_DATASET || 'production',
+      apiVersion: '2023-05-03',
+      token: process.env.SANITY_WRITE_TOKEN,
+      useCdn: false
+    });
+    
     // Build search filter
     let searchFilter = '';
     if (search) {

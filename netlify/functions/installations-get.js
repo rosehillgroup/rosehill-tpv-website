@@ -1,17 +1,7 @@
 // Netlify Function: Get single installation for editing
 // Returns English fields only
 
-import sanityClient from '@sanity/client';
 import { requireEditorRole, errorResponse, successResponse, safeLog } from './_utils/auth.js';
-
-// Initialize Sanity client
-const sanity = sanityClient({
-  projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
-  dataset: process.env.SANITY_DATASET || 'production',
-  apiVersion: '2023-05-03',
-  token: process.env.SANITY_TOKEN,
-  useCdn: false
-});
 
 /**
  * Generate CORS headers with proper origin handling
@@ -61,6 +51,16 @@ export async function handler(event, context) {
   }
   
   try {
+    // Create Sanity client
+    const { createClient } = await import('@sanity/client');
+    const sanity = createClient({
+      projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
+      dataset: process.env.SANITY_DATASET || 'production',
+      apiVersion: '2023-05-03',
+      token: process.env.SANITY_WRITE_TOKEN,
+      useCdn: false
+    });
+    
     // Query for the installation
     // Return only English fields for the edit form
     const query = `*[_type == "installation" && _id == $id][0] {
