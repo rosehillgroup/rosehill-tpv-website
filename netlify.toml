@@ -6,7 +6,7 @@
 
 [functions]
   directory = "netlify/functions"
-  external_node_modules = ["formidable", "jose", "@sanity/client"]
+  external_node_modules = ["jose", "@sanity/client"]
   node_bundler = "esbuild"
 
 # Admin redirects - only catch admin pages, not assets
