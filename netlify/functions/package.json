@@ -1,7 +1,6 @@
 {
   "name": "netlify-functions",
   "version": "1.0.0",
-  "type": "module",
   "dependencies": {
     "@sanity/client": "^6.22.7",
     "jose": "^5.2.0"

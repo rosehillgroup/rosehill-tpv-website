@@ -1,35 +1,58 @@
-// Netlify Function: Upload image to Sanity Assets
-// Uses v1 API for consistency with other admin functions
+// Netlify Function: Upload image to Sanity Assets (CommonJS for compatibility)
+const { createClient } = require('@sanity/client');
+const { createRemoteJWKSet, jwtVerify } = require('jose');
 
-import sanityClient from '@sanity/client';
-import { requireEditorRole, checkRateLimit, safeLog } from './_utils/auth.js';
-
-/**
- * Generate CORS headers with proper origin handling
- */
 function corsHeaders(origin) {
   const allowed = process.env.ALLOWED_ORIGIN || origin || '*';
   return {
     'Access-Control-Allow-Origin': allowed,
-    'Vary': 'Origin', 
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Vary': 'Origin',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS', 
     'Access-Control-Allow-Headers': 'Authorization, Content-Type'
   };
 }
 
-// Initialize Sanity client (same pattern as working functions)
-const sanity = sanityClient({
-  projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
-  dataset: process.env.SANITY_DATASET || 'production', 
-  apiVersion: '2023-05-03',
-  token: process.env.SANITY_TOKEN,
-  useCdn: false
-});
+// Lazy Sanity client 
+let sanity = null;
+function getSanity() {
+  if (!sanity) {
+    sanity = createClient({
+      projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
+      dataset: process.env.SANITY_DATASET || 'production',
+      apiVersion: '2023-05-03', 
+      token: process.env.SANITY_TOKEN,
+      useCdn: false
+    });
+  }
+  return sanity;
+}
 
-/**
- * Main handler - v1 API for consistency
- */
-export async function handler(event, context) {
+async function requireEditorRole(event) {
+  const ISSUER = process.env.AUTH0_ISSUER_BASE_URL;
+  const AUDIENCE = process.env.AUTH0_AUDIENCE;
+  
+  if (!ISSUER || !AUDIENCE) {
+    return { ok: false, status: 500, msg: 'Auth configuration missing' };
+  }
+  
+  const JWKS = createRemoteJWKSet(new URL(`${ISSUER}/.well-known/jwks.json`));
+  const ROLES = 'https://tpv.rosehill.group/roles';
+
+  const auth = event.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
+  if (!token) return { ok: false, status: 401, msg: 'Missing token' };
+
+  try {
+    const { payload } = await jwtVerify(token, JWKS, { issuer: ISSUER, audience: AUDIENCE });
+    const roles = payload[ROLES] || [];
+    return roles.includes('editor') ? { ok: true, user: payload }
+                                    : { ok: false, status: 403, msg: 'Forbidden' };
+  } catch (e) {
+    return { ok: false, status: 401, msg: 'Invalid token' };
+  }
+}
+
+exports.handler = async (event, context) => {
   const headers = corsHeaders(event.headers?.origin);
   
   try {
@@ -53,8 +76,8 @@ export async function handler(event, context) {
       };
     }
     
-    // Validate authentication using the same pattern as other functions
-    const auth = await requireEditorRole(event, process.env.ALLOWED_ORIGIN);
+    // Validate authentication 
+    const auth = await requireEditorRole(event);
     if (!auth.ok) {
       return {
         statusCode: auth.status,
@@ -63,8 +86,8 @@ export async function handler(event, context) {
       };
     }
     
-    // Rate limiting  
-    const rateLimit = checkRateLimit(auth.user.sub);
+    // Rate limiting
+    const rateLimit = checkRateLimit ? checkRateLimit(auth.user.sub) : { ok: true };
     if (!rateLimit.ok) {
       return {
         statusCode: 429,
@@ -75,7 +98,7 @@ export async function handler(event, context) {
       };
     }
     
-    // Parse JSON body (expecting base64 encoded image)
+    // Parse JSON body
     let data;
     try {
       data = JSON.parse(event.body);
@@ -125,11 +148,10 @@ export async function handler(event, context) {
     
     // Upload to Sanity
     try {
-      const asset = await sanity.assets.upload('image', imageBuffer, {
+      const sanityClient = getSanity();
+      const asset = await sanityClient.assets.upload('image', imageBuffer, {
         filename: data.filename
       });
-      
-      safeLog('Upload successful', { assetId: asset._id });
       
       return {
         statusCode: 200,
@@ -147,8 +169,6 @@ export async function handler(event, context) {
       };
       
     } catch (uploadError) {
-      safeLog('Sanity upload error', { error: uploadError.message });
-      
       return {
         statusCode: 500,
         headers: { ...headers, 'Content-Type': 'application/json' },
@@ -159,7 +179,7 @@ export async function handler(event, context) {
     }
     
   } catch (outerError) {
-    // Never let the function crash - always return valid response
+    // Never let the function crash
     console.error('Function error:', outerError);
     return {
       statusCode: 500,
@@ -167,4 +187,4 @@ export async function handler(event, context) {
       body: JSON.stringify({ error: 'Internal server error' })
     };
   }
-}
+};
