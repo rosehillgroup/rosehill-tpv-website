@@ -83,20 +83,47 @@ export async function handler(event) {
       };
     }
     
-    // For now, return a mock successful response
-    // TODO: Actually upload to Sanity once import issues are resolved
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        assetId: `mock_${Date.now()}`,
-        url: `https://cdn.sanity.io/images/mock/${data.filename}`,
-        filename: data.filename,
-        size: imageBuffer.length,
-        mock: true,
-        message: "Upload validated successfully (mock response)"
-      })
-    };
+    // Upload to Sanity using dynamic import
+    try {
+      const { createClient } = await import('@sanity/client');
+      
+      const sanity = createClient({
+        projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
+        dataset: process.env.SANITY_DATASET || 'production',
+        apiVersion: '2023-05-03',
+        token: process.env.SANITY_TOKEN,
+        useCdn: false
+      });
+      
+      const asset = await sanity.assets.upload('image', imageBuffer, {
+        filename: data.filename
+      });
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          assetId: asset._id,
+          url: asset.url,
+          filename: data.filename,
+          size: asset.size,
+          dimensions: {
+            width: asset.metadata?.dimensions?.width,
+            height: asset.metadata?.dimensions?.height
+          }
+        })
+      };
+      
+    } catch (sanityError) {
+      console.error('Sanity upload error:', sanityError);
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ 
+          error: `Upload failed: ${sanityError.message}`
+        })
+      };
+    }
     
   } catch (error) {
     return {
