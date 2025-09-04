@@ -1,6 +1,8 @@
-// Netlify Function: Upload image to Sanity Assets (CommonJS for compatibility)
-const { createClient } = require('@sanity/client');
-const { createRemoteJWKSet, jwtVerify } = require('jose');
+// Netlify Function: Upload image to Sanity Assets
+// Uses exact same auth pattern as other working admin functions
+
+import sanityClient from '@sanity/client';
+import { requireEditorRole, checkRateLimit, errorResponse, successResponse, safeLog } from './_utils/auth.js';
 
 function corsHeaders(origin) {
   const allowed = process.env.ALLOWED_ORIGIN || origin || '*';
@@ -12,179 +14,96 @@ function corsHeaders(origin) {
   };
 }
 
-// Lazy Sanity client 
-let sanity = null;
-function getSanity() {
-  if (!sanity) {
-    sanity = createClient({
-      projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
-      dataset: process.env.SANITY_DATASET || 'production',
-      apiVersion: '2023-05-03', 
-      token: process.env.SANITY_TOKEN,
-      useCdn: false
-    });
-  }
-  return sanity;
-}
+// Initialize Sanity client (same pattern as working functions)
+const sanity = sanityClient({
+  projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
+  dataset: process.env.SANITY_DATASET || 'production',
+  apiVersion: '2023-05-03', 
+  token: process.env.SANITY_TOKEN,
+  useCdn: false
+});
 
-async function requireEditorRole(event) {
-  const ISSUER = process.env.AUTH0_ISSUER_BASE_URL;
-  const AUDIENCE = process.env.AUTH0_AUDIENCE;
-  
-  if (!ISSUER || !AUDIENCE) {
-    return { ok: false, status: 500, msg: 'Auth configuration missing' };
-  }
-  
-  const JWKS = createRemoteJWKSet(new URL(`${ISSUER}/.well-known/jwks.json`));
-  const ROLES = 'https://tpv.rosehill.group/roles';
-
-  const auth = event.headers.authorization || '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-  if (!token) return { ok: false, status: 401, msg: 'Missing token' };
-
-  try {
-    const { payload } = await jwtVerify(token, JWKS, { issuer: ISSUER, audience: AUDIENCE });
-    const roles = payload[ROLES] || [];
-    return roles.includes('editor') ? { ok: true, user: payload }
-                                    : { ok: false, status: 403, msg: 'Forbidden' };
-  } catch (e) {
-    return { ok: false, status: 401, msg: 'Invalid token' };
-  }
-}
-
-exports.handler = async (event, context) => {
+export async function handler(event, context) {
   const headers = corsHeaders(event.headers?.origin);
   
-  try {
-    // CORS preflight
-    if (event.httpMethod === 'OPTIONS') {
-      return {
-        statusCode: 204,
-        headers,
-        body: ''
-      };
-    }
-    
-    // Only accept POST
-    if (event.httpMethod !== 'POST') {
-      return {
-        statusCode: 405,
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          error: `Method Not Allowed. Expected POST but received ${event.httpMethod}` 
-        })
-      };
-    }
-    
-    // Validate authentication 
-    const auth = await requireEditorRole(event);
-    if (!auth.ok) {
-      return {
-        statusCode: auth.status,
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: auth.msg })
-      };
-    }
-    
-    // Rate limiting
-    const rateLimit = checkRateLimit ? checkRateLimit(auth.user.sub) : { ok: true };
-    if (!rateLimit.ok) {
-      return {
-        statusCode: 429,
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          error: `Rate limit exceeded. Try again in ${rateLimit.retryAfter} seconds`
-        })
-      };
-    }
-    
-    // Parse JSON body
-    let data;
-    try {
-      data = JSON.parse(event.body);
-    } catch (error) {
-      return {
-        statusCode: 400,
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ error: 'Invalid JSON in request body' })
-      };
-    }
-    
-    // Validate required fields
-    if (!data.image || !data.filename || !data.mimeType) {
-      return {
-        statusCode: 400,
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          error: 'Missing required fields: image (base64), filename, and mimeType are required' 
-        })
-      };
-    }
-    
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!allowedTypes.includes(data.mimeType)) {
-      return {
-        statusCode: 400,
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          error: `Invalid file type. Allowed types: ${allowedTypes.join(', ')}` 
-        })
-      };
-    }
-    
-    // Decode and validate image
-    const imageBuffer = Buffer.from(data.image, 'base64');
-    const maxSize = 12 * 1024 * 1024;
-    if (imageBuffer.length > maxSize) {
-      return {
-        statusCode: 400,
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          error: `File too large. Maximum size is ${maxSize / 1024 / 1024}MB` 
-        })
-      };
-    }
-    
-    // Upload to Sanity
-    try {
-      const sanityClient = getSanity();
-      const asset = await sanityClient.assets.upload('image', imageBuffer, {
-        filename: data.filename
-      });
-      
-      return {
-        statusCode: 200,
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          assetId: asset._id,
-          url: asset.url,
-          filename: data.filename,
-          size: asset.size,
-          dimensions: {
-            width: asset.metadata?.dimensions?.width,
-            height: asset.metadata?.dimensions?.height
-          }
-        })
-      };
-      
-    } catch (uploadError) {
-      return {
-        statusCode: 500,
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          error: `Upload failed: ${uploadError.message}` 
-        })
-      };
-    }
-    
-  } catch (outerError) {
-    // Never let the function crash
-    console.error('Function error:', outerError);
-    return {
-      statusCode: 500,
-      headers: { ...headers, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ error: 'Internal server error' })
-    };
+  safeLog('Upload image request received', {
+    method: event.httpMethod,
+    headers: Object.keys(event.headers)
+  });
+  
+  // Handle preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return new Response(null, { status: 204, headers });
   }
-};
+  
+  // Only accept POST
+  if (event.httpMethod !== 'POST') {
+    return errorResponse('Method not allowed', 405, headers);
+  }
+  
+  // Validate authentication - EXACT SAME CALL AS OTHER FUNCTIONS
+  const auth = await requireEditorRole(event, process.env.ALLOWED_ORIGIN);
+  if (!auth.ok) {
+    return errorResponse(auth.msg, auth.status, headers);
+  }
+  
+  // Rate limiting
+  const rateLimit = checkRateLimit(auth.user.id);
+  if (!rateLimit.ok) {
+    return errorResponse(
+      `Rate limit exceeded. Try again in ${rateLimit.retryAfter} seconds`,
+      429,
+      headers
+    );
+  }
+  
+  // Parse JSON body
+  let data;
+  try {
+    data = JSON.parse(event.body);
+  } catch (error) {
+    return errorResponse('Invalid JSON in request body', 400, headers);
+  }
+  
+  // Validate required fields
+  if (!data.image || !data.filename || !data.mimeType) {
+    return errorResponse('Missing required fields: image (base64), filename, and mimeType are required', 400, headers);
+  }
+  
+  // Validate file type
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  if (!allowedTypes.includes(data.mimeType)) {
+    return errorResponse(`Invalid file type. Allowed types: ${allowedTypes.join(', ')}`, 400, headers);
+  }
+  
+  // Decode and validate image
+  const imageBuffer = Buffer.from(data.image, 'base64');
+  const maxSize = 12 * 1024 * 1024;
+  if (imageBuffer.length > maxSize) {
+    return errorResponse(`File too large. Maximum size is ${maxSize / 1024 / 1024}MB`, 400, headers);
+  }
+  
+  try {
+    // Upload to Sanity
+    const asset = await sanity.assets.upload('image', imageBuffer, {
+      filename: data.filename
+    });
+    
+    safeLog('Upload successful', { assetId: asset._id });
+    
+    return successResponse({
+      assetId: asset._id,
+      url: asset.url,
+      filename: data.filename,
+      size: asset.size,
+      dimensions: {
+        width: asset.metadata?.dimensions?.width,
+        height: asset.metadata?.dimensions?.height
+      }
+    }, 200, headers);
+    
+  } catch (error) {
+    safeLog('Upload error', { error: error.message });
+    return errorResponse('Failed to upload image: ' + error.message, 500, headers);
+  }
+}
