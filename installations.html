@@ -1185,18 +1185,54 @@ function getInstallationUrl(slug) {
                        : `/${lang}/installations/${slug}.html`;
 }
 
+// --- Helper Functions ---
+function detectLanguageFromPath() {
+  const path = window.location.pathname;
+  const match = path.match(/^\/(de|fr|es)\//);
+  return match ? match[1] : 'en';
+}
+
+function formatInstallationDate(dateString) {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long', 
+    year: 'numeric'
+  });
+}
+
 // --- Data load ---
 async function loadInstallations() {
   try {
-    // Use the new Sanity client
-    const installations = await sanityClient.getAllInstallations();
+    // Fetch from public API endpoint
+    const response = await fetch('/.netlify/functions/installations-public');
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+    const data = await response.json();
+    const installations = data.installations || [];
+    
+    // Detect current language
+    const currentLang = detectLanguageFromPath();
     
     // Transform data to match existing display format
     allInstallations = installations.map(installation => {
+      // Get language-specific content
+      const title = installation[`title__${currentLang}`] || installation.title;
+      const overview = installation[`overview__${currentLang}`] || installation.overview;
+      const locationStr = installation[`location__${currentLang}`] || 
+                         `${installation.location?.city || ''}, ${installation.location?.country || ''}`.replace(/^, |, $/, '');
+      
       // Convert Portable Text overview to plain text
       let overviewText = '';
-      if (installation.overview && Array.isArray(installation.overview)) {
-        overviewText = sanityClient.portableTextToHtml(installation.overview);
+      if (overview && Array.isArray(overview)) {
+        overviewText = overview.map(block => {
+          if (block._type === 'block' && block.children) {
+            return block.children.map(child => child.text || '').join('');
+          }
+          return '';
+        }).join(' ');
       }
       
       // Build image array (coverImage + gallery)
@@ -1211,17 +1247,12 @@ async function loadInstallations() {
         images = ['images/installations/placeholder.jpg'];
       }
       
-      // Build location string
-      const location = [installation.location?.city, installation.location?.country]
-        .filter(Boolean)
-        .join(', ');
-      
       return {
         id: installation._id,
-        title: installation.title,
-        displayTitle: installation.title,
-        location: location,
-        displayLocation: location,
+        title: title,
+        displayTitle: title,
+        location: locationStr,
+        displayLocation: locationStr,
         slug: installation.slug,
         displaySlug: installation.slug,
         description: overviewText,
@@ -1230,7 +1261,7 @@ async function loadInstallations() {
         category: installation.application || 'Playground',
         application: installation.application || 'Playground',
         images: images,
-        formattedDate: sanityClient.formatDate(installation.installationDate)
+        formattedDate: formatInstallationDate(installation.installationDate)
       };
     });
 
