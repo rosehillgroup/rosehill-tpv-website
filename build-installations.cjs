@@ -31,6 +31,7 @@ async function buildInstallationPages() {
     location,
     overview,
     thanksTo,
+    thanksToUrls,
     "coverImage": coverImage {
       asset->{
         _id,
@@ -63,6 +64,7 @@ async function buildInstallationPages() {
     title__es, title__fr, title__de,
     overview__es, overview__fr, overview__de,
     thanksTo__es, thanksTo__fr, thanksTo__de,
+    thanksToUrls__es, thanksToUrls__fr, thanksToUrls__de,
     "location__es": location.city__es + ", " + location.country__es,
     "location__fr": location.city__fr + ", " + location.country__fr,
     "location__de": location.city__de + ", " + location.country__de
@@ -147,6 +149,29 @@ async function buildInstallationPages() {
     return images.map(url => `"${url}"`).join(', ');
   }
 
+  function generateAttributionSection(thanksTo, thanksToUrls) {
+    if (!thanksTo || !Array.isArray(thanksTo) || thanksTo.length === 0) {
+      return '';
+    }
+
+    const attributionItems = thanksTo.map((attribution, index) => {
+      const url = thanksToUrls && thanksToUrls[index] && thanksToUrls[index].trim();
+      const text = attribution.children?.map(child => child.text || '').join('') || attribution;
+      
+      if (url && url.startsWith('http')) {
+        return `<p><a href="${url}" target="_blank" rel="noopener">${text}</a></p>`;
+      } else {
+        return `<p>${text}</p>`;
+      }
+    }).join('\n                ');
+
+    return `
+            <section class="attribution-section">
+                <h3>Photo Credits & Acknowledgments</h3>
+                ${attributionItems}
+            </section>`;
+  }
+
   let generatedCount = 0;
 
   // Generate pages
@@ -161,15 +186,30 @@ async function buildInstallationPages() {
                       `${installation.location?.city || ''}, ${installation.location?.country || ''}`.replace(/^, |, $/, '');
       const overview = installation[`overview__${lang}`] || installation.overview;
       const thanksTo = installation[`thanksTo__${lang}`] || installation.thanksTo;
+      const thanksToUrls = installation[`thanksToUrls__${lang}`] || installation.thanksToUrls;
 
       const fileName = `${installation.slug}.html`;
       const filePath = lang === 'en' 
         ? path.join(installationsDir, fileName)
         : path.join(__dirname, lang, 'installations', fileName);
 
+      // Generate URLs for this language
+      const urlBase = lang === 'en' ? '' : `/${lang}`;
+      const urls = {
+        home: `${urlBase}/index.html`,
+        products: `${urlBase}/products.html`,
+        applications: `${urlBase}/applications.html`,
+        colour: `${urlBase}/colour.html`,
+        installations: `${urlBase}/installations.html`,
+        about: `${urlBase}/about.html`,
+        contact: `${urlBase}/contact.html`,
+        logoWebp: lang === 'en' ? '../rosehill_tpv_logo.webp' : '../../rosehill_tpv_logo.webp',
+        logoPng: lang === 'en' ? '../rosehill_tpv_logo.png' : '../../rosehill_tpv_logo.png'
+      };
+
       const thumbnailGrid = createThumbnailGrid(installation.gallery, title, urlFor);
       const contentParagraphs = portableTextToHtml(overview);
-      const thanksParagraphs = portableTextToHtml(thanksTo);
+      const attributionSection = generateAttributionSection(thanksTo, thanksToUrls);
       const imageArray = createImageArray(installation.coverImage, installation.gallery, urlFor);
       
       const metaDescription = `${title} installation in ${location}. Professional TPV surfacing by Rosehill Group.`;
@@ -188,8 +228,17 @@ async function buildInstallationPages() {
         .replace(/{{APPLICATION}}/g, installation.application || 'Installation')
         .replace(/{{THUMBNAIL_GRID}}/g, thumbnailGrid)
         .replace(/{{CONTENT_PARAGRAPHS}}/g, contentParagraphs)
-        .replace(/{{THANKS_PARAGRAPHS}}/g, thanksParagraphs)
-        .replace(/{{IMAGE_ARRAY}}/g, imageArray);
+        .replace(/{{ATTRIBUTION_SECTION}}/g, attributionSection)
+        .replace(/{{IMAGE_ARRAY}}/g, imageArray)
+        .replace(/{{HOME_URL}}/g, urls.home)
+        .replace(/{{PRODUCTS_URL}}/g, urls.products)
+        .replace(/{{APPLICATIONS_URL}}/g, urls.applications)
+        .replace(/{{COLOUR_URL}}/g, urls.colour)
+        .replace(/{{INSTALLATIONS_URL}}/g, urls.installations)
+        .replace(/{{ABOUT_URL}}/g, urls.about)
+        .replace(/{{CONTACT_URL}}/g, urls.contact)
+        .replace(/{{LOGO_WEBP_URL}}/g, urls.logoWebp)
+        .replace(/{{LOGO_PNG_URL}}/g, urls.logoPng);
       
       fs.writeFileSync(filePath, pageContent);
       generatedCount++;
