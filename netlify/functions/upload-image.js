@@ -17,20 +17,14 @@ function corsHeaders(origin) {
   };
 }
 
-// Lazy Sanity client initialization
-let sanity = null;
-function getSanity() {
-  if (!sanity) {
-    sanity = sanityClient({
-      projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
-      dataset: process.env.SANITY_DATASET || 'production', 
-      apiVersion: '2023-05-03',
-      token: process.env.SANITY_TOKEN,
-      useCdn: false
-    });
-  }
-  return sanity;
-}
+// Initialize Sanity client (same pattern as working functions)
+const sanity = sanityClient({
+  projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
+  dataset: process.env.SANITY_DATASET || 'production', 
+  apiVersion: '2023-05-03',
+  token: process.env.SANITY_TOKEN,
+  useCdn: false
+});
 
 /**
  * Main handler - v1 API for consistency
@@ -131,8 +125,7 @@ export async function handler(event, context) {
     
     // Upload to Sanity
     try {
-      const sanityClient = getSanity();
-      const asset = await sanityClient.assets.upload('image', imageBuffer, {
+      const asset = await sanity.assets.upload('image', imageBuffer, {
         filename: data.filename
       });
       
