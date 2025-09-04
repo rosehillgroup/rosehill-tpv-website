@@ -1,17 +1,22 @@
 // Netlify Function: Upload image to Sanity Assets
 // Handles base64 encoded image uploads via JSON
 
-import sanityClient from '@sanity/client';
-import { requireEditorRole, checkRateLimit, errorResponse, successResponse, safeLog } from './_utils/auth.js';
+import { createClient } from '@sanity/client';
+import { requireEditorRole, checkRateLimit, safeLog } from './_utils/auth.js';
 
-// Initialize Sanity client
-const sanity = sanityClient({
-  projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
-  dataset: process.env.SANITY_DATASET || 'production',
-  apiVersion: '2023-05-03',
-  token: process.env.SANITY_TOKEN,
-  useCdn: false
-});
+// Initialize Sanity client with error handling
+let sanity;
+try {
+  sanity = createClient({
+    projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
+    dataset: process.env.SANITY_DATASET || 'production',
+    apiVersion: '2023-05-03',
+    token: process.env.SANITY_TOKEN,
+    useCdn: false
+  });
+} catch (error) {
+  console.error('Failed to initialize Sanity client:', error);
+}
 
 /**
  * Generate CORS headers with proper origin handling
@@ -36,6 +41,15 @@ const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'
 export async function handler(event, context) {
   try {
     const headers = corsHeaders(event.headers?.origin);
+    
+    // Check if Sanity client is initialized
+    if (!sanity) {
+      console.error('Sanity client not initialized');
+      return new Response(JSON.stringify({ error: 'Storage service not configured' }), {
+        status: 500,
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      });
+    }
     
     // Log what we're receiving for debugging
     console.log('Upload handler called with:', {

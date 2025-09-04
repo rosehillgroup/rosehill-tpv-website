@@ -1,11 +1,11 @@
 // Netlify Function: List installations for admin dashboard
 // Returns paginated list with search capability
 
-import sanityClient from '@sanity/client';
+import { createClient } from '@sanity/client';
 import { requireEditorRole, errorResponse, successResponse, safeLog } from './_utils/auth.js';
 
 // Initialize Sanity client
-const sanity = sanityClient({
+const sanity = createClient({
   projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
   dataset: process.env.SANITY_DATASET || 'production',
   apiVersion: '2023-05-03',
