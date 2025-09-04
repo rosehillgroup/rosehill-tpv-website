@@ -1205,13 +1205,20 @@ function formatInstallationDate(dateString) {
 // --- Data load ---
 async function loadInstallations() {
   try {
+    console.log('🔄 Loading installations from Sanity...');
+    
     // Fetch from public API endpoint
     const response = await fetch('/.netlify/functions/installations-public');
+    console.log('📡 API response status:', response.status);
+    
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
     const data = await response.json();
+    console.log('📊 API data:', data);
+    
     const installations = data.installations || [];
+    console.log(`📋 Found ${installations.length} installations`);
     
     // Detect current language
     const currentLang = detectLanguageFromPath();
