@@ -38,42 +38,6 @@ function generateDocumentId() {
 }
 
 /**
- * Check for slug collision
- */
-async function checkSlugCollision(slug, excludeId = null) {
-  const query = excludeId 
-    ? `*[_type == "installation" && slug.current == $slug && _id != $excludeId][0]`
-    : `*[_type == "installation" && slug.current == $slug][0]`;
-  
-  const { createClient } = await import('@sanity/client');
-  const sanity = createClient({
-    projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
-    dataset: process.env.SANITY_DATASET || 'production',
-    apiVersion: '2023-05-03',
-    token: process.env.SANITY_WRITE_TOKEN,
-    useCdn: false
-  });
-  
-  const existing = await sanity.fetch(query, { slug, excludeId });
-  return existing !== null;
-}
-
-/**
- * Generate unique slug if collision detected
- */
-async function generateUniqueSlug(baseSlug, excludeId = null) {
-  let slug = baseSlug;
-  let counter = 2;
-  
-  while (await checkSlugCollision(slug, excludeId)) {
-    slug = `${baseSlug}-${counter}`;
-    counter++;
-  }
-  
-  return slug;
-}
-
-/**
  * Translate text using DeepL with brand protection
  */
 async function translateText(text, targetLang, isHtml = false) {
@@ -246,6 +210,16 @@ export async function handler(event, context) {
   }
   
   try {
+    // Create Sanity client
+    const { createClient } = await import('@sanity/client');
+    const sanity = createClient({
+      projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
+      dataset: process.env.SANITY_DATASET || 'production',
+      apiVersion: '2023-05-03',
+      token: process.env.SANITY_WRITE_TOKEN,
+      useCdn: false
+    });
+    
     // Generate or validate slug
     let slug = data.slug || data.title
       .toLowerCase()
@@ -254,8 +228,30 @@ export async function handler(event, context) {
       .replace(/[^a-z0-9-]/g, '')
       .slice(0, 96);
     
+    // Update slug collision check to use local sanity client
+    async function checkSlugCollisionLocal(slug, excludeId = null) {
+      const query = excludeId 
+        ? `*[_type == "installation" && slug.current == $slug && _id != $excludeId][0]`
+        : `*[_type == "installation" && slug.current == $slug][0]`;
+      
+      const existing = await sanity.fetch(query, { slug, excludeId });
+      return existing !== null;
+    }
+    
+    async function generateUniqueSlugLocal(baseSlug, excludeId = null) {
+      let slug = baseSlug;
+      let counter = 2;
+      
+      while (await checkSlugCollisionLocal(slug, excludeId)) {
+        slug = `${baseSlug}-${counter}`;
+        counter++;
+      }
+      
+      return slug;
+    }
+    
     // Check for slug collision
-    slug = await generateUniqueSlug(slug, data.id);
+    slug = await generateUniqueSlugLocal(slug, data.id);
     
     // Prepare document ID
     const docId = data.id || generateDocumentId();
@@ -333,16 +329,6 @@ export async function handler(event, context) {
     // Calculate content hash for future change detection
     const contentHash = calculateContentHash(englishDoc);
     englishDoc.translatedFromHash = contentHash;
-    
-    // Create Sanity client
-    const { createClient } = await import('@sanity/client');
-    const sanity = createClient({
-      projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
-      dataset: process.env.SANITY_DATASET || 'production',
-      apiVersion: '2023-05-03',
-      token: process.env.SANITY_WRITE_TOKEN,
-      useCdn: false
-    });
     
     // Create or update English document
     const savedDoc = isUpdate 
