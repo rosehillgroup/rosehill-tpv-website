@@ -1,10 +1,7 @@
 // Netlify Function: Upload image to Sanity Assets
-// Handles multipart form data with validation
+// Handles base64 encoded image uploads via JSON
 
 import sanityClient from '@sanity/client';
-import formidable from 'formidable';
-import fs from 'fs';
-import path from 'path';
 import { requireEditorRole, checkRateLimit, errorResponse, successResponse, safeLog } from './_utils/auth.js';
 
 // Initialize Sanity client
@@ -31,60 +28,7 @@ function corsHeaders(origin) {
 
 // Validation constants
 const MAX_FILE_SIZE = 12 * 1024 * 1024; // 12MB
-const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-
-/**
- * Validate file before upload
- */
-function validateFile(file) {
-  // Check file exists
-  if (!file || !file.originalFilename) {
-    return { valid: false, error: 'No file provided' };
-  }
-  
-  // Check file size
-  if (file.size > MAX_FILE_SIZE) {
-    return { 
-      valid: false, 
-      error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB` 
-    };
-  }
-  
-  // Check MIME type
-  const mimeType = file.mimetype || file.type;
-  if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
-    return { 
-      valid: false, 
-      error: `Invalid file type. Allowed types: ${ALLOWED_MIME_TYPES.join(', ')}` 
-    };
-  }
-  
-  // Check file extension
-  const ext = path.extname(file.originalFilename).toLowerCase();
-  if (!ALLOWED_EXTENSIONS.includes(ext)) {
-    return { 
-      valid: false, 
-      error: `Invalid file extension. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}` 
-    };
-  }
-  
-  return { valid: true };
-}
-
-/**
- * Generate safe filename
- */
-function generateSafeFilename(originalName) {
-  const ext = path.extname(originalName).toLowerCase();
-  const basename = path.basename(originalName, ext)
-    .replace(/[^a-zA-Z0-9-_]/g, '-')
-    .replace(/-+/g, '-')
-    .slice(0, 50);
-  
-  const timestamp = Date.now();
-  return `${basename}-${timestamp}${ext}`;
-}
 
 /**
  * Main handler
@@ -128,123 +72,131 @@ export async function handler(event, context) {
       });
     }
     
-    safeLog('Upload image POST request received', {
-      method: event.httpMethod,
-      headers: Object.keys(event.headers)
-    });
+    safeLog('Upload image POST request received');
   
-  // Validate authentication
-  const auth = await requireEditorRole(event, process.env.ALLOWED_ORIGIN);
-  if (!auth.ok) {
-    return new Response(auth.msg, { status: auth.status, headers });
-  }
-  
-  // Rate limiting
-  const rateLimit = checkRateLimit(auth.user.id);
-  if (!rateLimit.ok) {
-    return new Response(
-      `Rate limit exceeded. Try again in ${rateLimit.retryAfter} seconds`,
-      { status: 429, headers }
-    );
-  }
-  
-  // Check for multipart content type
-  const contentType = event.headers['content-type'] || '';
-  if (!contentType.includes('multipart/form-data')) {
-    return new Response('Expected multipart/form-data', { status: 400, headers });
-  }
-  
-  try {
-    // Configure formidable
-    const form = formidable({
-      multiples: false,
-      maxFileSize: MAX_FILE_SIZE,
-      keepExtensions: true
-    });
-    
-    // Parse the form data
-    // Note: Netlify Functions may provide body as base64
-    const isBase64 = event.isBase64Encoded;
-    const body = isBase64 ? Buffer.from(event.body, 'base64').toString('utf-8') : event.body;
-    
-    const { files } = await new Promise((resolve, reject) => {
-      form.parse({ ...event, body }, (err, fields, files) => {
-        if (err) {
-          safeLog('Form parse error', { error: err.message });
-          reject(err);
-        } else {
-          resolve({ fields, files });
-        }
+    // Validate authentication
+    const auth = await requireEditorRole(event, process.env.ALLOWED_ORIGIN);
+    if (!auth.ok) {
+      return new Response(JSON.stringify({ error: auth.msg }), { 
+        status: auth.status, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
       });
-    });
-    
-    // Get the uploaded file
-    const file = files.file || files.image || Object.values(files)[0];
-    
-    if (!file) {
-      return new Response('No file part', { status: 400, headers });
+    }
+  
+    // Rate limiting
+    const rateLimit = checkRateLimit(auth.user.id);
+    if (!rateLimit.ok) {
+      return new Response(JSON.stringify({
+        error: `Rate limit exceeded. Try again in ${rateLimit.retryAfter} seconds`
+      }), { 
+        status: 429, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      });
+    }
+  
+    // Parse JSON body
+    let data;
+    try {
+      data = JSON.parse(event.body);
+    } catch (error) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), { 
+        status: 400, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      });
     }
     
-    // Validate file
-    const validation = validateFile(file);
-    if (!validation.valid) {
-      return new Response(validation.error, { status: 400, headers });
+    // Validate required fields
+    if (!data.image || !data.filename || !data.mimeType) {
+      return new Response(JSON.stringify({ 
+        error: 'Missing required fields: image (base64), filename, and mimeType are required' 
+      }), { 
+        status: 400, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      });
     }
     
-    // Generate safe filename
-    const safeFilename = generateSafeFilename(file.originalFilename);
+    // Validate mime type
+    if (!ALLOWED_MIME_TYPES.includes(data.mimeType)) {
+      return new Response(JSON.stringify({ 
+        error: `Invalid file type. Allowed types: ${ALLOWED_MIME_TYPES.join(', ')}` 
+      }), { 
+        status: 400, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Decode base64 image
+    const imageBuffer = Buffer.from(data.image, 'base64');
+    
+    // Validate file size
+    if (imageBuffer.length > MAX_FILE_SIZE) {
+      return new Response(JSON.stringify({ 
+        error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB` 
+      }), { 
+        status: 400, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      });
+    }
     
     safeLog('Uploading to Sanity', { 
-      filename: safeFilename,
-      size: file.size,
-      type: file.mimetype 
+      filename: data.filename,
+      size: imageBuffer.length,
+      type: data.mimeType 
     });
     
-    // Read file and upload to Sanity
-    const stream = fs.createReadStream(file.filepath || file.path);
-    
-    const asset = await sanity.assets.upload('image', stream, {
-      filename: safeFilename
-    });
-    
-    // Clean up temp file
     try {
-      fs.unlinkSync(file.filepath || file.path);
-    } catch (e) {
-      // Ignore cleanup errors
-    }
-    
-    safeLog('Upload successful', { assetId: asset._id });
-    
-    // Return asset information
-    return new Response(JSON.stringify({
-      assetId: asset._id,
-      url: asset.url,
-      filename: safeFilename,
-      size: asset.size,
-      dimensions: {
-        width: asset.metadata?.dimensions?.width,
-        height: asset.metadata?.dimensions?.height
+      // Upload buffer directly to Sanity
+      const asset = await sanity.assets.upload('image', imageBuffer, {
+        filename: data.filename,
+        contentType: data.mimeType
+      });
+      
+      safeLog('Upload successful', { assetId: asset._id });
+      
+      // Return asset information
+      return new Response(JSON.stringify({
+        assetId: asset._id,
+        url: asset.url,
+        filename: data.filename,
+        size: asset.size,
+        dimensions: {
+          width: asset.metadata?.dimensions?.width,
+          height: asset.metadata?.dimensions?.height
+        }
+      }), {
+        status: 200,
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      });
+      
+    } catch (uploadError) {
+      safeLog('Sanity upload error', { error: uploadError.message });
+      
+      if (uploadError.message?.includes('network')) {
+        return new Response(JSON.stringify({ 
+          error: 'Network error connecting to storage service' 
+        }), { 
+          status: 503, 
+          headers: { ...headers, 'Content-Type': 'application/json' }
+        });
       }
-    }), {
-      status: 200,
-      headers: { ...headers, 'Content-Type': 'application/json' }
-    });
-    
-  } catch (error) {
-    safeLog('Upload error', { error: error.message });
-    
-    // Handle specific errors with CORS headers
-    if (error.message?.includes('network')) {
-      return new Response('Network error connecting to storage service', { status: 503, headers });
+      
+      if (uploadError.message?.includes('token')) {
+        return new Response(JSON.stringify({ 
+          error: 'Storage service authentication error' 
+        }), { 
+          status: 500, 
+          headers: { ...headers, 'Content-Type': 'application/json' }
+        });
+      }
+      
+      return new Response(JSON.stringify({ 
+        error: `Upload failed: ${uploadError.message}` 
+      }), { 
+        status: 500, 
+        headers: { ...headers, 'Content-Type': 'application/json' }
+      });
     }
     
-    if (error.message?.includes('token')) {
-      return new Response('Storage service authentication error', { status: 500, headers });
-    }
-    
-    return new Response(`Upload failed: ${error.message}`, { status: 500, headers });
-  }
   } catch (outerError) {
     // Fallback error handler if something goes wrong in the function itself
     console.error('Function error:', outerError);
