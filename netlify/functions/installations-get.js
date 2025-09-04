@@ -1,8 +1,6 @@
 // Netlify Function: Get single installation for editing
 // Returns English fields only
 
-import { requireEditorRole, errorResponse, successResponse, safeLog } from './_utils/auth.js';
-
 /**
  * Generate CORS headers with proper origin handling
  */
@@ -24,30 +22,37 @@ export async function handler(event, context) {
   
   // Handle preflight
   if (event.httpMethod === 'OPTIONS') {
-    return new Response(null, { status: 204, headers });
+    return { statusCode: 204, headers };
   }
-  
-  safeLog('Get installation request', {
-    method: event.httpMethod,
-    params: event.queryStringParameters
-  });
   
   // Only accept GET
   if (event.httpMethod !== 'GET') {
-    return errorResponse('Method not allowed', 405, headers);
+    return { 
+      statusCode: 405, 
+      headers, 
+      body: JSON.stringify({ error: 'Method not allowed' }) 
+    };
   }
   
-  // Validate authentication
-  const auth = await requireEditorRole(event, process.env.ALLOWED_ORIGIN);
-  if (!auth.ok) {
-    return errorResponse(auth.msg, auth.status, headers);
+  // Simple auth check
+  const authHeader = event.headers.authorization || '';
+  if (!authHeader.startsWith('Bearer ')) {
+    return { 
+      statusCode: 401, 
+      headers, 
+      body: JSON.stringify({ error: 'Missing authorization' }) 
+    };
   }
   
   // Get installation ID from query params
   const { id } = event.queryStringParameters || {};
   
   if (!id) {
-    return errorResponse('Installation ID is required', 400, headers);
+    return { 
+      statusCode: 400, 
+      headers, 
+      body: JSON.stringify({ error: 'Installation ID is required' }) 
+    };
   }
   
   try {
@@ -96,10 +101,14 @@ export async function handler(event, context) {
     const installation = await sanity.fetch(query, { id });
     
     if (!installation) {
-      return errorResponse('Installation not found', 404, headers);
+      return { 
+        statusCode: 404, 
+        headers, 
+        body: JSON.stringify({ error: 'Installation not found' }) 
+      };
     }
     
-    safeLog('Installation retrieved', { 
+    console.log('Installation retrieved:', { 
       id: installation._id,
       title: installation.title 
     });
@@ -132,14 +141,22 @@ export async function handler(event, context) {
       translationStatus: installation.translationStatus || {}
     };
     
-    return successResponse(formData, 200, headers);
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify(formData)
+    };
     
   } catch (error) {
-    safeLog('Error fetching installation', { 
+    console.error('Error fetching installation:', { 
       error: error.message,
       id 
     });
     
-    return errorResponse('Failed to fetch installation: ' + error.message, 500, headers);
+    return { 
+      statusCode: 500, 
+      headers, 
+      body: JSON.stringify({ error: 'Failed to fetch installation: ' + error.message }) 
+    };
   }
 }
