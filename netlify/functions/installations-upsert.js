@@ -1,18 +1,8 @@
 // Netlify Function: Create or update installation with automatic translation
 // Handles English input, translates to ES/FR/DE via DeepL, and saves to Sanity
 
-import sanityClient from '@sanity/client';
 import crypto from 'crypto';
 import { requireEditorRole, checkRateLimit, errorResponse, successResponse, safeLog } from './_utils/auth.js';
-
-// Initialize Sanity client
-const sanity = sanityClient({
-  projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
-  dataset: process.env.SANITY_DATASET || 'production',
-  apiVersion: '2023-05-03',
-  token: process.env.SANITY_TOKEN,
-  useCdn: false
-});
 
 /**
  * Generate CORS headers with proper origin handling
@@ -54,6 +44,15 @@ async function checkSlugCollision(slug, excludeId = null) {
   const query = excludeId 
     ? `*[_type == "installation" && slug.current == $slug && _id != $excludeId][0]`
     : `*[_type == "installation" && slug.current == $slug][0]`;
+  
+  const { createClient } = await import('@sanity/client');
+  const sanity = createClient({
+    projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
+    dataset: process.env.SANITY_DATASET || 'production',
+    apiVersion: '2023-05-03',
+    token: process.env.SANITY_WRITE_TOKEN,
+    useCdn: false
+  });
   
   const existing = await sanity.fetch(query, { slug, excludeId });
   return existing !== null;
@@ -334,6 +333,16 @@ export async function handler(event, context) {
     // Calculate content hash for future change detection
     const contentHash = calculateContentHash(englishDoc);
     englishDoc.translatedFromHash = contentHash;
+    
+    // Create Sanity client
+    const { createClient } = await import('@sanity/client');
+    const sanity = createClient({
+      projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
+      dataset: process.env.SANITY_DATASET || 'production',
+      apiVersion: '2023-05-03',
+      token: process.env.SANITY_WRITE_TOKEN,
+      useCdn: false
+    });
     
     // Create or update English document
     const savedDoc = isUpdate 
