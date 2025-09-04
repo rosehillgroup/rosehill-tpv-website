@@ -1216,6 +1216,7 @@ async function loadInstallations() {
     }
     const data = await response.json();
     console.log('📊 API data:', data);
+    console.log('📊 Full installations array:', data.installations);
     
     const installations = data.installations || [];
     console.log(`📋 Found ${installations.length} installations`);

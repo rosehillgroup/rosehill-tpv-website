@@ -30,7 +30,8 @@ export async function handler(event, context) {
       projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
       dataset: process.env.SANITY_DATASET || 'production',
       apiVersion: '2023-05-03',
-      useCdn: true // Use CDN for public reads
+      token: process.env.SANITY_WRITE_TOKEN, // Need token to read from dataset
+      useCdn: false
     });
     
     // Get all published installations
