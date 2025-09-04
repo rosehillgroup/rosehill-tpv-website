@@ -599,8 +599,25 @@
                 
                 const result = await response.json();
                 
+                // Automatically generate static pages
+                AdminUtils.showLoading('Regenerating static pages...');
+                try {
+                    const pagesResponse = await fetch('/.netlify/functions/generate-pages-webhook', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ trigger: 'installation_updated' })
+                    });
+                    
+                    if (pagesResponse.ok) {
+                        const pagesResult = await pagesResponse.json();
+                        console.log('Pages regenerated:', pagesResult);
+                    }
+                } catch (pageError) {
+                    console.error('Page generation failed:', pageError);
+                }
+                
                 AdminUtils.hideLoading();
-                AdminUtils.showToast('Installation updated successfully!', 'success');
+                AdminUtils.showToast('Installation updated and pages regenerated successfully!', 'success');
                 
                 // Show success links
                 const successMsg = document.getElementById('successMessage');
