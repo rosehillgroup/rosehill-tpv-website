@@ -89,7 +89,7 @@ function generateSafeFilename(originalName) {
 /**
  * Main handler
  */
-export default async (event, context) => {
+export async function handler(event, context) {
   try {
     const headers = corsHeaders(event.headers?.origin);
     

@@ -200,7 +200,7 @@ function calculateContentHash(data) {
 /**
  * Main handler
  */
-export default async (event, context) => {
+export async function handler(event, context) {
   const headers = corsHeaders(event.headers.origin);
   
   // Handle preflight

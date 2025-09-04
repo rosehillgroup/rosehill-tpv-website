@@ -29,7 +29,7 @@ function corsHeaders(origin) {
 /**
  * Main handler
  */
-export default async (event, context) => {
+export async function handler(event, context) {
   const headers = corsHeaders(event.headers.origin);
   
   // Handle preflight
