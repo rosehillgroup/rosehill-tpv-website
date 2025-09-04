@@ -152,6 +152,7 @@ export async function handler(event, context) {
       },
       overview: overviewBlocks,
       thanksTo: thanksToBlocks,
+      thanksToUrls: data.thanksToUrls || [],
       coverImage: {
         _type: 'image',
         asset: { _type: 'reference', _ref: data.coverAssetId },
@@ -232,6 +233,11 @@ export async function handler(event, context) {
               }]
             }));
             translationPatch[`thanksTo__${lang}`] = translatedThanksBlocks;
+          }
+          
+          // Copy thanksToUrls for all languages (URLs don't need translation)
+          if (data.thanksToUrls && data.thanksToUrls.length > 0) {
+            translationPatch[`thanksToUrls__${lang}`] = data.thanksToUrls;
           }
           
           translationPatch[`seo.title__${lang}`] = translatedTitle;

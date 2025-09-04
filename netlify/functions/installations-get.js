@@ -80,6 +80,7 @@ export async function handler(event, context) {
       },
       overview,
       thanksTo,
+      thanksToUrls,
       "coverImage": coverImage {
         "assetId": asset._ref,
         "url": asset->url,
@@ -131,6 +132,7 @@ export async function handler(event, context) {
       thanksTo: installation.thanksTo?.map(block => 
         block.children?.map(child => child.text).join('') || ''
       ).filter(text => text) || [],
+      thanksToUrls: installation.thanksToUrls || [],
       coverImage: installation.coverImage || null,
       gallery: installation.gallery || [],
       seo: {
