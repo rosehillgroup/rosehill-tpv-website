@@ -271,6 +271,110 @@
             margin-bottom: 0;
         }
 
+        /* Attribution Section */
+        .attribution-section {
+            background: #f8f9fa;
+            padding: 30px 40px;
+            border-radius: 12px;
+            margin-top: 30px;
+            border-left: 4px solid #ff6b35;
+        }
+
+        .attribution-section h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 15px;
+            font-family: 'Overpass', sans-serif;
+        }
+
+        .attribution-section p {
+            font-size: 14px;
+            color: #666;
+            font-style: italic;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .attribution-section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .attribution-section a {
+            color: #1a365d;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .attribution-section a:hover {
+            color: #ff6b35;
+            text-decoration: underline;
+        }
+
+        /* Desktop Language Switcher - Bottom Right */
+        .language-switcher {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            gap: 4px;
+        }
+
+        .language-switcher a {
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 0 2px;
+            border-radius: 4px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .language-switcher a:hover {
+            background: rgba(255, 107, 53, 0.1);
+            color: #ff6b35;
+        }
+
+        .language-switcher a.current {
+            background: #ff6b35;
+            color: white;
+            box-shadow: 0 2px 8px rgba(255,107,53,0.3);
+        }
+
+        /* Mobile Language Switcher */
+        .mobile-language-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding-top: 20px;
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .mobile-language-switcher a {
+            color: rgba(255,255,255,0.8) !important;
+            font-weight: 500 !important;
+            padding: 8px 15px !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            border-radius: 6px !important;
+            text-decoration: none !important;
+            font-size: 14px !important;
+        }
+
+        .mobile-language-switcher a.current {
+            background: rgba(255, 107, 53, 0.3) !important;
+            color: #ff6b35 !important;
+            border-color: #ff6b35 !important;
+        }
+
         /* Application Badge */
         .application-badge {
             display: inline-block;
@@ -589,6 +693,12 @@
                     <a href="../installations.html" class="active">Installations</a>
                     <a href="../about.html">About Us</a>
                     <a href="../contact.html" class="contact-btn">Get in Touch</a>
+                    <div class="mobile-language-switcher" id="mobile-language-switcher">
+                        <a href="/installations/blue-primary-school-playground.html" class="current">EN</a>
+                        <a href="/es/installations/blue-primary-school-playground.html">ES</a>
+                        <a href="/fr/installations/blue-primary-school-playground.html">FR</a>
+                        <a href="/de/installations/blue-primary-school-playground.html">DE</a>
+                    </div>
                 </div>
             </nav>
         </div>
@@ -657,6 +767,12 @@
                 <p>Rosehill TPV® is an ideal choice for school playgrounds, delivering effective cushioning against everyday playtime accidents — as seen at Bullion Lane Primary School in Chester-le-Street. Installed across 500m² in our vibrant Standard Blue, the new surface absorbs the impact of trips and falls while retaining its softness and colour for years to come.</p>
                 <p>UV-stable and designed to withstand harsh climates and unpredictable weather, Rosehill TPV® is suitable for a wide range of applications — from playgrounds and splash parks to pool surrounds, gyms, and fitness spaces.</p>
                 <p>With 21 standard colours that can be mixed and matched, it’s easy to create the perfect palette for any project — from themed designs and vivid motifs to engaging floor games and playful 3D features. Rosehill TPV® makes playtime safer, more colourful, and more fun.</p>
+            </section>
+
+            <!-- Attribution -->
+            <section class="attribution-section">
+                <h3>Photo Credits & Acknowledgments</h3>
+                <p>Thanks to Surface Designs TPV for providing these images</p>
             </section>
         </div>
     </main>
@@ -842,6 +958,20 @@
             initMobileMenu();
         });
     </script>
+
+    <!-- Desktop Language Switcher (Fixed Bottom-Right) -->
+    <div class="language-switcher" id="language-switcher">
+        <a href="/installations/blue-primary-school-playground.html" class="current">EN</a>
+        <a href="/es/installations/blue-primary-school-playground.html">ES</a>
+        <a href="/fr/installations/blue-primary-school-playground.html">FR</a>
+        <a href="/de/installations/blue-primary-school-playground.html">DE</a>
+    </div>
+    
+    <!-- Language Switcher -->
+    <script src="/language-switcher-script.js"></script>
+    
+    <!-- Client-side translation system -->
+    <script src="/i18n/translate-client.js"></script>
 
 </body>
 </html>

@@ -23,6 +23,7 @@ async function main() {
     location,
     overview,
     thanksTo,
+    thanksToUrls,
     "coverImage": coverImage {
       "url": asset->url,
       alt
@@ -40,7 +41,8 @@ async function main() {
     "location__fr": location.city__fr + ", " + location.country__fr, 
     "location__de": location.city__de + ", " + location.country__de,
     overview__es, overview__fr, overview__de,
-    thanksTo__es, thanksTo__fr, thanksTo__de
+    thanksTo__es, thanksTo__fr, thanksTo__de,
+    thanksToUrls__es, thanksToUrls__fr, thanksToUrls__de
   }`;
 
   console.log('Fetching valid installations from Sanity...');
@@ -77,71 +79,147 @@ async function main() {
     }).join('\n                ');
   }
 
-  // Create installations directory
-  const installationsDir = path.join(__dirname, 'installations');
-  if (!fs.existsSync(installationsDir)) {
-    fs.mkdirSync(installationsDir, { recursive: true });
+  function generateAttributionSection(thanksTo, thanksToUrls) {
+    if (!thanksTo || !Array.isArray(thanksTo) || thanksTo.length === 0) {
+      return '';
+    }
+
+    const attributionItems = thanksTo.map((attribution, index) => {
+      const url = thanksToUrls && thanksToUrls[index] && thanksToUrls[index].trim();
+      const text = attribution.children?.map(child => child.text || '').join('') || attribution;
+      
+      if (url && url.startsWith('http')) {
+        return `<p><a href="${url}" target="_blank" rel="noopener">${text}</a></p>`;
+      } else {
+        return `<p>${text}</p>`;
+      }
+    }).join('\n                ');
+
+    return `
+            <section class="attribution-section">
+                <h3>Photo Credits & Acknowledgments</h3>
+                ${attributionItems}
+            </section>`;
   }
+
+  // Language configurations
+  const languages = [
+    { code: 'en', dir: 'installations', urlPrefix: '' },
+    { code: 'es', dir: 'es/installations', urlPrefix: '/es' },
+    { code: 'fr', dir: 'fr/installations', urlPrefix: '/fr' },
+    { code: 'de', dir: 'de/installations', urlPrefix: '/de' }
+  ];
+
+  // Create all language directories
+  languages.forEach(lang => {
+    const langDir = path.join(__dirname, lang.dir);
+    if (!fs.existsSync(langDir)) {
+      fs.mkdirSync(langDir, { recursive: true });
+    }
+  });
 
   let generatedPages = [];
 
-  // Generate pages for each valid installation
+  // Generate pages for each valid installation in all languages
   for (const installation of installations) {
-    const fileName = `${installation.slug}.html`;
-    const filePath = path.join(installationsDir, fileName);
-    
-    // Create thumbnail grid if gallery exists
-    let thumbnailGrid = '';
-    if (installation.gallery && installation.gallery.length > 0) {
-      thumbnailGrid = '<div class="thumbnail-grid">';
-      installation.gallery.forEach((image, index) => {
-        if (image.url) {
-          thumbnailGrid += `
-                <img src="${image.url}" 
-                     alt="${image.alt || installation.title}" 
-                     class="thumbnail" 
-                     onclick="setMainImage(${index + 1}); openLightbox(${index + 1})">`;
-        }
+    for (const lang of languages) {
+      const fileName = `${installation.slug}.html`;
+      const langDir = path.join(__dirname, lang.dir);
+      const filePath = path.join(langDir, fileName);
+      
+      // Get content for this language
+      const titleField = lang.code === 'en' ? 'title' : `title__${lang.code}`;
+      const locationField = lang.code === 'en' ? 'location' : `location__${lang.code}`;
+      const overviewField = lang.code === 'en' ? 'overview' : `overview__${lang.code}`;
+      const thanksToField = lang.code === 'en' ? 'thanksTo' : `thanksTo__${lang.code}`;
+      const thanksToUrlsField = lang.code === 'en' ? 'thanksToUrls' : `thanksToUrls__${lang.code}`;
+      
+      const title = installation[titleField] || installation.title;
+      const location = installation[locationField] || `${installation.location?.city || ''}, ${installation.location?.country || ''}`.replace(/^, |, $/, '');
+      const overview = installation[overviewField] || installation.overview;
+      const thanksTo = installation[thanksToField] || installation.thanksTo;
+      const thanksToUrls = installation[thanksToUrlsField] || installation.thanksToUrls;
+      
+      // Generate URLs for this language
+      const urlBase = lang.code === 'en' ? '' : lang.urlPrefix;
+      const urls = {
+        home: `${urlBase}/index.html`,
+        products: `${urlBase}/products.html`,
+        applications: `${urlBase}/applications.html`,
+        colour: `${urlBase}/colour.html`,
+        installations: `${urlBase}/installations.html`,
+        about: `${urlBase}/about.html`,
+        contact: `${urlBase}/contact.html`,
+        logoWebp: lang.code === 'en' ? '../rosehill_tpv_logo.webp' : '../../rosehill_tpv_logo.webp',
+        logoPng: lang.code === 'en' ? '../rosehill_tpv_logo.png' : '../../rosehill_tpv_logo.png'
+      };
+      
+      // Create thumbnail grid if gallery exists
+      let thumbnailGrid = '';
+      if (installation.gallery && installation.gallery.length > 0) {
+        thumbnailGrid = '<div class="thumbnail-grid">';
+        installation.gallery.forEach((image, index) => {
+          if (image.url) {
+            thumbnailGrid += `
+                  <img src="${image.url}" 
+                       alt="${image.alt || title}" 
+                       class="thumbnail" 
+                       onclick="setMainImage(${index + 1}); openLightbox(${index + 1})">`;
+          }
+        });
+        thumbnailGrid += '</div>';
+      }
+      
+      // Create content paragraphs using language-specific content
+      const contentParagraphs = portableTextToHtml(overview);
+      
+      // Generate attribution section using language-specific content
+      const attributionSection = generateAttributionSection(thanksTo, thanksToUrls);
+      
+      // Create image array for JavaScript
+      const images = [installation.coverImage?.url].filter(Boolean);
+      if (installation.gallery) {
+        images.push(...installation.gallery.filter(img => img?.url).map(img => img.url));
+      }
+      const imageArray = images.map(url => `"${url}"`).join(', ');
+      
+      // Replace template placeholders with language-specific content
+      let pageContent = template
+        .replace(/{{TITLE}}/g, title)
+        .replace(/{{LOCATION}}/g, location)
+        .replace(/{{URL_SLUG}}/g, installation.slug)
+        .replace(/{{META_DESCRIPTION}}/g, installation.seo?.description || `${title} installation by Rosehill TPV`)
+        .replace(/{{KEYWORDS}}/g, `${title}, Rosehill TPV, rubber surfacing, playground`)
+        .replace(/{{FIRST_IMAGE}}/g, installation.coverImage?.url || '')
+        .replace(/{{DATE}}/g, formatDate(installation.installationDate))
+        .replace(/{{APPLICATION}}/g, installation.application || 'Installation')
+        .replace(/{{THUMBNAIL_GRID}}/g, thumbnailGrid)
+        .replace(/{{CONTENT_PARAGRAPHS}}/g, contentParagraphs)
+        .replace(/{{ATTRIBUTION_SECTION}}/g, attributionSection)
+        .replace(/{{IMAGE_ARRAY}}/g, imageArray)
+        .replace(/{{HOME_URL}}/g, urls.home)
+        .replace(/{{PRODUCTS_URL}}/g, urls.products)
+        .replace(/{{APPLICATIONS_URL}}/g, urls.applications)
+        .replace(/{{COLOUR_URL}}/g, urls.colour)
+        .replace(/{{INSTALLATIONS_URL}}/g, urls.installations)
+        .replace(/{{ABOUT_URL}}/g, urls.about)
+        .replace(/{{CONTACT_URL}}/g, urls.contact)
+        .replace(/{{LOGO_WEBP_URL}}/g, urls.logoWebp)
+        .replace(/{{LOGO_PNG_URL}}/g, urls.logoPng);
+      
+      // Write the page for this language
+      fs.writeFileSync(filePath, pageContent);
+      
+      generatedPages.push({
+        title: title,
+        slug: installation.slug,
+        fileName: fileName,
+        language: lang.code,
+        path: lang.dir
       });
-      thumbnailGrid += '</div>';
+      
+      console.log(`✓ Generated: ${lang.code.toUpperCase()}/${fileName}`);
     }
-    
-    // Create content paragraphs
-    const contentParagraphs = portableTextToHtml(installation.overview);
-    const thanksParagraphs = portableTextToHtml(installation.thanksTo);
-    
-    // Create image array for JavaScript
-    const images = [installation.coverImage?.url].filter(Boolean);
-    if (installation.gallery) {
-      images.push(...installation.gallery.filter(img => img?.url).map(img => img.url));
-    }
-    const imageArray = images.map(url => `"${url}"`).join(', ');
-    
-    // Replace template placeholders
-    let pageContent = template
-      .replace(/{{TITLE}}/g, installation.title)
-      .replace(/{{LOCATION}}/g, `${installation.location?.city || ''}, ${installation.location?.country || ''}`.replace(/^, |, $/, ''))
-      .replace(/{{URL_SLUG}}/g, installation.slug)
-      .replace(/{{META_DESCRIPTION}}/g, installation.seo?.description || `${installation.title} installation by Rosehill TPV`)
-      .replace(/{{KEYWORDS}}/g, `${installation.title}, Rosehill TPV, rubber surfacing, playground`)
-      .replace(/{{FIRST_IMAGE}}/g, installation.coverImage?.url || '')
-      .replace(/{{DATE}}/g, formatDate(installation.installationDate))
-      .replace(/{{APPLICATION}}/g, installation.application || 'Installation')
-      .replace(/{{THUMBNAIL_GRID}}/g, thumbnailGrid)
-      .replace(/{{CONTENT_PARAGRAPHS}}/g, contentParagraphs)
-      .replace(/{{THANKS_PARAGRAPHS}}/g, thanksParagraphs)
-      .replace(/{{IMAGE_ARRAY}}/g, imageArray);
-    
-    // Write the English page
-    fs.writeFileSync(filePath, pageContent);
-    
-    generatedPages.push({
-      title: installation.title,
-      slug: installation.slug,
-      fileName: fileName
-    });
-    
-    console.log(`✓ Generated: ${fileName}`);
   }
 
   console.log(`\n🎉 Generated ${generatedPages.length} installation pages!`);

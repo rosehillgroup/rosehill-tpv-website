@@ -126,7 +126,6 @@
 
         /* Main Content */
         .main-content {
-            margin-top: 80px;
             min-height: calc(100vh - 80px);
         }
 
@@ -135,6 +134,7 @@
             background: white;
             padding: 20px 0;
             border-bottom: 1px solid #e9ecef;
+            margin-top: 80px;
         }
 
         .breadcrumb-container {
@@ -269,6 +269,46 @@
 
         .content-section p:last-child {
             margin-bottom: 0;
+        }
+
+        /* Attribution Section */
+        .attribution-section {
+            background: #f8f9fa;
+            padding: 30px 40px;
+            border-radius: 12px;
+            margin-top: 30px;
+            border-left: 4px solid #ff6b35;
+        }
+
+        .attribution-section h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 15px;
+            font-family: 'Overpass', sans-serif;
+        }
+
+        .attribution-section p {
+            font-size: 14px;
+            color: #666;
+            font-style: italic;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .attribution-section p:last-child {
+            margin-bottom: 0;
+        }
+
+        .attribution-section a {
+            color: #1a365d;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .attribution-section a:hover {
+            color: #ff6b35;
+            text-decoration: underline;
         }
 
         /* Application Badge */
@@ -513,6 +553,70 @@
             opacity: 0.8;
         }
 
+        /* Desktop Language Switcher - Bottom Right */
+        .language-switcher {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            gap: 4px;
+        }
+
+        .language-switcher a {
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 0 2px;
+            border-radius: 4px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .language-switcher a:hover {
+            background: rgba(255, 107, 53, 0.1);
+            color: #ff6b35;
+        }
+
+        .language-switcher a.current {
+            background: #ff6b35;
+            color: white;
+            box-shadow: 0 2px 8px rgba(255,107,53,0.3);
+        }
+
+        /* Mobile Language Switcher */
+        .mobile-language-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding-top: 20px;
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .mobile-language-switcher a {
+            color: rgba(255,255,255,0.8) !important;
+            font-weight: 500 !important;
+            padding: 8px 15px !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            border-radius: 6px !important;
+            text-decoration: none !important;
+            font-size: 14px !important;
+        }
+
+        .mobile-language-switcher a.current {
+            background: rgba(255, 107, 53, 0.3) !important;
+            color: #ff6b35 !important;
+            border-color: #ff6b35 !important;
+        }
+
         /* Responsive Design */
         @media (max-width: 900px) {
             .nav-menu {
@@ -560,21 +664,21 @@
     <!-- Header -->
     <header class="header">
         <div class="header-container">
-            <a href="../index.html" class="logo">
+            <a href="{{HOME_URL}}" class="logo">
                 <picture>
-                <source srcset="../rosehill_tpv_logo.webp" type="image/webp">
-                <img src="../rosehill_tpv_logo.png" alt="Rosehill TPV®" style="height: 60px;" loading="lazy">
+                <source srcset="{{LOGO_WEBP_URL}}" type="image/webp">
+                <img src="{{LOGO_PNG_URL}}" alt="Rosehill TPV®" style="height: 60px;" loading="lazy">
             </picture>
             </a>
             <nav>
                 <ul class="nav-menu">
-                    <li><a href="../index.html">Home</a></li>
-                    <li><a href="../products.html">Products</a></li>
-                    <li><a href="../applications.html">Applications</a></li>
-                    <li><a href="../colour.html">Colour</a></li>
-                    <li><a href="../installations.html" class="active">Installations</a></li>
-                    <li><a href="../about.html">About Us</a></li>
-                    <li><a href="../contact.html" class="contact-btn">Get in Touch</a></li>
+                    <li><a href="{{HOME_URL}}">Home</a></li>
+                    <li><a href="{{PRODUCTS_URL}}">Products</a></li>
+                    <li><a href="{{APPLICATIONS_URL}}">Applications</a></li>
+                    <li><a href="{{COLOUR_URL}}">Colour</a></li>
+                    <li><a href="{{INSTALLATIONS_URL}}" class="active">Installations</a></li>
+                    <li><a href="{{ABOUT_URL}}">About Us</a></li>
+                    <li><a href="{{CONTACT_URL}}" class="contact-btn">Get in Touch</a></li>
                 </ul>
                 <button class="mobile-menu-toggle" id="mobile-toggle">
                     <span></span>
@@ -582,13 +686,19 @@
                     <span></span>
                 </button>
                 <div class="mobile-nav-menu" id="mobile-menu">
-                    <a href="../index.html">Home</a>
-                    <a href="../products.html">Products</a>
-                    <a href="../applications.html">Applications</a>
-                    <a href="../colour.html">Colour</a>
-                    <a href="../installations.html" class="active">Installations</a>
-                    <a href="../about.html">About Us</a>
-                    <a href="../contact.html" class="contact-btn">Get in Touch</a>
+                    <a href="{{HOME_URL}}">Home</a>
+                    <a href="{{PRODUCTS_URL}}">Products</a>
+                    <a href="{{APPLICATIONS_URL}}">Applications</a>
+                    <a href="{{COLOUR_URL}}">Colour</a>
+                    <a href="{{INSTALLATIONS_URL}}" class="active">Installations</a>
+                    <a href="{{ABOUT_URL}}">About Us</a>
+                    <a href="{{CONTACT_URL}}" class="contact-btn">Get in Touch</a>
+                    <div class="mobile-language-switcher" id="mobile-language-switcher">
+                        <a href="/installations/{{URL_SLUG}}.html" class="current">EN</a>
+                        <a href="/es/installations/{{URL_SLUG}}.html">ES</a>
+                        <a href="/fr/installations/{{URL_SLUG}}.html">FR</a>
+                        <a href="/de/installations/{{URL_SLUG}}.html">DE</a>
+                    </div>
                 </div>
             </nav>
         </div>
@@ -600,9 +710,9 @@
         <div class="breadcrumb">
             <div class="breadcrumb-container">
                 <nav class="breadcrumb-nav">
-                    <a href="../index.html">Home</a>
+                    <a href="{{HOME_URL}}">Home</a>
                     <span>›</span>
-                    <a href="../installations.html">Installations</a>
+                    <a href="{{INSTALLATIONS_URL}}">Installations</a>
                     <span>›</span>
                     <span>{{TITLE}}</span>
                 </nav>
@@ -644,6 +754,9 @@
                 <h2>Project Overview</h2>
                 {{CONTENT_PARAGRAPHS}}
             </section>
+
+            <!-- Attribution -->
+            {{ATTRIBUTION_SECTION}}
         </div>
     </main>
 
@@ -828,6 +941,20 @@
             initMobileMenu();
         });
     </script>
+
+    <!-- Desktop Language Switcher (Fixed Bottom-Right) -->
+    <div class="language-switcher" id="language-switcher">
+        <a href="/installations/{{URL_SLUG}}.html" class="current">EN</a>
+        <a href="/es/installations/{{URL_SLUG}}.html">ES</a>
+        <a href="/fr/installations/{{URL_SLUG}}.html">FR</a>
+        <a href="/de/installations/{{URL_SLUG}}.html">DE</a>
+    </div>
+    
+    <!-- Language Switcher -->
+    <script src="/language-switcher-script.js"></script>
+    
+    <!-- Client-side translation system -->
+    <script src="/i18n/translate-client.js"></script>
 
 </body>
 </html>

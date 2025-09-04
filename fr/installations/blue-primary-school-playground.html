@@ -513,6 +513,80 @@
             opacity: 0.8;
         }
 
+        /* Desktop Language Switcher - Bottom Right */
+        .language-switcher {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            gap: 4px;
+        }
+
+        .language-switcher a {
+            display: inline-block;
+            padding: 6px 12px;
+            margin: 0 2px;
+            border-radius: 4px;
+            color: #64748b;
+            text-decoration: none;
+            font-size: 13px;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .language-switcher a:hover {
+            background: rgba(255, 107, 53, 0.1);
+            color: #ff6b35;
+        }
+
+        .language-switcher a.current {
+            background: #ff6b35;
+            color: white;
+            box-shadow: 0 2px 8px rgba(255,107,53,0.3);
+        }
+
+        /* Mobile Language Switcher */
+        .mobile-language-switcher {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            padding-top: 20px;
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .mobile-language-switcher a {
+            color: rgba(255,255,255,0.8) !important;
+            font-weight: 500 !important;
+            padding: 8px 15px !important;
+            border: 1px solid rgba(255,255,255,0.2) !important;
+            border-radius: 6px !important;
+            text-decoration: none !important;
+            font-size: 14px !important;
+        }
+
+        .mobile-language-switcher a.current {
+            background: rgba(255, 107, 53, 0.3) !important;
+            color: #ff6b35 !important;
+            border-color: #ff6b35 !important;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 900px) {
+            .nav-menu {
+                display: none;
+            }
+            .mobile-menu-toggle {
+                display: flex;
+            }
+        }
+
         /* Responsive Design */
         @media (max-width: 900px) {
             .nav-menu {
@@ -589,6 +663,12 @@
                     <a href="../installations.html" class="active">Installations</a>
                     <a href="../about.html">About Us</a>
                     <a href="../contact.html" class="contact-btn">Get in Touch</a>
+                    <div class="mobile-language-switcher" id="mobile-language-switcher">
+                        <a href="/installations/blue-primary-school-playground.html">EN</a>
+                        <a href="/es/installations/blue-primary-school-playground.html">ES</a>
+                        <a href="/fr/installations/blue-primary-school-playground.html" class="current">FR</a>
+                        <a href="/de/installations/blue-primary-school-playground.html">DE</a>
+                    </div>
                 </div>
             </nav>
         </div>
@@ -842,6 +922,20 @@
             initMobileMenu();
         });
     </script>
+
+    <!-- Desktop Language Switcher (Fixed Bottom-Right) -->
+    <div class="language-switcher" id="language-switcher">
+        <a href="/installations/blue-primary-school-playground.html">EN</a>
+        <a href="/es/installations/blue-primary-school-playground.html">ES</a>
+        <a href="/fr/installations/blue-primary-school-playground.html" class="current">FR</a>
+        <a href="/de/installations/blue-primary-school-playground.html">DE</a>
+    </div>
+    
+    <!-- Language Switcher -->
+    <script src="/language-switcher-script.js"></script>
+    
+    <!-- Client-side translation system -->
+    <script src="/i18n/translate-client.js"></script>
 
 </body>
 </html>
