@@ -138,7 +138,7 @@ export async function handler(event, context) {
       }]
     }));
     
-    // Create English document
+    // Create document with correct flat structure
     const englishDoc = {
       _id: docId,
       _type: 'installation',

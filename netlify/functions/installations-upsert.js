@@ -17,9 +17,9 @@ function corsHeaders(origin) {
   };
 }
 
-// DeepL configuration
+// DeepL configuration for Pro account
 const DEEPL_API_KEY = process.env.DEEPL_KEY;
-const DEEPL_API_URL = 'https://api.deepl.com/v2/translate';
+const DEEPL_API_URL = 'https://api.deepl.com/v2/translate'; // Pro endpoint
 
 // Brand terms that should not be translated
 const PROTECTED_TERMS = [
