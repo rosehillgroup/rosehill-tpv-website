@@ -985,14 +985,8 @@
     <!-- Filter Section -->
     <section class="filter-section">
         <div class="container">
-            <div class="filter-container">
-                <button class="filter-btn active" data-filter="all">All Installations</button>
-                <button class="filter-btn" data-filter="athletics">Athletics</button>
-                <button class="filter-btn" data-filter="playground">Playground</button>
-                <button class="filter-btn" data-filter="muga">MUGA</button>
-                <button class="filter-btn" data-filter="tennis">Tennis</button>
-                <button class="filter-btn" data-filter="fitness">Fitness</button>
-                <button class="filter-btn" data-filter="water">Water</button>
+            <div class="filter-container" id="filter-container">
+                <!-- Filters will be generated dynamically -->
             </div>
             <div class="stats-bar" id="stats-bar">
                 Loading installations...
@@ -1274,6 +1268,7 @@ async function loadInstallations() {
     });
 
     filteredInstallations = allInstallations.slice(0);
+    generateFilters();
     renderInstallations();
     updateStats();
     const loading = document.getElementById('loading');
@@ -1374,9 +1369,27 @@ function updatePagination() {
 function filterInstallations(category) {
   currentFilter = category;
   currentPage = 1;
-  filteredInstallations = (category === 'all')
-    ? allInstallations.slice(0)
-    : allInstallations.filter((i) => i.category && i.category.toLowerCase().includes(category.toLowerCase()));
+  
+  if (category === 'all') {
+    filteredInstallations = allInstallations.slice(0);
+  } else {
+    filteredInstallations = allInstallations.filter((installation) => {
+      const app = installation.application || installation.category || 'other';
+      const appLower = app.toLowerCase();
+      
+      // Map application values to filter categories
+      if (category === 'playground') return appLower.includes('playground');
+      if (category === 'sports') return appLower.includes('sports') || appLower.includes('muga');
+      if (category === 'athletics') return appLower.includes('athletics');
+      if (category === 'tennis') return appLower.includes('tennis');
+      if (category === 'fitness') return appLower.includes('fitness');
+      if (category === 'water') return appLower.includes('water');
+      if (category === 'other') return !['playground', 'sports', 'athletics', 'tennis', 'fitness', 'water'].some(type => appLower.includes(type)) && !appLower.includes('muga');
+      
+      return false;
+    });
+  }
+  
   renderInstallations();
   updateStats();
   document.querySelectorAll('.filter-btn').forEach((btn) => {
@@ -1482,14 +1495,55 @@ function generatePageHreflangTags() {
   document.head.appendChild(def);
 }
 
+// --- Filter Generation ---
+function generateFilters() {
+  // Map application types to single-word filter labels
+  const applicationMap = {
+    'playground': 'Playground',
+    'sports': 'Sports',
+    'athletics': 'Athletics', 
+    'tennis': 'Tennis',
+    'fitness': 'Fitness',
+    'water': 'Water',
+    'other': 'Other'
+  };
+  
+  // Get unique application types that exist in data
+  const existingTypes = [...new Set(allInstallations.map(inst => {
+    const app = inst.application || inst.category || 'other';
+    // Map form values to filter keys
+    if (app.toLowerCase().includes('playground')) return 'playground';
+    if (app.toLowerCase().includes('sports') || app.toLowerCase().includes('muga')) return 'sports';
+    if (app.toLowerCase().includes('athletics')) return 'athletics';
+    if (app.toLowerCase().includes('tennis')) return 'tennis';
+    if (app.toLowerCase().includes('fitness')) return 'fitness';
+    if (app.toLowerCase().includes('water')) return 'water';
+    return 'other';
+  }))];
+  
+  // Generate filter buttons
+  const filterContainer = document.getElementById('filter-container');
+  const filterButtons = ['<button class="filter-btn active" data-filter="all">All</button>'];
+  
+  existingTypes.sort().forEach(type => {
+    if (applicationMap[type]) {
+      filterButtons.push(`<button class="filter-btn" data-filter="${type}">${applicationMap[type]}</button>`);
+    }
+  });
+  
+  filterContainer.innerHTML = filterButtons.join('');
+  
+  // Add event listeners to new buttons
+  document.querySelectorAll('.filter-btn').forEach((btn) => {
+    btn.addEventListener('click', function () { filterInstallations(this.dataset.filter); });
+  });
+}
+
 // --- Init ---
 document.addEventListener('DOMContentLoaded', function () {
   updatePageSEO();
   loadInstallations();
   initMobileMenu();
-  document.querySelectorAll('.filter-btn').forEach((btn) => {
-    btn.addEventListener('click', function () { filterInstallations(this.dataset.filter); });
-  });
         });
     </script>
 </body>
