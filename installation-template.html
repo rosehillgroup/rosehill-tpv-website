@@ -13,14 +13,14 @@
     <meta property="og:url" content="https://rosehilltpv.com/installations/{{URL_SLUG}}/">
     <meta property="og:title" content="{{TITLE}} - {{LOCATION}}">
     <meta property="og:description" content="{{META_DESCRIPTION}}">
-    <meta property="og:image" content="https://rosehilltpv.com/images/installations/{{FIRST_IMAGE}}">
+    <meta property="og:image" content="{{FIRST_IMAGE}}">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://rosehilltpv.com/installations/{{URL_SLUG}}/">
     <meta property="twitter:title" content="{{TITLE}} - {{LOCATION}}">
     <meta property="twitter:description" content="{{META_DESCRIPTION}}">
-    <meta property="twitter:image" content="https://rosehilltpv.com/images/installations/{{FIRST_IMAGE}}">
+    <meta property="twitter:image" content="{{FIRST_IMAGE}}">
 
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -29,7 +29,7 @@
         "@type": "Article",
         "headline": "{{TITLE}} - {{LOCATION}}",
         "description": "{{META_DESCRIPTION}}",
-        "image": "https://rosehilltpv.com/images/installations/{{FIRST_IMAGE}}",
+        "image": "{{FIRST_IMAGE}}",
         "datePublished": "{{DATE}}",
         "author": {
             "@type": "Organization",
@@ -453,7 +453,7 @@
 
             <!-- Image Gallery -->
             <section class="image-gallery">
-                <img src="../images/installations/{{FIRST_IMAGE}}" alt="{{TITLE}} - Main Image" class="main-image" onclick="openLightbox(0)">
+                <img src="{{FIRST_IMAGE}}" alt="{{TITLE}} - Main Image" class="main-image" onclick="openLightbox(0)">
                 {{THUMBNAIL_GRID}}
             </section>
 
@@ -488,7 +488,7 @@
             const mainImg = document.querySelector('.main-image');
             const thumbnails = document.querySelectorAll('.thumbnail');
             
-            mainImg.src = `../images/installations/${images[index]}`;
+            mainImg.src = images[index];
             
             thumbnails.forEach((thumb, i) => {
                 thumb.classList.toggle('active', i === index);
@@ -503,7 +503,7 @@
             const lightboxImg = document.getElementById('lightbox-img');
             
             currentImageIndex = index;
-            lightboxImg.src = `../images/installations/${images[index]}`;
+            lightboxImg.src = images[index];
             lightbox.style.display = 'flex';
             document.body.style.overflow = 'hidden';
         }
@@ -524,7 +524,7 @@
             }
             
             const lightboxImg = document.getElementById('lightbox-img');
-            lightboxImg.src = `../images/installations/${images[currentImageIndex]}`;
+            lightboxImg.src = images[currentImageIndex];
         }
 
         // Keyboard navigation
@@ -550,24 +550,5 @@
         });
     </script>
 
-    <!-- Supabase and Translation System -->
-    <script src="/js/supabase-client.js"></script>
-    <script src="/js/installation-page-loader.js"></script>
-    <script src="/language-switcher-enhanced.js"></script>
-    <script src="/i18n/translate-client.js"></script>
-    
-    <script>
-        // Load installation content when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            // Get slug from data attribute or URL
-            const slug = document.body.getAttribute('data-installation-slug') || 
-                        window.location.pathname.match(/\/([^/]+)\.html$/)?.[1];
-            const lang = document.body.getAttribute('data-installation-lang') || 'en';
-            
-            if (slug) {
-                loadInstallationContent(slug, lang);
-            }
-        });
-    </script>
 </body>
 </html>

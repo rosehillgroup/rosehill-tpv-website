@@ -8,6 +8,8 @@ async function buildInstallationPages() {
   console.log('🔨 Building installation pages from Sanity...');
   
   const sanityClient = await import('@sanity/client');
+  const imageUrlBuilder = await import('@sanity/image-url');
+  
   const sanity = sanityClient.createClient({
     projectId: '68ola3dd',
     dataset: 'production',
@@ -15,6 +17,9 @@ async function buildInstallationPages() {
     token: process.env.SANITY_WRITE_TOKEN,
     useCdn: false
   });
+  
+  const builder = imageUrlBuilder.default(sanity);
+  const urlFor = (source) => builder.image(source);
 
   // Get all installations
   const query = `*[_type == "installation"] | order(installationDate desc) {
@@ -27,11 +32,29 @@ async function buildInstallationPages() {
     overview,
     thanksTo,
     "coverImage": coverImage {
-      "url": asset->url,
+      asset->{
+        _id,
+        url,
+        metadata {
+          dimensions {
+            width,
+            height
+          }
+        }
+      },
       alt
     },
     "gallery": gallery[] {
-      "url": asset->url,
+      asset->{
+        _id,
+        url,
+        metadata {
+          dimensions {
+            width,
+            height
+          }
+        }
+      },
       alt
     },
     seo,
@@ -94,13 +117,14 @@ async function buildInstallationPages() {
     }).join('\n                ');
   }
 
-  function createThumbnailGrid(gallery, title) {
+  function createThumbnailGrid(gallery, title, urlFor) {
     if (!gallery || gallery.length === 0) return '';
     let thumbnailGrid = '<div class="thumbnail-grid">';
     gallery.forEach((image, index) => {
-      if (image.url) {
+      if (image.asset) {
+        const imageUrl = urlFor(image.asset).width(300).auto('format').quality(70).url();
         thumbnailGrid += `
-                <img src="${image.url}" 
+                <img src="${imageUrl}" 
                      alt="${image.alt || title}" 
                      class="thumbnail" 
                      onclick="setMainImage(${index + 1}); openLightbox(${index + 1})">`;
@@ -110,10 +134,16 @@ async function buildInstallationPages() {
     return thumbnailGrid;
   }
 
-  function createImageArray(coverImage, gallery) {
+  function createImageArray(coverImage, gallery, urlFor) {
     const images = [];
-    if (coverImage?.url) images.push(coverImage.url);
-    if (gallery) images.push(...gallery.filter(img => img?.url).map(img => img.url));
+    if (coverImage?.asset) {
+      images.push(urlFor(coverImage.asset).width(1200).auto('format').quality(80).url());
+    }
+    if (gallery) {
+      images.push(...gallery.filter(img => img?.asset).map(img => 
+        urlFor(img.asset).width(1200).auto('format').quality(80).url()
+      ));
+    }
     return images.map(url => `"${url}"`).join(', ');
   }
 
@@ -137,12 +167,15 @@ async function buildInstallationPages() {
         ? path.join(installationsDir, fileName)
         : path.join(__dirname, lang, 'installations', fileName);
 
-      const thumbnailGrid = createThumbnailGrid(installation.gallery, title);
+      const thumbnailGrid = createThumbnailGrid(installation.gallery, title, urlFor);
       const contentParagraphs = portableTextToHtml(overview);
       const thanksParagraphs = portableTextToHtml(thanksTo);
-      const imageArray = createImageArray(installation.coverImage, installation.gallery);
+      const imageArray = createImageArray(installation.coverImage, installation.gallery, urlFor);
       
       const metaDescription = `${title} installation in ${location}. Professional TPV surfacing by Rosehill Group.`;
+      const firstImageUrl = installation.coverImage?.asset 
+        ? urlFor(installation.coverImage.asset).width(1200).auto('format').quality(80).url()
+        : '';
       
       let pageContent = template
         .replace(/{{TITLE}}/g, title)
@@ -150,7 +183,7 @@ async function buildInstallationPages() {
         .replace(/{{URL_SLUG}}/g, installation.slug)
         .replace(/{{META_DESCRIPTION}}/g, metaDescription)
         .replace(/{{KEYWORDS}}/g, `${title}, ${location}, Rosehill TPV, rubber surfacing`)
-        .replace(/{{FIRST_IMAGE}}/g, installation.coverImage?.url || '')
+        .replace(/{{FIRST_IMAGE}}/g, firstImageUrl)
         .replace(/{{DATE}}/g, formatDate(installation.installationDate))
         .replace(/{{APPLICATION}}/g, installation.application || 'Installation')
         .replace(/{{THUMBNAIL_GRID}}/g, thumbnailGrid)
