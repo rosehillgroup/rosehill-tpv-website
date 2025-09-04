@@ -91,7 +91,7 @@ export async function handler(event) {
         projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
         dataset: process.env.SANITY_DATASET || 'production',
         apiVersion: '2023-05-03',
-        token: process.env.SANITY_TOKEN,
+        token: process.env.SANITY_WRITE_TOKEN,
         useCdn: false
       });
       
