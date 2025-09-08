@@ -248,10 +248,39 @@ async function buildInstallationPages() {
   console.log(`✅ Generated ${generatedCount} installation pages`);
 }
 
+async function replaceApiKeys() {
+  console.log('🔑 Replacing API keys...');
+  
+  const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!googleMapsApiKey) {
+    console.warn('⚠️ GOOGLE_MAPS_API_KEY environment variable not found');
+    return;
+  }
+  
+  // Replace API key in contact.html
+  try {
+    const contactHtmlPath = path.join(__dirname, 'contact.html');
+    if (fs.existsSync(contactHtmlPath)) {
+      let contactContent = fs.readFileSync(contactHtmlPath, 'utf8');
+      contactContent = contactContent.replace(/GOOGLE_MAPS_API_KEY/g, googleMapsApiKey);
+      fs.writeFileSync(contactHtmlPath, contactContent);
+      console.log('✅ Updated contact.html with Google Maps API key');
+    }
+  } catch (error) {
+    console.error('❌ Failed to update contact.html:', error);
+  }
+}
+
 // Run the build
-buildInstallationPages()
-  .then(() => console.log('🎉 Installation pages built successfully'))
-  .catch(error => {
+async function build() {
+  try {
+    await buildInstallationPages();
+    await replaceApiKeys();
+    console.log('🎉 Build completed successfully');
+  } catch (error) {
     console.error('❌ Build failed:', error);
     process.exit(1);
-  });
+  }
+}
+
+build();
