@@ -1388,12 +1388,19 @@
             const langMatch = path.match(/^\/(?:es|fr|de)\//); 
             const currentLang = langMatch ? langMatch[0].slice(1, -1) : 'en';
             
+            // Extract base page path without language prefix
             let basePage = path;
             if (langMatch) {
-                basePage = path.substring(langMatch[0].length - 1);
+                // Remove language prefix (e.g., /fr/ from /fr/contact.html)
+                basePage = path.replace(/^\/(?:es|fr|de)/, '');
             }
+            // Ensure we have a proper page path
             if (basePage === '' || basePage === '/') {
-                basePage = '/index.html';
+                basePage = '/contact.html';
+            }
+            // Ensure basePage starts with /
+            if (!basePage.startsWith('/')) {
+                basePage = '/' + basePage;
             }
             
             // Update desktop dropdown
