@@ -703,7 +703,7 @@
             font-size: 14px !important;
         }
 
-        .mobile-language-switcher a.current {
+        .mobile-language-switcher a.active {
             background: rgba(255, 107, 53, 0.3) !important;
             color: #ff6b35 !important;
             border-color: #ff6b35 !important;
@@ -773,10 +773,10 @@
                     <li class="language-switcher-desktop">
                         <a href="#" class="language-dropdown-toggle" id="language-dropdown-toggle">EN</a>
                         <div class="language-dropdown" id="language-dropdown">
-                            <a href="/installations/safe-and-vibrant-school-play-area-new-south-wales.html" class="lang-option active">English</a>
-                            <a href="/es/installations/safe-and-vibrant-school-play-area-new-south-wales.html" class="lang-option">Español</a>
-                            <a href="/fr/installations/safe-and-vibrant-school-play-area-new-south-wales.html" class="lang-option">Français</a>
-                            <a href="/de/installations/safe-and-vibrant-school-play-area-new-south-wales.html" class="lang-option">Deutsch</a>
+                            <a href="#" class="lang-option" data-lang="en">English</a>
+                            <a href="#" class="lang-option" data-lang="es">Español</a>
+                            <a href="#" class="lang-option" data-lang="fr">Français</a>
+                            <a href="#" class="lang-option" data-lang="de">Deutsch</a>
                         </div>
                     </li>
                     <li><a href="{{CONTACT_URL}}" class="contact-btn">Get in Touch</a></li>
@@ -795,10 +795,10 @@
                     <a href="{{ABOUT_URL}}">About Us</a>
                     <a href="{{CONTACT_URL}}" class="contact-btn">Get in Touch</a>
                     <div class="mobile-language-switcher" id="mobile-language-switcher">
-                        <a href="/installations/safe-and-vibrant-school-play-area-new-south-wales.html" class="current">EN</a>
-                        <a href="/es/installations/safe-and-vibrant-school-play-area-new-south-wales.html">ES</a>
-                        <a href="/fr/installations/safe-and-vibrant-school-play-area-new-south-wales.html">FR</a>
-                        <a href="/de/installations/safe-and-vibrant-school-play-area-new-south-wales.html">DE</a>
+                        <a href="#" data-lang="en">EN</a>
+                        <a href="#" data-lang="es">ES</a>
+                        <a href="#" data-lang="fr">FR</a>
+                        <a href="#" data-lang="de">DE</a>
                     </div>
                 </div>
             </nav>
@@ -1072,79 +1072,113 @@
 
     <!-- Desktop Language Switcher (Fixed Bottom-Right) -->
     <div class="language-switcher" id="language-switcher">
-        <a href="/installations/safe-and-vibrant-school-play-area-new-south-wales.html" class="current">EN</a>
-        <a href="/es/installations/safe-and-vibrant-school-play-area-new-south-wales.html">ES</a>
-        <a href="/fr/installations/safe-and-vibrant-school-play-area-new-south-wales.html">FR</a>
-        <a href="/de/installations/safe-and-vibrant-school-play-area-new-south-wales.html">DE</a>
+        <a href="#" data-lang="en">EN</a>
+        <a href="#" data-lang="es">ES</a>
+        <a href="#" data-lang="fr">FR</a>
+        <a href="#" data-lang="de">DE</a>
     </div>
     
     <!-- Language Switcher Handler -->
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        function initLanguageSwitcher() {
             const path = window.location.pathname;
-            const langMatch = path.match(/^\/(?:es|fr|de)\//); 
+            const langMatch = path.match(/^\/(?:es|fr|de)\//);
             const currentLang = langMatch ? langMatch[0].slice(1, -1) : 'en';
             
-            // Extract installation page name from path
+            // Extract installation slug from path for installation pages
             const installationMatch = path.match(/\/installations\/(.+)\.html$/);
             const installationSlug = installationMatch ? installationMatch[1] : '';
             
-            // Update desktop dropdown
+            // Update desktop dropdown toggle
             const dropdownToggle = document.getElementById('language-dropdown-toggle');
             if (dropdownToggle) {
                 dropdownToggle.textContent = currentLang.toUpperCase();
             }
             
-            // Static language mapping to avoid href dependency issues
-            const languageMap = {
-                'English': 'en',
-                'Español': 'es', 
-                'Français': 'fr',
-                'Deutsch': 'de'
-            };
-
-            // Update desktop dropdown options
+            // Set active states and add click handlers for desktop dropdown
             document.querySelectorAll('.language-dropdown .lang-option').forEach(link => {
-                const text = link.textContent.trim();
-                const targetLang = languageMap[text];
+                const targetLang = link.getAttribute('data-lang');
                 
-                if (targetLang === 'en') {
-                    link.href = `/installations/${installationSlug}.html`; // No prefix for English
-                } else {
-                    link.href = `/${targetLang}/installations/${installationSlug}.html`;
-                }
-                
-                // Set active state based on current language
+                // Set active state
                 link.classList.remove('active');
                 if (targetLang === currentLang) {
                     link.classList.add('active');
                 }
+                
+                // Add click handler
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    let targetUrl;
+                    if (targetLang === 'en') {
+                        targetUrl = `/installations/${installationSlug}.html`;
+                    } else {
+                        targetUrl = `/${targetLang}/installations/${installationSlug}.html`;
+                    }
+                    
+                    // Navigate to the new URL
+                    window.location.href = targetUrl;
+                });
             });
             
-            // Update mobile switcher
+            // Set active states and add click handlers for mobile switcher
             document.querySelectorAll('.mobile-language-switcher a').forEach(link => {
-                const linkLang = link.textContent.toLowerCase().trim();
+                const targetLang = link.getAttribute('data-lang');
                 
                 // Reset styles
-                link.style.background = '';
-                link.style.color = 'rgba(255,255,255,0.8)';
-                link.style.borderColor = 'rgba(255,255,255,0.2)';
+                link.classList.remove('active');
                 
-                // Set URL for installation pages
-                if (linkLang === 'en') {
-                    link.href = `/installations/${installationSlug}.html`;
-                } else {
-                    link.href = `/${linkLang}/installations/${installationSlug}.html`;
+                // Set active state
+                if (targetLang === currentLang) {
+                    link.classList.add('active');
                 }
                 
-                // Highlight current
-                if (linkLang === currentLang) {
-                    link.style.background = 'rgba(255, 107, 53, 0.3)';
-                    link.style.color = '#ff6b35';
-                    link.style.borderColor = '#ff6b35';
-                }
+                // Add click handler
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    let targetUrl;
+                    if (targetLang === 'en') {
+                        targetUrl = `/installations/${installationSlug}.html`;
+                    } else {
+                        targetUrl = `/${targetLang}/installations/${installationSlug}.html`;
+                    }
+                    
+                    // Navigate to the new URL
+                    window.location.href = targetUrl;
+                });
             });
-        });
+            
+            // Handle bottom-right fixed language switcher
+            document.querySelectorAll('.language-switcher a').forEach(link => {
+                const targetLang = link.getAttribute('data-lang');
+                
+                // Remove current class from all
+                link.classList.remove('current');
+                
+                // Set active state
+                if (targetLang === currentLang) {
+                    link.classList.add('current');
+                }
+                
+                // Add click handler
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    let targetUrl;
+                    if (targetLang === 'en') {
+                        targetUrl = `/installations/${installationSlug}.html`;
+                    } else {
+                        targetUrl = `/${targetLang}/installations/${installationSlug}.html`;
+                    }
+                    
+                    // Navigate to the new URL
+                    window.location.href = targetUrl;
+                });
+            });
+        }
+        
+        document.addEventListener('DOMContentLoaded', initLanguageSwitcher);
     </script>
     
     <!-- Client-side translation system -->
