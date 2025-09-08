@@ -2361,26 +2361,30 @@
                 dropdownToggle.textContent = currentLang.toUpperCase();
             }
             
+            // Static language mapping to avoid href dependency issues
+            const languageMap = {
+                'English': 'en',
+                'Español': 'es', 
+                'Français': 'fr',
+                'Deutsch': 'de'
+            };
+
             document.querySelectorAll('.language-dropdown .lang-option').forEach(link => {
-                const href = link.getAttribute('href');
-                if (href.includes('/es/')) {
-                    link.href = `/es${basePage}`;
-                } else if (href.includes('/fr/')) {
-                    link.href = `/fr${basePage}`;
-                } else if (href.includes('/de/')) {
-                    link.href = `/de${basePage}`;
+                const text = link.textContent.trim();
+                const targetLang = languageMap[text];
+                
+                if (targetLang === 'en') {
+                    link.href = basePage; // No prefix for English
                 } else {
-                    link.href = basePage;
+                    link.href = `/${targetLang}${basePage}`;
                 }
                 
+                // Set active state based on current language
                 link.classList.remove('active');
+                if (targetLang === currentLang) {
+                    link.classList.add('active');
+                }
             });
-            
-            // Set active state for desktop dropdown
-            const activeOption = document.querySelector(`.language-dropdown .lang-option[href="${path}"], .language-dropdown .lang-option[href="${basePage}"]`);
-            if (activeOption) {
-                activeOption.classList.add('active');
-            }
             
             // Update mobile switcher
             document.querySelectorAll('.mobile-language-switcher a').forEach(link => {

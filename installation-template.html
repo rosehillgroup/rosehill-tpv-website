@@ -1094,27 +1094,31 @@
                 dropdownToggle.textContent = currentLang.toUpperCase();
             }
             
+            // Static language mapping to avoid href dependency issues
+            const languageMap = {
+                'English': 'en',
+                'Español': 'es', 
+                'Français': 'fr',
+                'Deutsch': 'de'
+            };
+
             // Update desktop dropdown options
             document.querySelectorAll('.language-dropdown .lang-option').forEach(link => {
-                const href = link.getAttribute('href');
-                if (href.includes('/es/')) {
-                    link.href = `/es/installations/${installationSlug}.html`;
-                } else if (href.includes('/fr/')) {
-                    link.href = `/fr/installations/${installationSlug}.html`;
-                } else if (href.includes('/de/')) {
-                    link.href = `/de/installations/${installationSlug}.html`;
+                const text = link.textContent.trim();
+                const targetLang = languageMap[text];
+                
+                if (targetLang === 'en') {
+                    link.href = `/installations/${installationSlug}.html`; // No prefix for English
                 } else {
-                    link.href = `/installations/${installationSlug}.html`;
+                    link.href = `/${targetLang}/installations/${installationSlug}.html`;
                 }
                 
+                // Set active state based on current language
                 link.classList.remove('active');
+                if (targetLang === currentLang) {
+                    link.classList.add('active');
+                }
             });
-            
-            // Set active state for desktop dropdown
-            const activeOption = document.querySelector(`.language-dropdown .lang-option[href="${path}"]`);
-            if (activeOption) {
-                activeOption.classList.add('active');
-            }
             
             // Update mobile switcher
             document.querySelectorAll('.mobile-language-switcher a').forEach(link => {
