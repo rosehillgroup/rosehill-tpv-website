@@ -645,43 +645,6 @@
             }
         }
 
-        /* Desktop Language Switcher - Bottom Right */
-        .language-switcher {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 8px;
-            padding: 8px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
-            z-index: 1000;
-            display: flex;
-            gap: 4px;
-        }
-
-        .language-switcher a {
-            display: inline-block;
-            padding: 6px 12px;
-            margin: 0 2px;
-            border-radius: 4px;
-            color: #64748b;
-            text-decoration: none;
-            font-size: 13px;
-            transition: all 0.2s ease;
-            font-weight: 500;
-        }
-
-        .language-switcher a:hover {
-            background: rgba(255, 107, 53, 0.1);
-            color: #ff6b35;
-        }
-
-        .language-switcher a.current {
-            background: #ff6b35;
-            color: white;
-            box-shadow: 0 2px 8px rgba(255,107,53,0.3);
-        }
 
         /* Mobile Language Switcher */
         .mobile-language-switcher {
@@ -1085,14 +1048,6 @@
         });
     </script>
 
-    <!-- Desktop Language Switcher (Fixed Bottom-Right) -->
-    <div class="language-switcher" id="language-switcher">
-        <a href="#" data-lang="en">EN</a>
-        <a href="#" data-lang="es">ES</a>
-        <a href="#" data-lang="fr">FR</a>
-        <a href="#" data-lang="de">DE</a>
-    </div>
-    
     <!-- Language Switcher Handler -->
     <script>
         function initLanguageSwitcher() {
@@ -1146,34 +1101,6 @@
                 // Set active state
                 if (targetLang === currentLang) {
                     link.classList.add('active');
-                }
-                
-                // Add click handler
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    
-                    let targetUrl;
-                    if (targetLang === 'en') {
-                        targetUrl = `/installations/${installationSlug}.html`;
-                    } else {
-                        targetUrl = `/${targetLang}/installations/${installationSlug}.html`;
-                    }
-                    
-                    // Navigate to the new URL
-                    window.location.href = targetUrl;
-                });
-            });
-            
-            // Handle bottom-right fixed language switcher
-            document.querySelectorAll('.language-switcher a').forEach(link => {
-                const targetLang = link.getAttribute('data-lang');
-                
-                // Remove current class from all
-                link.classList.remove('current');
-                
-                // Set active state
-                if (targetLang === currentLang) {
-                    link.classList.add('current');
                 }
                 
                 // Add click handler
