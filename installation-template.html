@@ -93,7 +93,7 @@
         .nav-menu {
             display: flex;
             list-style: none;
-            gap: 30px;
+            gap: 25px;
             align-items: center;
         }
 
@@ -115,6 +115,81 @@
             background: rgba(255, 107, 53, 0.2);
             color: #ff6b35;
             font-weight: 600;
+        }
+
+        /* Desktop Language Switcher Dropdown */
+        .language-switcher-desktop {
+            position: relative;
+            display: inline-block;
+        }
+
+        .language-dropdown-toggle {
+            color: white !important;
+            text-decoration: none !important;
+            font-weight: 500 !important;
+            transition: all 0.3s ease !important;
+            padding: 8px 16px !important;
+            border-radius: 6px !important;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .language-dropdown-toggle:after {
+            content: '▼';
+            font-size: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .language-dropdown-toggle.active:after {
+            transform: rotate(180deg);
+        }
+
+        .language-dropdown-toggle:hover {
+            background: rgba(255, 107, 53, 0.2) !important;
+            color: #ff6b35 !important;
+        }
+
+        .language-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            display: none;
+            flex-direction: column;
+            min-width: 120px;
+            z-index: 1000;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .language-dropdown.active {
+            display: flex;
+        }
+
+        .language-dropdown .lang-option {
+            padding: 12px 16px !important;
+            color: #64748b !important;
+            text-decoration: none !important;
+            transition: all 0.2s ease !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            border-radius: 0 !important;
+            display: block;
+        }
+
+        .language-dropdown .lang-option:hover {
+            background: #f8fafc !important;
+            color: #1a365d !important;
+        }
+
+        .language-switcher-desktop .language-dropdown .lang-option.active {
+            background: #ff6b35 !important;
+            color: white !important;
         }
 
         .contact-btn {
@@ -563,6 +638,13 @@
             opacity: 0.8;
         }
 
+        /* Hide desktop language dropdown on mobile */
+        @media (max-width: 768px) {
+            .language-switcher-desktop {
+                display: none;
+            }
+        }
+
         /* Desktop Language Switcher - Bottom Right */
         .language-switcher {
             position: fixed;
@@ -688,6 +770,15 @@
                     <li><a href="{{COLOUR_URL}}">Colour</a></li>
                     <li><a href="{{INSTALLATIONS_URL}}" class="active">Installations</a></li>
                     <li><a href="{{ABOUT_URL}}">About Us</a></li>
+                    <li class="language-switcher-desktop">
+                        <a href="#" class="language-dropdown-toggle" id="language-dropdown-toggle">EN</a>
+                        <div class="language-dropdown" id="language-dropdown">
+                            <a href="/installations/{{URL_SLUG}}.html" class="lang-option active">English</a>
+                            <a href="/es/installations/{{URL_SLUG}}.html" class="lang-option">Español</a>
+                            <a href="/fr/installations/{{URL_SLUG}}.html" class="lang-option">Français</a>
+                            <a href="/de/installations/{{URL_SLUG}}.html" class="lang-option">Deutsch</a>
+                        </div>
+                    </li>
                     <li><a href="{{CONTACT_URL}}" class="contact-btn">Get in Touch</a></li>
                 </ul>
                 <button class="mobile-menu-toggle" id="mobile-toggle">
@@ -940,6 +1031,32 @@
             });
         }
 
+        // Desktop Language Dropdown functionality
+        const languageToggle = document.getElementById('language-dropdown-toggle');
+        const languageDropdown = document.getElementById('language-dropdown');
+
+        if (languageToggle && languageDropdown) {
+            languageToggle.addEventListener('click', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                languageToggle.classList.toggle('active');
+                languageDropdown.classList.toggle('active');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!languageToggle.contains(event.target) && !languageDropdown.contains(event.target)) {
+                    languageToggle.classList.remove('active');
+                    languageDropdown.classList.remove('active');
+                }
+            });
+
+            // Prevent dropdown from closing when clicking inside
+            languageDropdown.addEventListener('click', function(event) {
+                event.stopPropagation();
+            });
+        }
+
         // Initialize first thumbnail as active
         document.addEventListener('DOMContentLoaded', function() {
             const firstThumbnail = document.querySelector('.thumbnail');
@@ -960,8 +1077,70 @@
         <a href="/de/installations/{{URL_SLUG}}.html">DE</a>
     </div>
     
-    <!-- Language Switcher -->
-    <script src="/language-switcher-script.js"></script>
+    <!-- Language Switcher Handler -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const path = window.location.pathname;
+            const langMatch = path.match(/^\/(?:es|fr|de)\//); 
+            const currentLang = langMatch ? langMatch[0].slice(1, -1) : 'en';
+            
+            // Extract installation page name from path
+            const installationMatch = path.match(/\/installations\/(.+)\.html$/);
+            const installationSlug = installationMatch ? installationMatch[1] : '';
+            
+            // Update desktop dropdown
+            const dropdownToggle = document.getElementById('language-dropdown-toggle');
+            if (dropdownToggle) {
+                dropdownToggle.textContent = currentLang.toUpperCase();
+            }
+            
+            // Update desktop dropdown options
+            document.querySelectorAll('.language-dropdown .lang-option').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href.includes('/es/')) {
+                    link.href = `/es/installations/${installationSlug}.html`;
+                } else if (href.includes('/fr/')) {
+                    link.href = `/fr/installations/${installationSlug}.html`;
+                } else if (href.includes('/de/')) {
+                    link.href = `/de/installations/${installationSlug}.html`;
+                } else {
+                    link.href = `/installations/${installationSlug}.html`;
+                }
+                
+                link.classList.remove('active');
+            });
+            
+            // Set active state for desktop dropdown
+            const activeOption = document.querySelector(`.language-dropdown .lang-option[href="${path}"]`);
+            if (activeOption) {
+                activeOption.classList.add('active');
+            }
+            
+            // Update mobile switcher
+            document.querySelectorAll('.mobile-language-switcher a').forEach(link => {
+                const linkLang = link.textContent.toLowerCase().trim();
+                
+                // Reset styles
+                link.style.background = '';
+                link.style.color = 'rgba(255,255,255,0.8)';
+                link.style.borderColor = 'rgba(255,255,255,0.2)';
+                
+                // Set URL for installation pages
+                if (linkLang === 'en') {
+                    link.href = `/installations/${installationSlug}.html`;
+                } else {
+                    link.href = `/${linkLang}/installations/${installationSlug}.html`;
+                }
+                
+                // Highlight current
+                if (linkLang === currentLang) {
+                    link.style.background = 'rgba(255, 107, 53, 0.3)';
+                    link.style.color = '#ff6b35';
+                    link.style.borderColor = '#ff6b35';
+                }
+            });
+        });
+    </script>
     
     <!-- Client-side translation system -->
     <script src="/i18n/translate-client.js"></script>

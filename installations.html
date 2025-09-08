@@ -60,7 +60,14 @@
     <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
     <link rel="manifest" href="favicon_io/site.webmanifest">
-    <!-- Fonts removed due to CSP restrictions - using system font stack -->
+    
+    <!-- Content Security Policy to allow Google Fonts -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://68ola3dd.api.sanity.io https://analytics.google.com; connect-src 'self' https://68ola3dd.api.sanity.io https://www.google-analytics.com; img-src 'self' data: https:; frame-src https://www.googletagmanager.com;">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
     
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -117,7 +124,7 @@
         .nav-menu {
             display: flex;
             list-style: none;
-            gap: 30px;
+            gap: 25px;
             align-items: center;
         }
 
@@ -139,6 +146,81 @@
             background: rgba(255, 107, 53, 0.2);
             color: #ff6b35;
             font-weight: 600;
+        }
+
+        /* Desktop Language Switcher Dropdown */
+        .language-switcher-desktop {
+            position: relative;
+            display: inline-block;
+        }
+
+        .language-dropdown-toggle {
+            color: white !important;
+            text-decoration: none !important;
+            font-weight: 500 !important;
+            transition: all 0.3s ease !important;
+            padding: 8px 16px !important;
+            border-radius: 6px !important;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .language-dropdown-toggle:after {
+            content: '▼';
+            font-size: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .language-dropdown-toggle.active:after {
+            transform: rotate(180deg);
+        }
+
+        .language-dropdown-toggle:hover {
+            background: rgba(255, 107, 53, 0.2) !important;
+            color: #ff6b35 !important;
+        }
+
+        .language-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            display: none;
+            flex-direction: column;
+            min-width: 120px;
+            z-index: 1000;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .language-dropdown.active {
+            display: flex;
+        }
+
+        .language-dropdown .lang-option {
+            padding: 12px 16px !important;
+            color: #64748b !important;
+            text-decoration: none !important;
+            transition: all 0.2s ease !important;
+            font-size: 14px !important;
+            font-weight: 500 !important;
+            border-radius: 0 !important;
+            display: block;
+        }
+
+        .language-dropdown .lang-option:hover {
+            background: #f8fafc !important;
+            color: #1a365d !important;
+        }
+
+        .language-switcher-desktop .language-dropdown .lang-option.active {
+            background: #ff6b35 !important;
+            color: white !important;
         }
 
         .contact-btn {
@@ -747,10 +829,10 @@
             opacity: 0.8;
         }
 
-        /* Language Switcher Mobile Responsive */
+        /* Hide desktop language dropdown on mobile */
         @media (max-width: 768px) {
-            #language-switcher {
-                display: none !important;
+            .language-switcher-desktop {
+                display: none;
             }
         }
 
@@ -936,6 +1018,15 @@
                     <li><a href="colour.html">Colour</a></li>
                     <li><a href="installations.html" class="active">Installations</a></li>
                     <li><a href="about.html">About Us</a></li>
+                    <li class="language-switcher-desktop">
+                        <a href="#" class="language-dropdown-toggle" id="language-dropdown-toggle">EN</a>
+                        <div class="language-dropdown" id="language-dropdown">
+                            <a href="/installations.html" class="lang-option active">English</a>
+                            <a href="/es/installations.html" class="lang-option">Español</a>
+                            <a href="/fr/installations.html" class="lang-option">Français</a>
+                            <a href="/de/installations.html" class="lang-option">Deutsch</a>
+                        </div>
+                    </li>
                     <li><a href="contact.html" class="contact-btn">Get in Touch</a></li>
                 </ul>
                 <button class="mobile-menu-toggle" id="mobile-toggle">
@@ -1126,18 +1217,108 @@
     <script src="/js/sanity-client.js"></script>
     <script src="/analytics-language-enhancer.js"></script>
 
-    <!-- Desktop Language Switcher (Fixed Bottom-Right) -->
-    <div class="language-switcher" id="language-switcher" style="position:fixed;bottom:20px;right:20px;background:linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);padding:8px 12px;border-radius:25px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:9999;border:1px solid rgba(255,107,53,0.1);backdrop-filter:blur(10px);display:flex;gap:4px;">
-        <a href="/installations.html" class="current" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;font-size:14px;font-weight:500;">EN</a>
-        <a href="/es/installations.html" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;font-size:14px;font-weight:500;">ES</a>
-        <a href="/fr/installations.html" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;font-size:14px;font-weight:500;">FR</a>
-        <a href="/de/installations.html" style="display:inline-block;padding:6px 12px;margin:0 2px;text-decoration:none;color:#64748b;border-radius:15px;transition:all 0.2s ease;font-size:14px;font-weight:500;">DE</a>
-    </div>
 
     <!-- Supabase removed - now using Sanity -->
     <!-- Supabase client removed - now using Sanity -->
     <script src="/language-switcher-script.js"></script>
     <script src="/i18n/translate-client.js"></script>
+
+    <!-- Desktop Language Dropdown functionality -->
+    <script>
+        // Desktop Language Dropdown functionality
+        const languageToggle = document.getElementById('language-dropdown-toggle');
+        const languageDropdown = document.getElementById('language-dropdown');
+
+        if (languageToggle && languageDropdown) {
+            languageToggle.addEventListener('click', function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                languageToggle.classList.toggle('active');
+                languageDropdown.classList.toggle('active');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!languageToggle.contains(event.target) && !languageDropdown.contains(event.target)) {
+                    languageToggle.classList.remove('active');
+                    languageDropdown.classList.remove('active');
+                }
+            });
+
+            // Prevent dropdown from closing when clicking inside
+            languageDropdown.addEventListener('click', function(event) {
+                event.stopPropagation();
+            });
+        }
+    </script>
+
+    <!-- Language Switcher Handler -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const path = window.location.pathname;
+            const langMatch = path.match(/^\/(?:es|fr|de)\//); 
+            const currentLang = langMatch ? langMatch[0].slice(1, -1) : 'en';
+            
+            let basePage = path;
+            if (langMatch) {
+                basePage = path.substring(langMatch[0].length - 1);
+            }
+            if (basePage === '' || basePage === '/') {
+                basePage = '/index.html';
+            }
+            
+            // Update desktop dropdown
+            const dropdownToggle = document.getElementById('language-dropdown-toggle');
+            if (dropdownToggle) {
+                dropdownToggle.textContent = currentLang.toUpperCase();
+            }
+            
+            document.querySelectorAll('.language-dropdown .lang-option').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href.includes('/es/')) {
+                    link.href = `/es${basePage}`;
+                } else if (href.includes('/fr/')) {
+                    link.href = `/fr${basePage}`;
+                } else if (href.includes('/de/')) {
+                    link.href = `/de${basePage}`;
+                } else {
+                    link.href = basePage;
+                }
+                
+                link.classList.remove('active');
+            });
+            
+            // Set active state for desktop dropdown
+            const activeOption = document.querySelector(`.language-dropdown .lang-option[href="${path}"], .language-dropdown .lang-option[href="${basePage}"]`);
+            if (activeOption) {
+                activeOption.classList.add('active');
+            }
+            
+            // Update mobile switcher if it exists
+            document.querySelectorAll('.mobile-language-switcher a').forEach(link => {
+                const linkLang = link.textContent.toLowerCase().trim();
+                
+                // Reset styles
+                link.style.background = '';
+                link.style.color = 'rgba(255,255,255,0.8)';
+                link.style.borderColor = 'rgba(255,255,255,0.2)';
+                
+                // Set URL
+                if (linkLang === 'en') {
+                    link.href = basePage;
+                } else {
+                    link.href = `/${linkLang}${basePage}`;
+                }
+                
+                // Highlight current
+                if (linkLang === currentLang) {
+                    link.style.background = 'rgba(255, 107, 53, 0.3)';
+                    link.style.color = '#ff6b35';
+                    link.style.borderColor = '#ff6b35';
+                }
+            });
+        });
+    </script>
     <script>
 // === Installations Page Logic (clean, template-literal version) ===
 
