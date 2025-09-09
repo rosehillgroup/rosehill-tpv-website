@@ -346,40 +346,61 @@ class InstallationParser {
         return 'other';
     }
 
-    // Parse all installation files using the Netlify function
+    // Parse all installations from static JSON
     async parseAllInstallations() {
         try {
-            console.log('Fetching installations from Netlify function...');
+            console.log('Loading installations from static JSON...');
             
-            // Use the same endpoint as installations.html
-            const response = await fetch('/.netlify/functions/get-installations-public');
+            // Fetch from static JSON file
+            const response = await fetch('/data/legacy-installations.json');
             const data = await response.json();
             const installationsData = data.installations || [];
             
-            console.log(`Found ${installationsData.length} installations from API`);
+            console.log(`Found ${installationsData.length} installations from legacy data`);
 
-            // Convert the API data to our format
+            // Convert the data to our expected format
             this.installations = installationsData.map(installation => {
+                // Generate a clean ID from title if not present
+                const id = installation.id || installation.slug || 
+                          (installation.title ? installation.title.toLowerCase()
+                            .replace(/[^a-z0-9]+/g, '-')
+                            .replace(/^-+|-+$/g, '') 
+                            : `installation-${Date.now()}`);
+                
+                // Handle description - can be array or string
+                let description = '';
+                let fullContent = '';
+                if (Array.isArray(installation.description)) {
+                    description = installation.description[0] || '';
+                    fullContent = installation.description.join(' ');
+                } else if (typeof installation.description === 'string') {
+                    description = installation.description;
+                    fullContent = installation.description;
+                } else {
+                    description = 'Installation details not available';
+                    fullContent = 'Content not available';
+                }
+                
                 return {
-                    id: installation.slug || installation.id,
-                    filename: `${installation.slug || installation.id}.html`,
+                    id: id,
+                    filename: `${id}.html`,
                     title: installation.title || 'Untitled Installation',
-                    description: installation.description || 'Installation details not available',
+                    description: description,
                     location: installation.location || 'Location not specified',
                     date: installation.date || 'Date not specified',
                     images: installation.images || [],
-                    category: this.categorizeInstallation(installation.title || '', installation.description || ''),
-                    fullContent: installation.content || installation.description || 'Content not available'
+                    category: this.categorizeInstallation(installation.title || '', description),
+                    fullContent: fullContent
                 };
             });
 
             return this.installations;
 
         } catch (error) {
-            console.error('Error fetching installations from API:', error);
+            console.error('Error loading installations from static JSON:', error);
             
-            // Return empty array if API fails
-            console.log('Could not fetch installations from API. Please check the connection.');
+            // Fallback to empty array if loading fails
+            console.log('Could not load installations. Please check the data file exists at /data/legacy-installations.json');
             return [];
         }
     }
