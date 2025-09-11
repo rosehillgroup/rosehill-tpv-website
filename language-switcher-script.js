@@ -1,15 +1,10 @@
 // Language Switcher Script - Fixed Version
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🌐 Language Switcher: Initializing...');
-    
     const path = window.location.pathname;
-    console.log('Current path:', path);
     
     // Detect current language with more robust regex
     const langMatch = path.match(/^\/(?:es|fr|de)\//);
     const currentLang = langMatch ? langMatch[0].slice(1, -1) : 'en';
-    
-    console.log('Detected language:', currentLang);
     
     // Get base page path by removing ALL language prefixes
     let basePage = path;
@@ -29,11 +24,8 @@ document.addEventListener('DOMContentLoaded', function() {
         basePage = '/index.html';
     }
     
-    console.log('Base page:', basePage);
-    
     // Find all language switcher links (both desktop and mobile)
     const languageLinks = document.querySelectorAll('.language-switcher a, .mobile-nav-menu .lang-btn');
-    console.log('Found', languageLinks.length, 'language links');
     
     languageLinks.forEach(link => {
         const linkLang = link.textContent.toLowerCase().trim();
@@ -52,15 +44,12 @@ document.addEventListener('DOMContentLoaded', function() {
             link.href = origin + '/' + linkLang + basePage;
         }
         
-        console.log(`${linkLang.toUpperCase()} link: ${link.href}`);
-        
         // Highlight ONLY the current language
         if (linkLang === currentLang) {
             link.style.background = '#ff6b35';
             link.style.color = 'white';
             link.style.boxShadow = '0 2px 8px rgba(255,107,53,0.3)';
             link.classList.add('current');
-            console.log(`✓ Highlighted ${linkLang.toUpperCase()} as current`);
         }
         
         // Instead of cloning, just remove all existing click handlers and add a new one
@@ -93,6 +82,4 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-    
-    console.log('🌐 Language Switcher: Initialization complete');
 });

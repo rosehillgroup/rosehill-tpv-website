@@ -956,7 +956,21 @@
             }
         }
 
-        @media (max-width: 900px) {
+        /* Intermediate breakpoint for nav compression */
+        @media (max-width: 1200px) and (min-width: 1101px) {
+            .nav-menu {
+                gap: 15px;
+            }
+            .nav-menu a {
+                padding: 6px 12px;
+                font-size: 0.95rem;
+            }
+            .contact-btn {
+                padding: 10px 20px;
+            }
+        }
+
+        @media (max-width: 1100px) {
             .nav-menu {
                 display: none;
             }
@@ -1274,7 +1288,6 @@
 
     <!-- Language Switcher Handler -->
     <script>
-            <script>
         function initLanguageSwitcher() {
             const path = window.location.pathname;
             const langMatch = path.match(/^\/(?:es|fr|de)\//);
@@ -1416,21 +1429,15 @@ function formatInstallationDate(dateString) {
 // --- Data load ---
 async function loadInstallations() {
   try {
-    console.log('🔄 Loading installations from Sanity...');
-    
     // Fetch from public API endpoint
     const response = await fetch('/.netlify/functions/installations-public');
-    console.log('📡 API response status:', response.status);
     
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
     const data = await response.json();
-    console.log('📊 API data:', data);
-    console.log('📊 Full installations array:', data.installations);
     
     const installations = data.installations || [];
-    console.log(`📋 Found ${installations.length} installations`);
     
     // Detect current language
     const currentLang = detectLanguageFromPath();

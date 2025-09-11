@@ -53,8 +53,6 @@ class AnalyticsLanguageEnhancer {
                 'multilingual_site': true,
                 'language_method': 'url_based'
             });
-            
-            console.log(`✓ Analytics: Language tracking enabled for ${this.currentLanguage}`);
         } catch (error) {
             console.warn('Analytics: Could not push language data', error);
         }
@@ -114,7 +112,6 @@ class AnalyticsLanguageEnhancer {
             this.monitorLanguageChanges();
             
             this.initialized = true;
-            console.log('✓ Analytics Language Enhancer: Initialized successfully');
         } catch (error) {
             console.error('Analytics Language Enhancer: Initialization failed', error);
         }

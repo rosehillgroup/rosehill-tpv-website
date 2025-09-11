@@ -38,7 +38,6 @@ class TranslationLoader {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       
       this.cache = await response.json();
-      console.log(`✓ Loaded ${Object.keys(this.cache).length} translations`);
       return this.cache;
     } catch (error) {
       console.error('Failed to load translation cache:', error);
@@ -106,8 +105,6 @@ class TranslationLoader {
 
     // Handle special cases for HTML content with inline elements
     this.translateHtmlElements();
-    
-    console.log(`✓ Translated ${translatedCount} text elements to ${this.currentLang}`);
   }
 
   /**
@@ -197,8 +194,6 @@ class TranslationLoader {
   async init() {
     if (this.isLoaded) return;
 
-    console.log(`🌐 Initializing translations for language: ${this.currentLang}`);
-
     await this.loadCache();
     
     // Only translate if we have cache and it's not English
@@ -209,7 +204,6 @@ class TranslationLoader {
     }
 
     this.isLoaded = true;
-    console.log('✓ Translation system initialized');
   }
 }
 

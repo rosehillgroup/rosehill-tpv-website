@@ -756,7 +756,21 @@
             }
         }
 
-        @media (max-width: 900px) {
+        /* Intermediate breakpoint for nav compression */
+        @media (max-width: 1200px) and (min-width: 1101px) {
+            .nav-menu {
+                gap: 15px;
+            }
+            .nav-menu a {
+                padding: 6px 12px;
+                font-size: 0.95rem;
+            }
+            .contact-btn {
+                padding: 10px 20px;
+            }
+        }
+
+        @media (max-width: 1100px) {
             .nav-menu {
                 display: none;
             }
@@ -1383,7 +1397,6 @@
 
     <!-- Language Switcher Handler -->
     <script>
-            <script>
         function initLanguageSwitcher() {
             const path = window.location.pathname;
             const langMatch = path.match(/^\/(?:es|fr|de)\//);
