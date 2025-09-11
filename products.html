@@ -1300,6 +1300,51 @@
                 flex: 1;
                 min-width: 120px;
             }
+            
+            /* Binder Selector Mobile Fixes */
+            .selector-progress {
+                flex-wrap: wrap;
+                gap: 10px;
+                padding: 0 10px;
+            }
+            
+            .step-arrow {
+                display: none; /* Hide arrows on mobile */
+            }
+            
+            .progress-step {
+                flex: 1 1 40%; /* Two steps per row */
+                justify-content: center;
+                min-width: 120px;
+            }
+            
+            .step-label {
+                font-size: 0.85rem;
+            }
+            
+            .selector-form {
+                grid-template-columns: 1fr; /* Single column on mobile */
+                padding: 0 15px;
+            }
+            
+            .form-control {
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+            
+            .form-group {
+                width: 100%;
+            }
+            
+            .binder-selector .container {
+                padding: 0 15px;
+                overflow-x: hidden; /* Prevent horizontal scroll */
+            }
+            
+            .selector-container {
+                padding: 20px 0;
+            }
         }
     </style>
 </head>
@@ -1391,7 +1436,7 @@
                 <div class="product-card">
                     <h3 class="product-title">Flexilon<sup>®</sup></h3>
                     <div class="product-subtitle">Polyurethane Binder Range</div>
-                    <p class="product-description">Comprehensive range of cleaners, primers, binders, catalysts and pigments for both hot and cold moulding applications. With over 30 years of experience developing MDI polyurethane binders.</p>
+                    <p class="product-description">Comprehensive range of binders, primers and cleaners for both hot and cold moulding applications. With over 30 years of experience developing MDI polyurethane binders.</p>
                     
                     <ul class="key-features">
                         <li>15+ specialised binder formulations for different conditions</li>
@@ -2270,9 +2315,9 @@
                                 </div>
                                 
                                 ${rec.product.uvStabilized ? 
-                                    '<div style="margin-top: 10px; padding: 10px; background: #d4edda; border-radius: 5px; font-size: 0.9rem; color: #155724;">✅ UV Stabilised - Reduces yellowing with light colours</div>' : 
+                                    '<div style="position: relative; z-index: 2; margin-top: 10px; padding: 10px; background: #d4edda; border-radius: 5px; font-size: 0.9rem; color: #155724;">✅ UV Stabilised - Reduces yellowing with light colours</div>' : 
                                     rec.product.uvNote ? 
-                                    '<div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px; font-size: 0.9rem; color: #856404;">⚠️ UV Note: ' + rec.product.uvNote + '</div>' : 
+                                    '<div style="position: relative; z-index: 2; margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px; font-size: 0.9rem; color: #856404;">⚠️ UV Note: ' + rec.product.uvNote + '</div>' : 
                                     ''
                                 }
                             </div>
