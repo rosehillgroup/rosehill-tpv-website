@@ -262,6 +262,30 @@ export async function handler(event, context) {
       console.log('Translations applied:', successfulTranslations);
     }
     
+    // Trigger site rebuild to generate installation pages
+    try {
+      const buildHookUrl = process.env.NETLIFY_BUILD_HOOK;
+      if (buildHookUrl) {
+        console.log('Triggering site rebuild...');
+        const rebuildResponse = await fetch(buildHookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        
+        if (rebuildResponse.ok) {
+          console.log('Site rebuild triggered successfully');
+        } else {
+          console.error('Build trigger failed:', rebuildResponse.status);
+        }
+      } else {
+        console.log('NETLIFY_BUILD_HOOK not configured - skipping auto-rebuild');
+      }
+    } catch (error) {
+      console.error('Failed to trigger rebuild:', error.message);
+      // Don't fail the whole operation if rebuild trigger fails
+    }
+    
     return {
       statusCode: 200,
       headers,

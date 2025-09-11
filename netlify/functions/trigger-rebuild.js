@@ -20,10 +20,10 @@ export async function handler(event, context) {
   
   try {
     // You need to set up a build hook in Netlify and add the URL as an environment variable
-    const buildHookUrl = process.env.NETLIFY_BUILD_HOOK_URL;
+    const buildHookUrl = process.env.NETLIFY_BUILD_HOOK;
     
     if (!buildHookUrl) {
-      console.log('Build hook URL not configured. Set NETLIFY_BUILD_HOOK_URL in environment variables.');
+      console.log('Build hook URL not configured. Set NETLIFY_BUILD_HOOK in environment variables.');
       return {
         statusCode: 200,
         headers,

@@ -15,6 +15,7 @@
     <meta property="og:url" content="https://tpv.rosehill.group/installations.html" id="og-url">
     <meta property="og:title" content="Latest Installations - Rosehill TPV® Sports & Play Surfaces Worldwide" id="og-title">
     <meta property="og:description" content="Discover Rosehill TPV® installations worldwide. From Olympic venues to theme parks, see how our coloured rubber granules create exceptional sports and play surfaces." id="og-description">
+    <meta property="og:image" content="https://tpv.rosehill.group/rosehill_tpv_social_sharing.jpg">
     <meta property="og:site_name" content="Rosehill TPV®">
     <meta property="og:locale" content="en_US" id="og-locale">
 
@@ -23,6 +24,7 @@
     <meta name="twitter:url" content="https://tpv.rosehill.group/installations.html" id="twitter-url">
     <meta name="twitter:title" content="Latest Installations - Rosehill TPV® Sports & Play Surfaces Worldwide" id="twitter-title">
     <meta name="twitter:description" content="Discover Rosehill TPV® installations worldwide. From Olympic venues to theme parks, see how our coloured rubber granules create exceptional sports and play surfaces." id="twitter-description">
+    <meta name="twitter:image" content="https://tpv.rosehill.group/rosehill_tpv_social_sharing.jpg">
     <meta name="twitter:site" content="@RosehillTPV">
     
     <!-- Hreflang tags will be added dynamically -->
@@ -1533,11 +1535,11 @@ function renderFeaturedInstallation() {
   featuredContainer.innerHTML = `
     <div class="featured-content">
       <div class="featured-text">
-        <span class="featured-badge">Latest Installation</span>
+        <span class="featured-badge translate" data-key="Latest Installation">Latest Installation</span>
         <h3 class="featured-title"><a href="${url}">${featured.displayTitle || featured.title || 'Installation'}</a></h3>
         <p class="featured-location">📍 ${featured.displayLocation || featured.location || ''}</p>
         <div class="featured-description">${truncatedDescription}</div>
-        <a href="${url}" class="read-more-btn">View Full Details →</a>
+        <a href="${url}" class="read-more-btn translate" data-key="View Full Details →">View Full Details →</a>
       </div>
       <div class="featured-image">
         <img src="${imageUrl}" alt="${featured.displayTitle || featured.title || 'Installation'}">
@@ -1594,7 +1596,7 @@ function renderInstallations() {
           <h3 class="installation-title"><a href="${url}">${title}</a></h3>
           <p class="installation-location">📍 ${location}</p>
           <div class="installation-description"><p>${previewText}</p></div>
-          <a href="${url}" class="read-more-btn">Read More →</a>
+          <a href="${url}" class="read-more-btn translate" data-key="Read More →">Read More →</a>
         </div>
       </div>`;
   }).join('');
@@ -1789,11 +1791,11 @@ function generateFilters() {
   
   // Generate filter buttons
   const filterContainer = document.getElementById('filter-container');
-  const filterButtons = ['<button class="filter-btn active" data-filter="all">All</button>'];
+  const filterButtons = ['<button class="filter-btn active" data-filter="all"><span class="translate" data-key="All">All</span></button>'];
   
   existingTypes.sort().forEach(type => {
     if (applicationMap[type]) {
-      filterButtons.push(`<button class="filter-btn" data-filter="${type}">${applicationMap[type]}</button>`);
+      filterButtons.push(`<button class="filter-btn" data-filter="${type}"><span class="translate" data-key="${applicationMap[type]}">${applicationMap[type]}</span></button>`);
     }
   });
   
