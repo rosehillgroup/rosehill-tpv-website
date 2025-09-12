@@ -7,6 +7,14 @@ Allow: /
 Disallow: /admin/
 Disallow: /admin-add-installation.html
 Disallow: /admin-process-installation.php
+Disallow: /src/
+Disallow: /node_modules/
+Disallow: /.well-known/
+
+# Explicitly allow multilingual routes for international SEO
+Allow: /fr/
+Allow: /de/
+Allow: /es/
 
 # Disallow backup files
 Disallow: /*.backup
