@@ -131,7 +131,7 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/d3-delaunay@6.0.4/dist/d3-delaunay.min.js"></script>
-    <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script src="/js/jspdf.umd.min.2.5.1.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <style>
@@ -2125,12 +2125,12 @@
                 // 3D Tile Zoom Functions
                 const zoomIn3D = useCallback(() => {
                     if (tileSceneRef.current) {
-                        const { controls } = tileSceneRef.current;
+                        const { camera, controls } = tileSceneRef.current;
                         const zoomFactor = 0.8; // Stronger zoom than mouse wheel
-                        
+
                         // Apply zoom by scaling
-                        if (controls.camera.position.length() * zoomFactor > 50) { // Minimum distance
-                            controls.camera.position.multiplyScalar(zoomFactor);
+                        if (camera.position.length() * zoomFactor > 50) { // Minimum distance
+                            camera.position.multiplyScalar(zoomFactor);
                             setTileZoomLevel(prev => Math.min(prev / zoomFactor, 4)); // Max 4x zoom
                             controls.update();
                         }
@@ -2139,12 +2139,12 @@
 
                 const zoomOut3D = useCallback(() => {
                     if (tileSceneRef.current) {
-                        const { controls } = tileSceneRef.current;
+                        const { camera, controls } = tileSceneRef.current;
                         const zoomFactor = 1.25; // Inverse of zoom in
-                        
+
                         // Apply zoom by scaling
-                        if (controls.camera.position.length() * zoomFactor < 800) { // Maximum distance
-                            controls.camera.position.multiplyScalar(zoomFactor);
+                        if (camera.position.length() * zoomFactor < 800) { // Maximum distance
+                            camera.position.multiplyScalar(zoomFactor);
                             setTileZoomLevel(prev => Math.max(prev / zoomFactor, 0.25)); // Min 0.25x zoom
                             controls.update();
                         }
@@ -3562,7 +3562,6 @@
 
     <!-- Language Switcher Handler -->
     <script>
-            <script>
         function initLanguageSwitcher() {
             const path = window.location.pathname;
             const langMatch = path.match(/^\/(?:es|fr|de)\//);
