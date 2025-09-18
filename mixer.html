@@ -4474,31 +4474,76 @@
             
             // Update desktop dropdown toggle
             const dropdownToggle = document.getElementById('language-dropdown-toggle');
+            const dropdown = document.querySelector('.language-dropdown');
+
             if (dropdownToggle) {
                 dropdownToggle.textContent = currentLang.toUpperCase();
+
+                // Add dropdown toggle functionality
+                if (dropdown) {
+                    // Toggle dropdown on click
+                    dropdownToggle.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const isActive = dropdown.classList.contains('active');
+
+                        if (isActive) {
+                            dropdown.classList.remove('active');
+                            dropdownToggle.classList.remove('active');
+                        } else {
+                            dropdown.classList.add('active');
+                            dropdownToggle.classList.add('active');
+                        }
+                    });
+
+                    // Close dropdown when clicking outside
+                    document.addEventListener('click', function(e) {
+                        if (!dropdownToggle.contains(e.target) && !dropdown.contains(e.target)) {
+                            dropdown.classList.remove('active');
+                            dropdownToggle.classList.remove('active');
+                        }
+                    });
+
+                    // Close dropdown on escape key
+                    document.addEventListener('keydown', function(e) {
+                        if (e.key === 'Escape') {
+                            dropdown.classList.remove('active');
+                            dropdownToggle.classList.remove('active');
+                        }
+                    });
+                }
             }
-            
+
             // Set active states and add click handlers for desktop dropdown
             document.querySelectorAll('.language-dropdown .lang-option').forEach(link => {
                 const targetLang = link.getAttribute('data-lang');
-                
+
                 // Set active state
                 link.classList.remove('active');
                 if (targetLang === currentLang) {
                     link.classList.add('active');
                 }
-                
+
                 // Add click handler
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
-                    
+
+                    // Close dropdown before navigation
+                    if (dropdown) {
+                        dropdown.classList.remove('active');
+                    }
+                    if (dropdownToggle) {
+                        dropdownToggle.classList.remove('active');
+                    }
+
                     let targetUrl;
                     if (targetLang === 'en') {
                         targetUrl = basePage;
                     } else {
                         targetUrl = `/${targetLang}${basePage}`;
                     }
-                    
+
                     // Navigate to the new URL
                     window.location.href = targetUrl;
                 });
