@@ -654,6 +654,62 @@
             transform: none;
         }
 
+        /* Page Title Section */
+        .page-title-section {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 60px 0 40px;
+            text-align: center;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a365d;
+            margin: 0 0 15px 0;
+            font-family: 'Overpass', sans-serif;
+        }
+
+        .page-title sup {
+            font-size: 0.6em;
+            top: -0.5em;
+        }
+
+        .page-subtitle {
+            font-size: 1.2rem;
+            color: #6c757d;
+            margin: 0;
+            font-weight: 400;
+            line-height: 1.5;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .page-subtitle sup {
+            font-size: 0.8em;
+            top: -0.3em;
+        }
+
+        #root {
+            background: #ffffff;
+            min-height: calc(100vh - 200px);
+        }
+
+        @media (max-width: 768px) {
+            .page-title-section {
+                padding: 40px 0 30px;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .page-subtitle {
+                font-size: 1.1rem;
+                padding: 0 20px;
+            }
+        }
+
         @media (max-width: 768px) {
             .form-grid {
                 grid-template-columns: 1fr;
@@ -1473,6 +1529,14 @@
         </div>
     </header>
 
+    <!-- Page Title Section -->
+    <section class="page-title-section">
+        <div class="container">
+            <h1 class="page-title">Rosehill TPV<sup>®</sup> Colour Mixer</h1>
+            <p class="page-subtitle">Create custom granule blends with our 21 premium Rosehill TPV<sup>®</sup> colours</p>
+        </div>
+    </section>
+
     <div id="root"></div>
 
     <!-- Footer -->
@@ -1673,6 +1737,49 @@
                 return Math.random().toString(36).substring(2, 10);
             }
 
+            // HSL color conversion utilities for color variation
+            function rgbToHsl(r, g, b) {
+                r /= 255; g /= 255; b /= 255;
+                const max = Math.max(r, g, b), min = Math.min(r, g, b);
+                let h, s, l = (max + min) / 2;
+
+                if (max === min) {
+                    h = s = 0; // achromatic
+                } else {
+                    const d = max - min;
+                    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                    switch (max) {
+                        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                        case g: h = (b - r) / d + 2; break;
+                        case b: h = (r - g) / d + 4; break;
+                    }
+                    h /= 6;
+                }
+                return [h * 360, s, l];
+            }
+
+            function hslToRgb(h, s, l) {
+                function hue2rgb(p, q, t) {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                }
+
+                if (s === 0) {
+                    return [l * 255, l * 255, l * 255]; // achromatic
+                } else {
+                    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                    const p = 2 * l - q;
+                    const r = hue2rgb(p, q, h + 1/3);
+                    const g = hue2rgb(p, q, h);
+                    const b = hue2rgb(p, q, h - 1/3);
+                    return [r * 255, g * 255, b * 255];
+                }
+            }
+
             // Base36 encoding/decoding for compact codes
             function encodeBase36(num) {
                 return num.toString(36).toUpperCase();
@@ -1765,21 +1872,21 @@
                         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
                         renderer.outputEncoding = THREE.sRGBEncoding;
                         
-                        // Enhanced renderer settings for better quality
-                        renderer.physicallyCorrectLights = true;
-                        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                        renderer.toneMappingExposure = 1.2;
+                        // Renderer settings optimized for vibrant colors
+                        renderer.physicallyCorrectLights = false; // Disable for more predictable lighting
+                        renderer.toneMapping = THREE.ReinhardToneMapping; // Better for vibrant colors
+                        renderer.toneMappingExposure = 1.1; // Higher exposure for color pop
 
                         tileContainerRef.current.appendChild(renderer.domElement);
 
                         // Enhanced lighting setup for realistic rubber tile appearance
                         
-                        // 1. Ambient light - subtle base illumination
-                        const ambientLight = new THREE.AmbientLight(0xf0f8ff, 0.2); // Reduced from 0.3
+                        // 1. Ambient light - brighter for vibrant colors
+                        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Much brighter for color vibrancy
                         scene.add(ambientLight);
 
-                        // 2. Main directional light (sun-like) - creates primary shadows and highlights
-                        const mainLight = new THREE.DirectionalLight(0xffffff, 0.8); // Reduced from 1.2
+                        // 2. Main directional light - bright enough to show true colors
+                        const mainLight = new THREE.DirectionalLight(0xffffff, 0.4); // Brighter for color pop
                         mainLight.position.set(400, 500, 300);
                         mainLight.castShadow = true;
                         mainLight.shadow.mapSize.width = 2048;
@@ -1793,24 +1900,18 @@
                         mainLight.shadow.bias = -0.0001;
                         scene.add(mainLight);
 
-                        // 3. Fill light - softer light from opposite side to reduce harsh shadows
-                        const fillLight = new THREE.DirectionalLight(0xf0f8ff, 0.25); // Reduced from 0.4
+                        // 3. Fill light - stronger fill for color vibrancy
+                        const fillLight = new THREE.DirectionalLight(0xffffff, 0.15); // More visible
                         fillLight.position.set(-200, 250, -150);
                         scene.add(fillLight);
 
-                        // 4. Rim light - creates edge highlighting for depth
-                        const rimLight = new THREE.DirectionalLight(0xfff8e1, 0.35); // Reduced from 0.6
+                        // 4. Rim light - stronger edge definition for pop
+                        const rimLight = new THREE.DirectionalLight(0xffffff, 0.2); // Stronger rim lighting
                         rimLight.position.set(-250, 200, 400);
                         scene.add(rimLight);
 
-                        // 5. Point light for dynamic highlights on granule texture
-                        const accentLight = new THREE.PointLight(0xffffff, 0.5, 800); // Reduced from 0.8
-                        accentLight.position.set(150, 300, 150);
-                        scene.add(accentLight);
-
-                        // 6. Hemisphere light for natural sky/ground color variation
-                        const hemiLight = new THREE.HemisphereLight(0x87ceeb, 0x8b7355, 0.15); // Reduced from 0.2
-                        scene.add(hemiLight);
+                        // Remove point light and hemisphere light - too much brightness
+                        // Focus on color accuracy for UV-stable TPV presentation
 
                         // Tile geometry (200x200x20mm - realistic size)
                         const geometry = new THREE.BoxGeometry(200, 20, 200);
@@ -1854,7 +1955,7 @@
                             material,
                             lights: {
                                 main: mainLight,
-                                accent: accentLight,
+                                fill: fillLight,
                                 rim: rimLight
                             },
                             isAnimating: true
@@ -1894,14 +1995,11 @@
                                 
                                 // Always update subtle lighting animation
                                 const { lights } = tileSceneRef.current;
-                                
-                                // Gently move the accent light in a small circle for dynamic highlights
-                                lights.accent.position.x = 150 + Math.sin(animationTime * 0.4) * 25;
-                                lights.accent.position.z = 150 + Math.cos(animationTime * 0.4) * 25;
-                                
-                                // Subtle intensity variation for more natural look
-                                lights.accent.intensity = 0.5 + Math.sin(animationTime * 0.25) * 0.06;
-                                lights.rim.intensity = 0.35 + Math.cos(animationTime * 0.3) * 0.03;
+
+                                // Lighting animation for vibrant appearance
+                                // Gentle intensity variation to maintain vibrancy
+                                lights.main.intensity = 0.4 + Math.sin(animationTime * 0.2) * 0.03;
+                                lights.rim.intensity = 0.2 + Math.cos(animationTime * 0.25) * 0.015;
                                 
                                 // Only render if something changed
                                 if (sceneChanged) {
@@ -1953,88 +2051,369 @@
                     }
                 }, []);
 
-                // Create randomized texture from canvas
-                const createRandomizedTexture = useCallback((sourceCanvas) => {
-                    if (!sourceCanvas) return null;
+                // Create distance-optimized tile surface using enhanced Voronoi
+                const createTileSurface = useCallback((parts, tileSize = 512) => {
+                    if (!parts || parts.size === 0) return null;
 
-                    // Create a larger canvas for randomized tiling
-                    const randomCanvas = document.createElement('canvas');
-                    const randomCtx = randomCanvas.getContext('2d');
-                    const tileSize = 512; // Higher resolution for better quality
-                    randomCanvas.width = tileSize;
-                    randomCanvas.height = tileSize;
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = tileSize;
+                    canvas.height = tileSize;
 
-                    // Number of random tiles to create variation
-                    const tilesPerRow = 4;
-                    const tileWidth = tileSize / tilesPerRow;
-                    const tileHeight = tileSize / tilesPerRow;
+                    // Calculate total parts for distribution
+                    const totalParts = Array.from(parts.values()).reduce((a, b) => a + b, 0);
+                    if (totalParts === 0) return null;
 
-                    // Create random placement of source texture
-                    for (let x = 0; x < tilesPerRow; x++) {
-                        for (let y = 0; y < tilesPerRow; y++) {
-                            const destX = x * tileWidth;
-                            const destY = y * tileHeight;
-                            
-                            // Random rotation and flip for variation
-                            randomCtx.save();
-                            randomCtx.translate(destX + tileWidth/2, destY + tileHeight/2);
-                            
-                            // Random rotation (0, 90, 180, or 270 degrees)
-                            const rotation = (Math.floor(Math.random() * 4) * Math.PI) / 2;
-                            randomCtx.rotate(rotation);
-                            
-                            // Random flip
-                            const flipX = Math.random() > 0.5 ? -1 : 1;
-                            const flipY = Math.random() > 0.5 ? -1 : 1;
-                            randomCtx.scale(flipX, flipY);
-                            
-                            // Random offset within the source canvas
-                            const sourceSize = Math.min(sourceCanvas.width, sourceCanvas.height);
-                            const offsetX = Math.random() * (sourceCanvas.width - sourceSize);
-                            const offsetY = Math.random() * (sourceCanvas.height - sourceSize);
-                            
-                            randomCtx.drawImage(
-                                sourceCanvas,
-                                offsetX, offsetY, sourceSize, sourceSize,
-                                -tileWidth/2, -tileHeight/2, tileWidth, tileHeight
+                    // Balanced tile settings - realistic granule size with optimized performance
+                    const numPoints = Math.floor(tileSize * tileSize / 60); // ~4,500 granules for 512px - realistic size, good performance
+                    const points = [];
+
+                    // Generate points using enhanced Poisson disk sampling
+                    const baseMinDistance = Math.sqrt(60) * 0.75; // Smaller granules for realistic appearance
+                    let attempts = 0;
+                    const maxAttempts = numPoints * 50;
+
+                    // Use fixed seed for consistent tile generation
+                    const tileSeed = 'tile_surface_' + Array.from(parts.entries()).map(([k,v]) => `${k}:${v}`).join('_');
+                    const seedNum = tileSeed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                    const tileRng = mulberry32(seedNum);
+
+                    while (points.length < numPoints && attempts < maxAttempts) {
+                        const x = tileRng() * tileSize;
+                        const y = tileRng() * tileSize;
+
+                        // Check minimum distance with clustering variation
+                        const maxTries = 20 + Math.floor(tileRng() * 20); // 20-40 variation
+                        const minDistance = baseMinDistance * (0.8 + tileRng() * 0.4); // Distance variation
+
+                        let validPoint = true;
+                        for (let i = 0; i < points.length; i++) {
+                            const distance = Math.sqrt((points[i].x - x) ** 2 + (points[i].y - y) ** 2);
+                            if (distance < minDistance) {
+                                validPoint = false;
+                                break;
+                            }
+                        }
+
+                        if (validPoint) {
+                            // Enhanced size distribution for distance viewing (25%-400% range)
+                            const sizeRng1 = tileRng();
+                            const sizeRng2 = tileRng();
+                            const sizeRng3 = tileRng();
+                            const weightedRandom = (sizeRng1 + sizeRng2 + sizeRng3) / 3; // Bell curve
+                            const exponentialWeight = Math.pow(weightedRandom, 1.5); // Favor medium sizes
+                            const granuleSize = 0.25 + exponentialWeight * 3.75; // 25%-400% range
+
+                            points.push({ x, y, size: granuleSize });
+                        }
+                        attempts++;
+                    }
+
+                    // Generate Delaunay triangulation and Voronoi cells
+                    const delaunay = d3.Delaunay.from(points, d => d.x, d => d.y);
+                    const voronoi = delaunay.voronoi([0, 0, tileSize, tileSize]);
+
+                    // Assign colors to cells based on parts distribution
+                    const cellAssignments = new Array(points.length).fill(-1);
+                    const indices = Array.from({ length: points.length }, (_, i) => i);
+
+                    // Fisher-Yates shuffle for randomization
+                    for (let i = indices.length - 1; i > 0; i--) {
+                        const j = Math.floor(tileRng() * (i + 1));
+                        [indices[i], indices[j]] = [indices[j], indices[i]];
+                    }
+
+                    // Assign colors based on parts
+                    let cursor = 0;
+                    parts.forEach((partCount, colourIndex) => {
+                        const quota = Math.round((partCount / totalParts) * indices.length);
+                        for (let i = 0; i < quota && cursor < indices.length; i++) {
+                            cellAssignments[indices[cursor]] = colourIndex;
+                            cursor++;
+                        }
+                    });
+
+                    // Render the tile surface with all realism enhancements
+                    // First pass: Base colors with enhanced variations
+                    for (let i = 0; i < points.length; i++) {
+                        const colourIndex = cellAssignments[i];
+                        if (colourIndex === -1) continue;
+
+                        const cell = voronoi.cellPolygon(i);
+                        if (!cell || cell.length < 3) continue;
+
+                        const baseColour = PALETTE[colourIndex];
+                        const variationRng = mulberry32(Math.floor(points[i].x + points[i].y * 1000));
+
+                        // Parse base color and apply enhanced variations
+                        const r = parseInt(baseColour.hex.slice(1, 3), 16);
+                        const g = parseInt(baseColour.hex.slice(3, 5), 16);
+                        const b = parseInt(baseColour.hex.slice(5, 7), 16);
+
+                        const hsl = rgbToHsl(r, g, b);
+
+                        // Color family detection for smart enhancements
+                        const isLightColor = hsl[2] > 0.6; // Light colors (yellows, whites, light blues, etc.)
+                        const isDarkColor = hsl[2] < 0.3;  // Dark colors (blacks, dark reds, etc.)
+                        const isVibrantColor = hsl[1] > 0.7; // Already saturated colors
+
+                        // Enhanced variations based on color family
+                        let satVariation, hueVariation, lightVariation;
+
+                        if (isLightColor) {
+                            // Light colors: boost saturation significantly, subtle hue shifts
+                            satVariation = (variationRng() - 0.5) * 0.15 + 0.1; // +10% base boost
+                            hueVariation = (variationRng() - 0.5) * 3;
+                            lightVariation = (variationRng() - 0.5) * 0.08;
+                        } else if (isDarkColor) {
+                            // Dark colors: enhance contrast, maintain depth
+                            satVariation = (variationRng() - 0.5) * 0.12;
+                            hueVariation = (variationRng() - 0.5) * 5;
+                            lightVariation = (variationRng() - 0.5) * 0.1; // More light variation for depth
+                        } else {
+                            // Mid-tone colors: balanced enhancement
+                            satVariation = (variationRng() - 0.5) * 0.13;
+                            hueVariation = (variationRng() - 0.5) * 4;
+                            lightVariation = (variationRng() - 0.5) * 0.08;
+                        }
+
+                        const newSat = Math.max(0, Math.min(1, hsl[1] + satVariation));
+                        const newHue = (hsl[0] + hueVariation + 360) % 360;
+                        let newLight = Math.max(0, Math.min(1, hsl[2] + lightVariation));
+
+                        // Smart size-based hierarchy - much less aggressive muting
+                        const granuleSize = points[i].size;
+                        const normalizedSize = Math.min(4, Math.max(0.25, granuleSize));
+                        const sizeContrastFactor = 0.85 + (normalizedSize / 4) * 0.3; // Less extreme range
+                        let contrastAdjustedSat = Math.max(0, Math.min(1, newSat * sizeContrastFactor));
+
+                        // Greatly reduced muting for small granules - keep them vibrant!
+                        if (normalizedSize < 1.0 && !isLightColor) {
+                            // Only mute dark colors slightly, preserve light color vibrancy
+                            const muteFactor = (1.0 - normalizedSize) * 0.1; // Reduced from 0.3
+                            newLight = newLight + (0.4 - newLight) * muteFactor; // Less gray (0.4 instead of 0.5)
+                        }
+
+                        // Extra boost for light colors to make them pop
+                        if (isLightColor && normalizedSize > 0.8) {
+                            contrastAdjustedSat = Math.min(1, contrastAdjustedSat * 1.15); // 15% saturation boost
+                            newLight = Math.min(1, newLight * 1.05); // Slight brightness boost
+                        }
+
+                        const [finalR, finalG, finalB] = hslToRgb(newHue / 360, contrastAdjustedSat, newLight);
+                        const finalColor = `rgb(${Math.round(finalR)}, ${Math.round(finalG)}, ${Math.round(finalB)})`;
+
+                        // Draw the cell
+                        ctx.fillStyle = finalColor;
+                        ctx.beginPath();
+                        ctx.moveTo(cell[0][0], cell[0][1]);
+                        for (let j = 1; j < cell.length; j++) {
+                            ctx.lineTo(cell[j][0], cell[j][1]);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                    }
+
+                    // Second pass: Enhanced 3D lighting and surface effects
+                    for (let i = 0; i < points.length; i++) {
+                        const colourIndex = cellAssignments[i];
+                        if (colourIndex === -1) continue;
+
+                        const cell = voronoi.cellPolygon(i);
+                        if (!cell || cell.length < 3) continue;
+
+                        const granuleSize = points[i].size;
+                        const normalizedSize = Math.min(4, Math.max(0.25, granuleSize));
+
+                        // Calculate cell bounds for lighting
+                        let minX = cell[0][0], maxX = cell[0][0];
+                        let minY = cell[0][1], maxY = cell[0][1];
+                        let centerX = 0, centerY = 0;
+
+                        for (let j = 0; j < cell.length; j++) {
+                            minX = Math.min(minX, cell[j][0]);
+                            maxX = Math.max(maxX, cell[j][0]);
+                            minY = Math.min(minY, cell[j][1]);
+                            maxY = Math.max(maxY, cell[j][1]);
+                            centerX += cell[j][0];
+                            centerY += cell[j][1];
+                        }
+                        centerX /= cell.length;
+                        centerY /= cell.length;
+
+                        // Enhanced lighting simulation for tile surface
+                        const width = maxX - minX;
+                        const height = maxY - minY;
+                        const radius = Math.max(width, height) / 2;
+
+                        // Multiple light sources for realism
+                        const lightDir1 = { x: -0.7071, y: -0.7071 }; // Top-left primary
+                        const lightDir2 = { x: 0.5, y: -0.8 }; // Top-right rim
+
+                        // Create radial gradient for 3D effect
+                        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+
+                        // Calculate lighting based on granule size and position
+                        const lightIntensity1 = Math.max(0, -lightDir1.x * 0.3 + -lightDir1.y * 0.7) * 0.8;
+                        const lightIntensity2 = Math.max(0, lightDir2.x * 0.3 + -lightDir2.y * 0.7) * 0.3;
+                        const totalLighting = 0.2 + lightIntensity1 + lightIntensity2; // 20% ambient
+
+                        // Size-based lighting variation
+                        const lightingBoost = 0.9 + (normalizedSize / 4) * 0.2; // Large granules get more light
+                        const finalLighting = Math.min(1.2, totalLighting * lightingBoost);
+
+                        // Ambient occlusion for depth
+                        const occlusion = Math.max(0, 1 - (normalizedSize / 4) * 0.15); // Large granules get slight darkening
+
+                        const lightColor = `rgba(255, 255, 255, ${finalLighting * 0.15})`;
+                        const shadowColor = `rgba(0, 0, 0, ${(1 - occlusion) * 0.1})`;
+
+                        gradient.addColorStop(0, lightColor);
+                        gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0)');
+                        gradient.addColorStop(1, shadowColor);
+
+                        // Apply gradient within cell bounds
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.moveTo(cell[0][0], cell[0][1]);
+                        for (let j = 1; j < cell.length; j++) {
+                            ctx.lineTo(cell[j][0], cell[j][1]);
+                        }
+                        ctx.closePath();
+                        ctx.clip();
+
+                        ctx.fillStyle = gradient;
+                        ctx.fill();
+                        ctx.restore();
+
+                        // Add specular highlights for large granules (distance-appropriate)
+                        if (normalizedSize > 2.0 && finalLighting > 1.0) {
+                            const highlightIntensity = (finalLighting - 1.0) * (normalizedSize / 4) * 0.8;
+                            ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(0.4, highlightIntensity)})`;
+                            ctx.beginPath();
+                            ctx.arc(
+                                centerX - radius * 0.2,
+                                centerY - radius * 0.2,
+                                radius * 0.3,
+                                0,
+                                Math.PI * 2
                             );
-                            randomCtx.restore();
+                            ctx.fill();
                         }
                     }
 
-                    return randomCanvas;
+                    return canvas;
                 }, []);
 
-                // Create bump map for surface texture
-                const createBumpMap = useCallback(() => {
+                // Create enhanced bump map from granule structure
+                const createEnhancedBumpMap = useCallback((parts, size = 256) => {
                     const bumpCanvas = document.createElement('canvas');
                     const bumpCtx = bumpCanvas.getContext('2d');
-                    const size = 256;
                     bumpCanvas.width = size;
                     bumpCanvas.height = size;
 
-                    // Create noise pattern for bump map
+                    if (!parts || parts.size === 0) {
+                        // Fill with neutral gray for no bump effect
+                        bumpCtx.fillStyle = '#808080';
+                        bumpCtx.fillRect(0, 0, size, size);
+                        return bumpCanvas;
+                    }
+
+                    // Generate granule structure for bump mapping to match realistic tile scale
+                    const numPoints = Math.floor(size * size / 60); // Match main tile granule density for consistency
+                    const points = [];
+
+                    // Use same seed as tile surface for consistency
+                    const totalParts = Array.from(parts.values()).reduce((a, b) => a + b, 0);
+                    const tileSeed = 'bump_surface_' + Array.from(parts.entries()).map(([k,v]) => `${k}:${v}`).join('_');
+                    const seedNum = tileSeed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                    const bumpRng = mulberry32(seedNum);
+
+                    const baseMinDistance = Math.sqrt(60) * 0.75; // Match main tile scale for consistency
+                    let attempts = 0;
+                    const maxAttempts = numPoints * 50;
+
+                    while (points.length < numPoints && attempts < maxAttempts) {
+                        const x = bumpRng() * size;
+                        const y = bumpRng() * size;
+                        const minDistance = baseMinDistance * (0.8 + bumpRng() * 0.4);
+
+                        let validPoint = true;
+                        for (let i = 0; i < points.length; i++) {
+                            const distance = Math.sqrt((points[i].x - x) ** 2 + (points[i].y - y) ** 2);
+                            if (distance < minDistance) {
+                                validPoint = false;
+                                break;
+                            }
+                        }
+
+                        if (validPoint) {
+                            const sizeRng1 = bumpRng();
+                            const sizeRng2 = bumpRng();
+                            const sizeRng3 = bumpRng();
+                            const weightedRandom = (sizeRng1 + sizeRng2 + sizeRng3) / 3;
+                            const exponentialWeight = Math.pow(weightedRandom, 1.5);
+                            const granuleSize = 0.25 + exponentialWeight * 3.75;
+
+                            // Height varies with granule size for realistic bump mapping
+                            const height = 0.3 + (granuleSize / 4) * 0.4; // 0.3-0.7 height range
+
+                            points.push({ x, y, size: granuleSize, height: height });
+                        }
+                        attempts++;
+                    }
+
+                    // Generate Delaunay triangulation for height mapping
+                    const delaunay = d3.Delaunay.from(points, d => d.x, d => d.y);
+                    const voronoi = delaunay.voronoi([0, 0, size, size]);
+
+                    // Create height map from granule structure
                     const imageData = bumpCtx.createImageData(size, size);
                     const data = imageData.data;
 
-                    for (let i = 0; i < data.length; i += 4) {
-                        // Generate noise with different frequencies for realistic granule texture
-                        const x = (i / 4) % size;
-                        const y = Math.floor((i / 4) / size);
-                        
-                        // Multiple octaves of noise for complex surface
-                        let noise = 0;
-                        noise += Math.sin(x * 0.1) * Math.cos(y * 0.1) * 0.3;
-                        noise += Math.sin(x * 0.05) * Math.cos(y * 0.05) * 0.5;
-                        noise += Math.random() * 0.2; // Fine detail
-                        
-                        // Convert to grayscale value (0-255)
-                        const value = Math.floor((noise + 1) * 127.5);
-                        
-                        data[i] = value;     // Red
-                        data[i + 1] = value; // Green
-                        data[i + 2] = value; // Blue
-                        data[i + 3] = 255;   // Alpha
+                    for (let y = 0; y < size; y++) {
+                        for (let x = 0; x < size; x++) {
+                            const index = (y * size + x) * 4;
+
+                            // Find closest granule center for height information
+                            let minDistance = Infinity;
+                            let closestPoint = null;
+
+                            for (let i = 0; i < points.length; i++) {
+                                const distance = Math.sqrt((points[i].x - x) ** 2 + (points[i].y - y) ** 2);
+                                if (distance < minDistance) {
+                                    minDistance = distance;
+                                    closestPoint = points[i];
+                                }
+                            }
+
+                            if (closestPoint) {
+                                // Calculate height based on distance to granule center (realistic scale)
+                                const granuleRadius = Math.sqrt(60) * closestPoint.size * 0.5;
+                                const distanceRatio = Math.min(1, minDistance / granuleRadius);
+
+                                // Create raised granule profile (dome-like)
+                                const heightProfile = Math.cos(distanceRatio * Math.PI * 0.5);
+                                const finalHeight = 0.5 + (closestPoint.height * heightProfile * 0.5);
+
+                                // Add subtle surface texture for rubber-like appearance
+                                const textureNoise = (bumpRng() - 0.5) * 0.05;
+                                const clampedHeight = Math.max(0, Math.min(1, finalHeight + textureNoise));
+
+                                const grayValue = Math.floor(clampedHeight * 255);
+
+                                data[index] = grayValue;     // R
+                                data[index + 1] = grayValue; // G
+                                data[index + 2] = grayValue; // B
+                                data[index + 3] = 255;       // A
+                            } else {
+                                // Fallback neutral color
+                                data[index] = 128;     // R
+                                data[index + 1] = 128; // G
+                                data[index + 2] = 128; // B
+                                data[index + 3] = 255; // A
+                            }
+                        }
                     }
 
                     bumpCtx.putImageData(imageData, 0, 0);
@@ -2066,36 +2445,98 @@
                     // Small delay to ensure canvas is updated
                     setTimeout(() => {
                         try {
-                            // Create randomized texture
-                            const randomizedCanvas = createRandomizedTexture(canvasRef.current);
-                            if (!randomizedCanvas) {
+                            // Use mixer canvas directly for vibrant, accurate colors
+                            if (!canvasRef.current) {
                                 setTileLoading(false);
                                 return;
                             }
 
-                            // Create main texture
-                            const texture = new THREE.CanvasTexture(randomizedCanvas);
+                            // Create enhanced version of mixer canvas for tile
+                            const tileCanvas = document.createElement('canvas');
+                            const tileCtx = tileCanvas.getContext('2d');
+                            tileCanvas.width = 512;
+                            tileCanvas.height = 512;
+
+                            // Get mixer canvas dimensions to preserve aspect ratio
+                            const mixerWidth = canvasRef.current.width;
+                            const mixerHeight = canvasRef.current.height;
+                            const mixerAspect = mixerWidth / mixerHeight;
+
+                            // Get the largest square we can from the mixer canvas, then sample a portion for smaller granules
+                            let sourceWidth, sourceHeight, sourceX, sourceY;
+
+                            // Get the largest square from the center of the canvas
+                            if (mixerAspect > 1) {
+                                sourceWidth = sourceHeight = mixerHeight;
+                                sourceX = (mixerWidth - sourceWidth) / 2;
+                                sourceY = 0;
+                            } else if (mixerAspect < 1) {
+                                sourceWidth = sourceHeight = mixerWidth;
+                                sourceX = 0;
+                                sourceY = (mixerHeight - sourceHeight) / 2;
+                            } else {
+                                sourceWidth = mixerWidth;
+                                sourceHeight = mixerHeight;
+                                sourceX = sourceY = 0;
+                            }
+
+                            // Use tiling approach for smaller granules
+                            const sampleWidth = sourceWidth;
+                            const sampleHeight = sourceHeight;
+                            const sampleX = sourceX;
+                            const sampleY = sourceY;
+
+                            // Apply saturation boost filter
+                            tileCtx.filter = 'saturate(1.4) contrast(1.15) brightness(1.05)';
+
+                            // Create 2x2 tiled pattern for smaller granules
+                            const tileSize = 256; // Each tile is 256px (half of 512)
+                            for (let x = 0; x < 2; x++) {
+                                for (let y = 0; y < 2; y++) {
+                                    tileCtx.drawImage(
+                                        canvasRef.current,
+                                        sampleX, sampleY, sampleWidth, sampleHeight,
+                                        x * tileSize, y * tileSize, tileSize, tileSize
+                                    );
+                                }
+                            }
+                            tileCtx.filter = 'none';
+
+                            // Create main texture with realistic granule surface
+                            const texture = new THREE.CanvasTexture(tileCanvas);
                             texture.wrapS = THREE.RepeatWrapping;
                             texture.wrapT = THREE.RepeatWrapping;
-                            texture.repeat.set(2, 2); // Less obvious tiling
+                            texture.repeat.set(1, 1); // Single tile since we generate realistic surface at full resolution
                             texture.magFilter = THREE.LinearFilter;
                             texture.minFilter = THREE.LinearMipMapLinearFilter;
+                            texture.flipY = false; // Correct orientation for Three.js
 
-                            // Create bump map for surface detail
-                            const bumpCanvas = createBumpMap();
+                            // Create enhanced bump map from granule structure
+                            const bumpCanvas = createEnhancedBumpMap(parts, 256);
                             const bumpTexture = new THREE.CanvasTexture(bumpCanvas);
                             bumpTexture.wrapS = THREE.RepeatWrapping;
                             bumpTexture.wrapT = THREE.RepeatWrapping;
-                            bumpTexture.repeat.set(8, 8); // Higher frequency for fine detail
+                            bumpTexture.repeat.set(1, 1); // Match main texture
+                            bumpTexture.flipY = false;
 
-                            // Update material with enhanced properties
+                            // Update material with properties optimized for enhanced texture colors
                             const { material } = tileSceneRef.current;
                             material.map = texture;
                             material.bumpMap = bumpTexture;
-                            material.bumpScale = 0.05; // More pronounced bump for larger, realistic granules
-                            material.roughness = 0.9; // More rubber-like
-                            material.metalness = 0.05; // Very low metalness for rubber
-                            material.color.setHex(0xffffff);
+                            material.bumpScale = 0.06; // Reduced bump to let colors show through
+                            material.roughness = 0.8; // Slightly rough for realistic TPV
+                            material.metalness = 0.0; // No metalness for pure color representation
+                            material.color.setHex(0xffffff); // Let enhanced texture handle all color
+
+                            // Simplified material properties to preserve enhanced texture colors
+                            material.envMapIntensity = 0.2; // Reduced to preserve texture vibrancy
+                            material.clearcoat = 0.05; // Minimal clearcoat
+                            material.clearcoatRoughness = 0.9; // Keep clearcoat matte
+
+                            // Remove emissive - let enhanced texture provide the pop
+                            material.emissive = new THREE.Color(0x000000);
+                            material.emissiveIntensity = 0.0;
+
                             material.needsUpdate = true;
 
                             // Force a render update since texture has changed
@@ -2109,7 +2550,7 @@
                             setTileLoading(false);
                         }
                     }, 100);
-                }, [totalParts, parts, createRandomizedTexture, createBumpMap]);
+                }, [totalParts, parts, createTileSurface, createEnhancedBumpMap]);
 
                 const resetTileView = useCallback(() => {
                     if (tileSceneRef.current) {
@@ -2266,19 +2707,44 @@
                         const seedNum = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
                         const rng = mulberry32(seedNum);
                         
-                        // Adjust minDistance for desired cell count (~50,000 cells)
+                        // Adjust minDistance for desired cell count (~50,000 cells) with clustering
                         const targetCells = 50000;
                         const area = canvasWidth * canvasHeight;
-                        const minDistance = Math.sqrt(area / targetCells) * 2;
+                        const baseMinDistance = Math.sqrt(area / targetCells) * 2;
+
+                        // Reduce minimum distance to allow natural clustering (75% of calculated)
+                        const minDistance = baseMinDistance * 0.75;
                         
-                        const points = poissonDiskSampling(canvasWidth, canvasHeight, minDistance, 30, rng);
+                        // Variable maxTries for more natural distribution variation
+                        const maxTries = 20 + Math.floor(rng() * 20); // 20-40 tries
+
+                        const points = poissonDiskSampling(canvasWidth, canvasHeight, minDistance, maxTries, rng);
                         
-                        // Add enhanced size variation to points
-                        const pointsWithSize = points.map(([x, y]) => ({
-                            x,
-                            y,
-                            size: 0.6 + rng() * 0.8 // 60% to 140% size variation
-                        }));
+                        // Add enhanced size variation to points (25% to 400% range)
+                        const pointsWithSize = points.map(([x, y]) => {
+                            // Weighted distribution favoring medium sizes
+                            const rand1 = rng();
+                            const rand2 = rng();
+                            const rand3 = rng();
+
+                            // Use multiple random values to create bell-curve-like distribution
+                            const weightedRandom = (rand1 + rand2 + rand3) / 3;
+
+                            // Map to 25%-400% range with bias toward center
+                            const minSize = 0.25;
+                            const maxSize = 4.0;
+                            const range = maxSize - minSize;
+
+                            // Apply exponential curve to favor medium sizes
+                            const exponentialWeight = Math.pow(weightedRandom, 0.7);
+                            const size = minSize + range * exponentialWeight;
+
+                            return {
+                                x,
+                                y,
+                                size: size
+                            };
+                        });
                         
                         // Create Voronoi diagram
                         const delaunay = d3.Delaunay.from(pointsWithSize, p => p.x, p => p.y);
@@ -2359,13 +2825,97 @@
                         if (!polygon || polygon.length < 3) return;
 
                         const colourIndex = cellAssignments[i];
-                        const colour = colourIndex === -1 ? { hex: '#FAFAFA' } : PALETTE[colourIndex];
+                        const baseColour = colourIndex === -1 ? { hex: '#FAFAFA' } : PALETTE[colourIndex];
+
+                        // Add color variation effects (saturation, hue shifting, edge bleeding)
+                        const variationRng = mulberry32(Math.floor(voronoiData.points[i].x + voronoiData.points[i].y * 1000));
+
+                        let finalColor = baseColour.hex;
+                        if (colourIndex !== -1) {
+                            // Parse base color
+                            const r = parseInt(baseColour.hex.slice(1, 3), 16);
+                            const g = parseInt(baseColour.hex.slice(3, 5), 16);
+                            const b = parseInt(baseColour.hex.slice(5, 7), 16);
+
+                            // Convert to HSL for better manipulation
+                            const hsl = rgbToHsl(r, g, b);
+
+                            // More subtle saturation variation (±5%)
+                            const satVariation = (variationRng() - 0.5) * 0.1; // ±0.05
+                            const newSat = Math.max(0, Math.min(1, hsl[1] + satVariation));
+
+                            // Very minor hue shifting within color family (±2 degrees)
+                            const hueVariation = (variationRng() - 0.5) * 4; // ±2 degrees
+                            const newHue = (hsl[0] + hueVariation + 360) % 360;
+
+                            // Minimal lightness variation (±3%)
+                            const lightVariation = (variationRng() - 0.5) * 0.06; // ±0.03
+                            let newLight = Math.max(0, Math.min(1, hsl[2] + lightVariation));
+
+                            // Enhanced size-based hierarchy: contrast scaling
+                            const granuleSize = voronoiData.points[i].size || 1;
+                            const normalizedSize = Math.min(4, Math.max(0.25, granuleSize));
+
+                            // Size-based contrast adjustment (larger = more vibrant, smaller = more muted)
+                            const sizeContrastFactor = 0.7 + (normalizedSize / 4) * 0.6; // 0.7 to 1.3 range
+
+                            // Apply contrast scaling to saturation and lightness
+                            const contrastAdjustedSat = Math.max(0, Math.min(1, newSat * sizeContrastFactor));
+
+                            // Small granules get slightly desaturated and pushed toward mid-tones
+                            if (normalizedSize < 1.0) {
+                                const muteFactor = (1.0 - normalizedSize) * 0.3; // Up to 30% muting for smallest
+                                newLight = newLight + (0.5 - newLight) * muteFactor; // Push toward 50% lightness
+                            }
+
+                            // Convert back to RGB
+                            const [newR, newG, newB] = hslToRgb(newHue / 360, contrastAdjustedSat, newLight);
+                            finalColor = `rgb(${Math.round(newR)}, ${Math.round(newG)}, ${Math.round(newB)})`;
+                        }
+
+                        const colour = { hex: finalColor };
                         
-                        // Draw cell with solid color first
+                        // Draw cell with subtle edge curves for organic appearance
                         ctx.beginPath();
                         ctx.moveTo(polygon[0][0], polygon[0][1]);
+
+                        // Add slight curves to edges based on granule size for more organic look
+                        const granuleSize = voronoiData.points[i].size || 1;
+                        const curveIntensity = Math.min(2, granuleSize * 0.5); // Scale curve with size
+
                         for (let j = 1; j < polygon.length; j++) {
-                            ctx.lineTo(polygon[j][0], polygon[j][1]);
+                            const currentPoint = polygon[j];
+                            const prevPoint = polygon[j - 1];
+
+                            // Calculate edge length and add subtle curve if edge is long enough
+                            const edgeLength = Math.sqrt(
+                                Math.pow(currentPoint[0] - prevPoint[0], 2) +
+                                Math.pow(currentPoint[1] - prevPoint[1], 2)
+                            );
+
+                            if (edgeLength > 15 && curveIntensity > 0.5) {
+                                // Create deterministic curve based on edge position
+                                const edgeSeed = Math.floor(prevPoint[0] + prevPoint[1] + currentPoint[0] + currentPoint[1]);
+                                const edgeRng = mulberry32(edgeSeed);
+
+                                // Calculate control point for quadratic curve
+                                const midX = (prevPoint[0] + currentPoint[0]) / 2;
+                                const midY = (prevPoint[1] + currentPoint[1]) / 2;
+
+                                // Perpendicular offset for curve
+                                const edgeVecX = currentPoint[0] - prevPoint[0];
+                                const edgeVecY = currentPoint[1] - prevPoint[1];
+                                const perpX = -edgeVecY / edgeLength;
+                                const perpY = edgeVecX / edgeLength;
+
+                                const curveOffset = (edgeRng() - 0.5) * curveIntensity;
+                                const controlX = midX + perpX * curveOffset;
+                                const controlY = midY + perpY * curveOffset;
+
+                                ctx.quadraticCurveTo(controlX, controlY, currentPoint[0], currentPoint[1]);
+                            } else {
+                                ctx.lineTo(currentPoint[0], currentPoint[1]);
+                            }
                         }
                         ctx.closePath();
                         
@@ -2377,11 +2927,42 @@
                     voronoiData.cells.forEach((cell, i) => {
                         const colourIndex = cellAssignments[i];
                         if (colourIndex === -1) return; // Skip unassigned cells (white)
-                        
+
                         const polygon = cell.polygon;
                         if (!polygon || polygon.length < 3) return;
 
-                        const colour = PALETTE[colourIndex];
+                        // Apply same color variation as first pass
+                        const baseColour = PALETTE[colourIndex];
+                        const variationRng = mulberry32(Math.floor(voronoiData.points[i].x + voronoiData.points[i].y * 1000));
+
+                        // Parse base color
+                        const r = parseInt(baseColour.hex.slice(1, 3), 16);
+                        const g = parseInt(baseColour.hex.slice(3, 5), 16);
+                        const b = parseInt(baseColour.hex.slice(5, 7), 16);
+
+                        // Convert to HSL for better manipulation
+                        const hsl = rgbToHsl(r, g, b);
+
+                        // More subtle saturation variation (±5%)
+                        const satVariation = (variationRng() - 0.5) * 0.1;
+                        const newSat = Math.max(0, Math.min(1, hsl[1] + satVariation));
+
+                        // Very minor hue shifting within color family (±2 degrees)
+                        const hueVariation = (variationRng() - 0.5) * 4;
+                        const newHue = (hsl[0] + hueVariation + 360) % 360;
+
+                        // Minimal lightness variation (±3%)
+                        const lightVariation = (variationRng() - 0.5) * 0.06;
+                        let newLight = Math.max(0, Math.min(1, hsl[2] + lightVariation));
+
+                        // Convert back to RGB with base variations first
+                        const [newR, newG, newB] = hslToRgb(newHue / 360, newSat, newLight);
+                        const colour = {
+                            hex: `rgb(${Math.round(newR)}, ${Math.round(newG)}, ${Math.round(newB)})`,
+                            r: Math.round(newR),
+                            g: Math.round(newG),
+                            b: Math.round(newB)
+                        };
                         
                         // Calculate cell center
                         let centerX = 0, centerY = 0;
@@ -2394,44 +2975,105 @@
 
                         // Create edge-based shading for realistic 3D effect
                         const granuleSize = voronoiData.points[i].size || 1;
-                        
-                        // Light direction vector (from top-left)
-                        const lightDir = { x: -0.7071, y: -0.7071 }; // Normalized diagonal direction
-                        
+
+                        // Enhanced size-based hierarchy: apply contrast scaling to existing color
+                        const normalizedSize = Math.min(4, Math.max(0.25, granuleSize));
+                        const sizeContrastFactor = 0.7 + (normalizedSize / 4) * 0.6;
+
+                        // Re-apply size-based contrast to the color
+                        let finalR = colour.r;
+                        let finalG = colour.g;
+                        let finalB = colour.b;
+
+                        if (colourIndex !== -1) {
+                            // Convert current color back to HSL for contrast adjustment
+                            const currentHsl = rgbToHsl(finalR, finalG, finalB);
+                            const contrastAdjustedSat = Math.max(0, Math.min(1, currentHsl[1] * sizeContrastFactor));
+                            let adjustedLight = currentHsl[2];
+
+                            // Small granules get muted
+                            if (normalizedSize < 1.0) {
+                                const muteFactor = (1.0 - normalizedSize) * 0.3;
+                                adjustedLight = adjustedLight + (0.5 - adjustedLight) * muteFactor;
+                            }
+
+                            // Convert back to RGB
+                            const [adjustedR, adjustedG, adjustedB] = hslToRgb(currentHsl[0] / 360, contrastAdjustedSat, adjustedLight);
+                            finalR = Math.round(adjustedR);
+                            finalG = Math.round(adjustedG);
+                            finalB = Math.round(adjustedB);
+
+                            // Update colour object
+                            colour.r = finalR;
+                            colour.g = finalG;
+                            colour.b = finalB;
+                            colour.hex = `rgb(${finalR}, ${finalG}, ${finalB})`;
+                        }
+
+                        // Multiple light sources for enhanced realism
+                        const primaryLight = { x: -0.7071, y: -0.7071, intensity: 0.8 }; // Main top-left light
+                        const rimLight = { x: 0.5, y: -0.8, intensity: 0.3 }; // Rim light from top-right
+                        const ambientLight = 0.2; // Base ambient lighting
+
                         // Calculate polygon lighting zones based on edge orientations
                         let totalLighting = 0;
                         let lightedArea = 0;
-                        
+                        let maxLightIntensity = 0; // For specular highlights
+
                         for (let j = 0; j < polygon.length; j++) {
                             const p1 = polygon[j];
                             const p2 = polygon[(j + 1) % polygon.length];
-                            
+
                             // Calculate edge vector and normal
                             const edgeVec = { x: p2[0] - p1[0], y: p2[1] - p1[1] };
                             const edgeLength = Math.sqrt(edgeVec.x * edgeVec.x + edgeVec.y * edgeVec.y);
-                            
+
                             // Skip degenerate edges (zero length)
                             if (edgeLength < 0.001) continue;
-                            
+
                             // Calculate edge normal (perpendicular, pointing inward)
-                            const normal = { 
-                                x: -edgeVec.y / edgeLength, 
-                                y: edgeVec.x / edgeLength 
+                            const normal = {
+                                x: -edgeVec.y / edgeLength,
+                                y: edgeVec.x / edgeLength
                             };
-                            
-                            // Calculate lighting intensity based on edge normal vs light direction
-                            const lightIntensity = Math.max(0, -(normal.x * lightDir.x + normal.y * lightDir.y));
-                            
-                            totalLighting += lightIntensity * edgeLength;
+
+                            // Calculate lighting from primary light source
+                            const primaryIntensity = Math.max(0, -(normal.x * primaryLight.x + normal.y * primaryLight.y)) * primaryLight.intensity;
+
+                            // Calculate lighting from rim light source
+                            const rimIntensity = Math.max(0, -(normal.x * rimLight.x + normal.y * rimLight.y)) * rimLight.intensity;
+
+                            // Combine lighting sources
+                            const combinedIntensity = Math.min(1, primaryIntensity + rimIntensity + ambientLight);
+
+                            // Track maximum for specular highlights
+                            maxLightIntensity = Math.max(maxLightIntensity, combinedIntensity);
+
+                            totalLighting += combinedIntensity * edgeLength;
                             lightedArea += edgeLength;
                         }
-                        
+
                         // Calculate average lighting for this polygon with fallback
                         const avgLighting = lightedArea > 0 ? totalLighting / lightedArea : 0.5;
+
+                        // Add ambient occlusion based on granule density
+                        const cellDensity = Math.min(1, granuleSize / 2); // Larger granules create more occlusion
+                        const ambientOcclusion = 1 - (cellDensity * 0.15); // Up to 15% darkening
                         
-                        // Scale lighting effect by granule size for variation
-                        const sizeFactor = 0.7 + Math.max(0, Math.min(0.8, granuleSize - 0.6)) / 0.8 * 0.6; // Scale 0.7-1.3 based on size
-                        const lightingIntensity = Math.min(1, Math.max(0, avgLighting * sizeFactor));
+                        // Enhanced size-based lighting with ambient occlusion (use existing normalizedSize)
+                        const sizeFactor = 0.4 + (normalizedSize / 4) * 1.2;
+
+                        // Apply ambient occlusion to lighting
+                        const occludedLighting = avgLighting * ambientOcclusion;
+                        const lightingIntensity = Math.min(1, Math.max(0, occludedLighting * sizeFactor));
+
+                        // Enhanced shadow depth with ambient occlusion
+                        const shadowDepthMultiplier = (1 + (normalizedSize / 4) * 0.5) * (2 - ambientOcclusion);
+
+                        // Specular highlights for larger granules with high light intensity
+                        const specularThreshold = 0.7;
+                        const hasSpecular = normalizedSize > 1.5 && maxLightIntensity > specularThreshold;
+                        const specularIntensity = hasSpecular ? (maxLightIntensity - specularThreshold) * 2 : 0;
                         
                         // Calculate bounds for gradient positioning
                         let minX = polygon[0][0], maxX = polygon[0][0];
@@ -2455,33 +3097,323 @@
                             maxY - gradientOffsetY
                         );
                         
-                        // Parse hex colour
-                        const r = parseInt(colour.hex.slice(1, 3), 16);
-                        const g = parseInt(colour.hex.slice(3, 5), 16);
-                        const b = parseInt(colour.hex.slice(5, 7), 16);
+                        // Use color values from variation (already available in colour object)
                         
-                        // Add gradient stops based on edge lighting analysis with validation
-                        const highlightStrength = Math.floor(Math.max(0, Math.min(20, lightingIntensity * 20))); // 0-20 intensity
-                        const shadowStrength = Math.floor(Math.max(0, Math.min(25, (1 - lightingIntensity) * 25))); // 0-25 intensity
-                        
-                        gradient.addColorStop(0, `rgba(${Math.min(255, Math.max(0, r + highlightStrength))}, ${Math.min(255, Math.max(0, g + highlightStrength))}, ${Math.min(255, Math.max(0, b + highlightStrength))}, 1)`);
-                        gradient.addColorStop(0.2, `rgba(${Math.min(255, Math.max(0, r + highlightStrength * 0.4))}, ${Math.min(255, Math.max(0, g + highlightStrength * 0.4))}, ${Math.min(255, Math.max(0, b + highlightStrength * 0.4))}, 1)`);
-                        gradient.addColorStop(0.5, colour.hex);
-                        gradient.addColorStop(0.7, `rgba(${Math.max(0, Math.min(255, r - shadowStrength * 0.4))}, ${Math.max(0, Math.min(255, g - shadowStrength * 0.4))}, ${Math.max(0, Math.min(255, b - shadowStrength * 0.4))}, 1)`);
-                        gradient.addColorStop(1, `rgba(${Math.max(0, Math.min(255, r - shadowStrength))}, ${Math.max(0, Math.min(255, g - shadowStrength))}, ${Math.max(0, Math.min(255, b - shadowStrength))}, 1)`);
+                        // Enhanced gradient with specular highlights and improved lighting
+                        const baseHighlightStrength = lightingIntensity * 25;
+                        const baseShadowStrength = (1 - lightingIntensity) * 30;
 
-                        // Draw cell with gradient
+                        // Apply size-based multipliers and specular enhancement
+                        const highlightStrength = Math.floor(Math.max(0, Math.min(40, baseHighlightStrength * sizeFactor)));
+                        const shadowStrength = Math.floor(Math.max(0, Math.min(50, baseShadowStrength * shadowDepthMultiplier)));
+
+                        // Specular highlight (bright white spots on highly lit large granules)
+                        const specularBoost = Math.floor(specularIntensity * 80); // Bright white highlight
+
+                        // Build gradient with enhanced lighting
+                        if (hasSpecular) {
+                            // Add specular highlight for shiny granules
+                            gradient.addColorStop(0, `rgba(${Math.min(255, colour.r + highlightStrength + specularBoost)}, ${Math.min(255, colour.g + highlightStrength + specularBoost)}, ${Math.min(255, colour.b + highlightStrength + specularBoost)}, 1)`);
+                            gradient.addColorStop(0.1, `rgba(${Math.min(255, colour.r + highlightStrength + specularBoost * 0.3)}, ${Math.min(255, colour.g + highlightStrength + specularBoost * 0.3)}, ${Math.min(255, colour.b + highlightStrength + specularBoost * 0.3)}, 1)`);
+                            gradient.addColorStop(0.3, `rgba(${Math.min(255, colour.r + highlightStrength * 0.6)}, ${Math.min(255, colour.g + highlightStrength * 0.6)}, ${Math.min(255, colour.b + highlightStrength * 0.6)}, 1)`);
+                        } else {
+                            // Standard highlight without specular
+                            gradient.addColorStop(0, `rgba(${Math.min(255, colour.r + highlightStrength)}, ${Math.min(255, colour.g + highlightStrength)}, ${Math.min(255, colour.b + highlightStrength)}, 1)`);
+                            gradient.addColorStop(0.2, `rgba(${Math.min(255, colour.r + highlightStrength * 0.5)}, ${Math.min(255, colour.g + highlightStrength * 0.5)}, ${Math.min(255, colour.b + highlightStrength * 0.5)}, 1)`);
+                        }
+
+                        gradient.addColorStop(0.5, colour.hex);
+                        gradient.addColorStop(0.75, `rgba(${Math.max(0, colour.r - shadowStrength * 0.5)}, ${Math.max(0, colour.g - shadowStrength * 0.5)}, ${Math.max(0, colour.b - shadowStrength * 0.5)}, 1)`);
+                        gradient.addColorStop(1, `rgba(${Math.max(0, colour.r - shadowStrength)}, ${Math.max(0, colour.g - shadowStrength)}, ${Math.max(0, colour.b - shadowStrength)}, 1)`);
+
+                        // Draw cell with gradient using same curve pattern
                         ctx.beginPath();
                         ctx.moveTo(polygon[0][0], polygon[0][1]);
+
+                        // Apply same curve logic for consistency
+                        const curveIntensity = Math.min(2, granuleSize * 0.5);
+
                         for (let j = 1; j < polygon.length; j++) {
-                            ctx.lineTo(polygon[j][0], polygon[j][1]);
+                            const currentPoint = polygon[j];
+                            const prevPoint = polygon[j - 1];
+
+                            const edgeLength = Math.sqrt(
+                                Math.pow(currentPoint[0] - prevPoint[0], 2) +
+                                Math.pow(currentPoint[1] - prevPoint[1], 2)
+                            );
+
+                            if (edgeLength > 15 && curveIntensity > 0.5) {
+                                const edgeSeed = Math.floor(prevPoint[0] + prevPoint[1] + currentPoint[0] + currentPoint[1]);
+                                const edgeRng = mulberry32(edgeSeed);
+
+                                const midX = (prevPoint[0] + currentPoint[0]) / 2;
+                                const midY = (prevPoint[1] + currentPoint[1]) / 2;
+
+                                const edgeVecX = currentPoint[0] - prevPoint[0];
+                                const edgeVecY = currentPoint[1] - prevPoint[1];
+                                const perpX = -edgeVecY / edgeLength;
+                                const perpY = edgeVecX / edgeLength;
+
+                                const curveOffset = (edgeRng() - 0.5) * curveIntensity;
+                                const controlX = midX + perpX * curveOffset;
+                                const controlY = midY + perpY * curveOffset;
+
+                                ctx.quadraticCurveTo(controlX, controlY, currentPoint[0], currentPoint[1]);
+                            } else {
+                                ctx.lineTo(currentPoint[0], currentPoint[1]);
+                            }
                         }
                         ctx.closePath();
                         
                         ctx.fillStyle = gradient;
                         ctx.fill();
+
+                        // Simplified texture - no problematic white effects
+                        if (normalizedSize > 1.2) { // Only larger granules get minimal texture
+                            const textureRng = mulberry32(Math.floor(centerX + centerY * 1000));
+                            const colorBrightness = (colour.r + colour.g + colour.b) / (3 * 255);
+                            const isDarkColor = colorBrightness < 0.5;
+
+                            // Very subtle texture only for dark colors to avoid discoloration
+                            if (isDarkColor && normalizedSize > 2.0) {
+                                const numTexturePoints = Math.floor(normalizedSize * 2); // Much reduced
+                                ctx.fillStyle = `rgba(255, 255, 255, 0.015)`; // Very subtle
+
+                                for (let t = 0; t < numTexturePoints; t++) {
+                                    const texX = centerX + (textureRng() - 0.5) * (maxX - minX) * 0.3;
+                                    const texY = centerY + (textureRng() - 0.5) * (maxY - minY) * 0.3;
+                                    const texSize = textureRng() * 0.8 + 0.2;
+
+                                    ctx.beginPath();
+                                    ctx.arc(texX, texY, texSize, 0, Math.PI * 2);
+                                    ctx.fill();
+                                }
+                            }
+                        }
                     });
-                    
+
+                    // Third pass: Add multi-layer depth illusion with inner granules
+                    voronoiData.cells.forEach((cell, i) => {
+                        const colourIndex = cellAssignments[i];
+                        if (colourIndex === -1) return; // Skip unassigned cells
+
+                        const polygon = cell.polygon;
+                        if (!polygon || polygon.length < 3) return;
+
+                        // Apply same color variation as other passes
+                        const baseColour = PALETTE[colourIndex];
+                        const variationRng = mulberry32(Math.floor(voronoiData.points[i].x + voronoiData.points[i].y * 1000));
+
+                        // Parse base color and apply variations
+                        const r = parseInt(baseColour.hex.slice(1, 3), 16);
+                        const g = parseInt(baseColour.hex.slice(3, 5), 16);
+                        const b = parseInt(baseColour.hex.slice(5, 7), 16);
+
+                        const hsl = rgbToHsl(r, g, b);
+                        const satVariation = (variationRng() - 0.5) * 0.1;
+                        const newSat = Math.max(0, Math.min(1, hsl[1] + satVariation));
+                        const hueVariation = (variationRng() - 0.5) * 4;
+                        const newHue = (hsl[0] + hueVariation + 360) % 360;
+                        const lightVariation = (variationRng() - 0.5) * 0.06;
+                        let newLight = Math.max(0, Math.min(1, hsl[2] + lightVariation));
+
+                        const [newR, newG, newB] = hslToRgb(newHue / 360, newSat, newLight);
+                        const colour = {
+                            hex: `rgb(${Math.round(newR)}, ${Math.round(newG)}, ${Math.round(newB)})`,
+                            r: Math.round(newR),
+                            g: Math.round(newG),
+                            b: Math.round(newB)
+                        };
+
+                        const granuleSize = voronoiData.points[i].size || 1;
+                        const normalizedSize = Math.min(4, Math.max(0.25, granuleSize));
+
+                        // Enhanced size-based hierarchy: apply contrast scaling to depth colors
+                        if (colourIndex !== -1) {
+                            const sizeContrastFactor = 0.7 + (normalizedSize / 4) * 0.6;
+
+                            // Convert current color back to HSL for contrast adjustment
+                            const currentHsl = rgbToHsl(colour.r, colour.g, colour.b);
+                            const contrastAdjustedSat = Math.max(0, Math.min(1, currentHsl[1] * sizeContrastFactor));
+                            let adjustedLight = currentHsl[2];
+
+                            // Small granules get muted
+                            if (normalizedSize < 1.0) {
+                                const muteFactor = (1.0 - normalizedSize) * 0.3;
+                                adjustedLight = adjustedLight + (0.5 - adjustedLight) * muteFactor;
+                            }
+
+                            // Update colour with size-based adjustments
+                            const [adjustedR, adjustedG, adjustedB] = hslToRgb(currentHsl[0] / 360, contrastAdjustedSat, adjustedLight);
+                            colour.r = Math.round(adjustedR);
+                            colour.g = Math.round(adjustedG);
+                            colour.b = Math.round(adjustedB);
+                            colour.hex = `rgb(${colour.r}, ${colour.g}, ${colour.b})`;
+                        }
+
+                        // Only add depth effects to larger granules
+                        if (normalizedSize > 1.5) {
+                            // Calculate polygon center and bounds
+                            let cellCenterX = 0, cellCenterY = 0;
+                            let minX = polygon[0][0], maxX = polygon[0][0];
+                            let minY = polygon[0][1], maxY = polygon[0][1];
+
+                            for (let j = 0; j < polygon.length; j++) {
+                                cellCenterX += polygon[j][0];
+                                cellCenterY += polygon[j][1];
+                                minX = Math.min(minX, polygon[j][0]);
+                                maxX = Math.max(maxX, polygon[j][0]);
+                                minY = Math.min(minY, polygon[j][1]);
+                                maxY = Math.max(maxY, polygon[j][1]);
+                            }
+                            cellCenterX /= polygon.length;
+                            cellCenterY /= polygon.length;
+
+                            const depthRng = mulberry32(Math.floor(cellCenterX * 100 + cellCenterY * 100 + i));
+
+                            const cellWidth = maxX - minX;
+                            const cellHeight = maxY - minY;
+
+                            // Add 1-3 inner "granules" for depth layering
+                            const numInnerGranules = 1 + Math.floor(depthRng() * 3); // 1-3 inner shapes
+
+                            for (let layer = 0; layer < numInnerGranules; layer++) {
+                                const layerDepth = (layer + 1) / (numInnerGranules + 1); // 0.25, 0.5, 0.75 etc
+                                const innerSize = (0.3 + depthRng() * 0.4) * (1 - layerDepth * 0.3); // Smaller for deeper layers
+
+                                // Position inner granule within bounds
+                                const offsetX = (depthRng() - 0.5) * cellWidth * 0.4;
+                                const offsetY = (depthRng() - 0.5) * cellHeight * 0.4;
+                                const innerCenterX = cellCenterX + offsetX;
+                                const innerCenterY = cellCenterY + offsetY;
+
+                                // Create inner granule as ellipse for variety
+                                const innerRadiusX = cellWidth * innerSize * 0.5;
+                                const innerRadiusY = cellHeight * innerSize * 0.5;
+
+                                // Color-aware depth variation using pre-computed values
+                                const r = colour.r;
+                                const g = colour.g;
+                                const b = colour.b;
+
+                                // Calculate color brightness to adjust depth effects
+                                const colorBrightness = (r + g + b) / (3 * 255);
+                                const isDarkColor = colorBrightness < 0.5;
+
+                                // Much more subtle color variation, scaled by color darkness
+                                const baseVariation = isDarkColor ? 10 : 5; // Dark colors can handle more variation
+                                const depthVariation = (depthRng() - 0.5) * baseVariation; // ±5-10 variation
+
+                                // Reduce brightness effect and make it color-aware
+                                const layerBrightness = isDarkColor ?
+                                    (1 - layerDepth * 0.15) : // Darker colors: subtle darkening
+                                    (1 - layerDepth * 0.08);  // Light colors: minimal darkening
+
+                                // Apply variations more carefully
+                                const innerR = Math.max(0, Math.min(255, (r + depthVariation) * layerBrightness));
+                                const innerG = Math.max(0, Math.min(255, (g + depthVariation) * layerBrightness));
+                                const innerB = Math.max(0, Math.min(255, (b + depthVariation) * layerBrightness));
+
+                                // Set clipping to current cell to maintain tessellation
+                                ctx.save();
+                                ctx.beginPath();
+                                ctx.moveTo(polygon[0][0], polygon[0][1]);
+                                for (let j = 1; j < polygon.length; j++) {
+                                    ctx.lineTo(polygon[j][0], polygon[j][1]);
+                                }
+                                ctx.closePath();
+                                ctx.clip();
+
+                                // Color-aware opacity for cleaner light colors
+                                const baseOpacity = isDarkColor ? 0.25 : 0.15; // Lower opacity for light colors
+                                const opacity = baseOpacity - layerDepth * 0.05; // More subtle opacity reduction
+                                ctx.fillStyle = `rgba(${Math.floor(innerR)}, ${Math.floor(innerG)}, ${Math.floor(innerB)}, ${opacity})`;
+
+                                ctx.beginPath();
+                                ctx.ellipse(innerCenterX, innerCenterY, innerRadiusX, innerRadiusY, depthRng() * Math.PI * 2, 0, Math.PI * 2);
+                                ctx.fill();
+
+                                ctx.restore();
+                            }
+                        }
+                    });
+
+                    // Fourth pass: Apply focus/blur effects for depth of field realism
+                    voronoiData.cells.forEach((cell, i) => {
+                        const colourIndex = cellAssignments[i];
+                        if (colourIndex === -1) return; // Skip unassigned cells
+
+                        const polygon = cell.polygon;
+                        if (!polygon || polygon.length < 3) return;
+
+                        const granuleSize = voronoiData.points[i].size || 1;
+                        const normalizedSize = Math.min(4, Math.max(0.25, granuleSize));
+
+                        // Apply blur to small granules for depth of field effect
+                        if (normalizedSize < 1.2) {
+                            // Calculate blur amount based on size (smaller = more blur)
+                            const blurAmount = Math.max(0.8, (1.2 - normalizedSize) * 1.5);
+
+                            // Apply blur filter
+                            ctx.filter = `blur(${blurAmount}px)`;
+
+                            // Set clipping to current cell to maintain tessellation
+                            ctx.save();
+                            ctx.beginPath();
+                            ctx.moveTo(polygon[0][0], polygon[0][1]);
+                            for (let j = 1; j < polygon.length; j++) {
+                                ctx.lineTo(polygon[j][0], polygon[j][1]);
+                            }
+                            ctx.closePath();
+                            ctx.clip();
+
+                            // Get the current granule colors (matching the existing passes)
+                            const baseColour = PALETTE[colourIndex];
+                            const variationRng = mulberry32(Math.floor(voronoiData.points[i].x + voronoiData.points[i].y * 1000));
+
+                            // Parse base color and apply same variations as other passes
+                            const r = parseInt(baseColour.hex.slice(1, 3), 16);
+                            const g = parseInt(baseColour.hex.slice(3, 5), 16);
+                            const b = parseInt(baseColour.hex.slice(5, 7), 16);
+
+                            const hsl = rgbToHsl(r, g, b);
+                            const satVariation = (variationRng() - 0.5) * 0.1;
+                            const newSat = Math.max(0, Math.min(1, hsl[1] + satVariation));
+                            const hueVariation = (variationRng() - 0.5) * 4;
+                            const newHue = (hsl[0] + hueVariation + 360) % 360;
+                            const lightVariation = (variationRng() - 0.5) * 0.06;
+                            let newLight = Math.max(0, Math.min(1, hsl[2] + lightVariation));
+
+                            // Apply size-based contrast scaling
+                            const sizeContrastFactor = 0.7 + (normalizedSize / 4) * 0.6;
+                            const contrastAdjustedSat = Math.max(0, Math.min(1, newSat * sizeContrastFactor));
+
+                            // Small granules get muted
+                            if (normalizedSize < 1.0) {
+                                const muteFactor = (1.0 - normalizedSize) * 0.3;
+                                newLight = newLight + (0.5 - newLight) * muteFactor;
+                            }
+
+                            const [finalR, finalG, finalB] = hslToRgb(newHue / 360, contrastAdjustedSat, newLight);
+                            const finalColor = `rgb(${Math.round(finalR)}, ${Math.round(finalG)}, ${Math.round(finalB)})`;
+
+                            // Re-render the blurred granule
+                            ctx.fillStyle = finalColor;
+                            ctx.beginPath();
+                            ctx.moveTo(polygon[0][0], polygon[0][1]);
+                            for (let j = 1; j < polygon.length; j++) {
+                                ctx.lineTo(polygon[j][0], polygon[j][1]);
+                            }
+                            ctx.closePath();
+                            ctx.fill();
+
+                            ctx.restore();
+                        }
+                    });
+
+                    // Reset filter for any subsequent drawing
+                    ctx.filter = 'none';
+
                     // Add instructional text for blank canvas
                     if (totalParts === 0) {
                         ctx.save();
@@ -3147,15 +4079,6 @@
                 }, [undo, redo]);
 
                 return React.createElement('div', { className: 'app' },
-                    React.createElement('header', { className: 'app-header' },
-                        React.createElement('h1', null, 
-                            React.createElement('span', null, 'Rosehill TPV'),
-                            React.createElement('sup', null, '®'),
-                            React.createElement('span', null, ' Colour Mixer')
-                        ),
-                        React.createElement('p', { style: { fontFamily: "'Source Sans Pro', sans-serif" } }, 'Create custom granule blends with our 21 premium Rosehill TPV® colours')
-                    ),
-
                     React.createElement('div', { className: 'main-content' },
                         React.createElement('div', { className: 'canvas-container' },
                             React.createElement('div', { className: 'canvas-wrapper' },
@@ -3472,14 +4395,16 @@
         // Enhanced scroll effect for header
         window.addEventListener('scroll', function() {
             const header = document.querySelector('.header');
-            if (window.scrollY > 100) {
-                header.style.background = 'linear-gradient(135deg, rgba(26, 54, 93, 0.98), rgba(45, 74, 113, 0.98))';
-                header.style.backdropFilter = 'blur(10px)';
-                header.style.boxShadow = '0 8px 32px rgba(0,0,0,0.15)';
-            } else {
-                header.style.background = 'linear-gradient(135deg, #1a365d, #2d4a71)';
-                header.style.backdropFilter = 'none';
-                header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+            if (header) {
+                if (window.scrollY > 100) {
+                    header.style.background = 'linear-gradient(135deg, rgba(26, 54, 93, 0.98), rgba(45, 74, 113, 0.98))';
+                    header.style.backdropFilter = 'blur(10px)';
+                    header.style.boxShadow = '0 8px 32px rgba(0,0,0,0.15)';
+                } else {
+                    header.style.background = 'linear-gradient(135deg, #1a365d, #2d4a71)';
+                    header.style.backdropFilter = 'none';
+                    header.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+                }
             }
         });
 
@@ -3526,38 +4451,6 @@
                 }
             });
         });
-    </script>
-    <!-- Client-side translation system -->
-
-    <!-- Analytics Language Enhancement -->
-    <script src="/analytics-language-enhancer.js"></script>
-
-    <script>
-        // Desktop Language Dropdown functionality
-        const languageToggle = document.getElementById('language-dropdown-toggle');
-        const languageDropdown = document.getElementById('language-dropdown');
-
-        if (languageToggle && languageDropdown) {
-            languageToggle.addEventListener('click', function(event) {
-                event.preventDefault();
-                event.stopPropagation();
-                languageToggle.classList.toggle('active');
-                languageDropdown.classList.toggle('active');
-            });
-
-            // Close dropdown when clicking outside
-            document.addEventListener('click', function(event) {
-                if (!languageToggle.contains(event.target) && !languageDropdown.contains(event.target)) {
-                    languageToggle.classList.remove('active');
-                    languageDropdown.classList.remove('active');
-                }
-            });
-
-            // Prevent dropdown from closing when clicking inside
-            languageDropdown.addEventListener('click', function(event) {
-                event.stopPropagation();
-            });
-        }
     </script>
 
     <!-- Language Switcher Handler -->
