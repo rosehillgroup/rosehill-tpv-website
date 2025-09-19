@@ -21,5 +21,15 @@ Disallow: /*.backup
 Disallow: /*.backup2
 Disallow: /*.backup_*
 
+# Disallow white-label mixers (customer-specific pages)
+Disallow: /mixer-bruces-playgrounds.html
+Disallow: /mixer-complete-playgrounds.html
+Disallow: /mixer-grange-surfacing.html
+Disallow: /mixer-nt-shade.html
+Disallow: /mixer-perth-playground.html
+Disallow: /mixer-synthetic-grass.html
+Disallow: /mixer-glooloop.html
+Disallow: /mixer-rebranded.html
+
 # Sitemap location (update after generating sitemap)
 Sitemap: https://tpv.rosehill.group/sitemap.xml
