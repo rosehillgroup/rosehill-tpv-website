@@ -1,6 +1,6 @@
 [build]
   publish = "."
-  command = "node build-installations.cjs"
+  command = "echo 'Skipping build for now to test functions'"
 
 [build.environment]
   NODE_VERSION = "18"
