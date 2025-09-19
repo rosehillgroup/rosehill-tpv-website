@@ -7,7 +7,7 @@
 
 [functions]
   directory = "netlify/functions"
-  external_node_modules = ["jose", "@sanity/client", "@supabase/supabase-js", "busboy"]
+  external_node_modules = ["jose", "@sanity/client", "@supabase/supabase-js"]
   node_bundler = "esbuild"
 
 [[plugins]]

@@ -188,10 +188,22 @@
     async function handleSubmit(e) {
         e.preventDefault();
 
-        // Validate
+        // Validate files
         if (selectedFiles.length === 0) {
             showError('Please upload at least one photo');
             return;
+        }
+
+        // Client-side file validation
+        for (const file of selectedFiles) {
+            if (file.size > 20 * 1024 * 1024) { // 20 MB limit
+                showError(`File "${file.name}" is too large. Maximum size is 20MB.`);
+                return;
+            }
+            if (!/^image\/(jpe?g|png|webp|heic)$/i.test(file.type)) {
+                showError(`File "${file.name}" is not a supported image format.`);
+                return;
+            }
         }
 
         if (!form.checkValidity()) {
@@ -210,35 +222,7 @@
         submitButton.textContent = 'Uploading...';
 
         try {
-            // Prepare form data
-            const formData = new FormData(form);
-
-            // Add files to form data
-            selectedFiles.forEach((file, index) => {
-                formData.append(`photo_${index}`, file);
-            });
-
-            // Get selected products
-            const productsUsed = Array.from(
-                document.querySelectorAll('input[name="products_used"]:checked')
-            ).map(input => input.value);
-            formData.set('products_used', JSON.stringify(productsUsed));
-
-            // Submit to Netlify function (working version)
-            const response = await fetch('/.netlify/functions/photo-working', {
-                method: 'POST',
-                body: formData
-            });
-
-            const result = await response.json();
-
-            if (response.ok && result.success) {
-                // Success!
-                showSuccess();
-                resetForm();
-            } else {
-                throw new Error(result.error || 'Upload failed');
-            }
+            await uploadFilesDirectly();
         } catch (error) {
             console.error('Upload error:', error);
             showError('There was an error uploading your photos. Please try again.');
@@ -249,6 +233,121 @@
             loadingSpinner.style.display = 'none';
             submitButton.textContent = 'Submit Photos';
         }
+    }
+
+    // Direct upload to Supabase using signed URLs
+    async function uploadFilesDirectly() {
+        // Generate unique install ID (could also come from QR code)
+        const installId = `TPV-${Date.now()}-${Math.random().toString(36).substring(7)}`;
+
+        // Prepare file metadata
+        const fileMetadata = selectedFiles.map(file => ({
+            name: file.name,
+            type: file.type,
+            size: file.size
+        }));
+
+        submitButton.textContent = 'Getting upload URLs...';
+
+        // Step 1: Get signed upload URLs
+        const urlResponse = await fetch('/.netlify/functions/create-upload-urls', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+                installId,
+                files: fileMetadata,
+                qrToken: null // TODO: Get from QR code if available
+            })
+        });
+
+        if (!urlResponse.ok) {
+            const errorText = await urlResponse.text();
+            throw new Error(`Failed to get upload URLs: ${errorText}`);
+        }
+
+        const { uploads } = await urlResponse.json();
+
+        // Step 2: Upload files directly to Supabase
+        submitButton.textContent = 'Uploading files...';
+        const uploadedFiles = [];
+
+        // Import Supabase client
+        const { createClient } = await import('https://esm.sh/@supabase/supabase-js@2');
+        const supabase = createClient(
+            window.SUPABASE_URL || 'https://rgtaaqkbubzjrczrtdbu.supabase.co',
+            window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJndGFhcWtidWJ6anJjenJ0ZGJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY3MzY5MjksImV4cCI6MjA0MjMxMjkyOX0.fQhI8fq7aaGRMfh11r8Bfk-A2BsNzPP_pFuMVyHSLEo'
+        );
+
+        for (let i = 0; i < selectedFiles.length; i++) {
+            const file = selectedFiles[i];
+            const upload = uploads[i];
+
+            submitButton.textContent = `Uploading ${i + 1}/${selectedFiles.length}...`;
+
+            const { data, error } = await supabase.storage
+                .from(upload.bucket)
+                .uploadToSignedUrl(upload.path, upload.token, file, {
+                    contentType: upload.contentType || file.type
+                });
+
+            if (error) {
+                throw new Error(`Failed to upload ${file.name}: ${error.message}`);
+            }
+
+            uploadedFiles.push({
+                bucket: upload.bucket,
+                path: upload.path,
+                name: file.name,
+                size: file.size
+            });
+        }
+
+        // Step 3: Record submission metadata
+        submitButton.textContent = 'Recording submission...';
+
+        // Get form data
+        const formData = new FormData(form);
+        const productsUsed = Array.from(
+            document.querySelectorAll('input[name="products_used"]:checked')
+        ).map(input => input.value);
+
+        const submissionResponse = await fetch('/.netlify/functions/record-submission', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+                installId,
+                files: uploadedFiles,
+                uploaderMeta: {
+                    userAgent: navigator.userAgent,
+                    when: new Date().toISOString()
+                },
+                // Form fields
+                installer_name: formData.get('installer_name'),
+                company_name: formData.get('company_name'),
+                email: formData.get('email'),
+                phone: formData.get('phone'),
+                location_city: formData.get('location_city'),
+                location_country: formData.get('location_country'),
+                installation_date: formData.get('installation_date'),
+                project_name: formData.get('project_name'),
+                project_description: formData.get('project_description'),
+                tpv_products_used: productsUsed,
+                square_meters: formData.get('square_meters'),
+                terms_accepted: true
+            })
+        });
+
+        if (!submissionResponse.ok) {
+            const errorText = await submissionResponse.text();
+            throw new Error(`Failed to record submission: ${errorText}`);
+        }
+
+        const result = await submissionResponse.json();
+        console.log('Submission recorded:', result);
+
+        // Success!
+        showSuccess();
+        resetForm();
     }
 
     // Show success message
