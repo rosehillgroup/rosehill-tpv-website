@@ -1,17 +1,32 @@
 // CommonJS to match your current setup
 const { createClient } = require('@supabase/supabase-js');
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE; // server-only
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_PUBLIC_SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE;
 const BUCKET = process.env.SUPABASE_BUCKET || 'tpv-photos';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
+console.log('Environment check:', {
+  hasUrl: !!SUPABASE_URL,
+  hasServiceRole: !!SUPABASE_SERVICE_ROLE,
+  bucket: BUCKET
+});
 
 exports.handler = async (event) => {
   try {
     if (event.httpMethod !== 'POST') {
       return { statusCode: 405, body: 'Method Not Allowed' };
     }
+
+    // Check environment variables first
+    if (!SUPABASE_URL) {
+      return { statusCode: 500, body: 'SUPABASE_URL not configured' };
+    }
+
+    if (!SUPABASE_SERVICE_ROLE) {
+      return { statusCode: 500, body: 'SUPABASE_SERVICE_ROLE not configured' };
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
 
     const { installId, files = [], qrToken } = JSON.parse(event.body || '{}');
 
