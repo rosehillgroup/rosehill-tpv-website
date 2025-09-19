@@ -1,7 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE;
+const SUPABASE_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
 
@@ -53,20 +53,19 @@ exports.handler = async (event) => {
       project_description: project_description || null,
       tpv_products_used: tpv_products_used || [],
       square_meters: square_meters ? parseInt(square_meters) : null,
-      photo_urls: files.map(f => `${f.bucket}/${f.path}`),
+      files: files.map(f => ({
+        bucket: f.bucket,
+        path: f.path,
+        name: f.name,
+        size: f.size
+      })),
       terms_accepted: true,
       submission_ip: event.headers['client-ip'] || event.headers['x-forwarded-for'] || null,
       metadata: {
         source: 'qr_code',
         user_agent: uploaderMeta?.userAgent || event.headers['user-agent'] || null,
         upload_count: files.length,
-        install_id: installId,
-        files: files.map(f => ({
-          bucket: f.bucket,
-          path: f.path,
-          name: f.name,
-          size: f.size
-        }))
+        install_id: installId
       }
     };
 
