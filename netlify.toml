@@ -7,8 +7,11 @@
 
 [functions]
   directory = "netlify/functions"
-  external_node_modules = ["jose", "@sanity/client"]
+  external_node_modules = ["jose", "@sanity/client", "@supabase/supabase-js", "busboy"]
   node_bundler = "esbuild"
+
+[[plugins]]
+  package = "@netlify/plugin-functions-install-core"
 
 # Admin redirects - only catch admin pages, not assets
 [[redirects]]
