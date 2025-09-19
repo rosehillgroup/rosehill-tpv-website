@@ -70,7 +70,7 @@ exports.handler = async (event) => {
         bucket: BUCKET,
         path,
         token: data.token,       // used client-side
-        // signedUrl: data.signedUrl, // optional for direct PUT if needed
+        signedUrl: data.signedUrl, // full URL for direct upload
         contentType: f.type
       });
     }

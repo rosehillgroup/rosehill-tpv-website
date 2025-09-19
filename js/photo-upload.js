@@ -284,14 +284,34 @@
 
             submitButton.textContent = `Uploading ${i + 1}/${selectedFiles.length}...`;
 
-            const { data, error } = await supabase.storage
-                .from(upload.bucket)
-                .uploadToSignedUrl(upload.path, upload.token, file, {
-                    contentType: upload.contentType || file.type
+            // Use signedUrl if available, otherwise use uploadToSignedUrl method
+            let uploadResult;
+            if (upload.signedUrl) {
+                // Direct PUT to signed URL
+                const response = await fetch(upload.signedUrl, {
+                    method: 'PUT',
+                    body: file,
+                    headers: {
+                        'Content-Type': upload.contentType || file.type
+                    }
                 });
 
-            if (error) {
-                throw new Error(`Failed to upload ${file.name}: ${error.message}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to upload ${file.name}: ${response.statusText}`);
+                }
+                uploadResult = { data: { path: upload.path } };
+            } else {
+                // Use Supabase SDK method
+                const { data, error } = await supabase.storage
+                    .from(upload.bucket)
+                    .uploadToSignedUrl(upload.path, upload.token, file, {
+                        contentType: upload.contentType || file.type
+                    });
+
+                if (error) {
+                    throw new Error(`Failed to upload ${file.name}: ${error.message}`);
+                }
+                uploadResult = { data };
             }
 
             uploadedFiles.push({
