@@ -274,8 +274,8 @@
         // Import Supabase client from CDN
         const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
         const supabase = createClient(
-            window.SUPABASE_URL || 'https://rgtaaqkbubzjrczrtdbu.supabase.co',
-            window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJndGFhcWtidWJ6anJjenJ0ZGJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjY3MzY5MjksImV4cCI6MjA0MjMxMjkyOX0.fQhI8fq7aaGRMfh11r8Bfk-A2BsNzPP_pFuMVyHSLEo'
+            window.SUPABASE_URL || 'https://okakomwfikxmwllvliva.supabase.co',
+            window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rYWtvbXdmaWt4bXdsbHZsaXZhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzI4MTQyODgsImV4cCI6MjA0ODM5MDI4OH0.mFyhF7JICEjwZ7Og92zlvHbjGX2ouI8QKQKF3uMzFLk'
         );
 
         for (let i = 0; i < selectedFiles.length; i++) {
