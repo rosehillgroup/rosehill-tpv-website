@@ -9,20 +9,37 @@ function corsHeaders(origin) {
   };
 }
 
+// Helper function to convert Sanity blocks to plain text
+function blocksToPlainText(blocks) {
+  if (!blocks || !Array.isArray(blocks)) return '';
+  return blocks
+    .map(block =>
+      block.children?.map(child => child.text || '').join('') || ''
+    )
+    .join(' ')
+    .trim();
+}
+
 export async function handler(event, context) {
   const headers = corsHeaders(event.headers.origin);
-  
+
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers };
   }
-  
+
   if (event.httpMethod !== 'GET') {
-    return { 
-      statusCode: 405, 
-      headers, 
-      body: JSON.stringify({ error: 'Method not allowed' }) 
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
+
+  // Handle language parameter
+  const lang = (event.queryStringParameters?.lang || '').toLowerCase();
+  const supported = new Set(['en','fr','es','de']);
+  const useLang = supported.has(lang) ? lang : 'en';
+  const suffix = useLang === 'en' ? '' : `__${useLang}`;
   
   try {
     const { createClient } = await import('@sanity/client');
@@ -66,12 +83,55 @@ export async function handler(event, context) {
     
     const installations = await sanity.fetch(query);
     
+    // Transform to card-ready data with language-aware content
+    const pick = (row, base) => row[`${base}${suffix}`] || row[base] || '';
+
+    const transformedInstallations = installations.slice(0, 3).map(installation => {
+      // Get localized overview text
+      const overviewBlocks = installation[`overview${suffix}`] || installation.overview || [];
+      const fullText = blocksToPlainText(overviewBlocks);
+      const excerpt = fullText.length > 120 ? fullText.substring(0, 120) + '...' : fullText;
+
+      // Build correct URL
+      const installationUrl = useLang === 'en'
+        ? `/installations/${installation.slug}.html`
+        : `/${useLang}/installations/${installation.slug}.html`;
+
+      // Compose location (handle both string and object formats)
+      let locationText = '';
+      if (installation[`location__${useLang}`]) {
+        locationText = installation[`location__${useLang}`];
+      } else if (installation.location?.city && installation.location?.country) {
+        const city = installation.location[`city${suffix}`] || installation.location.city || '';
+        const country = installation.location[`country${suffix}`] || installation.location.country || '';
+        locationText = `${city}, ${country}`.replace(/^, |, $/, '');
+      } else {
+        locationText = installation.location || '';
+      }
+
+      return {
+        _id: installation._id,
+        title: pick(installation, 'title'),
+        excerpt: excerpt,
+        locationText: locationText,
+        image: {
+          src: installation.coverImage?.url || '',
+          alt: pick(installation, 'coverImageAlt') || installation.coverImage?.alt || ''
+        },
+        url: installationUrl,
+        installationDate: installation.installationDate,
+        application: installation.application,
+        slug: installation.slug // Keep for any debugging needs
+      };
+    });
+
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
-        installations: installations,
-        count: installations.length,
+        installations: transformedInstallations,
+        count: transformedInstallations.length,
+        language: useLang,
         generated: new Date().toISOString()
       })
     };

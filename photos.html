@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Share Your TPV Installation | Rosehill TPV</title>
+    <meta name="description" content="Upload photos of your TPV installation to be featured on our website and social media">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .upload-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .upload-hero {
+            background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+            color: white;
+            padding: 60px 20px;
+            text-align: center;
+            margin: -20px -20px 40px -20px;
+        }
+
+        .upload-hero h1 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .upload-hero p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .upload-form {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+
+        .form-section {
+            margin-bottom: 40px;
+        }
+
+        .form-section h2 {
+            font-family: 'Overpass', sans-serif;
+            color: #1a365d;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .form-group label .required {
+            color: #ff6b35;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="tel"],
+        .form-group input[type="date"],
+        .form-group input[type="number"],
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #ff6b35;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .form-group .help-text {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-top: 5px;
+        }
+
+        /* Photo Upload Section */
+        .photo-upload-area {
+            border: 3px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            background: #f8fafc;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .photo-upload-area:hover,
+        .photo-upload-area.dragging {
+            border-color: #ff6b35;
+            background: #fff5f3;
+        }
+
+        .photo-upload-area.has-photos {
+            border-style: solid;
+            cursor: default;
+        }
+
+        .upload-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            fill: #cbd5e0;
+        }
+
+        .photo-upload-area.dragging .upload-icon,
+        .photo-upload-area:hover .upload-icon {
+            fill: #ff6b35;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .photo-previews {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .photo-preview {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #f1f5f9;
+            aspect-ratio: 1;
+        }
+
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-preview .remove-photo {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .photo-preview .remove-photo:hover {
+            background: #ff6b35;
+        }
+
+        /* Product checkboxes */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .product-checkbox {
+            display: flex;
+            align-items: center;
+        }
+
+        .product-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        .product-checkbox label {
+            cursor: pointer;
+            margin: 0;
+            font-weight: 400;
+        }
+
+        /* Terms section */
+        .terms-box {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .terms-checkbox {
+            display: flex;
+            align-items: flex-start;
+            margin-top: 20px;
+        }
+
+        .terms-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+
+        /* Submit button */
+        .submit-button {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .submit-button:hover:not(:disabled) {
+            background: #e55a2b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255,107,53,0.3);
+        }
+
+        .submit-button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+
+        /* Loading and success states */
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            background: #48bb78;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            background: #f56565;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .upload-container {
+                padding: 10px;
+            }
+
+            .upload-hero {
+                padding: 40px 20px;
+            }
+
+            .upload-hero h1 {
+                font-size: 2rem;
+            }
+
+            .upload-form {
+                padding: 20px;
+            }
+
+            .photo-previews {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="main-header">
+        <nav class="nav-container">
+            <div class="nav-wrapper">
+                <a href="index.html" class="logo">
+                    <img src="images/rosehill-logo.svg" alt="Rosehill TPV" style="height: 40px;">
+                </a>
+                <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <ul class="nav-menu">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="products.html">Products</a></li>
+                    <li><a href="applications.html">Applications</a></li>
+                    <li><a href="colour.html">Colour</a></li>
+                    <li><a href="installations.html">Installations</a></li>
+                    <li><a href="about.html">About Us</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="upload-container">
+            <div class="upload-hero">
+                <h1>Share Your TPV<sup>®</sup> Installation</h1>
+                <p>Upload photos of your project to be featured on our website and social media channels</p>
+            </div>
+
+            <div class="success-message" id="success-message">
+                <h3>Thank you for your submission!</h3>
+                <p>Your photos have been uploaded successfully. We'll review them shortly and may feature them on our website and social media.</p>
+            </div>
+
+            <div class="error-message" id="error-message">
+                <p>There was an error uploading your photos. Please try again.</p>
+            </div>
+
+            <form class="upload-form" id="photo-upload-form">
+                <!-- Contact Information -->
+                <div class="form-section">
+                    <h2>Your Information</h2>
+
+                    <div class="form-group">
+                        <label for="installer-name">
+                            Your Name <span class="required">*</span>
+                        </label>
+                        <input type="text" id="installer-name" name="installer_name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="company-name">
+                            Company Name
+                        </label>
+                        <input type="text" id="company-name" name="company_name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">
+                            Email Address <span class="required">*</span>
+                        </label>
+                        <input type="email" id="email" name="email" required>
+                        <div class="help-text">We'll only use this to contact you if we feature your photos</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">
+                            Phone Number
+                        </label>
+                        <input type="tel" id="phone" name="phone">
+                    </div>
+                </div>
+
+                <!-- Project Information -->
+                <div class="form-section">
+                    <h2>Project Details</h2>
+
+                    <div class="form-group">
+                        <label for="project-name">
+                            Project Name
+                        </label>
+                        <input type="text" id="project-name" name="project_name" placeholder="e.g., St. Mary's Primary School Playground">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location-city">
+                            City/Town <span class="required">*</span>
+                        </label>
+                        <input type="text" id="location-city" name="location_city" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location-country">
+                            Country <span class="required">*</span>
+                        </label>
+                        <input type="text" id="location-country" name="location_country" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="installation-date">
+                            Installation Date
+                        </label>
+                        <input type="date" id="installation-date" name="installation_date">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="square-meters">
+                            Area (m²)
+                        </label>
+                        <input type="number" id="square-meters" name="square_meters" min="1" placeholder="e.g., 250">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="project-description">
+                            Project Description
+                        </label>
+                        <textarea id="project-description" name="project_description"
+                                  placeholder="Tell us about this installation - what makes it special?"></textarea>
+                    </div>
+                </div>
+
+                <!-- Products Used -->
+                <div class="form-section">
+                    <h2>Products Used</h2>
+                    <div class="product-grid">
+                        <div class="product-checkbox">
+                            <input type="checkbox" id="product-tpv" name="products_used" value="TPV Granules">
+                            <label for="product-tpv">TPV<sup>®</sup> Granules</label>
+                        </div>
+                        <div class="product-checkbox">
+                            <input type="checkbox" id="product-flexilon" name="products_used" value="Flexilon Binder">
+                            <label for="product-flexilon">Flexilon<sup>®</sup> Binder</label>
+                        </div>
+                        <div class="product-checkbox">
+                            <input type="checkbox" id="product-primer" name="products_used" value="Primer">
+                            <label for="product-primer">Primer</label>
+                        </div>
+                        <div class="product-checkbox">
+                            <input type="checkbox" id="product-sealer" name="products_used" value="Sealer">
+                            <label for="product-sealer">Sealer</label>
+                        </div>
+                        <div class="product-checkbox">
+                            <input type="checkbox" id="product-pretreatment" name="products_used" value="Pre-treatment">
+                            <label for="product-pretreatment">Pre-treatment</label>
+                        </div>
+                        <div class="product-checkbox">
+                            <input type="checkbox" id="product-other" name="products_used" value="Other">
+                            <label for="product-other">Other</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Photo Upload -->
+                <div class="form-section">
+                    <h2>Upload Photos <span class="required">*</span></h2>
+                    <div class="help-text" style="margin-bottom: 20px;">
+                        Upload up to 10 photos of your installation (max 5MB each). We recommend including both close-up and wide shots.
+                    </div>
+
+                    <div class="photo-upload-area" id="photo-upload-area">
+                        <svg class="upload-icon" viewBox="0 0 24 24">
+                            <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                        <p><strong>Click to upload or drag and drop</strong></p>
+                        <p>JPEG, PNG or WebP (max 5MB each)</p>
+                    </div>
+                    <input type="file" id="file-input" name="photos" multiple accept="image/jpeg,image/png,image/webp">
+                    <div class="photo-previews" id="photo-previews"></div>
+                </div>
+
+                <!-- Terms and Conditions -->
+                <div class="form-section">
+                    <div class="terms-box">
+                        <h3>Terms & Conditions</h3>
+                        <p>By uploading photos, you confirm that:</p>
+                        <ul style="margin: 15px 0; padding-left: 20px;">
+                            <li>You own the rights to these photos or have permission to share them</li>
+                            <li>You grant Rosehill TPV permission to use these photos for marketing purposes</li>
+                            <li>The photos accurately represent a genuine TPV installation</li>
+                            <li>You consent to being credited (if applicable) when photos are used</li>
+                        </ul>
+
+                        <div class="terms-checkbox">
+                            <input type="checkbox" id="terms" name="terms_accepted" required>
+                            <label for="terms">
+                                I agree to the terms and conditions above <span class="required">*</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-button" id="submit-button">
+                    Submit Photos
+                    <span class="loading-spinner" id="loading-spinner"></span>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Rosehill TPV<sup>®</sup></h3>
+                <p>Leading UK manufacturer of thermoplastic vulcanizate granules for safer, sustainable surfaces.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="products.html">Products</a></li>
+                    <li><a href="applications.html">Applications</a></li>
+                    <li><a href="installations.html">Installations</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Contact</h4>
+                <p>Rosehill Sports & Play<br>
+                A Division of Rosehill Group<br>
+                Email: info@rosehilltpv.com<br>
+                Phone: +44 (0) 1422 317 271</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Rosehill Sports & Play. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Photo Upload JavaScript -->
+    <script src="js/photo-upload.js"></script>
+    <script src="js/navigation.js"></script>
+</body>
+</html>

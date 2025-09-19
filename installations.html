@@ -64,7 +64,7 @@
     <link rel="manifest" href="favicon_io/site.webmanifest">
     
     <!-- Content Security Policy to allow Google Fonts -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://68ola3dd.api.sanity.io https://analytics.google.com; connect-src 'self' https://68ola3dd.api.sanity.io https://www.google-analytics.com; img-src 'self' data: https:; frame-src https://www.googletagmanager.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; font-src 'self' https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://68ola3dd.api.sanity.io https://analytics.google.com; connect-src 'self' https://68ola3dd.api.sanity.io https://www.google-analytics.com https://region1.analytics.google.com https://region1.google-analytics.com https://*.analytics.google.com https://*.google-analytics.com; img-src 'self' data: https:; frame-src https://www.googletagmanager.com;">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -761,6 +761,126 @@
             font-size: 1.2rem;
         }
 
+        /* Community Photos Section */
+        .community-photos-section {
+            background: #f8fafc;
+            padding: 60px 0;
+            margin-top: 60px;
+        }
+
+        .community-photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .community-photo-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .community-photo-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .community-photo-image {
+            position: relative;
+            aspect-ratio: 16/12;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .community-photo-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .community-photo-card:hover .community-photo-image img {
+            transform: scale(1.05);
+        }
+
+        .community-photo-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff6b35;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .community-photo-info {
+            padding: 20px;
+        }
+
+        .community-photo-title {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 8px;
+        }
+
+        .community-photo-meta {
+            color: #718096;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .community-photo-location {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #4a5568;
+            font-size: 0.95rem;
+        }
+
+        .community-photo-location svg {
+            width: 16px;
+            height: 16px;
+            fill: #ff6b35;
+        }
+
+        .load-more-btn {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .load-more-btn:hover {
+            background: #e55a2b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255,107,53,0.3);
+        }
+
+        .load-more-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-message {
+            text-align: center;
+            color: #718096;
+            padding: 40px;
+            font-size: 1.1rem;
+        }
+
         /* Footer */
         .footer {
             background: #1a365d;
@@ -1166,6 +1286,22 @@
         <span class="lightbox-close" id="lightbox-close">&times;</span>
         <img class="lightbox-content" id="lightbox-image">
     </div>
+
+    <!-- Community Photos Section -->
+    <section class="community-photos-section" id="community-photos">
+        <div class="container">
+            <h2 class="section-title">Community Installations</h2>
+            <p class="section-subtitle">Photos submitted by TPV installers from around the world</p>
+
+            <div class="community-photos-grid" id="community-photos-grid">
+                <div class="loading-message">Loading community photos...</div>
+            </div>
+
+            <div class="load-more-container" style="text-align: center; margin-top: 40px; display: none;">
+                <button class="load-more-btn" id="load-more-photos">Load More Photos</button>
+            </div>
+        </div>
+    </section>
 
     <!-- Footer -->
     <footer class="footer">
@@ -1807,10 +1943,128 @@ function generateFilters() {
   });
 }
 
+// --- Community Photos ---
+let communityPhotosOffset = 0;
+const communityPhotosLimit = 6;
+let loadingCommunityPhotos = false;
+
+async function loadCommunityPhotos(append = false) {
+    if (loadingCommunityPhotos) return;
+    loadingCommunityPhotos = true;
+
+    const grid = document.getElementById('community-photos-grid');
+    const loadMoreBtn = document.getElementById('load-more-photos');
+    const loadMoreContainer = document.querySelector('.load-more-container');
+
+    try {
+        // Show loading state if first load
+        if (!append) {
+            grid.innerHTML = '<div class="loading-message">Loading community photos...</div>';
+        } else {
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.textContent = 'Loading...';
+        }
+
+        // Fetch photos from API
+        const response = await fetch(`/.netlify/functions/photos-get?limit=${communityPhotosLimit}&offset=${communityPhotosOffset}`);
+
+        if (!response.ok) {
+            throw new Error('Failed to load photos');
+        }
+
+        const data = await response.json();
+        const photos = data.photos || [];
+
+        // Clear loading message if first load
+        if (!append) {
+            grid.innerHTML = '';
+        }
+
+        // Render photos
+        if (photos.length > 0) {
+            photos.forEach(photo => {
+                const photoCard = createCommunityPhotoCard(photo);
+                grid.appendChild(photoCard);
+            });
+
+            // Update offset for pagination
+            communityPhotosOffset += photos.length;
+
+            // Show/hide load more button
+            if (data.pagination && data.pagination.has_more) {
+                loadMoreContainer.style.display = 'block';
+                loadMoreBtn.disabled = false;
+                loadMoreBtn.textContent = 'Load More Photos';
+            } else {
+                loadMoreContainer.style.display = 'none';
+            }
+        } else if (!append) {
+            grid.innerHTML = '<div class="loading-message">No community photos yet. Be the first to submit!</div>';
+        }
+    } catch (error) {
+        console.error('Error loading community photos:', error);
+        if (!append) {
+            grid.innerHTML = '<div class="loading-message">Community photos coming soon!</div>';
+        }
+        loadMoreContainer.style.display = 'none';
+    } finally {
+        loadingCommunityPhotos = false;
+    }
+}
+
+function createCommunityPhotoCard(photo) {
+    const card = document.createElement('div');
+    card.className = 'community-photo-card';
+
+    // Use first photo from array
+    const imageUrl = photo.photos && photo.photos[0] ? photo.photos[0] : 'images/placeholder.jpg';
+
+    // Format date
+    const date = photo.installation_date ? new Date(photo.installation_date).toLocaleDateString('en-GB', {
+        month: 'short',
+        year: 'numeric'
+    }) : '';
+
+    // Build location string
+    const location = [photo.location?.city, photo.location?.country].filter(Boolean).join(', ');
+
+    card.innerHTML = `
+        <div class="community-photo-image" onclick="openLightbox('${imageUrl}')">
+            <img src="${imageUrl}" alt="${photo.project_name || 'TPV Installation'}" loading="lazy">
+            ${photo.is_featured ? '<span class="community-photo-badge">Featured</span>' : ''}
+        </div>
+        <div class="community-photo-info">
+            <h3 class="community-photo-title">${photo.project_name || 'TPV Installation'}</h3>
+            <div class="community-photo-meta">
+                ${photo.installer_name}${photo.company_name ? ` • ${photo.company_name}` : ''}
+            </div>
+            ${location ? `
+                <div class="community-photo-location">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    </svg>
+                    ${location}
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+    return card;
+}
+
+// Add event listener for load more button
+document.addEventListener('DOMContentLoaded', function() {
+    const loadMoreBtn = document.getElementById('load-more-photos');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', () => loadCommunityPhotos(true));
+    }
+});
+
 // --- Init ---
 document.addEventListener('DOMContentLoaded', function () {
   updatePageSEO();
   loadInstallations();
+  loadCommunityPhotos(); // Load community photos
   initMobileMenu();
         });
     </script>
