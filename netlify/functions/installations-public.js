@@ -82,11 +82,15 @@ export async function handler(event, context) {
     }`;
     
     const installations = await sanity.fetch(query);
-    
+
+    // Get limit parameter if provided
+    const qp = event.queryStringParameters || {};
+    const limit = Number.parseInt(qp.limit, 10);
+
     // Transform to card-ready data with language-aware content
     const pick = (row, base) => row[`${base}${suffix}`] || row[base] || '';
 
-    const transformedInstallations = installations.slice(0, 3).map(installation => {
+    const allTransformed = installations.map(installation => {
       // Get localized overview text
       const overviewBlocks = installation[`overview${suffix}`] || installation.overview || [];
       const fullText = blocksToPlainText(overviewBlocks);
@@ -124,6 +128,9 @@ export async function handler(event, context) {
         slug: installation.slug // Keep for any debugging needs
       };
     });
+
+    // Apply limit only if explicitly requested
+    const transformedInstallations = Number.isFinite(limit) ? allTransformed.slice(0, limit) : allTransformed;
 
     return {
       statusCode: 200,
