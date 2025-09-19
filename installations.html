@@ -1567,18 +1567,18 @@ function formatInstallationDate(dateString) {
 // --- Data load ---
 async function loadInstallations() {
   try {
-    // Fetch from public API endpoint
-    const response = await fetch('/.netlify/functions/installations-public');
-    
+    // Detect current language
+    const currentLang = detectLanguageFromPath();
+
+    // Fetch from public API endpoint with language parameter
+    const response = await fetch(`/.netlify/functions/installations-public?lang=${currentLang}`);
+
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);
     }
     const data = await response.json();
-    
+
     const installations = data.installations || [];
-    
-    // Detect current language
-    const currentLang = detectLanguageFromPath();
     
     // Transform data to match existing display format
     allInstallations = installations.map(installation => {

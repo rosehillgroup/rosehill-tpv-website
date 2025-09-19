@@ -83,11 +83,26 @@ export async function handler(event, context) {
     
     const installations = await sanity.fetch(query);
 
-    // Get limit parameter if provided
+    // Get query parameters
     const qp = event.queryStringParameters || {};
     const limit = Number.parseInt(qp.limit, 10);
+    const format = (qp.format || '').toLowerCase(); // 'cards' or default raw
 
-    // Transform to card-ready data with language-aware content
+    // If format is not 'cards', return raw Sanity data (backward compatible)
+    if (format !== 'cards') {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          installations: installations,
+          count: installations.length,
+          language: useLang,
+          generated: new Date().toISOString()
+        })
+      };
+    }
+
+    // Transform to card-ready data with language-aware content (only when format=cards)
     const pick = (row, base) => row[`${base}${suffix}`] || row[base] || '';
 
     const allTransformed = installations.map(installation => {
