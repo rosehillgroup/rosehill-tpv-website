@@ -12,8 +12,167 @@
     <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700&family=Source+Sans+Pro:wght@400;600&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="styles.css">
     <style>
+        /* Base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header styles */
+        .main-header {
+            background: #1a365d;
+            padding: 15px 0;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .nav-wrapper {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 40px;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 30px;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-menu a:hover {
+            color: #ff6b35;
+        }
+
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .mobile-menu-toggle span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 3px 0;
+            transition: all 0.3s;
+        }
+
+        /* Main content spacing */
+        main {
+            margin-top: 70px;
+        }
+
+        /* Footer styles */
+        .main-footer {
+            background: #1a365d;
+            color: white;
+            padding: 60px 0 30px;
+            margin-top: 60px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+
+        .footer-section h3,
+        .footer-section h4 {
+            color: #ff6b35;
+            margin-bottom: 15px;
+        }
+
+        .footer-section ul {
+            list-style: none;
+        }
+
+        .footer-section ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-section a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-section a:hover {
+            color: #ff6b35;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Mobile menu styles */
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+                position: fixed;
+                top: 70px;
+                left: 0;
+                right: 0;
+                background: #1a365d;
+                flex-direction: column;
+                padding: 20px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            }
+
+            .nav-menu.active {
+                display: flex;
+            }
+
+            .mobile-menu-toggle {
+                display: flex;
+            }
+
+            main {
+                margin-top: 60px;
+            }
+        }
+
+        /* Upload page specific styles */
         .upload-container {
             max-width: 800px;
             margin: 0 auto;
@@ -333,7 +492,10 @@
         <nav class="nav-container">
             <div class="nav-wrapper">
                 <a href="index.html" class="logo">
-                    <img src="images/rosehill-logo.svg" alt="Rosehill TPV" style="height: 40px;">
+                    <picture>
+                        <source srcset="rosehill_tpv_logo.webp" type="image/webp">
+                        <img src="rosehill_tpv_logo.png" alt="Rosehill TPV" style="height: 40px;">
+                    </picture>
                 </a>
                 <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">
                     <span></span>
@@ -562,6 +724,27 @@
 
     <!-- Photo Upload JavaScript -->
     <script src="js/photo-upload.js"></script>
-    <script src="js/navigation.js"></script>
+
+    <!-- Navigation JavaScript -->
+    <script>
+        // Mobile menu toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+            const navMenu = document.querySelector('.nav-menu');
+
+            if (mobileMenuToggle && navMenu) {
+                mobileMenuToggle.addEventListener('click', function() {
+                    navMenu.classList.toggle('active');
+                });
+
+                // Close menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!event.target.closest('.nav-wrapper')) {
+                        navMenu.classList.remove('active');
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>
