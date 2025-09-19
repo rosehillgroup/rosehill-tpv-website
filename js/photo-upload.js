@@ -224,8 +224,8 @@
             ).map(input => input.value);
             formData.set('products_used', JSON.stringify(productsUsed));
 
-            // Submit to Netlify function (step-by-step version)
-            const response = await fetch('/.netlify/functions/photo-upload-step', {
+            // Submit to Netlify function (working version)
+            const response = await fetch('/.netlify/functions/photo-working', {
                 method: 'POST',
                 body: formData
             });
