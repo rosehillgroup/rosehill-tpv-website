@@ -27,15 +27,22 @@ exports.handler = async (event) => {
     // Handle GET requests - retrieve submissions and stats
     if (event.httpMethod === 'GET') {
         try {
+            console.log('Supabase config:', { url: supabaseUrl, keyType: supabaseKey ? 'present' : 'missing' });
+
             // Get all submissions
             const { data: submissions, error: submissionsError } = await supabase
                 .from('photo_submissions')
                 .select('*')
                 .order('submission_timestamp', { ascending: false });
 
+            console.log('Query result:', {
+                submissionsCount: submissions?.length || 0,
+                error: submissionsError?.message
+            });
+
             if (submissionsError) {
                 console.error('Error fetching submissions:', submissionsError);
-                return response(500, { error: 'Failed to fetch submissions' });
+                return response(500, { error: 'Failed to fetch submissions', details: submissionsError.message });
             }
 
             // Transform submissions to include photo URLs
