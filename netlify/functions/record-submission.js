@@ -110,10 +110,38 @@ exports.handler = async (event) => {
       return { statusCode: 500, body: `DB error: ${error.message}` };
     }
 
-    // Send email notification (don't wait for it to complete)
+    // Send console notification
     sendNewSubmissionNotification(submissionData, submission.id).catch(err => {
-      console.error('Email notification failed:', err);
+      console.error('Console notification failed:', err);
     });
+
+    // Send email notification via separate function
+    try {
+      const emailNotificationData = {
+        submission_id: submission.id,
+        installer_name,
+        company_name: company_name || '',
+        email,
+        project_name: project_name || '',
+        location: [location_city, location_country].filter(Boolean).join(', ') || 'Not specified',
+        installation_date: installation_date ? new Date(installation_date).toLocaleDateString('en-GB') : 'Not specified',
+        photo_count: files.length
+      };
+
+      // Call email notification function
+      fetch('/.netlify/functions/send-notification-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(emailNotificationData)
+      }).catch(err => {
+        console.error('Email notification call failed:', err);
+      });
+
+    } catch (err) {
+      console.error('Email notification setup failed:', err);
+    }
 
     return {
       statusCode: 200,
