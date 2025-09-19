@@ -2541,5 +2541,18 @@
 
     <!-- Dynamic Latest Installations -->
     <script src="/js/latest-installations.js" defer></script>
+
+    <!-- Hidden form for Netlify form detection - Photo submission alerts -->
+    <form name="photo-submission-alert" style="display: none;" netlify>
+        <input type="text" name="submission_id" />
+        <input type="text" name="installer_name" />
+        <input type="text" name="company_name" />
+        <input type="email" name="email" />
+        <input type="text" name="project_name" />
+        <input type="text" name="location" />
+        <input type="text" name="installation_date" />
+        <input type="number" name="photo_count" />
+        <input type="url" name="admin_link" />
+    </form>
 </body>
 </html>

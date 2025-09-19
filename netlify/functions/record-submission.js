@@ -1,25 +1,12 @@
 const { createClient } = require('@supabase/supabase-js');
-const sgMail = require('@sendgrid/mail');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE;
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@rosehilltpv.com';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
 
-// Configure SendGrid
-if (SENDGRID_API_KEY) {
-  sgMail.setApiKey(SENDGRID_API_KEY);
-}
-
-// Email notification function
+// Netlify Form notification function
 async function sendNewSubmissionNotification(submissionData, submissionId) {
-  if (!SENDGRID_API_KEY) {
-    console.log('SendGrid not configured, skipping email notification');
-    return;
-  }
-
   try {
     const {
       installer_name,
@@ -37,87 +24,36 @@ async function sendNewSubmissionNotification(submissionData, submissionId) {
     const location = [location_city, location_country].filter(Boolean).join(', ') || 'Not specified';
     const installDate = installation_date ? new Date(installation_date).toLocaleDateString('en-GB') : 'Not specified';
 
-    const emailContent = {
-      to: ADMIN_EMAIL,
-      from: {
-        email: 'noreply@rosehilltpv.com',
-        name: 'TPV Photo Submissions'
+    // Submit to Netlify form for email notification
+    const formData = new URLSearchParams({
+      'form-name': 'photo-submission-alert',
+      'submission_id': submissionId,
+      'installer_name': installer_name,
+      'company_name': company_name || '',
+      'email': email,
+      'project_name': project_name || '',
+      'location': location,
+      'installation_date': installDate,
+      'photo_count': photoCount,
+      'admin_link': 'https://tpv.rosehill.group/admin/photo-moderation.html'
+    });
+
+    const response = await fetch('https://tpv.rosehill.group/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      subject: `New TPV Photo Submission${project_name ? ` - ${project_name}` : ''}`,
-      html: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #1a365d 0%, #2c5282 100%); color: white; padding: 30px; border-radius: 12px; margin-bottom: 30px; text-align: center;">
-            <h1 style="margin: 0 0 10px 0; font-size: 24px;">📷 New Photo Submission</h1>
-            <p style="margin: 0; opacity: 0.9;">A new TPV installation photo submission has been received</p>
-          </div>
+      body: formData.toString()
+    });
 
-          <div style="background: #f8fafc; padding: 25px; border-radius: 8px; margin-bottom: 20px;">
-            <h2 style="color: #1a365d; margin: 0 0 20px 0; font-size: 18px;">Submission Details</h2>
-
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 8px 0; color: #64748b; font-weight: 500; width: 140px;">Installer:</td>
-                <td style="padding: 8px 0; color: #1e293b;">${installer_name}${company_name ? ` (${company_name})` : ''}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #64748b; font-weight: 500;">Email:</td>
-                <td style="padding: 8px 0; color: #1e293b;">${email}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #64748b; font-weight: 500;">Project:</td>
-                <td style="padding: 8px 0; color: #1e293b;">${project_name || 'Not specified'}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #64748b; font-weight: 500;">Location:</td>
-                <td style="padding: 8px 0; color: #1e293b;">${location}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #64748b; font-weight: 500;">Install Date:</td>
-                <td style="padding: 8px 0; color: #1e293b;">${installDate}</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #64748b; font-weight: 500;">Photos:</td>
-                <td style="padding: 8px 0; color: #1e293b;"><strong>${photoCount} uploaded</strong></td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #64748b; font-weight: 500;">Submission ID:</td>
-                <td style="padding: 8px 0; color: #64748b; font-family: monospace; font-size: 12px;">${submissionId}</td>
-              </tr>
-            </table>
-          </div>
-
-          <div style="text-align: center; margin-bottom: 20px;">
-            <a href="https://tpv.rosehill.group/admin/photo-moderation.html"
-               style="display: inline-block; background: #ff6b35; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
-              Review & Approve Photos
-            </a>
-          </div>
-
-          <div style="text-align: center; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
-            <p style="margin: 0;">This is an automated notification from the TPV Photo Submission System</p>
-          </div>
-        </div>
-      `,
-      text: `
-New TPV Photo Submission Received
-
-Installer: ${installer_name}${company_name ? ` (${company_name})` : ''}
-Email: ${email}
-Project: ${project_name || 'Not specified'}
-Location: ${location}
-Installation Date: ${installDate}
-Photos: ${photoCount} uploaded
-Submission ID: ${submissionId}
-
-Review and approve: https://tpv.rosehill.group/admin/photo-moderation.html
-      `.trim()
-    };
-
-    await sgMail.send(emailContent);
-    console.log('Email notification sent successfully');
+    if (response.ok) {
+      console.log('Netlify form notification sent successfully');
+    } else {
+      console.error('Failed to send Netlify form notification:', response.status);
+    }
   } catch (error) {
-    console.error('Failed to send email notification:', error);
-    // Don't fail the entire submission if email fails
+    console.error('Failed to send notification:', error);
+    // Don't fail the entire submission if notification fails
   }
 }
 
