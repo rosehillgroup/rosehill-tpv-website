@@ -8,6 +8,7 @@
 
     <button id="test-json">Test JSON POST</button>
     <button id="test-form">Test FormData POST</button>
+    <button id="test-photo-minimal">Test Photo Minimal POST</button>
 
     <div id="results"></div>
 
@@ -46,6 +47,24 @@
                 results.innerHTML = '<h3>FormData POST Result:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
             } catch (error) {
                 results.innerHTML = '<h3>FormData POST Error:</h3><pre>' + error.message + '</pre>';
+            }
+        });
+
+        document.getElementById('test-photo-minimal').addEventListener('click', async () => {
+            try {
+                const formData = new FormData();
+                formData.append('test', 'photo data');
+                formData.append('field', 'value');
+
+                const response = await fetch('/.netlify/functions/photo-minimal', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+                results.innerHTML = '<h3>Photo Minimal POST Result:</h3><pre>' + JSON.stringify(result, null, 2) + '</pre>';
+            } catch (error) {
+                results.innerHTML = '<h3>Photo Minimal POST Error:</h3><pre>' + error.message + '</pre>';
             }
         });
     </script>
