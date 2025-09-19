@@ -3,7 +3,7 @@ const { createClient } = require('@supabase/supabase-js');
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
 
 // Response helper
 const response = (statusCode, body) => ({
@@ -38,27 +38,39 @@ exports.handler = async (event) => {
                 return response(500, { error: 'Failed to fetch submissions' });
             }
 
-            // Get statistics
-            const { data: stats, error: statsError } = await supabase
-                .from('photo_submission_stats')
-                .select('*')
-                .single();
+            // Transform submissions to include photo URLs
+            const transformedSubmissions = (submissions || []).map(submission => {
+                // Transform files array to photo URLs
+                const photoUrls = [];
+                if (submission.files && Array.isArray(submission.files)) {
+                    submission.files.forEach(file => {
+                        if (file.bucket && file.path) {
+                            // Create public URL for the file
+                            const publicUrl = `${supabaseUrl}/storage/v1/object/public/${file.bucket}/${file.path}`;
+                            photoUrls.push(publicUrl);
+                        }
+                    });
+                }
 
-            if (statsError) {
-                console.error('Error fetching stats:', statsError);
-                // Continue without stats
-            }
+                return {
+                    ...submission,
+                    photo_urls: photoUrls
+                };
+            });
+
+            // Calculate statistics from the data
+            const stats = {
+                pending_count: transformedSubmissions.filter(s => s.approval_status === 'pending').length,
+                approved_count: transformedSubmissions.filter(s => s.approval_status === 'approved').length,
+                featured_count: transformedSubmissions.filter(s => s.approval_status === 'featured').length,
+                rejected_count: transformedSubmissions.filter(s => s.approval_status === 'rejected').length,
+                total_count: transformedSubmissions.length
+            };
 
             return response(200, {
                 success: true,
-                submissions: submissions || [],
-                stats: stats || {
-                    pending_count: 0,
-                    approved_count: 0,
-                    featured_count: 0,
-                    rejected_count: 0,
-                    total_count: submissions?.length || 0
-                }
+                submissions: transformedSubmissions,
+                stats: stats
             });
         } catch (error) {
             console.error('Handler error:', error);
