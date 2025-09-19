@@ -53,12 +53,7 @@ exports.handler = async (event) => {
       project_description: project_description || null,
       tpv_products_used: tpv_products_used || [],
       square_meters: square_meters ? parseInt(square_meters) : null,
-      files: files.map(f => ({
-        bucket: f.bucket,
-        path: f.path,
-        name: f.name,
-        size: f.size
-      })),
+      photo_urls: files.map(f => `${f.bucket}/${f.path}`),
       terms_accepted: true,
       submission_ip: event.headers['client-ip'] || event.headers['x-forwarded-for'] || null,
       metadata: {

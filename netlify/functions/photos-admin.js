@@ -40,15 +40,17 @@ exports.handler = async (event) => {
 
             // Transform submissions to include photo URLs
             const transformedSubmissions = (submissions || []).map(submission => {
-                // Transform files array to photo URLs
-                const photoUrls = [];
-                if (submission.files && Array.isArray(submission.files)) {
-                    submission.files.forEach(file => {
-                        if (file.bucket && file.path) {
-                            // Create public URL for the file
-                            const publicUrl = `${supabaseUrl}/storage/v1/object/public/${file.bucket}/${file.path}`;
-                            photoUrls.push(publicUrl);
+                // Transform photo_urls to full URLs
+                let photoUrls = [];
+
+                if (submission.photo_urls && Array.isArray(submission.photo_urls)) {
+                    photoUrls = submission.photo_urls.map(path => {
+                        // If already a full URL, return as is
+                        if (path.startsWith('http')) {
+                            return path;
                         }
+                        // Otherwise, construct the full URL
+                        return `${supabaseUrl}/storage/v1/object/public/${path}`;
                     });
                 }
 
