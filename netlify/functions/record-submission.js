@@ -5,7 +5,7 @@ const SUPABASE_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || process.e
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE);
 
-// Netlify Form notification function
+// Simple notification logging (for now)
 async function sendNewSubmissionNotification(submissionData, submissionId) {
   try {
     const {
@@ -24,41 +24,20 @@ async function sendNewSubmissionNotification(submissionData, submissionId) {
     const location = [location_city, location_country].filter(Boolean).join(', ') || 'Not specified';
     const installDate = installation_date ? new Date(installation_date).toLocaleDateString('en-GB') : 'Not specified';
 
-    // Submit to Netlify form for email notification
-    const formData = new URLSearchParams({
-      'form-name': 'photo-submission-alert',
-      'submission_id': submissionId,
-      'installer_name': installer_name,
-      'company_name': company_name || '',
-      'email': email,
-      'project_name': project_name || '',
-      'location': location,
-      'installation_date': installDate,
-      'photo_count': photoCount,
-      'admin_link': 'https://tpv.rosehill.group/admin/photo-moderation.html'
-    });
+    // Log notification details for manual checking
+    console.log('🔔 NEW PHOTO SUBMISSION ALERT:');
+    console.log(`📧 Installer: ${installer_name}${company_name ? ` (${company_name})` : ''}`);
+    console.log(`📍 Location: ${location}`);
+    console.log(`🏗️ Project: ${project_name || 'Not specified'}`);
+    console.log(`📅 Install Date: ${installDate}`);
+    console.log(`📷 Photos: ${photoCount} uploaded`);
+    console.log(`🆔 Submission ID: ${submissionId}`);
+    console.log(`👤 Email: ${email}`);
+    console.log(`🔗 Review at: https://tpv.rosehill.group/admin/photo-moderation.html`);
+    console.log('─'.repeat(60));
 
-    console.log('Submitting form data:', formData.toString());
-
-    const response = await fetch('https://tpv.rosehill.group/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: formData.toString()
-    });
-
-    console.log('Form submission response:', response.status, response.statusText);
-
-    if (response.ok) {
-      console.log('Netlify form notification sent successfully');
-    } else {
-      const responseText = await response.text();
-      console.error('Failed to send Netlify form notification:', response.status, responseText);
-    }
   } catch (error) {
-    console.error('Failed to send notification:', error);
-    // Don't fail the entire submission if notification fails
+    console.error('Failed to log notification:', error);
   }
 }
 
