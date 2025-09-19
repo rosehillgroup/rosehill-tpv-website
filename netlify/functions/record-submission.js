@@ -38,6 +38,8 @@ async function sendNewSubmissionNotification(submissionData, submissionId) {
       'admin_link': 'https://tpv.rosehill.group/admin/photo-moderation.html'
     });
 
+    console.log('Submitting form data:', formData.toString());
+
     const response = await fetch('https://tpv.rosehill.group/', {
       method: 'POST',
       headers: {
@@ -46,10 +48,13 @@ async function sendNewSubmissionNotification(submissionData, submissionId) {
       body: formData.toString()
     });
 
+    console.log('Form submission response:', response.status, response.statusText);
+
     if (response.ok) {
       console.log('Netlify form notification sent successfully');
     } else {
-      console.error('Failed to send Netlify form notification:', response.status);
+      const responseText = await response.text();
+      console.error('Failed to send Netlify form notification:', response.status, responseText);
     }
   } catch (error) {
     console.error('Failed to send notification:', error);
