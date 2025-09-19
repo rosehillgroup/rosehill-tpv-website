@@ -17,22 +17,29 @@ const response = (statusCode, body) => ({
 });
 
 exports.handler = async (event) => {
-    // Only accept POST requests
-    if (event.httpMethod !== 'POST') {
-        return response(405, { error: 'Method not allowed' });
-    }
-
-    // Check if Supabase is configured
-    if (!supabaseUrl || !supabaseKey) {
-        console.error('Supabase environment variables not configured');
-        return response(500, { error: 'Storage service not configured' });
-    }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     try {
+        console.log('Function started, method:', event.httpMethod);
+
+        // Only accept POST requests
+        if (event.httpMethod !== 'POST') {
+            return response(405, { error: 'Method not allowed' });
+        }
+
+        // Check if Supabase is configured
+        console.log('Checking Supabase config...');
+        if (!supabaseUrl || !supabaseKey) {
+            console.error('Supabase environment variables not configured');
+            console.error('supabaseUrl:', !!supabaseUrl, 'supabaseKey:', !!supabaseKey);
+            return response(500, { error: 'Storage service not configured' });
+        }
+
+        console.log('Creating Supabase client...');
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
+        console.log('Parsing multipart form data...');
         // Parse multipart form data
         const formData = await parseMultipartForm(event);
+        console.log('Form data parsed successfully, fields:', Object.keys(formData.fields), 'files:', formData.files.length);
 
         // Validate required fields
         if (!formData.fields.installer_name || !formData.fields.email) {
@@ -155,24 +162,46 @@ exports.handler = async (event) => {
 
     } catch (error) {
         console.error('Handler error:', error);
+        console.error('Error stack:', error.stack);
         return response(500, {
             error: 'An error occurred processing your submission',
             details: error.message
         });
+    } catch (criticalError) {
+        // Catch any errors in error handling itself
+        console.error('Critical error in handler:', criticalError);
+        return {
+            statusCode: 500,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+            },
+            body: JSON.stringify({
+                error: 'Critical system error',
+                details: criticalError.message
+            }),
+        };
     }
 };
 
 // Parse multipart form data using busboy
 function parseMultipartForm(event) {
     return new Promise((resolve, reject) => {
-        const fields = {};
-        const files = [];
+        try {
+            const fields = {};
+            const files = [];
 
-        // Decode base64 body if needed
-        const contentType = event.headers['content-type'] || event.headers['Content-Type'];
-        const body = event.isBase64Encoded
-            ? Buffer.from(event.body, 'base64')
-            : event.body;
+            console.log('parseMultipartForm: Starting...');
+            console.log('Content-Type:', event.headers['content-type'] || event.headers['Content-Type']);
+            console.log('isBase64Encoded:', event.isBase64Encoded);
+
+            // Decode base64 body if needed
+            const contentType = event.headers['content-type'] || event.headers['Content-Type'];
+            const body = event.isBase64Encoded
+                ? Buffer.from(event.body, 'base64')
+                : event.body;
+
+            console.log('Body type:', typeof body, 'length:', body?.length);
 
         const bb = busboy({
             headers: {
@@ -215,15 +244,22 @@ function parseMultipartForm(event) {
         });
 
         bb.on('error', (error) => {
+            console.error('Busboy error:', error);
             reject(error);
         });
 
         // Write data to busboy
+        console.log('Writing data to busboy...');
         if (typeof body === 'string') {
             bb.write(Buffer.from(body, 'binary'));
         } else {
             bb.write(body);
         }
         bb.end();
+
+        } catch (parseError) {
+            console.error('parseMultipartForm error:', parseError);
+            reject(parseError);
+        }
     });
 }
