@@ -17,8 +17,10 @@ const response = (statusCode, body) => ({
 });
 
 exports.handler = async (event) => {
+    const startTime = Date.now();
     try {
         console.log('Function started, method:', event.httpMethod);
+        console.log('Start time:', new Date(startTime).toISOString());
 
         // Only accept POST requests
         if (event.httpMethod !== 'POST') {
