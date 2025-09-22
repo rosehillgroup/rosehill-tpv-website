@@ -10,6 +10,10 @@
   external_node_modules = ["jose", "@sanity/client", "@supabase/supabase-js"]
   node_bundler = "esbuild"
 
+[[edge_functions]]
+  path = "/*"
+  function = "geo-cookie"
+
 [[plugins]]
   package = "@netlify/plugin-functions-install-core"
 
