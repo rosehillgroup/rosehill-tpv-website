@@ -4,18 +4,40 @@
 const COOKIE_CONSENT_KEY = 'rosehill_cookie_consent';
 const CONSENT_EXPIRY = 365 * 24 * 60 * 60 * 1000; // 1 year in milliseconds
 
-// Google Analytics - only loads if consent given
-function loadGoogleAnalytics() {
-    // Replace 'GA_MEASUREMENT_ID' with your actual Google Analytics Measurement ID
-    const script1 = document.createElement('script');
-    script1.async = true;
-    script1.src = 'https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID';
-    document.head.appendChild(script1);
-    
+// GTM Consent Mode - integrates with Google Tag Manager
+function setDefaultConsent() {
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'GA_MEASUREMENT_ID');
+    window.dataLayer.push({
+        'event': 'default_consent',
+        'functionality_storage': 'denied',
+        'analytics_storage': 'denied',
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied'
+    });
+}
+
+function updateConsent(analytics) {
+    window.dataLayer = window.dataLayer || [];
+    if (analytics) {
+        window.dataLayer.push({
+            'event': 'update_consent',
+            'functionality_storage': 'granted',
+            'analytics_storage': 'granted',
+            'ad_storage': 'granted',
+            'ad_user_data': 'granted',
+            'ad_personalization': 'granted'
+        });
+    } else {
+        window.dataLayer.push({
+            'event': 'update_consent',
+            'functionality_storage': 'granted',
+            'analytics_storage': 'denied',
+            'ad_storage': 'denied',
+            'ad_user_data': 'denied',
+            'ad_personalization': 'denied'
+        });
+    }
 }
 
 function getCookieConsent() {
@@ -53,11 +75,13 @@ function hideCookieBanner() {
 }
 
 function initializeConsent() {
+    // Set default consent denial for GTM
+    setDefaultConsent();
+
     const consent = getCookieConsent();
     if (consent) {
-        if (consent.analytics) {
-            loadGoogleAnalytics();
-        }
+        // Update GTM consent based on stored preference
+        updateConsent(consent.analytics);
     } else {
         // Show banner after a short delay
         setTimeout(showCookieBanner, 1500);
@@ -70,7 +94,7 @@ function initializeCookieEventListeners() {
     if (acceptAllBtn) {
         acceptAllBtn.addEventListener('click', function() {
             setCookieConsent(true);
-            loadGoogleAnalytics();
+            updateConsent(true);
             hideCookieBanner();
         });
     }
@@ -80,6 +104,7 @@ function initializeCookieEventListeners() {
     if (essentialOnlyBtn) {
         essentialOnlyBtn.addEventListener('click', function() {
             setCookieConsent(false);
+            updateConsent(false);
             hideCookieBanner();
         });
     }
@@ -107,6 +132,7 @@ function initializeCookieEventListeners() {
     if (modalEssentialBtn) {
         modalEssentialBtn.addEventListener('click', function() {
             setCookieConsent(false);
+            updateConsent(false);
             hideCookieBanner();
             hideCookieModal();
         });
@@ -118,11 +144,8 @@ function initializeCookieEventListeners() {
             const analyticsToggle = document.getElementById('analytics-toggle');
             const analyticsConsent = analyticsToggle ? analyticsToggle.checked : false;
             setCookieConsent(analyticsConsent);
-            
-            if (analyticsConsent && !window.gtag) {
-                loadGoogleAnalytics();
-            }
-            
+            updateConsent(analyticsConsent);
+
             hideCookieBanner();
             hideCookieModal();
         });
