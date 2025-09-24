@@ -2698,6 +2698,33 @@
                 const exportWidth = 2000;
                 const exportHeight = 1000;
 
+                // Load mix code from URL parameters
+                useEffect(() => {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const codeFromURL = urlParams.get('code');
+
+                    if (codeFromURL) {
+                        const code = codeFromURL.trim().toUpperCase();
+
+                        if (code.length >= 8) {
+                            try {
+                                const seedPart = code.substring(0, 8).toLowerCase();
+                                const recipePart = code.substring(8);
+                                const newParts = decompressRecipe(recipePart);
+
+                                setSeed(seedPart);
+                                setParts(newParts);
+
+                                // Show success notification
+                                setTooltip({ text: 'Mix loaded from URL!', x: window.innerWidth / 2, y: 100 });
+                                setTimeout(() => setTooltip(null), 2000);
+                            } catch (error) {
+                                setShareError('Invalid mix code in URL');
+                            }
+                        }
+                    }
+                }, []); // Run once on mount
+
                 // Initialize Voronoi diagram
                 useEffect(() => {
                     const initializeVoronoi = async () => {
@@ -3570,6 +3597,20 @@
                     setTimeout(() => setTooltip(null), 2000);
                 }, [shareCode]);
 
+                // Generate shareable URL
+                const getShareableURL = useCallback(() => {
+                    const baseURL = window.location.origin + window.location.pathname;
+                    return `${baseURL}?code=${shareCode}`;
+                }, [shareCode]);
+
+                // Copy URL to clipboard
+                const copyShareURL = useCallback(() => {
+                    const url = getShareableURL();
+                    navigator.clipboard.writeText(url);
+                    setTooltip({ text: 'Link copied!', x: window.innerWidth / 2, y: 100 });
+                    setTimeout(() => setTooltip(null), 2000);
+                }, [getShareableURL]);
+
                 // Load share code
                 const loadShareCode = useCallback(() => {
                     setShareError('');
@@ -4347,7 +4388,19 @@
                                         onClick: (e) => e.target.select(),
                                         style: { marginBottom: '5px' }
                                     }),
-                                    React.createElement('button', { className: 'btn', onClick: copyShareCode }, 'Copy Code')
+                                    React.createElement('div', { style: { display: 'flex', gap: '10px' } },
+                                        React.createElement('button', { className: 'btn', onClick: copyShareCode }, 'Copy Code'),
+                                        React.createElement('button', { className: 'btn', onClick: copyShareURL }, 'Copy Link')
+                                    ),
+                                    React.createElement('div', {
+                                        style: {
+                                            fontSize: '11px',
+                                            color: '#666',
+                                            marginTop: '8px',
+                                            wordBreak: 'break-all',
+                                            fontStyle: 'italic'
+                                        }
+                                    }, `Shareable link: ${getShareableURL()}`)
                                 ),
                                 React.createElement('div', null,
                                     React.createElement('label', { className: 'form-label', style: { marginBottom: '5px', display: 'block' } }, 'Load Mix Code'),
