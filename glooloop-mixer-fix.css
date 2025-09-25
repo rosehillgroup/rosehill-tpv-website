@@ -1,0 +1,55 @@
+/* Fix for glooloop-mixer scroll and display issues */
+
+/* Reset problematic body styles */
+body {
+    display: block !important;
+    place-items: unset !important;
+    min-height: unset !important;
+    overflow: auto !important;
+}
+
+/* Fix root container */
+#root {
+    min-height: unset !important;
+    width: 100% !important;
+}
+
+/* Fix App container */
+.App {
+    min-height: unset !important;
+    display: block !important;
+    flex-direction: unset !important;
+}
+
+/* Ensure SVG containers display properly */
+.svg-container {
+    display: block !important;
+    line-height: normal !important;
+}
+
+/* Fix any potential canvas or visualization issues */
+.color-visualization {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+}
+
+/* Ensure main content can scroll */
+.main_div {
+    position: relative !important;
+    overflow: visible !important;
+}
+
+/* Fix mobile scroll issues */
+@media screen and (max-width: 767px) {
+    div#mixer-controls {
+        overflow-y: auto !important;
+        height: auto !important;
+        max-height: 400px;
+    }
+
+    body {
+        overflow: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+}
