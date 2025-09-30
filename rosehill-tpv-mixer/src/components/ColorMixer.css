@@ -1,0 +1,219 @@
+/* Original exact CSS from WordPress plugin */
+.centeralContainer {
+  max-width: 1170px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+.centeralContainer h3 {
+  font-weight: 400;
+  color: #273476;
+}
+
+.main_div {
+  width: 100%;
+  display: inline-block;
+  padding: 20px 0;
+  margin-top: 0;
+  background-color: #f4f4f4;
+  color: #273476;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loader-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #273476;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.mixer-controls {
+  margin: 30px 0 0 0;
+}
+
+.mixer-controls {
+  margin: 0 -8px;
+}
+
+/* Original plugin SVG styling - no gaps */
+svg {
+  border-radius: 10px;
+  box-shadow: 0 0 12px rgba(0,0,0,.2);
+  width: 100%;
+  height: auto;
+  margin: 0;
+  padding: 0;
+  display: block;
+}
+
+.main_div.text-center svg {
+  margin-bottom: 50px;
+}
+
+/* PDF container styling - minimal bottom padding for closer progress bar */
+.pdfBlock, #pdf {
+  padding: 0;
+  width: 100%;
+}
+
+.parts-progress {
+  margin: 0 auto;
+  width: 48px;
+}
+
+.parts-progress div {
+  width: 48px;
+  height: 18px;
+  background: #dedfe0;
+  border-radius: 6px;
+  margin: 2px 0;
+}
+
+.active-fill {
+  background: #2cb34a !important;
+}
+
+.perc {
+  margin-top: 10px;
+  font-weight: 900;
+  text-align: center;
+}
+
+/* Progress bar positioned below canvas - nearly touching */
+.progressShow {
+  display: flex;
+  width: 100%;
+  margin: 3px 0 20px 0;
+}
+
+.hide-svg {
+  display: none;
+}
+
+.btn-cont button {
+  margin: 0 auto 25px;
+  border-radius: 50px;
+  background-color: #2cb34a;
+  color: #fff;
+  padding: 14px 0;
+  width: 46%;
+  text-transform: uppercase;
+  border: 0;
+}
+
+.btn:active:focus, .btn:focus {
+  outline: none;
+}
+
+.btn-cont {
+  width: 100%;
+  padding: 80px 0 0;
+}
+
+.row {
+  margin-left: -15px;
+  margin-right: -15px;
+}
+
+.row:before, .row:after {
+  content: " ";
+  display: table;
+  clear: both;
+}
+
+/* Bootstrap-like column system for proper layout */
+[class*="col-"] {
+  position: relative;
+  min-height: 1px;
+  padding-left: 15px;
+  padding-right: 15px;
+  float: left;
+}
+
+.col-lg-4, .col-md-4 {
+  width: 33.33333333%;
+}
+
+.col-lg-8, .col-md-8 {
+  width: 66.66666667%;
+}
+
+.col-md-12 {
+  width: 100%;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 767px) {
+  .col-sm-12, .col-xs-12 {
+    width: 100%;
+    float: none;
+  }
+}
+
+@media (max-width: 991px) {
+  .col-sm-10 {
+    width: 83.33333333%;
+  }
+}
+
+/* Responsive - exact from original */
+@media screen and (max-width: 1199px) {
+  .customizeContainer {
+    padding: 80px 0;
+  }
+  .main_div {
+    padding: 40px 0;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .customizeContainer {
+    padding: 40px 0;
+  }
+  .parts-progress {
+    padding: 5px 3px 3px 3px;
+  }
+  div#pdf svg {
+    margin-bottom: 0;
+  }
+  .btn-cont {
+    padding: 0;
+  }
+  .mixer-colour-outer {
+    padding-left: 15px;
+  }
+  .btn-cont button {
+    display: inline;
+    margin-bottom: 15px;
+  }
+  div#mixer-controls {
+    overflow-y: scroll;
+    height: 310px;
+  }
+  .btn-cont {
+    padding: 20px 0 0;
+  }
+  .main_div {
+    padding: 20px 0;
+  }
+}

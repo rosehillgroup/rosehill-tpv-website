@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Glyph" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 64 64">
+  <rect x="7" y="37" width="5" height="16" rx="2" ry="2" style="fill: #000; stroke-width: 0px;"/>
+  <path d="M17,34c-1.6543,0-3,1.3457-3,3v16c0,1.6543,1.3457,3,3,3s3-1.3457,3-3v-16c0-1.6543-1.3457-3-3-3Z" style="fill: #000; stroke-width: 0px;"/>
+  <rect x="52" y="37" width="5" height="16" rx="2" ry="2" style="fill: #000; stroke-width: 0px;"/>
+  <path d="M47,34c-1.6543,0-3,1.3457-3,3v16c0,1.6543,1.3457,3,3,3s3-1.3457,3-3v-16c0-1.6543-1.3457-3-3-3Z" style="fill: #000; stroke-width: 0px;"/>
+  <rect x="22" y="42" width="20" height="6" style="fill: #000; stroke-width: 0px;"/>
+  <rect x="7" y="11" width="5" height="16" rx="2" ry="2" style="fill: #000; stroke-width: 0px;"/>
+  <path d="M17,8c-1.6543,0-3,1.3457-3,3v16c0,1.6543,1.3457,3,3,3s3-1.3457,3-3V11c0-1.6543-1.3457-3-3-3Z" style="fill: #000; stroke-width: 0px;"/>
+  <rect x="52" y="11" width="5" height="16" rx="2" ry="2" style="fill: #000; stroke-width: 0px;"/>
+  <path d="M47,8c-1.6543,0-3,1.3457-3,3v16c0,1.6543,1.3457,3,3,3s3-1.3457,3-3V11c0-1.6543-1.3457-3-3-3Z" style="fill: #000; stroke-width: 0px;"/>
+  <rect x="22" y="16" width="20" height="6" style="fill: #000; stroke-width: 0px;"/>
+</svg>

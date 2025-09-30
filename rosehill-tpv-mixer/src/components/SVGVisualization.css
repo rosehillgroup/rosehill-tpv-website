@@ -1,0 +1,16 @@
+/* Match original plugin exactly - no gaps */
+.svg-container {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  display: block;
+  line-height: 0; /* Removes any line-height gaps */
+}
+
+.color-visualization {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0;
+  padding: 0;
+}

@@ -1,0 +1,79 @@
+/* Footer Styles */
+.rebranded-footer {
+  background: linear-gradient(135deg, #1a365d, #2d4a71);
+  color: white;
+  padding: 30px 0 20px 0;
+  margin-top: 50px;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.footer-content {
+  margin-bottom: 20px;
+}
+
+.footer-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  color: white;
+  font-family: 'Overpass', sans-serif;
+}
+
+.footer-description {
+  font-size: 14px;
+  color: #e0e7ff;
+  margin: 0 0 15px 0;
+  line-height: 1.5;
+}
+
+.footer-links {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 30px;
+  margin: 15px 0;
+  flex-wrap: wrap;
+}
+
+.footer-link {
+  color: #e0e7ff;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s ease;
+}
+
+.footer-link:hover {
+  color: #ff6b35;
+}
+
+.footer-copyright {
+  font-size: 12px;
+  color: #a0b0c4;
+  margin: 15px 0 0 0;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .footer-links {
+    gap: 20px;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .footer-description {
+    font-size: 13px;
+  }
+
+  .footer-copyright {
+    font-size: 11px;
+  }
+}

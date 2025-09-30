@@ -1,0 +1,35 @@
+# Robots.txt for Rosehill TPV
+
+User-agent: *
+Allow: /
+
+# Disallow admin pages
+Disallow: /admin/
+Disallow: /admin-add-installation.html
+Disallow: /admin-process-installation.php
+Disallow: /src/
+Disallow: /node_modules/
+Disallow: /.well-known/
+
+# Explicitly allow multilingual routes for international SEO
+Allow: /fr/
+Allow: /de/
+Allow: /es/
+
+# Disallow backup files
+Disallow: /*.backup
+Disallow: /*.backup2
+Disallow: /*.backup_*
+
+# Disallow white-label mixers (customer-specific pages)
+Disallow: /mixer-bruces-playgrounds.html
+Disallow: /mixer-complete-playgrounds.html
+Disallow: /mixer-grange-surfacing.html
+Disallow: /mixer-nt-shade.html
+Disallow: /mixer-perth-playground.html
+Disallow: /mixer-synthetic-grass.html
+Disallow: /mixer-glooloop.html
+Disallow: /mixer-rebranded.html
+
+# Sitemap location (update after generating sitemap)
+Sitemap: https://tpv.rosehill.group/sitemap.xml

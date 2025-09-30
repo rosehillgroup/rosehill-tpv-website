@@ -1108,6 +1108,16 @@
                     <input type="hidden" name="utm_term" id="utm_term">
                     <input type="hidden" name="utm_content" id="utm_content">
 
+                    <!-- Journey Summary Field -->
+                    <textarea name="journey_summary" hidden></textarea>
+
+                    <!-- Enhanced Journey Tracking Fields -->
+                    <input type="hidden" name="entry_page" id="entry_page">
+                    <input type="hidden" name="pages_visited" id="pages_visited">
+                    <input type="hidden" name="session_duration" id="session_duration">
+                    <input type="hidden" name="page_count" id="page_count">
+                    <input type="hidden" name="ga_client_id" id="ga_client_id">
+
                     <button type="submit" class="btn-submit">Send Enquiry</button>
                 </form>
                 
@@ -1679,6 +1689,138 @@
         }
         
         document.addEventListener('DOMContentLoaded', initLanguageSwitcher);
+    </script>
+
+    <!-- Enhanced Journey Tracking Script -->
+    <script>
+        (function () {
+            const MAX_STEPS = 20;
+            const SESSION_KEY = 'rh_sess';
+
+            // Initialize or load session
+            const now = Date.now();
+            const sess = JSON.parse(sessionStorage.getItem(SESSION_KEY) || '{}');
+
+            // Track session start
+            if (!sess.started_at) {
+                sess.started_at = now;
+                sess.first_page = location.pathname;
+                sess.referrer = document.referrer || 'direct';
+                sess.landing_params = location.search;
+            }
+
+            // Track page visits with timing
+            sess.steps = sess.steps || [];
+            const lastStep = sess.steps[sess.steps.length - 1];
+
+            if (!lastStep || lastStep.path !== location.pathname) {
+                // Calculate time on previous page
+                if (lastStep) {
+                    lastStep.duration = now - lastStep.ts;
+                }
+
+                sess.steps.push({
+                    path: location.pathname,
+                    ts: now,
+                    duration: 0
+                });
+                sess.steps = sess.steps.slice(-MAX_STEPS);
+            }
+
+            sessionStorage.setItem(SESSION_KEY, JSON.stringify(sess));
+
+            // Get GA Client ID if available
+            function getGAClientId() {
+                const ga = document.cookie.match(/_ga=GA\d\.\d\.(\d+\.\d+)/);
+                return ga ? ga[1] : '';
+            }
+
+            // Build comprehensive journey summary
+            function buildJourneySummary() {
+                const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || '{}');
+                const totalTime = Math.round((Date.now() - (s.started_at || Date.now())) / 1000);
+                const timeFormatted = totalTime < 60 ? `${totalTime}s` : `${Math.floor(totalTime/60)}m ${totalTime%60}s`;
+
+                // Update duration for current page
+                if (s.steps && s.steps.length > 0) {
+                    const currentStep = s.steps[s.steps.length - 1];
+                    currentStep.duration = Date.now() - currentStep.ts;
+                }
+
+                // Format page path with timing
+                const pathsWithTime = (s.steps || []).map(step => {
+                    const dur = step.duration ? ` (${Math.round(step.duration/1000)}s)` : '';
+                    return step.path + dur;
+                }).join(' > ');
+
+                return {
+                    entry_page: s.first_page || '/',
+                    referrer: s.referrer || 'direct',
+                    pages_visited: (s.steps || []).map(x => x.path).join(' > '),
+                    pages_with_timing: pathsWithTime,
+                    session_duration: timeFormatted,
+                    page_count: (s.steps || []).length,
+                    ga_client_id: getGAClientId(),
+                    language: document.documentElement.lang || 'en'
+                };
+            }
+
+            // Wire up form
+            function wireForm(form) {
+                if (form.__journeyWired) return;
+                form.__journeyWired = true;
+
+                // Keep fields updated
+                const updateFields = () => {
+                    const journey = buildJourneySummary();
+
+                    // Populate journey summary for backwards compatibility
+                    const summaryField = form.querySelector('[name="journey_summary"]');
+                    if (summaryField) {
+                        summaryField.value = [
+                            `Entry: ${journey.entry_page}`,
+                            `Referrer: ${journey.referrer}`,
+                            `Trail: ${journey.pages_with_timing}`,
+                            `Time on site: ${journey.session_duration}`,
+                            `Pages viewed: ${journey.page_count}`,
+                            `GA ID: ${journey.ga_client_id || 'not available'}`,
+                            `Language: ${journey.language}`
+                        ].join('\n');
+                    }
+
+                    // Individual fields for easier processing
+                    Object.entries(journey).forEach(([key, value]) => {
+                        const field = document.getElementById(key);
+                        if (field && key !== 'pages_with_timing') {
+                            field.value = String(value);
+                        }
+                    });
+                };
+
+                // Update immediately and periodically
+                updateFields();
+                const iv = setInterval(updateFields, 500);
+
+                // Update fields before submission
+                form.addEventListener('submit', function(e) {
+                    clearInterval(iv);
+                    updateFields(); // Final update
+                }, { capture: true });
+            }
+
+            // Initialize on DOM ready
+            function init() {
+                // Wire the contact form
+                const contactForm = document.querySelector('form[name="contact"]');
+                if (contactForm) wireForm(contactForm);
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
     </script>
 </body>
 </html>

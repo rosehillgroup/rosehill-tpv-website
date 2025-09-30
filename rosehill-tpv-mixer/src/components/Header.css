@@ -1,0 +1,197 @@
+/* Rebranded Header Styles */
+.rebranded-header {
+  color: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Logo section background - full width */
+.header-logo-wrapper {
+  background: linear-gradient(135deg, #1a365d, #2d4a71);
+  padding: 15px 0 10px 0;
+  width: 100%;
+}
+
+.rebranded-header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  text-align: center;
+}
+
+.header-logo-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.logo-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 140px;
+}
+
+.logo-img {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 4px;
+  background: white;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 8px;
+  transition: transform 0.3s ease;
+}
+
+.logo-label {
+  font-size: 12px;
+  color: #e0e7ff;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Remove white background from manufacturer logo (already white PNG with transparency) and increase size */
+.manufacturer-logo .logo-img {
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+  height: 70px;
+}
+
+/* Increase customer logo size */
+.customer-logo .logo-img {
+  height: 80px;
+}
+
+/* Logo link styling */
+.logo-item a {
+  display: inline-block;
+  transition: transform 0.3s ease;
+}
+
+.logo-item a:hover {
+  transform: scale(1.05);
+}
+
+.mixer-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 10px 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  font-family: 'Overpass', sans-serif;
+}
+
+.mixer-strapline {
+  font-size: 16px;
+  color: #e0e7ff;
+  margin: 0;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+/* Colorful gradient text section representing color mixing */
+.header-text-section {
+  background: linear-gradient(
+    135deg,
+    #ff6b35 0%,     /* Rosehill orange */
+    #e74c3c 20%,    /* Red */
+    #9b59b6 40%,    /* Purple */
+    #3498db 60%,    /* Blue */
+    #2ecc71 80%,    /* Green */
+    #f39c12 100%    /* Orange-yellow */
+  );
+  padding: 30px 0;
+  position: relative;
+}
+
+/* Subtle overlay to ensure text readability while maintaining colors */
+.header-text-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg,
+    rgba(26, 54, 93, 0.3) 0%,
+    rgba(45, 74, 113, 0.3) 100%
+  );
+  z-index: 1;
+}
+
+.header-text-section .rebranded-header-container {
+  position: relative;
+  z-index: 2;
+  background: none;
+  padding: 0 20px;
+}
+
+/* Enhanced text styling for the colorful section */
+.header-text-section .mixer-title {
+  text-shadow: 0 3px 6px rgba(0,0,0,0.5);
+  font-size: 32px;
+}
+
+.header-text-section .mixer-strapline {
+  text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  color: white;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .header-logo-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 0;
+  }
+
+  /* Rosehill logo spans full width on top row */
+  .manufacturer-logo {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  /* Surface Designs logo on bottom left */
+  .distributor-logo {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  /* Glooloop logo on bottom right */
+  .customer-logo {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .logo-item {
+    min-width: 120px;
+  }
+
+  .logo-img {
+    height: 50px;
+  }
+
+  .manufacturer-logo .logo-img {
+    height: 60px;
+  }
+
+  .customer-logo .logo-img {
+    height: 60px;
+  }
+
+  .header-text-section .mixer-title {
+    font-size: 26px;
+  }
+
+  .header-text-section {
+    padding: 20px 0;
+  }
+}

@@ -1,0 +1,101 @@
+/* Original exact styling from WordPress plugin */
+.mixer-colour-outer {
+  -ms-user-select: none;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+  width: 100%;
+  float: left;
+  padding: 0 8px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 14px;
+  margin-bottom: 10px;
+}
+
+.mixer-colour-outer a {
+  color: #000;
+  font-size: 24px;
+  font-weight: bold;
+  padding: 0 10px 10px;
+  text-decoration: none;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.mixer-colour-outer .mixer-color {
+  border-radius: 20px;
+  margin: 0 0 10px;
+}
+
+.mixer-colour-outer .mixer-color-inner {
+  color: #fff;
+  text-shadow: 2px 2px 5px rgba(150,150,150,1);
+  padding: 10px 0;
+}
+
+.mixer-colour-outer .mixer-text span {
+  display: block;
+}
+
+/* Style for +/- buttons */
+.ChangePercentageUp, .ChangePercentageDown {
+  background: #2196F3;
+  color: white;
+  border: 2px solid #1976D2;
+  border-radius: 4px;
+  font-size: 18px;
+  font-weight: bold;
+  padding: 4px 8px;
+  margin: 0 2px 8px 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ChangePercentageUp:hover, .ChangePercentageDown:hover {
+  background: #1976D2;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.ChangePercentageUp:active, .ChangePercentageDown:active {
+  transform: translateY(0);
+}
+
+/* Responsive breakpoints - exact from original */
+@media screen and (min-width: 767px) {
+  .mixer-colour-outer {
+    width: 12.5%;
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  .mixer-colour-outer {
+    width: 8.3333%;
+  }
+  .mixer-colour-outer:nth-child(12n+1) {
+    clear: both;
+  }
+}
+
+@media screen and (max-width: 1199px) {
+  .mixer-colour-outer:nth-child(8n+1) {
+    clear: both;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .mixer-colour-outer {
+    width: 25%;
+  }
+  .mixer-colour-outer:nth-child(4n+1) {
+    clear: both;
+  }
+}

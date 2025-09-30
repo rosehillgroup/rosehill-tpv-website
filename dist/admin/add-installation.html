@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Installation - Rosehill TPV Admin</title>
+    
+    <!-- Auth0 SDK -->
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
+    <script src="js/auth0-client.js"></script>
+    
+    <!-- Admin Styles -->
+    <link rel="stylesheet" href="css/admin.css">
+    
+    <style>
+        /* Page-specific styles */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .paragraph-list {
+            margin-bottom: 16px;
+        }
+        
+        .paragraph-item {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .paragraph-item textarea {
+            flex: 1;
+        }
+        
+        .paragraph-item .btn-danger {
+            flex-shrink: 0;
+            padding: 8px 12px;
+        }
+        
+        .add-paragraph-btn {
+            margin-top: 10px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: space-between;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            margin-top: 32px;
+        }
+        
+        .form-actions .left {
+            display: flex;
+            gap: 16px;
+        }
+        
+        .success-links {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-radius: 8px;
+        }
+        
+        .success-links h3 {
+            color: var(--success-color);
+            margin-bottom: 12px;
+        }
+        
+        .success-links .link-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .success-links a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .success-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Auth Check -->
+    <script src="js/auth-simple.js"></script>
+    <script src="js/admin-common.js"></script>
+    
+    <!-- Header -->
+    <header class="admin-header">
+        <div class="header-content">
+            <div class="header-title">Add Installation</div>
+            <nav class="header-nav">
+                <a href="installations.html">Installations</a>
+                <a href="add-installation.html" class="active">Add New</a>
+                <a href="/" target="_blank">View Site</a>
+                <a href="#" data-logout>Logout</a>
+            </nav>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <div class="admin-container">
+        <form id="installationForm" class="card">
+            <div class="card-header">
+                <h2 class="card-title">New Installation</h2>
+                <p class="card-subtitle">Add a new installation to the website. English content will be automatically translated to Spanish, French, and German.</p>
+            </div>
+            
+            <!-- Basic Information -->
+            <div class="form-section">
+                <h3 class="form-section-title">Basic Information</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">
+                            Title <span class="required">*</span>
+                        </label>
+                        <input type="text" class="form-input" name="title" required>
+                        <span class="form-help">The name of this installation project</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Slug</label>
+                        <input type="text" class="form-input" name="slug">
+                        <span class="form-help">URL-friendly version (auto-generated if blank)</span>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">
+                            Installation Date <span class="required">*</span>
+                        </label>
+                        <input type="date" class="form-input" name="installationDate" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Application Type</label>
+                        <select class="form-select" name="application">
+                            <option value="">Select type...</option>
+                            <option value="playground">Playground</option>
+                            <option value="sports">Sports Court</option>
+                            <option value="athletics">Athletics Track</option>
+                            <option value="tennis">Tennis Court</option>
+                            <option value="fitness">Fitness Area</option>
+                            <option value="water">Water Park</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Location -->
+            <div class="form-section">
+                <h3 class="form-section-title">Location</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">City</label>
+                        <input type="text" class="form-input" name="city">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Country</label>
+                        <input type="text" class="form-input" name="country">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Content -->
+            <div class="form-section">
+                <h3 class="form-section-title">Content</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">Overview</label>
+                    <div id="overviewParagraphs" class="paragraph-list">
+                        <div class="paragraph-item">
+                            <textarea class="form-textarea" name="overview[]" placeholder="Enter paragraph text..."></textarea>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary add-paragraph-btn" onclick="addParagraph('overview')">
+                        + Add Paragraph
+                    </button>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Thanks To</label>
+                    <div id="thanksToParagraphs" class="paragraph-list">
+                        <div class="paragraph-item">
+                            <div style="display: flex; flex-direction: column; gap: 10px; flex: 1;">
+                                <textarea class="form-textarea" name="thanksTo[]" placeholder="Enter acknowledgments..." style="margin-bottom: 0;"></textarea>
+                                <input type="url" class="form-input" name="thanksToUrl[]" placeholder="Optional website URL (e.g. https://example.com)">
+                            </div>
+                            <button type="button" class="btn btn-danger" onclick="removeThanksToParagraph(this)" style="align-self: flex-start;">Remove</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary add-paragraph-btn" onclick="addThanksToParagraph()">
+                        + Add Attribution
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Images -->
+            <div class="form-section">
+                <h3 class="form-section-title">Images</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        Cover Image <span class="required">*</span>
+                    </label>
+                    <div class="image-upload" id="coverUpload" onclick="document.getElementById('coverInput').click()">
+                        <div id="coverPlaceholder">
+                            <p>Click to upload or drag and drop</p>
+                            <p class="form-help">JPG, PNG, GIF, or WebP (max 12MB)</p>
+                        </div>
+                        <div id="coverPreview" style="display:none;"></div>
+                    </div>
+                    <input type="file" id="coverInput" accept="image/*" style="display:none;" onchange="handleCoverUpload(this.files[0])">
+                    <input type="hidden" name="coverAssetId" id="coverAssetId" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Gallery Images</label>
+                    <div class="image-upload" id="galleryUpload" onclick="document.getElementById('galleryInput').click()">
+                        <p>Click to upload or drag and drop</p>
+                        <p class="form-help">Upload multiple images (max 12 images)</p>
+                    </div>
+                    <input type="file" id="galleryInput" accept="image/*" multiple style="display:none;" onchange="handleGalleryUpload(this.files)">
+                    <div id="galleryPreview" class="image-preview"></div>
+                </div>
+            </div>
+            
+            <!-- SEO -->
+            <div class="form-section">
+                <h3 class="form-section-title">SEO Settings</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">SEO Title</label>
+                    <input type="text" class="form-input" name="seoTitle">
+                    <span class="form-help">Leave blank to use installation title</span>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">SEO Description</label>
+                    <textarea class="form-textarea" name="seoDescription" rows="3"></textarea>
+                    <span class="form-help">Brief description for search engines</span>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <div class="left">
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        Save Installation
+                    </button>
+                    <a href="installations.html" class="btn btn-secondary">Cancel</a>
+                </div>
+            </div>
+        </form>
+        
+        <!-- Success Message (hidden by default) -->
+        <div id="successMessage" class="success-links" style="display:none;">
+            <h3>✓ Installation saved successfully!</h3>
+            <div class="link-list">
+                <a id="viewEn" href="#" target="_blank">View English →</a>
+                <a id="viewEs" href="#" target="_blank">View Spanish →</a>
+                <a id="viewFr" href="#" target="_blank">View French →</a>
+                <a id="viewDe" href="#" target="_blank">View German →</a>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Store uploaded images
+        let coverImage = null;
+        let galleryImages = [];
+        
+        // Add paragraph function
+        function addParagraph(type) {
+            const container = document.getElementById(type + 'Paragraphs');
+            const item = document.createElement('div');
+            item.className = 'paragraph-item';
+            item.innerHTML = `
+                <textarea class="form-textarea" name="${type}[]" placeholder="Enter paragraph text..."></textarea>
+                <button type="button" class="btn btn-danger" onclick="removeParagraph(this)">Remove</button>
+            `;
+            container.appendChild(item);
+        }
+        
+        // Remove paragraph function
+        function removeParagraph(button) {
+            button.parentElement.remove();
+        }
+
+        // Add Thanks To paragraph function
+        function addThanksToParagraph() {
+            const container = document.getElementById('thanksToParagraphs');
+            const item = document.createElement('div');
+            item.className = 'paragraph-item';
+            item.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 10px; flex: 1;">
+                    <textarea class="form-textarea" name="thanksTo[]" placeholder="Enter acknowledgments..." style="margin-bottom: 0;"></textarea>
+                    <input type="url" class="form-input" name="thanksToUrl[]" placeholder="Optional website URL (e.g. https://example.com)">
+                </div>
+                <button type="button" class="btn btn-danger" onclick="removeThanksToParagraph(this)" style="align-self: flex-start;">Remove</button>
+            `;
+            container.appendChild(item);
+        }
+
+        // Remove Thanks To paragraph function
+        function removeThanksToParagraph(button) {
+            button.parentElement.remove();
+        }
+        
+        // Handle cover image upload
+        async function handleCoverUpload(file) {
+            if (!file) return;
+            
+            try {
+                AdminUtils.showLoading('Uploading cover image...');
+                const result = await AdminUtils.handleImageUpload(file);
+                
+                coverImage = result;
+                document.getElementById('coverAssetId').value = result.assetId;
+                
+                // Show preview
+                document.getElementById('coverPlaceholder').style.display = 'none';
+                document.getElementById('coverPreview').innerHTML = `
+                    <img src="${result.url}" alt="Cover preview" style="max-width:100%; height:200px; object-fit:cover;">
+                `;
+                document.getElementById('coverPreview').style.display = 'block';
+                
+                AdminUtils.hideLoading();
+                AdminUtils.showToast('Cover image uploaded', 'success');
+                
+            } catch (error) {
+                AdminUtils.hideLoading();
+                AdminUtils.showToast(error.message, 'error');
+            }
+        }
+        
+        // Handle gallery upload
+        async function handleGalleryUpload(files) {
+            if (!files || files.length === 0) return;
+            
+            const maxImages = 12;
+            const remaining = maxImages - galleryImages.length;
+            
+            if (remaining <= 0) {
+                AdminUtils.showToast(`Maximum ${maxImages} gallery images allowed`, 'warning');
+                return;
+            }
+            
+            const filesToUpload = Array.from(files).slice(0, remaining);
+            
+            try {
+                AdminUtils.showLoading(`Uploading ${filesToUpload.length} images...`);
+                
+                for (const file of filesToUpload) {
+                    const result = await AdminUtils.handleImageUpload(file);
+                    galleryImages.push(result);
+                }
+                
+                updateGalleryPreview();
+                AdminUtils.hideLoading();
+                AdminUtils.showToast(`${filesToUpload.length} images uploaded`, 'success');
+                
+            } catch (error) {
+                AdminUtils.hideLoading();
+                AdminUtils.showToast(error.message, 'error');
+            }
+        }
+        
+        // Update gallery preview
+        function updateGalleryPreview() {
+            const preview = document.getElementById('galleryPreview');
+            preview.innerHTML = galleryImages.map((img, index) => `
+                <div class="image-item">
+                    <img src="${img.url}" alt="Gallery image ${index + 1}">
+                    <button type="button" class="remove-btn" onclick="removeGalleryImage(${index})">×</button>
+                </div>
+            `).join('');
+        }
+        
+        // Remove gallery image
+        function removeGalleryImage(index) {
+            galleryImages.splice(index, 1);
+            updateGalleryPreview();
+        }
+        
+        // Setup drag and drop
+        AdminUtils.setupDragDrop(document.getElementById('coverUpload'), (files) => {
+            handleCoverUpload(files[0]);
+        });
+        
+        AdminUtils.setupDragDrop(document.getElementById('galleryUpload'), (files) => {
+            handleGalleryUpload(files);
+        });
+        
+        // Handle form submission
+        document.getElementById('installationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            
+            // Validate required fields
+            if (!formData.get('title')) {
+                AdminUtils.showToast('Title is required', 'error');
+                return;
+            }
+            
+            if (!formData.get('installationDate')) {
+                AdminUtils.showToast('Installation date is required', 'error');
+                return;
+            }
+            
+            if (!coverImage) {
+                AdminUtils.showToast('Cover image is required', 'error');
+                return;
+            }
+            
+            // Prepare data
+            const data = {
+                title: formData.get('title'),
+                slug: formData.get('slug'),
+                installationDate: formData.get('installationDate'),
+                application: formData.get('application'),
+                location: {
+                    city: formData.get('city'),
+                    country: formData.get('country')
+                },
+                overview: formData.getAll('overview[]').filter(text => text.trim()),
+                thanksTo: formData.getAll('thanksTo[]').filter(text => text.trim()),
+                thanksToUrls: formData.getAll('thanksToUrl[]'),
+                coverAssetId: coverImage.assetId,
+                galleryAssetIds: galleryImages.map(img => img.assetId),
+                seo: {
+                    title: formData.get('seoTitle'),
+                    description: formData.get('seoDescription')
+                }
+            };
+            
+            try {
+                document.getElementById('submitBtn').disabled = true;
+                AdminUtils.showLoading('Saving installation and translating...');
+                
+                const response = await adminAuth.apiCall('/.netlify/functions/installations-upsert-working', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to save installation');
+                }
+                
+                const result = await response.json();
+                
+                AdminUtils.hideLoading();
+                AdminUtils.showToast('Installation saved successfully! Pages will be live in ~2 minutes.', 'success');
+                
+                // Show success links
+                const successMsg = document.getElementById('successMessage');
+                successMsg.style.display = 'block';
+                
+                // Set view links
+                document.getElementById('viewEn').href = result.viewUrls.en || '#';
+                document.getElementById('viewEs').href = result.viewUrls.es || '#';
+                document.getElementById('viewFr').href = result.viewUrls.fr || '#';
+                document.getElementById('viewDe').href = result.viewUrls.de || '#';
+                
+                // Disable unavailable languages
+                if (!result.viewUrls.es) document.getElementById('viewEs').style.display = 'none';
+                if (!result.viewUrls.fr) document.getElementById('viewFr').style.display = 'none';
+                if (!result.viewUrls.de) document.getElementById('viewDe').style.display = 'none';
+                
+                // Reset form for new entry
+                setTimeout(() => {
+                    if (confirm('Add another installation?')) {
+                        window.location.reload();
+                    } else {
+                        window.location.href = 'installations.html';
+                    }
+                }, 2000);
+                
+            } catch (error) {
+                AdminUtils.hideLoading();
+                AdminUtils.showToast(error.message, 'error');
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

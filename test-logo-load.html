@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Loading Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .logo-test {
+            border: 2px solid #ddd;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .logo-test img {
+            max-width: 200px;
+            height: auto;
+            display: block;
+            margin: 10px 0;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 5px 0;
+        }
+        .loading { background: #fff3cd; color: #856404; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Rosehill Logo Loading Test</h1>
+
+    <div class="logo-test">
+        <h2>Test 1: Root Directory</h2>
+        <p>URL: /Rosehill_SportPlay.png</p>
+        <img src="/Rosehill_SportPlay.png" alt="Rosehill SportPlay Logo"
+             onload="this.nextElementSibling.className='status success'; this.nextElementSibling.textContent='✓ Loaded successfully';"
+             onerror="this.nextElementSibling.className='status error'; this.nextElementSibling.textContent='✗ Failed to load (404)';">
+        <span class="status loading">Loading...</span>
+    </div>
+
+    <div class="logo-test">
+        <h2>Test 2: Glooloop Mixer Directory</h2>
+        <p>URL: /glooloop-mixer/Rosehill_SportPlay.png</p>
+        <img src="/glooloop-mixer/Rosehill_SportPlay.png" alt="Rosehill SportPlay Logo"
+             onload="this.nextElementSibling.className='status success'; this.nextElementSibling.textContent='✓ Loaded successfully';"
+             onerror="this.nextElementSibling.className='status error'; this.nextElementSibling.textContent='✗ Failed to load (404)';">
+        <span class="status loading">Loading...</span>
+    </div>
+
+    <div class="logo-test">
+        <h2>Test 3: Alternative Logo</h2>
+        <p>URL: /rosehill_tpv_logo.png</p>
+        <img src="/rosehill_tpv_logo.png" alt="Rosehill TPV Logo"
+             onload="this.nextElementSibling.className='status success'; this.nextElementSibling.textContent='✓ Loaded successfully';"
+             onerror="this.nextElementSibling.className='status error'; this.nextElementSibling.textContent='✗ Failed to load (404)';">
+        <span class="status loading">Loading...</span>
+    </div>
+
+    <div class="logo-test">
+        <h2>Test 4: SVG (Control Test)</h2>
+        <p>URL: /complete-granules.svg</p>
+        <img src="/complete-granules.svg" alt="Complete Granules" style="max-width: 200px;"
+             onload="this.nextElementSibling.className='status success'; this.nextElementSibling.textContent='✓ Loaded successfully';"
+             onerror="this.nextElementSibling.className='status error'; this.nextElementSibling.textContent='✗ Failed to load (404)';">
+        <span class="status loading">Loading...</span>
+    </div>
+
+    <hr>
+    <p><strong>Last Git Push:</strong> Commit 46d0929 - "Fix Rosehill manufacturer logo display in PDF generation"</p>
+    <p><strong>Expected Result:</strong> All logos should load successfully once the server deploys the latest changes.</p>
+
+    <script>
+        // Auto-refresh every 30 seconds to check deployment status
+        setTimeout(() => {
+            console.log('Auto-refreshing to check deployment status...');
+            location.reload();
+        }, 30000);
+
+        // Show last refresh time
+        const refreshTime = document.createElement('p');
+        refreshTime.innerHTML = `<strong>Page loaded at:</strong> ${new Date().toLocaleTimeString()}`;
+        refreshTime.style.color = '#666';
+        document.body.appendChild(refreshTime);
+    </script>
+</body>
+</html>

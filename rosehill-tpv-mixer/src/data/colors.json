@@ -1,0 +1,152 @@
+{
+  "colors": [
+    {
+      "id": "RH31",
+      "name": "Cream",
+      "hex": "#E6DCC7",
+      "enabled": true
+    },
+    {
+      "id": "RH30",
+      "name": "Beige",
+      "hex": "#E8C399",
+      "enabled": true
+    },
+    {
+      "id": "RH41",
+      "name": "Bright Yellow",
+      "hex": "#E7CE62",
+      "enabled": true
+    },
+    {
+      "id": "RH40",
+      "name": "Mustard Yellow",
+      "hex": "#CF9C2E",
+      "enabled": true
+    },
+    {
+      "id": "RH26",
+      "name": "Turquoise",
+      "hex": "#5ABBC1",
+      "enabled": true
+    },
+    {
+      "id": "RH23",
+      "name": "Azure",
+      "hex": "#339AC1",
+      "enabled": true
+    },
+    {
+      "id": "RH22",
+      "name": "Light Blue",
+      "hex": "#60A3D3",
+      "enabled": true
+    },
+    {
+      "id": "RH20",
+      "name": "Standard Blue",
+      "hex": "#376FAB",
+      "enabled": true
+    },
+    {
+      "id": "RH21",
+      "name": "Purple",
+      "hex": "#49498C",
+      "enabled": true
+    },
+    {
+      "id": "RH90",
+      "name": "Funky Pink",
+      "hex": "#DD4586",
+      "enabled": true
+    },
+    {
+      "id": "RH11",
+      "name": "Bright Green",
+      "hex": "#62AF4A",
+      "enabled": true
+    },
+    {
+      "id": "RH10",
+      "name": "Standard Green",
+      "hex": "#78965E",
+      "enabled": true
+    },
+    {
+      "id": "RH12",
+      "name": "Dark Green",
+      "hex": "#49A087",
+      "enabled": true
+    },
+    {
+      "id": "RH50",
+      "name": "Orange",
+      "hex": "#D54F27",
+      "enabled": true
+    },
+    {
+      "id": "RH02",
+      "name": "Bright Red",
+      "hex": "#CC2027",
+      "enabled": true
+    },
+    {
+      "id": "RH01",
+      "name": "Standard Red",
+      "hex": "#A33128",
+      "enabled": true
+    },
+    {
+      "id": "RH32",
+      "name": "Brown",
+      "hex": "#AD6943",
+      "enabled": true
+    },
+    {
+      "id": "RH65",
+      "name": "Pale Grey",
+      "hex": "#C8C6C7",
+      "enabled": true
+    },
+    {
+      "id": "RH61",
+      "name": "Light Grey",
+      "hex": "#9A9990",
+      "enabled": true
+    },
+    {
+      "id": "RH60",
+      "name": "Dark Grey",
+      "hex": "#77736F",
+      "enabled": true
+    },
+    {
+      "id": "RH70",
+      "name": "Black",
+      "hex": "#131519",
+      "enabled": true
+    }
+  ],
+  "settings": {
+    "companyName": "Rosehill Sports & Play",
+    "logoUrl": "https://rosehillsportsandplay.com/wp-content/uploads/2020/09/rosehill_sportsandplay_social_1200x630.png",
+    "phone": "0044(0)1422 839 456",
+    "website": "rosehillsportsandplay.com",
+    "pdfHeaderText": "Rosehill TPV Colour Mixer",
+    "instructions": {
+      "title": "Instructions",
+      "content": [
+        "With the Rosehill TPV<sup>®</sup> Colour Mixer you can design the perfect blend for your next project.",
+        "Mix bespoke colours to suit any brief by combining two or more of our 21 coloured rubber granules.",
+        "Select your colours from the swatches below.",
+        "Use the + buttons to add granules and the - buttons to remove them.",
+        "When you have finished your design, save or print it as a PDF."
+      ],
+      "learnMoreUrl": "https://rosehillsportsandplay.com/rosehilltpv/"
+    },
+    "colorDisclaimer": "Colour Disclaimer: Do not rely on screen representation for colour accuracy. We cannot guarantee an exact match and the colour appearing on screen should not be relied on as being such, swatch colours will vary depending on your screen settings.",
+    "backgroundColor": "#f4f4f4",
+    "textColor": "#273476",
+    "textFont": "Arial, Helvetica, sans-serif"
+  }
+}
