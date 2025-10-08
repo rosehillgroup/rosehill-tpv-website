@@ -24,15 +24,27 @@ http://tpv.rosehill.group/* https://tpv.rosehill.group/:splat 301!
 /de/translation-test.html /translation-test.html 200
 /en/translation-test.html /translation-test.html 200
 
-# Pretty URLs - redirect to canonical .html version
-/about              /about.html             301!
-/products           /products.html          301!
-/applications       /applications.html      301!
-/colour             /colour.html            301!
-/contact            /contact.html           301!
-/installations      /installations.html     301!
-/login              /login.html             301!
-/mixer              /mixer.html             301!
+# Clean URLs - remove .html extension (redirect .html to clean)
+/about.html /about 301
+/products.html /products 301
+/applications.html /applications 301
+/colour.html /colour 301
+/contact.html /contact 301
+/installations.html /installations 301
+/mixer.html /mixer 301
+/login.html /login 301
+/thank-you.html /thank-you 301
+
+# Serve HTML files without extension
+/about /about.html 200
+/products /products.html 200
+/applications /applications.html 200
+/colour /colour.html 200
+/contact /contact.html 200
+/installations /installations.html 200
+/mixer /mixer.html 200
+/login /login.html 200
+/thank-you /thank-you.html 200
 
 # Installation pages - serve from installations directory
 /installations/*    /installations/:splat   200
@@ -51,3 +63,6 @@ http://tpv.rosehill.group/* https://tpv.rosehill.group/:splat 301!
 
 # Force HTTPS
 # http://yourdomain.com/* https://yourdomain.com/:splat 301!
+
+# Fallback for 404 errors
+/* /404.html 404
