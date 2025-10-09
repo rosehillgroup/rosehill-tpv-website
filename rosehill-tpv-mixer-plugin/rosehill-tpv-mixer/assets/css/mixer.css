@@ -1,0 +1,733 @@
+/**
+ * Rosehill TPV® Colour Mixer - Scoped Styles
+ * All styles are scoped to .rosehill-mixer-container to avoid conflicts
+ */
+
+.rosehill-mixer-container {
+    font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.rosehill-mixer-container *,
+.rosehill-mixer-container *::before,
+.rosehill-mixer-container *::after {
+    box-sizing: border-box;
+}
+
+/* Container Layout */
+.rosehill-mixer-container .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.rosehill-mixer-container .mixer-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* Canvas Container */
+.rosehill-mixer-container .canvas-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    position: relative;
+}
+
+.rosehill-mixer-container .canvas-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 1000px;
+    height: 500px;
+    margin: 0 auto;
+    overflow: hidden;
+    aspect-ratio: 2 / 1;
+}
+
+.rosehill-mixer-container canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.rosehill-mixer-container .loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #666;
+}
+
+/* Zoom Controls */
+.rosehill-mixer-container .zoom-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 5px;
+    z-index: 100;
+}
+
+.rosehill-mixer-container .zoom-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.rosehill-mixer-container .zoom-btn:hover {
+    background: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.rosehill-mixer-container .zoom-btn:active {
+    transform: translateY(0);
+}
+
+.rosehill-mixer-container .zoom-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.rosehill-mixer-container .zoom-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Project Details Form */
+.rosehill-mixer-container .project-details-section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.rosehill-mixer-container .project-details-section h2 {
+    font-family: 'Overpass', sans-serif;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.rosehill-mixer-container .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.rosehill-mixer-container .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.rosehill-mixer-container .form-field.full-width {
+    grid-column: 1 / -1;
+}
+
+.rosehill-mixer-container .form-label {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+}
+
+.rosehill-mixer-container .form-input,
+.rosehill-mixer-container .form-textarea {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+}
+
+.rosehill-mixer-container .form-input:focus,
+.rosehill-mixer-container .form-textarea:focus {
+    outline: none;
+    border-color: #2196F3;
+}
+
+.rosehill-mixer-container .form-textarea {
+    resize: vertical;
+    min-height: 60px;
+}
+
+/* Material Calculations */
+.rosehill-mixer-container .material-calc {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 15px 0;
+    border-left: 4px solid #2196F3;
+}
+
+.rosehill-mixer-container .material-calc h4 {
+    font-family: 'Overpass', sans-serif;
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.rosehill-mixer-container .material-amount {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #2196F3;
+}
+
+.rosehill-mixer-container .color-materials-breakdown {
+    margin: 10px 0;
+}
+
+.rosehill-mixer-container .color-material-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.rosehill-mixer-container .color-material-item:last-child {
+    border-bottom: none;
+    margin-bottom: 8px;
+}
+
+.rosehill-mixer-container .color-material-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.rosehill-mixer-container .color-material-swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+.rosehill-mixer-container .color-material-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.rosehill-mixer-container .color-material-code {
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.rosehill-mixer-container .color-material-amount {
+    font-weight: 600;
+    color: #2196F3;
+    font-size: 0.95rem;
+}
+
+/* Controls Layout */
+.rosehill-mixer-container .controls {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 30px;
+    align-items: start;
+}
+
+.rosehill-mixer-container .left-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.rosehill-mixer-container .right-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Colour Palette */
+.rosehill-mixer-container .palette-section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 25px;
+    width: 100%;
+}
+
+.rosehill-mixer-container .palette-title {
+    font-family: 'Overpass', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #444;
+}
+
+.rosehill-mixer-container .palette-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.rosehill-mixer-container .colour-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.rosehill-mixer-container .colour-swatch {
+    width: 100%;
+    height: 40px;
+    border: 2px solid #e0e0e0;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.rosehill-mixer-container .colour-swatch:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.rosehill-mixer-container .colour-swatch.has-parts {
+    border-color: #2196F3;
+    border-width: 3px;
+}
+
+.rosehill-mixer-container .colour-info {
+    text-align: center;
+}
+
+.rosehill-mixer-container .colour-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 1px;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rosehill-mixer-container .colour-code {
+    font-size: 0.65rem;
+    color: #666;
+    font-family: monospace;
+}
+
+/* Parts Controls */
+.rosehill-mixer-container .parts-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.rosehill-mixer-container .parts-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    background: #2196F3;
+    color: white;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.rosehill-mixer-container .parts-btn:hover {
+    background: #1976D2;
+    transform: scale(1.1);
+}
+
+.rosehill-mixer-container .parts-btn:active {
+    transform: scale(0.95);
+}
+
+.rosehill-mixer-container .parts-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.rosehill-mixer-container .parts-count {
+    min-width: 24px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+/* Mix Bar */
+.rosehill-mixer-container .mix-bar-section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+}
+
+.rosehill-mixer-container .mix-bar-section h2 {
+    font-family: 'Overpass', sans-serif;
+    margin-bottom: 15px;
+}
+
+.rosehill-mixer-container .mix-bar {
+    height: 40px;
+    border-radius: 20px;
+    overflow: hidden;
+    display: flex;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 15px;
+}
+
+.rosehill-mixer-container .mix-bar-segment {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+}
+
+.rosehill-mixer-container .mix-bar-empty {
+    flex: 1;
+    background: #e0e0e0;
+    color: #999;
+    text-shadow: none;
+}
+
+.rosehill-mixer-container .mix-details {
+    display: grid;
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.rosehill-mixer-container .mix-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    background: #f8f8f8;
+    border-radius: 6px;
+}
+
+.rosehill-mixer-container .mix-detail-colour {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.rosehill-mixer-container .mix-detail-text {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+/* Action Buttons */
+.rosehill-mixer-container .action-buttons {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.rosehill-mixer-container .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #2196F3;
+    color: white;
+}
+
+.rosehill-mixer-container .btn:hover {
+    background: #1976D2;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.rosehill-mixer-container .btn:active {
+    transform: translateY(0);
+}
+
+.rosehill-mixer-container .btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.rosehill-mixer-container .btn-secondary {
+    background: #757575;
+}
+
+.rosehill-mixer-container .btn-secondary:hover {
+    background: #616161;
+}
+
+/* Share Section */
+.rosehill-mixer-container .share-section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+}
+
+.rosehill-mixer-container .share-section h2 {
+    font-family: 'Overpass', sans-serif;
+    margin-bottom: 15px;
+}
+
+.rosehill-mixer-container .share-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.rosehill-mixer-container .share-input-field {
+    flex: 1;
+}
+
+.rosehill-mixer-container .share-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 0.9rem;
+}
+
+.rosehill-mixer-container .share-input:focus {
+    outline: none;
+    border-color: #2196F3;
+}
+
+.rosehill-mixer-container .btn-load {
+    background: #28a745;
+    padding: 10px 15px;
+    white-space: nowrap;
+}
+
+.rosehill-mixer-container .btn-load:hover {
+    background: #218838;
+}
+
+.rosehill-mixer-container .btn-load:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+}
+
+.rosehill-mixer-container .share-error {
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 5px;
+}
+
+/* 3D Tile Preview */
+.rosehill-mixer-container .tile-preview-section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.rosehill-mixer-container .tile-preview-section h2 {
+    font-family: 'Overpass', sans-serif;
+    margin-bottom: 15px;
+}
+
+.rosehill-mixer-container .tile-preview-container {
+    width: 100%;
+    height: 250px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, #f5f5f5, #e8e8e8);
+    cursor: grab;
+}
+
+.rosehill-mixer-container .tile-preview-container:active {
+    cursor: grabbing;
+}
+
+.rosehill-mixer-container .tile-preview-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.rosehill-mixer-container .tile-preview-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #666;
+    font-size: 0.9rem;
+    z-index: 100;
+}
+
+.rosehill-mixer-container .tile-preview-error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #dc3545;
+    font-size: 0.9rem;
+    text-align: center;
+    z-index: 100;
+}
+
+.rosehill-mixer-container .tile-zoom-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 100;
+}
+
+.rosehill-mixer-container .tile-zoom-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    backdrop-filter: blur(5px);
+}
+
+.rosehill-mixer-container .tile-zoom-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.rosehill-mixer-container .tile-zoom-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Tooltip */
+.rosehill-mixer-container .tooltip {
+    position: absolute;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    pointer-events: none;
+    z-index: 1000;
+    white-space: nowrap;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .rosehill-mixer-container .palette-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 10px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .rosehill-mixer-container .controls {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .rosehill-mixer-container .palette-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+    }
+
+    .rosehill-mixer-container .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .rosehill-mixer-container .canvas-wrapper {
+        height: auto;
+        max-height: 400px;
+        min-height: 200px;
+    }
+
+    .rosehill-mixer-container .tile-preview-container {
+        height: 200px;
+    }
+
+    .rosehill-mixer-container .tile-zoom-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+        touch-action: manipulation;
+    }
+}
+
+@media (max-width: 480px) {
+    .rosehill-mixer-container .canvas-wrapper {
+        max-height: 240px;
+        min-height: 180px;
+    }
+
+    .rosehill-mixer-container .tile-preview-container {
+        height: 180px;
+    }
+}
+
+/* Support for browsers without aspect-ratio */
+@supports not (aspect-ratio: 2 / 1) {
+    .rosehill-mixer-container .canvas-wrapper {
+        height: 50vw;
+        max-height: 500px;
+    }
+}
