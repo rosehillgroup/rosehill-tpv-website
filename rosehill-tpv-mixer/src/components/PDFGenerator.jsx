@@ -107,9 +107,9 @@ const PDFGenerator = ({ svgRef, selectedColors, percentages }) => {
         pdf.saveGraphicsState();
 
         // Calculate center of canvas for watermark positioning
-        // Account for the actual canvas position and size
+        // Position lower on canvas to ensure it stays within bounds
         const watermarkX = pageWidth / 2; // Center horizontally on page
-        const watermarkY = canvasYStart + (imgHeight / 2); // Center vertically on canvas
+        const watermarkY = canvasYStart + (imgHeight * 0.6); // Position at 60% down the canvas (lower than center)
 
         // Debug: log values to console
         console.log('Canvas Y Start:', canvasYStart, 'Canvas Height:', imgHeight, 'Watermark Y:', watermarkY);
@@ -120,11 +120,11 @@ const PDFGenerator = ({ svgRef, selectedColors, percentages }) => {
         pdf.setFont(undefined, 'bold');
         pdf.setGState(new pdf.GState({ opacity: 0.4 }));
 
-        // Draw watermark with rotation
+        // Draw watermark with reduced rotation (30 degrees instead of 45)
         pdf.text('Rosehill TPV', watermarkX, watermarkY, {
           align: 'center',
-          angle: 45,
-          baseline: 'middle' // Use middle baseline for better centering
+          angle: 30,
+          baseline: 'middle'
         });
 
         pdf.restoreGraphicsState();
