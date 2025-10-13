@@ -84,8 +84,21 @@ const PDFGenerator = ({ svgRef, selectedColors, percentages }) => {
         });
 
         const imgData = canvas.toDataURL('image/png');
-        const imgWidth = 120;
-        const imgHeight = 80;
+
+        // Calculate dimensions while maintaining aspect ratio
+        const canvasAspectRatio = canvas.width / canvas.height;
+        const maxWidth = 140; // Max width in mm
+        const maxHeight = 100; // Max height in mm
+
+        let imgWidth = maxWidth;
+        let imgHeight = imgWidth / canvasAspectRatio;
+
+        // If height exceeds max, constrain by height instead
+        if (imgHeight > maxHeight) {
+          imgHeight = maxHeight;
+          imgWidth = imgHeight * canvasAspectRatio;
+        }
+
         const imgX = (pageWidth - imgWidth) / 2;
         pdf.addImage(imgData, 'PNG', imgX, yPos, imgWidth, imgHeight);
         yPos += imgHeight + 5;
