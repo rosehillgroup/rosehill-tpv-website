@@ -4,63 +4,54 @@
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
-/* Logo section background - full width */
-.header-logo-wrapper {
-  background: #ffffff;
-  padding: 20px 0;
+/* Unified magenta section with logo | title | logo layout */
+.header-unified-section {
+  background: #7F007C;
+  padding: 25px 0;
   width: 100%;
-  border-bottom: 1px solid #e5e7eb;
 }
 
 .rebranded-header-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
-  text-align: center;
 }
 
-.header-logo-section {
+.header-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0;
-  flex-wrap: nowrap;
+  gap: 20px;
 }
 
 .logo-item {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: auto;
+  flex-shrink: 0;
 }
 
-.logo-img {
-  height: 60px;
+/* Surface Designs logo - 25% larger with white container */
+.distributor-logo .logo-img {
+  height: 75px;
   width: auto;
   object-fit: contain;
   border-radius: 4px;
   background: white;
-  padding: 8px;
+  padding: 10px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 8px;
   transition: transform 0.3s ease;
 }
 
-.logo-label {
-  font-size: 12px;
-  color: #e0e7ff;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Rosehill Sports & Play logo styling */
+/* Rosehill TPV logo - no container */
 .manufacturer-logo .logo-img {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
   background: transparent;
   padding: 0;
   box-shadow: none;
-  height: 50px;
+  border-radius: 0;
 }
 
 /* Logo link styling */
@@ -74,96 +65,52 @@
 }
 
 .mixer-title {
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 700;
   color: white;
-  margin: 0 0 10px 0;
+  margin: 0;
   text-shadow: 0 2px 4px rgba(0,0,0,0.3);
   font-family: 'Overpass', sans-serif;
-}
-
-.mixer-strapline {
-  font-size: 16px;
-  color: #e0e7ff;
-  margin: 0;
-  font-weight: 400;
-  line-height: 1.4;
-}
-
-/* Colorful gradient text section representing color mixing */
-.header-text-section {
-  background: linear-gradient(
-    90deg,
-    #00b4d8 0%,     /* Bright teal */
-    #0077b6 25%,    /* Ocean blue */
-    #023e8a 50%,    /* Deep blue */
-    #6a4c93 75%,    /* Purple */
-    #1b3a4b 100%    /* Dark blue-grey */
-  );
-  padding: 30px 0;
-  position: relative;
-}
-
-/* Subtle overlay to ensure text readability while maintaining colors */
-.header-text-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg,
-    rgba(26, 54, 93, 0.3) 0%,
-    rgba(45, 74, 113, 0.3) 100%
-  );
-  z-index: 1;
-}
-
-.header-text-section .rebranded-header-container {
-  position: relative;
-  z-index: 2;
-  background: none;
-  padding: 0 20px;
-}
-
-/* Enhanced text styling for the colorful section */
-.header-text-section .mixer-title {
-  text-shadow: 0 3px 6px rgba(0,0,0,0.5);
-  font-size: 32px;
-}
-
-.header-text-section .mixer-strapline {
-  text-shadow: 0 2px 4px rgba(0,0,0,0.4);
-  color: white;
+  text-align: center;
+  flex-grow: 1;
 }
 
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
-  .header-logo-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  .header-unified-section {
+    padding: 15px 0;
+  }
+
+  .header-content {
     gap: 10px;
-    flex-wrap: nowrap;
   }
 
-  .logo-item {
-    min-width: auto;
-  }
-
-  .logo-img {
-    height: 40px;
+  .distributor-logo .logo-img {
+    height: 50px;
+    padding: 6px;
   }
 
   .manufacturer-logo .logo-img {
     height: 40px;
   }
 
-  .header-text-section .mixer-title {
-    font-size: 26px;
+  .mixer-title {
+    font-size: 20px;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .mixer-title {
+    font-size: 16px;
   }
 
-  .header-text-section {
-    padding: 20px 0;
+  .distributor-logo .logo-img {
+    height: 40px;
+    padding: 5px;
+  }
+
+  .manufacturer-logo .logo-img {
+    height: 35px;
   }
 }

@@ -100,22 +100,27 @@ const PDFGenerator = ({ svgRef, selectedColors, percentages }) => {
         }
 
         const imgX = (pageWidth - imgWidth) / 2;
+        const canvasYPos = yPos; // Store canvas Y position before adding image
         pdf.addImage(imgData, 'PNG', imgX, yPos, imgWidth, imgHeight);
 
         // Add diagonal watermark over canvas
         pdf.saveGraphicsState();
-        pdf.setGState(new pdf.GState({ opacity: 0.12 }));
-        pdf.setTextColor(180, 180, 180);
-        pdf.setFontSize(56);
-        pdf.setFont(undefined, 'bold');
 
         // Calculate center of canvas for watermark positioning
-        const watermarkX = imgX + (imgWidth / 2);
-        const watermarkY = yPos + (imgHeight / 2);
+        const watermarkX = pageWidth / 2; // Center horizontally on page (where canvas is centered)
+        const watermarkY = canvasYPos + (imgHeight / 2); // Center vertically on canvas
 
+        // Set rotation and position
+        const angle = 45;
+        pdf.setTextColor(255, 255, 255); // White text
+        pdf.setFontSize(52);
+        pdf.setFont(undefined, 'bold');
+
+        // Apply opacity and draw text
+        pdf.setGState(new pdf.GState({ opacity: 0.35 }));
         pdf.text('Rosehill TPV', watermarkX, watermarkY, {
           align: 'center',
-          angle: 45
+          angle: angle
         });
 
         pdf.restoreGraphicsState();
