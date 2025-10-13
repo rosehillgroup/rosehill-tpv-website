@@ -35,26 +35,9 @@ const PDFGenerator = ({ svgRef, selectedColors, percentages }) => {
       };
 
       const surfaceDesignsLogo = await loadImage('/SURFACEDESIGNS_LOGO.jpg');
-      const rosehillLogo = await loadImage('/Rosehill_SportPlay.png');
-      const glooloopLogo = await loadImage('/glooloop.webp');
 
-      // Three column header section with logos
-      const colWidth = contentWidth / 3;
+      // Header section with Surface Designs logo centered
       let yPos = 20;
-
-      // Add labels above logos
-      pdf.setFontSize(9);
-      pdf.setTextColor(80, 80, 80);
-      pdf.text('Distributor', margin + (colWidth / 2), yPos, { align: 'center' });
-      pdf.text('Installed By', margin + colWidth + (colWidth / 2), yPos, { align: 'center' });
-      pdf.text('Manufacturer', margin + (colWidth * 2) + (colWidth / 2), yPos, { align: 'center' });
-
-      // Move position down for logos
-      yPos += 7;
-
-      // Add logos with proper aspect ratios
-      const maxLogoHeight = 25;
-      const maxLogoWidth = colWidth - 10;
 
       // Function to calculate dimensions while maintaining aspect ratio
       const calculateLogoDimensions = (logoInfo, maxWidth, maxHeight) => {
@@ -72,35 +55,19 @@ const PDFGenerator = ({ svgRef, selectedColors, percentages }) => {
         return { width, height };
       };
 
-      // Surface Designs Logo (Distributor - left)
+      // Surface Designs Logo - centered
       if (surfaceDesignsLogo) {
+        const maxLogoHeight = 30;
+        const maxLogoWidth = 80;
         const dims = calculateLogoDimensions(surfaceDesignsLogo, maxLogoWidth, maxLogoHeight);
         if (dims) {
-          const logoX = margin + (colWidth - dims.width) / 2;
+          const logoX = (pageWidth - dims.width) / 2;
           pdf.addImage(surfaceDesignsLogo.data, 'PNG', logoX, yPos, dims.width, dims.height);
         }
       }
 
-      // Glooloop Logo (Installed By - center)
-      if (glooloopLogo) {
-        const dims = calculateLogoDimensions(glooloopLogo, maxLogoWidth, maxLogoHeight);
-        if (dims) {
-          const logoX = margin + colWidth + (colWidth - dims.width) / 2;
-          pdf.addImage(glooloopLogo.data, 'PNG', logoX, yPos, dims.width, dims.height);
-        }
-      }
-
-      // Rosehill Logo (Manufacturer - right)
-      if (rosehillLogo) {
-        const dims = calculateLogoDimensions(rosehillLogo, maxLogoWidth, maxLogoHeight);
-        if (dims) {
-          const logoX = margin + (colWidth * 2) + (colWidth - dims.width) / 2;
-          pdf.addImage(rosehillLogo.data, 'PNG', logoX, yPos, dims.width, dims.height);
-        }
-      }
-
       // Main title
-      yPos = 60;
+      yPos = 55;
       pdf.setFontSize(18);
       pdf.setTextColor(39, 52, 118);
       pdf.text('Rosehill TPV® Colour Mix', pageWidth / 2, yPos, { align: 'center' });

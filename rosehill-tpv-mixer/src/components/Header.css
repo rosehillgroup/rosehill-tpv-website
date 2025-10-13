@@ -6,9 +6,10 @@
 
 /* Logo section background - full width */
 .header-logo-wrapper {
-  background: linear-gradient(135deg, #1a365d, #2d4a71);
-  padding: 15px 0 10px 0;
+  background: #ffffff;
+  padding: 20px 0;
   width: 100%;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .rebranded-header-container {
@@ -22,8 +23,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
+  margin-bottom: 0;
+  flex-wrap: nowrap;
 }
 
 .logo-item {
@@ -31,7 +32,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 140px;
+  min-width: auto;
 }
 
 .logo-img {
@@ -54,17 +55,12 @@
   letter-spacing: 0.5px;
 }
 
-/* Remove white background from manufacturer logo (already white PNG with transparency) and increase size */
+/* Rosehill Sports & Play logo styling */
 .manufacturer-logo .logo-img {
   background: transparent;
   padding: 0;
   box-shadow: none;
-  height: 70px;
-}
-
-/* Increase customer logo size */
-.customer-logo .logo-img {
-  height: 80px;
+  height: 50px;
 }
 
 /* Logo link styling */
@@ -97,13 +93,12 @@
 /* Colorful gradient text section representing color mixing */
 .header-text-section {
   background: linear-gradient(
-    135deg,
-    #ff6b35 0%,     /* Rosehill orange */
-    #e74c3c 20%,    /* Red */
-    #9b59b6 40%,    /* Purple */
-    #3498db 60%,    /* Blue */
-    #2ecc71 80%,    /* Green */
-    #f39c12 100%    /* Orange-yellow */
+    90deg,
+    #00b4d8 0%,     /* Bright teal */
+    #0077b6 25%,    /* Ocean blue */
+    #023e8a 50%,    /* Deep blue */
+    #6a4c93 75%,    /* Purple */
+    #1b3a4b 100%    /* Dark blue-grey */
   );
   padding: 30px 0;
   position: relative;
@@ -145,46 +140,23 @@
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
   .header-logo-section {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto auto;
-    gap: 15px;
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    margin-bottom: 0;
-  }
-
-  /* Rosehill logo spans full width on top row */
-  .manufacturer-logo {
-    grid-column: 1 / -1;
-    grid-row: 1;
-  }
-
-  /* Surface Designs logo on bottom left */
-  .distributor-logo {
-    grid-column: 1;
-    grid-row: 2;
-  }
-
-  /* Glooloop logo on bottom right */
-  .customer-logo {
-    grid-column: 2;
-    grid-row: 2;
+    gap: 10px;
+    flex-wrap: nowrap;
   }
 
   .logo-item {
-    min-width: 120px;
+    min-width: auto;
   }
 
   .logo-img {
-    height: 50px;
+    height: 40px;
   }
 
   .manufacturer-logo .logo-img {
-    height: 60px;
-  }
-
-  .customer-logo .logo-img {
-    height: 60px;
+    height: 40px;
   }
 
   .header-text-section .mixer-title {
