@@ -100,27 +100,31 @@ const PDFGenerator = ({ svgRef, selectedColors, percentages }) => {
         }
 
         const imgX = (pageWidth - imgWidth) / 2;
-        const canvasYPos = yPos; // Store canvas Y position before adding image
+        const canvasYStart = yPos; // Store canvas Y position
         pdf.addImage(imgData, 'PNG', imgX, yPos, imgWidth, imgHeight);
 
         // Add diagonal watermark over canvas
         pdf.saveGraphicsState();
 
         // Calculate center of canvas for watermark positioning
-        const watermarkX = pageWidth / 2; // Center horizontally on page (where canvas is centered)
-        const watermarkY = canvasYPos + (imgHeight / 2); // Center vertically on canvas
+        // Account for the actual canvas position and size
+        const watermarkX = pageWidth / 2; // Center horizontally on page
+        const watermarkY = canvasYStart + (imgHeight / 2); // Center vertically on canvas
 
-        // Set rotation and position
-        const angle = 45;
+        // Debug: log values to console
+        console.log('Canvas Y Start:', canvasYStart, 'Canvas Height:', imgHeight, 'Watermark Y:', watermarkY);
+
+        // Set text properties
         pdf.setTextColor(255, 255, 255); // White text
-        pdf.setFontSize(52);
+        pdf.setFontSize(48);
         pdf.setFont(undefined, 'bold');
+        pdf.setGState(new pdf.GState({ opacity: 0.4 }));
 
-        // Apply opacity and draw text
-        pdf.setGState(new pdf.GState({ opacity: 0.35 }));
+        // Draw watermark with rotation
         pdf.text('Rosehill TPV', watermarkX, watermarkY, {
           align: 'center',
-          angle: angle
+          angle: 45,
+          baseline: 'middle' // Use middle baseline for better centering
         });
 
         pdf.restoreGraphicsState();
