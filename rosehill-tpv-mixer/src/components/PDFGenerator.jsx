@@ -108,8 +108,8 @@ const PDFGenerator = ({ svgRef, selectedColors, percentages }) => {
 
         // Calculate center of canvas for watermark positioning
         // Position lower on canvas to ensure it stays within bounds
-        const watermarkX = pageWidth / 2; // Center horizontally on page
-        const watermarkY = canvasYStart + (imgHeight * 0.7); // Position at 70% down the canvas
+        const watermarkX = (pageWidth / 2) + 3; // Center horizontally, shifted 3mm right
+        const watermarkY = canvasYStart + (imgHeight * 0.75); // Position at 75% down the canvas
 
         // Debug: log values to console
         console.log('Canvas Y Start:', canvasYStart, 'Canvas Height:', imgHeight, 'Watermark Y:', watermarkY);
