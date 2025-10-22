@@ -12,6 +12,11 @@ http://rosehillsportsandplay.com/binders/ https://tpv.rosehill.group/products 30
 https://www.rosehillsportsandplay.com/binders/ https://tpv.rosehill.group/products 301!
 http://www.rosehillsportsandplay.com/binders/ https://tpv.rosehill.group/products 301!
 
+https://rosehillsportsandplay.com/rosehilltpv/ https://tpv.rosehill.group/products 301!
+http://rosehillsportsandplay.com/rosehilltpv/ https://tpv.rosehill.group/products 301!
+https://www.rosehillsportsandplay.com/rosehilltpv/ https://tpv.rosehill.group/products 301!
+http://www.rosehillsportsandplay.com/rosehilltpv/ https://tpv.rosehill.group/products 301!
+
 # Force old domain to new subdomain (wildcard - catches everything else)
 https://rosehillsportsandplay.com/* https://tpv.rosehill.group/:splat 301!
 http://rosehillsportsandplay.com/* https://tpv.rosehill.group/:splat 301!
