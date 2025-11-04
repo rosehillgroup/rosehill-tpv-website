@@ -100,7 +100,7 @@
         }
 
         /* Visualizer Layout */
-        .visualizer-grid {
+        .visualiser-grid {
             display: grid;
             grid-template-columns: 350px 1fr;
             gap: 30px;
@@ -624,7 +624,7 @@
 
         /* Responsive */
         @media (max-width: 900px) {
-            .visualizer-grid {
+            .visualiser-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -663,7 +663,7 @@
             <p>Upload a reference photo and visualize how Rosehill TPV<sup>®</sup> surfaces will look in your project</p>
         </div>
 
-        <div class="visualizer-grid">
+        <div class="visualiser-grid">
             <!-- Control Panel -->
             <div class="control-panel">
                 <div class="control-section">
@@ -719,7 +719,7 @@
                     </div>
                 </div>
 
-                <div class="control-section">
+                <div class="control-section" id="modeAControls">
                     <h3>4. Pattern & Texture</h3>
                     <label style="font-size: 0.9rem; color: #666; margin-bottom: 8px; display: block;">Pattern Style</label>
                     <select id="patternSelect" class="pattern-select">
@@ -748,11 +748,36 @@
                     </div>
                 </div>
 
+                <div class="control-section" id="modeBControls" style="display: none;">
+                    <h3>4. AI Options</h3>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="useEnhancedPrompt" style="cursor: pointer;">
+                            <span>Enhanced Prompt (Llama 3)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="useAutoMask" checked style="cursor: pointer;">
+                            <span>Auto Segmentation (SAM 2)</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="usePaletteClamp" checked style="cursor: pointer;">
+                            <span>Palette Quantization</span>
+                        </label>
+                        <div class="texture-control" id="clampStrengthControl">
+                            <label>
+                                <span>Clamp Strength</span>
+                                <span id="clampStrengthValue">0.7</span>
+                            </label>
+                            <input type="range" id="clampStrength" min="0" max="1" step="0.1" value="0.7">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="control-section">
                     <h3>5. Rendering Mode</h3>
                     <div class="mode-toggle">
                         <button id="modeABtn" class="mode-btn active">Mode A (Fast)</button>
-                        <button id="modeBBtn" class="mode-btn" disabled>Mode B (AI) - Week 3</button>
+                        <button id="modeBBtn" class="mode-btn">Mode B (AI Photoreal)</button>
                     </div>
                 </div>
 
@@ -802,7 +827,7 @@
         let uploadedImage = null;
         let selectedColors = []; // Array of {code, name, hex, proportion}
         let visualizedImage = null;
-        let currentMode = 'A'; // 'A' or 'B'
+        let currentMode = 'modeA'; // 'modeA' or 'modeB'
 
         // Masking state
         let maskingTool = 'polygon'; // 'polygon' or 'brush'
@@ -1159,9 +1184,20 @@
                 document.getElementById('brightnessValue').textContent = brightness.toFixed(1);
             });
 
+            // Mode B controls
+            document.getElementById('clampStrength').addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                document.getElementById('clampStrengthValue').textContent = value.toFixed(1);
+            });
+
+            document.getElementById('usePaletteClamp').addEventListener('change', (e) => {
+                const strengthControl = document.getElementById('clampStrengthControl');
+                strengthControl.style.display = e.target.checked ? 'block' : 'none';
+            });
+
             // Mode toggle
-            document.getElementById('modeABtn').addEventListener('click', () => setMode('A'));
-            document.getElementById('modeBBtn').addEventListener('click', () => setMode('B'));
+            document.getElementById('modeABtn').addEventListener('click', () => setMode('modeA'));
+            document.getElementById('modeBBtn').addEventListener('click', () => setMode('modeB'));
         }
 
         function setMaskingTool(tool) {
@@ -1182,8 +1218,12 @@
 
         function setMode(mode) {
             currentMode = mode;
-            document.getElementById('modeABtn').classList.toggle('active', mode === 'A');
-            document.getElementById('modeBBtn').classList.toggle('active', mode === 'B');
+            document.getElementById('modeABtn').classList.toggle('active', mode === 'modeA');
+            document.getElementById('modeBBtn').classList.toggle('active', mode === 'modeB');
+
+            // Show/hide mode-specific controls
+            document.getElementById('modeAControls').style.display = mode === 'modeA' ? 'block' : 'none';
+            document.getElementById('modeBControls').style.display = mode === 'modeB' ? 'block' : 'none';
         }
 
         // Polygon drawing
@@ -1400,7 +1440,7 @@
                 loading.classList.add('active');
                 canvas.style.display = 'none';
 
-                if (currentMode === 'A') {
+                if (currentMode === 'modeA') {
                     await generateModeA();
                 } else {
                     await generateModeB();
@@ -1679,9 +1719,69 @@
             return foreground;
         }
 
-        // Mode B: AI-powered rendering (placeholder for Week 3)
+        // Mode B: AI-powered rendering using orchestration API
         async function generateModeB() {
-            throw new Error('Mode B (AI) will be implemented in Week 3');
+            console.log('[MODE B] Starting AI-powered rendering...');
+
+            // Get original image as base64
+            const canvas = document.createElement('canvas');
+            canvas.width = uploadedImage.width;
+            canvas.height = uploadedImage.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(uploadedImage, 0, 0);
+            const imageData = canvas.toDataURL('image/png');
+
+            // Export mask
+            const maskData = exportMask();
+
+            // Get Mode B options
+            const useEnhancedPrompt = document.getElementById('useEnhancedPrompt').checked;
+            const useAutoMask = document.getElementById('useAutoMask').checked;
+            const usePaletteClamp = document.getElementById('usePaletteClamp').checked;
+            const clampStrength = parseFloat(document.getElementById('clampStrength').value);
+
+            console.log('[MODE B] Options:', { useEnhancedPrompt, useAutoMask, usePaletteClamp, clampStrength });
+
+            // Call orchestration API
+            const response = await fetch('/.netlify/functions/visualise', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    imageData,
+                    maskData: useAutoMask ? null : maskData,
+                    colors: selectedColors,
+                    mode: 'modeB',
+                    useEnhancedPrompt,
+                    useAutoMask,
+                    usePaletteClamp,
+                    clampStrength
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(`Mode B generation failed: ${error.message || response.statusText}`);
+            }
+
+            const result = await response.json();
+            console.log('[MODE B] Pipeline complete:', result);
+
+            // Display result
+            const previewCanvas = document.getElementById('previewCanvas');
+            const resultCtx = previewCanvas.getContext('2d');
+            const resultImg = new Image();
+
+            await new Promise((resolve, reject) => {
+                resultImg.onload = () => {
+                    resultCtx.drawImage(resultImg, 0, 0);
+                    visualizedImage = previewCanvas.toDataURL();
+                    resolve();
+                };
+                resultImg.onerror = reject;
+                resultImg.src = result.resultUrl;
+            });
+
+            console.log('[MODE B] Rendering complete');
         }
 
         // Tab switching

@@ -42,8 +42,8 @@ Phase 2A (Week 1: Foundation) has been successfully completed. All core infrastr
 
 **Manual Step Required**: Apply RLS policies via Supabase Dashboard SQL Editor (see VISUALISER_SETUP.md)
 
-### 4. ✅ Visualizer UI (visualizer.html)
-**File**: `visualizer.html`
+### 4. ✅ Visualizer UI (visualiser.html)
+**File**: `visualiser.html`
 
 **Features**:
 - Fixed header matching site branding
@@ -96,7 +96,7 @@ Response:
 
 ```
 ├── tpv-palette.ts                          # Enhanced color science module
-├── visualizer.html                         # Main visualizer UI
+├── visualiser.html                         # Main visualizer UI
 ├── netlify/functions/texture.js            # Texture generation API
 ├── supabase/
 │   ├── migrations/
@@ -109,7 +109,7 @@ Response:
 
 ## Testing Checklist
 
-- [ ] Access visualizer at `/visualizer.html`
+- [ ] Access visualizer at `/visualiser.html`
 - [ ] Upload test image (JPG, PNG, or WebP)
 - [ ] Select TPV color from 21-color grid
 - [ ] Click "Generate Visualization" (should show stub response)
@@ -145,7 +145,7 @@ Response:
    - Generate signed URLs with 1-hour expiry
    - Implement 24-hour auto-cleanup
 
-4. **Update visualizer.html**
+4. **Update visualiser.html**
    - Replace stub with actual /api/texture calls
    - Add loading states and progress feedback
    - Display deltaE metrics
@@ -154,7 +154,7 @@ Response:
 
 - `netlify/functions/texture.js` - Implement Replicate API calls
 - `netlify/functions/package.json` - Add replicate, @supabase/supabase-js
-- `visualizer.html` - Replace placeholder with real API integration
+- `visualiser.html` - Replace placeholder with real API integration
 - `tpv-palette.ts` - Export quantiseToPalette for Node.js use
 
 ## Environment Variables Required (Phase 2B)

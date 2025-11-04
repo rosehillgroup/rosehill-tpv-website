@@ -1,18 +1,19 @@
 // /.netlify/functions/mask.js
 // TPV Design Visualiser - Mask Generation API
-// Week 2: Placeholder for Week 3 SAM 2 integration
+// Week 3: SAM 2 Auto-Segmentation Integration
 
 /**
  * API Endpoint: POST /api/mask
  *
- * Generates segmentation masks for uploaded images
+ * Generates segmentation masks for uploaded images using SAM 2
  *
  * Request Body:
  * {
  *   imageData: string,     // Base64 data URL of image
- *   mode?: string,         // "auto" | "simple" (default: "simple")
- *   points?: Array,        // Optional point prompts for SAM 2 (Week 3)
- *   boxes?: Array          // Optional box prompts for SAM 2 (Week 3)
+ *   imageUrl?: string,     // Optional: HTTP URL to image (alternative to imageData)
+ *   mode?: string,         // "auto" | "simple" (default: "auto")
+ *   points?: Array<{x, y, label}>, // Optional point prompts for SAM 2
+ *   boxes?: Array<[x1, y1, x2, y2]> // Optional box prompts for SAM 2
  * }
  *
  * Response:
@@ -20,9 +21,13 @@
  *   success: boolean,
  *   maskUrl: string,       // Base64 data URL of mask (white=foreground, black=background)
  *   mode: string,          // Mode used to generate mask
+ *   segmentCount?: number, // Number of segments detected (auto mode)
+ *   selectedSegment?: string, // Heuristic used to select segment
  *   processingTime: number // Milliseconds
  * }
  */
+
+import { uploadImageToSupabase, generateSAM2Mask, generateSimpleMask } from './_utils/sam2.js';
 
 // CORS headers
 const headers = {
@@ -51,21 +56,21 @@ export default async (request) => {
   try {
     // Parse request body
     const body = await request.json();
-    const { imageData, mode = 'simple', points, boxes } = body;
+    const { imageData, imageUrl, mode = 'auto', points, boxes } = body;
 
-    // Validate required fields
-    if (!imageData) {
+    // Validate required fields (need either imageData or imageUrl)
+    if (!imageData && !imageUrl) {
       return new Response(
         JSON.stringify({
-          error: 'Missing required field: imageData',
-          message: 'imageData (base64 data URL) is required'
+          error: 'Missing required field',
+          message: 'Either imageData (base64) or imageUrl (HTTP URL) is required'
         }),
         { status: 400, headers }
       );
     }
 
-    // Validate imageData format
-    if (!imageData.startsWith('data:image/')) {
+    // Validate imageData format if provided
+    if (imageData && !imageData.startsWith('data:image/')) {
       return new Response(
         JSON.stringify({
           error: 'Invalid imageData format',
@@ -89,16 +94,47 @@ export default async (request) => {
     console.log('[MASK] Generating mask with mode:', mode);
 
     // Route to appropriate mask generation handler
-    let maskUrl;
+    let result;
 
     if (mode === 'simple') {
       // Simple mode: return full-image white mask
-      maskUrl = generateSimpleMask();
+      result = {
+        maskUrl: generateSimpleMask(),
+        mode: 'simple'
+      };
     } else {
-      // Auto mode: placeholder for Week 3 SAM 2 integration
-      // For now, return simple mask with a note
-      console.log('[MASK] Auto mode requested but SAM 2 not yet integrated. Using simple mask.');
-      maskUrl = generateSimpleMask();
+      // Auto mode: use SAM 2 for segmentation
+      console.log('[MASK] Calling SAM 2 for auto-segmentation...');
+
+      try {
+        // Upload image to Supabase if base64
+        let finalImageUrl = imageUrl;
+
+        if (imageData && !imageUrl) {
+          console.log('[MASK] Uploading base64 image to Supabase...');
+          finalImageUrl = await uploadImageToSupabase(imageData);
+        }
+
+        // Call SAM 2
+        const sam2Result = await generateSAM2Mask(finalImageUrl, points, boxes);
+
+        result = {
+          maskUrl: sam2Result.maskUrl,
+          mode: 'auto',
+          segmentCount: sam2Result.segmentCount,
+          selectedSegment: sam2Result.selectedSegment
+        };
+      } catch (sam2Error) {
+        console.error('[MASK] SAM 2 failed, falling back to simple mask:', sam2Error);
+
+        // Fallback to simple mask
+        result = {
+          maskUrl: generateSimpleMask(),
+          mode: 'simple',
+          fallback: true,
+          error: sam2Error.message
+        };
+      }
     }
 
     const processingTime = Date.now() - startTime;
@@ -108,9 +144,7 @@ export default async (request) => {
     return new Response(
       JSON.stringify({
         success: true,
-        maskUrl,
-        mode,
-        note: mode === 'auto' ? 'SAM 2 auto-segmentation will be available in Week 3' : undefined,
+        ...result,
         processingTime
       }),
       { status: 200, headers }
@@ -130,35 +164,4 @@ export default async (request) => {
   }
 };
 
-/**
- * Generate a simple full-image white mask
- * This creates a 1x1 white pixel PNG that can be scaled to match any image
- *
- * Returns: Base64 data URL of a white 1x1 pixel PNG
- */
-function generateSimpleMask() {
-  // 1x1 white pixel PNG
-  // This is a minimal PNG file representing a single white pixel
-  // When used as a mask: white = include in processing, black = exclude
-  const whitePng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';
-
-  return whitePng;
-}
-
-/**
- * WEEK 3 PLACEHOLDER: SAM 2 Integration
- *
- * Future implementation will include:
- * - SAM 2 model integration via Replicate API
- * - Point-based prompting for specific object selection
- * - Box-based prompting for region selection
- * - Automatic ground/surface detection
- * - Multi-segment support for complex scenes
- *
- * Expected signature:
- * async function generateSAM2Mask(imageData, points, boxes) {
- *   // Call Replicate SAM 2 API
- *   // Process segmentation results
- *   // Return high-quality segmentation mask
- * }
- */
+// All mask generation functions now imported from _utils/sam2.js

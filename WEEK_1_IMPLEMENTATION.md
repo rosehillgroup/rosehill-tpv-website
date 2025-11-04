@@ -10,7 +10,7 @@ Week 1 focuses on building the core Mode A (deterministic rendering) infrastruct
 
 ## Architecture Changes
 
-### visualizer.html Structure
+### visualiser.html Structure
 
 ```
 ├── Upload Section (EXISTING)
@@ -40,7 +40,7 @@ Week 1 focuses on building the core Mode A (deterministic rendering) infrastruct
 
 ### Task 1: Polygon Drawing Tool ✅ IN PROGRESS
 
-**Files**: `visualizer.html`
+**Files**: `visualiser.html`
 
 **Implementation**:
 - Add polygon points array storage
@@ -354,7 +354,7 @@ By end of Week 1, the visualizer should:
 ## File Structure
 
 ```
-visualizer.html              # Enhanced UI (Week 1 complete)
+visualiser.html              # Enhanced UI (Week 1 complete)
 netlify/functions/
   └── texture.js            # Refactored for Mode A (Week 1)
 assets/

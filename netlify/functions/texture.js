@@ -53,6 +53,7 @@ import {
   computeAverageBlend,
   decodeMix
 } from './_utils/color-science.js';
+import { uploadImageToSupabase, generateSAM2Mask, generateSimpleMask } from './_utils/sam2.js';
 
 // Initialize clients
 const replicate = new Replicate({
@@ -274,9 +275,32 @@ async function handleModeB({ imageData, maskData, colors }) {
   try {
     // Ensure we have a mask
     let finalMaskData = maskData;
+    let sam2Info = null;
+
     if (!finalMaskData) {
-      console.log('[MODE B] No mask provided, generating simple mask...');
-      finalMaskData = generateSimpleMask();
+      console.log('[MODE B] No mask provided, generating SAM 2 auto-segmentation mask...');
+
+      try {
+        // Upload image to Supabase for SAM 2
+        const imageUrl = await uploadImageToSupabase(imageData);
+
+        // Generate mask using SAM 2
+        const sam2Result = await generateSAM2Mask(imageUrl);
+
+        finalMaskData = sam2Result.maskUrl;
+        sam2Info = {
+          segmentCount: sam2Result.segmentCount,
+          selectedSegment: sam2Result.selectedSegment
+        };
+
+        console.log('[MODE B] SAM 2 mask generated:', sam2Info);
+      } catch (sam2Error) {
+        console.error('[MODE B] SAM 2 failed, falling back to simple mask:', sam2Error);
+
+        // Fallback to simple mask if SAM 2 fails
+        finalMaskData = generateSimpleMask();
+        sam2Info = { fallback: true, error: sam2Error.message };
+      }
     }
 
     // Generate prompt based on colors
@@ -342,7 +366,8 @@ async function handleModeB({ imageData, maskData, colors }) {
 
     return {
       textureUrl: signedUrlData.signedUrl,
-      deltaE: 0 // TODO: Calculate if needed
+      deltaE: 0, // TODO: Calculate if needed
+      sam2: sam2Info // Include SAM 2 segmentation info
     };
 
   } catch (error) {
