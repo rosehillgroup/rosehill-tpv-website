@@ -707,7 +707,7 @@
                 </div>
 
                 <div class="control-section">
-                    <h3>3. Select TPV<sup>®</sup> Colors (1-3)</h3>
+                    <h3>2. Select TPV<sup>®</sup> Colors (1-3)</h3>
                     <div class="color-grid" id="colorGrid">
                         <!-- Colors will be populated by JavaScript -->
                     </div>
@@ -719,7 +719,7 @@
                     </div>
                 </div>
 
-                <div class="control-section" id="modeAControls">
+                <div class="control-section" id="modeAControls" style="display: none;">
                     <h3>4. Pattern & Texture</h3>
                     <label style="font-size: 0.9rem; color: #666; margin-bottom: 8px; display: block;">Pattern Style</label>
                     <select id="patternSelect" class="pattern-select">
@@ -748,8 +748,8 @@
                     </div>
                 </div>
 
-                <div class="control-section" id="modeBControls" style="display: none;">
-                    <h3>4. AI Options</h3>
+                <div class="control-section" id="modeBControls">
+                    <h3>3. AI Options</h3>
                     <div style="display: flex; flex-direction: column; gap: 12px;">
                         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                             <input type="checkbox" id="useEnhancedPrompt" style="cursor: pointer;">
@@ -773,7 +773,7 @@
                     </div>
                 </div>
 
-                <div class="control-section">
+                <div class="control-section" style="display: none;">
                     <h3>5. Rendering Mode</h3>
                     <div class="mode-toggle">
                         <button id="modeABtn" class="mode-btn active">Mode A (Fast)</button>
@@ -782,7 +782,7 @@
                 </div>
 
                 <div class="control-section">
-                    <h3>6. Generate Preview</h3>
+                    <h3>4. Generate Preview</h3>
                     <button class="btn btn-primary" id="generateBtn" disabled>
                         Generate Visualization
                     </button>
@@ -827,7 +827,7 @@
         let uploadedImage = null;
         let selectedColors = []; // Array of {code, name, hex, proportion}
         let visualizedImage = null;
-        let currentMode = 'modeA'; // 'modeA' or 'modeB'
+        let currentMode = 'modeB'; // Mode B only (AI-powered)
 
         // Masking state
         let maskingTool = 'polygon'; // 'polygon' or 'brush'
@@ -1094,11 +1094,7 @@
                     uploadedImage = img;
                     displayImage(img, 'original');
 
-                    // Show masking section
-                    document.getElementById('maskingSection').style.display = 'block';
-
-                    // Initialize mask canvas
-                    initializeMaskCanvas();
+                    // Mode B doesn't need masking section - SAM 2 handles it automatically
 
                     updateGenerateButton();
                 };
@@ -1387,16 +1383,8 @@
         // Update generate button state
         function updateGenerateButton() {
             const generateBtn = document.getElementById('generateBtn');
-            const hasMask = polygonPoints.length >= 3 || (maskData && hasSomeMaskData());
-            generateBtn.disabled = !(uploadedImage && selectedColors.length > 0 && hasMask);
-        }
-
-        function hasSomeMaskData() {
-            if (!maskData) return false;
-            for (let i = 0; i < maskData.data.length; i += 4) {
-                if (maskData.data[i + 3] > 0) return true; // Check alpha channel
-            }
-            return false;
+            // Mode B only needs image + colors (SAM 2 handles segmentation)
+            generateBtn.disabled = !(uploadedImage && selectedColors.length > 0);
         }
 
         // Export mask as PNG data URL
@@ -1440,11 +1428,8 @@
                 loading.classList.add('active');
                 canvas.style.display = 'none';
 
-                if (currentMode === 'modeA') {
-                    await generateModeA();
-                } else {
-                    await generateModeB();
-                }
+                // Always use Mode B (AI-powered)
+                await generateModeB();
 
                 // Enable download
                 document.getElementById('downloadBtn').disabled = false;
