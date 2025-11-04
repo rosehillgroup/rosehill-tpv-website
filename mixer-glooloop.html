@@ -131,6 +131,9 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/d3-delaunay@6.0.4/dist/d3-delaunay.min.js"></script>
+    <script src="https://unpkg.com/d3-array@3"></script>
+    <script src="https://unpkg.com/d3-polygon@3"></script>
+    <script src="https://unpkg.com/d3-weighted-voronoi@1/build/d3-weighted-voronoi.js"></script>
     <script src="/js/jspdf.umd.min.2.5.1.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -1853,6 +1856,387 @@
                 }
             }
 
+            // Smooth interpolation function (hermite interpolation)
+            function smoothstep(edge0, edge1, x) {
+                const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
+                return t * t * (3 - 2 * t);
+            }
+
+            // Poisson disc sampling for even point distribution
+            function poissonDiscSampling(width, height, minDist, maxAttempts, rng) {
+                const cellSize = minDist / Math.sqrt(2);
+                const gridWidth = Math.ceil(width / cellSize);
+                const gridHeight = Math.ceil(height / cellSize);
+                const grid = new Array(gridWidth * gridHeight).fill(null);
+                const points = [];
+                const active = [];
+
+                // Helper to convert point to grid index
+                const gridIndex = (x, y) => {
+                    const col = Math.floor(x / cellSize);
+                    const row = Math.floor(y / cellSize);
+                    return row * gridWidth + col;
+                };
+
+                // Start with random point
+                const firstPoint = { x: rng() * width, y: rng() * height };
+                points.push(firstPoint);
+                active.push(firstPoint);
+                grid[gridIndex(firstPoint.x, firstPoint.y)] = firstPoint;
+
+                while (active.length > 0) {
+                    const randomIndex = Math.floor(rng() * active.length);
+                    const point = active[randomIndex];
+                    let found = false;
+
+                    for (let i = 0; i < maxAttempts; i++) {
+                        const angle = rng() * 2 * Math.PI;
+                        const radius = minDist * (1 + rng());
+                        const newPoint = {
+                            x: point.x + radius * Math.cos(angle),
+                            y: point.y + radius * Math.sin(angle)
+                        };
+
+                        // Check if point is within bounds
+                        if (newPoint.x < 0 || newPoint.x >= width || newPoint.y < 0 || newPoint.y >= height) {
+                            continue;
+                        }
+
+                        // Check if point is far enough from others
+                        const gx = Math.floor(newPoint.x / cellSize);
+                        const gy = Math.floor(newPoint.y / cellSize);
+                        let valid = true;
+
+                        for (let dy = -2; dy <= 2 && valid; dy++) {
+                            for (let dx = -2; dx <= 2 && valid; dx++) {
+                                const nx = gx + dx;
+                                const ny = gy + dy;
+                                if (nx >= 0 && nx < gridWidth && ny >= 0 && ny < gridHeight) {
+                                    const neighbor = grid[ny * gridWidth + nx];
+                                    if (neighbor) {
+                                        const dist = Math.hypot(newPoint.x - neighbor.x, newPoint.y - neighbor.y);
+                                        if (dist < minDist) {
+                                            valid = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (valid) {
+                            points.push(newPoint);
+                            active.push(newPoint);
+                            grid[gridIndex(newPoint.x, newPoint.y)] = newPoint;
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found) {
+                        active.splice(randomIndex, 1);
+                    }
+                }
+
+                return points;
+            }
+
+            // ========== CAPACITY-CONSTRAINED POWER DIAGRAM HELPERS ==========
+
+            // Calculate area of polygon using shoelace formula
+            function calculatePolygonArea(polygon) {
+                if (!polygon || polygon.length < 3) return 0;
+
+                let area = 0;
+                for (let i = 0; i < polygon.length; i++) {
+                    const [x0, y0] = polygon[i];
+                    const [x1, y1] = polygon[(i + 1) % polygon.length];
+                    area += x0 * y1 - x1 * y0;
+                }
+                return Math.abs(area) / 2;
+            }
+
+            // Clip polygon to rectangle using Sutherland-Hodgman algorithm
+            function clipPolygonToRect(polygon, x0, y0, x1, y1) {
+                if (!polygon || polygon.length < 3) return [];
+
+                // Clip against each edge: left, right, bottom, top
+                let output = polygon;
+
+                // Clip against left edge (x = x0)
+                output = clipAgainstEdge(output, x0, y0, x0, y1, true);
+                // Clip against right edge (x = x1)
+                output = clipAgainstEdge(output, x1, y1, x1, y0, true);
+                // Clip against bottom edge (y = y0)
+                output = clipAgainstEdge(output, x0, y0, x1, y0, false);
+                // Clip against top edge (y = y1)
+                output = clipAgainstEdge(output, x1, y1, x0, y1, false);
+
+                return output;
+
+                function clipAgainstEdge(poly, ex0, ey0, ex1, ey1, isVertical) {
+                    const result = [];
+                    if (poly.length === 0) return result;
+
+                    for (let i = 0; i < poly.length; i++) {
+                        const [x0, y0] = poly[i];
+                        const [x1, y1] = poly[(i + 1) % poly.length];
+
+                        const inside0 = isVertical ?
+                            (ex0 < ex1 ? x0 >= ex0 : x0 <= ex0) :
+                            (ey0 < ey1 ? y0 >= ey0 : y0 <= ey0);
+                        const inside1 = isVertical ?
+                            (ex0 < ex1 ? x1 >= ex0 : x1 <= ex0) :
+                            (ey0 < ey1 ? y1 >= ey0 : y1 <= ey0);
+
+                        if (inside0 && inside1) {
+                            // Both inside
+                            result.push([x1, y1]);
+                        } else if (inside0 && !inside1) {
+                            // Leaving
+                            const t = isVertical ?
+                                (ex0 - x0) / (x1 - x0) :
+                                (ey0 - y0) / (y1 - y0);
+                            result.push([x0 + t * (x1 - x0), y0 + t * (y1 - y0)]);
+                        } else if (!inside0 && inside1) {
+                            // Entering
+                            const t = isVertical ?
+                                (ex0 - x0) / (x1 - x0) :
+                                (ey0 - y0) / (y1 - y0);
+                            result.push([x0 + t * (x1 - x0), y0 + t * (y1 - y0)]);
+                            result.push([x1, y1]);
+                        }
+                    }
+
+                    return result;
+                }
+            }
+
+            // Calculate target area for each site based on size bin
+            function calculateAreaTargets(sites, totalArea) {
+                // Calculate target areas: mi = c × di²
+                const targetAreas = sites.map(site => {
+                    const diameter = site.size;
+                    return diameter * diameter; // Area proportional to diameter²
+                });
+
+                // Normalize so sum equals totalArea
+                const sum = targetAreas.reduce((a, b) => a + b, 0);
+                const scale = totalArea / sum;
+
+                return targetAreas.map(area => area * scale);
+            }
+
+            // Create 3×3 periodic tiling of sites
+            function createPeriodicTiling(sites, width, height) {
+                const tiledSites = [];
+                const offsets = [
+                    [-width, -height], [0, -height], [width, -height],
+                    [-width, 0],       [0, 0],       [width, 0],
+                    [-width, height],  [0, height],  [width, height]
+                ];
+
+                offsets.forEach(([dx, dy], tileIndex) => {
+                    sites.forEach((site, siteIndex) => {
+                        tiledSites.push({
+                            x: site.x + dx,
+                            y: site.y + dy,
+                            size: site.size,
+                            bin: site.bin,
+                            weight: site.weight || 0,
+                            isOriginal: (dx === 0 && dy === 0),
+                            originalIndex: siteIndex,
+                            tileIndex: tileIndex
+                        });
+                    });
+                });
+
+                return tiledSites;
+            }
+
+            // Solve weights to match target areas using iterative log update
+            function solveWeightsForAreas(originalSites, tiledSites, areaTargets, width, height, iterations = 12, k = 1.0) {
+                // Initialize all weights to 1.0 (small positive value to avoid log(0) = -Infinity)
+                tiledSites.forEach(site => site.weight = 1.0);
+
+                for (let iter = 0; iter < iterations; iter++) {
+                    // Build weighted Voronoi on tiled sites
+                    const wv = d3.weightedVoronoi()
+                        .x(d => d.x)
+                        .y(d => d.y)
+                        .weight(d => d.weight)
+                        .clip([[-width, -height], [2*width, -height], [2*width, 2*height], [-width, 2*height]]);
+
+                    const cells = wv(tiledSites);
+
+                    // Update weights for original sites only
+                    let maxError = 0;
+
+                    tiledSites.forEach((site, i) => {
+                        if (!site.isOriginal) return;
+
+                        const cell = cells[i];
+                        if (!cell || cell.length < 3) return;
+
+                        // Clip cell to central tile and calculate area
+                        const clippedCell = clipPolygonToRect(cell, 0, 0, width, height);
+                        const actualArea = calculatePolygonArea(clippedCell);
+                        const targetArea = areaTargets[site.originalIndex];
+
+                        if (targetArea > 0 && actualArea > 0) {
+                            // Log update: wi += k × log(Ai / mi)
+                            const ratio = actualArea / targetArea;
+
+                            // Clamp ratio to avoid extreme weight changes
+                            const clampedRatio = Math.max(0.1, Math.min(10.0, ratio));
+                            const weightDelta = k * Math.log(clampedRatio);
+
+                            // Apply update to all copies of this site
+                            tiledSites.forEach(s => {
+                                if (s.originalIndex === site.originalIndex) {
+                                    s.weight += weightDelta;
+                                }
+                            });
+
+                            // Track convergence
+                            const error = Math.abs(ratio - 1.0);
+                            maxError = Math.max(maxError, error);
+                        }
+                    });
+
+                    // Check convergence (5% threshold)
+                    if (maxError < 0.05) {
+                        console.log(`Weight solver converged after ${iter + 1} iterations (max error: ${(maxError * 100).toFixed(2)}%)`);
+                        break;
+                    }
+
+                    // Log progress
+                    if (iter === iterations - 1) {
+                        console.log(`Weight solver finished ${iterations} iterations (max error: ${(maxError * 100).toFixed(2)}%)`);
+                    }
+                }
+
+                // Copy final weights back to original sites
+                tiledSites.forEach(site => {
+                    if (site.isOriginal) {
+                        originalSites[site.originalIndex].weight = site.weight;
+                    }
+                });
+
+                return originalSites;
+            }
+
+            // ========== POWER DIAGRAM CONFIGURATION ==========
+            // Real-world sieve curves from production QC - distribution by COUNT, not area
+            const SIEVE_CURVES = {
+                standard: {
+                    '1-2mm': 0.40,  // 40% of granules
+                    '2-3mm': 0.35,  // 35% of granules
+                    '3-4mm': 0.25   // 25% of granules
+                },
+                fine: {
+                    '1-2mm': 0.60,
+                    '2-3mm': 0.30,
+                    '3-4mm': 0.10
+                },
+                coarse: {
+                    '1-2mm': 0.20,
+                    '2-3mm': 0.35,
+                    '3-4mm': 0.45
+                }
+            };
+
+            // Map size bin string to realistic visual multipliers matching 1-4mm range
+            const SIZE_BIN_DIAMETERS = {
+                '1-2mm': 1.0,   // Small granules - baseline
+                '2-3mm': 2.0,   // Medium granules - 2× larger
+                '3-4mm': 3.5    // Large granules - 3.5× larger (realistic 1-4mm range)
+            };
+
+            // Weight mapping function: w = k * r^p
+            // p = 1.8 provides moderate non-linear mapping for realistic size differences
+            function sizeToWeight(diameter, p = 1.8) {
+                return Math.pow(diameter, p);
+            }
+
+            // Power-Lloyd relaxation using weighted Voronoi
+            // Iteratively moves sites toward weighted cell centroids to regularize shapes while preserving size variation
+            function powerLloydRelaxation(sites, width, height, iterations = 5, damping = 0.4) {
+                const wv = d3.weightedVoronoi()
+                    .x(d => d.x)
+                    .y(d => d.y)
+                    .weight(d => d.weight)
+                    .clip([[0, 0], [width, 0], [width, height], [0, height]]);
+
+                for (let k = 0; k < iterations; k++) {
+                    const cells = wv(sites);
+                    sites = cells.map((cell, i) => {
+                        if (!cell || cell.length < 3) return sites[i];
+
+                        // Calculate polygon centroid
+                        let a = 0, cx = 0, cy = 0;
+                        for (let j = 0; j < cell.length; j++) {
+                            const [x0, y0] = cell[j];
+                            const [x1, y1] = cell[(j + 1) % cell.length];
+                            const f = x0 * y1 - x1 * y0;
+                            a += f;
+                            cx += (x0 + x1) * f;
+                            cy += (y0 + y1) * f;
+                        }
+                        a *= 0.5;
+                        if (Math.abs(a) < 1e-10) return sites[i];
+                        cx /= (6 * a);
+                        cy /= (6 * a);
+
+                        // Apply damped movement toward centroid
+                        return {
+                            ...sites[i],
+                            x: Math.max(0, Math.min(width, sites[i].x + (cx - sites[i].x) * damping)),
+                            y: Math.max(0, Math.min(height, sites[i].y + (cy - sites[i].y) * damping))
+                        };
+                    });
+                }
+                return sites;
+            }
+
+            // Generate sites distributed by color AND size bins across a rectangle
+            function generatePowerDiagramSites(parts, totalSites, sieveCurve, width, height, rng) {
+                const totalParts = Array.from(parts.values()).reduce((a, b) => a + b, 0);
+                if (totalParts === 0) return [];
+
+                const sites = [];
+                const sizeBins = Object.keys(sieveCurve);
+
+                parts.forEach((partCount, colorIndex) => {
+                    const colorProportion = partCount / totalParts;
+                    const colorSiteCount = Math.round(colorProportion * totalSites);
+
+                    // Distribute this color's sites across size bins
+                    sizeBins.forEach((bin, binIndex) => {
+                        const binProportion = sieveCurve[bin];
+                        const binSiteCount = binIndex === sizeBins.length - 1
+                            ? Math.max(0, colorSiteCount - sites.filter(s => s.color === colorIndex).length)
+                            : Math.round(colorSiteCount * binProportion);
+
+                        const diameter = SIZE_BIN_DIAMETERS[bin];
+                        const weight = sizeToWeight(diameter);
+
+                        // Simple uniform random distribution across canvas
+                        for (let i = 0; i < binSiteCount; i++) {
+                            sites.push({
+                                x: rng() * width,
+                                y: rng() * height,
+                                size: diameter,
+                                weight: weight,
+                                color: colorIndex,
+                                bin: bin
+                            });
+                        }
+                    });
+                });
+
+                return sites;
+            }
+
             // Base36 encoding/decoding for compact codes
             function encodeBase36(num) {
                 return num.toString(36).toUpperCase();
@@ -2137,74 +2521,68 @@
                     const totalParts = Array.from(parts.values()).reduce((a, b) => a + b, 0);
                     if (totalParts === 0) return null;
 
-                    // Balanced tile settings - realistic granule size with optimized performance
-                    const numPoints = Math.floor(tileSize * tileSize / 60); // ~4,500 granules for 512px - realistic size, good performance
-                    const points = [];
-
-                    // Generate points using enhanced Poisson disk sampling
-                    const baseMinDistance = Math.sqrt(60) * 0.75; // Smaller granules for realistic appearance
-                    let attempts = 0;
-                    const maxAttempts = numPoints * 50;
-
                     // Use fixed seed for consistent tile generation
                     const tileSeed = 'tile_surface_' + Array.from(parts.entries()).map(([k,v]) => `${k}:${v}`).join('_');
                     const seedNum = tileSeed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
                     const tileRng = mulberry32(seedNum);
 
-                    while (points.length < numPoints && attempts < maxAttempts) {
-                        const x = tileRng() * tileSize;
-                        const y = tileRng() * tileSize;
+                    // Generate points with Poisson disc sampling for even distribution
+                    const points = poissonDiscSampling(tileSize, tileSize, 20, 30, tileRng);
 
-                        // Check minimum distance with clustering variation
-                        const maxTries = 20 + Math.floor(tileRng() * 20); // 20-40 variation
-                        const minDistance = baseMinDistance * (0.8 + tileRng() * 0.4); // Distance variation
+                    // Assign sizes from sieve curves
+                    const sieveCurve = SIEVE_CURVES.standard;
+                    const sizeBins = Object.keys(sieveCurve);
 
-                        let validPoint = true;
-                        for (let i = 0; i < points.length; i++) {
-                            const distance = Math.sqrt((points[i].x - x) ** 2 + (points[i].y - y) ** 2);
-                            if (distance < minDistance) {
-                                validPoint = false;
+                    points.forEach(point => {
+                        const rand = tileRng();
+                        let cumulative = 0;
+                        for (const bin of sizeBins) {
+                            cumulative += sieveCurve[bin];
+                            if (rand < cumulative) {
+                                point.size = SIZE_BIN_DIAMETERS[bin];
+                                point.bin = bin;
                                 break;
                             }
                         }
+                    });
 
-                        if (validPoint) {
-                            // Enhanced size distribution for distance viewing (25%-400% range)
-                            const sizeRng1 = tileRng();
-                            const sizeRng2 = tileRng();
-                            const sizeRng3 = tileRng();
-                            const weightedRandom = (sizeRng1 + sizeRng2 + sizeRng3) / 3; // Bell curve
-                            const exponentialWeight = Math.pow(weightedRandom, 1.5); // Favor medium sizes
-                            const granuleSize = 0.25 + exponentialWeight * 3.75; // 25%-400% range
+                    // Simple weighted Voronoi with size-based weights
+                    points.forEach(point => {
+                        point.weight = Math.pow(point.size, 2.2);
+                    });
 
-                            points.push({ x, y, size: granuleSize });
-                        }
-                        attempts++;
-                    }
+                    // Build weighted Voronoi directly
+                    const wv = d3.weightedVoronoi()
+                        .x(d => d.x)
+                        .y(d => d.y)
+                        .weight(d => d.weight)
+                        .clip([[0, 0], [tileSize, 0], [tileSize, tileSize], [0, tileSize]]);
 
-                    // Generate Delaunay triangulation and Voronoi cells
-                    const delaunay = d3.Delaunay.from(points, d => d.x, d => d.y);
-                    const voronoi = delaunay.voronoi([0, 0, tileSize, tileSize]);
+                    const cells = wv(points);
 
-                    // Assign colors to cells based on parts distribution
-                    const cellAssignments = new Array(points.length).fill(-1);
-                    const indices = Array.from({ length: points.length }, (_, i) => i);
+                    // Assign colors proportionally to points
+                    const cellAssignments = new Array(points.length);
+                    let assignmentIndex = 0;
 
-                    // Fisher-Yates shuffle for randomization
-                    for (let i = indices.length - 1; i > 0; i--) {
-                        const j = Math.floor(tileRng() * (i + 1));
-                        [indices[i], indices[j]] = [indices[j], indices[i]];
-                    }
+                    parts.forEach((partCount, colorIndex) => {
+                        const proportion = partCount / totalParts;
+                        const numCells = Math.round(proportion * points.length);
 
-                    // Assign colors based on parts
-                    let cursor = 0;
-                    parts.forEach((partCount, colourIndex) => {
-                        const quota = Math.round((partCount / totalParts) * indices.length);
-                        for (let i = 0; i < quota && cursor < indices.length; i++) {
-                            cellAssignments[indices[cursor]] = colourIndex;
-                            cursor++;
+                        for (let i = 0; i < numCells && assignmentIndex < points.length; i++) {
+                            cellAssignments[assignmentIndex++] = colorIndex;
                         }
                     });
+
+                    // Fill any remaining cells with last color
+                    while (assignmentIndex < points.length) {
+                        cellAssignments[assignmentIndex++] = Array.from(parts.keys()).pop();
+                    }
+
+                    // Shuffle assignments for even distribution
+                    for (let i = cellAssignments.length - 1; i > 0; i--) {
+                        const j = Math.floor(tileRng() * (i + 1));
+                        [cellAssignments[i], cellAssignments[j]] = [cellAssignments[j], cellAssignments[i]];
+                    }
 
                     // Render the tile surface with all realism enhancements
                     // First pass: Base colors with enhanced variations
@@ -2212,7 +2590,7 @@
                         const colourIndex = cellAssignments[i];
                         if (colourIndex === -1) continue;
 
-                        const cell = voronoi.cellPolygon(i);
+                        const cell = cells[i];
                         if (!cell || cell.length < 3) continue;
 
                         const baseColour = PALETTE[colourIndex];
@@ -2256,8 +2634,8 @@
 
                         // Smart size-based hierarchy - much less aggressive muting
                         const granuleSize = points[i].size;
-                        const normalizedSize = Math.min(4, Math.max(0.25, granuleSize));
-                        const sizeContrastFactor = 0.85 + (normalizedSize / 4) * 0.3; // Less extreme range
+                        const normalizedSize = Math.min(6, Math.max(0.5, granuleSize));
+                        const sizeContrastFactor = 0.7 + (normalizedSize / 6) * 0.6; // 0.7-1.3 range for dramatic variation
                         let contrastAdjustedSat = Math.max(0, Math.min(1, newSat * sizeContrastFactor));
 
                         // Greatly reduced muting for small granules - keep them vibrant!
@@ -2292,11 +2670,11 @@
                         const colourIndex = cellAssignments[i];
                         if (colourIndex === -1) continue;
 
-                        const cell = voronoi.cellPolygon(i);
+                        const cell = cells[i];
                         if (!cell || cell.length < 3) continue;
 
                         const granuleSize = points[i].size;
-                        const normalizedSize = Math.min(4, Math.max(0.25, granuleSize));
+                        const normalizedSize = Math.min(6, Math.max(0.5, granuleSize));
 
                         // Calculate cell bounds for lighting
                         let minX = cell[0][0], maxX = cell[0][0];
@@ -2359,9 +2737,10 @@
                         ctx.fill();
                         ctx.restore();
 
-                        // Add specular highlights for large granules (distance-appropriate)
-                        if (normalizedSize > 2.0 && finalLighting > 1.0) {
-                            const highlightIntensity = (finalLighting - 1.0) * (normalizedSize / 4) * 0.8;
+                        // Add specular highlights with smooth gradient (all granules get proportional highlights)
+                        const specAmt = smoothstep(1.2, 4.0, normalizedSize) * smoothstep(0.9, 1.1, finalLighting);
+                        if (specAmt > 0.05) {
+                            const highlightIntensity = specAmt * 0.8;
                             ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(0.4, highlightIntensity)})`;
                             ctx.beginPath();
                             ctx.arc(
@@ -2392,55 +2771,48 @@
                         return bumpCanvas;
                     }
 
-                    // Generate granule structure for bump mapping to match realistic tile scale
-                    const numPoints = Math.floor(size * size / 60); // Match main tile granule density for consistency
-                    const points = [];
-
-                    // Use same seed as tile surface for consistency
-                    const totalParts = Array.from(parts.values()).reduce((a, b) => a + b, 0);
+                    // Generate granule structure for bump mapping using standard Voronoi
                     const tileSeed = 'bump_surface_' + Array.from(parts.entries()).map(([k,v]) => `${k}:${v}`).join('_');
                     const seedNum = tileSeed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
                     const bumpRng = mulberry32(seedNum);
 
-                    const baseMinDistance = Math.sqrt(60) * 0.75; // Match main tile scale for consistency
-                    let attempts = 0;
-                    const maxAttempts = numPoints * 50;
+                    // Generate points with Poisson disc sampling
+                    const points = poissonDiscSampling(size, size, 20, 30, bumpRng);
 
-                    while (points.length < numPoints && attempts < maxAttempts) {
-                        const x = bumpRng() * size;
-                        const y = bumpRng() * size;
-                        const minDistance = baseMinDistance * (0.8 + bumpRng() * 0.4);
+                    // Assign sizes from sieve curves
+                    const sieveCurve = SIEVE_CURVES.standard;
+                    const sizeBins = Object.keys(sieveCurve);
 
-                        let validPoint = true;
-                        for (let i = 0; i < points.length; i++) {
-                            const distance = Math.sqrt((points[i].x - x) ** 2 + (points[i].y - y) ** 2);
-                            if (distance < minDistance) {
-                                validPoint = false;
+                    points.forEach(point => {
+                        const rand = bumpRng();
+                        let cumulative = 0;
+                        for (const bin of sizeBins) {
+                            cumulative += sieveCurve[bin];
+                            if (rand < cumulative) {
+                                point.size = SIZE_BIN_DIAMETERS[bin];
+                                point.bin = bin;
+                                // Calculate height based on granule size for bump mapping
+                                point.height = 0.3 + (point.size / 3.5) * 0.4; // 0.3-0.7 height range
                                 break;
                             }
                         }
+                    });
 
-                        if (validPoint) {
-                            const sizeRng1 = bumpRng();
-                            const sizeRng2 = bumpRng();
-                            const sizeRng3 = bumpRng();
-                            const weightedRandom = (sizeRng1 + sizeRng2 + sizeRng3) / 3;
-                            const exponentialWeight = Math.pow(weightedRandom, 1.5);
-                            const granuleSize = 0.25 + exponentialWeight * 3.75;
+                    // Simple weighted Voronoi with size-based weights
+                    points.forEach(point => {
+                        point.weight = Math.pow(point.size, 2.2);
+                    });
 
-                            // Height varies with granule size for realistic bump mapping
-                            const height = 0.3 + (granuleSize / 4) * 0.4; // 0.3-0.7 height range
+                    // Build weighted Voronoi directly (cells not actually used for bump map)
+                    const wv = d3.weightedVoronoi()
+                        .x(d => d.x)
+                        .y(d => d.y)
+                        .weight(d => d.weight)
+                        .clip([[0, 0], [size, 0], [size, size], [0, size]]);
 
-                            points.push({ x, y, size: granuleSize, height: height });
-                        }
-                        attempts++;
-                    }
+                    const cells = wv(points);
 
-                    // Generate Delaunay triangulation for height mapping
-                    const delaunay = d3.Delaunay.from(points, d => d.x, d => d.y);
-                    const voronoi = delaunay.voronoi([0, 0, size, size]);
-
-                    // Create height map from granule structure
+                    // Create height map from granule structure using Voronoi cells
                     const imageData = bumpCtx.createImageData(size, size);
                     const data = imageData.data;
 
@@ -2530,50 +2902,11 @@
                             tileCanvas.width = 512;
                             tileCanvas.height = 512;
 
-                            // Get mixer canvas dimensions to preserve aspect ratio
-                            const mixerWidth = canvasRef.current.width;
-                            const mixerHeight = canvasRef.current.height;
-                            const mixerAspect = mixerWidth / mixerHeight;
-
-                            // Get the largest square we can from the mixer canvas, then sample a portion for smaller granules
-                            let sourceWidth, sourceHeight, sourceX, sourceY;
-
-                            // Get the largest square from the center of the canvas
-                            if (mixerAspect > 1) {
-                                sourceWidth = sourceHeight = mixerHeight;
-                                sourceX = (mixerWidth - sourceWidth) / 2;
-                                sourceY = 0;
-                            } else if (mixerAspect < 1) {
-                                sourceWidth = sourceHeight = mixerWidth;
-                                sourceX = 0;
-                                sourceY = (mixerHeight - sourceHeight) / 2;
-                            } else {
-                                sourceWidth = mixerWidth;
-                                sourceHeight = mixerHeight;
-                                sourceX = sourceY = 0;
+                            // Render weighted tile surface directly (not from main canvas)
+                            const weightedCanvas = createTileSurface(parts, 512);
+                            if (weightedCanvas) {
+                                tileCtx.drawImage(weightedCanvas, 0, 0, 512, 512);
                             }
-
-                            // Use tiling approach for smaller granules
-                            const sampleWidth = sourceWidth;
-                            const sampleHeight = sourceHeight;
-                            const sampleX = sourceX;
-                            const sampleY = sourceY;
-
-                            // Apply saturation boost filter
-                            tileCtx.filter = 'saturate(1.4) contrast(1.15) brightness(1.05)';
-
-                            // Create 2x2 tiled pattern for smaller granules
-                            const tileSize = 256; // Each tile is 256px (half of 512)
-                            for (let x = 0; x < 2; x++) {
-                                for (let y = 0; y < 2; y++) {
-                                    tileCtx.drawImage(
-                                        canvasRef.current,
-                                        sampleX, sampleY, sampleWidth, sampleHeight,
-                                        x * tileSize, y * tileSize, tileSize, tileSize
-                                    );
-                                }
-                            }
-                            tileCtx.filter = 'none';
 
                             // Create main texture with realistic granule surface
                             const texture = new THREE.CanvasTexture(tileCanvas);
@@ -2773,67 +3106,70 @@
 
                 // Initialize Voronoi diagram
                 useEffect(() => {
-                    const initializeVoronoi = async () => {
+    const initializeVoronoi = async () => {
                         setIsInitializing(true);
-                        
+
                         // Generate points using seeded RNG
                         const seedNum = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
                         const rng = mulberry32(seedNum);
-                        
-                        // Adjust minDistance for desired cell count (~50,000 cells) with clustering
-                        const targetCells = 50000;
-                        const area = canvasWidth * canvasHeight;
-                        const baseMinDistance = Math.sqrt(area / targetCells) * 2;
 
-                        // Reduce minimum distance to allow natural clustering (75% of calculated)
-                        const minDistance = baseMinDistance * 0.75;
-                        
-                        // Variable maxTries for more natural distribution variation
-                        const maxTries = 20 + Math.floor(rng() * 20); // 20-40 tries
+                        // Use Poisson disk sampling for even distribution (spacing ~20px)
+                        const points = poissonDiscSampling(canvasWidth, canvasHeight, 20, 30, rng);
 
-                        const points = poissonDiskSampling(canvasWidth, canvasHeight, minDistance, maxTries, rng);
-                        
-                        // Add enhanced size variation to points (25% to 400% range)
-                        const pointsWithSize = points.map(([x, y]) => {
-                            // Weighted distribution favoring medium sizes
-                            const rand1 = rng();
-                            const rand2 = rng();
-                            const rand3 = rng();
+                        // Assign sizes from sieve curves to each point
+                        const sieveCurve = SIEVE_CURVES.standard;
+                        const sizeBins = Object.keys(sieveCurve);
 
-                            // Use multiple random values to create bell-curve-like distribution
-                            const weightedRandom = (rand1 + rand2 + rand3) / 3;
-
-                            // Map to 25%-400% range with bias toward center
-                            const minSize = 0.25;
-                            const maxSize = 4.0;
-                            const range = maxSize - minSize;
-
-                            // Apply exponential curve to favor medium sizes
-                            const exponentialWeight = Math.pow(weightedRandom, 0.7);
-                            const size = minSize + range * exponentialWeight;
-
-                            return {
-                                x,
-                                y,
-                                size: size
-                            };
+                        points.forEach(point => {
+                            // Randomly assign size bin based on sieve distribution
+                            const rand = rng();
+                            let cumulative = 0;
+                            for (const bin of sizeBins) {
+                                cumulative += sieveCurve[bin];
+                                if (rand < cumulative) {
+                                    point.size = SIZE_BIN_DIAMETERS[bin];
+                                    point.bin = bin;
+                                    break;
+                                }
+                            }
                         });
-                        
-                        // Create Voronoi diagram
-                        const delaunay = d3.Delaunay.from(pointsWithSize, p => p.x, p => p.y);
-                        const voronoi = delaunay.voronoi([0, 0, canvasWidth, canvasHeight]);
-                        
+
+                        // Simple weighted Voronoi: use size-based weights without iterative solving
+                        // This gives visible variation even if areas aren't perfectly proportional
+                        points.forEach(point => {
+                            // Stronger weight scaling for more dramatic size differences
+                            point.weight = Math.pow(point.size, 2.2); // Increased from 1.8 to 2.2
+                        });
+
+                        console.log('Using simple size-based weights (no area solving)');
+
+                        // Build weighted Voronoi directly
+                        const cells = points.map((point, idx) => ({
+                            index: idx,
+                            colourIndex: -1,
+                            polygon: []
+                        }));
+
+                        const finalWv = d3.weightedVoronoi()
+                            .x(d => d.x)
+                            .y(d => d.y)
+                            .weight(d => d.weight)
+                            .clip([[0, 0], [canvasWidth, 0], [canvasWidth, canvasHeight], [0, canvasHeight]]);
+
+                        const finalCells = finalWv(points);
+
+                        points.forEach((point, i) => {
+                            const cell = finalCells[i];
+                            if (cell && cell.length >= 3) {
+                                cells[i].polygon = cell;
+                            }
+                        });
+
                         setVoronoiData({
-                            points: pointsWithSize,
-                            voronoi,
-                            delaunay,
-                            cells: Array.from({ length: points.length }, (_, i) => ({
-                                index: i,
-                                colourIndex: -1,
-                                polygon: [...voronoi.cellPolygon(i)]
-                            }))
+                            points: points, // has .size and .weight
+                            cells: cells
                         });
-                        
+
                         setIsInitializing(false);
                     };
 
@@ -2927,10 +3263,10 @@
 
                             // Enhanced size-based hierarchy: contrast scaling
                             const granuleSize = voronoiData.points[i].size || 1;
-                            const normalizedSize = Math.min(4, Math.max(0.25, granuleSize));
+                            const normalizedSize = Math.min(6, Math.max(0.5, granuleSize));
 
                             // Size-based contrast adjustment (larger = more vibrant, smaller = more muted)
-                            const sizeContrastFactor = 0.7 + (normalizedSize / 4) * 0.6; // 0.7 to 1.3 range
+                            const sizeContrastFactor = 0.7 + (normalizedSize / 6) * 0.6; // 0.7 to 1.3 range
 
                             // Apply contrast scaling to saturation and lightness
                             const contrastAdjustedSat = Math.max(0, Math.min(1, newSat * sizeContrastFactor));
@@ -3050,8 +3386,8 @@
                         const granuleSize = voronoiData.points[i].size || 1;
 
                         // Enhanced size-based hierarchy: apply contrast scaling to existing color
-                        const normalizedSize = Math.min(4, Math.max(0.25, granuleSize));
-                        const sizeContrastFactor = 0.7 + (normalizedSize / 4) * 0.6;
+                        const normalizedSize = Math.min(6, Math.max(0.5, granuleSize));
+                        const sizeContrastFactor = 0.7 + (normalizedSize / 6) * 0.6;
 
                         // Re-apply size-based contrast to the color
                         let finalR = colour.r;
@@ -3299,11 +3635,11 @@
                         };
 
                         const granuleSize = voronoiData.points[i].size || 1;
-                        const normalizedSize = Math.min(4, Math.max(0.25, granuleSize));
+                        const normalizedSize = Math.min(6, Math.max(0.5, granuleSize));
 
                         // Enhanced size-based hierarchy: apply contrast scaling to depth colors
                         if (colourIndex !== -1) {
-                            const sizeContrastFactor = 0.7 + (normalizedSize / 4) * 0.6;
+                            const sizeContrastFactor = 0.7 + (normalizedSize / 6) * 0.6;
 
                             // Convert current color back to HSL for contrast adjustment
                             const currentHsl = rgbToHsl(colour.r, colour.g, colour.b);
@@ -3420,7 +3756,7 @@
                         if (!polygon || polygon.length < 3) return;
 
                         const granuleSize = voronoiData.points[i].size || 1;
-                        const normalizedSize = Math.min(4, Math.max(0.25, granuleSize));
+                        const normalizedSize = Math.min(6, Math.max(0.5, granuleSize));
 
                         // Apply blur to small granules for depth of field effect
                         if (normalizedSize < 1.2) {
@@ -3458,7 +3794,7 @@
                             let newLight = Math.max(0, Math.min(1, hsl[2] + lightVariation));
 
                             // Apply size-based contrast scaling
-                            const sizeContrastFactor = 0.7 + (normalizedSize / 4) * 0.6;
+                            const sizeContrastFactor = 0.7 + (normalizedSize / 6) * 0.6;
                             const contrastAdjustedSat = Math.max(0, Math.min(1, newSat * sizeContrastFactor));
 
                             // Small granules get muted

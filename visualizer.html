@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TPV Design Visualiser - Rosehill TPV®</title>
+    <meta name="description" content="Visualize Rosehill TPV® surfaces on your reference photos with AI-powered rendering">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            margin-top: 70px;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 15px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-menu a:hover {
+            color: #ff6b35;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-header h1 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 2.5rem;
+            color: #1a365d;
+            margin-bottom: 15px;
+        }
+
+        .page-header p {
+            font-size: 1.1rem;
+            color: #666;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Visualizer Layout */
+        .visualizer-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            height: fit-content;
+        }
+
+        .control-section {
+            margin-bottom: 30px;
+        }
+
+        .control-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-section h3 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.1rem;
+            color: #1a365d;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .upload-zone {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+
+        .upload-zone:hover {
+            border-color: #ff6b35;
+            background: #fff5f2;
+        }
+
+        .upload-zone.dragover {
+            border-color: #ff6b35;
+            background: #fff5f2;
+        }
+
+        .upload-zone input[type="file"] {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            color: #ccc;
+            margin-bottom: 10px;
+        }
+
+        .upload-text {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .upload-text strong {
+            color: #ff6b35;
+        }
+
+        .file-info {
+            margin-top: 15px;
+            padding: 12px;
+            background: #e8f4ea;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #2d5a3d;
+        }
+
+        /* Color Picker */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .color-swatch {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .color-swatch.selected {
+            border-color: #1a365d;
+            box-shadow: 0 0 0 2px white, 0 0 0 4px #1a365d;
+        }
+
+        .color-swatch-name {
+            font-size: 0.75rem;
+            text-align: center;
+            margin-top: 4px;
+            color: #666;
+        }
+
+        .selected-color-display {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .selected-color-preview {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            border: 2px solid #ddd;
+        }
+
+        .selected-color-info {
+            flex: 1;
+        }
+
+        .selected-color-info strong {
+            display: block;
+            color: #1a365d;
+            font-size: 1rem;
+        }
+
+        .selected-color-info span {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Button Styles */
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Source Sans Pro', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ff6b35, #ff8555);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #1a365d;
+            border: 2px solid #1a365d;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #1a365d;
+            color: white;
+        }
+
+        /* Preview Canvas */
+        .preview-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            min-height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .preview-header h3 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.3rem;
+            color: #1a365d;
+        }
+
+        .preview-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #1a365d;
+            color: white;
+            border-color: #1a365d;
+        }
+
+        .canvas-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fafafa;
+            border-radius: 8px;
+            min-height: 500px;
+            position: relative;
+        }
+
+        .canvas-wrapper canvas {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 6px;
+        }
+
+        .placeholder {
+            text-align: center;
+            color: #999;
+        }
+
+        .placeholder-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .placeholder-text {
+            font-size: 1.1rem;
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: none;
+            text-align: center;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff6b35;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .visualizer-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .control-panel {
+                order: 2;
+            }
+
+            .preview-container {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <a href="index.html" class="logo">
+                Rosehill TPV<sup>®</sup> | Design Visualiser
+            </a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="colour.html">Colours</a></li>
+                    <li><a href="mixer.html">Color Mixer</a></li>
+                    <li><a href="contact.html">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <div class="page-header">
+            <h1>TPV<sup>®</sup> Design Visualiser</h1>
+            <p>Upload a reference photo and visualize how Rosehill TPV<sup>®</sup> surfaces will look in your project</p>
+        </div>
+
+        <div class="visualizer-grid">
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <div class="control-section">
+                    <h3>1. Upload Photo</h3>
+                    <div class="upload-zone" id="uploadZone">
+                        <div class="upload-icon">📸</div>
+                        <div class="upload-text">
+                            <strong>Click to upload</strong> or drag and drop<br>
+                            <small>JPG, PNG or WebP (max 12MB)</small>
+                        </div>
+                        <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
+                    </div>
+                    <div class="file-info" id="fileInfo" style="display: none;">
+                        <strong>Uploaded:</strong> <span id="fileName"></span>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>2. Select TPV<sup>®</sup> Color</h3>
+                    <div class="color-grid" id="colorGrid">
+                        <!-- Colors will be populated by JavaScript -->
+                    </div>
+                    <div class="selected-color-display" id="selectedColorDisplay" style="display: none;">
+                        <div class="selected-color-preview" id="selectedColorPreview"></div>
+                        <div class="selected-color-info">
+                            <strong id="selectedColorName">No color selected</strong>
+                            <span id="selectedColorCode"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-section">
+                    <h3>3. Generate Preview</h3>
+                    <button class="btn btn-primary" id="generateBtn" disabled>
+                        Generate Visualization
+                    </button>
+                    <div style="margin-top: 15px;">
+                        <button class="btn btn-secondary" id="downloadBtn" disabled>
+                            Download Result
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Canvas -->
+            <div class="preview-container">
+                <div class="preview-header">
+                    <h3>Preview</h3>
+                    <div class="preview-tabs">
+                        <button class="tab-btn active" data-tab="original">Original</button>
+                        <button class="tab-btn" data-tab="visualized">Visualized</button>
+                    </div>
+                </div>
+
+                <div class="canvas-wrapper" id="canvasWrapper">
+                    <div class="placeholder">
+                        <div class="placeholder-icon">🎨</div>
+                        <div class="placeholder-text">Upload a photo to get started</div>
+                    </div>
+                    <canvas id="previewCanvas" style="display: none;"></canvas>
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <div>Processing your visualization...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import TPV palette data
+        const PALETTE_URL = '/assets/tpv-palette.json';
+
+        let uploadedImage = null;
+        let selectedColor = null;
+        let visualizedImage = null;
+
+        // Load TPV color palette
+        async function loadPalette() {
+            try {
+                const response = await fetch(PALETTE_URL);
+                const palette = await response.json();
+                renderColorGrid(palette);
+            } catch (error) {
+                console.error('Failed to load palette:', error);
+            }
+        }
+
+        // Render color swatches
+        function renderColorGrid(palette) {
+            const colorGrid = document.getElementById('colorGrid');
+            colorGrid.innerHTML = '';
+
+            palette.forEach(color => {
+                const swatch = document.createElement('div');
+                swatch.className = 'color-swatch';
+                swatch.style.backgroundColor = color.hex;
+                swatch.title = `${color.name} (${color.code})`;
+                swatch.dataset.code = color.code;
+                swatch.dataset.name = color.name;
+                swatch.dataset.hex = color.hex;
+
+                swatch.addEventListener('click', () => selectColor(color, swatch));
+                colorGrid.appendChild(swatch);
+            });
+        }
+
+        // Select color
+        function selectColor(color, element) {
+            // Remove previous selection
+            document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+            element.classList.add('selected');
+
+            selectedColor = color;
+
+            // Update display
+            const display = document.getElementById('selectedColorDisplay');
+            const preview = document.getElementById('selectedColorPreview');
+            const name = document.getElementById('selectedColorName');
+            const code = document.getElementById('selectedColorCode');
+
+            display.style.display = 'flex';
+            preview.style.backgroundColor = color.hex;
+            name.textContent = color.name;
+            code.textContent = color.code;
+
+            // Enable generate button if image uploaded
+            updateGenerateButton();
+        }
+
+        // File upload handling
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+
+        uploadZone.addEventListener('click', () => fileInput.click());
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFileUpload(file);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFileUpload(file);
+        });
+
+        function handleFileUpload(file) {
+            // Validate file
+            if (!file.type.match('image/(jpeg|png|webp)')) {
+                alert('Please upload a JPG, PNG, or WebP image');
+                return;
+            }
+
+            if (file.size > 12 * 1024 * 1024) {
+                alert('File size must be under 12MB');
+                return;
+            }
+
+            // Show file info
+            fileName.textContent = file.name;
+            fileInfo.style.display = 'block';
+
+            // Load image
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    uploadedImage = img;
+                    displayImage(img, 'original');
+                    updateGenerateButton();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Display image on canvas
+        function displayImage(img, tab) {
+            const canvas = document.getElementById('previewCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // Set canvas size
+            const maxWidth = 900;
+            const maxHeight = 600;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxWidth) {
+                height *= maxWidth / width;
+                width = maxWidth;
+            }
+
+            if (height > maxHeight) {
+                width *= maxHeight / height;
+                height = maxHeight;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+
+            // Draw image
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Show canvas
+            document.querySelector('.placeholder').style.display = 'none';
+            canvas.style.display = 'block';
+        }
+
+        // Update generate button state
+        function updateGenerateButton() {
+            const generateBtn = document.getElementById('generateBtn');
+            generateBtn.disabled = !(uploadedImage && selectedColor);
+        }
+
+        // Generate visualization with FLUX Fill Pro AI
+        document.getElementById('generateBtn').addEventListener('click', async () => {
+            if (!uploadedImage || !selectedColor) return;
+
+            const loading = document.getElementById('loading');
+            const canvas = document.getElementById('previewCanvas');
+
+            try {
+                loading.classList.add('active');
+                canvas.style.display = 'none';
+
+                // Get current canvas image as base64 data URL
+                const imageData = canvas.toDataURL('image/jpeg', 0.95);
+
+                // Call /api/texture endpoint with FLUX Fill Pro
+                console.log('[VISUALIZER] Calling /api/texture...');
+                const response = await fetch('/.netlify/functions/texture', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        imageData: imageData,
+                        colorCode: selectedColor.code,
+                        colorHex: selectedColor.hex,
+                        mode: 'ai-enhanced'
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'API request failed');
+                }
+
+                const result = await response.json();
+                console.log('[VISUALIZER] API result:', result);
+
+                if (!result.success) {
+                    throw new Error('Texture generation failed');
+                }
+
+                // Load generated texture
+                const textureImg = new Image();
+                textureImg.crossOrigin = 'anonymous';
+
+                await new Promise((resolve, reject) => {
+                    textureImg.onload = resolve;
+                    textureImg.onerror = () => reject(new Error('Failed to load generated texture'));
+                    textureImg.src = result.textureUrl;
+                });
+
+                // Draw generated texture to canvas
+                displayImage(textureImg, 'visualized');
+                visualizedImage = canvas.toDataURL();
+
+                // Enable download
+                document.getElementById('downloadBtn').disabled = false;
+
+                // Switch to visualized tab
+                document.querySelector('[data-tab="visualized"]').click();
+
+                // Log processing time
+                console.log(`[VISUALIZER] Processing time: ${result.processingTime}ms`);
+
+            } catch (error) {
+                console.error('Visualization failed:', error);
+                alert(`Failed to generate visualization: ${error.message}\n\nPlease try again or contact support if the issue persists.`);
+                canvas.style.display = 'block';
+            } finally {
+                loading.classList.remove('active');
+            }
+        });
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const tab = btn.dataset.tab;
+                if (tab === 'original' && uploadedImage) {
+                    displayImage(uploadedImage, 'original');
+                } else if (tab === 'visualized' && visualizedImage) {
+                    // Canvas already has visualized image
+                }
+            });
+        });
+
+        // Download result
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            if (!visualizedImage) return;
+
+            const link = document.createElement('a');
+            link.download = `tpv-visualization-${selectedColor.code}.png`;
+            link.href = visualizedImage;
+            link.click();
+        });
+
+        // Initialize
+        loadPalette();
+    </script>
+</body>
+</html>

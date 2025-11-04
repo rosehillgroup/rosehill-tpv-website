@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rosehill TPV UV Fade Calculator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            clip-path: polygon(30% 0%, 100% 0%, 100% 100%, 0% 100%);
+            opacity: 0.8;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 25px;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border-right: 3px solid #ff6b35;
+            height: fit-content;
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            color: #1a365d;
+            font-size: 1.4rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            color: #1a365d;
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: block;
+            font-size: 0.95rem;
+        }
+
+        .select-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: white;
+            color: #495057;
+            transition: all 0.3s ease;
+        }
+
+        .select-input:focus {
+            outline: none;
+            border-color: #ff6b35;
+            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+        }
+
+        .color-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .color-option {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .color-option:hover {
+            border-color: #ff6b35;
+            transform: translateY(-1px);
+        }
+
+        .color-option.selected {
+            border-color: #ff6b35;
+            box-shadow: 0 3px 10px rgba(255, 107, 53, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .color-swatch {
+            width: 100%;
+            height: 25px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            margin-bottom: 4px;
+        }
+
+        .color-name {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #1a365d;
+            line-height: 1.1;
+        }
+
+        .color-code {
+            font-size: 0.6rem;
+            color: #6c757d;
+            font-family: monospace;
+        }
+
+        .time-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .time-option {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            padding: 12px 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .time-option:hover {
+            border-color: #ff6b35;
+            background: #fff3f0;
+        }
+
+        .time-option.selected {
+            border-color: #ff6b35;
+            background: #ff6b35;
+            color: white;
+        }
+
+        .uv-info {
+            background: linear-gradient(135deg, #e3f2fd, #f0f8ff);
+            border-left: 4px solid #ff6b35;
+            padding: 12px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 15px;
+            font-size: 0.85rem;
+        }
+
+        .uv-info h4 {
+            color: #1a365d;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .uv-value {
+            color: #ff6b35;
+            font-weight: 600;
+            font-family: monospace;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .swatch-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .swatch-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .swatch-display {
+            width: 100%;
+            height: 120px;
+            border-radius: 8px;
+            border: 3px solid #e9ecef;
+            margin-bottom: 12px;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .swatch-overlay {
+            display: none;
+        }
+
+        .swatch-title {
+            font-weight: 600;
+            color: #1a365d;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .swatch-subtitle {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+
+        .fade-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .no-change {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .fade-light {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .fade-moderate {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .fade-severe {
+            background: #f5c6cb;
+            color: #721c24;
+        }
+
+        .technical-details {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .detail-item {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #ff6b35;
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 4px;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: #1a365d;
+            font-family: monospace;
+        }
+
+        .methodology {
+            background: linear-gradient(135deg, #e3f2fd, #f0f8ff);
+            border-left: 4px solid #ff6b35;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 20px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .methodology h4 {
+            color: #1a365d;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .btn {
+            background: #ff6b35;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            background: #e55a2b;
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 1200px) {
+            .comparison-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .color-selector {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-section {
+                border-right: none;
+                border-bottom: 3px solid #ff6b35;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-content">
+                <h1>Rosehill TPV UV Fade Calculator</h1>
+                <p>Compare long-term colour stability: TPV vs EPDM rubber surfacing</p>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="form-section">
+                <h2 class="section-title" style="font-size: 1.2rem;">Configuration</h2>
+
+                <div class="input-group">
+                    <label class="input-label">Select Country/Region</label>
+                    <select id="countrySelect" class="select-input">
+                        <option value="">Choose location...</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Select TPV Colour</label>
+                    <div id="colorSelector" class="color-selector">
+                        <!-- Color options will be generated here -->
+                    </div>
+                </div>
+
+
+
+                <div id="uvInfo" class="uv-info" style="display: none;">
+                    <h4>UV Exposure Data</h4>
+                    <div>Annual UV: <span class="uv-value" id="uvValue">-</span></div>
+                    <div style="font-size: 0.75rem; margin-top: 5px; opacity: 0.8;">
+                        Based on meteorological data
+                    </div>
+                </div>
+
+                <div class="methodology">
+                    <h4>Testing Methodology</h4>
+                    <p><strong>Based on 5-year independent testing</strong> using EN 20105-A02 standard. TPV shows no colour change up to 9600 kJ exposure. EPDM shows progressive fading based on UV levels.</p>
+                </div>
+            </div>
+
+            <div class="results-section">
+                <h2 class="section-title">UV Fade Comparison</h2>
+
+                <div class="comparison-grid">
+                    <div class="swatch-card">
+                        <div class="swatch-display" id="tpvNew" style="background-color: #0075BC;">
+                        </div>
+                        <div class="swatch-title">Rosehill TPV</div>
+                        <div class="swatch-subtitle">As Installed</div>
+                        <div class="fade-indicator no-change">No Change</div>
+                    </div>
+
+                    <div class="swatch-card">
+                        <div class="swatch-display" id="tpvAged" style="background-color: #0075BC;">
+                        </div>
+                        <div class="swatch-title">Rosehill TPV</div>
+                        <div class="swatch-subtitle" id="tpvAgeLabel">After 5 Years</div>
+                        <div class="fade-indicator no-change">No Change</div>
+                    </div>
+
+                    <div class="swatch-card">
+                        <div class="swatch-display" id="epdmNew" style="background-color: #0075BC;">
+                        </div>
+                        <div class="swatch-title">EPDM Rubber</div>
+                        <div class="swatch-subtitle">As Installed</div>
+                        <div class="fade-indicator no-change">No Change</div>
+                    </div>
+
+                    <div class="swatch-card">
+                        <div class="swatch-display" id="epdmAged" style="background-color: #0075BC;">
+                        </div>
+                        <div class="swatch-title">EPDM Rubber</div>
+                        <div class="swatch-subtitle" id="epdmAgeLabel">After 5 Years</div>
+                        <div class="fade-indicator fade-light" id="epdmFadeIndicator">Light Fading</div>
+                    </div>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 25px;">
+                    <label class="input-label">Time Period</label>
+                    <div class="time-selector">
+                        <div class="time-option" data-years="1">1 Year</div>
+                        <div class="time-option" data-years="3">3 Years</div>
+                        <div class="time-option selected" data-years="5">5 Years</div>
+                    </div>
+                </div>
+
+                <div class="technical-details">
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">Selected Colour</div>
+                            <div class="detail-value" id="selectedColorName">Standard Blue</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Location UV Exposure</div>
+                            <div class="detail-value" id="exposureValue">- kJ/m²/year</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">EPDM Fade Percentage</div>
+                            <div class="detail-value" id="fadePercentage">0%</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Test Standard</div>
+                            <div class="detail-value">EN 20105-A02</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn" onclick="generateReport()">
+                    📊 Generate Comparison Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // TPV Colours from the existing Color Mixer
+        const TPV_COLOURS = [
+            { name: 'Beige', code: 'RH30', hex: '#E8E3D8' },
+            { name: 'Cream', code: 'RH31', hex: '#E4C4AA' },
+            { name: 'Bright Yellow', code: 'RH41', hex: '#FFD833' },
+            { name: 'Mustard', code: 'RH40', hex: '#E5A144' },
+            { name: 'Orange', code: 'RH50', hex: '#F15B32' },
+            { name: 'Standard Red', code: 'RH01', hex: '#A5362F' },
+            { name: 'Bright Red', code: 'RH02', hex: '#E21F2F' },
+            { name: 'Funky Pink', code: 'RH90', hex: '#E8457E' },
+            { name: 'Purple', code: 'RH21', hex: '#493D8C' },
+            { name: 'Standard Blue', code: 'RH20', hex: '#0075BC' },
+            { name: 'Light Blue', code: 'RH22', hex: '#47AFE3' },
+            { name: 'Azure', code: 'RH23', hex: '#039DC4' },
+            { name: 'Turquoise', code: 'RH26', hex: '#00A6A3' },
+            { name: 'Dark Green', code: 'RH12', hex: '#006C55' },
+            { name: 'Standard Green', code: 'RH10', hex: '#609B63' },
+            { name: 'Bright Green', code: 'RH11', hex: '#3BB44A' },
+            { name: 'Brown', code: 'RH32', hex: '#8B5F3C' },
+            { name: 'Pale Grey', code: 'RH65', hex: '#D9D9D6' },
+            { name: 'Light Grey', code: 'RH61', hex: '#939598' },
+            { name: 'Dark Grey', code: 'RH60', hex: '#59595B' },
+            { name: 'Black', code: 'RH70', hex: '#231F20' }
+        ];
+
+        // UV exposure data by country, grouped by continent (kJ/m²/year)
+        const UV_DATA = {
+            "Europe": {
+                "France": 34675,
+                "Germany": 32850,
+                "Greece": 57488,
+                "Russia": 28288,
+                "Spain": 53838,
+                "United Kingdom": 19163
+            },
+            "North America": {
+                "Canada": 31938,
+                "USA": 63875
+            },
+            "South America": {
+                "Brazil": 73913
+            },
+            "Asia": {
+                "Japan": 55663,
+                "Malaysia": 106763,
+                "Mongolia": 44713,
+                "Sri Lanka": 104938,
+                "Thailand": 99463,
+                "Vietnam": 95813
+            },
+            "Africa": {
+                "Kenya": 98550,
+                "Madagascar": 79387
+            },
+            "Oceania": {
+                "Australia": 61746
+            },
+            "Central America & Caribbean": {
+                "Cuba": 84863,
+                "Panama": 95813
+            }
+        };
+
+        let selectedCountry = '';
+        let selectedColor = TPV_COLOURS[9]; // Default to Standard Blue
+        let selectedYears = 5;
+
+        function hexToHsl(hex) {
+            const r = parseInt(hex.slice(1, 3), 16) / 255;
+            const g = parseInt(hex.slice(3, 5), 16) / 255;
+            const b = parseInt(hex.slice(5, 7), 16) / 255;
+
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+
+            if (max === min) {
+                h = s = 0;
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+                switch (max) {
+                    case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                    case g: h = (b - r) / d + 2; break;
+                    case b: h = (r - g) / d + 4; break;
+                }
+                h /= 6;
+            }
+
+            return [h * 360, s * 100, l * 100];
+        }
+
+        function hslToHex(h, s, l) {
+            h /= 360;
+            s /= 100;
+            l /= 100;
+
+            const c = (1 - Math.abs(2 * l - 1)) * s;
+            const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+            const m = l - c / 2;
+            let r = 0, g = 0, b = 0;
+
+            if (0 <= h && h < 1/6) {
+                r = c; g = x; b = 0;
+            } else if (1/6 <= h && h < 1/3) {
+                r = x; g = c; b = 0;
+            } else if (1/3 <= h && h < 1/2) {
+                r = 0; g = c; b = x;
+            } else if (1/2 <= h && h < 2/3) {
+                r = 0; g = x; b = c;
+            } else if (2/3 <= h && h < 5/6) {
+                r = x; g = 0; b = c;
+            } else if (5/6 <= h && h < 1) {
+                r = c; g = 0; b = x;
+            }
+
+            r = Math.round((r + m) * 255);
+            g = Math.round((g + m) * 255);
+            b = Math.round((b + m) * 255);
+
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+
+        function calculateEPDMFade(originalHex, uvExposure, years) {
+            const maxUV = 9600; // Based on 5-year test data
+            const maxFade = 0.4; // 40% maximum lightening
+            const fadePercentage = Math.min((uvExposure / maxUV) * (years / 5) * maxFade, 0.5);
+
+            const [h, s, l] = hexToHsl(originalHex);
+            
+            // Increase lightness and reduce saturation
+            const newL = Math.min(l + (fadePercentage * 100), 95);
+            const newS = Math.max(s - (fadePercentage * 50), 10);
+            
+            return {
+                hex: hslToHex(h, newS, newL),
+                fadePercentage: Math.round(fadePercentage * 100)
+            };
+        }
+
+        function getFadeIndicator(fadePercentage) {
+            if (fadePercentage === 0) return { class: 'no-change', text: 'No Change' };
+            if (fadePercentage <= 10) return { class: 'fade-light', text: 'Light Fading' };
+            if (fadePercentage <= 25) return { class: 'fade-moderate', text: 'Moderate Fading' };
+            return { class: 'fade-severe', text: 'Severe Fading' };
+        }
+
+        function initializeInterface() {
+            // Populate country selector with continent grouping
+            const countrySelect = document.getElementById('countrySelect');
+            
+            Object.keys(UV_DATA).forEach(continent => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = continent;
+                
+                Object.keys(UV_DATA[continent]).sort().forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country;
+                    option.textContent = country;
+                    optgroup.appendChild(option);
+                });
+                
+                countrySelect.appendChild(optgroup);
+            });
+
+            // Generate color selector
+            const colorSelector = document.getElementById('colorSelector');
+            TPV_COLOURS.forEach((color, index) => {
+                const colorDiv = document.createElement('div');
+                colorDiv.className = 'color-option' + (index === 9 ? ' selected' : '');
+                colorDiv.innerHTML = `
+                    <div class="color-swatch" style="background-color: ${color.hex};"></div>
+                    <div class="color-name">${color.name}</div>
+                    <div class="color-code">${color.code}</div>
+                `;
+                colorDiv.addEventListener('click', () => selectColor(color, colorDiv));
+                colorSelector.appendChild(colorDiv);
+            });
+
+            // Time selector event listeners
+            document.querySelectorAll('.time-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    document.querySelectorAll('.time-option').forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedYears = parseInt(this.dataset.years);
+                    updateAgeLabels();
+                    updateComparison();
+                });
+            });
+
+            // Country selector change
+            countrySelect.addEventListener('change', function() {
+                selectedCountry = this.value;
+                updateUVInfo();
+                updateComparison();
+            });
+
+            updateComparison();
+        }
+
+        function selectColor(color, element) {
+            document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedColor = color;
+            updateComparison();
+        }
+
+        function getUVExposure(country) {
+            for (const continent in UV_DATA) {
+                if (UV_DATA[continent][country]) {
+                    return UV_DATA[continent][country];
+                }
+            }
+            return 0;
+        }
+
+        function updateUVInfo() {
+            const uvInfo = document.getElementById('uvInfo');
+            const uvValue = document.getElementById('uvValue');
+            const exposureValue = document.getElementById('exposureValue');
+
+            if (selectedCountry) {
+                const exposure = getUVExposure(selectedCountry);
+                if (exposure > 0) {
+                    uvInfo.style.display = 'block';
+                    uvValue.textContent = `${exposure.toLocaleString()} kJ/m²/year`;
+                    exposureValue.textContent = `${exposure.toLocaleString()} kJ/m²/year`;
+                } else {
+                    uvInfo.style.display = 'none';
+                    exposureValue.textContent = '- kJ/m²/year';
+                }
+            } else {
+                uvInfo.style.display = 'none';
+                exposureValue.textContent = '- kJ/m²/year';
+            }
+        }
+
+        function updateAgeLabels() {
+            document.getElementById('tpvAgeLabel').textContent = `After ${selectedYears} Year${selectedYears !== 1 ? 's' : ''}`;
+            document.getElementById('epdmAgeLabel').textContent = `After ${selectedYears} Year${selectedYears !== 1 ? 's' : ''}`;
+        }
+
+        function updateComparison() {
+            const color = selectedColor.hex;
+            
+            // Update TPV swatches (no change)
+            document.getElementById('tpvNew').style.backgroundColor = color;
+            document.getElementById('tpvAged').style.backgroundColor = color;
+            
+            // Update EPDM new swatch
+            document.getElementById('epdmNew').style.backgroundColor = color;
+            
+            // Calculate EPDM fade
+            let fadedResult = { hex: color, fadePercentage: 0 };
+            
+            if (selectedCountry) {
+                const uvExposure = getUVExposure(selectedCountry);
+                if (uvExposure > 0) {
+                    fadedResult = calculateEPDMFade(color, uvExposure, selectedYears);
+                }
+            }
+            
+            // Update EPDM aged swatch
+            document.getElementById('epdmAged').style.backgroundColor = fadedResult.hex;
+            
+            // Update fade indicator
+            const fadeIndicator = getFadeIndicator(fadedResult.fadePercentage);
+            const fadeElement = document.getElementById('epdmFadeIndicator');
+            fadeElement.className = `fade-indicator ${fadeIndicator.class}`;
+            fadeElement.textContent = fadeIndicator.text;
+            
+            // Update technical details
+            document.getElementById('selectedColorName').textContent = `${selectedColor.name} (${selectedColor.code})`;
+            document.getElementById('fadePercentage').textContent = `${fadedResult.fadePercentage}%`;
+        }
+
+        function generateReport() {
+            const country = selectedCountry || 'Location not selected';
+            const color = selectedColor;
+            const years = selectedYears;
+            const uvExposure = selectedCountry ? getUVExposure(selectedCountry) : 0;
+            const fadeResult = selectedCountry ? calculateEPDMFade(color.hex, uvExposure, years) : { fadePercentage: 0 };
+            
+            const reportContent = `
+Rosehill TPV UV Fade Comparison Report
+=====================================
+
+Configuration:
+- Location: ${country}
+- Selected Colour: ${color.name} (${color.code})
+- Time Period: ${years} year${years !== 1 ? 's' : ''}
+- UV Exposure: ${uvExposure.toLocaleString()} kJ/m²/year
+
+Results:
+- Rosehill TPV: No colour change (0% fade)
+- EPDM Rubber: ${fadeResult.fadePercentage}% lightening observed
+
+Technical Notes:
+- Based on EN 20105-A02 testing standard
+- TPV tested to 9600 kJ exposure with no visible change
+- EPDM shows progressive fading based on UV levels
+
+Generated: ${new Date().toLocaleDateString('en-GB')}
+            `.trim();
+            
+            // Create and download report
+            const blob = new Blob([reportContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `rosehill-uv-comparison-${selectedColor.code.toLowerCase()}-${years}yr.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initializeInterface);
+    </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+# UV Index Gradient Color Ramp (WHO Standard Colors)
+# Format: elevation R G B (alpha is added automatically by gdaldem)
+#
+# WHO UV Index Color Standards:
+# Low (0-2):         Green  #558B2F
+# Moderate (3-5):    Yellow #F9A825
+# High (6-7):        Orange #EF6C00
+# Very High (8-10):  Red    #B71C1C
+# Extreme (11+):     Violet #6A1B9A
+
+# Low: Green
+0     85  139  47
+
+# Transition Low -> Moderate
+2.5   167 194  42
+
+# Moderate: Yellow
+3     249 168  37
+
+# Transition Moderate -> High
+5.5   244 138  19
+
+# High: Orange
+6     239 108   0
+
+# Transition High -> Very High
+7.5   211  68  14
+
+# Very High: Red
+8     183  28  28
+
+# Transition Very High -> Extreme
+10    145  28  91
+
+# Extreme: Violet
+11    106  27 154
+
+# Maximum
+16    106  27 154

@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UV Fade Visualiser - Rosehill TPV® Colour Stability</title>
+    <meta name="description" content="Discover how UV radiation affects colour stability globally. Interactive tool comparing EPDM granule fading vs Rosehill TPV® UV resistance using NASA satellite data.">
+    <meta name="keywords" content="UV resistance, colour stability, EPDM fading, TPV granules, UV Index, colour retention, sports surface durability, playground surface fading">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://tpv.rosehill.group/performance/uv-stability.html">
+    <meta property="og:title" content="UV Fade Visualiser - Rosehill TPV® Colour Stability">
+    <meta property="og:description" content="Interactive tool showing how UV radiation affects colour stability of EPDM vs Rosehill TPV® using NASA data.">
+    <meta property="og:image" content="https://tpv.rosehill.group/rosehill_tpv_social_sharing.jpg">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="UV Fade Visualiser - Rosehill TPV® Colour Stability">
+    <meta name="twitter:description" content="Interactive tool showing how UV radiation affects colour stability of EPDM vs Rosehill TPV® using NASA data.">
+
+    <link rel="canonical" href="https://tpv.rosehill.group/performance/uv-stability.html">
+    <link rel="apple-touch-icon" sizes="180x180" href="../favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../favicon_io/favicon-16x16.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- MapLibre GL JS -->
+    <script src='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js'></script>
+    <link href='https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css' rel='stylesheet' />
+
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-5565Z2W7');</script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Source Sans Pro', sans-serif;
+            background: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Header Styles - matching existing site */
+        .header {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 15px 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 600;
+            font-family: 'Overpass', sans-serif;
+            color: white;
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 6px;
+        }
+
+        .nav-menu a:hover {
+            background: rgba(255, 107, 53, 0.2);
+            color: #ff6b35;
+        }
+
+        .contact-btn {
+            background: #ff6b35;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .contact-btn:hover {
+            background: #e55a2b !important;
+            transform: translateY(-2px);
+        }
+
+        /* Mobile menu toggle */
+        .mobile-menu-toggle {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 8px;
+            background: none;
+            border: none;
+        }
+
+        .mobile-menu-toggle span {
+            width: 25px;
+            height: 3px;
+            background: white;
+            margin: 3px 0;
+            transition: 0.3s;
+            border-radius: 2px;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-top: 70px;
+            height: calc(100vh - 70px);
+            position: relative;
+            display: flex;
+        }
+
+        /* Map Container */
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+
+        /* Map Legend */
+        .map-legend {
+            position: absolute;
+            bottom: 30px;
+            left: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10;
+            min-width: 200px;
+        }
+
+        .legend-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            color: #1a365d;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 5px 0;
+            font-size: 0.85rem;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 15px;
+            border-radius: 3px;
+        }
+
+        /* Location Drawer */
+        .drawer {
+            width: 450px;
+            background: white;
+            height: 100%;
+            overflow-y: auto;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 5;
+        }
+
+        .drawer-header {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 25px;
+        }
+
+        .drawer-header h2 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+        }
+
+        .drawer-header p {
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .drawer-content {
+            padding: 25px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.2rem;
+            color: #1a365d;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* City Search */
+        .city-search {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .city-search-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .city-search-input:focus {
+            outline: none;
+            border-color: #ff6b35;
+        }
+
+        .city-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-top: 5px;
+            display: none;
+            z-index: 100;
+        }
+
+        .city-dropdown.active {
+            display: block;
+        }
+
+        .city-option {
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .city-option:hover {
+            background: #f8f9fa;
+        }
+
+        .city-option strong {
+            color: #1a365d;
+        }
+
+        .city-option small {
+            color: #6c757d;
+            display: block;
+            margin-top: 2px;
+        }
+
+        /* Location Info */
+        .location-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .location-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #1a365d;
+            margin-bottom: 8px;
+        }
+
+        .location-coords {
+            font-size: 0.9rem;
+            color: #6c757d;
+            font-family: monospace;
+        }
+
+        /* UV Badge */
+        .uv-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin: 10px 0;
+        }
+
+        .uv-badge.low { background: #C5E1A5; color: #33691E; }
+        .uv-badge.moderate { background: #FFF59D; color: #F57F17; }
+        .uv-badge.high { background: #FFB74D; color: #E65100; }
+        .uv-badge.very-high { background: #EF5350; color: #B71C1C; }
+        .uv-badge.extreme { background: #AB47BC; color: #4A148C; }
+
+        .uv-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        /* Duration Toggle */
+        .duration-toggle {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .duration-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .duration-btn.active {
+            background: #1a365d;
+            color: white;
+            border-color: #1a365d;
+        }
+
+        .duration-btn:hover:not(.active) {
+            border-color: #ff6b35;
+        }
+
+        /* Colour Picker */
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .colour-swatch {
+            aspect-ratio: 1;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .colour-swatch:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .colour-swatch.selected {
+            border-color: #1a365d;
+            box-shadow: 0 0 0 2px white, 0 0 0 4px #1a365d;
+        }
+
+        .colour-name {
+            font-size: 0.75rem;
+            text-align: center;
+            margin-top: 5px;
+            color: #6c757d;
+        }
+
+        /* Fade Comparison */
+        .fade-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .fade-box {
+            text-align: center;
+        }
+
+        .fade-box-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+
+        .fade-swatch {
+            width: 100%;
+            height: 80px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            margin-bottom: 8px;
+        }
+
+        .fade-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+
+        .fade-value {
+            font-weight: 700;
+            color: #e74c3c;
+            font-size: 1.1rem;
+        }
+
+        /* CTA Button */
+        .cta-button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #ff6b35;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+
+        .cta-button:hover {
+            background: #e55a2b;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+        }
+
+        /* Methodology Button */
+        .methodology-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: #1a365d;
+            border: 2px solid #1a365d;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+
+        .methodology-btn:hover {
+            background: #1a365d;
+            color: white;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            color: white;
+            padding: 25px;
+            border-radius: 12px 12px 0 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modal-header h3 {
+            font-family: 'Overpass', sans-serif;
+            font-size: 1.8rem;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.5rem;
+            line-height: 1;
+            transition: all 0.3s;
+        }
+
+        .modal-close:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .modal-section {
+            margin-bottom: 25px;
+        }
+
+        .modal-section h4 {
+            font-family: 'Overpass', sans-serif;
+            color: #1a365d;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .modal-section p {
+            line-height: 1.8;
+            color: #555;
+        }
+
+        .citation-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .citation-list li {
+            margin: 10px 0;
+        }
+
+        .citation-list a {
+            color: #ff6b35;
+            text-decoration: none;
+            word-break: break-all;
+        }
+
+        .citation-list a:hover {
+            text-decoration: underline;
+        }
+
+        .disclaimer-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+
+        .disclaimer-box p {
+            margin: 0;
+            color: #856404;
+            font-size: 0.9rem;
+        }
+
+        /* Onboarding Tooltip */
+        .onboarding-tooltip {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 20px 25px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            z-index: 100;
+            max-width: 400px;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .onboarding-tooltip.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        .tooltip-title {
+            font-weight: 700;
+            color: #1a365d;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .tooltip-text {
+            color: #555;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .tooltip-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background: #ff6b35;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tooltip-btn:hover {
+            background: #e55a2b;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 968px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .mobile-menu-toggle {
+                display: flex;
+            }
+
+            .main-content {
+                flex-direction: column;
+            }
+
+            #map {
+                height: 50vh;
+            }
+
+            .drawer {
+                width: 100%;
+                height: 50vh;
+                box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            }
+
+            .map-legend {
+                top: 80px;
+                bottom: auto;
+                left: 10px;
+                right: auto;
+                padding: 10px;
+                font-size: 0.85rem;
+                min-width: 150px;
+            }
+        }
+
+        /* Loading State */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 50;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1a365d;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5565Z2W7"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <a href="../index.html" class="logo">Rosehill TPV<sup>®</sup></a>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="../products.html">Products</a></li>
+                    <li><a href="../applications.html">Applications</a></li>
+                    <li><a href="../colour.html">Colour</a></li>
+                    <li><a href="../installations.html">Installations</a></li>
+                    <li><a href="../about.html">About Us</a></li>
+                    <li><a href="../contact.html" class="contact-btn">Contact</a></li>
+                </ul>
+            </nav>
+            <button class="mobile-menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Map -->
+        <div id="map">
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Loading UV data...</p>
+            </div>
+        </div>
+
+        <!-- Map Legend -->
+        <div class="map-legend">
+            <div class="legend-title">UV Index</div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #AB47BC"></div>
+                <span>Extreme (≥11)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #EF5350"></div>
+                <span>Very High (8-10)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #FFB74D"></div>
+                <span>High (6-7)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #FFF59D"></div>
+                <span>Moderate (3-5)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #C5E1A5"></div>
+                <span>Low (0-2)</span>
+            </div>
+        </div>
+
+        <!-- Onboarding Tooltip -->
+        <div class="onboarding-tooltip" id="onboarding">
+            <div class="tooltip-title">Welcome to the UV Fade Visualiser</div>
+            <div class="tooltip-text">
+                Click anywhere on the map or search for a city to see how UV radiation affects colour stability in that location. Compare EPDM fading vs Rosehill TPV® performance.
+            </div>
+            <button class="tooltip-btn" onclick="closeOnboarding()">Got it!</button>
+        </div>
+
+        <!-- Location Drawer -->
+        <div class="drawer">
+            <div class="drawer-header">
+                <h2>UV Fade Visualiser</h2>
+                <p>Discover colour stability by location</p>
+            </div>
+
+            <div class="drawer-content">
+                <!-- City Search -->
+                <div class="section">
+                    <div class="section-title">📍 Search Location</div>
+                    <div class="city-search">
+                        <input
+                            type="text"
+                            class="city-search-input"
+                            id="citySearch"
+                            placeholder="Type a city name..."
+                            autocomplete="off"
+                        >
+                        <div class="city-dropdown" id="cityDropdown"></div>
+                    </div>
+                </div>
+
+                <!-- Location Info -->
+                <div class="section" id="locationSection" style="display: none;">
+                    <div class="section-title">📌 Selected Location</div>
+                    <div class="location-info">
+                        <div class="location-name" id="locationName">Select a location</div>
+                        <div class="location-coords" id="locationCoords"></div>
+                        <div id="uvBadge"></div>
+                        <div class="uv-value" id="uvValue"></div>
+                    </div>
+
+                    <!-- Duration Toggle -->
+                    <div class="duration-toggle">
+                        <button class="duration-btn active" data-duration="1">12 Months</button>
+                        <button class="duration-btn" data-duration="3">3 Years</button>
+                    </div>
+                </div>
+
+                <!-- Colour Picker -->
+                <div class="section" id="colourSection" style="display: none;">
+                    <div class="section-title">🎨 Select TPV<sup>®</sup> Colour</div>
+                    <div class="color-grid" id="colourGrid"></div>
+                </div>
+
+                <!-- Fade Comparison -->
+                <div class="section" id="comparisonSection" style="display: none;">
+                    <div class="section-title">⚡ Fade Comparison</div>
+                    <div class="fade-comparison">
+                        <div class="fade-box">
+                            <div class="fade-box-title">Standard EPDM</div>
+                            <div class="fade-swatch" id="epdmSwatch"></div>
+                            <div class="fade-label">Colour Loss: <span class="fade-value" id="epdmLoss">--</span></div>
+                        </div>
+                        <div class="fade-box">
+                            <div class="fade-box-title">Rosehill TPV<sup>®</sup></div>
+                            <div class="fade-swatch" id="tpvSwatch"></div>
+                            <div class="fade-label">Colour Loss: <span class="fade-value" id="tpvLoss" style="color: #28a745;">~0%</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CTA -->
+                <div class="section" id="ctaSection" style="display: none;">
+                    <a href="../contact.html" class="cta-button" onclick="trackEvent('contact_cta_click')">Request Sample</a>
+                    <button class="methodology-btn" onclick="openMethodologyModal()">How This Works</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Methodology Modal -->
+    <div class="modal" id="methodologyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Methodology & Data Sources</h3>
+                <button class="modal-close" onclick="closeMethodologyModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <p>Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // TPV Colour Palette
+        const TPV_COLOURS = [
+            { name: 'Beige', code: 'RH30', hex: '#E4C4AA' },
+            { name: 'Cream', code: 'RH31', hex: '#E8E3D8' },
+            { name: 'Bright Yellow', code: 'RH41', hex: '#FFD833' },
+            { name: 'Mustard', code: 'RH40', hex: '#E5A144' },
+            { name: 'Orange', code: 'RH50', hex: '#F15B32' },
+            { name: 'Standard Red', code: 'RH01', hex: '#A5362F' },
+            { name: 'Bright Red', code: 'RH02', hex: '#E21F2F' },
+            { name: 'Funky Pink', code: 'RH90', hex: '#E8457E' },
+            { name: 'Purple', code: 'RH21', hex: '#493D8C' },
+            { name: 'Standard Blue', code: 'RH20', hex: '#0075BC' },
+            { name: 'Light Blue', code: 'RH22', hex: '#47AFE3' },
+            { name: 'Azure', code: 'RH23', hex: '#039DC4' },
+            { name: 'Turquoise', code: 'RH26', hex: '#00A6A3' },
+            { name: 'Dark Green', code: 'RH12', hex: '#006C55' },
+            { name: 'Standard Green', code: 'RH10', hex: '#609B63' },
+            { name: 'Bright Green', code: 'RH11', hex: '#3BB44A' },
+            { name: 'Brown', code: 'RH32', hex: '#8B5F3C' },
+            { name: 'Pale Grey', code: 'RH65', hex: '#D9D9D6' },
+            { name: 'Light Grey', code: 'RH61', hex: '#939598' },
+            { name: 'Dark Grey', code: 'RH60', hex: '#59595B' },
+            { name: 'Black', code: 'RH70', hex: '#231F20' }
+        ];
+
+        // Fade Model Constants
+        const FADE_K = 2.4;
+        const FADE_LMAX = 0.85;
+        const TPV_LOSS_FRACTION = 0.0;
+
+        // Global State
+        let map;
+        let cities = [];
+        let uvLookupData = {};
+        let contentData = {};
+        let selectedLocation = null;
+        let selectedColour = TPV_COLOURS[9]; // Default to Standard Blue
+        let selectedDuration = 1;
+
+        // Initialise
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeMap();
+            loadData();
+            initialiseColourGrid();
+            initializeDurationToggle();
+            initializeCitySearch();
+            showOnboarding();
+        });
+
+        // Initialise Map
+        function initializeMap() {
+            // Configuration
+            const USE_UV_OVERLAY = true; // Supabase data uploaded and ready
+            const SUPABASE_URL = 'https://okakomwfikxmwllvliva.supabase.co';
+
+            map = new maplibregl.Map({
+                container: 'map',
+                maxZoom: 6, // Limit zoom to match UV tile availability (0-6)
+                style: {
+                    version: 8,
+                    sources: {
+                        // Dark basemap
+                        'carto-dark': {
+                            type: 'raster',
+                            tiles: [
+                                'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+                                'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+                                'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+                                'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+                            ],
+                            tileSize: 256,
+                            attribution: '© OpenStreetMap contributors, © CARTO'
+                        },
+                        // UV Index overlay (from Supabase Storage)
+                        'uv-overlay': {
+                            type: 'raster',
+                            tiles: [`http://localhost:8001/{z}/{x}/{y}.png?v=3`],
+                            tileSize: 256,
+                            minzoom: 0,
+                            maxzoom: 6,
+                            attribution: 'UV data: NASA Earth Observations'
+                        }
+                    },
+                    layers: [
+                        // Base layer - dark map
+                        {
+                            id: 'carto-dark',
+                            type: 'raster',
+                            source: 'carto-dark',
+                            paint: {
+                                'raster-opacity': 0.8
+                            }
+                        },
+                        // UV overlay layer - color-coded UV Index
+                        {
+                            id: 'uv-overlay',
+                            type: 'raster',
+                            source: 'uv-overlay',
+                            paint: {
+                                'raster-opacity': USE_UV_OVERLAY ? 0.7 : 0 // Hide until data uploaded
+                            },
+                            minzoom: 0,
+                            maxzoom: 6
+                        }
+                    ]
+                },
+                center: [0, 20],
+                zoom: 2
+            });
+
+            map.on('load', () => {
+                document.getElementById('loading').style.display = 'none';
+
+                // Log status
+                if (USE_UV_OVERLAY) {
+                    console.log('✓ UV overlay enabled - loading from Supabase');
+                } else {
+                    console.log('ℹ️ UV overlay disabled - set USE_UV_OVERLAY = true after data upload');
+                }
+            });
+
+            // Handle tile loading errors gracefully
+            map.on('error', (e) => {
+                if (e.error && e.error.message && e.error.message.includes('uv-data')) {
+                    console.warn('UV tiles not available yet - run data pipeline first');
+                }
+            });
+
+            map.on('click', handleMapClick);
+        }
+
+        // Load Data Files
+        async function loadData() {
+            // Configuration - switch to Supabase after data upload
+            const USE_SUPABASE_DATA = true; // Supabase data uploaded and ready
+            const SUPABASE_URL = 'https://okakomwfikxmwllvliva.supabase.co';
+
+            // Data URLs
+            const lookupUrl = USE_SUPABASE_DATA ?
+                `${SUPABASE_URL}/storage/v1/object/public/uv-data/data/uv_lookup_full.json?v=2` :
+                '../data/uv_sample_lookup.json';
+            const citiesUrl = USE_SUPABASE_DATA ?
+                `${SUPABASE_URL}/storage/v1/object/public/uv-data/data/cities.json?v=2` :
+                '../data/cities.json';
+
+            try {
+                console.log(`Loading data from: ${USE_SUPABASE_DATA ? 'Supabase' : 'local files'}`);
+
+                // Load lookup data (required)
+                const lookupRes = await fetch(lookupUrl);
+                if (!lookupRes.ok) {
+                    throw new Error('Failed to fetch UV lookup data');
+                }
+                uvLookupData = await lookupRes.json(); // Keep full object with meta + grid
+
+                // Load cities data (optional)
+                try {
+                    const citiesRes = await fetch(citiesUrl);
+                    if (citiesRes.ok) {
+                        cities = await citiesRes.json();
+                        console.log(`✓ Cities data loaded: ${cities.length} cities`);
+                    } else {
+                        console.log('Cities data not available - search disabled');
+                        cities = [];
+                    }
+                } catch (e) {
+                    console.log('Cities data not available - search disabled');
+                    cities = [];
+                }
+
+                // Try to load content data if available (optional)
+                try {
+                    const contentUrl = USE_SUPABASE_DATA ?
+                        `${SUPABASE_URL}/storage/v1/object/public/uv-data/data/uv_copy.json` :
+                        '../data/uv_copy.json';
+                    const contentRes = await fetch(contentUrl);
+                    if (contentRes.ok) {
+                        contentData = await contentRes.json();
+                    }
+                } catch (e) {
+                    console.log('Content data not available (methodology modal will use fallback)');
+                }
+
+                const gridSize = uvLookupData.grid ? (uvLookupData.meta.rows * uvLookupData.meta.cols) : 0;
+                console.log(`✓ UV lookup data loaded: ${gridSize.toLocaleString()} grid points`);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                console.warn('Using fallback estimation mode');
+            }
+        }
+
+        // Initialise Colour Grid
+        function initialiseColourGrid() {
+            const grid = document.getElementById('colourGrid');
+            TPV_COLOURS.forEach((colour, index) => {
+                const swatch = document.createElement('div');
+                swatch.className = 'colour-swatch' + (index === 9 ? ' selected' : '');
+                swatch.style.background = colour.hex;
+                swatch.title = `${colour.name} (${colour.code})`;
+                swatch.onclick = () => selectColour(colour, swatch);
+                grid.appendChild(swatch);
+            });
+        }
+
+        // Select Colour
+        function selectColour(colour, element) {
+            document.querySelectorAll('.colour-swatch').forEach(s => s.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedColour = colour;
+            if (selectedLocation) {
+                updateFadeComparison();
+            }
+            trackEvent('colour_change', { colour: colour.name });
+        }
+
+        // Initialize Duration Toggle
+        function initializeDurationToggle() {
+            document.querySelectorAll('.duration-btn').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    selectedDuration = parseInt(btn.dataset.duration);
+                    if (selectedLocation) {
+                        updateFadeComparison();
+                    }
+                    trackEvent('duration_toggle', { duration: selectedDuration });
+                };
+            });
+        }
+
+        // Initialize City Search
+        function initializeCitySearch() {
+            const input = document.getElementById('citySearch');
+            const dropdown = document.getElementById('cityDropdown');
+
+            input.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                if (query.length < 2) {
+                    dropdown.classList.remove('active');
+                    return;
+                }
+
+                const filtered = cities.filter(city =>
+                    city.city.toLowerCase().includes(query) ||
+                    city.country.toLowerCase().includes(query)
+                );
+
+                if (filtered.length > 0) {
+                    dropdown.innerHTML = filtered.map(city => `
+                        <div class="city-option" onclick="selectCity(${city.lat}, ${city.lon}, '${city.city}', '${city.country}')">
+                            <strong>${city.city}</strong>
+                            <small>${city.country} • UV Index: ${city.uviAnnualMean}</small>
+                        </div>
+                    `).join('');
+                    dropdown.classList.add('active');
+                } else {
+                    dropdown.classList.remove('active');
+                }
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.city-search')) {
+                    dropdown.classList.remove('active');
+                }
+            });
+        }
+
+        // Select City from Search
+        function selectCity(lat, lon, city, country) {
+            document.getElementById('cityDropdown').classList.remove('active');
+            document.getElementById('citySearch').value = `${city}, ${country}`;
+            map.flyTo({ center: [lon, lat], zoom: 5 });
+            handleLocationSelect(lat, lon, `${city}, ${country}`);
+            trackEvent('location_select', { city, country });
+        }
+
+        // Handle Map Click
+        function handleMapClick(e) {
+            const { lat, lng } = e.lngLat;
+            handleLocationSelect(lat, lng);
+            trackEvent('map_click', { lat, lng });
+        }
+
+        // Handle Location Selection
+        function handleLocationSelect(lat, lon, locationName = null) {
+            const uvData = lookupUVData(lat, lon);
+
+            selectedLocation = {
+                lat,
+                lon,
+                name: locationName || `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+                ...uvData
+            };
+
+            updateLocationDisplay();
+            showAllSections();
+            updateFadeComparison();
+        }
+
+        // Lookup UV Data
+        function lookupUVData(lat, lon) {
+            // Check if grid data is available
+            if (!uvLookupData || !uvLookupData.grid || !uvLookupData.meta) {
+                return fallbackEstimate(lat);
+            }
+
+            // Round to nearest 0.5 degree
+            const resolution = uvLookupData.meta.resolution_deg;
+            const roundedLat = Math.round(lat * 2) / 2;
+            const roundedLon = Math.round(lon * 2) / 2;
+
+            // Convert to grid indices
+            const latIndex = Math.round((90 - roundedLat) / resolution);
+            const lonIndex = Math.round((roundedLon + 180) / resolution);
+
+            // Bounds check
+            if (latIndex >= 0 && latIndex < uvLookupData.meta.rows &&
+                lonIndex >= 0 && lonIndex < uvLookupData.meta.cols) {
+                const uvi = uvLookupData.grid[latIndex][lonIndex];
+
+                if (uvi > 0) {
+                    return {
+                        uviAnnualMean: uvi,
+                        uviPeak: uvi * 1.15,
+                        category: getUVCategory(uvi)
+                    };
+                }
+            }
+
+            return fallbackEstimate(lat);
+        }
+
+        // Get UV Category
+        function getUVCategory(uvi) {
+            if (uvi < 3) return 'Low';
+            if (uvi < 6) return 'Moderate';
+            if (uvi < 8) return 'High';
+            if (uvi < 11) return 'Very High';
+            return 'Extreme';
+        }
+
+        // Fallback UV Estimate
+        function fallbackEstimate(lat) {
+            const absLat = Math.abs(lat);
+            let uvi, category;
+
+            if (absLat < 23) {
+                uvi = 10.5; category = 'Extreme';
+            } else if (absLat < 35) {
+                uvi = 8.5; category = 'Very High';
+            } else if (absLat < 45) {
+                uvi = 6.5; category = 'High';
+            } else if (absLat < 60) {
+                uvi = 4.5; category = 'Moderate';
+            } else {
+                uvi = 2.5; category = 'Low';
+            }
+
+            return {
+                uviAnnualMean: uvi,
+                uviPeak: uvi * 1.15,
+                category
+            };
+        }
+
+        // Update Location Display
+        function updateLocationDisplay() {
+            if (!selectedLocation) return;
+
+            document.getElementById('locationName').textContent = selectedLocation.name;
+            document.getElementById('locationCoords').textContent =
+                `${selectedLocation.lat.toFixed(4)}°, ${selectedLocation.lon.toFixed(4)}°`;
+            document.getElementById('uvValue').textContent =
+                `UV Index: ${selectedLocation.uviAnnualMean.toFixed(1)}`;
+
+            const badgeClass = selectedLocation.category.toLowerCase().replace(' ', '-');
+            document.getElementById('uvBadge').innerHTML =
+                `<span class="uv-badge ${badgeClass}">${selectedLocation.category}</span>`;
+        }
+
+        // Show All Sections
+        function showAllSections() {
+            document.getElementById('locationSection').style.display = 'block';
+            document.getElementById('colourSection').style.display = 'block';
+            document.getElementById('comparisonSection').style.display = 'block';
+            document.getElementById('ctaSection').style.display = 'block';
+        }
+
+        // Calculate Fade Loss
+        function calculateFadeLoss(uvi, duration) {
+            const normalisedUVI = Math.min(uvi / 16, 1);
+            const loss = FADE_LMAX * (1 - Math.exp(-FADE_K * normalisedUVI * duration));
+            return loss;
+        }
+
+        // Update Fade Comparison
+        function updateFadeComparison() {
+            if (!selectedLocation || !selectedColour) return;
+
+            const epdmLoss = calculateFadeLoss(selectedLocation.uviAnnualMean, selectedDuration);
+            const tpvLoss = epdmLoss * TPV_LOSS_FRACTION;
+
+            // Update EPDM swatch with faded colour
+            const fadedEpdmColour = applyFade(selectedColour.hex, epdmLoss);
+            document.getElementById('epdmSwatch').style.background = fadedEpdmColour;
+            document.getElementById('epdmLoss').textContent = `${(epdmLoss * 100).toFixed(0)}%`;
+
+            // Update TPV swatch (minimal fade)
+            document.getElementById('tpvSwatch').style.background = selectedColour.hex;
+        }
+
+        // Apply Fade to Colour (OKLCH with HSL fallback)
+        function applyFade(hex, lossFraction) {
+            if (lossFraction === 0) return hex;
+
+            // Convert hex to RGB
+            const r = parseInt(hex.slice(1, 3), 16) / 255;
+            const g = parseInt(hex.slice(3, 5), 16) / 255;
+            const b = parseInt(hex.slice(5, 7), 16) / 255;
+
+            // Simple HSL approximation for fading (desaturate and lighten)
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            let h, s, l = (max + min) / 2;
+
+            if (max === min) {
+                h = s = 0;
+            } else {
+                const d = max - min;
+                s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+
+                switch (max) {
+                    case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+                    case g: h = ((b - r) / d + 2) / 6; break;
+                    case b: h = ((r - g) / d + 4) / 6; break;
+                }
+            }
+
+            // Apply fade: reduce saturation, increase lightness
+            s *= (1 - lossFraction * 0.7);
+            l = Math.min(1, l + lossFraction * 0.15);
+
+            // Convert back to RGB
+            const hue2rgb = (p, q, t) => {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1/6) return p + (q - p) * 6 * t;
+                if (t < 1/2) return q;
+                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+            };
+
+            let rOut, gOut, bOut;
+            if (s === 0) {
+                rOut = gOut = bOut = l;
+            } else {
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                rOut = hue2rgb(p, q, h + 1/3);
+                gOut = hue2rgb(p, q, h);
+                bOut = hue2rgb(p, q, h - 1/3);
+            }
+
+            // Convert to hex
+            const toHex = (n) => {
+                const hex = Math.round(n * 255).toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            };
+
+            return `#${toHex(rOut)}${toHex(gOut)}${toHex(bOut)}`;
+        }
+
+        // Onboarding
+        function showOnboarding() {
+            const hasSeenOnboarding = localStorage.getItem('uvVisualiserOnboarding');
+            if (!hasSeenOnboarding) {
+                setTimeout(() => {
+                    document.getElementById('onboarding').classList.add('active');
+                }, 1500);
+            }
+        }
+
+        function closeOnboarding() {
+            document.getElementById('onboarding').classList.remove('active');
+            localStorage.setItem('uvVisualiserOnboarding', 'true');
+        }
+
+        // Methodology Modal
+        async function openMethodologyModal() {
+            document.getElementById('methodologyModal').classList.add('active');
+
+            if (contentData.methodology) {
+                const modalBody = document.getElementById('modalBody');
+                modalBody.innerHTML = `
+                    ${contentData.methodology.sections.map(section => `
+                        <div class="modal-section">
+                            <h4>${section.heading}</h4>
+                            <p>${section.content}</p>
+                        </div>
+                    `).join('')}
+
+                    <div class="disclaimer-box">
+                        <p><strong>Disclaimer:</strong> ${contentData.disclaimer.text}</p>
+                    </div>
+
+                    <div class="modal-section">
+                        <h4>Data Sources</h4>
+                        <ul class="citation-list">
+                            ${contentData.citations.map(cite => `
+                                <li><a href="${cite.url}" target="_blank">${cite.label}</a></li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+
+        function closeMethodologyModal() {
+            document.getElementById('methodologyModal').classList.remove('active');
+        }
+
+        // Close modal on outside click
+        document.getElementById('methodologyModal').addEventListener('click', (e) => {
+            if (e.target.id === 'methodologyModal') {
+                closeMethodologyModal();
+            }
+        });
+
+        // Analytics Tracking
+        function trackEvent(eventName, eventData = {}) {
+            if (window.dataLayer) {
+                window.dataLayer.push({
+                    event: eventName,
+                    ...eventData
+                });
+            }
+            console.log('Event tracked:', eventName, eventData);
+        }
+
+        // Mobile Menu Toggle
+        document.querySelector('.mobile-menu-toggle').addEventListener('click', function() {
+            this.classList.toggle('active');
+        });
+    </script>
+</body>
+</html>
