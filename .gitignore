@@ -39,3 +39,8 @@ npm-debug.log*
 
 # Generated files
 sitemap.xml.gz
+
+# UV data and processing output
+output/
+geonames_data/
+data/
