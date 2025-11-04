@@ -635,8 +635,3 @@ function generateFluxPrompt(colors) {
            `small granular texture, realistic lighting, professional photography quality.`;
   }
 }
-
-function generateSimpleMask() {
-  // Return a 1x1 white pixel PNG (tells FLUX to fill entire image)
-  return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';
-}
