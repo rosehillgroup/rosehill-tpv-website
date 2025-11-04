@@ -126,17 +126,33 @@ export default async (request) => {
       imageBase64 = `data:image/jpeg;base64,${Buffer.from(imageBuffer).toString('base64')}`;
     }
 
-    // Step 2: Generate TPV texture prompt
+    // Step 2: Generate mask using SAM 2 (if not provided)
+    let maskBase64;
+    if (maskUrl) {
+      console.log('[TEXTURE] Using provided mask URL...');
+      const maskResponse = await fetch(maskUrl);
+      if (!maskResponse.ok) {
+        throw new Error(`Failed to download mask: ${maskResponse.statusText}`);
+      }
+      const maskBuffer = await maskResponse.arrayBuffer();
+      maskBase64 = `data:image/png;base64,${Buffer.from(maskBuffer).toString('base64')}`;
+    } else {
+      console.log('[TEXTURE] Generating mask with SAM 2...');
+      maskBase64 = await generateGroundMask(imageBase64);
+    }
+
+    // Step 3: Generate TPV texture prompt
     const prompt = generateTexturePrompt(colorCode, colorHex);
     console.log('[TEXTURE] Generated prompt:', prompt);
 
-    // Step 3: Call Replicate FLUX Fill Pro for texture generation
-    console.log('[TEXTURE] Calling FLUX Fill Pro API...');
+    // Step 4: Call Replicate FLUX Fill Pro for texture generation
+    console.log('[TEXTURE] Calling FLUX Fill Pro API with mask...');
     const output = await replicate.run(
       "black-forest-labs/flux-fill-pro",
       {
         input: {
           image: imageBase64,
+          mask: maskBase64,
           prompt: prompt,
           guidance: 3.5,
           num_outputs: 1,
@@ -218,6 +234,58 @@ export default async (request) => {
     );
   }
 };
+
+/**
+ * Generate ground surface mask using SAM 2
+ * @param {string} imageBase64 - Base64 encoded image data URL
+ * @returns {Promise<string>} Base64 encoded mask data URL (white=surface, black=background)
+ */
+async function generateGroundMask(imageBase64) {
+  try {
+    console.log('[MASK] Calling SAM 2 for automatic segmentation...');
+
+    // Use SAM 2 with automatic mask generation
+    // We'll use point prompts at the bottom-center of the image (likely ground)
+    const output = await replicate.run(
+      "meta/sam-2",
+      {
+        input: {
+          image: imageBase64,
+          // Point at bottom-center (normalized coordinates: x=0.5, y=0.8)
+          // This assumes ground/surface is typically in the lower portion
+          point_coords: "[[0.5, 0.8]]",
+          point_labels: "[1]",  // 1 = foreground
+          multimask_output: false
+        }
+      }
+    );
+
+    console.log('[MASK] SAM 2 output:', output);
+
+    // SAM 2 returns mask as a URL
+    const maskUrl = Array.isArray(output?.masks) ? output.masks[0] : output;
+
+    if (!maskUrl) {
+      throw new Error('No mask returned from SAM 2');
+    }
+
+    // Download the mask
+    const maskResponse = await fetch(maskUrl);
+    if (!maskResponse.ok) {
+      throw new Error(`Failed to download mask: ${maskResponse.statusText}`);
+    }
+
+    const maskBuffer = await maskResponse.arrayBuffer();
+    const maskBase64 = `data:image/png;base64,${Buffer.from(maskBuffer).toString('base64')}`;
+
+    console.log('[MASK] Mask generated successfully');
+    return maskBase64;
+
+  } catch (error) {
+    console.error('[MASK] SAM 2 error:', error);
+    throw new Error(`Failed to generate mask: ${error.message}`);
+  }
+}
 
 /**
  * Generate FLUX Fill Pro prompt for TPV texture generation
