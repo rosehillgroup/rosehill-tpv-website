@@ -115,10 +115,16 @@ export async function generateSAM2Mask(imageUrl, points = null, boxes = null) {
   // Run SAM 2 prediction
   console.log('[SAM2] Calling Replicate API with input:', JSON.stringify(input, null, 2));
 
-  const output = await replicate.run(
-    "meta/sam-2:1e2b2fd4c6d89e03a1c3084e7945cef14e78f51c7d6e4ef24e64e410948af8db",
-    { input }
-  );
+  let output;
+  try {
+    output = await replicate.run(
+      "meta/sam-2:1e2b2fd4c6d89e03a1c3084e7945cef14e78f51c7d6e4ef24e64e410948af8db",
+      { input }
+    );
+  } catch (replicateError) {
+    console.error('[SAM2] Replicate API error:', replicateError);
+    throw new Error(`Replicate SAM 2 failed: ${replicateError.message}`);
+  }
 
   console.log('[SAM2] Prediction complete:', JSON.stringify(output, null, 2));
 

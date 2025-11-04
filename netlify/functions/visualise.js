@@ -242,18 +242,10 @@ async function runModeBPipeline({ imageData, maskData, colors, useEnhancedPrompt
       console.log('[MODE B PIPELINE] SAM 2 mask generated');
     } catch (sam2Error) {
       console.error('[MODE B PIPELINE] SAM 2 failed:', sam2Error);
-
-      finalMaskData = generateSimpleMask();
-
-      pipeline.mask = {
-        method: 'simple',
-        fallback: true,
-        error: sam2Error.message
-      };
+      throw new Error(`Automatic segmentation failed: ${sam2Error.message}. Please try a different image or contact support.`);
     }
   } else if (!finalMaskData) {
-    finalMaskData = generateSimpleMask();
-    pipeline.mask = { method: 'simple' };
+    throw new Error('No mask provided and auto-segmentation is disabled. Please enable auto-segmentation.');
   }
 
   // Step 2: Generate enhanced prompt (if requested)
