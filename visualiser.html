@@ -1743,12 +1743,13 @@
             console.log('[MODE B] Options:', { useEnhancedPrompt, useAutoMask, usePaletteClamp, clampStrength });
 
             // Call orchestration API
+            // Always send null for maskData in Mode B - SAM 2 will handle segmentation
             const response = await fetch('/.netlify/functions/visualise', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     imageData,
-                    maskData: useAutoMask ? null : maskData,
+                    maskData: null,  // Always null - let SAM 2 handle it
                     colors: selectedColors,
                     mode: 'modeB',
                     useEnhancedPrompt,
