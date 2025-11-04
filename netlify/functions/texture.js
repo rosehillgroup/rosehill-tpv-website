@@ -241,50 +241,17 @@ export default async (request) => {
  * @returns {Promise<string>} Base64 encoded mask data URL (white=surface, black=background)
  */
 async function generateGroundMask(imageBase64) {
-  try {
-    console.log('[MASK] Calling SAM 2 for automatic segmentation...');
+  // QUICK FIX: Return a simple white mask covering the entire image
+  // This allows FLUX Fill Pro to work without requiring manual masking
+  // TODO Week 3: Replace with SAM 2 auto-segmentation + manual polygon/brush tools
 
-    // Use SAM 2 with automatic mask generation
-    // We'll use point prompts at the bottom-center of the image (likely ground)
-    const output = await replicate.run(
-      "meta/sam-2",
-      {
-        input: {
-          image: imageBase64,
-          // Point at bottom-center (normalized coordinates: x=0.5, y=0.8)
-          // This assumes ground/surface is typically in the lower portion
-          point_coords: "[[0.5, 0.8]]",
-          point_labels: "[1]",  // 1 = foreground
-          multimask_output: false
-        }
-      }
-    );
+  console.log('[MASK] Using simple full-image white mask');
 
-    console.log('[MASK] SAM 2 output:', output);
+  // Return a 1x1 white pixel PNG that FLUX will scale to match the image
+  // This tells FLUX to fill/repaint the entire image
+  const whitePixelPng = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';
 
-    // SAM 2 returns mask as a URL
-    const maskUrl = Array.isArray(output?.masks) ? output.masks[0] : output;
-
-    if (!maskUrl) {
-      throw new Error('No mask returned from SAM 2');
-    }
-
-    // Download the mask
-    const maskResponse = await fetch(maskUrl);
-    if (!maskResponse.ok) {
-      throw new Error(`Failed to download mask: ${maskResponse.statusText}`);
-    }
-
-    const maskBuffer = await maskResponse.arrayBuffer();
-    const maskBase64 = `data:image/png;base64,${Buffer.from(maskBuffer).toString('base64')}`;
-
-    console.log('[MASK] Mask generated successfully');
-    return maskBase64;
-
-  } catch (error) {
-    console.error('[MASK] SAM 2 error:', error);
-    throw new Error(`Failed to generate mask: ${error.message}`);
-  }
+  return whitePixelPng;
 }
 
 /**
