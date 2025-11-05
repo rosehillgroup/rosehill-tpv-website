@@ -1,0 +1,202 @@
+{
+  "version": "1.0",
+  "last_updated": "2025-11-05",
+  "units": "metres",
+  "defaults": {
+    "min_feature_mm": 150,
+    "min_radius_mm": 600,
+    "recommended_min_size_m": 0.4,
+    "safe_scale_range": [
+      0.6,
+      2.5
+    ],
+    "colours": "single"
+  },
+  "motifs": [
+    {
+      "id": "marine/fish-simple",
+      "file": "marine/fish-simple.svg",
+      "tags": [
+        "fish",
+        "animal",
+        "marine"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "marine/fish-rounded",
+      "file": "marine/fish-rounded.svg",
+      "tags": [
+        "fish",
+        "animal",
+        "marine"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "marine/starfish",
+      "file": "marine/starfish.svg",
+      "tags": [
+        "starfish",
+        "marine"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "marine/shell",
+      "file": "marine/shell.svg",
+      "tags": [
+        "shell",
+        "marine"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "marine/seaweed-clump",
+      "file": "marine/seaweed-clump.svg",
+      "tags": [
+        "seaweed",
+        "marine"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "marine/wave-arc",
+      "file": "marine/wave-arc.svg",
+      "tags": [
+        "wave",
+        "band",
+        "marine"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "shapes/capsule-large",
+      "file": "shapes/capsule-large.svg",
+      "tags": [
+        "shape",
+        "capsule"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "shapes/superellipse-1",
+      "file": "shapes/superellipse-1.svg",
+      "tags": [
+        "shape",
+        "rounded"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "shapes/circle-large",
+      "file": "shapes/circle-large.svg",
+      "tags": [
+        "shape",
+        "circle"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "shapes/rounded-rectangle",
+      "file": "shapes/rounded-rectangle.svg",
+      "tags": [
+        "shape",
+        "rounded"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "play/hopscotch-10",
+      "file": "play/hopscotch-10.svg",
+      "tags": [
+        "play",
+        "numbers"
+      ],
+      "complexity": "medium",
+      "colours": "multi:2"
+    },
+    {
+      "id": "play/number-giant-1",
+      "file": "play/number-giant-1.svg",
+      "tags": [
+        "number",
+        "play"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "play/letter-giant-a",
+      "file": "play/letter-giant-a.svg",
+      "tags": [
+        "letter",
+        "play"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "nature/leaf-simple",
+      "file": "nature/leaf-simple.svg",
+      "tags": [
+        "leaf",
+        "nature"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "nature/flower-5",
+      "file": "nature/flower-5.svg",
+      "tags": [
+        "flower",
+        "nature"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "nature/tree-rounded",
+      "file": "nature/tree-rounded.svg",
+      "tags": [
+        "tree",
+        "nature"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "geo/star-5-rounded",
+      "file": "geo/star-5-rounded.svg",
+      "tags": [
+        "star",
+        "shape"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "geo/arc-band",
+      "file": "geo/arc-band.svg",
+      "tags": [
+        "band",
+        "arc",
+        "shape"
+      ],
+      "complexity": "low"
+    },
+    {
+      "id": "geo/spiral-wide",
+      "file": "geo/spiral-wide.svg",
+      "tags": [
+        "spiral",
+        "shape"
+      ],
+      "complexity": "medium"
+    },
+    {
+      "id": "animals/bird-silhouette",
+      "file": "animals/bird-silhouette.svg",
+      "tags": [
+        "bird",
+        "animal"
+      ],
+      "complexity": "low"
+    }
+  ]
+}
