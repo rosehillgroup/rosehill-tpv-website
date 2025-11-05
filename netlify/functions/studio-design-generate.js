@@ -153,9 +153,28 @@ async function generateVariant(spec, variantNumber, seed) {
   const regions = combineGrammars(grammar, surface, seed);
   console.log(`[VARIANT ${variantNumber}] Generated ${regions.length} regions`);
 
+  // Step 1.5: Create flow field for motif alignment (VCE)
+  console.log(`[VARIANT ${variantNumber}] Creating flow field...`);
+  const flowField = createFlowField(seed + 999, 0.5);
+
   // Step 2: Assign colors to regions
   console.log(`[VARIANT ${variantNumber}] Assigning colors...`);
   const coloredRegions = assignColors(regions, palette);
+
+  // Step 2.5: Place motifs using VCE
+  console.log(`[VARIANT ${variantNumber}] Placing motifs...`);
+  const theme = spec.meta?.theme || 'generic';
+  const motifSpecs = spec.motifs || getDefaultMotifs(theme, surface);
+  const motifs = placeMotifs(
+    motifSpecs,
+    surface,
+    flowField,
+    coloredRegions,
+    palette,
+    rules || {},
+    seed + 1111
+  );
+  console.log(`[VARIANT ${variantNumber}] Placed ${motifs.length} motifs`);
 
   // Step 3: Check constraints
   console.log(`[VARIANT ${variantNumber}] Checking constraints...`);
@@ -186,6 +205,24 @@ async function generateVariant(spec, variantNumber, seed) {
 
   const exports = await generateAllExports(coloredRegions, surface, metadata, bom, palette);
 
+  // Step 6.5: Generate VCE paint metadata for validation (VCE)
+  console.log(`[VARIANT ${variantNumber}] Generating VCE paint metadata...`);
+  const { metadata: paintMetadata } = paintSVG(surface, coloredRegions, motifs, palette, { edgeSoftening: false });
+
+  // Log coverage statistics
+  console.log(`[VARIANT ${variantNumber}] VCE Coverage Statistics:`);
+  for (const [role, percent] of Object.entries(paintMetadata.coverage)) {
+    console.log(`  ${role}: ${percent.toFixed(1)}%`);
+  }
+
+  // Validate design against VCE constraints
+  const validation = validateDesign(paintMetadata, rules || {});
+  if (!validation.valid) {
+    console.warn(`[VARIANT ${variantNumber}] VCE Validation warnings:`, validation.violations);
+  } else {
+    console.log(`[VARIANT ${variantNumber}] VCE Validation: PASSED ✓`);
+  }
+
   // Step 7: Return variant data
   return {
     variant: variantNumber,
@@ -196,6 +233,13 @@ async function generateVariant(spec, variantNumber, seed) {
     pngUrl: exports.pngUrl,
     dxfUrl: exports.dxfUrl,
     pdfUrl: exports.pdfUrl,
-    metadata
+    metadata: {
+      ...metadata,
+      vce: {
+        coverage: paintMetadata.coverage,
+        motifCount: motifs.length,
+        validation: validation
+      }
+    }
   };
 }
