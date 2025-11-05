@@ -170,11 +170,16 @@ export function assignColors(regions, palette) {
     return regions;
   }
 
-  // Define piece caps per role
+  // Define piece caps per role - expanded for 6-color system
   const PIECE_CAPS = {
     base: 12,
-    accent: 30,
-    highlight: 40
+    accent: 30,      // Legacy 3-color role
+    accent1: 25,
+    accent2: 30,
+    accent3: 35,
+    highlight: 40,    // Legacy 3-color role
+    highlight1: 35,
+    highlight2: 40
   };
 
   // Calculate total area

@@ -58,30 +58,38 @@ export function paintSVG(surface, shapes, motifs, palette, options = {}) {
 
   console.log(`[PAINTER] Base field: ${baseColor} (full surface)`);
 
-  // === LAYER 2: ACCENT SHAPES (Bands, Clusters, Islands) ===
-  const accentShapes = shapes.filter(s => s.colorRole === 'accent');
-  if (accentShapes.length > 0) {
-    svgParts.push(`<g id="layer-accent">`);
-    for (const shape of accentShapes) {
-      const pathData = pointsToPathData(shape.points);
-      const filter = edgeSoftening ? ' filter="url(#soften-edge)"' : '';
-      svgParts.push(`<path d="${pathData}" fill="${shape.color}"${filter} />`);
+  // === LAYER 2: ACCENT SHAPES (All accent roles) ===
+  // Render accent layers in order: accent, accent1, accent2, accent3
+  const accentRoles = ['accent', 'accent1', 'accent2', 'accent3'];
+  for (const role of accentRoles) {
+    const roleShapes = shapes.filter(s => s.colorRole === role);
+    if (roleShapes.length > 0) {
+      svgParts.push(`<g id="layer-${role}">`);
+      for (const shape of roleShapes) {
+        const pathData = pointsToPathData(shape.points);
+        const filter = edgeSoftening ? ' filter="url(#soften-edge)"' : '';
+        svgParts.push(`<path d="${pathData}" fill="${shape.color}"${filter} />`);
+      }
+      svgParts.push(`</g>`);
+      console.log(`[PAINTER] ${role} layer: ${roleShapes.length} shapes`);
     }
-    svgParts.push(`</g>`);
-    console.log(`[PAINTER] Accent layer: ${accentShapes.length} shapes`);
   }
 
-  // === LAYER 3: HIGHLIGHT SHAPES ===
-  const highlightShapes = shapes.filter(s => s.colorRole === 'highlight');
-  if (highlightShapes.length > 0) {
-    svgParts.push(`<g id="layer-highlight">`);
-    for (const shape of highlightShapes) {
-      const pathData = pointsToPathData(shape.points);
-      const filter = edgeSoftening ? ' filter="url(#soften-edge)"' : '';
-      svgParts.push(`<path d="${pathData}" fill="${shape.color}"${filter} />`);
+  // === LAYER 3: HIGHLIGHT SHAPES (All highlight roles) ===
+  // Render highlight layers in order: highlight, highlight1, highlight2
+  const highlightRoles = ['highlight', 'highlight1', 'highlight2'];
+  for (const role of highlightRoles) {
+    const roleShapes = shapes.filter(s => s.colorRole === role);
+    if (roleShapes.length > 0) {
+      svgParts.push(`<g id="layer-${role}">`);
+      for (const shape of roleShapes) {
+        const pathData = pointsToPathData(shape.points);
+        const filter = edgeSoftening ? ' filter="url(#soften-edge)"' : '';
+        svgParts.push(`<path d="${pathData}" fill="${shape.color}"${filter} />`);
+      }
+      svgParts.push(`</g>`);
+      console.log(`[PAINTER] ${role} layer: ${roleShapes.length} shapes`);
     }
-    svgParts.push(`</g>`);
-    console.log(`[PAINTER] Highlight layer: ${highlightShapes.length} shapes`);
   }
 
   // === LAYER 4: MOTIFS ===
@@ -169,13 +177,19 @@ function pointsToPathData(points) {
 function calculateCoverage(shapes, surface, palette) {
   const totalArea = surface.width_m * surface.height_m;
 
-  // Group shapes by role
+  // Initialize coverage for all possible roles
   const roleAreas = {
-    base: totalArea, // Base always covers full surface
-    accent: 0,
-    highlight: 0
+    base: totalArea // Base always covers full surface
   };
 
+  // Initialize all roles from palette to 0
+  for (const p of palette) {
+    if (p.role !== 'base') {
+      roleAreas[p.role] = 0;
+    }
+  }
+
+  // Accumulate areas by role
   for (const shape of shapes) {
     const role = shape.colorRole;
     if (!role) continue;

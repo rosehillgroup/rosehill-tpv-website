@@ -69,7 +69,7 @@ const headers = {
 };
 
 // Few-shot examples from LLM_fewshot_prompts.md
-const SYSTEM_PROMPT = `You are a senior playground surface designer. Convert the brief into LayoutSpec JSON using grammars and motifs that express the mood. Limit to 3 colours unless requested. Use RH codes from the standard palette. Use realistic parameters. Always include seeds.
+const SYSTEM_PROMPT = `You are a senior playground surface designer. Convert the brief into LayoutSpec JSON using grammars and motifs that express the mood. Use 5-6 rich colours by default for professional designs. Use RH codes from the standard palette. Use realistic parameters. Always include seeds.
 
 IMPORTANT: You must ONLY use these grammar names in the "grammar" array:
 - "Bands" (flowing horizontal/vertical bands)
@@ -232,6 +232,7 @@ export default async (request) => {
 /**
  * Enforce user's palette on a LayoutSpec
  * NEVER let the LLM choose colors - always use user's selection
+ * Supports 2-6 colors with expanded role system
  */
 function enforcePalette(spec, userPalette) {
   if (!userPalette || userPalette.length < 2) {
@@ -241,7 +242,7 @@ function enforcePalette(spec, userPalette) {
   const paletteMap = loadPalette();
 
   // Validate RH codes exist in palette BEFORE assigning roles
-  const codes = userPalette.slice(0, 3).map(c => c.code || c);
+  const codes = userPalette.slice(0, 6).map(c => c.code || c);
   for (const code of codes) {
     if (!paletteMap.has(code)) {
       const availableCodes = Array.from(paletteMap.keys()).sort().join(', ');
@@ -249,22 +250,29 @@ function enforcePalette(spec, userPalette) {
     }
   }
 
-  // Define roles and ratios - this is policy, not LLM decision
-  const roles = ['base', 'accent', 'highlight'];
-  const ratios = [0.55, 0.30, 0.15];
+  // Define roles and ratios based on color count - policy, not LLM decision
+  const roleSchemes = {
+    2: { roles: ['base', 'accent'], ratios: [0.65, 0.35] },
+    3: { roles: ['base', 'accent', 'highlight'], ratios: [0.55, 0.30, 0.15] },
+    4: { roles: ['base', 'accent1', 'accent2', 'highlight'], ratios: [0.45, 0.25, 0.20, 0.10] },
+    5: { roles: ['base', 'accent1', 'accent2', 'highlight1', 'highlight2'], ratios: [0.40, 0.25, 0.15, 0.12, 0.08] },
+    6: { roles: ['base', 'accent1', 'accent2', 'accent3', 'highlight1', 'highlight2'], ratios: [0.35, 0.20, 0.18, 0.12, 0.10, 0.05] }
+  };
+
+  const scheme = roleSchemes[codes.length] || roleSchemes[6];
 
   // Replace LLM's palette with user's selection
   spec.palette = codes.map((code, i) => ({
     code,
-    role: roles[i] || 'accent',
-    target_ratio: ratios[i] || 0.15
+    role: scheme.roles[i] || 'accent',
+    target_ratio: scheme.ratios[i] || 0.10
   }));
 
   // Validate roles
-  const validRoles = ['base', 'accent', 'highlight'];
+  const validRoles = ['base', 'accent', 'accent1', 'accent2', 'accent3', 'highlight', 'highlight1', 'highlight2'];
   for (const entry of spec.palette) {
     if (!validRoles.includes(entry.role)) {
-      throw new Error(`Invalid palette role: ${entry.role}. Must be base, accent, or highlight`);
+      throw new Error(`Invalid palette role: ${entry.role}. Must be one of: ${validRoles.join(', ')}`);
     }
   }
 
@@ -392,24 +400,39 @@ function generateFallbackSpec(prompt, surface, palette, complexity) {
   const placementSeed = (promptHash * 7) % 100000;
   const colourSeed = (promptHash * 13) % 100000;
 
-  // Determine color count based on complexity
-  const colorCount = complexity === 'low' ? 2 : 3;
+  // Determine color count based on complexity - default to 5 for richer designs
+  const colorCount = complexity === 'low' ? 3 : complexity === 'high' ? 6 : 5;
 
   // Use provided palette or generate default
   let colors;
   if (palette && palette.length > 0) {
-    colors = palette.slice(0, colorCount).map((c, i) => ({
+    // Use enforcePalette's role schemes
+    const roleSchemes = {
+      2: { roles: ['base', 'accent'], ratios: [0.65, 0.35] },
+      3: { roles: ['base', 'accent', 'highlight'], ratios: [0.55, 0.30, 0.15] },
+      4: { roles: ['base', 'accent1', 'accent2', 'highlight'], ratios: [0.45, 0.25, 0.20, 0.10] },
+      5: { roles: ['base', 'accent1', 'accent2', 'highlight1', 'highlight2'], ratios: [0.40, 0.25, 0.15, 0.12, 0.08] },
+      6: { roles: ['base', 'accent1', 'accent2', 'accent3', 'highlight1', 'highlight2'], ratios: [0.35, 0.20, 0.18, 0.12, 0.10, 0.05] }
+    };
+    const actualCount = Math.min(palette.length, colorCount);
+    const scheme = roleSchemes[actualCount] || roleSchemes[5];
+    colors = palette.slice(0, actualCount).map((c, i) => ({
       code: c.code,
-      role: i === 0 ? 'base' : i === 1 ? 'accent' : 'highlight',
-      target_ratio: i === 0 ? 0.55 : i === 1 ? 0.30 : 0.15
+      role: scheme.roles[i] || 'accent',
+      target_ratio: scheme.ratios[i] || 0.10
     }));
   } else {
-    // Default palette - using real RH codes
-    const defaultPalette = ['RH22', 'RH23', 'RH26'];
-    colors = defaultPalette.slice(0, colorCount).map((code, i) => ({
+    // Default palette - using real RH codes with more variety
+    const defaultPalettes = {
+      3: { codes: ['RH22', 'RH23', 'RH26'], roles: ['base', 'accent', 'highlight'], ratios: [0.55, 0.30, 0.15] },
+      5: { codes: ['RH22', 'RH23', 'RH26', 'RH20', 'RH11'], roles: ['base', 'accent1', 'accent2', 'highlight1', 'highlight2'], ratios: [0.40, 0.25, 0.15, 0.12, 0.08] },
+      6: { codes: ['RH22', 'RH23', 'RH26', 'RH20', 'RH11', 'RH41'], roles: ['base', 'accent1', 'accent2', 'accent3', 'highlight1', 'highlight2'], ratios: [0.35, 0.20, 0.18, 0.12, 0.10, 0.05] }
+    };
+    const defaultScheme = defaultPalettes[colorCount] || defaultPalettes[5];
+    colors = defaultScheme.codes.map((code, i) => ({
       code,
-      role: i === 0 ? 'base' : i === 1 ? 'accent' : 'highlight',
-      target_ratio: i === 0 ? 0.55 : i === 1 ? 0.30 : 0.15
+      role: defaultScheme.roles[i] || 'accent',
+      target_ratio: defaultScheme.ratios[i] || 0.10
     }));
   }
 
