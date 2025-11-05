@@ -123,6 +123,28 @@ export default async (request) => {
 async function generateVariant(spec, variantNumber, seed) {
   const { surface, palette, grammar, rules } = spec;
 
+  // === DETERMINISTIC PAINT ORDER LOGGING ===
+  console.log(`\n========== VARIANT ${variantNumber} GENERATION ==========`);
+  console.log(`[SEED] Using seed: ${seed}`);
+  console.log(`[SURFACE] ${surface.width_m}m x ${surface.height_m}m (${(surface.width_m * surface.height_m).toFixed(1)}m²)`);
+
+  // [PALETTE] - User's locked color selection
+  console.log('\n[PALETTE] Locked color selection:');
+  palette.forEach(p => {
+    const targetPercent = (p.target_ratio * 100).toFixed(1);
+    console.log(`  ${p.code} (${p.role}): ${targetPercent}% target`);
+  });
+
+  // [GRAMMARS] - Pattern generation order
+  console.log('\n[GRAMMARS] Pattern generation order:');
+  grammar.forEach(g => {
+    const weightPercent = (g.weight * 100).toFixed(1);
+    console.log(`  ${g.name}: ${weightPercent}% weight, params=${JSON.stringify(g.params)}`);
+  });
+
+  console.log('\n[RENDER] Paint order will be: BASE LAYER → GRAMMARS → COLOR ASSIGNMENT');
+  console.log('================================================\n');
+
   // Step 1: Generate geometric regions using grammars
   console.log(`[VARIANT ${variantNumber}] Generating regions...`);
   const regions = combineGrammars(grammar, surface, seed);
