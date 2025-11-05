@@ -29,10 +29,10 @@
  * }
  */
 
-import { combineGrammars } from './_utils/grammars.js';
-import { assignColors, checkRegionConstraints, calculateInstallerScore, calculateBOM } from './_utils/constraints.js';
-import { generateAllExports } from './_utils/exports.js';
-import { SeededRandom } from './_utils/random.js';
+import { combineGrammars } from './studio/_utils/grammars.js';
+import { assignColors, checkRegionConstraints, calculateInstallerScore, calculateBOM } from './studio/_utils/constraints.js';
+import { generateAllExports } from './studio/_utils/exports.js';
+import { SeededRandom } from './studio/_utils/random.js';
 
 // CORS headers
 const headers = {
