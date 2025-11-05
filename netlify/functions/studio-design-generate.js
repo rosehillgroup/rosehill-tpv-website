@@ -33,6 +33,9 @@ import { combineGrammars } from './studio/_utils/grammars.js';
 import { assignColors, checkRegionConstraints, calculateInstallerScore, calculateBOM } from './studio/_utils/constraints.js';
 import { generateAllExports } from './studio/_utils/exports.js';
 import { SeededRandom } from './studio/_utils/random.js';
+import { createFlowField } from './studio/_utils/noise.js';
+import { placeMotifs, getDefaultMotifs } from './studio/_utils/motifs.js';
+import { paintSVG, validateDesign } from './studio/_utils/painter.js';
 
 // CORS headers
 const headers = {
