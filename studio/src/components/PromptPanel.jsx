@@ -14,7 +14,7 @@ function PromptPanel({ onVariantsGenerated }) {
 
   useEffect(() => {
     // Load TPV palette
-    fetch('./assets/tpv-palette.json')
+    fetch('/studio/assets/tpv-palette.json')
       .then(res => res.json())
       .then(data => setPalette(data.palette || []))
       .catch(err => console.error('Failed to load palette:', err));
