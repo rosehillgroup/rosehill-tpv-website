@@ -23,7 +23,7 @@ function PromptPanel({ onVariantsGenerated }) {
   const handleColorToggle = (color) => {
     if (selectedColors.find(c => c.code === color.code)) {
       setSelectedColors(selectedColors.filter(c => c.code !== color.code));
-    } else if (selectedColors.length < 3) {
+    } else if (selectedColors.length < 6) {
       setSelectedColors([...selectedColors, color]);
     }
   };
@@ -109,7 +109,7 @@ function PromptPanel({ onVariantsGenerated }) {
 
       <div className="tpv-studio__form-group">
         <label className="tpv-studio__label">
-          Select Colors (optional, max 3)
+          Select Colors (optional, max 6)
         </label>
         <div className="tpv-studio__color-grid">
           {palette.map(color => (

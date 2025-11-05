@@ -5,8 +5,15 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Handle both ESM and bundled environments
+let __dirname;
+try {
+  const __filename = fileURLToPath(import.meta.url);
+  __dirname = path.dirname(__filename);
+} catch (e) {
+  // Fallback for bundled/CommonJS environments (Netlify Functions)
+  __dirname = process.cwd();
+}
 
 // Theme name to folder mapping
 const THEME_FOLDERS = {
@@ -32,8 +39,20 @@ const THEME_INDEX_CACHE = {};
  * Resolves to /motifs/ from project root
  */
 function getMotifsDir() {
-  // Navigate up from netlify/functions/studio/_utils/ to project root
-  return path.resolve(__dirname, '../../../../motifs');
+  // In bundled environment (Netlify Functions), use process.cwd()
+  // In development, navigate up from netlify/functions/studio/_utils/
+  const devPath = path.resolve(__dirname, '../../../../motifs');
+  const prodPath = path.resolve(process.cwd(), 'motifs');
+
+  // Check which path exists
+  if (fs.existsSync(prodPath)) {
+    return prodPath;
+  } else if (fs.existsSync(devPath)) {
+    return devPath;
+  }
+
+  // Fallback to prodPath (let it fail with a clear error)
+  return prodPath;
 }
 
 /**
