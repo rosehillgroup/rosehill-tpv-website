@@ -118,13 +118,16 @@ Response:
 - [ ] Test responsive design on mobile
 - [ ] Verify /api/texture returns stub response
 
-## Known Limitations (Phase 2A)
+## Known Limitations (Current State)
 
-1. **No AI Rendering**: Uses simple color overlay placeholder
-2. **No Segmentation**: No automatic surface detection
-3. **No Color Quantisation**: No OKLab-based color accuracy
-4. **No Supabase Upload**: Files not stored in tpv-visualiser bucket
-5. **RLS Policies Not Applied**: Manual application required (see VISUALISER_SETUP.md)
+1. **SAM 2 Temporarily Disabled**: Automatic segmentation bypassed (processes entire image)
+   - Root cause: Replicate API returns 422 "Invalid version or not permitted" for SAM 2 model
+   - TODO: Update SAM 2 model version once Replicate access is confirmed
+   - Current workaround: FLUX Fill Pro processes entire image with `mask: null`
+2. **Mode A Disabled**: Only AI-powered Mode B is available in the UI
+   - Manual masking tools hidden for simplified user experience
+   - Mode A pattern controls (solid, speckle, swirl, etc.) hidden
+3. **RLS Policies Not Applied**: Manual application required (see VISUALISER_SETUP.md)
 
 ## Next Steps: Phase 2B (AI Pipeline)
 
