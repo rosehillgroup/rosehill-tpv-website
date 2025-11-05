@@ -12,7 +12,8 @@
     "@sanity/image-url": "^1.2.0",
     "@supabase/supabase-js": "^2.38.0",
     "jose": "^5.2.0",
-    "cheerio": "^1.0.0-rc.12"
+    "cheerio": "^1.0.0-rc.12",
+    "replicate": "^0.32.0"
   },
   "engines": {
     "node": "18.x"

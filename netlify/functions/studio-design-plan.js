@@ -36,7 +36,7 @@ const headers = {
 };
 
 // Few-shot examples from LLM_fewshot_prompts.md
-const SYSTEM_PROMPT = `You are a senior playground surface designer. Convert the brief into LayoutSpec JSON using grammars and motifs that express the mood. Limit to 3 colours unless requested. Use TPV codes. Use realistic parameters. Always include seeds.
+const SYSTEM_PROMPT = `You are a senior playground surface designer. Convert the brief into LayoutSpec JSON using grammars and motifs that express the mood. Limit to 3 colours unless requested. Use RH codes from the standard palette. Use realistic parameters. Always include seeds.
 
 Return ONLY valid JSON matching the LayoutSpec schema. No extra fields. No prose. No markdown formatting.`;
 
@@ -48,9 +48,9 @@ const FEW_SHOT_EXAMPLES = [
       surface: { width_m: 5, height_m: 5, border_mm: 100 },
       seeds: { global: 41721, placement: 9182, colour: 1123 },
       palette: [
-        { code: "TPV08", role: "base", target_ratio: 0.55 },
-        { code: "TPV11", role: "accent", target_ratio: 0.30 },
-        { code: "TPV21", role: "highlight", target_ratio: 0.15 }
+        { code: "RH22", role: "base", target_ratio: 0.55 },
+        { code: "RH23", role: "accent", target_ratio: 0.30 },
+        { code: "RH26", role: "highlight", target_ratio: 0.15 }
       ],
       grammar: [
         { name: "Bands", weight: 0.6, params: { bands: 3, amplitude_m: [0.3, 0.8], smoothness: 0.8 } },
@@ -72,15 +72,15 @@ const FEW_SHOT_EXAMPLES = [
     }, null, 0)
   },
   {
-    user: 'Surface 8x4 m. Theme "jungle play". Energetic, lively. Use 3 specific colours: TPV05, TPV14, TPV18.',
+    user: 'Surface 8x4 m. Theme "jungle play". Energetic, lively. Use 3 specific colours: RH10, RH11, RH41.',
     assistant: JSON.stringify({
       meta: { title: "Jungle Play", theme: "jungle", mood: ["energetic", "lively"] },
       surface: { width_m: 8, height_m: 4, border_mm: 100 },
       seeds: { global: 90211, placement: 1234, colour: 3456 },
       palette: [
-        { code: "TPV05", role: "base", target_ratio: 0.5 },
-        { code: "TPV14", role: "accent", target_ratio: 0.35 },
-        { code: "TPV18", role: "highlight", target_ratio: 0.15 }
+        { code: "RH10", role: "base", target_ratio: 0.5 },
+        { code: "RH11", role: "accent", target_ratio: 0.35 },
+        { code: "RH41", role: "highlight", target_ratio: 0.15 }
       ],
       grammar: [
         { name: "Bands", weight: 0.5, params: { bands: 4, amplitude_m: [0.2, 0.6], smoothness: 0.7 } },
@@ -212,8 +212,8 @@ function generateFallbackSpec(prompt, surface, palette, complexity) {
       target_ratio: i === 0 ? 0.55 : i === 1 ? 0.30 : 0.15
     }));
   } else {
-    // Default palette
-    const defaultPalette = ['TPV08', 'TPV11', 'TPV21'];
+    // Default palette - using real RH codes
+    const defaultPalette = ['RH22', 'RH23', 'RH26'];
     colors = defaultPalette.slice(0, colorCount).map((code, i) => ({
       code,
       role: i === 0 ? 'base' : i === 1 ? 'accent' : 'highlight',
