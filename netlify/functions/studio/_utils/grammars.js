@@ -1,8 +1,10 @@
 // Grammar Generators for TPV Studio
 // Creates geometric patterns based on LayoutSpec grammar definitions
 
-import { PerlinNoise } from './perlin.js';
-import { SeededRandom, PoissonDisc } from './random.js';
+import { createSeededNoise, createFlowField, createThicknessFunction } from './noise.js';
+import { offsetPolyline, superellipse, unionPolygons, smoothPolygon, circle } from './geometry.js';
+import { poissonDisc } from './composition.js';
+import { SeededRandom } from './random.js';
 
 /**
  * Bands Grammar
@@ -13,7 +15,6 @@ export class BandsGrammar {
     this.spec = spec;
     this.surface = surface;
     this.seed = seed;
-    this.perlin = new PerlinNoise(seed);
     this.rng = new SeededRandom(seed);
   }
 
@@ -28,56 +29,59 @@ export class BandsGrammar {
     const amplitude = params.amplitude_m || [0.3, 0.8];
     const smoothness = params.smoothness || 0.8;
 
-    // Sample points along the surface to create band paths
+    // Create noise and flow field
+    const noiseScale = 0.3 / smoothness;
+    const noise = createSeededNoise(this.seed);
+    const flowField = createFlowField(this.seed + 1, noiseScale);
+
+    // Sample points along the surface to create band centerlines
     const resolution = 50; // Points per band line
     const bandPaths = [];
 
-    for (let b = 0; b < bands; b++) {
-      const bandTop = [];
-      const bandBottom = [];
+    // Amplitude range
+    const ampMin = Array.isArray(amplitude) ? amplitude[0] : amplitude * 0.5;
+    const ampMax = Array.isArray(amplitude) ? amplitude[1] : amplitude * 1.5;
 
-      // Top edge of band
-      const yTop = (height_m / (bands + 1)) * (b + 1);
+    // Create thickness function for variable band width
+    const thicknessFunc = createThicknessFunction(
+      noise,
+      ampMin * 0.8,
+      ampMax * 1.2,
+      noiseScale * 0.5
+    );
+
+    for (let b = 0; b < bands; b++) {
+      // Create centerline for this band
+      const centerline = [];
+      const yCenter = (height_m / (bands + 1)) * (b + 1);
 
       for (let i = 0; i <= resolution; i++) {
         const x = (width_m / resolution) * i;
-        const noiseScale = 0.3 / smoothness;
-        const noise = this.perlin.octaveNoise2D(x * noiseScale, yTop * noiseScale, 3);
 
-        // Apply amplitude
-        const ampMin = Array.isArray(amplitude) ? amplitude[0] : amplitude * 0.5;
-        const ampMax = Array.isArray(amplitude) ? amplitude[1] : amplitude * 1.5;
-        const amp = ampMin + (ampMax - ampMin) * Math.abs(noise);
+        // Sample flow field to create organic curves
+        const flow = flowField(x, yCenter);
+        const noiseValue = noise(x * noiseScale, yCenter * noiseScale);
 
-        const y = yTop + noise * amp;
+        // Apply amplitude variation
+        const amp = ampMin + (ampMax - ampMin) * (Math.abs(noiseValue) * 0.5 + 0.5);
+        const y = yCenter + noiseValue * amp;
 
-        bandTop.push({ x, y: Math.max(0, Math.min(height_m, y)) });
+        centerline.push({
+          x,
+          y: Math.max(0, Math.min(height_m, y))
+        });
       }
 
-      // Bottom edge of band (offset from next band's top)
-      const yBottom = (height_m / (bands + 1)) * (b + 2);
+      // Create band polygon using offset polyline with variable thickness
+      const bandPolygon = offsetPolyline(centerline, thicknessFunc);
 
-      for (let i = resolution; i >= 0; i--) {
-        const x = (width_m / resolution) * i;
-        const noiseScale = 0.3 / smoothness;
-        const noise = this.perlin.octaveNoise2D(x * noiseScale, yBottom * noiseScale, 3);
-
-        const ampMin = Array.isArray(amplitude) ? amplitude[0] : amplitude * 0.5;
-        const ampMax = Array.isArray(amplitude) ? amplitude[1] : amplitude * 1.5;
-        const amp = ampMin + (ampMax - ampMin) * Math.abs(noise);
-
-        const y = yBottom + noise * amp;
-
-        bandBottom.push({ x, y: Math.max(0, Math.min(height_m, y)) });
-      }
-
-      // Combine top and bottom into closed polygon
-      const polygon = [...bandTop, ...bandBottom];
+      // Smooth the polygon for organic edges
+      const smoothedPolygon = smoothPolygon(bandPolygon, 1);
 
       bandPaths.push({
         type: 'band',
         index: b,
-        points: polygon
+        points: smoothedPolygon
       });
     }
 
@@ -87,7 +91,7 @@ export class BandsGrammar {
 
 /**
  * Clusters Grammar
- * Creates island regions using Voronoi-like clustering
+ * Creates island regions using Poisson-disc sampling and superellipse shapes
  */
 export class ClustersGrammar {
   constructor(spec, surface, seed) {
@@ -99,7 +103,7 @@ export class ClustersGrammar {
 
   /**
    * Generate cluster regions
-   * Returns array of circular/organic island shapes
+   * Returns array of organic superellipse island shapes
    */
   generate() {
     const { width_m, height_m } = this.surface;
@@ -113,57 +117,56 @@ export class ClustersGrammar {
     // Generate cluster centers using Poisson disc sampling
     // This ensures even distribution with minimum spacing
     const minSpacing = Math.min(width_m, height_m) * 0.2;
-    const poisson = new PoissonDisc(width_m, height_m, minSpacing, 30, this.seed);
-    const centers = poisson.generate();
+    const centers = poissonDisc(width_m, height_m, minSpacing, this.seed);
 
     // Limit to requested count
     const selectedCenters = centers.slice(0, count);
 
-    // Create organic circular regions for each cluster
+    // Create organic superellipse regions for each cluster
     for (let i = 0; i < selectedCenters.length; i++) {
       const center = selectedCenters[i];
 
       // Determine cluster size
       const minSize = Array.isArray(islandSize) ? islandSize[0] : islandSize * 0.7;
       const maxSize = Array.isArray(islandSize) ? islandSize[1] : islandSize * 1.3;
-      const baseRadius = this.rng.nextFloat(minSize, maxSize) / 2;
+      const size = this.rng.nextFloat(minSize, maxSize);
 
-      // Create organic shape by varying radius
-      const points = 32;
-      const polygon = [];
+      // Semi-axes with variation for organic shapes
+      const a = (size / 2) * this.rng.nextFloat(0.9, 1.1);
+      const b = (size / 2) * this.rng.nextFloat(0.9, 1.1);
 
-      for (let j = 0; j < points; j++) {
-        const angle = (j / points) * Math.PI * 2;
+      // Superellipse exponent: 2.0 = ellipse, 3.5 = more rectangular
+      const n = this.rng.nextFloat(2.0, 3.2);
 
-        // Add organic variation using noise
-        const noise = this.rng.nextFloat(0.8, 1.2);
-        const radius = baseRadius * noise * spread;
+      // Generate superellipse shape
+      const basePolygon = superellipse(a, b, n, 32, center);
 
-        const x = center.x + Math.cos(angle) * radius;
-        const y = center.y + Math.sin(angle) * radius;
+      // Add organic variation and clamp to bounds
+      const polygon = basePolygon.map(p => ({
+        x: Math.max(0, Math.min(width_m, p.x)),
+        y: Math.max(0, Math.min(height_m, p.y))
+      }));
 
-        // Clamp to surface bounds
-        polygon.push({
-          x: Math.max(0, Math.min(width_m, x)),
-          y: Math.max(0, Math.min(height_m, y))
-        });
-      }
+      // Smooth for organic edges
+      const smoothedPolygon = smoothPolygon(polygon, 1);
 
       clusters.push({
         type: 'cluster',
         index: i,
         center,
-        points: polygon
+        points: smoothedPolygon
       });
     }
 
+    // Optional: merge overlapping clusters with metaball effect
+    // For now, return individual shapes (can enable union later if needed)
     return clusters;
   }
 }
 
 /**
  * Islands Grammar
- * Similar to clusters but more scattered and irregular
+ * Similar to clusters but more scattered and irregular with varied shapes
  */
 export class IslandsGrammar {
   constructor(spec, surface, seed) {
@@ -191,33 +194,44 @@ export class IslandsGrammar {
 
       // Random size
       const size = this.rng.nextFloat(sizeRange[0], sizeRange[1]);
-      const radius = size / 2;
 
-      // Create organic polygon
-      const points = 16 + this.rng.nextInt(0, 16);
-      const polygon = [];
+      // Use superellipse for varied organic shapes
+      const a = (size / 2) * this.rng.nextFloat(0.85, 1.15);
+      const b = (size / 2) * this.rng.nextFloat(0.85, 1.15);
 
-      for (let j = 0; j < points; j++) {
-        const angle = (j / points) * Math.PI * 2;
+      // More variation in exponent for islands
+      const n = this.rng.nextFloat(2.0, 3.5);
 
-        // Vary radius for organic shape
-        const variation = this.rng.nextFloat(0.7, 1.3);
-        const r = radius * (roundness + (1 - roundness) * variation);
+      // Generate base superellipse
+      const segments = 16 + this.rng.nextInt(0, 16);
+      const basePolygon = superellipse(a, b, n, segments, center);
 
-        const x = center.x + Math.cos(angle) * r;
-        const y = center.y + Math.sin(angle) * r;
+      // Add additional organic variation by jittering points
+      const polygon = basePolygon.map(p => {
+        const dx = p.x - center.x;
+        const dy = p.y - center.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
 
-        polygon.push({
-          x: Math.max(0, Math.min(width_m, x)),
-          y: Math.max(0, Math.min(height_m, y))
-        });
-      }
+        // Apply roundness-based variation
+        const variation = this.rng.nextFloat(
+          roundness * 0.9,
+          roundness * 1.1 + (1 - roundness) * 0.3
+        );
+
+        return {
+          x: Math.max(0, Math.min(width_m, center.x + dx * variation)),
+          y: Math.max(0, Math.min(height_m, center.y + dy * variation))
+        };
+      });
+
+      // Apply smoothing for organic edges
+      const smoothedPolygon = smoothPolygon(polygon, 2);
 
       islands.push({
         type: 'island',
         index: i,
         center,
-        points: polygon
+        points: smoothedPolygon
       });
     }
 
