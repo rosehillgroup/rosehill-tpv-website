@@ -481,8 +481,8 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
       input: {
         prompt: fullPrompt,
         max_tokens: 6000,  // 405B model can generate very detailed designs
-        temperature: 0.7,
-        top_p: 0.9
+        temperature: 0.25,  // Low creativity for consistent, predictable designs
+        top_p: 0.85  // Deterministic decoding until more grammars/motifs available
       }
     })
   });
@@ -511,9 +511,9 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
           version: versionId,
           input: {
             prompt: fullPrompt,
-            max_tokens: 1500,
-            temperature: 0.7,
-            top_p: 0.9
+            max_tokens: 6000,  // Match main call
+            temperature: 0.25,  // Low creativity for consistent, predictable designs
+            top_p: 0.85  // Deterministic decoding until more grammars/motifs available
           }
         })
       });
