@@ -13,9 +13,12 @@
     "@supabase/supabase-js": "^2.38.0",
     "chaikin-smooth": "^1.0.4",
     "cheerio": "^1.0.0-rc.12",
+    "color-diff": "^1.4.0",
     "jose": "^5.2.0",
     "polygon-clipping": "^0.15.7",
+    "potrace": "^2.1.8",
     "replicate": "^0.32.0",
+    "sharp": "^0.34.4",
     "simplex-noise": "^4.0.3"
   },
   "engines": {
