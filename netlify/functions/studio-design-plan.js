@@ -281,10 +281,57 @@ function generateFallbackSpec(prompt, surface, palette, complexity) {
 }
 
 /**
- * Generate LayoutSpec using Llama 3.1 70B Instruct via direct API calls
+ * Generate headers for Replicate API with optional account/project
+ */
+function getReplicateHeaders(token, account, project) {
+  const headers = {
+    'Authorization': `Token ${token}`,
+    'Content-Type': 'application/json'
+  };
+
+  if (account) {
+    headers['X-Replicate-Account'] = account;
+  }
+
+  if (project) {
+    headers['X-Replicate-Project'] = project;
+  }
+
+  return headers;
+}
+
+/**
+ * Get the latest version ID for a model
+ */
+async function getModelVersion(token, account, project, modelSlug) {
+  const url = `https://api.replicate.com/v1/models/${modelSlug}`;
+
+  const response = await fetch(url, {
+    headers: getReplicateHeaders(token, account, project)
+  });
+
+  const responseText = await response.text();
+  let data;
+  try {
+    data = JSON.parse(responseText);
+  } catch (e) {
+    throw new Error(`Failed to parse model metadata: ${responseText.substring(0, 200)}`);
+  }
+
+  if (!response.ok) {
+    throw new Error(`Model metadata error ${response.status}: ${JSON.stringify(data)}`);
+  }
+
+  return data?.latest_version?.id;
+}
+
+/**
+ * Generate LayoutSpec using Llama 3.1 with version pinning
  */
 async function generateLlama3Spec(prompt, surface, palette, complexity) {
   const token = process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY;
+  const account = process.env.REPLICATE_ACCOUNT;
+  const project = process.env.REPLICATE_PROJECT;
 
   if (!token) {
     throw new Error('REPLICATE_API_TOKEN not configured');
@@ -317,55 +364,82 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
   // Add current user request
   fullPrompt += `USER: ${userRequest}\n\nASSISTANT:`;
 
+  // Trim prompt to 1500 chars for testing (can increase later)
+  const trimmedPrompt = fullPrompt.substring(0, 1500);
+
   console.log('[LLAMA3] Calling Replicate API...');
   console.log('[LLAMA3] User request:', userRequest);
-  console.log('[LLAMA3] Prompt length:', fullPrompt.length);
+  console.log('[LLAMA3] Full prompt length:', fullPrompt.length, '| Trimmed to:', trimmedPrompt.length);
 
-  // Try 70B first, fallback to 8B if it fails
-  const models = [
-    { name: '70b', url: 'https://api.replicate.com/v1/models/meta/meta-llama-3.1-70b-instruct/predictions' },
-    { name: '8b', url: 'https://api.replicate.com/v1/models/meta/meta-llama-3.1-8b-instruct/predictions' }
-  ];
+  // Get version ID for 70B model
+  const modelSlug = 'meta/meta-llama-3.1-70b-instruct';
+  console.log('[LLAMA3] Fetching version for:', modelSlug);
 
-  let createResponse, createData, modelUsed;
+  const versionId = await getModelVersion(token, account, project, modelSlug);
+  console.log('[LLAMA3] Version ID:', versionId);
 
-  for (const model of models) {
-    console.log(`[LLAMA3] Trying ${model.name} model...`);
+  // Create prediction with version pinning
+  const createUrl = 'https://api.replicate.com/v1/predictions';
 
-    createResponse = await fetch(model.url, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Token ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        input: {
-          prompt: fullPrompt,
-          max_tokens: 1500,
-          temperature: 0.7,
-          top_p: 0.9
-        }
-      })
-    });
-
-    createData = await createResponse.json();
-
-    if (createResponse.ok) {
-      modelUsed = model.name;
-      console.log(`[LLAMA3] ${model.name} model succeeded`);
-      break;
-    } else {
-      console.error(`[LLAMA3] ${model.name} CREATE ERROR:`, createResponse.status, createData);
-      if (model.name === '8b') {
-        // Both models failed
-        throw new Error(`All models failed. Last error (${createResponse.status}): ${JSON.stringify(createData)}`);
+  let createResponse = await fetch(createUrl, {
+    method: 'POST',
+    headers: getReplicateHeaders(token, account, project),
+    body: JSON.stringify({
+      version: versionId,  // Pin to specific version
+      input: {
+        prompt: trimmedPrompt,
+        max_tokens: 1500,
+        temperature: 0.7,
+        top_p: 0.9
       }
-      // Continue to try 8B
-    }
+    })
+  });
+
+  const createResponseText = await createResponse.text();
+  let createData;
+  try {
+    createData = JSON.parse(createResponseText);
+  } catch (e) {
+    console.error('[LLAMA3] CREATE - Failed to parse JSON:', createResponseText.substring(0, 500));
+    throw new Error(`Replicate create returned invalid JSON: ${createResponseText.substring(0, 200)}`);
   }
 
   if (!createResponse.ok) {
-    throw new Error(`Replicate create failed (${createResponse.status}): ${JSON.stringify(createData)}`);
+    console.error('[LLAMA3] CREATE ERROR:', createResponse.status, createData);
+
+    // Retry once on 5xx errors
+    if (createResponse.status >= 500) {
+      console.log('[LLAMA3] Retrying after 500 error...');
+      await new Promise(resolve => setTimeout(resolve, 1200));
+
+      createResponse = await fetch(createUrl, {
+        method: 'POST',
+        headers: getReplicateHeaders(token, account, project),
+        body: JSON.stringify({
+          version: versionId,
+          input: {
+            prompt: trimmedPrompt,
+            max_tokens: 1500,
+            temperature: 0.7,
+            top_p: 0.9
+          }
+        })
+      });
+
+      const retryText = await createResponse.text();
+      try {
+        createData = JSON.parse(retryText);
+      } catch (e) {
+        throw new Error(`Retry also failed - invalid JSON: ${retryText.substring(0, 200)}`);
+      }
+
+      if (!createResponse.ok) {
+        console.error('[LLAMA3] RETRY ALSO FAILED:', createResponse.status, createData);
+        throw new Error(`Replicate create failed after retry (${createResponse.status}): ${JSON.stringify(createData)}`);
+      }
+    } else {
+      throw new Error(`Replicate create failed (${createResponse.status}): ${JSON.stringify(createData)}`);
+    }
   }
 
   console.log('[LLAMA3] Prediction created:', createData.id);
@@ -375,17 +449,22 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
   let attempts = 0;
   const maxAttempts = 60; // 90 seconds max
 
-  while (['starting', 'processing'].includes(prediction.status) && attempts < maxAttempts) {
+  while (['starting', 'processing', 'queued'].includes(prediction.status) && attempts < maxAttempts) {
     await new Promise(resolve => setTimeout(resolve, 1500));
     attempts++;
 
     const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-      headers: {
-        'Authorization': `Token ${token}`
-      }
+      headers: getReplicateHeaders(token, account, project)
     });
 
-    const pollData = await pollResponse.json();
+    const pollText = await pollResponse.text();
+    let pollData;
+    try {
+      pollData = JSON.parse(pollText);
+    } catch (e) {
+      console.error('[LLAMA3] POLL - Failed to parse JSON:', pollText.substring(0, 500));
+      throw new Error(`Poll response invalid JSON: ${pollText.substring(0, 200)}`);
+    }
 
     if (!pollResponse.ok) {
       console.error('[LLAMA3] POLL ERROR:', pollResponse.status, pollData);
@@ -434,7 +513,7 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
   spec.surface.width_m = surface.width_m;
   spec.surface.height_m = surface.height_m;
 
-  return { spec, model: modelUsed };
+  return { spec, model: '70b' };
 }
 
 /**
