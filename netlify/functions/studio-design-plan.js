@@ -392,7 +392,7 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
       version: versionId,  // Pin to specific version
       input: {
         prompt: fullPrompt,
-        max_tokens: 3000,  // Increased for more detailed designs
+        max_tokens: 6000,  // 405B model can generate very detailed designs
         temperature: 0.7,
         top_p: 0.9
       }
