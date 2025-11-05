@@ -36,6 +36,13 @@ const headers = {
 // Few-shot examples from LLM_fewshot_prompts.md
 const SYSTEM_PROMPT = `You are a senior playground surface designer. Convert the brief into LayoutSpec JSON using grammars and motifs that express the mood. Limit to 3 colours unless requested. Use RH codes from the standard palette. Use realistic parameters. Always include seeds.
 
+IMPORTANT: You must ONLY use these grammar names in the "grammar" array:
+- "Bands" (flowing horizontal/vertical bands)
+- "Clusters" (organic circular island shapes)
+- "Islands" (scattered irregular shapes)
+
+Do NOT invent new grammar names. Only use Bands, Clusters, or Islands.
+
 Return ONLY valid JSON matching the LayoutSpec schema. No extra fields. No prose. No markdown formatting.`;
 
 const FEW_SHOT_EXAMPLES = [
