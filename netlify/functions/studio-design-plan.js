@@ -25,8 +25,6 @@
  * }
  */
 
-import Replicate from 'replicate';
-
 // CORS headers
 const headers = {
   'Content-Type': 'application/json',
@@ -283,12 +281,14 @@ function generateFallbackSpec(prompt, surface, palette, complexity) {
 }
 
 /**
- * Generate LayoutSpec using Llama 3.1 70B Instruct
+ * Generate LayoutSpec using Llama 3.1 70B Instruct via direct API calls
  */
 async function generateLlama3Spec(prompt, surface, palette, complexity) {
-  const replicate = new Replicate({
-    auth: process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY
-  });
+  const token = process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY;
+
+  if (!token) {
+    throw new Error('REPLICATE_API_TOKEN not configured');
+  }
 
   // Build user request
   let userRequest = `Surface ${surface.width_m}x${surface.height_m} m. Theme "${prompt}".`;
@@ -307,7 +307,6 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
   }
 
   // Build complete prompt with system instructions and few-shot examples
-  // Replicate Llama 3.1 doesn't support system_prompt parameter, so we include everything in prompt
   let fullPrompt = `${SYSTEM_PROMPT}\n\n`;
 
   // Add few-shot examples
@@ -320,33 +319,78 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
 
   console.log('[LLAMA3] Calling Replicate API...');
   console.log('[LLAMA3] User request:', userRequest);
+  console.log('[LLAMA3] Prompt length:', fullPrompt.length);
 
-  // Call Llama 3.1 70B Instruct with only supported parameters
-  const output = await replicate.run(
-    "meta/meta-llama-3.1-70b-instruct",
-    {
+  // Create prediction with minimal, known-good parameters
+  const createUrl = 'https://api.replicate.com/v1/models/meta/meta-llama-3.1-70b-instruct/predictions';
+  const createResponse = await fetch(createUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Token ${token}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
       input: {
         prompt: fullPrompt,
-        max_tokens: 2000,
+        max_tokens: 1500,
         temperature: 0.7,
         top_p: 0.9
       }
-    }
-  );
+    })
+  });
 
-  // Handle streaming response
+  const createData = await createResponse.json();
+
+  if (!createResponse.ok) {
+    console.error('[LLAMA3] CREATE ERROR:', createResponse.status, createData);
+    throw new Error(`Replicate create failed (${createResponse.status}): ${JSON.stringify(createData)}`);
+  }
+
+  console.log('[LLAMA3] Prediction created:', createData.id);
+
+  // Poll for completion
+  let prediction = createData;
+  let attempts = 0;
+  const maxAttempts = 60; // 90 seconds max
+
+  while (['starting', 'processing'].includes(prediction.status) && attempts < maxAttempts) {
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    attempts++;
+
+    const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+      headers: {
+        'Authorization': `Token ${token}`
+      }
+    });
+
+    const pollData = await pollResponse.json();
+
+    if (!pollResponse.ok) {
+      console.error('[LLAMA3] POLL ERROR:', pollResponse.status, pollData);
+      throw new Error(`Replicate poll failed (${pollResponse.status}): ${JSON.stringify(pollData)}`);
+    }
+
+    prediction = pollData;
+    console.log('[LLAMA3] Status:', prediction.status, `(attempt ${attempts}/${maxAttempts})`);
+  }
+
+  if (prediction.status === 'failed') {
+    console.error('[LLAMA3] Prediction failed:', prediction.error);
+    throw new Error(`Replicate prediction failed: ${prediction.error}`);
+  }
+
+  if (prediction.status !== 'succeeded') {
+    throw new Error(`Prediction timed out or has unexpected status: ${prediction.status}`);
+  }
+
+  // Extract response text
   let responseText = '';
-
-  if (typeof output === 'string') {
-    responseText = output;
-  } else if (Array.isArray(output)) {
-    responseText = output.join('');
-  } else if (output && typeof output[Symbol.asyncIterator] === 'function') {
-    for await (const chunk of output) {
-      responseText += chunk;
-    }
+  if (typeof prediction.output === 'string') {
+    responseText = prediction.output;
+  } else if (Array.isArray(prediction.output)) {
+    responseText = prediction.output.join('');
   } else {
-    throw new Error('Unexpected Llama 3.1 output format');
+    throw new Error('Unexpected output format from Llama 3.1');
   }
 
   console.log('[LLAMA3] Raw response length:', responseText.length);
@@ -355,6 +399,7 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
   const spec = extractJSON(responseText);
 
   if (!spec) {
+    console.error('[LLAMA3] Failed to extract JSON from:', responseText.substring(0, 500));
     throw new Error('Failed to extract valid JSON from Llama 3.1 response');
   }
 
