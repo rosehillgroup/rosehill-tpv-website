@@ -290,51 +290,46 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
     auth: process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_KEY
   });
 
-  // Build user prompt
-  let userPrompt = `Surface ${surface.width_m}x${surface.height_m} m. Theme "${prompt}".`;
+  // Build user request
+  let userRequest = `Surface ${surface.width_m}x${surface.height_m} m. Theme "${prompt}".`;
 
   if (palette && palette.length > 0) {
     const colorCodes = palette.map(c => c.code).join(', ');
-    userPrompt += ` Use ${palette.length} specific colours: ${colorCodes}.`;
+    userRequest += ` Use ${palette.length} specific colours: ${colorCodes}.`;
   } else {
-    userPrompt += ' Colours auto.';
+    userRequest += ' Colours auto.';
   }
 
   if (complexity === 'low') {
-    userPrompt += ' Keep it simple.';
+    userRequest += ' Keep it simple.';
   } else if (complexity === 'high') {
-    userPrompt += ' Make it complex and detailed.';
+    userRequest += ' Make it complex and detailed.';
   }
 
-  // Build full conversation with few-shot examples
-  const conversation = [
-    { role: 'system', content: SYSTEM_PROMPT }
-  ];
+  // Build complete prompt with system instructions and few-shot examples
+  // Replicate Llama 3.1 doesn't support system_prompt parameter, so we include everything in prompt
+  let fullPrompt = `${SYSTEM_PROMPT}\n\n`;
 
   // Add few-shot examples
   for (const example of FEW_SHOT_EXAMPLES) {
-    conversation.push({ role: 'user', content: example.user });
-    conversation.push({ role: 'assistant', content: example.assistant });
+    fullPrompt += `USER: ${example.user}\n\nASSISTANT: ${example.assistant}\n\n`;
   }
 
-  // Add user request
-  conversation.push({ role: 'user', content: userPrompt });
+  // Add current user request
+  fullPrompt += `USER: ${userRequest}\n\nASSISTANT:`;
 
   console.log('[LLAMA3] Calling Replicate API...');
-  console.log('[LLAMA3] User prompt:', userPrompt);
+  console.log('[LLAMA3] User request:', userRequest);
 
-  // Call Llama 3.1 70B Instruct
+  // Call Llama 3.1 70B Instruct with only supported parameters
   const output = await replicate.run(
     "meta/meta-llama-3.1-70b-instruct",
     {
       input: {
-        prompt: userPrompt,
-        system_prompt: SYSTEM_PROMPT,
+        prompt: fullPrompt,
         max_tokens: 2000,
         temperature: 0.7,
-        top_p: 0.9,
-        // Note: JSON mode would be ideal but not all models support it
-        // We'll parse the output manually
+        top_p: 0.9
       }
     }
   );
