@@ -155,11 +155,11 @@ export default async (request) => {
     let model = 'fallback';
 
     try {
-      console.log('[DESIGN PLAN] Calling Llama 3.1 70B Instruct...');
-      const llama3Spec = await generateLlama3Spec(prompt, surface, palette, complexity);
-      spec = llama3Spec;
-      model = 'llama-3.1-70b';
-      console.log('[DESIGN PLAN] Llama 3.1 spec generated successfully');
+      console.log('[DESIGN PLAN] Calling Llama 3.1...');
+      const result = await generateLlama3Spec(prompt, surface, palette, complexity);
+      spec = result.spec;
+      model = `llama-3.1-${result.model}`;
+      console.log(`[DESIGN PLAN] Llama 3.1 ${result.model} spec generated successfully`);
     } catch (llama3Error) {
       console.error('[DESIGN PLAN] Llama 3.1 failed, using fallback:', llama3Error.message);
       // Keep using fallbackSpec
@@ -321,28 +321,50 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
   console.log('[LLAMA3] User request:', userRequest);
   console.log('[LLAMA3] Prompt length:', fullPrompt.length);
 
-  // Create prediction with minimal, known-good parameters
-  const createUrl = 'https://api.replicate.com/v1/models/meta/meta-llama-3.1-70b-instruct/predictions';
-  const createResponse = await fetch(createUrl, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Token ${token}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      input: {
-        prompt: fullPrompt,
-        max_tokens: 1500,
-        temperature: 0.7,
-        top_p: 0.9
-      }
-    })
-  });
+  // Try 70B first, fallback to 8B if it fails
+  const models = [
+    { name: '70b', url: 'https://api.replicate.com/v1/models/meta/meta-llama-3.1-70b-instruct/predictions' },
+    { name: '8b', url: 'https://api.replicate.com/v1/models/meta/meta-llama-3.1-8b-instruct/predictions' }
+  ];
 
-  const createData = await createResponse.json();
+  let createResponse, createData, modelUsed;
+
+  for (const model of models) {
+    console.log(`[LLAMA3] Trying ${model.name} model...`);
+
+    createResponse = await fetch(model.url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        input: {
+          prompt: fullPrompt,
+          max_tokens: 1500,
+          temperature: 0.7,
+          top_p: 0.9
+        }
+      })
+    });
+
+    createData = await createResponse.json();
+
+    if (createResponse.ok) {
+      modelUsed = model.name;
+      console.log(`[LLAMA3] ${model.name} model succeeded`);
+      break;
+    } else {
+      console.error(`[LLAMA3] ${model.name} CREATE ERROR:`, createResponse.status, createData);
+      if (model.name === '8b') {
+        // Both models failed
+        throw new Error(`All models failed. Last error (${createResponse.status}): ${JSON.stringify(createData)}`);
+      }
+      // Continue to try 8B
+    }
+  }
 
   if (!createResponse.ok) {
-    console.error('[LLAMA3] CREATE ERROR:', createResponse.status, createData);
     throw new Error(`Replicate create failed (${createResponse.status}): ${JSON.stringify(createData)}`);
   }
 
@@ -412,7 +434,7 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
   spec.surface.width_m = surface.width_m;
   spec.surface.height_m = surface.height_m;
 
-  return spec;
+  return { spec, model: modelUsed };
 }
 
 /**
