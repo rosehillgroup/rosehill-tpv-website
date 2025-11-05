@@ -44,3 +44,7 @@ sitemap.xml.gz
 output/
 geonames_data/
 data/
+
+# Studio built artifacts (generated during deployment)
+studio/assets/
+studio/index.html
