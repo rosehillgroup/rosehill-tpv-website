@@ -25,6 +25,41 @@
  * }
  */
 
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load RH palette from tpv-palette.json
+let RH_PALETTE = null;
+
+function loadPalette() {
+  if (RH_PALETTE) return RH_PALETTE;
+
+  try {
+    // Navigate from /netlify/functions/ to /studio/public/assets/
+    const palettePath = resolve(__dirname, '../../studio/public/assets/tpv-palette.json');
+    const paletteData = JSON.parse(readFileSync(palettePath, 'utf8'));
+
+    // Create Map<'RH50', {name, hex}>
+    RH_PALETTE = new Map();
+    for (const color of paletteData.palette) {
+      RH_PALETTE.set(color.code, { name: color.name, hex: color.hex });
+    }
+
+    console.log('[PALETTE] Loaded', RH_PALETTE.size, 'RH colors');
+    return RH_PALETTE;
+  } catch (error) {
+    console.error('[PALETTE] Failed to load tpv-palette.json:', error);
+    throw new Error('Failed to load TPV color palette');
+  }
+}
+
+// Initialize palette on module load
+loadPalette();
+
 // CORS headers
 const headers = {
   'Content-Type': 'application/json',
@@ -203,13 +238,24 @@ function enforcePalette(spec, userPalette) {
     throw new Error('Palette must have at least 2 RH codes');
   }
 
+  const paletteMap = loadPalette();
+
+  // Validate RH codes exist in palette BEFORE assigning roles
+  const codes = userPalette.slice(0, 3).map(c => c.code || c);
+  for (const code of codes) {
+    if (!paletteMap.has(code)) {
+      const availableCodes = Array.from(paletteMap.keys()).sort().join(', ');
+      throw new Error(`Unknown RH code: ${code}. Available codes: ${availableCodes}`);
+    }
+  }
+
   // Define roles and ratios - this is policy, not LLM decision
   const roles = ['base', 'accent', 'highlight'];
   const ratios = [0.55, 0.30, 0.15];
 
   // Replace LLM's palette with user's selection
-  spec.palette = userPalette.slice(0, 3).map((c, i) => ({
-    code: c.code || c,  // Handle both {code:'RH50'} and 'RH50' formats
+  spec.palette = codes.map((code, i) => ({
+    code,
     role: roles[i] || 'accent',
     target_ratio: ratios[i] || 0.15
   }));
@@ -228,7 +274,10 @@ function enforcePalette(spec, userPalette) {
     throw new Error(`Palette ratios must sum to 1.0, got ${sumRatios.toFixed(2)}`);
   }
 
-  console.log('[PALETTE] Enforced user palette:', spec.palette.map(p => `${p.code} (${p.role})`).join(', '));
+  console.log('[PALETTE] Enforced user palette:', spec.palette.map(p => {
+    const colorInfo = paletteMap.get(p.code);
+    return `${p.code}=${colorInfo.hex} "${colorInfo.name}" (${p.role})`;
+  }).join(', '));
 
   return spec;
 }
