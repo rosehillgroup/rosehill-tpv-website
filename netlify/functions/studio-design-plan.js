@@ -283,6 +283,60 @@ function enforcePalette(spec, userPalette) {
 }
 
 /**
+ * Compute scale-aware grammar parameters based on surface area
+ * Implements user requirements: Bands=A/6, Clusters=A/4, Islands=A/2.2
+ */
+function computeScaleAwareParams(surface) {
+  const area_m2 = surface.width_m * surface.height_m;
+
+  // Scale formulas from user requirements
+  const bandCount = Math.max(2, Math.round(area_m2 / 6));
+  const clusterCount = Math.max(3, Math.round(area_m2 / 4));
+  const islandCount = Math.max(5, Math.round(area_m2 / 2.2));
+
+  console.log(`[SCALE-AWARE] Surface: ${area_m2.toFixed(1)}m² → Bands:${bandCount}, Clusters:${clusterCount}, Islands:${islandCount}`);
+
+  return {
+    bands: bandCount,
+    clusters: clusterCount,
+    islands: islandCount
+  };
+}
+
+/**
+ * Apply scale-aware parameters to all grammars in spec
+ * Normalizes grammar params regardless of source (LLM or fallback)
+ */
+function applyScaleAwareParams(spec, surface) {
+  if (!spec.grammar || !Array.isArray(spec.grammar)) {
+    return spec;
+  }
+
+  const scaleParams = computeScaleAwareParams(surface);
+
+  for (const grammar of spec.grammar) {
+    if (!grammar.params) {
+      grammar.params = {};
+    }
+
+    switch (grammar.name) {
+      case 'Bands':
+        grammar.params.bands = scaleParams.bands;
+        break;
+      case 'Clusters':
+        grammar.params.count = scaleParams.clusters;
+        break;
+      case 'Islands':
+        grammar.params.count = scaleParams.islands;
+        break;
+    }
+  }
+
+  console.log('[SCALE-AWARE] Applied to', spec.grammar.map(g => g.name).join(', '));
+  return spec;
+}
+
+/**
  * Ensure spec has base coverage layer
  * Add Bands grammar with weight ≥0.5 if missing or too weak
  */
@@ -296,14 +350,13 @@ function ensureBaseLayer(spec, surface) {
 
   if (!bandsGrammar) {
     // No Bands - add one with weight 0.6
-    const area_m2 = surface.width_m * surface.height_m;
-    const bandCount = Math.max(2, Math.round(area_m2 / 6));  // Scale-aware: A/6
+    const scaleParams = computeScaleAwareParams(surface);
 
     bandsGrammar = {
       name: 'Bands',
       weight: 0.6,
       params: {
-        bands: bandCount,
+        bands: scaleParams.bands,
         amplitude_m: [0.3, 0.7],
         smoothness: 0.7
       }
@@ -360,11 +413,14 @@ function generateFallbackSpec(prompt, surface, palette, complexity) {
     }));
   }
 
-  // Complexity parameters
+  // Compute scale-aware parameters
+  const scaleParams = computeScaleAwareParams(surface);
+
+  // Complexity parameters (now only style parameters, counts come from scale)
   const complexityParams = {
-    low: { bands: 2, amplitude: [0.2, 0.5], smoothness: 0.9, clusters: 2 },
-    medium: { bands: 3, amplitude: [0.3, 0.8], smoothness: 0.8, clusters: 3 },
-    high: { bands: 4, amplitude: [0.4, 1.0], smoothness: 0.7, clusters: 4 }
+    low: { amplitude: [0.2, 0.5], smoothness: 0.9 },
+    medium: { amplitude: [0.3, 0.8], smoothness: 0.8 },
+    high: { amplitude: [0.4, 1.0], smoothness: 0.7 }
   };
 
   const params = complexityParams[complexity] || complexityParams.medium;
@@ -394,7 +450,7 @@ function generateFallbackSpec(prompt, surface, palette, complexity) {
         name: 'Bands',
         weight: 0.7,
         params: {
-          bands: params.bands,
+          bands: scaleParams.bands,
           amplitude_m: params.amplitude,
           smoothness: params.smoothness
         }
@@ -403,7 +459,7 @@ function generateFallbackSpec(prompt, surface, palette, complexity) {
         name: 'Clusters',
         weight: 0.3,
         params: {
-          count: params.clusters,
+          count: scaleParams.clusters,
           spread: 0.6
         }
       }
@@ -650,6 +706,9 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
   // Override surface dimensions with actual request values
   spec.surface.width_m = surface.width_m;
   spec.surface.height_m = surface.height_m;
+
+  // Apply scale-aware grammar parameters - normalize LLM's counts
+  applyScaleAwareParams(spec, surface);
 
   // Enforce user's palette - NEVER trust LLM's color choices
   if (palette && palette.length > 0) {
