@@ -3,17 +3,40 @@
 
 import sharp from 'sharp';
 import { createClient } from '@supabase/supabase-js';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
 
-// Load TPV palette colors
-const TPV_PALETTE = {
-  'TPV01': '#000000', 'TPV02': '#FFFFFF', 'TPV03': '#808080',
-  'TPV04': '#C0C0C0', 'TPV05': '#8B4513', 'TPV06': '#D2691E',
-  'TPV07': '#CD853F', 'TPV08': '#4169E1', 'TPV09': '#00008B',
-  'TPV10': '#ADD8E6', 'TPV11': '#40E0D0', 'TPV12': '#006400',
-  'TPV13': '#228B22', 'TPV14': '#90EE90', 'TPV15': '#FFFF00',
-  'TPV16': '#FFD700', 'TPV17': '#FFA500', 'TPV18': '#FF4500',
-  'TPV19': '#FF0000', 'TPV20': '#8B008B', 'TPV21': '#FF69B4'
-};
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load RH palette from tpv-palette.json
+let RH_PALETTE = null;
+
+function loadPalette() {
+  if (RH_PALETTE) return RH_PALETTE;
+
+  try {
+    // Navigate from /netlify/functions/studio/_utils/ to /studio/public/assets/
+    const palettePath = resolve(__dirname, '../../../../studio/public/assets/tpv-palette.json');
+    const paletteData = JSON.parse(readFileSync(palettePath, 'utf8'));
+
+    // Create Map<'RH50', '#F15B32'>
+    RH_PALETTE = new Map();
+    for (const color of paletteData.palette) {
+      RH_PALETTE.set(color.code, color.hex);
+    }
+
+    console.log('[PALETTE] Loaded', RH_PALETTE.size, 'RH colors');
+    return RH_PALETTE;
+  } catch (error) {
+    console.error('[PALETTE] Failed to load tpv-palette.json:', error);
+    throw new Error('Failed to load TPV color palette');
+  }
+}
+
+// Initialize palette on module load
+loadPalette();
 
 /**
  * Convert polygon points to SVG path string
@@ -33,14 +56,52 @@ function pointsToPath(points) {
 
 /**
  * Export design to SVG
+ * @param {Array} regions - Generated regions with points and colors
+ * @param {Object} surface - Surface dimensions
+ * @param {Object} metadata - Design metadata
+ * @param {Array} palette - Palette from LayoutSpec (with code, role, target_ratio)
  */
-export function exportSVG(regions, surface, metadata = {}) {
+export function exportSVG(regions, surface, metadata = {}, palette = null) {
   const { width_m, height_m } = surface;
+  const paletteMap = loadPalette();
+
+  // Log palette being used
+  if (palette && palette.length > 0) {
+    const paletteInfo = palette.map(p => {
+      const hex = paletteMap.get(p.code);
+      return `${p.code}=${hex} (${p.role})`;
+    }).join(', ');
+    console.log('[SVG EXPORT] Rendering with palette:', paletteInfo);
+  }
+
+  // Get base color for background (first palette entry with role='base')
+  let baseColor = null;
+  if (palette && palette.length > 0) {
+    const baseEntry = palette.find(p => p.role === 'base') || palette[0];
+    baseColor = baseEntry.code;
+
+    // Strict RH code resolution - throw error if not found
+    if (!paletteMap.has(baseColor)) {
+      throw new Error(`Unknown RH code: ${baseColor}. Available codes: ${Array.from(paletteMap.keys()).join(', ')}`);
+    }
+
+    const baseHex = paletteMap.get(baseColor);
+    console.log(`[SVG EXPORT] Painted base layer with ${baseColor} (${baseHex})`);
+  }
 
   // Group regions by color
   const layersByColor = {};
   for (const region of regions) {
-    const color = region.color || 'TPV08';
+    const color = region.color;
+
+    // Strict RH code resolution - throw error if not found
+    if (!color) {
+      throw new Error('Region missing color property');
+    }
+    if (!paletteMap.has(color)) {
+      throw new Error(`Unknown RH code: ${color}. Available codes: ${Array.from(paletteMap.keys()).join(', ')}`);
+    }
+
     if (!layersByColor[color]) {
       layersByColor[color] = [];
     }
@@ -50,14 +111,25 @@ export function exportSVG(regions, surface, metadata = {}) {
   // Build SVG with layers
   const layers = [];
 
+  // ALWAYS paint base layer first as full-surface rectangle
+  if (baseColor) {
+    const baseHex = paletteMap.get(baseColor);
+    layers.push(
+      `  <g id="layer-base" data-color="${baseColor}" data-role="base">\n    <rect x="0" y="0" width="${width_m}" height="${height_m}" fill="${baseHex}" />\n  </g>`
+    );
+  }
+
+  // Add shape layers on top of base
   for (const [color, colorRegions] of Object.entries(layersByColor)) {
-    const hexColor = TPV_PALETTE[color] || '#4169E1';
+    const hexColor = paletteMap.get(color);
+    const role = palette?.find(p => p.code === color)?.role || 'unknown';
+
     const paths = colorRegions.map(region =>
       `    <path d="${pointsToPath(region.points)}" fill="${hexColor}" />`
     ).join('\n');
 
     layers.push(
-      `  <g id="layer-${color}" data-color="${color}">\n${paths}\n  </g>`
+      `  <g id="layer-${color}" data-color="${color}" data-role="${role}">\n${paths}\n  </g>`
     );
   }
 
@@ -210,13 +282,18 @@ function getContentType(filename) {
 /**
  * Generate all exports for a variant
  * Returns URLs for each format
+ * @param {Array} regions - Generated regions with points and colors
+ * @param {Object} surface - Surface dimensions
+ * @param {Object} metadata - Design metadata (title, variant, etc.)
+ * @param {Object} bom - Bill of materials
+ * @param {Array} palette - Palette from LayoutSpec (required)
  */
-export async function generateAllExports(regions, surface, metadata, bom) {
+export async function generateAllExports(regions, surface, metadata, bom, palette) {
   const variantId = `v${metadata.variant}_${Date.now()}`;
 
   try {
-    // Generate SVG
-    const svg = exportSVG(regions, surface, metadata);
+    // Generate SVG with palette
+    const svg = exportSVG(regions, surface, metadata, palette);
     const svgUrl = await uploadToStorage(
       Buffer.from(svg, 'utf8'),
       `${variantId}.svg`

@@ -159,7 +159,7 @@ async function generateVariant(spec, variantNumber, seed) {
     seed
   };
 
-  const exports = await generateAllExports(coloredRegions, surface, metadata, bom);
+  const exports = await generateAllExports(coloredRegions, surface, metadata, bom, palette);
 
   // Step 7: Return variant data
   return {
