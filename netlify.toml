@@ -31,12 +31,12 @@
 # Studio API endpoints - map paths to function names
 [[redirects]]
   from = "/api/studio/design/plan"
-  to = "/.netlify/functions/design-plan"
+  to = "/.netlify/functions/studio-design-plan"
   status = 200
 
 [[redirects]]
   from = "/api/studio/design/generate"
-  to = "/.netlify/functions/design-generate"
+  to = "/.netlify/functions/studio-design-generate"
   status = 200
 
 # Studio app - serve index.html for all /studio routes (SPA fallback)

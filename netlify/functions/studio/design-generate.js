@@ -42,36 +42,38 @@ const headers = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
-export default async (request) => {
+export async function handler(event) {
   const startTime = Date.now();
 
   // Handle OPTIONS preflight
-  if (request.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers });
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
   }
 
   // Only allow POST
-  if (request.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ error: 'Method not allowed' }),
-      { status: 405, headers }
-    );
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ error: 'Method not allowed' })
+    };
   }
 
   try {
     // Parse request body
-    const body = await request.json();
+    const body = JSON.parse(event.body);
     const { spec, variants: variantCount = 3 } = body;
 
     // Validate LayoutSpec
     if (!spec || !spec.surface || !spec.palette || !spec.grammar) {
-      return new Response(
-        JSON.stringify({
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
           error: 'Invalid LayoutSpec',
           message: 'spec must include surface, palette, and grammar'
-        }),
-        { status: 400, headers }
-      );
+        })
+      };
     }
 
     console.log('[DESIGN GEN] Generating', variantCount, 'variants');
@@ -103,28 +105,30 @@ export default async (request) => {
     const processingTime = Date.now() - startTime;
     console.log('[DESIGN GEN] All variants complete:', processingTime, 'ms');
 
-    return new Response(
-      JSON.stringify({
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
         success: true,
         variants: generatedVariants,
         processingTime
-      }),
-      { status: 200, headers }
-    );
+      })
+    };
 
   } catch (error) {
     console.error('[DESIGN GEN] Error:', error);
 
-    return new Response(
-      JSON.stringify({
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({
         error: 'Internal server error',
         message: error.message,
         stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      }),
-      { status: 500, headers }
-    );
+      })
+    };
   }
-};
+}
 
 /**
  * Generate a single design variant
