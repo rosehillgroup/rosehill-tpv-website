@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from './lib/api/auth.js';
-import PromptPanel from './components/PromptPanel.jsx';
-import VariantGallery from './components/VariantGallery.jsx';
-import ExportPanel from './components/ExportPanel.jsx';
+import InspirePanel from './components/InspirePanel.jsx';
+import ConceptGallery from './components/ConceptGallery.jsx';
+import DraftifyPanel from './components/DraftifyPanel.jsx';
 
 function SignInForm() {
   const [email, setEmail] = useState('');
@@ -122,8 +122,9 @@ function SignInForm() {
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [variants, setVariants] = useState([]);
-  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [concepts, setConcepts] = useState([]);
+  const [selectedConcept, setSelectedConcept] = useState(null);
+  const [design, setDesign] = useState(null);
 
   useEffect(() => {
     // Check auth status on mount
@@ -140,13 +141,22 @@ function App() {
     return () => subscription?.unsubscribe();
   }, []);
 
-  const handleVariantsGenerated = (newVariants) => {
-    setVariants(newVariants);
-    setSelectedVariant(null);
+  const handleConceptsGenerated = (newConcepts, metadata) => {
+    console.log('[App] Concepts generated:', newConcepts.length, 'concepts');
+    setConcepts(newConcepts);
+    setSelectedConcept(null);
+    setDesign(null);
   };
 
-  const handleVariantSelect = (variant) => {
-    setSelectedVariant(variant);
+  const handleSelectConcept = (concept) => {
+    console.log('[App] Concept selected:', concept.id);
+    setSelectedConcept(concept);
+    setDesign(null);
+  };
+
+  const handleDesignComplete = (completedDesign) => {
+    console.log('[App] Design completed:', completedDesign.id);
+    setDesign(completedDesign);
   };
 
   if (loading) {
@@ -170,31 +180,31 @@ function App() {
   return (
     <div className="tpv-studio">
       <header className="tpv-studio__header">
-        <h1>TPV Studio</h1>
+        <h1>TPV Studio 2.0</h1>
         <p>AI-powered playground surface design tool</p>
       </header>
 
       <main className="tpv-studio__container">
-        <PromptPanel onVariantsGenerated={handleVariantsGenerated} />
+        <InspirePanel onConceptsGenerated={handleConceptsGenerated} />
 
-        {variants.length > 0 && (
-          <>
-            <VariantGallery
-              variants={variants}
-              selectedVariant={selectedVariant}
-              onSelectVariant={handleVariantSelect}
-            />
-
-            {selectedVariant && (
-              <ExportPanel variant={selectedVariant} />
-            )}
-          </>
+        {concepts.length > 0 && (
+          <ConceptGallery
+            concepts={concepts}
+            onSelectConcept={handleSelectConcept}
+          />
         )}
 
-        {variants.length === 0 && (
+        {selectedConcept && (
+          <DraftifyPanel
+            selectedConcept={selectedConcept}
+            onDesignComplete={handleDesignComplete}
+          />
+        )}
+
+        {concepts.length === 0 && (
           <div className="tpv-studio__empty">
             <h3>Get started by describing your design above</h3>
-            <p>Enter a theme, select colors, and let AI create installer-ready playground surface designs.</p>
+            <p>Generate AI concepts with FLUX.1 [pro], then vectorize into installer-ready playground surface designs.</p>
           </div>
         )}
       </main>

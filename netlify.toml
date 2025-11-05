@@ -7,7 +7,7 @@
 
 [functions]
   directory = "netlify/functions"
-  external_node_modules = ["jose", "@sanity/client", "@supabase/supabase-js"]
+  external_node_modules = ["jose", "@sanity/client", "@supabase/supabase-js", "replicate", "sharp", "potrace", "color-diff"]
   node_bundler = "esbuild"
   included_files = ["motifs/**/*.svg"]
 
@@ -29,7 +29,20 @@
   to = "/admin/index.html"
   status = 200
 
-# Studio API endpoints - map paths to function names
+# Studio API endpoints - TPV Studio 2.0 (AI-first workflow)
+[[redirects]]
+  from = "/api/studio/inspire"
+  to = "/.netlify/functions/studio-inspire"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/studio/draftify"
+  to = "/.netlify/functions/studio-draftify"
+  status = 200
+  force = true
+
+# Legacy Studio API endpoints (deprecated)
 [[redirects]]
   from = "/api/studio/design/plan"
   to = "/.netlify/functions/studio-design-plan"
