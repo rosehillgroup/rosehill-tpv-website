@@ -1,0 +1,14 @@
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <title>07 Kaaba</title>
+  <g>
+    <rect x="13" y="17" width="72" height="16"/>
+    <rect x="87" y="17" width="28" height="16"/>
+    <path d="M13,41V72H52V46H72V72H85V41Zm26,9H18V46H39Zm9,0H43V46h5Zm33,0H76V46h5Z"/>
+    <path d="M75,106a1,1,0,0,1,0-2H85v-4H13v6H23a1,1,0,0,1,0,2H13v4H85v-6Zm-42,2H30a1,1,0,0,1,0-2h3a1,1,0,0,1,0,2Zm38-2H68a1,1,0,0,1,0-2h3a1,1,0,0,1,0,2Z"/>
+    <path d="M103,108a1,1,0,0,1,0-2h12v-6H87v12h28v-4Zm-4,0H96a1,1,0,0,1,0-2h3a1,1,0,0,1,0,2Z"/>
+    <path d="M115,72V41H87V72ZM91,46h19v4H91Z"/>
+    <rect x="87" y="74" width="28" height="24"/>
+    <rect x="13" y="74" width="39" height="24"/>
+    <rect x="72" y="74" width="13" height="24"/>
+  </g>
+</svg>

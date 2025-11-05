@@ -1,0 +1,17 @@
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <title>10 Arch the Triumph</title>
+  <g>
+    <rect x="8" y="61" width="33" height="4"/>
+    <rect x="8" y="103" width="33" height="5"/>
+    <rect x="87" y="61" width="33" height="4" transform="translate(207 126) rotate(-180)"/>
+    <rect x="87" y="103" width="33" height="5" transform="translate(207 211) rotate(-180)"/>
+    <rect x="8" y="41" width="112" height="4"/>
+    <path d="M40,47V57.9749C45.5711,53.1176,55.1735,50,64,50s18.4289,3.1176,24,7.9749V47Z"/>
+    <rect x="19" y="22" width="90" height="3"/>
+    <rect x="11" y="27" width="106" height="12"/>
+    <path d="M11,67v34H38V67ZM32,92H17V78.5a7.5,7.5,0,0,1,15,0Z"/>
+    <path d="M38,59V47H11V59ZM15,49H34v8H15Z"/>
+    <path d="M117,59V47H90V59ZM94,49h19v8H94Z"/>
+    <path d="M90,67v34h27V67Zm21,25H96V78.5a7.5,7.5,0,0,1,15,0Z"/>
+  </g>
+</svg>

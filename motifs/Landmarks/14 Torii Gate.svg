@@ -1,0 +1,15 @@
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <title>14 Torii Gate</title>
+  <g>
+    <polygon points="20 51 20 55 64 55 108 55 108 51 64 51 20 51"/>
+    <polygon points="18 31 20 35 30 35 30 39 41 39 41 35 64 35 87 35 87 39 98 39 98 35 108 35 110 31 64 31 18 31"/>
+    <path d="M64,24c-19.7158,0-40-.5133-56-6l5.0769,11H114.9231L120,18C104,23.4867,83.7158,24,64,24Z"/>
+    <rect x="59" y="37" width="10" height="12"/>
+    <rect x="32" y="57" width="7" height="42"/>
+    <rect x="29" y="101" width="13" height="11"/>
+    <rect x="89" y="57" width="7" height="42"/>
+    <rect x="86" y="101" width="13" height="11"/>
+    <rect x="89" y="41" width="7" height="8"/>
+    <rect x="32" y="41" width="7" height="8"/>
+  </g>
+</svg>
