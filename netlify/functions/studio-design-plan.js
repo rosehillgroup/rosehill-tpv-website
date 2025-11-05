@@ -364,12 +364,9 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
   // Add current user request
   fullPrompt += `USER: ${userRequest}\n\nASSISTANT:`;
 
-  // Trim prompt to 1500 chars for testing (can increase later)
-  const trimmedPrompt = fullPrompt.substring(0, 1500);
-
   console.log('[LLAMA3] Calling Replicate API...');
   console.log('[LLAMA3] User request:', userRequest);
-  console.log('[LLAMA3] Full prompt length:', fullPrompt.length, '| Trimmed to:', trimmedPrompt.length);
+  console.log('[LLAMA3] Full prompt length:', fullPrompt.length);
 
   // Get version ID for 70B model
   const modelSlug = 'meta/meta-llama-3-70b-instruct';
@@ -387,7 +384,7 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
     body: JSON.stringify({
       version: versionId,  // Pin to specific version
       input: {
-        prompt: trimmedPrompt,
+        prompt: fullPrompt,
         max_tokens: 1500,
         temperature: 0.7,
         top_p: 0.9
@@ -418,7 +415,7 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
         body: JSON.stringify({
           version: versionId,
           input: {
-            prompt: trimmedPrompt,
+            prompt: fullPrompt,
             max_tokens: 1500,
             temperature: 0.7,
             top_p: 0.9
