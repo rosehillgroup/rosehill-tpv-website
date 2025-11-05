@@ -375,8 +375,8 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
   console.log('[LLAMA3] User request:', userRequest);
   console.log('[LLAMA3] Full prompt length:', fullPrompt.length);
 
-  // Get version ID for 70B model
-  const modelSlug = 'meta/meta-llama-3-70b-instruct';
+  // Get version ID for 405B model
+  const modelSlug = 'meta/meta-llama-3.1-405b-instruct';
   console.log('[LLAMA3] Fetching version for:', modelSlug);
 
   const versionId = await getModelVersion(token, account, project, modelSlug);
