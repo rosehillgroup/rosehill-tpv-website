@@ -195,6 +195,45 @@ export default async (request) => {
 }
 
 /**
+ * Enforce user's palette on a LayoutSpec
+ * NEVER let the LLM choose colors - always use user's selection
+ */
+function enforcePalette(spec, userPalette) {
+  if (!userPalette || userPalette.length < 2) {
+    throw new Error('Palette must have at least 2 RH codes');
+  }
+
+  // Define roles and ratios - this is policy, not LLM decision
+  const roles = ['base', 'accent', 'highlight'];
+  const ratios = [0.55, 0.30, 0.15];
+
+  // Replace LLM's palette with user's selection
+  spec.palette = userPalette.slice(0, 3).map((c, i) => ({
+    code: c.code || c,  // Handle both {code:'RH50'} and 'RH50' formats
+    role: roles[i] || 'accent',
+    target_ratio: ratios[i] || 0.15
+  }));
+
+  // Validate roles
+  const validRoles = ['base', 'accent', 'highlight'];
+  for (const entry of spec.palette) {
+    if (!validRoles.includes(entry.role)) {
+      throw new Error(`Invalid palette role: ${entry.role}. Must be base, accent, or highlight`);
+    }
+  }
+
+  // Validate ratios sum to ~1.0 (allow small floating point error)
+  const sumRatios = spec.palette.reduce((sum, p) => sum + p.target_ratio, 0);
+  if (Math.abs(sumRatios - 1.0) > 0.01) {
+    throw new Error(`Palette ratios must sum to 1.0, got ${sumRatios.toFixed(2)}`);
+  }
+
+  console.log('[PALETTE] Enforced user palette:', spec.palette.map(p => `${p.code} (${p.role})`).join(', '));
+
+  return spec;
+}
+
+/**
  * Generate fallback LayoutSpec without AI
  * Simple Bands-only design that always works
  */
@@ -516,6 +555,11 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
   // Override surface dimensions with actual request values
   spec.surface.width_m = surface.width_m;
   spec.surface.height_m = surface.height_m;
+
+  // Enforce user's palette - NEVER trust LLM's color choices
+  if (palette && palette.length > 0) {
+    enforcePalette(spec, palette);
+  }
 
   return { spec, model: '70b' };
 }
