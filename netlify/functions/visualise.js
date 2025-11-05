@@ -221,32 +221,16 @@ async function runModeAPipeline({ imageData, maskData, colors, pattern, granuleS
 async function runModeBPipeline({ imageData, maskData, colors, useEnhancedPrompt, useAutoMask, usePaletteClamp, clampStrength, pipeline }) {
   console.log('[MODE B PIPELINE] Starting AI rendering...');
 
-  // Step 1: Generate mask (if needed)
-  let finalMaskData = maskData;
+  // Step 1: Skip SAM 2 for now - just process whole image
+  // TODO: Fix SAM 2 model version once Replicate access is confirmed
+  console.log('[MODE B PIPELINE] Skipping SAM 2 - processing entire image');
 
-  if (!finalMaskData && useAutoMask) {
-    console.log('[MODE B PIPELINE] Step 1: Generating SAM 2 mask...');
+  const finalMaskData = null; // null = FLUX processes entire image
 
-    try {
-      const imageUrl = await uploadImageToSupabase(imageData);
-      const sam2Result = await generateSAM2Mask(imageUrl);
-
-      finalMaskData = sam2Result.maskUrl;
-
-      pipeline.mask = {
-        method: 'sam2',
-        segmentCount: sam2Result.segmentCount,
-        selectedSegment: sam2Result.selectedSegment
-      };
-
-      console.log('[MODE B PIPELINE] SAM 2 mask generated');
-    } catch (sam2Error) {
-      console.error('[MODE B PIPELINE] SAM 2 failed:', sam2Error);
-      throw new Error(`Automatic segmentation failed: ${sam2Error.message}. Please try a different image or contact support.`);
-    }
-  } else if (!finalMaskData) {
-    throw new Error('No mask provided and auto-segmentation is disabled. Please enable auto-segmentation.');
-  }
+  pipeline.mask = {
+    method: 'none',
+    note: 'Processing entire image (SAM 2 disabled)'
+  };
 
   // Step 2: Generate enhanced prompt (if requested)
   let prompt;
