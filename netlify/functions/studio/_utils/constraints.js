@@ -162,36 +162,110 @@ export function calculateBOM(regions, palette) {
 }
 
 /**
- * Assign colors to regions based on palette and target ratios
- * Simplified algorithm for MVP
+ * Assign colors to regions with area balancing and piece caps
+ * Implements piece limits: base ≤12, accent ≤30, highlight ≤40
  */
 export function assignColors(regions, palette) {
   if (regions.length === 0 || palette.length === 0) {
     return regions;
   }
 
-  // Sort palette by target ratio (descending)
-  const sortedPalette = [...palette].sort((a, b) =>
-    (b.target_ratio || 0) - (a.target_ratio || 0)
-  );
+  // Define piece caps per role
+  const PIECE_CAPS = {
+    base: 12,
+    accent: 30,
+    highlight: 40
+  };
 
-  // Distribute colors based on target ratios
-  const coloredRegions = [];
-  let currentColorIndex = 0;
-  const regionsPerColor = Math.ceil(regions.length / palette.length);
+  // Calculate total area
+  const regionsWithArea = regions.map(r => ({
+    region: r,
+    area: polygonArea(r.points)
+  }));
 
-  for (let i = 0; i < regions.length; i++) {
-    // Move to next color based on target ratios
-    if (i > 0 && i % regionsPerColor === 0 && currentColorIndex < palette.length - 1) {
-      currentColorIndex++;
+  const totalArea = regionsWithArea.reduce((sum, r) => sum + r.area, 0);
+
+  // Sort regions by area (descending) - assign largest to base first
+  regionsWithArea.sort((a, b) => b.area - a.area);
+
+  // Initialize color buckets with caps
+  const colorBuckets = palette.map(p => ({
+    code: p.code,
+    role: p.role,
+    target_ratio: p.target_ratio || 0,
+    target_area: totalArea * (p.target_ratio || 0),
+    cap: PIECE_CAPS[p.role] || 50,
+    assigned_area: 0,
+    assigned_count: 0,
+    regions: []
+  }));
+
+  // Sort buckets by target ratio (descending) - fill base first
+  colorBuckets.sort((a, b) => b.target_ratio - a.target_ratio);
+
+  // Assign regions to colors using greedy area-matching with caps
+  for (const { region, area } of regionsWithArea) {
+    // Find best color: maximize area coverage without exceeding cap
+    let bestBucket = null;
+    let bestScore = -Infinity;
+
+    for (const bucket of colorBuckets) {
+      // Skip if cap reached
+      if (bucket.assigned_count >= bucket.cap) {
+        continue;
+      }
+
+      // Score = how much this helps reach target (negative if over)
+      const areaDeficit = bucket.target_area - bucket.assigned_area;
+      const score = areaDeficit / bucket.target_area; // Normalized deficit
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestBucket = bucket;
+      }
     }
 
-    const color = sortedPalette[currentColorIndex];
-    coloredRegions.push({
-      ...regions[i],
-      color: color.code,
-      colorRole: color.role
-    });
+    // Fallback: assign to first available bucket if all targets met
+    if (!bestBucket) {
+      bestBucket = colorBuckets.find(b => b.assigned_count < b.cap);
+    }
+
+    // Assign to chosen bucket
+    if (bestBucket) {
+      bestBucket.regions.push(region);
+      bestBucket.assigned_area += area;
+      bestBucket.assigned_count++;
+    } else {
+      // Emergency fallback: assign to base (should never happen)
+      console.warn('[COLOR ASSIGN] All caps reached, assigning to base');
+      colorBuckets[0].regions.push(region);
+      colorBuckets[0].assigned_count++;
+    }
+  }
+
+  // Log assignment summary
+  for (const bucket of colorBuckets) {
+    const areaPercent = ((bucket.assigned_area / totalArea) * 100).toFixed(1);
+    const targetPercent = (bucket.target_ratio * 100).toFixed(1);
+    const capStatus = bucket.assigned_count > bucket.cap ? '⚠️  EXCEEDED' : '✓';
+
+    console.log(
+      `[COLOR ASSIGN] ${bucket.code} (${bucket.role}): ` +
+      `${bucket.assigned_count}/${bucket.cap} pieces ${capStatus}, ` +
+      `${areaPercent}% area (target ${targetPercent}%)`
+    );
+  }
+
+  // Flatten back to colored regions
+  const coloredRegions = [];
+  for (const bucket of colorBuckets) {
+    for (const region of bucket.regions) {
+      coloredRegions.push({
+        ...region,
+        color: bucket.code,
+        colorRole: bucket.role
+      });
+    }
   }
 
   return coloredRegions;
