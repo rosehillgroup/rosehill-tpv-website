@@ -42,7 +42,7 @@ const headers = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
-export default async function(request) {
+export default async (request) => {
   const startTime = Date.now();
 
   // Handle OPTIONS preflight

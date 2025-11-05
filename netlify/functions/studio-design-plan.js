@@ -103,7 +103,7 @@ const FEW_SHOT_EXAMPLES = [
   }
 ];
 
-export default async function(request) {
+export default async (request) => {
   const startTime = Date.now();
 
   // Handle OPTIONS preflight
