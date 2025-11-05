@@ -1,6 +1,6 @@
 [build]
   publish = "."
-  command = "node build-installations.cjs && cd studio && npm install && npm run build"
+  command = "node build-installations.cjs && cd studio && npm install && npm run build && cp -r dist/* ."
 
 [build.environment]
   NODE_VERSION = "18"
@@ -34,15 +34,15 @@
   to = "/.netlify/functions/studio/:splat"
   status = 200
 
-# Studio app - serve index.html for all /studio routes
+# Studio app - serve index.html for all /studio routes (SPA fallback)
 [[redirects]]
   from = "/studio"
-  to = "/studio/dist/index.html"
+  to = "/studio/index.html"
   status = 200
 
 [[redirects]]
   from = "/studio/*"
-  to = "/studio/dist/index.html"
+  to = "/studio/index.html"
   status = 200
 
 # Redirects for multilingual routing
