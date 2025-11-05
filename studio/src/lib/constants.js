@@ -4,8 +4,9 @@
 export const BASE_URL = '/studio';
 
 export const API_ENDPOINTS = {
-  DESIGN_PLAN: '/api/studio/design/plan',
-  DESIGN_GENERATE: '/api/studio/design/generate'
+  // Direct function URLs to bypass cache during deployment
+  DESIGN_PLAN: '/.netlify/functions/studio-design-plan',
+  DESIGN_GENERATE: '/.netlify/functions/studio-design-generate'
 };
 
 export const SUPABASE_CONFIG = {

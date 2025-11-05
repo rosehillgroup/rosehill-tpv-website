@@ -33,11 +33,13 @@
   from = "/api/studio/design/plan"
   to = "/.netlify/functions/studio-design-plan"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/api/studio/design/generate"
   to = "/.netlify/functions/studio-design-generate"
   status = 200
+  force = true
 
 # Studio app - serve index.html for all /studio routes (SPA fallback)
 [[redirects]]
