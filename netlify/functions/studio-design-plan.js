@@ -103,26 +103,25 @@ const FEW_SHOT_EXAMPLES = [
   }
 ];
 
-export async function handler(event) {
+export default async function(request) {
   const startTime = Date.now();
 
   // Handle OPTIONS preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers, body: '' };
+  if (request.method === 'OPTIONS') {
+    return new Response('', { status: 204, headers });
   }
 
   // Only allow POST
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers
+    });
   }
 
   try {
     // Parse request body
-    const body = JSON.parse(event.body);
+    const body = await request.json();
     const {
       prompt,
       surface,
@@ -133,25 +132,17 @@ export async function handler(event) {
 
     // Validate required fields
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({
-          error: 'Invalid prompt',
-          message: 'prompt is required and must be a non-empty string'
-        })
-      };
+      return new Response(JSON.stringify({
+        error: 'Invalid prompt',
+        message: 'prompt is required and must be a non-empty string'
+      }), { status: 400, headers });
     }
 
     if (!surface || typeof surface.width_m !== 'number' || typeof surface.height_m !== 'number') {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({
-          error: 'Invalid surface',
-          message: 'surface must include width_m and height_m as numbers'
-        })
-      };
+      return new Response(JSON.stringify({
+        error: 'Invalid surface',
+        message: 'surface must include width_m and height_m as numbers'
+      }), { status: 400, headers });
     }
 
     console.log('[DESIGN PLAN] Generating layout spec for:', prompt);
@@ -180,29 +171,21 @@ export async function handler(event) {
 
     console.log('[DESIGN PLAN] Plan generation complete:', processingTime, 'ms');
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        success: true,
-        spec,
-        model,
-        processingTime
-      })
-    };
+    return new Response(JSON.stringify({
+      success: true,
+      spec,
+      model,
+      processingTime
+    }), { status: 200, headers });
 
   } catch (error) {
     console.error('[DESIGN PLAN] Error:', error);
 
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({
-        error: 'Internal server error',
-        message: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      })
-    };
+    return new Response(JSON.stringify({
+      error: 'Internal server error',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }), { status: 500, headers });
   }
 }
 

@@ -42,38 +42,33 @@ const headers = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
-export async function handler(event) {
+export default async function(request) {
   const startTime = Date.now();
 
   // Handle OPTIONS preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers, body: '' };
+  if (request.method === 'OPTIONS') {
+    return new Response('', { status: 204, headers });
   }
 
   // Only allow POST
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      headers,
-      body: JSON.stringify({ error: 'Method not allowed' })
-    };
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers
+    });
   }
 
   try {
     // Parse request body
-    const body = JSON.parse(event.body);
+    const body = await request.json();
     const { spec, variants: variantCount = 3 } = body;
 
     // Validate LayoutSpec
     if (!spec || !spec.surface || !spec.palette || !spec.grammar) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({
-          error: 'Invalid LayoutSpec',
-          message: 'spec must include surface, palette, and grammar'
-        })
-      };
+      return new Response(JSON.stringify({
+        error: 'Invalid LayoutSpec',
+        message: 'spec must include surface, palette, and grammar'
+      }), { status: 400, headers });
     }
 
     console.log('[DESIGN GEN] Generating', variantCount, 'variants');
@@ -105,28 +100,20 @@ export async function handler(event) {
     const processingTime = Date.now() - startTime;
     console.log('[DESIGN GEN] All variants complete:', processingTime, 'ms');
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        success: true,
-        variants: generatedVariants,
-        processingTime
-      })
-    };
+    return new Response(JSON.stringify({
+      success: true,
+      variants: generatedVariants,
+      processingTime
+    }), { status: 200, headers });
 
   } catch (error) {
     console.error('[DESIGN GEN] Error:', error);
 
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({
-        error: 'Internal server error',
-        message: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-      })
-    };
+    return new Response(JSON.stringify({
+      error: 'Internal server error',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    }), { status: 500, headers });
   }
 }
 
