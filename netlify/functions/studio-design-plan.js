@@ -25,40 +25,40 @@
  * }
  */
 
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, resolve } from 'path';
+// RH Palette - inline to avoid file loading issues in serverless
+const RH_PALETTE_DATA = [
+  { code: "RH30", name: "Beige", hex: "#E4C4AA" },
+  { code: "RH31", name: "Cream", hex: "#E8E3D8" },
+  { code: "RH41", name: "Bright Yellow", hex: "#FFD833" },
+  { code: "RH40", name: "Mustard", hex: "#E5A144" },
+  { code: "RH50", name: "Orange", hex: "#F15B32" },
+  { code: "RH01", name: "Standard Red", hex: "#A5362F" },
+  { code: "RH02", name: "Bright Red", hex: "#E21F2F" },
+  { code: "RH90", name: "Funky Pink", hex: "#E8457E" },
+  { code: "RH21", name: "Purple", hex: "#493D8C" },
+  { code: "RH20", name: "Standard Blue", hex: "#0075BC" },
+  { code: "RH22", name: "Light Blue", hex: "#47AFE3" },
+  { code: "RH23", name: "Azure", hex: "#039DC4" },
+  { code: "RH26", name: "Turquoise", hex: "#00A6A3" },
+  { code: "RH12", name: "Dark Green", hex: "#006C55" },
+  { code: "RH10", name: "Standard Green", hex: "#609B63" },
+  { code: "RH11", name: "Bright Green", hex: "#3BB44A" },
+  { code: "RH32", name: "Brown", hex: "#8B5F3C" },
+  { code: "RH65", name: "Pale Grey", hex: "#D9D9D6" },
+  { code: "RH61", name: "Light Grey", hex: "#939598" },
+  { code: "RH60", name: "Dark Grey", hex: "#59595B" },
+  { code: "RH70", name: "Black", hex: "#231F20" }
+];
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Load RH palette from tpv-palette.json
-let RH_PALETTE = null;
-
-function loadPalette() {
-  if (RH_PALETTE) return RH_PALETTE;
-
-  try {
-    // Navigate from /netlify/functions/ to /studio/public/assets/
-    const palettePath = resolve(__dirname, '../../studio/public/assets/tpv-palette.json');
-    const paletteData = JSON.parse(readFileSync(palettePath, 'utf8'));
-
-    // Create Map<'RH50', {name, hex}>
-    RH_PALETTE = new Map();
-    for (const color of paletteData.palette) {
-      RH_PALETTE.set(color.code, { name: color.name, hex: color.hex });
-    }
-
-    console.log('[PALETTE] Loaded', RH_PALETTE.size, 'RH colors');
-    return RH_PALETTE;
-  } catch (error) {
-    console.error('[PALETTE] Failed to load tpv-palette.json:', error);
-    throw new Error('Failed to load TPV color palette');
-  }
+// Create palette Map
+const RH_PALETTE = new Map();
+for (const color of RH_PALETTE_DATA) {
+  RH_PALETTE.set(color.code, { name: color.name, hex: color.hex });
 }
 
-// Initialize palette on module load
-loadPalette();
+function loadPalette() {
+  return RH_PALETTE;
+}
 
 // CORS headers
 const headers = {
