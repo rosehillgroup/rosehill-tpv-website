@@ -283,6 +283,52 @@ function enforcePalette(spec, userPalette) {
 }
 
 /**
+ * Ensure spec has base coverage layer
+ * Add Bands grammar with weight ≥0.5 if missing or too weak
+ */
+function ensureBaseLayer(spec, surface) {
+  if (!spec.grammar || !Array.isArray(spec.grammar)) {
+    spec.grammar = [];
+  }
+
+  // Find existing Bands grammar
+  let bandsGrammar = spec.grammar.find(g => g.name === 'Bands');
+
+  if (!bandsGrammar) {
+    // No Bands - add one with weight 0.6
+    const area_m2 = surface.width_m * surface.height_m;
+    const bandCount = Math.max(2, Math.round(area_m2 / 6));  // Scale-aware: A/6
+
+    bandsGrammar = {
+      name: 'Bands',
+      weight: 0.6,
+      params: {
+        bands: bandCount,
+        amplitude_m: [0.3, 0.7],
+        smoothness: 0.7
+      }
+    };
+    spec.grammar.push(bandsGrammar);
+    console.log('[BASE LAYER] Added missing Bands grammar with weight 0.6');
+  } else if (bandsGrammar.weight < 0.5) {
+    // Bands exists but too weak - boost to 0.5
+    console.log(`[BASE LAYER] Boosting Bands weight from ${bandsGrammar.weight} to 0.5`);
+    bandsGrammar.weight = 0.5;
+  }
+
+  // Normalize weights to sum to 1.0
+  const totalWeight = spec.grammar.reduce((sum, g) => sum + g.weight, 0);
+  if (Math.abs(totalWeight - 1.0) > 0.01) {
+    for (const g of spec.grammar) {
+      g.weight = g.weight / totalWeight;
+    }
+    console.log('[BASE LAYER] Normalized grammar weights to sum to 1.0');
+  }
+
+  return spec;
+}
+
+/**
  * Generate fallback LayoutSpec without AI
  * Simple Bands-only design that always works
  */
@@ -609,6 +655,9 @@ async function generateLlama3Spec(prompt, surface, palette, complexity) {
   if (palette && palette.length > 0) {
     enforcePalette(spec, palette);
   }
+
+  // Ensure base coverage layer - prevent confetti designs
+  ensureBaseLayer(spec, surface);
 
   return { spec, model: '70b' };
 }
