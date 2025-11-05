@@ -1,6 +1,6 @@
 [build]
   publish = "."
-  command = "node build-installations.cjs"
+  command = "node build-installations.cjs && cd studio && npm install && npm run build"
 
 [build.environment]
   NODE_VERSION = "18"
