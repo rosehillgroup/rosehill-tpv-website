@@ -22,22 +22,22 @@ export const STYLE_PRESETS = {
     name: 'Playful Flat Design',
     description: 'Bold shapes, vibrant colors, fun themes for play areas',
     prefix: 'Bold flat shapes, vibrant playground design, playful motifs,',
-    guidance: 5.5, // Optimized for FLUX - lower guidance = less artifacts
-    steps: 16 // FLUX.1-schnell optimal steps
+    guidance: 3.5, // FLUX.1-schnell works best with 2-4 guidance
+    steps: 4 // FLUX.1-schnell maximum (ultra-fast model)
   },
   geometric: {
     name: 'Geometric Abstract',
     description: 'Clean lines, mathematical patterns, modern aesthetics',
     prefix: 'Geometric abstract pattern, clean lines, mathematical precision, modern minimalist design,',
-    guidance: 5.5,
-    steps: 16
+    guidance: 3.5,
+    steps: 4
   },
   sport_court: {
     name: 'Sport Court Graphics',
     description: 'Athletic field markings, court layouts, sport-specific designs',
     prefix: 'Sport court graphics, athletic field design, clean court markings, professional sports surface,',
-    guidance: 6, // Slightly higher CFG for more structured output
-    steps: 18
+    guidance: 3.5,
+    steps: 4
   }
 };
 
