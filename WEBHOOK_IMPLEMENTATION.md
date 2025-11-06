@@ -29,7 +29,7 @@ Total: ~50s (vs ~100s with cron)
 
 Add to Netlify:
 ```bash
-REPLICATE_API_KEY=r8_... # Your Replicate API token
+REPLICATE_API_TOKEN=r8_... # Your Replicate API token (standard name)
 REPLICATE_WEBHOOK_SECRET=$(openssl rand -hex 32) # Generate with this command
 PUBLIC_BASE_URL=https://yoursite.netlify.app
 SUPABASE_URL=https://okakomwfikxmwllvliva.supabase.co

@@ -61,7 +61,7 @@ export async function handler(event, context) {
         // Query Replicate API
         const predictionUrl = `${REPLICATE_API}/${job.prediction_id}`;
         const response = await fetch(predictionUrl, {
-          headers: { 'Authorization': `Token ${process.env.REPLICATE_API_KEY}` }
+          headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}` }
         });
 
         if (!response.ok) {

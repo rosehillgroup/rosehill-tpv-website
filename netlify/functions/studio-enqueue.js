@@ -47,7 +47,7 @@ export async function handler(event, context) {
     const predictionResponse = await fetch(REPLICATE_API, {
       method: 'POST',
       headers: {
-        'Authorization': `Token ${process.env.REPLICATE_API_KEY}`,
+        'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
