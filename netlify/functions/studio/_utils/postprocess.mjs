@@ -2,7 +2,7 @@
 // Wraps color-quantize functions and adds auto-ranking
 
 import sharp from 'sharp';
-import { quantizeImageToPalette, extractDominantColors } from './color-quantize.js';
+import { quantizeImageToPalette, extractDominantColors } from './color-quantize.mjs';
 /**
  * Clamp image to TPV palette
  * Wrapper for quantizeImageToPalette

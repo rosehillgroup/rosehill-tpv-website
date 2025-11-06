@@ -1,7 +1,7 @@
 // Palette swatch generation for IP-Adapter conditioning
 // Creates SVG swatches from TPV color hex codes (serverless-friendly)
 
-import { uploadToStorage } from './exports.js';
+import { uploadToStorage } from './exports.mjs';
 /**
  * Generate a palette swatch as SVG buffer from color hex codes
  * Creates a grid of equal-sized color blocks

@@ -1,7 +1,7 @@
 // Painter utilities for TPV Studio
 // Role-aware compositing, SVG generation, and PNG rasterization
 
-import { polygonCentroid } from './geometry.js';
+import { polygonCentroid } from './geometry.mjs';
 /**
  * Paint SVG with role-aware layering
  * @param {Object} surface - {width_m, height_m}

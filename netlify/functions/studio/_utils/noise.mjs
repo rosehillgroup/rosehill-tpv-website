@@ -2,7 +2,7 @@
 // Provides seeded Perlin/Simplex noise for organic shape generation
 
 import { createNoise2D } from 'simplex-noise';
-import { SeededRandom } from './random.js';
+import { SeededRandom } from './random.mjs';
 /**
  * Create a seeded 2D noise function
  * @param {number} seed - Seed for noise generation
