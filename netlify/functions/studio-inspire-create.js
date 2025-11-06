@@ -25,7 +25,7 @@ import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
  *   estimatedDuration: number (seconds)
  * }
  */
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
   // Only accept POST
   if (event.httpMethod !== 'POST') {
     return {
@@ -142,4 +142,4 @@ export async function handler(event, context) {
       })
     };
   }
-}
+};

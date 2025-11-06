@@ -10,7 +10,7 @@ import { uploadToStorage } from './studio/_utils/exports.js';
 const REPLICATE_API = 'https://api.replicate.com/v1/predictions';
 const STUCK_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
   try {
     console.log('[RECONCILER] Starting reconciliation check...');
 
@@ -183,4 +183,4 @@ export async function handler(event, context) {
       body: JSON.stringify({ error: error.message })
     };
   }
-}
+};

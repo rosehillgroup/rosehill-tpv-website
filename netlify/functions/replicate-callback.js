@@ -6,7 +6,7 @@ import { downloadImage } from './studio/_utils/replicate.js';
 import { clampToTPVPalette, autoRankConcepts } from './studio/_utils/postprocess.js';
 import { uploadToStorage } from './studio/_utils/exports.js';
 
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
   try {
     // Verify webhook token
     const token = event.queryStringParameters?.token;
@@ -125,4 +125,4 @@ export async function handler(event, context) {
     console.error('[WEBHOOK ERROR]', error);
     return { statusCode: 500, body: error.message };
   }
-}
+};

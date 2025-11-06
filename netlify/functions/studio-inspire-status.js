@@ -21,7 +21,7 @@ import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
  *   completed_at: string (if completed/failed)
  * }
  */
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
   // Only accept GET
   if (event.httpMethod !== 'GET') {
     return {
@@ -137,4 +137,4 @@ export async function handler(event, context) {
       })
     };
   }
-}
+};

@@ -7,7 +7,7 @@ import { generateAndUploadStencil, buildReplicateInput } from './studio/_utils/p
 const REPLICATE_API = 'https://api.replicate.com/v1/predictions';
 const SDXL_VERSION = '39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b'; // stable-diffusion-xl-1024-v1-0
 
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
@@ -93,4 +93,4 @@ export async function handler(event, context) {
       body: JSON.stringify({ error: error.message })
     };
   }
-}
+};
