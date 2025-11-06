@@ -2,7 +2,7 @@
 // Creates a pending job record and returns immediately (no timeout)
 // Background worker picks up pending jobs and processes them
 
-import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
+const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
 
 /**
  * Create Inspire Job Handler

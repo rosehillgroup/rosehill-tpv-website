@@ -2,7 +2,7 @@
 // Returns current status of a job (pending, processing, completed, failed)
 // Client polls this endpoint until status is 'completed' or 'failed'
 
-import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
+const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
 
 /**
  * Get Inspire Job Status Handler
