@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from './lib/api/auth.js';
 import InspirePanel from './components/InspirePanel.jsx';
-import ConceptGallery from './components/ConceptGallery.jsx';
-import DraftifyPanel from './components/DraftifyPanel.jsx';
 
 function SignInForm() {
   const [email, setEmail] = useState('');
@@ -122,9 +120,6 @@ function SignInForm() {
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [concepts, setConcepts] = useState([]);
-  const [selectedConcept, setSelectedConcept] = useState(null);
-  const [design, setDesign] = useState(null);
 
   useEffect(() => {
     // Check auth status on mount
@@ -140,24 +135,6 @@ function App() {
 
     return () => subscription?.unsubscribe();
   }, []);
-
-  const handleConceptsGenerated = (newConcepts, metadata) => {
-    console.log('[App] Concepts generated:', newConcepts.length, 'concepts');
-    setConcepts(newConcepts);
-    setSelectedConcept(null);
-    setDesign(null);
-  };
-
-  const handleSelectConcept = (concept) => {
-    console.log('[App] Concept selected:', concept.id);
-    setSelectedConcept(concept);
-    setDesign(null);
-  };
-
-  const handleDesignComplete = (completedDesign) => {
-    console.log('[App] Design completed:', completedDesign.id);
-    setDesign(completedDesign);
-  };
 
   if (loading) {
     return (
@@ -180,33 +157,12 @@ function App() {
   return (
     <div className="tpv-studio">
       <header className="tpv-studio__header">
-        <h1>TPV Studio 2.0</h1>
-        <p>AI-powered playground surface design tool</p>
+        <h1>TPV Studio - Inspiration Mode</h1>
+        <p>AI-powered playground surface design inspiration tool</p>
       </header>
 
       <main className="tpv-studio__container">
-        <InspirePanel onConceptsGenerated={handleConceptsGenerated} />
-
-        {concepts.length > 0 && (
-          <ConceptGallery
-            concepts={concepts}
-            onSelectConcept={handleSelectConcept}
-          />
-        )}
-
-        {selectedConcept && (
-          <DraftifyPanel
-            selectedConcept={selectedConcept}
-            onDesignComplete={handleDesignComplete}
-          />
-        )}
-
-        {concepts.length === 0 && (
-          <div className="tpv-studio__empty">
-            <h3>Get started by describing your design above</h3>
-            <p>Generate AI concepts with FLUX.1 [pro], then vectorize into installer-ready playground surface designs.</p>
-          </div>
-        )}
+        <InspirePanel />
       </main>
     </div>
   );

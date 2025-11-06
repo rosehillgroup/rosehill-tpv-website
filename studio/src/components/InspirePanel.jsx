@@ -1,43 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { apiClient } from '../lib/api/client.js';
 import { DEFAULT_SURFACE } from '../lib/constants.js';
 
 const STYLE_PRESETS = [
-  { value: 'professional', label: 'Professional', description: 'Clean, modern, minimal' },
-  { value: 'playful', label: 'Playful', description: 'Fun, friendly, whimsical' },
-  { value: 'geometric', label: 'Geometric', description: 'Sharp angles, mathematical' }
+  { value: 'playful_flat', label: 'Playful Flat Design', description: 'Bold shapes, vibrant colors, fun themes' },
+  { value: 'geometric', label: 'Geometric Abstract', description: 'Clean lines, mathematical patterns' },
+  { value: 'sport_court', label: 'Sport Court Graphics', description: 'Athletic field markings, court layouts' }
 ];
 
 function InspirePanel({ onConceptsGenerated }) {
   const [prompt, setPrompt] = useState('');
   const [surfaceWidth, setSurfaceWidth] = useState(DEFAULT_SURFACE.width_m);
   const [surfaceHeight, setSurfaceHeight] = useState(DEFAULT_SURFACE.height_m);
-  const [style, setStyle] = useState('professional');
-  const [selectedColors, setSelectedColors] = useState([]);
-  const [palette, setPalette] = useState([]);
+  const [style, setStyle] = useState('playful_flat');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState(null);
-
-  useEffect(() => {
-    // Load TPV palette
-    fetch('/studio/assets/tpv-palette.json')
-      .then(res => res.json())
-      .then(data => setPalette(data.palette || []))
-      .catch(err => console.error('Failed to load palette:', err));
-  }, []);
-
-  const handleColorToggle = (color) => {
-    if (selectedColors.find(c => c.code === color.code)) {
-      setSelectedColors(selectedColors.filter(c => c.code !== color.code));
-    } else if (selectedColors.length < 6) {
-      setSelectedColors([...selectedColors, color]);
-    }
-  };
+  const [result, setResult] = useState(null);
 
   const handleGenerate = async () => {
     setLoading(true);
     setError(null);
+    setResult(null);
     setProgress('Creating job...');
 
     try {
@@ -47,46 +31,45 @@ function InspirePanel({ onConceptsGenerated }) {
           width_m: parseFloat(surfaceWidth),
           height_m: parseFloat(surfaceHeight)
         },
-        paletteColors: selectedColors.length > 0
-          ? selectedColors.map(c => ({ code: c.code, hex: c.hex, name: c.name }))
-          : null,
-        style,
-        count: 6
+        style
       };
 
-      console.log('[InspirePanel] Creating async job:', request);
+      console.log('[InspirePanel] Creating simple mode job:', request);
 
       // Step 1: Create job (returns immediately, no timeout)
-      const jobResponse = await apiClient.inspireCreateJob(request);
+      const jobResponse = await apiClient.inspireSimpleCreateJob(request);
       const { jobId, estimatedDuration } = jobResponse;
 
       console.log('[InspirePanel] Job created:', jobId);
-      setProgress(`Job created! Estimated time: ~${estimatedDuration}s. Waiting for worker...`);
+      setProgress(`Job created! Estimated time: ~${estimatedDuration}s. Generating...`);
 
       // Step 2: Poll for completion with progress updates
-      const result = await apiClient.inspireWaitForCompletion(jobId, (status) => {
+      const jobResult = await apiClient.inspireSimpleWaitForCompletion(jobId, (status) => {
         console.log('[InspirePanel] Status update:', status.status);
 
         switch (status.status) {
           case 'pending':
-            setProgress('Job created. Preparing stencil and starting prediction...');
+            setProgress('Job created. Starting generation...');
             break;
           case 'queued':
-            setProgress('Stencil generated. Waiting for GPU allocation...');
+            setProgress('Job queued. Waiting for GPU...');
             break;
           case 'running':
-            setProgress('Generating concepts with SDXL img2img pipeline...');
+            setProgress('Generating inspiration with SDXL...');
             break;
           default:
             setProgress(`Status: ${status.status}`);
         }
       }, 2000); // Poll every 2 seconds
 
-      console.log('[InspirePanel] Job completed:', result);
-      setProgress('Concepts generated successfully!');
+      console.log('[InspirePanel] Job completed:', jobResult);
+      setProgress('Generation complete!');
+      setResult(jobResult.result);
 
-      // Pass concepts to parent
-      onConceptsGenerated(result.concepts, result.metadata);
+      // Notify parent with result
+      if (onConceptsGenerated) {
+        onConceptsGenerated([jobResult.result], jobResult.metadata);
+      }
 
     } catch (err) {
       console.error('[InspirePanel] Error:', err);
@@ -97,11 +80,16 @@ function InspirePanel({ onConceptsGenerated }) {
     }
   };
 
+  const handleGenerateAnother = () => {
+    // Keep the same prompt and settings, just regenerate
+    handleGenerate();
+  };
+
   return (
     <div className="tpv-studio__card">
-      <h2>Step 1: Inspire</h2>
+      <h2>TPV Studio - Inspiration Mode</h2>
       <p style={{ color: '#718096', marginBottom: '1.5rem' }}>
-        Generate AI concept images using SDXL img2img with flat stencils
+        Generate creative playground surface designs with AI - no color restrictions
       </p>
 
       <div className="tpv-studio__form-group">
@@ -110,12 +98,12 @@ function InspirePanel({ onConceptsGenerated }) {
           className="tpv-studio__textarea"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="e.g., Ocean energy with fish, flowing bands of blue and turquoise..."
+          placeholder="e.g., abstract playground design with bold geometric shapes and vibrant colors..."
           rows={3}
           disabled={loading}
         />
         <small style={{ color: '#718096', display: 'block', marginTop: '0.5rem' }}>
-          Describe the visual concept you want. Be specific about shapes, patterns, and mood.
+          Describe your design vision. AI will generate inspiration freely - color-match later with separate tool.
         </small>
       </div>
 
@@ -167,41 +155,6 @@ function InspirePanel({ onConceptsGenerated }) {
         </select>
       </div>
 
-      <div className="tpv-studio__form-group">
-        <label className="tpv-studio__label">
-          Select Colors (optional, max 6)
-        </label>
-        <div className="tpv-studio__color-grid">
-          {palette.map(color => (
-            <button
-              key={color.code}
-              className={`tpv-studio__color-swatch ${
-                selectedColors.find(c => c.code === color.code)
-                  ? 'tpv-studio__color-swatch--selected'
-                  : ''
-              }`}
-              style={{ backgroundColor: color.hex }}
-              onClick={() => handleColorToggle(color)}
-              title={`${color.name} (${color.code})`}
-              disabled={loading || (selectedColors.length >= 6 && !selectedColors.find(c => c.code === color.code))}
-            >
-              <div className="tpv-studio__color-label">
-                {color.code}
-              </div>
-            </button>
-          ))}
-        </div>
-        {selectedColors.length > 0 && (
-          <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#718096' }}>
-            Selected: {selectedColors.map(c => c.code).join(', ')}
-          </p>
-        )}
-        {selectedColors.length === 0 && (
-          <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#718096' }}>
-            Leave empty to let AI choose colors from the full palette
-          </p>
-        )}
-      </div>
 
       {error && (
         <div style={{
@@ -234,18 +187,73 @@ function InspirePanel({ onConceptsGenerated }) {
         style={{ width: '100%' }}
       >
         {loading && <span className="tpv-studio__spinner" />}
-        {loading ? 'Generating Concepts...' : 'Generate 6 Concepts ($0.18)'}
+        {loading ? 'Generating Inspiration...' : 'Generate Inspiration ($0.003)'}
       </button>
 
-      {!loading && (
+      {!loading && !result && (
         <p style={{
           marginTop: '0.5rem',
           fontSize: '0.75rem',
           color: '#a0aec0',
           textAlign: 'center'
         }}>
-          ~20 seconds using SDXL | Generates 6 concepts | Auto-ranked by quality | 100% TPV palette
+          ~20-40 seconds using SDXL | Simple mode | No color restrictions
         </p>
+      )}
+
+      {result && !loading && (
+        <div style={{ marginTop: '1.5rem' }}>
+          <h3 style={{ marginBottom: '1rem' }}>Generated Inspiration</h3>
+          <div style={{
+            display: 'grid',
+            gap: '1rem',
+            marginBottom: '1rem'
+          }}>
+            {result.final_url && (
+              <div>
+                <img
+                  src={result.final_url}
+                  alt="Generated inspiration"
+                  style={{ width: '100%', borderRadius: '8px', marginBottom: '0.5rem' }}
+                />
+                <div style={{ fontSize: '0.875rem', color: '#718096' }}>
+                  <p>Dimensions: {result.dimensions?.final?.w || 'N/A'} × {result.dimensions?.final?.h || 'N/A'} px</p>
+                  <p>Surface: {surfaceWidth} × {surfaceHeight} meters</p>
+                </div>
+              </div>
+            )}
+            {result.thumbnail_url && !result.final_url && (
+              <div>
+                <img
+                  src={result.thumbnail_url}
+                  alt="Generated inspiration thumbnail"
+                  style={{ width: '100%', borderRadius: '8px' }}
+                />
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <button
+              className="tpv-studio__button tpv-studio__button--secondary"
+              onClick={handleGenerateAnother}
+              disabled={loading}
+              style={{ flex: 1 }}
+            >
+              Generate Another
+            </button>
+            {result.final_url && (
+              <a
+                href={result.final_url}
+                download
+                className="tpv-studio__button tpv-studio__button--secondary"
+                style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}
+              >
+                Download
+              </a>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
