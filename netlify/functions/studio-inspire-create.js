@@ -2,7 +2,7 @@
 // Creates a pending job record and returns immediately (no timeout)
 // Background worker picks up pending jobs and processes them
 
-const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
+import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
 
 /**
  * Create Inspire Job Handler
@@ -25,7 +25,7 @@ const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
  *   estimatedDuration: number (seconds)
  * }
  */
-exports.handler = async function(event, context) {
+export const handler = async(event, context) {
   // Only accept POST
   if (event.httpMethod !== 'POST') {
     return {

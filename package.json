@@ -1,6 +1,7 @@
 {
   "name": "rosehill-tpv-website",
   "version": "1.0.0",
+  "type": "module",
   "description": "Rosehill TPV Sports & Recreation Surfaces Website",
   "scripts": {
     "test": "echo 'Admin interface available at /admin/' && echo 'Visit https://tpv.rosehill.group/admin/ to manage installations'",

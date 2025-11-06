@@ -1,9 +1,9 @@
 // SVG Loader for TPV Studio Motifs
 // Dynamically loads SVG files from /motifs/ directory and extracts path data
 
-const fs = require('fs');
-const path = require('path');
-const { fileURLToPath } = require('url');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 // Handle both ESM and bundled environments
 let __dirname;
 try {
@@ -15,7 +15,7 @@ try {
 }
 
 // Theme name to folder mapping
-const THEME_FOLDERS = {
+export const THEME_FOLDERS = {
   'ocean': 'Ocean',
   'space': 'Space',
   'food': 'FastFood',
@@ -30,14 +30,14 @@ const THEME_FOLDERS = {
 };
 
 // Motif cache to avoid repeated file reads
-const MOTIF_CACHE = {};
-const THEME_INDEX_CACHE = {};
+export const MOTIF_CACHE = {};
+export const THEME_INDEX_CACHE = {};
 
 /**
  * Get the motifs directory path
  * Resolves to /motifs/ from project root
  */
-function getMotifsDir() {
+export function getMotifsDir() {
   // In bundled environment (Netlify Functions), use process.cwd()
   // In development, navigate up from netlify/functions/studio/_utils/
   const devPath = path.resolve(__dirname, '../../../../motifs');
@@ -59,7 +59,7 @@ function getMotifsDir() {
  * @param {string} svgContent - Raw SVG XML content
  * @returns {Object} {paths: string, viewBox: string}
  */
-function parseSVG(svgContent) {
+export function parseSVG(svgContent) {
   // Extract viewBox
   const viewBoxMatch = svgContent.match(/viewBox="([^"]+)"/);
   const viewBox = viewBoxMatch ? viewBoxMatch[1] : '0 0 64 64';
@@ -93,7 +93,7 @@ function parseSVG(svgContent) {
  * @param {string} theme - Theme name (e.g., 'ocean', 'space')
  * @returns {Object|null} Motif data or null if not found
  */
-function loadMotifFromFile(id, theme) {
+export function loadMotifFromFile(id, theme) {
   const cacheKey = `${theme}:${id}`;
 
   // Check cache
@@ -154,7 +154,7 @@ function loadMotifFromFile(id, theme) {
  * @param {string} theme - Theme name
  * @returns {Array} Array of motif IDs
  */
-function listMotifsInTheme(theme) {
+export function listMotifsInTheme(theme) {
   // Check cache
   if (THEME_INDEX_CACHE[theme]) {
     return THEME_INDEX_CACHE[theme];
@@ -191,7 +191,7 @@ function listMotifsInTheme(theme) {
  * @param {function} rng - Random number generator
  * @returns {Object|null} Motif data
  */
-function getRandomMotifFromTheme(theme, rng) {
+export function getRandomMotifFromTheme(theme, rng) {
   const motifIds = listMotifsInTheme(theme);
 
   if (motifIds.length === 0) {
@@ -210,7 +210,7 @@ function getRandomMotifFromTheme(theme, rng) {
  * List all available themes
  * @returns {Array} Array of theme names
  */
-function listAvailableThemes() {
+export function listAvailableThemes() {
   return Object.keys(THEME_FOLDERS);
 }
 
@@ -218,7 +218,7 @@ function listAvailableThemes() {
  * Check if motifs directory exists and is accessible
  * @returns {boolean}
  */
-function validateMotifsDirectory() {
+export function validateMotifsDirectory() {
   const motifsDir = getMotifsDir();
 
   if (!fs.existsSync(motifsDir)) {
@@ -245,7 +245,7 @@ function validateMotifsDirectory() {
 
 // Validate on module load
 console.log('[SVG LOADER] Initializing SVG motif loader...');
-const isValid = validateMotifsDirectory();
+export const isValid = validateMotifsDirectory();
 if (isValid) {
   console.log('[SVG LOADER] Motif library loaded successfully');
 } else {
@@ -253,18 +253,4 @@ if (isValid) {
 }
 
 
-module.exports = {
-  getMotifsDir,
-  parseSVG,
-  loadMotifFromFile,
-  listMotifsInTheme,
-  getRandomMotifFromTheme,
-  listAvailableThemes,
-  validateMotifsDirectory,
-  fs,
-  path,
-  THEME_FOLDERS,
-  MOTIF_CACHE,
-  THEME_INDEX_CACHE,
-  isValid
-};
+

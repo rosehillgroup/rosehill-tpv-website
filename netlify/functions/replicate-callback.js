@@ -1,12 +1,12 @@
 // TPV Studio - Replicate Webhook Callback
 // Processes completed predictions and updates job status
 
-const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
-const { downloadImage } = require('./studio/_utils/replicate.js');
-const { clampToTPVPalette, autoRankConcepts } = require('./studio/_utils/postprocess.js');
-const { uploadToStorage } = require('./studio/_utils/exports.js');
+import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
+import { downloadImage } from './studio/_utils/replicate.js';
+import { clampToTPVPalette, autoRankConcepts } from './studio/_utils/postprocess.js';
+import { uploadToStorage } from './studio/_utils/exports.js';
 
-exports.handler = async function(event, context) {
+export const handler = async (event, context) => {
   try {
     // Verify webhook token
     const token = event.queryStringParameters?.token;

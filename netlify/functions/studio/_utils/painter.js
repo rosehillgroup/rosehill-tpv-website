@@ -1,7 +1,7 @@
 // Painter utilities for TPV Studio
 // Role-aware compositing, SVG generation, and PNG rasterization
 
-const { polygonCentroid } = require('./geometry.js');
+import { polygonCentroid } from './geometry.js';
 /**
  * Paint SVG with role-aware layering
  * @param {Object} surface - {width_m, height_m}
@@ -11,7 +11,7 @@ const { polygonCentroid } = require('./geometry.js');
  * @param {Object} options - Rendering options
  * @returns {Object} {svg: string, metadata: Object}
  */
-function paintSVG(surface, shapes, motifs, palette, options = {}) {
+export function paintSVG(surface, shapes, motifs, palette, options = {}) {
   const { width_m, height_m } = surface;
   const dpi = options.dpi || 96;
   const edgeSoftening = options.edgeSoftening !== false; // default true
@@ -152,7 +152,7 @@ function paintSVG(surface, shapes, motifs, palette, options = {}) {
  * @param {Array} points - Array of {x, y} points
  * @returns {string} SVG path data string
  */
-function pointsToPathData(points) {
+export function pointsToPathData(points) {
   if (!points || points.length === 0) return '';
 
   const parts = [];
@@ -173,7 +173,7 @@ function pointsToPathData(points) {
  * @param {Object} palette - Palette with roles
  * @returns {Object} Coverage percentages by role
  */
-function calculateCoverage(shapes, surface, palette) {
+export function calculateCoverage(shapes, surface, palette) {
   const totalArea = surface.width_m * surface.height_m;
 
   // Initialize coverage for all possible roles
@@ -212,7 +212,7 @@ function calculateCoverage(shapes, surface, palette) {
  * @param {Array} points - Array of {x, y} points
  * @returns {number} Area in square units
  */
-function polygonArea(points) {
+export function polygonArea(points) {
   let area = 0;
   const n = points.length;
 
@@ -245,7 +245,7 @@ export async function rasterizeToPNG(svg, options = {}) {
  * @param {Object} palette - Color palette
  * @returns {Object} {layers: Array of {color, svg}}
  */
-function exportCuttingLayers(surface, shapes, palette) {
+export function exportCuttingLayers(surface, shapes, palette) {
   const { width_m, height_m } = surface;
   const layers = [];
 
@@ -294,7 +294,7 @@ function exportCuttingLayers(surface, shapes, palette) {
  * @param {Object} constraints - Constraint thresholds
  * @returns {Object} {valid: boolean, violations: Array}
  */
-function validateDesign(metadata, constraints = {}) {
+export function validateDesign(metadata, constraints = {}) {
   const violations = [];
 
   // Default coverage targets
@@ -334,11 +334,4 @@ function validateDesign(metadata, constraints = {}) {
 }
 
 
-module.exports = {
-  paintSVG,
-  pointsToPathData,
-  calculateCoverage,
-  polygonArea,
-  exportCuttingLayers,
-  validateDesign
-};
+

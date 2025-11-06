@@ -2,10 +2,10 @@
 // Creates flat geometric compositions for img2img initialization
 // Generates installer-friendly structure: large shapes, flat colors, clean edges
 
-const { poissonDisc } = require('./composition.js');
-const { polygonCentroid, expandPolygon } = require('./geometry.js');
-const { SeededRandom } = require('./random.js');
-const Delaunay = require('d3-delaunay');
+import { poissonDisc } from './composition.js';
+import { polygonCentroid, expandPolygon } from './geometry.js';
+import { SeededRandom } from './random.js';
+import Delaunay from 'd3-delaunay';
 /**
  * Generate flat composition stencil
  * Creates geometric regions with assigned TPV colors
@@ -14,7 +14,7 @@ const Delaunay = require('d3-delaunay');
  * @param {Object} options - Generation options
  * @returns {Array} Array of colored regions with points
  */
-function generateFlatStencil(surface, paletteColors, options = {}) {
+export function generateFlatStencil(surface, paletteColors, options = {}) {
   const {
     strategy = 'voronoi', // 'voronoi', 'bands', 'grid'
     seed = Date.now(),
@@ -57,7 +57,7 @@ function generateFlatStencil(surface, paletteColors, options = {}) {
  * @param {number} minFeatureSize_m - Minimum region size
  * @returns {Array} Colored Voronoi regions
  */
-function generateVoronoiStencil(surface, paletteColors, seed, minRegions, maxRegions, minFeatureSize_m) {
+export function generateVoronoiStencil(surface, paletteColors, seed, minRegions, maxRegions, minFeatureSize_m) {
   const { width_m, height_m } = surface;
   const rng = new SeededRandom(seed);
 
@@ -127,7 +127,7 @@ function generateVoronoiStencil(surface, paletteColors, seed, minRegions, maxReg
  * @param {number} seed - Random seed
  * @returns {Array} Colored band regions
  */
-function generateBandStencil(surface, paletteColors, seed) {
+export function generateBandStencil(surface, paletteColors, seed) {
   const { width_m, height_m } = surface;
   const rng = new SeededRandom(seed);
 
@@ -181,7 +181,7 @@ function generateBandStencil(surface, paletteColors, seed) {
  * @param {number} seed - Random seed
  * @returns {Array} Colored grid regions
  */
-function generateGridStencil(surface, paletteColors, seed) {
+export function generateGridStencil(surface, paletteColors, seed) {
   const { width_m, height_m } = surface;
   const rng = new SeededRandom(seed);
 
@@ -241,7 +241,7 @@ function generateGridStencil(surface, paletteColors, seed) {
  * @param {Object} surface - Surface dimensions
  * @returns {string} SVG string
  */
-function renderStencilToSVG(regions, surface) {
+export function renderStencilToSVG(regions, surface) {
   const { width_m, height_m } = surface;
 
   const svg = [];
@@ -266,7 +266,7 @@ function renderStencilToSVG(regions, surface) {
  * @param {Array} points - Array of {x, y}
  * @returns {string} SVG path data
  */
-function pointsToSVGPath(points) {
+export function pointsToSVGPath(points) {
   if (!points || points.length === 0) return '';
 
   const parts = [`M ${points[0].x.toFixed(3)} ${points[0].y.toFixed(3)}`];
@@ -308,12 +308,4 @@ export async function rasterizeStencilToPNG(svg, width, height) {
 }
 
 
-module.exports = {
-  generateFlatStencil,
-  generateVoronoiStencil,
-  generateBandStencil,
-  generateGridStencil,
-  renderStencilToSVG,
-  pointsToSVGPath,
-  Delaunay
-};
+

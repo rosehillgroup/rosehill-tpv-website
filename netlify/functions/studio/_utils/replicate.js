@@ -1,11 +1,11 @@
 // Replicate API client for FLUX.1 [pro] image generation
 // Handles palette-locked prompt engineering and concept generation
 
-const Replicate = require('replicate');
+import Replicate from 'replicate';
 /**
  * Initialize Replicate client
  */
-function getReplicateClient() {
+export function getReplicateClient() {
   const apiKey = process.env.REPLICATE_API_TOKEN;
   if (!apiKey) {
     throw new Error('REPLICATE_API_TOKEN environment variable not set');
@@ -17,7 +17,7 @@ function getReplicateClient() {
  * Style preset configurations for SDXL - enforces flat vector graphic aesthetic
  * Strong prompts to avoid photorealistic/painterly outputs
  */
-const STYLE_PRESETS = {
+export const STYLE_PRESETS = {
   professional: {
     prefix: 'flat vector art, screen print design, bold graphic illustration, paper cutout style, logo design aesthetic, Adobe Illustrator style, simple geometric shapes, solid color fills, poster design, large color blocks, clean edges, corporate identity design',
     negative: 'photorealistic, photograph, 3D render, painting, sketch, watercolor, airbrush, pencil drawing, gradients, shadows, lighting effects, depth, perspective, textures, fine details, intricate patterns, shading, highlights, reflections, blur, bokeh, text, words, letters, typography'
@@ -40,7 +40,7 @@ const STYLE_PRESETS = {
  * @param {string} style - Style preset name
  * @returns {string} Enhanced prompt
  */
-function buildPalettePrompt(userPrompt, paletteColors, style = 'professional') {
+export function buildPalettePrompt(userPrompt, paletteColors, style = 'professional') {
   const preset = STYLE_PRESETS[style] || STYLE_PRESETS.professional;
 
   // Extract color descriptions
@@ -161,7 +161,7 @@ export async function downloadImage(url) {
  * @param {number} count - Number of concepts to generate
  * @returns {Object} Cost estimate
  */
-function estimateCost(count) {
+export function estimateCost(count) {
   const costPerImage = 0.055;
   const totalCost = count * costPerImage;
 
@@ -272,7 +272,7 @@ export async function generateConceptsSDXL(prompt, options = {}) {
  * @param {number} count - Number of concepts
  * @returns {Object} Cost estimate
  */
-function estimateCostSDXL(count) {
+export export function estimateCostSDXL(count) {
   const costPerImage = 0.03;
   const totalCost = count * costPerImage;
 
@@ -286,11 +286,4 @@ function estimateCostSDXL(count) {
 }
 
 
-module.exports = {
-  getReplicateClient,
-  buildPalettePrompt,
-  estimateCost,
-  estimateCostSDXL,
-  Replicate,
-  STYLE_PRESETS
-};
+

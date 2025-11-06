@@ -1,7 +1,7 @@
 // Composition utilities for TPV Studio
 // Provides intelligent placement and spatial distribution
 
-const { SeededRandom } = require('./random.js');
+import { SeededRandom } from './random.js';
 /**
  * Poisson-disc sampling for evenly-spaced point distribution
  * @param {number} width - Surface width
@@ -11,7 +11,7 @@ const { SeededRandom } = require('./random.js');
  * @param {number} maxAttempts - Rejection sampling attempts (default 30)
  * @returns {Array} Array of {x, y} points
  */
-function poissonDisc(width, height, minDist, seed, maxAttempts = 30) {
+export function poissonDisc(width, height, minDist, seed, maxAttempts = 30) {
   const rng = new SeededRandom(seed);
   const cellSize = minDist / Math.sqrt(2);
   const gridWidth = Math.ceil(width / cellSize);
@@ -111,7 +111,7 @@ function poissonDisc(width, height, minDist, seed, maxAttempts = 30) {
  * @param {Object} surface - {width_m, height_m}
  * @returns {Object} Named zones with bounds
  */
-function getCompositionZones(theme, surface) {
+export function getCompositionZones(theme, surface) {
   const { width_m: w, height_m: h } = surface;
 
   // Default zones (linear composition)
@@ -161,7 +161,7 @@ function getCompositionZones(theme, surface) {
 /**
  * Generate grid zones for structured layouts
  */
-function generateGridZones(width, height, cols, rows) {
+export function generateGridZones(width, height, cols, rows) {
   const zones = [];
   const cellW = width / cols;
   const cellH = height / rows;
@@ -185,7 +185,7 @@ function generateGridZones(width, height, cols, rows) {
 /**
  * Generate constellation-style anchor points
  */
-function getConstellationPoints(width, height, count) {
+export function getConstellationPoints(width, height, count) {
   // Golden spiral points
   const points = [];
   const phi = (1 + Math.sqrt(5)) / 2;
@@ -209,7 +209,7 @@ function getConstellationPoints(width, height, count) {
  * @param {function} flowField - Flow field function (x,y) -> {x,y}
  * @returns {Array} Array of {point, tangent} objects
  */
-function sampleFlowAlongPath(path, flowField) {
+export function sampleFlowAlongPath(path, flowField) {
   return path.map(p => {
     const flow = flowField(p.x, p.y);
     const angle = Math.atan2(flow.y, flow.x);
@@ -229,7 +229,7 @@ function sampleFlowAlongPath(path, flowField) {
  * @param {number} seed - Random seed for jitter
  * @returns {Array} Distributed points
  */
-function distributeAlongCurve(curve, count, seed = 0) {
+export function distributeAlongCurve(curve, count, seed = 0) {
   const rng = new SeededRandom(seed);
   const points = [];
 
@@ -277,7 +277,7 @@ function distributeAlongCurve(curve, count, seed = 0) {
  * @param {number} minGap - Minimum gap to maintain
  * @returns {boolean} True if clear
  */
-function isZoneClear(zone, regions, minGap = 0.1) {
+export function isZoneClear(zone, regions, minGap = 0.1) {
   const zoneCenter = {
     x: zone.x + zone.width / 2,
     y: zone.y + zone.height / 2
@@ -301,7 +301,7 @@ function isZoneClear(zone, regions, minGap = 0.1) {
 /**
  * Calculate centroid helper
  */
-function calculateCentroid(points) {
+export function calculateCentroid(points) {
   let cx = 0, cy = 0;
   for (const p of points) {
     cx += p.x;
@@ -311,13 +311,4 @@ function calculateCentroid(points) {
 }
 
 
-module.exports = {
-  poissonDisc,
-  getCompositionZones,
-  generateGridZones,
-  getConstellationPoints,
-  sampleFlowAlongPath,
-  distributeAlongCurve,
-  isZoneClear,
-  calculateCentroid
-};
+

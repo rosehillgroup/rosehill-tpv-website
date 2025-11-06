@@ -1,8 +1,8 @@
 // Post-processing for SDXL-generated concepts
 // Wraps color-quantize functions and adds auto-ranking
 
-const sharp = require('sharp');
-const { quantizeImageToPalette, extractDominantColors } = require('./color-quantize.js');
+import sharp from 'sharp';
+import { quantizeImageToPalette, extractDominantColors } from './color-quantize.js';
 /**
  * Clamp image to TPV palette
  * Wrapper for quantizeImageToPalette
@@ -255,6 +255,4 @@ export async function autoRankConcepts(concepts) {
 }
 
 
-module.exports = {
-  sharp
-};
+

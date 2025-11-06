@@ -1,10 +1,10 @@
 // TPV Studio - Preprocessing Utilities
 // Handles stencil generation and upload for SDXL img2img
 
-const { generateFlatStencil, renderStencilToSVG, rasterizeStencilToPNG } = require('./stencil-generator.js');
-const { selectModelAspect } = require('./aspect-resolver.js');
-const { uploadToStorage } = require('./exports.js');
-const TPV_PALETTE = [
+import { generateFlatStencil, renderStencilToSVG, rasterizeStencilToPNG } from './stencil-generator.js';
+import { selectModelAspect } from './aspect-resolver.js';
+import { uploadToStorage } from './exports.js';
+export const TPV_PALETTE = [
   { code: "RH30", name: "Beige", hex: "#E4C4AA" },
   { code: "RH31", name: "Cream", hex: "#E8E3D8" },
   { code: "RH41", name: "Bright Yellow", hex: "#FFD833" },
@@ -31,7 +31,7 @@ const TPV_PALETTE = [
 /**
  * Resolve palette colors from codes
  */
-function resolvePaletteColors(colorCodes) {
+export function resolvePaletteColors(colorCodes) {
   if (!colorCodes || colorCodes.length === 0) {
     return null;
   }
@@ -107,7 +107,7 @@ export async function generateAndUploadStencil(inputs) {
 /**
  * Build Replicate prediction input payload
  */
-function buildReplicateInput(inputs, stencilUrl, metadata) {
+export function buildReplicateInput(inputs, stencilUrl, metadata) {
   const { prompt, style, count } = inputs;
   const { aspectInfo } = metadata;
 
@@ -128,8 +128,4 @@ function buildReplicateInput(inputs, stencilUrl, metadata) {
 }
 
 
-module.exports = {
-  resolvePaletteColors,
-  buildReplicateInput,
-  TPV_PALETTE
-};
+

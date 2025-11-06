@@ -4,7 +4,7 @@
 /**
  * Supported SDXL aspect ratios with their dimensions
  */
-const ASPECT_RATIOS = [
+export const ASPECT_RATIOS = [
   { ratio: '1:1', width: 1024, height: 1024, decimal: 1.0 },
   { ratio: '3:2', width: 1152, height: 768, decimal: 1.5 },
   { ratio: '2:3', width: 768, height: 1152, decimal: 0.6667 },
@@ -20,7 +20,7 @@ const ASPECT_RATIOS = [
  * @param {number} targetHeight - Target height in meters
  * @returns {Object} {ratio, width, height, targetAspect}
  */
-function selectModelAspect(targetWidth, targetHeight) {
+export function selectModelAspect(targetWidth, targetHeight) {
   const targetAspect = targetWidth / targetHeight;
 
   console.log(`[ASPECT] Target dimensions: ${targetWidth}m × ${targetHeight}m (${targetAspect.toFixed(3)})`);
@@ -56,7 +56,7 @@ function selectModelAspect(targetWidth, targetHeight) {
  * @param {number} targetHeight
  * @returns {boolean}
  */
-function isCloseMatch(targetWidth, targetHeight) {
+export function isCloseMatch(targetWidth, targetHeight) {
   const result = selectModelAspect(targetWidth, targetHeight);
   return result.aspectDiff < 0.05; // 5% tolerance
 }
@@ -65,7 +65,7 @@ function isCloseMatch(targetWidth, targetHeight) {
  * Get all supported aspect ratios
  * @returns {Array} List of supported aspects
  */
-function getSupportedAspects() {
+export function getSupportedAspects() {
   return ASPECT_RATIOS.map(a => ({
     ratio: a.ratio,
     width: a.width,
@@ -74,9 +74,4 @@ function getSupportedAspects() {
 }
 
 
-module.exports = {
-  selectModelAspect,
-  isCloseMatch,
-  getSupportedAspects,
-  ASPECT_RATIOS
-};
+

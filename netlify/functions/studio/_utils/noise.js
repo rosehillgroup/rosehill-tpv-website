@@ -1,14 +1,14 @@
 // Noise utilities for TPV Studio
 // Provides seeded Perlin/Simplex noise for organic shape generation
 
-const { createNoise2D } = require('simplex-noise');
-const { SeededRandom } = require('./random.js');
+import { createNoise2D } from 'simplex-noise';
+import { SeededRandom } from './random.js';
 /**
  * Create a seeded 2D noise function
  * @param {number} seed - Seed for noise generation
  * @returns {function} noise2D(x, y) -> [-1, 1]
  */
-function createSeededNoise(seed) {
+export function createSeededNoise(seed) {
   const prng = new SeededRandom(seed);
   const noise2D = createNoise2D(() => prng.next());
 
@@ -22,7 +22,7 @@ function createSeededNoise(seed) {
  * @param {number} scale - Spatial frequency (lower = smoother)
  * @returns {function} flowField(x, y) -> {x, y} unit vector
  */
-function createFlowField(seed, scale = 0.5) {
+export function createFlowField(seed, scale = 0.5) {
   const noise = createSeededNoise(seed);
 
   return (x, y) => {
@@ -44,7 +44,7 @@ function createFlowField(seed, scale = 0.5) {
  * @param {number} persistence - Amplitude falloff per octave (default 0.5)
  * @returns {function} noise(x, y) -> [-1, 1]
  */
-function createFractalNoise(seed, octaves = 3, persistence = 0.5) {
+export function createFractalNoise(seed, octaves = 3, persistence = 0.5) {
   const noise = createSeededNoise(seed);
 
   return (x, y) => {
@@ -73,7 +73,7 @@ function createFractalNoise(seed, octaves = 3, persistence = 0.5) {
  * @param {number} scale - Spatial scale
  * @returns {Array} Array of noise values [-1, 1]
  */
-function sampleNoiseAlongPath(noise, path, scale = 1.0) {
+export function sampleNoiseAlongPath(noise, path, scale = 1.0) {
   return path.map(p => noise(p.x * scale, p.y * scale));
 }
 
@@ -86,7 +86,7 @@ function sampleNoiseAlongPath(noise, path, scale = 1.0) {
  * @param {number} scale - Spatial frequency
  * @returns {function} thickness(x, y) -> meters
  */
-function createThicknessFunction(noise, minThickness, maxThickness, scale = 0.3) {
+export function createThicknessFunction(noise, minThickness, maxThickness, scale = 0.3) {
   return (x, y) => {
     const noiseValue = noise(x * scale, y * scale); // [-1, 1]
     const t = (noiseValue + 1) / 2; // [0, 1]
@@ -95,10 +95,4 @@ function createThicknessFunction(noise, minThickness, maxThickness, scale = 0.3)
 }
 
 
-module.exports = {
-  createSeededNoise,
-  createFlowField,
-  createFractalNoise,
-  sampleNoiseAlongPath,
-  createThicknessFunction
-};
+

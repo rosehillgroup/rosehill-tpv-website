@@ -1,11 +1,11 @@
 // Auto-Repair Utilities for TPV Studio
 // Automatically fixes constraint violations in vectorized designs
 
-const { checkRegionConstraints } = require('./constraints.js');
+import { checkRegionConstraints } from './constraints.js';
 /**
  * Default TPV installation rules
  */
-const DEFAULT_RULES = {
+export const DEFAULT_RULES = {
   min_island_area_m2: 0.3,      // 300cm² minimum region size
   min_feature_mm: 120,          // 120mm minimum feature width
   min_gap_mm: 80,               // 80mm minimum gap between features
@@ -15,7 +15,7 @@ const DEFAULT_RULES = {
 /**
  * Calculate polygon area using shoelace formula
  */
-function polygonArea(points) {
+export function polygonArea(points) {
   let area = 0;
   const n = points.length;
 
@@ -31,7 +31,7 @@ function polygonArea(points) {
 /**
  * Calculate perimeter of polygon
  */
-function polygonPerimeter(points) {
+export function polygonPerimeter(points) {
   let perimeter = 0;
   const n = points.length;
 
@@ -51,7 +51,7 @@ function polygonPerimeter(points) {
  * @param {Object} rules - Constraint rules
  * @returns {boolean} True if region should be removed
  */
-function shouldRemoveRegion(region, rules) {
+export function shouldRemoveRegion(region, rules) {
   const area = polygonArea(region.points);
   const minArea = rules.min_island_area_m2 || 0.3;
 
@@ -65,7 +65,7 @@ function shouldRemoveRegion(region, rules) {
  * @param {Object} rules - Constraint rules
  * @returns {boolean} True if region is too thin
  */
-function isTooThin(region, rules) {
+export function isTooThin(region, rules) {
   const area = polygonArea(region.points);
   const perimeter = polygonPerimeter(region.points);
   const approxWidth = (2 * area) / perimeter;
@@ -81,7 +81,7 @@ function isTooThin(region, rules) {
  * @param {number} tolerance - Simplification tolerance in meters
  * @returns {Array} Simplified points
  */
-function simplifyPoints(points, tolerance = 0.01) {
+export function simplifyPoints(points, tolerance = 0.01) {
   if (points.length < 3) {
     return points;
   }
@@ -121,7 +121,7 @@ function simplifyPoints(points, tolerance = 0.01) {
  * @param {number} bufferAmount - Buffer distance in meters
  * @returns {Object} Buffered region
  */
-function bufferRegion(region, bufferAmount = 0.05) {
+export function bufferRegion(region, bufferAmount = 0.05) {
   // Simplified buffer: offset each point outward from centroid
   const centroid = {
     x: region.points.reduce((sum, p) => sum + p.x, 0) / region.points.length,
@@ -155,7 +155,7 @@ function bufferRegion(region, bufferAmount = 0.05) {
  * @param {Object} rules - Constraint rules
  * @returns {Object} {repaired, removed}
  */
-function removeSmallRegions(regions, rules = DEFAULT_RULES) {
+export function removeSmallRegions(regions, rules = DEFAULT_RULES) {
   console.log(`[AUTO-REPAIR] Checking ${regions.length} regions for size violations...`);
 
   const kept = [];
@@ -185,7 +185,7 @@ function removeSmallRegions(regions, rules = DEFAULT_RULES) {
  * @param {number} tolerance - Simplification tolerance (0.01 = 10mm)
  * @returns {Array} Simplified regions
  */
-function simplifyRegions(regions, tolerance = 0.01) {
+export function simplifyRegions(regions, tolerance = 0.01) {
   console.log(`[AUTO-REPAIR] Simplifying ${regions.length} regions (tolerance: ${tolerance * 1000}mm)...`);
 
   let totalPointsBefore = 0;
@@ -216,7 +216,7 @@ function simplifyRegions(regions, tolerance = 0.01) {
  * @param {Object} rules - Constraint rules
  * @returns {Array} Buffered regions
  */
-function expandThinRegions(regions, rules = DEFAULT_RULES) {
+export function expandThinRegions(regions, rules = DEFAULT_RULES) {
   console.log(`[AUTO-REPAIR] Checking ${regions.length} regions for width violations...`);
 
   const minWidth = (rules.min_feature_mm || 120) / 1000; // Convert mm to m
@@ -247,7 +247,7 @@ function expandThinRegions(regions, rules = DEFAULT_RULES) {
  * @param {Object} options - Repair options
  * @returns {Object} {repaired, violations, summary}
  */
-function autoRepair(regions, options = {}) {
+export function autoRepair(regions, options = {}) {
   const {
     rules = DEFAULT_RULES,
     removeSmall = true,
@@ -314,7 +314,7 @@ function autoRepair(regions, options = {}) {
  * @param {Object} repairResult - Result from autoRepair()
  * @returns {string} Human-readable repair summary
  */
-function generateRepairReport(repairResult) {
+export function generateRepairReport(repairResult) {
   const { summary, removed, violations } = repairResult;
 
   const lines = [
@@ -338,17 +338,4 @@ function generateRepairReport(repairResult) {
 }
 
 
-module.exports = {
-  polygonArea,
-  polygonPerimeter,
-  shouldRemoveRegion,
-  isTooThin,
-  simplifyPoints,
-  bufferRegion,
-  removeSmallRegions,
-  simplifyRegions,
-  expandThinRegions,
-  autoRepair,
-  generateRepairReport,
-  DEFAULT_RULES
-};
+

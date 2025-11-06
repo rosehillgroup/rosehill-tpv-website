@@ -1,13 +1,13 @@
 // Vectorization Utilities for TPV Studio
 // Converts raster images (PNG) to vector paths (SVG) using potrace
 
-const potrace = require('potrace');
-const sharp = require('sharp');
+import potrace from 'potrace';
+import sharp from 'sharp';
 /**
  * Vectorization parameters
  * These control the quality vs complexity tradeoff
  */
-const VECTORIZE_PRESETS = {
+export const VECTORIZE_PRESETS = {
   draft: {
     threshold: 128,
     turdSize: 100,     // Suppress speckles (higher = cleaner)
@@ -96,7 +96,7 @@ async function extractColorLayer(imageBuffer, targetHex) {
  * @param {Object} options - Potrace parameters
  * @returns {Promise<string>} SVG path data (d attribute)
  */
-function traceImage(bitmapBuffer, options = {}) {
+export function traceImage(bitmapBuffer, options = {}) {
   return new Promise((resolve, reject) => {
     potrace.trace(bitmapBuffer, options, (error, svg) => {
       if (error) {
@@ -114,7 +114,7 @@ function traceImage(bitmapBuffer, options = {}) {
  * @param {string} svgContent - Full SVG from potrace
  * @returns {Array<string>} Array of path d attributes
  */
-function extractPathData(svgContent) {
+export function extractPathData(svgContent) {
   const pathRegex = /<path[^>]*d="([^"]+)"[^>]*\/>/g;
   const paths = [];
   let match;
@@ -191,7 +191,7 @@ export async function vectorizeImage(imageBuffer, paletteColors, preset = 'balan
  * @param {Object} surface - Surface dimensions {width_m, height_m}
  * @returns {Array} TPV regions [{color, points: [{x, y}]}]
  */
-function convertToTPVFormat(regions, surface) {
+export function convertToTPVFormat(regions, surface) {
   console.log('[VECTORIZE] Converting to TPV polygon format...');
 
   // For now, return regions as-is with SVG paths
@@ -232,7 +232,7 @@ export async function simplifyPaths(regions, simplifyFactor = 0.5) {
  * @param {Array} regions - Vectorized regions
  * @returns {Object} {pathCount, avgPathsPerColor, complexity}
  */
-function estimateQuality(regions) {
+export function estimateQuality(regions) {
   const totalPaths = regions.reduce((sum, r) => sum + r.pathCount, 0);
   const avgPaths = totalPaths / regions.length;
   const complexity = totalPaths < 50 ? 'simple' : totalPaths < 200 ? 'moderate' : 'complex';
@@ -246,12 +246,4 @@ function estimateQuality(regions) {
 }
 
 
-module.exports = {
-  traceImage,
-  extractPathData,
-  convertToTPVFormat,
-  estimateQuality,
-  potrace,
-  sharp,
-  VECTORIZE_PRESETS
-};
+

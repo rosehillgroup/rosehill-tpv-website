@@ -1,14 +1,14 @@
 // Motif utilities for TPV Studio
 // Handles SVG icon loading, intelligent placement, and thematic elements
 
-const { SeededRandom } = require('./random.js');
-const { pointInPolygon, polygonCentroid, expandPolygon } = require('./geometry.js');
-const { getCompositionZones } = require('./composition.js');
-const { loadMotifFromFile, listMotifsInTheme, getRandomMotifFromTheme } = require('./svg-loader.js');
+import { SeededRandom } from './random.js';
+import { pointInPolygon, polygonCentroid, expandPolygon } from './geometry.js';
+import { getCompositionZones } from './composition.js';
+import { loadMotifFromFile, listMotifsInTheme, getRandomMotifFromTheme } from './svg-loader.js';
 /**
  * SVG motif cache (now managed by svg-loader.js)
  */
-const MOTIF_CACHE = {};
+export const MOTIF_CACHE = {};
 
 /**
  * Load motif by ID
@@ -16,7 +16,7 @@ const MOTIF_CACHE = {};
  * @param {string} theme - Optional theme hint (default: 'generic')
  * @returns {Object} Motif data with paths, viewBox, size range
  */
-function loadMotif(id, theme = 'generic') {
+export function loadMotif(id, theme = 'generic') {
   const cacheKey = `${theme}:${id}`;
 
   // Check cache
@@ -51,7 +51,7 @@ function loadMotif(id, theme = 'generic') {
  * @param {string} theme - Theme name (ocean, space, food, gym, etc.)
  * @returns {Array} Array of motif IDs matching theme
  */
-function findMotifsForTheme(theme) {
+export function findMotifsForTheme(theme) {
   // Use SVG loader to get all motifs from theme folder
   const motifIds = listMotifsInTheme(theme);
 
@@ -75,7 +75,7 @@ function findMotifsForTheme(theme) {
  * @param {number} seed - Random seed
  * @returns {Array} Array of placed motif instances
  */
-function placeMotifs(
+export function placeMotifs(
   motifSpecs,
   surface,
   flowField,
@@ -229,7 +229,7 @@ function placeMotifs(
  * @param {Object} surface - Surface dimensions
  * @returns {Array} Default motif specifications
  */
-function getDefaultMotifs(theme, surface) {
+export function getDefaultMotifs(theme, surface) {
   const area_m2 = surface.width_m * surface.height_m;
   const motifIds = findMotifsForTheme(theme);
 
@@ -251,10 +251,4 @@ function getDefaultMotifs(theme, surface) {
 }
 
 
-module.exports = {
-  loadMotif,
-  findMotifsForTheme,
-  placeMotifs,
-  getDefaultMotifs,
-  MOTIF_CACHE
-};
+

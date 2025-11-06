@@ -1,13 +1,13 @@
 // TPV Studio - Enqueue Job
 // Generates stencil and starts Replicate prediction with webhook
 
-const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
-const { generateAndUploadStencil, buildReplicateInput } = require('./studio/_utils/preprocessing.js');
+import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
+import { generateAndUploadStencil, buildReplicateInput } from './studio/_utils/preprocessing.js';
 
 const REPLICATE_API = 'https://api.replicate.com/v1/predictions';
 const SDXL_VERSION = '39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b'; // stable-diffusion-xl-1024-v1-0
 
-exports.handler = async function(event, context) {
+export const handler = async(event, context) {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }

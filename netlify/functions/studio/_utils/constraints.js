@@ -4,7 +4,7 @@
 /**
  * Calculate polygon area using shoelace formula
  */
-function polygonArea(points) {
+export function polygonArea(points) {
   let area = 0;
   const n = points.length;
 
@@ -20,7 +20,7 @@ function polygonArea(points) {
 /**
  * Calculate perimeter of polygon
  */
-function polygonPerimeter(points) {
+export function polygonPerimeter(points) {
   let perimeter = 0;
   const n = points.length;
 
@@ -37,7 +37,7 @@ function polygonPerimeter(points) {
 /**
  * Check if polygon is too small (area constraint)
  */
-function checkMinArea(region, rules) {
+export function checkMinArea(region, rules) {
   const area = polygonArea(region.points);
   const minArea = rules.min_island_area_m2 || 0.3;
 
@@ -55,7 +55,7 @@ function checkMinArea(region, rules) {
  * Estimate minimum feature width (simplified)
  * Compares area to perimeter to detect thin features
  */
-function checkMinWidth(region, rules) {
+export function checkMinWidth(region, rules) {
   const area = polygonArea(region.points);
   const perimeter = polygonPerimeter(region.points);
 
@@ -76,7 +76,7 @@ function checkMinWidth(region, rules) {
 /**
  * Check constraints for a single region
  */
-function checkRegionConstraints(region, rules) {
+export function checkRegionConstraints(region, rules) {
   const violations = [];
 
   // Check minimum area
@@ -98,7 +98,7 @@ function checkRegionConstraints(region, rules) {
  * Calculate installer score (0-100)
  * Based on RULES.md scoring system
  */
-function calculateInstallerScore(allViolations) {
+export function calculateInstallerScore(allViolations) {
   let score = 100;
 
   // Count violations by type
@@ -138,7 +138,7 @@ function calculateInstallerScore(allViolations) {
  * Calculate Bill of Materials (BoM)
  * Returns color areas and percentages
  */
-function calculateBOM(regions, palette) {
+export function calculateBOM(regions, palette) {
   const colourAreas = {};
   let totalArea = 0;
 
@@ -165,7 +165,7 @@ function calculateBOM(regions, palette) {
  * Assign colors to regions with area balancing and piece caps
  * Implements piece limits: base ≤12, accent ≤30, highlight ≤40
  */
-function assignColors(regions, palette) {
+export function assignColors(regions, palette) {
   if (regions.length === 0 || palette.length === 0) {
     return regions;
   }
@@ -277,13 +277,4 @@ function assignColors(regions, palette) {
 }
 
 
-module.exports = {
-  polygonArea,
-  polygonPerimeter,
-  checkMinArea,
-  checkMinWidth,
-  checkRegionConstraints,
-  calculateInstallerScore,
-  calculateBOM,
-  assignColors
-};
+

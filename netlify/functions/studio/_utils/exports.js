@@ -1,10 +1,10 @@
 // Export Utilities for TPV Studio
 // SVG, PNG, DXF, and PDF exports
 
-const sharp = require('sharp');
-const { createClient } = require('@supabase/supabase-js');
+import sharp from 'sharp';
+import { createClient } from '@supabase/supabase-js';
 // RH Palette - inline to avoid file loading issues in serverless
-const RH_PALETTE_DATA = [
+export const RH_PALETTE_DATA = [
   { code: "RH30", name: "Beige", hex: "#E4C4AA" },
   { code: "RH31", name: "Cream", hex: "#E8E3D8" },
   { code: "RH41", name: "Bright Yellow", hex: "#FFD833" },
@@ -29,19 +29,19 @@ const RH_PALETTE_DATA = [
 ];
 
 // Create palette Map<'RH50', '#F15B32'>
-const RH_PALETTE = new Map();
+export const RH_PALETTE = new Map();
 for (const color of RH_PALETTE_DATA) {
   RH_PALETTE.set(color.code, color.hex);
 }
 
-function loadPalette() {
+export function loadPalette() {
   return RH_PALETTE;
 }
 
 /**
  * Convert polygon points to SVG path string
  */
-function pointsToPath(points) {
+export function pointsToPath(points) {
   if (!points || points.length === 0) return '';
 
   const pathParts = points.map((p, i) => {
@@ -61,7 +61,7 @@ function pointsToPath(points) {
  * @param {Object} metadata - Design metadata
  * @param {Array} palette - Palette from LayoutSpec (with code, role, target_ratio)
  */
-function exportSVG(regions, surface, metadata = {}, palette = null) {
+export function exportSVG(regions, surface, metadata = {}, palette = null) {
   const { width_m, height_m } = surface;
   const paletteMap = loadPalette();
 
@@ -172,7 +172,7 @@ export async function exportPNG(svgContent, width = 1200) {
  * DXF Export Stub
  * Returns basic DXF header for now
  */
-function exportDXF(regions, surface) {
+export function exportDXF(regions, surface) {
   // Week 1 MVP: Basic stub
   // Full implementation would use dxf-writer or similar
   const { width_m, height_m } = surface;
@@ -209,7 +209,7 @@ EOF`;
  * PDF Export Stub
  * Returns basic PDF metadata for now
  */
-function exportPDF(regions, surface, bom) {
+export function exportPDF(regions, surface, bom) {
   // Week 1 MVP: Basic stub
   // Full implementation would use pdfkit
   return {
@@ -267,7 +267,7 @@ export async function uploadToStorage(buffer, filename, bucketName = 'tpv-studio
 /**
  * Get content type from filename
  */
-function getContentType(filename) {
+export function getContentType(filename) {
   const ext = filename.split('.').pop().toLowerCase();
   const types = {
     'svg': 'image/svg+xml',
@@ -333,14 +333,4 @@ export async function generateAllExports(regions, surface, metadata, bom, palett
 }
 
 
-module.exports = {
-  loadPalette,
-  pointsToPath,
-  exportSVG,
-  exportDXF,
-  exportPDF,
-  getContentType,
-  sharp,
-  RH_PALETTE_DATA,
-  RH_PALETTE
-};
+
