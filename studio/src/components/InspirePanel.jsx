@@ -51,10 +51,10 @@ function InspirePanel({ onConceptsGenerated }) {
           ? selectedColors.map(c => ({ code: c.code, hex: c.hex, name: c.name }))
           : null,
         style,
-        count: 2
+        count: 6
       };
 
-      setProgress('Generating 2 concepts with FLUX.1 [pro]...');
+      setProgress('Generating 6 concepts with SDXL + IP-Adapter...');
       console.log('[InspirePanel] Calling inspire API:', request);
 
       const response = await apiClient.inspire(request);
@@ -78,7 +78,7 @@ function InspirePanel({ onConceptsGenerated }) {
     <div className="tpv-studio__card">
       <h2>Step 1: Inspire</h2>
       <p style={{ color: '#718096', marginBottom: '1.5rem' }}>
-        Generate AI concept images using FLUX.1 [pro]
+        Generate AI concept images using SDXL + IP-Adapter (Economy)
       </p>
 
       <div className="tpv-studio__form-group">
@@ -211,7 +211,7 @@ function InspirePanel({ onConceptsGenerated }) {
         style={{ width: '100%' }}
       >
         {loading && <span className="tpv-studio__spinner" />}
-        {loading ? 'Generating Concepts...' : 'Generate 2 Concepts ($0.11)'}
+        {loading ? 'Generating Concepts...' : 'Generate 6 Concepts ($0.18)'}
       </button>
 
       {!loading && (
@@ -221,7 +221,7 @@ function InspirePanel({ onConceptsGenerated }) {
           color: '#a0aec0',
           textAlign: 'center'
         }}>
-          ~20 seconds using FLUX.1 [pro] | Generates 2 concepts | Auto-quantized to TPV palette
+          ~20 seconds using SDXL | Generates 6 concepts | Auto-ranked by quality | 100% TPV palette
         </p>
       )}
     </div>

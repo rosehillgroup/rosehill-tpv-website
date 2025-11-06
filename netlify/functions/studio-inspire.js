@@ -1,9 +1,11 @@
-// TPV Studio 2.0 - Inspire Stage
-// Generate AI concept images using FLUX.1 [pro] with palette-locked diffusion
-// Replaces the old LLM-based design-plan endpoint
+// TPV Studio 2.0 - Inspire Stage (SDXL Pipeline)
+// Generate AI concept images using SDXL + IP-Adapter with palette-locked conditioning
+// Fast generation (~20s for 6 concepts) with auto-ranking
 
-import { buildPalettePrompt, generateConcepts, downloadImage } from './studio/_utils/replicate.js';
-import { quantizeImageToPalette, extractDominantColors } from './studio/_utils/color-quantize.js';
+import { buildPalettePrompt, generateConceptsSDXL, downloadImage, estimateCostSDXL } from './studio/_utils/replicate.js';
+import { clampToTPVPalette, autoRankConcepts } from './studio/_utils/postprocess.js';
+import { selectModelAspect } from './studio/_utils/aspect-resolver.js';
+import { createPaletteSwatch } from './studio/_utils/palette-swatch.js';
 import { uploadToStorage } from './studio/_utils/exports.js';
 
 // TPV palette inline (avoid file loading in serverless)
@@ -57,44 +59,7 @@ function resolvePaletteColors(colorCodes) {
 }
 
 /**
- * Analyze concept image to score visual quality
- * Basic heuristics for auto-ranking concepts
- * @param {Buffer} imageBuffer - Quantized PNG
- * @param {Array} paletteColors - Used colors
- * @returns {Object} {contrast, balance, score}
- */
-async function analyzeConceptQuality(imageBuffer, paletteColors) {
-  try {
-    // Extract dominant colors from the quantized image
-    const dominantColors = await extractDominantColors(imageBuffer, 10);
-
-    // Simple scoring heuristics
-    const colorCount = dominantColors.length;
-    const contrast = Math.min(colorCount / 5, 1.0); // More colors = better contrast
-    const balance = 0.7; // Placeholder for color balance metric
-
-    // Weighted score (0-1)
-    const score = (contrast * 0.5) + (balance * 0.5);
-
-    return {
-      contrast: Math.round(contrast * 100) / 100,
-      balance: Math.round(balance * 100) / 100,
-      score: Math.round(score * 100) / 100,
-      dominantColors
-    };
-  } catch (error) {
-    console.warn('[INSPIRE] Analysis failed:', error.message);
-    return {
-      contrast: 0.5,
-      balance: 0.5,
-      score: 0.5,
-      dominantColors: []
-    };
-  }
-}
-
-/**
- * Main Inspire Handler
+ * Main Inspire Handler (SDXL Pipeline)
  * POST /api/studio/inspire
  *
  * Request body:
@@ -114,9 +79,22 @@ async function analyzeConceptQuality(imageBuffer, paletteColors) {
  *     quantizedUrl: string,
  *     thumbnailUrl: string,
  *     paletteUsed: [{code, name, hex}],
- *     quality: {contrast, balance, score},
- *     metadata: {seed, index}
- *   }]
+ *     quality: {
+ *       conformity: number,
+ *       avgDeltaE: number,
+ *       colorsUsed: number,
+ *       colorCoverage: number,
+ *       edgeClarity: number,
+ *       colorBalance: number,
+ *       score: number
+ *     },
+ *     metadata: {seed, index, aspectRatio, modelDimensions}
+ *   }],
+ *   metadata: {
+ *     prompt, enhancedPrompt, surface, style,
+ *     paletteUsed, paletteSwatch, aspectRatio,
+ *     duration, count, cost
+ *   }
  * }
  */
 export async function handler(event, context) {
@@ -149,39 +127,51 @@ export async function handler(event, context) {
       };
     }
 
-    console.log('[INSPIRE] Starting concept generation...');
+    console.log('[INSPIRE] Starting SDXL concept generation...');
     console.log('[INSPIRE] Prompt:', prompt);
     console.log('[INSPIRE] Surface:', `${surface.width_m}m x ${surface.height_m}m`);
     console.log('[INSPIRE] Style:', style);
     console.log('[INSPIRE] Count:', count);
 
-    // Resolve palette colors
+    // Step 1: Resolve aspect ratio for model
+    const aspectInfo = selectModelAspect(surface.width_m, surface.height_m);
+    console.log(`[INSPIRE] Model aspect: ${aspectInfo.ratio} (${aspectInfo.width}×${aspectInfo.height})`);
+
+    // Step 2: Resolve palette colors
     const selectedColors = resolvePaletteColors(paletteColors);
     const targetPalette = selectedColors || TPV_PALETTE.slice(0, 6); // Default to first 6 colors
 
     console.log('[INSPIRE] Target palette:', targetPalette.map(c => c.code).join(', '));
 
-    // Step 1: Build enhanced prompt with color guidance
+    // Step 3: Create palette swatch for IP-Adapter
+    console.log('[INSPIRE] Creating palette swatch for IP-Adapter...');
+    const paletteSwatchUrl = await createPaletteSwatch(targetPalette, 'tpv-studio');
+    console.log('[INSPIRE] Palette swatch uploaded:', paletteSwatchUrl);
+
+    // Step 4: Build enhanced prompt with color guidance
     const enhancedPrompt = buildPalettePrompt(prompt, targetPalette, style);
 
-    // Step 2: Generate concepts using FLUX.1 [pro]
-    // TPV surfaces are typically square, use 1:1 aspect ratio
-    const aspectRatio = '1:1';
-    console.log('[INSPIRE] Surface dimensions:', `${surface.width_m}m x ${surface.height_m}m`);
-    console.log('[INSPIRE] Using aspect ratio:', aspectRatio);
-
-    const rawConcepts = await generateConcepts(enhancedPrompt, {
+    // Step 5: Generate concepts using SDXL + IP-Adapter
+    const genStartTime = Date.now();
+    const rawConcepts = await generateConceptsSDXL(enhancedPrompt, {
       count,
-      aspectRatio,
+      width: aspectInfo.width,
+      height: aspectInfo.height,
+      paletteSwatchUrl: paletteSwatchUrl,
       style,
-      guidance: 3.5,
-      steps: 28
+      guidance: 5.5,
+      steps: 28,
+      ipAdapterScale: 0.9
     });
 
-    console.log(`[INSPIRE] Generated ${rawConcepts.length} raw concepts from FLUX`);
+    const genDuration = Date.now() - genStartTime;
+    console.log(`[INSPIRE] Generated ${rawConcepts.length} raw concepts from SDXL in ${genDuration}ms`);
 
-    // Step 3: Process each concept (download, quantize, upload)
-    const concepts = [];
+    // Step 6: Process concepts in parallel
+    console.log('[INSPIRE] Processing concepts: download → clamp → upload...');
+    const processStartTime = Date.now();
+
+    const conceptBuffers = [];
 
     for (let i = 0; i < rawConcepts.length; i++) {
       const rawConcept = rawConcepts[i];
@@ -192,34 +182,69 @@ export async function handler(event, context) {
         const originalBuffer = await downloadImage(rawConcept.imageUrl);
         console.log(`[INSPIRE] Downloaded ${originalBuffer.length} bytes`);
 
-        // Apply hard palette quantization
-        const quantizedBuffer = await quantizeImageToPalette(originalBuffer, targetPalette);
-        console.log(`[INSPIRE] Quantized to TPV palette`);
+        // Apply hard palette quantization (clamping)
+        const quantizedBuffer = await clampToTPVPalette(originalBuffer, targetPalette);
+        console.log(`[INSPIRE] Clamped to TPV palette`);
 
-        // Analyze quality
-        const quality = await analyzeConceptQuality(quantizedBuffer, targetPalette);
-        console.log(`[INSPIRE] Quality score: ${quality.score}`);
+        // Store for auto-ranking
+        conceptBuffers.push({
+          id: rawConcept.id,
+          buffer: quantizedBuffer,
+          originalBuffer: originalBuffer,
+          palette: targetPalette,
+          seed: rawConcept.seed,
+          index: rawConcept.index
+        });
 
-        // Upload to Supabase storage
-        const conceptId = `concept_${Date.now()}_${i}`;
+      } catch (error) {
+        console.error(`[INSPIRE] Failed to process concept ${i + 1}:`, error);
+        // Continue with other concepts
+      }
+    }
+
+    const processDuration = Date.now() - processStartTime;
+    console.log(`[INSPIRE] Processed ${conceptBuffers.length} concepts in ${processDuration}ms`);
+
+    // Step 7: Auto-rank concepts by quality metrics
+    console.log('[INSPIRE] Auto-ranking concepts by quality...');
+    const rankStartTime = Date.now();
+
+    const rankedConcepts = await autoRankConcepts(conceptBuffers);
+
+    const rankDuration = Date.now() - rankStartTime;
+    console.log(`[INSPIRE] Ranked ${rankedConcepts.length} concepts in ${rankDuration}ms`);
+    console.log('[INSPIRE] Top 3 scores:', rankedConcepts.slice(0, 3).map(c => c.quality.score));
+
+    // Step 8: Upload ranked concepts to Supabase
+    console.log('[INSPIRE] Uploading concepts to Supabase...');
+    const uploadStartTime = Date.now();
+
+    const concepts = [];
+
+    for (let i = 0; i < rankedConcepts.length; i++) {
+      const rankedConcept = rankedConcepts[i];
+      console.log(`[INSPIRE] Uploading concept ${i + 1}/${rankedConcepts.length} (score: ${rankedConcept.quality.score})...`);
+
+      try {
+        const conceptId = rankedConcept.id;
 
         // Upload quantized version (primary)
         const quantizedUrl = await uploadToStorage(
-          quantizedBuffer,
+          rankedConcept.buffer,
           `${conceptId}_quantized.png`,
           'tpv-studio'
         );
 
-        // Upload original for comparison (optional, but useful)
+        // Upload original for comparison
         const originalUrl = await uploadToStorage(
-          originalBuffer,
+          rankedConcept.originalBuffer,
           `${conceptId}_original.png`,
           'tpv-studio'
         );
 
         // Create thumbnail (smaller version for gallery)
         const sharp = (await import('sharp')).default;
-        const thumbnailBuffer = await sharp(quantizedBuffer)
+        const thumbnailBuffer = await sharp(rankedConcept.buffer)
           .resize(400, null, { fit: 'contain' })
           .png()
           .toBuffer();
@@ -239,27 +264,36 @@ export async function handler(event, context) {
           quantizedUrl,
           thumbnailUrl,
           paletteUsed: targetPalette,
-          quality,
+          quality: rankedConcept.quality,
           metadata: {
-            seed: rawConcept.seed,
-            index: i,
+            seed: rankedConcept.seed,
+            index: rankedConcept.index,
+            aspectRatio: aspectInfo.ratio,
+            modelDimensions: {
+              width: aspectInfo.width,
+              height: aspectInfo.height
+            },
             prompt: enhancedPrompt
           }
         });
 
       } catch (error) {
-        console.error(`[INSPIRE] Failed to process concept ${i + 1}:`, error);
+        console.error(`[INSPIRE] Failed to upload concept ${i + 1}:`, error);
         // Continue with other concepts
       }
     }
 
-    // Step 4: Sort by quality score (best first)
-    concepts.sort((a, b) => b.quality.score - a.quality.score);
+    const uploadDuration = Date.now() - uploadStartTime;
+    console.log(`[INSPIRE] Uploaded ${concepts.length} concepts in ${uploadDuration}ms`);
 
-    const duration = Date.now() - startTime;
-    console.log(`[INSPIRE] Complete! Generated ${concepts.length} concepts in ${duration}ms`);
+    // Calculate cost
+    const cost = estimateCostSDXL(count);
 
-    // Return results
+    const totalDuration = Date.now() - startTime;
+    console.log(`[INSPIRE] Complete! Generated ${concepts.length} concepts in ${totalDuration}ms`);
+    console.log(`[INSPIRE] Cost: $${cost.totalCost.toFixed(3)} (${cost.count} × $${cost.costPerImage})`);
+
+    // Return results (already sorted by quality)
     return {
       statusCode: 200,
       headers: {
@@ -274,8 +308,29 @@ export async function handler(event, context) {
           surface,
           style,
           paletteUsed: targetPalette.map(c => ({ code: c.code, name: c.name, hex: c.hex })),
-          duration,
-          count: concepts.length
+          paletteSwatch: paletteSwatchUrl,
+          aspectRatio: {
+            selected: aspectInfo.ratio,
+            modelWidth: aspectInfo.width,
+            modelHeight: aspectInfo.height,
+            targetAspect: aspectInfo.targetAspect,
+            aspectDiff: aspectInfo.aspectDiff
+          },
+          duration: totalDuration,
+          timings: {
+            generation: genDuration,
+            processing: processDuration,
+            ranking: rankDuration,
+            upload: uploadDuration,
+            total: totalDuration
+          },
+          count: concepts.length,
+          cost: {
+            total: cost.totalCost,
+            perImage: cost.costPerImage,
+            currency: cost.currency,
+            model: cost.model
+          }
         }
       })
     };
