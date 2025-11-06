@@ -14,21 +14,39 @@ export function getReplicateClient() {
 }
 
 /**
- * Style preset configurations for SDXL - enforces flat vector graphic aesthetic
- * Strong prompts to avoid photorealistic/painterly outputs
+ * Style preset configurations for SDXL - Multi-pass surgical prompts
+ * Enforces flat vector graphic aesthetic with material-first approach
  */
 export const STYLE_PRESETS = {
   professional: {
-    prefix: 'flat vector art, screen print design, bold graphic illustration, paper cutout style, logo design aesthetic, Adobe Illustrator style, simple geometric shapes, solid color fills, poster design, large color blocks, clean edges, corporate identity design',
-    negative: 'photorealistic, photograph, 3D render, painting, sketch, watercolor, airbrush, pencil drawing, gradients, shadows, lighting effects, depth, perspective, textures, fine details, intricate patterns, shading, highlights, reflections, blur, bokeh, text, words, letters, typography'
+    // Base draft: material description only
+    baseDraft: 'rubber granule surfacing, TPV playground surface, matte finish, subtle micro-shadowing, no gradients larger than 3% luminance, no outlines, installer-friendly geometry, large smooth curves, photoreal texture',
+
+    // Bands/clusters: flowing organic forms
+    bands: 'flowing bands, macro undulation, no high-frequency detail, clean border joins, installer-friendly transitions, smooth color blocks',
+
+    // Motifs: bold recognizable shapes
+    motifs: 'bold icon silhouette, ≤3 interior cuts, large radii, no tiny cavities, simple recognizable shapes, installer-friendly geometry, large smooth forms',
+
+    // Unified negative (all passes)
+    negative: 'text, logo marks, thin strokes, serif letters, halftone, bevel, metallic, glossy, watercolor, oil paint, fine details, busy patterns, sharp angles, gradients, shadows, lighting effects, depth, perspective',
+
+    // Legacy prefix for backwards compatibility
+    prefix: 'flat vector art, screen print design, bold graphic illustration, paper cutout style, clean edges, solid color fills'
   },
   playful: {
-    prefix: 'flat vector art, playful graphic illustration, bold cartoon style, paper craft design, fun poster art, simple colorful shapes, solid fills, friendly geometric forms, children\'s book illustration style, cut paper aesthetic, bold outlines, large simple areas',
-    negative: 'photorealistic, photograph, 3D render, detailed painting, watercolor, airbrush, pencil drawing, gradients, soft shadows, lighting effects, depth, perspective, fine textures, intricate details, shading, highlights, reflections, blur, sophisticated rendering, text, words'
+    baseDraft: 'rubber granule surfacing, playful TPV surface, matte finish, friendly curves, subtle micro-shadowing, no gradients larger than 3% luminance, no outlines, large simple shapes',
+    bands: 'playful flowing bands, fun undulations, cheerful transitions, clean joins, bold color blocks',
+    motifs: 'fun bold icon, ≤3 interior shapes, large friendly radii, simple happy forms, no tiny details',
+    negative: 'text, logo marks, thin strokes, serif letters, halftone, bevel, metallic, glossy, watercolor, oil paint, fine details, busy patterns, sophisticated rendering, gradients, shadows',
+    prefix: 'flat vector art, playful graphic illustration, bold cartoon style, paper craft design, solid fills'
   },
   geometric: {
-    prefix: 'flat vector art, geometric abstract design, mathematical shapes, hard edge painting, constructivist poster, Bauhaus style, pure geometric forms, sharp angles, clean lines, color field design, minimalist graphic, architectural abstraction, precise geometry',
-    negative: 'photorealistic, photograph, 3D render, organic shapes, curved lines, painting textures, gradients, shadows, lighting, depth, perspective, fine details, decorative patterns, shading, soft edges, naturalistic forms, hand-drawn, sketchy, text, words'
+    baseDraft: 'rubber granule surfacing, geometric TPV surface, matte finish, mathematical precision, subtle micro-shadowing, no gradients, sharp clean edges, installer-friendly geometry',
+    bands: 'geometric bands, precise transitions, mathematical undulations, clean angular joins, bold color fields',
+    motifs: 'geometric icon, ≤3 interior angles, precise radii, mathematical forms, architectural shapes',
+    negative: 'text, logo marks, thin strokes, organic shapes, curved lines, halftone, bevel, metallic, glossy, watercolor, oil paint, decorative patterns, gradients, shadows',
+    prefix: 'flat vector art, geometric abstract design, mathematical shapes, hard edge painting, precise geometry'
   }
 };
 
@@ -281,9 +299,317 @@ export function estimateCostSDXL(count) {
     costPerImage,
     totalCost,
     currency: 'USD',
-    model: 'SDXL + IP-Adapter'
+    model: 'SDXL'
   };
 }
 
+/**
+ * Generate draft image using SDXL (Pass 1: Base Draft)
+ * Fast, stable parameters for initial composition
+ * @param {string} prompt - User prompt
+ * @param {string} initImage - Base stencil URL
+ * @param {Object} options - Generation options
+ * @returns {Promise<Object>} {imageUrl, seed}
+ */
+export async function generateDraftSDXL(prompt, initImage, options = {}) {
+  const replicate = getReplicateClient();
 
+  const {
+    width = 1024,
+    height = 1024,
+    style = 'professional',
+    steps = parseInt(process.env.IMG_DRAFT_STEPS || '18'),
+    guidance = parseFloat(process.env.IMG_DRAFT_CFG || '5.0'),
+    denoiseStrength = parseFloat(process.env.IMG_DRAFT_STRENGTH || '0.40'),
+    seed = Math.floor(Math.random() * 1000000)
+  } = options;
 
+  const preset = STYLE_PRESETS[style] || STYLE_PRESETS.professional;
+
+  console.log(`[REPLICATE] Pass 1: Generating draft with SDXL`);
+  console.log(`[REPLICATE] Steps: ${steps}, CFG: ${guidance}, Denoise: ${denoiseStrength}`);
+
+  // Build draft prompt (material-first, no theme words yet)
+  const draftPrompt = `${preset.baseDraft}. ${prompt}`;
+
+  const modelInput = {
+    prompt: draftPrompt,
+    negative_prompt: preset.negative,
+    image: initImage,
+    prompt_strength: denoiseStrength, // How much to transform
+    num_inference_steps: steps,
+    guidance_scale: guidance,
+    seed,
+    scheduler: 'K_EULER' // Fast, stable scheduler
+  };
+
+  const startTime = Date.now();
+
+  try {
+    const output = await replicate.run(
+      "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
+      { input: modelInput }
+    );
+
+    const imageUrl = Array.isArray(output) ? output[0] : output;
+    const duration = Date.now() - startTime;
+
+    console.log(`[REPLICATE] Draft generated in ${duration}ms: ${imageUrl}`);
+
+    return { imageUrl, seed };
+
+  } catch (error) {
+    console.error('[REPLICATE] Draft generation failed:', error);
+    throw new Error(`Draft SDXL failed: ${error.message}`);
+  }
+}
+
+/**
+ * Refine specific region using masked img2img (Pass 2: Region Refinement)
+ * Role-specific parameters for targeted improvements
+ * @param {string} initImage - Current image URL
+ * @param {string} maskImage - Region mask URL (white = refine, black = preserve)
+ * @param {string} prompt - User prompt
+ * @param {string} regionType - 'base' | 'accent' | 'highlight'
+ * @param {Object} options - Generation options
+ * @returns {Promise<Object>} {imageUrl, seed}
+ */
+export async function refineRegionSDXL(initImage, maskImage, prompt, regionType, options = {}) {
+  const replicate = getReplicateClient();
+
+  const {
+    style = 'professional',
+    seed = Math.floor(Math.random() * 1000000)
+  } = options;
+
+  const preset = STYLE_PRESETS[style] || STYLE_PRESETS.professional;
+
+  // Role-specific parameters (surgical precision)
+  let steps, guidance, denoiseStrength, regionPrompt;
+
+  if (regionType === 'base') {
+    // Base regions: preserve most structure
+    steps = parseInt(process.env.IMG_ACCENT_STEPS || '20');
+    guidance = parseFloat(process.env.IMG_ACCENT_CFG || '5.5');
+    denoiseStrength = parseFloat(process.env.IMG_ACCENT_STRENGTH || '0.32');
+    regionPrompt = `${preset.baseDraft}. ${prompt}`;
+  } else if (regionType === 'accent') {
+    // Accent regions (bands/clusters): moderate refinement
+    steps = parseInt(process.env.IMG_ACCENT_STEPS || '20');
+    guidance = parseFloat(process.env.IMG_ACCENT_CFG || '5.5');
+    denoiseStrength = parseFloat(process.env.IMG_ACCENT_STRENGTH || '0.32');
+    regionPrompt = `${preset.bands}. ${prompt}`;
+  } else if (regionType === 'highlight') {
+    // Highlight regions (motifs): more freedom for detail
+    steps = parseInt(process.env.IMG_HIGHLIGHT_STEPS || '21');
+    guidance = parseFloat(process.env.IMG_HIGHLIGHT_CFG || '6.0');
+    denoiseStrength = parseFloat(process.env.IMG_HIGHLIGHT_STRENGTH || '0.54');
+    regionPrompt = `${preset.motifs}. ${prompt}`;
+  } else {
+    throw new Error(`Unknown region type: ${regionType}`);
+  }
+
+  console.log(`[REPLICATE] Pass 2: Refining ${regionType} region`);
+  console.log(`[REPLICATE] Steps: ${steps}, CFG: ${guidance}, Denoise: ${denoiseStrength}`);
+
+  const modelInput = {
+    prompt: regionPrompt,
+    negative_prompt: preset.negative,
+    image: initImage,
+    mask: maskImage,
+    prompt_strength: denoiseStrength,
+    num_inference_steps: steps,
+    guidance_scale: guidance,
+    seed,
+    scheduler: 'K_EULER'
+  };
+
+  const startTime = Date.now();
+
+  try {
+    const output = await replicate.run(
+      "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
+      { input: modelInput }
+    );
+
+    const imageUrl = Array.isArray(output) ? output[0] : output;
+    const duration = Date.now() - startTime;
+
+    console.log(`[REPLICATE] ${regionType} refined in ${duration}ms: ${imageUrl}`);
+
+    return { imageUrl, seed };
+
+  } catch (error) {
+    console.error(`[REPLICATE] Region refinement failed (${regionType}):`, error);
+    throw new Error(`Region SDXL failed: ${error.message}`);
+  }
+}
+
+/**
+ * Build region-specific prompt
+ * @param {string} userPrompt - User's design description
+ * @param {string} role - 'base' | 'accent' | 'highlight'
+ * @param {string} style - Style preset name
+ * @returns {string} Role-specific prompt
+ */
+export function buildRegionPrompt(userPrompt, role, style = 'professional') {
+  const preset = STYLE_PRESETS[style] || STYLE_PRESETS.professional;
+
+  if (role === 'base') {
+    return `${preset.baseDraft}. ${userPrompt}`;
+  } else if (role === 'accent') {
+    return `${preset.bands}. ${userPrompt}`;
+  } else if (role === 'highlight') {
+    return `${preset.motifs}. ${userPrompt}`;
+  } else {
+    // Fallback
+    return `${preset.baseDraft}. ${userPrompt}`;
+  }
+}
+
+/**
+ * Create text-to-image prediction with webhook (Inspiration Mode - Simple Pipeline)
+ * Submits async prediction and returns prediction ID for webhook tracking
+ * @param {Object} params - Generation parameters
+ * @param {string} params.prompt - Full prompt with style and material anchoring
+ * @param {string} params.negative_prompt - Negative prompt
+ * @param {number} params.width - Image width in pixels
+ * @param {number} params.height - Image height in pixels
+ * @param {number} params.steps - Number of inference steps
+ * @param {number} params.guidance - Guidance scale (CFG)
+ * @param {string} params.scheduler - Scheduler type (K_EULER, DPM++, etc.)
+ * @param {number} params.seed - Random seed for reproducibility
+ * @param {number} params.num_outputs - Number of images to generate (default: 1)
+ * @param {string} params.webhook - Webhook URL for completion callback
+ * @returns {Promise<Object>} {predictionId, version, model}
+ */
+export async function createText2ImagePrediction(params) {
+  const replicate = getReplicateClient();
+
+  const {
+    prompt,
+    negative_prompt,
+    width,
+    height,
+    steps,
+    guidance,
+    scheduler = 'K_EULER',
+    seed,
+    num_outputs = 1,
+    webhook
+  } = params;
+
+  // Get model ID from env var or use default SDXL
+  const modelId = process.env.MODEL_ID || 'stability-ai/sdxl';
+  const modelVersion = '39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b';
+
+  console.log(`[REPLICATE] Creating text→image prediction with ${modelId}`);
+  console.log(`[REPLICATE] Size: ${width}×${height}, Steps: ${steps}, CFG: ${guidance}, Seed: ${seed}`);
+  console.log(`[REPLICATE] Webhook: ${webhook}`);
+
+  const startTime = Date.now();
+
+  try {
+    // Create prediction with webhook
+    const prediction = await replicate.predictions.create({
+      version: modelVersion,
+      input: {
+        prompt,
+        negative_prompt,
+        width,
+        height,
+        num_inference_steps: steps,
+        guidance_scale: guidance,
+        scheduler,
+        seed,
+        num_outputs
+      },
+      webhook,
+      webhook_events_filter: ['completed']
+    });
+
+    const duration = Date.now() - startTime;
+
+    console.log(`[REPLICATE] Prediction created in ${duration}ms: ${prediction.id}`);
+    console.log(`[REPLICATE] Status: ${prediction.status}`);
+
+    return {
+      predictionId: prediction.id,
+      version: modelVersion,
+      model: modelId,
+      status: prediction.status
+    };
+
+  } catch (error) {
+    console.error('[REPLICATE] Prediction creation failed:', error);
+    throw new Error(`Text→image prediction failed: ${error.message}`);
+  }
+}
+
+/**
+ * Get prediction status (for polling/reconciliation)
+ * @param {string} predictionId - Prediction ID
+ * @returns {Promise<Object>} Prediction object with status and output
+ */
+export async function getPrediction(predictionId) {
+  const replicate = getReplicateClient();
+
+  try {
+    const prediction = await replicate.predictions.get(predictionId);
+
+    return {
+      id: prediction.id,
+      status: prediction.status,
+      output: prediction.output,
+      error: prediction.error,
+      metrics: prediction.metrics
+    };
+
+  } catch (error) {
+    console.error(`[REPLICATE] Failed to get prediction ${predictionId}:`, error);
+    throw new Error(`Get prediction failed: ${error.message}`);
+  }
+}
+
+/**
+ * Cancel a running prediction (for cleanup/timeout scenarios)
+ * @param {string} predictionId - Prediction ID
+ * @returns {Promise<Object>} Cancelled prediction
+ */
+export async function cancelPrediction(predictionId) {
+  const replicate = getReplicateClient();
+
+  try {
+    const prediction = await replicate.predictions.cancel(predictionId);
+
+    console.log(`[REPLICATE] Cancelled prediction ${predictionId}`);
+
+    return {
+      id: prediction.id,
+      status: prediction.status
+    };
+
+  } catch (error) {
+    console.error(`[REPLICATE] Failed to cancel prediction ${predictionId}:`, error);
+    throw new Error(`Cancel prediction failed: ${error.message}`);
+  }
+}
+
+/**
+ * Estimate cost for simple text2image generation
+ * SDXL pricing: ~$0.0032 per image (fast params)
+ * @param {number} count - Number of images
+ * @returns {Object} Cost estimate
+ */
+export function estimateCostSimple(count = 1) {
+  const costPerImage = 0.0032; // SDXL fast params cost
+  const totalCost = count * costPerImage;
+
+  return {
+    count,
+    costPerImage,
+    totalCost,
+    currency: 'USD',
+    model: 'SDXL (simple mode)'
+  };
+}

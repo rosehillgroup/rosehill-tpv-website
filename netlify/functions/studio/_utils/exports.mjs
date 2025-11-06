@@ -222,29 +222,86 @@ export function exportPDF(regions, surface, bom) {
 }
 
 /**
- * Upload file to Supabase Storage
- * Returns public URL
+ * Generate storage path with lifecycle awareness
+ * @param {string} filename - File name
+ * @param {string} lifecycle - 'draft' | 'temp' | 'final'
+ * @param {string} jobId - Job ID for organizing related files
+ * @returns {string} Storage path
  */
-export async function uploadToStorage(buffer, filename, bucketName = 'tpv-studio') {
+export function generateStoragePath(filename, lifecycle = 'final', jobId = null) {
+  const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
+
+  if (lifecycle === 'draft' || lifecycle === 'temp') {
+    // Temp files: studio/temp/YYYYMMDD/job_id/filename
+    const jobPath = jobId ? `${jobId}/` : '';
+    return `studio/temp/${date}/${jobPath}${filename}`;
+  } else {
+    // Final files: studio/finals/YYYYMMDD/filename
+    return `studio/finals/${date}/${filename}`;
+  }
+}
+
+/**
+ * Get cache control headers for lifecycle
+ * @param {string} lifecycle - 'draft' | 'temp' | 'final'
+ * @returns {string} Cache control header
+ */
+export function getCacheControl(lifecycle) {
+  if (lifecycle === 'draft' || lifecycle === 'temp') {
+    // Temp files: 24h max-age, allow revalidation
+    return 'public, max-age=86400, must-revalidate';
+  } else {
+    // Final files: Immutable, 1 year cache
+    return 'public, max-age=31536000, immutable';
+  }
+}
+
+/**
+ * Upload file to Supabase Storage with lifecycle management
+ * @param {Buffer} buffer - File buffer
+ * @param {string} filename - File name
+ * @param {Object} options - Upload options
+ * @returns {Promise<Object>} { publicUrl, path, lifecycle }
+ */
+export async function uploadToStorage(buffer, filename, options = {}) {
+  const {
+    bucketName = 'tpv-studio',
+    lifecycle = 'final', // 'draft' | 'temp' | 'final'
+    jobId = null,
+    contentType = null
+  } = options;
+
   const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE || process.env.SUPABASE_SERVICE_KEY
   );
 
   try {
-    // Generate unique path: designs/YYYYMMDD/filename
-    const date = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    const path = `designs/${date}/${filename}`;
+    // Generate lifecycle-aware path
+    const path = generateStoragePath(filename, lifecycle, jobId);
 
-    console.log('[UPLOAD] Uploading to:', bucketName, path);
+    console.log(`[UPLOAD] Uploading to ${bucketName}/${path} (lifecycle: ${lifecycle})`);
+
+    // Prepare upload options
+    const uploadOptions = {
+      contentType: contentType || getContentType(filename),
+      cacheControl: getCacheControl(lifecycle),
+      upsert: true
+    };
+
+    // Add custom metadata for temp files (helps cleanup job)
+    if (lifecycle === 'draft' || lifecycle === 'temp') {
+      uploadOptions.metadata = {
+        lifecycle,
+        uploaded_at: new Date().toISOString(),
+        ttl_hours: '24'
+      };
+    }
 
     // Upload file
     const { data, error } = await supabase.storage
       .from(bucketName)
-      .upload(path, buffer, {
-        contentType: getContentType(filename),
-        upsert: true
-      });
+      .upload(path, buffer, uploadOptions);
 
     if (error) {
       throw error;
@@ -255,13 +312,37 @@ export async function uploadToStorage(buffer, filename, bucketName = 'tpv-studio
       .from(bucketName)
       .getPublicUrl(path);
 
-    console.log('[UPLOAD] Success:', publicUrl);
+    console.log(`[UPLOAD] Success: ${publicUrl}`);
 
-    return publicUrl;
+    return {
+      publicUrl,
+      path,
+      lifecycle
+    };
   } catch (error) {
     console.error('[UPLOAD] Error:', error);
     throw new Error(`Upload failed: ${error.message}`);
   }
+}
+
+/**
+ * Upload with automatic lifecycle detection
+ * Draft/stencil images are temp, final renders are final
+ * @param {Buffer} buffer - File buffer
+ * @param {string} filename - File name
+ * @param {string} stage - 'stencil' | 'draft' | 'region' | 'final'
+ * @param {string} jobId - Job ID
+ * @returns {Promise<Object>} Upload result
+ */
+export async function uploadByStage(buffer, filename, stage, jobId) {
+  const lifecycle = (stage === 'stencil' || stage === 'draft' || stage === 'region')
+    ? 'temp'
+    : 'final';
+
+  return uploadToStorage(buffer, filename, {
+    lifecycle,
+    jobId
+  });
 }
 
 /**
@@ -287,44 +368,61 @@ export function getContentType(filename) {
  * @param {Object} metadata - Design metadata (title, variant, etc.)
  * @param {Object} bom - Bill of materials
  * @param {Array} palette - Palette from LayoutSpec (required)
+ * @param {Object} options - Export options
  */
-export async function generateAllExports(regions, surface, metadata, bom, palette) {
+export async function generateAllExports(regions, surface, metadata, bom, palette, options = {}) {
+  const {
+    lifecycle = 'final', // 'draft' | 'temp' | 'final'
+    jobId = null
+  } = options;
+
   const variantId = `v${metadata.variant}_${Date.now()}`;
 
   try {
     // Generate SVG with palette
     const svg = exportSVG(regions, surface, metadata, palette);
-    const svgUrl = await uploadToStorage(
+    const svgResult = await uploadToStorage(
       Buffer.from(svg, 'utf8'),
-      `${variantId}.svg`
+      `${variantId}.svg`,
+      { lifecycle, jobId }
     );
 
     // Generate PNG from SVG
     const pngBuffer = await exportPNG(svg, 1200);
-    const pngUrl = await uploadToStorage(
+    const pngResult = await uploadToStorage(
       pngBuffer,
-      `${variantId}.png`
+      `${variantId}.png`,
+      { lifecycle, jobId }
     );
 
     // Generate DXF stub
     const dxf = exportDXF(regions, surface);
-    const dxfUrl = await uploadToStorage(
+    const dxfResult = await uploadToStorage(
       Buffer.from(dxf, 'utf8'),
-      `${variantId}.dxf`
+      `${variantId}.dxf`,
+      { lifecycle, jobId }
     );
 
     // Generate PDF stub (just metadata for now)
     const pdfData = exportPDF(regions, surface, bom);
-    const pdfUrl = await uploadToStorage(
+    const pdfResult = await uploadToStorage(
       Buffer.from(JSON.stringify(pdfData, null, 2), 'utf8'),
-      `${variantId}.pdf.json`
+      `${variantId}.pdf.json`,
+      { lifecycle, jobId }
     );
 
     return {
-      svgUrl,
-      pngUrl,
-      dxfUrl,
-      pdfUrl
+      svgUrl: svgResult.publicUrl,
+      pngUrl: pngResult.publicUrl,
+      dxfUrl: dxfResult.publicUrl,
+      pdfUrl: pdfResult.publicUrl,
+      paths: {
+        svg: svgResult.path,
+        png: pngResult.path,
+        dxf: dxfResult.path,
+        pdf: pdfResult.path
+      },
+      lifecycle
     };
   } catch (error) {
     console.error('[EXPORTS] Error generating exports:', error);

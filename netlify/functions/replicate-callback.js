@@ -1,28 +1,48 @@
-// TPV Studio - Replicate Webhook Callback
-// Processes completed predictions and updates job status
+// TPV Studio - Multi-Pass Replicate Webhook Callback
+// State machine for draft → region refinement → polish pipeline
+// Idempotent handling with prediction_id + job_id guard
 
 exports.handler = async (event, context) => {
   // Dynamic import of ESM utilities
   const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.mjs');
-  const { downloadImage } = await import('./studio/_utils/replicate.mjs');
-  const { clampToTPVPalette, autoRankConcepts } = await import('./studio/_utils/postprocess.mjs');
-  const { uploadToStorage } = await import('./studio/_utils/exports.mjs');
+  const { downloadImage, generateDraftSDXL, refineRegionSDXL } = await import('./studio/_utils/replicate.mjs');
+  const { uploadByStage } = await import('./studio/_utils/exports.mjs');
+  const { generateRoleMasks, generateMotifMasks } = await import('./studio/_utils/mask-generator.mjs');
+  const { quantizeWithDithering } = await import('./studio/_utils/oklch-quantize.mjs');
+  const { assessConceptQuality } = await import('./studio/_utils/quality-gate.mjs');
+  const crypto = await import('crypto');
+
   try {
-    // Verify webhook token
+    // 1. Verify webhook signature (idempotency layer 1)
+    const signature = event.headers['webhook-signature'] || event.headers['Webhook-Signature'];
     const token = event.queryStringParameters?.token;
+
     if (token !== process.env.REPLICATE_WEBHOOK_SECRET) {
       console.error('[WEBHOOK] Invalid token');
       return { statusCode: 401, body: 'Unauthorized' };
     }
 
-    const body = JSON.parse(event.body || '{}');
-    const { id: prediction_id, status, output, error: predictionError } = body;
+    // Verify Replicate webhook signature if present
+    if (signature && process.env.REPLICATE_WEBHOOK_SECRET) {
+      const body = event.body;
+      const hash = crypto.createHmac('sha256', process.env.REPLICATE_WEBHOOK_SECRET)
+        .update(body)
+        .digest('hex');
+
+      if (signature !== hash) {
+        console.error('[WEBHOOK] Invalid signature');
+        return { statusCode: 401, body: 'Invalid signature' };
+      }
+    }
+
+    const payload = JSON.parse(event.body || '{}');
+    const { id: prediction_id, status, output, error: predictionError } = payload;
 
     console.log(`[WEBHOOK] Received: ${prediction_id}, status: ${status}`);
 
     const supabase = getSupabaseServiceClient();
 
-    // Find job by prediction_id
+    // 2. Find job by prediction_id (idempotency layer 2)
     const { data: job, error: fetchError } = await supabase
       .from('studio_jobs')
       .select('*')
@@ -34,89 +54,47 @@ exports.handler = async (event, context) => {
       return { statusCode: 200, body: 'Job not found' };
     }
 
-    // Handle status transitions
-    if (status === 'starting') {
-      await supabase
-        .from('studio_jobs')
-        .update({ status: 'running' })
-        .eq('id', job.id);
+    // 3. Check if already processed (idempotency layer 3: prediction_id + job_id guard)
+    const processedKey = `${prediction_id}_${job.id}`;
+    const { data: existing } = await supabase
+      .from('studio_webhooks')
+      .select('*')
+      .eq('prediction_id', prediction_id)
+      .eq('job_id', job.id)
+      .eq('status', status)
+      .maybeSingle();
 
-      return { statusCode: 200, body: 'Running' };
+    if (existing) {
+      console.log(`[WEBHOOK] Already processed: ${processedKey} (status: ${status})`);
+      return { statusCode: 200, body: 'Already processed' };
+    }
+
+    // Log webhook receipt
+    await supabase
+      .from('studio_webhooks')
+      .insert({
+        prediction_id,
+        job_id: job.id,
+        status,
+        payload,
+        received_at: new Date().toISOString()
+      });
+
+    // 4. Handle status transitions via state machine
+    if (status === 'starting') {
+      return handleStarting(supabase, job);
+    }
+
+    if (status === 'processing') {
+      return handleProcessing(supabase, job);
     }
 
     if (status === 'succeeded' && output) {
-      console.log(`[WEBHOOK] Processing ${output.length} outputs for job ${job.id}`);
-
-      // Post-process: download, clamp, rank, upload
-      const conceptBuffers = [];
-
-      for (let i = 0; i < output.length; i++) {
-        try {
-          const originalBuffer = await downloadImage(output[i]);
-          const targetPalette = job.metadata?.targetPalette || [];
-          const quantizedBuffer = await clampToTPVPalette(originalBuffer, targetPalette);
-
-          conceptBuffers.push({
-            id: `concept_${job.id}_${i}`,
-            buffer: quantizedBuffer,
-            originalBuffer,
-            palette: targetPalette,
-            index: i
-          });
-        } catch (err) {
-          console.error(`[WEBHOOK] Failed to process output ${i}:`, err);
-        }
-      }
-
-      const rankedConcepts = await autoRankConcepts(conceptBuffers);
-
-      // Upload final concepts
-      const concepts = [];
-      for (const concept of rankedConcepts) {
-        const quantizedUrl = await uploadToStorage(
-          concept.buffer,
-          `${concept.id}_quantized.png`,
-          'tpv-studio'
-        );
-
-        const originalUrl = await uploadToStorage(
-          concept.originalBuffer,
-          `${concept.id}_original.png`,
-          'tpv-studio'
-        );
-
-        concepts.push({
-          id: concept.id,
-          originalUrl,
-          quantizedUrl,
-          quality: concept.quality,
-          index: concept.index
-        });
-      }
-
-      await supabase
-        .from('studio_jobs')
-        .update({
-          status: 'completed',
-          outputs: { concepts },
-          concepts // Keep for backward compatibility
-        })
-        .eq('id', job.id);
-
-      console.log(`[WEBHOOK] Job ${job.id} completed with ${concepts.length} concepts`);
-      return { statusCode: 200, body: 'Completed' };
+      return handleSuccess(supabase, job, output, prediction_id);
     }
 
     if (status === 'failed' || predictionError) {
-      await supabase
-        .from('studio_jobs')
-        .update({
-          status: 'failed',
-          error: predictionError || 'Prediction failed'
-        })
-        .eq('id', job.id);
-
-      return { statusCode: 200, body: 'Failed' };
+      return handleFailure(supabase, job, predictionError);
     }
 
     return { statusCode: 200, body: 'OK' };
@@ -126,3 +104,592 @@ exports.handler = async (event, context) => {
     return { statusCode: 500, body: error.message };
   }
 };
+
+/**
+ * Handle 'starting' status
+ */
+async function handleStarting(supabase, job) {
+  await supabase
+    .from('studio_jobs')
+    .update({ status: 'running' })
+    .eq('id', job.id);
+
+  console.log(`[WEBHOOK] Job ${job.id} starting`);
+  return { statusCode: 200, body: 'Starting' };
+}
+
+/**
+ * Handle 'processing' status
+ */
+async function handleProcessing(supabase, job) {
+  // Optional: update progress metadata
+  console.log(`[WEBHOOK] Job ${job.id} processing`);
+  return { statusCode: 200, body: 'Processing' };
+}
+
+/**
+ * Handle 'failed' status
+ */
+async function handleFailure(supabase, job, error) {
+  await supabase
+    .from('studio_jobs')
+    .update({
+      status: 'failed',
+      error: error || 'Prediction failed'
+    })
+    .eq('id', job.id);
+
+  console.error(`[WEBHOOK] Job ${job.id} failed:`, error);
+  return { statusCode: 200, body: 'Failed' };
+}
+
+/**
+ * Handle 'succeeded' status - route to appropriate pass handler or simple mode
+ */
+async function handleSuccess(supabase, job, output, prediction_id) {
+  const mode = job.metadata?.mode;
+
+  // === SIMPLE MODE HANDLER (Inspiration Mode) ===
+  if (mode === 'simple') {
+    console.log(`[WEBHOOK] Job ${job.id} succeeded (simple mode)`);
+    return handleSimpleSuccess(supabase, job, output);
+  }
+
+  // === MULTI-PASS MODE HANDLER (Original Pipeline) ===
+  const { generateDraftSDXL, refineRegionSDXL } = await import('./studio/_utils/replicate.mjs');
+  const { uploadByStage } = await import('./studio/_utils/exports.mjs');
+  const { generateRoleMasks } = await import('./studio/_utils/mask-generator.mjs');
+  const { quantizeWithDithering } = await import('./studio/_utils/oklch-quantize.mjs');
+  const { assessConceptQuality } = await import('./studio/_utils/quality-gate.mjs');
+  const { downloadImage } = await import('./studio/_utils/replicate.mjs');
+
+  const passType = job.metadata?.passType || 'draft';
+  const pipelineState = job.metadata?.pipelineState || {};
+
+  console.log(`[WEBHOOK] Job ${job.id} succeeded (multi-pass, pass: ${passType})`);
+
+  // Route to appropriate pass handler
+  switch (passType) {
+    case 'draft':
+      return handleDraftPass(supabase, job, output, pipelineState);
+
+    case 'region_base':
+    case 'region_accent':
+    case 'region_highlight':
+      return handleRegionPass(supabase, job, output, passType, pipelineState);
+
+    case 'final':
+      return handleFinalPass(supabase, job, output, pipelineState);
+
+    default:
+      console.error(`[WEBHOOK] Unknown pass type: ${passType}`);
+      return { statusCode: 500, body: 'Unknown pass type' };
+  }
+}
+
+/**
+ * Handle simple mode success (Inspiration Mode)
+ * Download → crop/pad → thumbnail → upload → complete
+ */
+async function handleSimpleSuccess(supabase, job, output) {
+  const { downloadImage } = await import('./studio/_utils/replicate.mjs');
+  const { cropPadToExactAR, makeThumbnail } = await import('./studio/_utils/image.mjs');
+  const { uploadToStorage } = await import('./studio/_utils/exports.mjs');
+
+  const startTime = Date.now();
+
+  try {
+    console.log(`[SIMPLE] Processing simple mode output for job ${job.id}`);
+
+    // Handle missing output
+    if (!output || (Array.isArray(output) && output.length === 0)) {
+      console.error(`[SIMPLE] No output from prediction for job ${job.id}`);
+      await supabase
+        .from('studio_jobs')
+        .update({
+          status: 'failed',
+          error: 'No output from prediction',
+          completed_at: new Date().toISOString()
+        })
+        .eq('id', job.id);
+
+      return { statusCode: 200, body: 'No output' };
+    }
+
+    // Download generated image
+    const imageUrl = Array.isArray(output) ? output[0] : output;
+    console.log(`[SIMPLE] Downloading: ${imageUrl}`);
+    const rawBuffer = await downloadImage(imageUrl);
+
+    // Get target dimensions from job metadata
+    const targetW = job.metadata?.target_dims?.w || 2000;
+    const targetH = job.metadata?.target_dims?.h || 2000;
+    const genW = job.metadata?.gen_dims?.w || targetW;
+    const genH = job.metadata?.gen_dims?.h || targetH;
+
+    console.log(`[SIMPLE] Crop/pad: ${genW}×${genH} → ${targetW}×${targetH}`);
+
+    // Crop/pad to exact aspect ratio
+    const croppedBuffer = await cropPadToExactAR(rawBuffer, { targetW, targetH });
+
+    // Generate thumbnail
+    const thumbnailBuffer = await makeThumbnail(croppedBuffer, 512);
+
+    // Upload to storage with signed URLs (private bucket)
+    const finalFilename = `final_${job.id}_${Date.now()}.jpg`;
+    const thumbFilename = `thumb_${job.id}_${Date.now()}.jpg`;
+
+    const finalUpload = await uploadToStorage(croppedBuffer, finalFilename, {
+      lifecycle: 'final',
+      jobId: job.id,
+      contentType: 'image/jpeg'
+    });
+
+    const thumbUpload = await uploadToStorage(thumbnailBuffer, thumbFilename, {
+      lifecycle: 'final',
+      jobId: job.id,
+      contentType: 'image/jpeg'
+    });
+
+    const processingDuration = Date.now() - startTime;
+    const totalDuration = Date.now() - new Date(job.started_at).getTime();
+
+    // Log concise completion line
+    console.log(
+      `[INSP] job=${job.id} status=completed ` +
+      `processing=${processingDuration}ms total=${totalDuration}ms ` +
+      `final_url=${finalUpload.publicUrl}`
+    );
+
+    // Update job to completed
+    await supabase
+      .from('studio_jobs')
+      .update({
+        status: 'completed',
+        completed_at: new Date().toISOString(),
+        result: {
+          final_url: finalUpload.publicUrl,
+          thumbnail_url: thumbUpload.publicUrl,
+          raw_output: imageUrl,
+          dimensions: {
+            target: { w: targetW, h: targetH },
+            gen: { w: genW, h: genH },
+            final: { w: targetW, h: targetH }
+          }
+        },
+        metadata: {
+          ...job.metadata,
+          processing_duration: processingDuration,
+          total_duration: totalDuration,
+          final_path: finalUpload.path,
+          thumbnail_path: thumbUpload.path
+        }
+      })
+      .eq('id', job.id);
+
+    return { statusCode: 200, body: 'Simple mode completed' };
+
+  } catch (error) {
+    console.error(`[SIMPLE] Processing failed for job ${job.id}:`, error);
+
+    // Mark job as failed
+    await supabase
+      .from('studio_jobs')
+      .update({
+        status: 'failed',
+        error: `Processing failed: ${error.message}`,
+        completed_at: new Date().toISOString()
+      })
+      .eq('id', job.id);
+
+    return { statusCode: 500, body: error.message };
+  }
+}
+
+/**
+ * Handle Pass 1: Draft SDXL completion
+ * Next: Generate masks and launch region refinements
+ */
+async function handleDraftPass(supabase, job, output, pipelineState) {
+  const { downloadImage } = await import('./studio/_utils/replicate.mjs');
+  const { uploadByStage } = await import('./studio/_utils/exports.mjs');
+  const { generateRoleMasks } = await import('./studio/_utils/mask-generator.mjs');
+  const { refineRegionSDXL } = await import('./studio/_utils/replicate.mjs');
+
+  console.log(`[DRAFT] Processing draft output for job ${job.id}`);
+
+  // Download draft image
+  const draftUrl = Array.isArray(output) ? output[0] : output;
+  const draftBuffer = await downloadImage(draftUrl);
+
+  // Upload draft as temp file
+  const draftUpload = await uploadByStage(draftBuffer, `draft_${job.id}.png`, 'draft', job.id);
+
+  // Generate role-based masks from regions
+  const regions = job.metadata?.regions || [];
+  const dimensions = {
+    width: job.metadata?.surface?.width_m * 100 || 1024, // Convert to pixels (assume 100px/m)
+    height: job.metadata?.surface?.height_m * 100 || 1024
+  };
+
+  const roleMasks = await generateRoleMasks(regions, dimensions, 2); // 2px interior feather
+
+  // Upload masks
+  const maskUploads = {};
+  for (const [role, maskBuffer] of Object.entries(roleMasks)) {
+    const maskUpload = await uploadByStage(maskBuffer, `mask_${role}_${job.id}.png`, 'temp', job.id);
+    maskUploads[role] = maskUpload.publicUrl;
+  }
+
+  // Launch region refinements (respect MAX_REGION_REFINES cost cap)
+  const maxRegionRefines = parseInt(process.env.MAX_REGION_REFINES || '4');
+  const regionPasses = [];
+
+  // Base regions (highest priority)
+  if (roleMasks.base && regionPasses.length < maxRegionRefines) {
+    const basePrediction = await refineRegionSDXL(
+      draftUpload.publicUrl,
+      maskUploads.base,
+      job.metadata?.prompt || '',
+      'base',
+      {
+        style: job.metadata?.style || 'professional',
+        seed: pipelineState.seed
+      }
+    );
+
+    regionPasses.push({
+      role: 'base',
+      prediction_id: basePrediction.id
+    });
+
+    // Create child job for region pass
+    await supabase.from('studio_jobs').insert({
+      user_id: job.user_id,
+      type: 'region_refinement',
+      prediction_id: basePrediction.id,
+      metadata: {
+        ...job.metadata,
+        passType: 'region_base',
+        parentJobId: job.id,
+        pipelineState: {
+          ...pipelineState,
+          draftUrl: draftUpload.publicUrl,
+          masks: maskUploads
+        }
+      }
+    });
+  }
+
+  // Accent regions
+  if (roleMasks.accent && regionPasses.length < maxRegionRefines) {
+    const accentPrediction = await refineRegionSDXL(
+      draftUpload.publicUrl,
+      maskUploads.accent,
+      job.metadata?.prompt || '',
+      'accent',
+      {
+        style: job.metadata?.style || 'professional',
+        seed: pipelineState.seed
+      }
+    );
+
+    regionPasses.push({
+      role: 'accent',
+      prediction_id: accentPrediction.id
+    });
+
+    await supabase.from('studio_jobs').insert({
+      user_id: job.user_id,
+      type: 'region_refinement',
+      prediction_id: accentPrediction.id,
+      metadata: {
+        ...job.metadata,
+        passType: 'region_accent',
+        parentJobId: job.id,
+        pipelineState: {
+          ...pipelineState,
+          draftUrl: draftUpload.publicUrl,
+          masks: maskUploads
+        }
+      }
+    });
+  }
+
+  // Highlight regions (motifs)
+  if (roleMasks.highlight && regionPasses.length < maxRegionRefines) {
+    const highlightPrediction = await refineRegionSDXL(
+      draftUpload.publicUrl,
+      maskUploads.highlight,
+      job.metadata?.prompt || '',
+      'highlight',
+      {
+        style: job.metadata?.style || 'professional',
+        seed: pipelineState.seed
+      }
+    );
+
+    regionPasses.push({
+      role: 'highlight',
+      prediction_id: highlightPrediction.id
+    });
+
+    await supabase.from('studio_jobs').insert({
+      user_id: job.user_id,
+      type: 'region_refinement',
+      prediction_id: highlightPrediction.id,
+      metadata: {
+        ...job.metadata,
+        passType: 'region_highlight',
+        parentJobId: job.id,
+        pipelineState: {
+          ...pipelineState,
+          draftUrl: draftUpload.publicUrl,
+          masks: maskUploads
+        }
+      }
+    });
+  }
+
+  // Update job with draft results and pending region passes
+  await supabase
+    .from('studio_jobs')
+    .update({
+      status: 'regions_pending',
+      metadata: {
+        ...job.metadata,
+        pipelineState: {
+          ...pipelineState,
+          draftUrl: draftUpload.publicUrl,
+          masks: maskUploads,
+          regionPasses,
+          completedPasses: ['draft']
+        }
+      }
+    })
+    .eq('id', job.id);
+
+  console.log(`[DRAFT] Launched ${regionPasses.length} region refinements for job ${job.id}`);
+  return { statusCode: 200, body: 'Draft completed, regions launched' };
+}
+
+/**
+ * Handle Pass 2: Region refinement completion
+ * Next: Check if all regions done, then launch final polish
+ */
+async function handleRegionPass(supabase, job, output, passType, pipelineState) {
+  const { downloadImage } = await import('./studio/_utils/replicate.mjs');
+  const { uploadByStage } = await import('./studio/_utils/exports.mjs');
+
+  console.log(`[REGION] Processing ${passType} output for job ${job.id}`);
+
+  // Download refined region image
+  const regionUrl = Array.isArray(output) ? output[0] : output;
+  const regionBuffer = await downloadImage(regionUrl);
+
+  // Upload region as temp file
+  const regionUpload = await uploadByStage(
+    regionBuffer,
+    `${passType}_${job.id}.png`,
+    'region',
+    job.id
+  );
+
+  // Get parent job
+  const parentJobId = job.metadata?.parentJobId;
+  const { data: parentJob } = await supabase
+    .from('studio_jobs')
+    .select('*')
+    .eq('id', parentJobId)
+    .single();
+
+  if (!parentJob) {
+    console.error(`[REGION] Parent job ${parentJobId} not found`);
+    return { statusCode: 500, body: 'Parent job not found' };
+  }
+
+  // Update pipeline state with completed region
+  const updatedState = {
+    ...parentJob.metadata.pipelineState,
+    completedPasses: [
+      ...(parentJob.metadata.pipelineState.completedPasses || []),
+      passType
+    ],
+    regionUrls: {
+      ...(parentJob.metadata.pipelineState.regionUrls || {}),
+      [passType]: regionUpload.publicUrl
+    }
+  };
+
+  // Check if all regions completed
+  const regionPasses = parentJob.metadata.pipelineState.regionPasses || [];
+  const completedRegions = updatedState.completedPasses.filter(p => p.startsWith('region_'));
+  const allRegionsDone = completedRegions.length >= regionPasses.length;
+
+  if (allRegionsDone) {
+    console.log(`[REGION] All regions complete for job ${parentJobId}, launching final polish`);
+
+    // Launch final polish pass (quantization + quality check)
+    await supabase
+      .from('studio_jobs')
+      .update({
+        status: 'finalizing',
+        metadata: {
+          ...parentJob.metadata,
+          pipelineState: updatedState
+        }
+      })
+      .eq('id', parentJobId);
+
+    // Trigger final polish (no new prediction, just postprocessing)
+    return handleFinalPolish(supabase, parentJob, updatedState);
+  } else {
+    // Still waiting for other regions
+    await supabase
+      .from('studio_jobs')
+      .update({
+        metadata: {
+          ...parentJob.metadata,
+          pipelineState: updatedState
+        }
+      })
+      .eq('id', parentJobId);
+
+    console.log(`[REGION] Region ${passType} complete, waiting for ${regionPasses.length - completedRegions.length} more`);
+    return { statusCode: 200, body: 'Region completed, waiting for others' };
+  }
+}
+
+/**
+ * Handle Pass 3: Final polish (quantization + quality check)
+ * Next: If quality passes, mark complete. If fails, retry motif pass.
+ */
+async function handleFinalPolish(supabase, job, pipelineState) {
+  const { downloadImage } = await import('./studio/_utils/replicate.mjs');
+  const { quantizeWithDithering } = await import('./studio/_utils/oklch-quantize.mjs');
+  const { assessConceptQuality } = await import('./studio/_utils/quality-gate.mjs');
+  const { uploadToStorage } = await import('./studio/_utils/exports.mjs');
+
+  console.log(`[FINAL] Starting final polish for job ${job.id}`);
+
+  // Composite all region passes (simplified: use last region output as base)
+  // Production: properly composite all regions with masks using Sharp
+  const finalRegionUrl = Object.values(pipelineState.regionUrls || {}).pop();
+  const compositeBuffer = await downloadImage(finalRegionUrl);
+
+  // Apply OKLCH quantization with dithering
+  const palette = job.metadata?.targetPalette || [];
+  const quantizedBuffer = await quantizeWithDithering(compositeBuffer, palette, {
+    ditherStrength: parseFloat(process.env.DITHER_STRENGTH || '0.11'),
+    mask: null // Apply globally
+  });
+
+  // Assess quality
+  const qualityResult = await assessConceptQuality(
+    {
+      regions: job.metadata?.regions || [],
+      surface: job.metadata?.surface || {}
+    },
+    {
+      checkCoverage: true,
+      checkEdgeHealth: true,
+      checkPalettePurity: true,
+      checkMotifLegibility: true,
+      imageBuffer: quantizedBuffer,
+      palette,
+      afterDithering: true
+    }
+  );
+
+  console.log(`[FINAL] Quality score: ${qualityResult.score.toFixed(3)} (threshold: ${qualityResult.threshold})`);
+
+  // Check if retry needed
+  if (!qualityResult.passed && !pipelineState.retriedMotifs) {
+    console.log(`[FINAL] Quality below threshold, retrying motif pass`);
+
+    // Re-seed motif pass only (cheapest/highest visual lift)
+    const { refineRegionSDXL } = await import('./studio/_utils/replicate.mjs');
+
+    const newSeed = Math.floor(Math.random() * 1000000);
+    const retryPrediction = await refineRegionSDXL(
+      pipelineState.draftUrl,
+      pipelineState.masks.highlight,
+      job.metadata?.prompt || '',
+      'highlight',
+      {
+        style: job.metadata?.style || 'professional',
+        seed: newSeed
+      }
+    );
+
+    // Create retry job
+    await supabase.from('studio_jobs').insert({
+      user_id: job.user_id,
+      type: 'region_refinement',
+      prediction_id: retryPrediction.id,
+      metadata: {
+        ...job.metadata,
+        passType: 'region_highlight',
+        parentJobId: job.id,
+        pipelineState: {
+          ...pipelineState,
+          retriedMotifs: true
+        }
+      }
+    });
+
+    await supabase
+      .from('studio_jobs')
+      .update({
+        status: 'retrying_motifs',
+        metadata: {
+          ...job.metadata,
+          pipelineState: {
+            ...pipelineState,
+            retriedMotifs: true,
+            qualityCheck: qualityResult
+          }
+        }
+      })
+      .eq('id', job.id);
+
+    return { statusCode: 200, body: 'Retrying motif pass' };
+  }
+
+  // Upload final quantized image
+  const finalUpload = await uploadToStorage(quantizedBuffer, `final_${job.id}.png`, {
+    lifecycle: 'final',
+    jobId: job.id
+  });
+
+  // Mark complete
+  await supabase
+    .from('studio_jobs')
+    .update({
+      status: 'completed',
+      outputs: {
+        finalUrl: finalUpload.publicUrl,
+        qualityScore: qualityResult.score,
+        passed: qualityResult.passed
+      },
+      metadata: {
+        ...job.metadata,
+        pipelineState: {
+          ...pipelineState,
+          qualityCheck: qualityResult
+        }
+      }
+    })
+    .eq('id', job.id);
+
+  console.log(`[FINAL] Job ${job.id} completed with quality score ${qualityResult.score.toFixed(3)}`);
+  return { statusCode: 200, body: 'Completed' };
+}
+
+/**
+ * Handle final pass (legacy single-pass support)
+ */
+async function handleFinalPass(supabase, job, output, pipelineState) {
+  // Legacy: direct completion for single-pass jobs
+  return handleFinalPolish(supabase, job, pipelineState);
+}
