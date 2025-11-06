@@ -38,7 +38,7 @@
 # Studio API endpoints - TPV Studio 2.0 (AI-first workflow)
 [[redirects]]
   from = "/api/studio/inspire"
-  to = "/.netlify/functions/studio-inspire"
+  to = "/.netlify/functions/studio-inspire-simple"
   status = 200
   force = true
 
