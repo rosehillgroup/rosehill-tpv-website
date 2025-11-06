@@ -499,9 +499,8 @@ export async function createText2ImagePrediction(params) {
     webhook
   } = params;
 
-  // Get model ID from env var or use default SDXL
-  const modelId = process.env.MODEL_ID || 'stability-ai/sdxl';
-  const modelVersion = '39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b';
+  // Use FLUX.1-schnell for fast, clean results (optimized for designer-friendly outputs)
+  const modelId = process.env.MODEL_ID || 'black-forest-labs/flux-schnell';
 
   console.log(`[REPLICATE] Creating text→image prediction with ${modelId}`);
   console.log(`[REPLICATE] Size: ${width}×${height}, Steps: ${steps}, CFG: ${guidance}, Seed: ${seed}`);
@@ -510,10 +509,25 @@ export async function createText2ImagePrediction(params) {
   const startTime = Date.now();
 
   try {
-    // Create prediction with webhook
-    const prediction = await replicate.predictions.create({
-      version: modelVersion,
-      input: {
+    // Build input based on model
+    let input;
+    if (modelId.includes('flux')) {
+      // FLUX models (schnell or dev)
+      input = {
+        prompt,
+        width,
+        height,
+        num_inference_steps: steps,
+        guidance_scale: guidance,
+        seed,
+        num_outputs,
+        output_format: 'png',
+        output_quality: 90,
+        disable_safety_checker: false
+      };
+    } else {
+      // SDXL fallback (legacy)
+      input = {
         prompt,
         negative_prompt,
         width,
@@ -523,7 +537,13 @@ export async function createText2ImagePrediction(params) {
         scheduler,
         seed,
         num_outputs
-      },
+      };
+    }
+
+    // Create prediction with webhook using model name (Replicate will resolve latest version)
+    const prediction = await replicate.predictions.create({
+      model: modelId,
+      input,
       webhook,
       webhook_events_filter: ['completed']
     });
@@ -535,7 +555,7 @@ export async function createText2ImagePrediction(params) {
 
     return {
       predictionId: prediction.id,
-      version: modelVersion,
+      version: prediction.version,
       model: modelId,
       status: prediction.status
     };
@@ -597,12 +617,12 @@ export async function cancelPrediction(predictionId) {
 
 /**
  * Estimate cost for simple text2image generation
- * SDXL pricing: ~$0.0032 per image (fast params)
+ * FLUX.1-schnell pricing: ~$0.003 per image (fast, clean results)
  * @param {number} count - Number of images
  * @returns {Object} Cost estimate
  */
 export function estimateCostSimple(count = 1) {
-  const costPerImage = 0.0032; // SDXL fast params cost
+  const costPerImage = 0.003; // FLUX.1-schnell cost (optimized)
   const totalCost = count * costPerImage;
 
   return {
@@ -610,6 +630,6 @@ export function estimateCostSimple(count = 1) {
     costPerImage,
     totalCost,
     currency: 'USD',
-    model: 'SDXL (simple mode)'
+    model: 'FLUX.1-schnell (simple mode)'
   };
 }

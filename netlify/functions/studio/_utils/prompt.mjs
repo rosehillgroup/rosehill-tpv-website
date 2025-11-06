@@ -2,40 +2,42 @@
 // Material-first prompting with style presets
 
 /**
- * Material-first prompt anchoring
+ * Material-first prompt anchoring - optimized for FLUX models
  * Describes TPV rubber granule properties before creative theme
  */
-const MATERIAL_TAIL = 'rubber granule surfacing, matte finish, installer-friendly geometry, large smooth curves, clean joins, no text';
+const MATERIAL_TAIL = 'flat vector poster style, rubber granule surfacing look, large smooth shapes, soft shadows only, bold silhouettes, clean joins, no gradients, no text, no outlines';
 
 /**
- * Unified negative prompts to avoid unwanted outputs
+ * Unified negative prompts to avoid AI artifacts and unwanted outputs
+ * Optimized for FLUX models to produce clean, designer-friendly results
  */
-const NEGATIVE_PROMPTS = 'text, watermark, logo, thin lines, metallic, glossy, gradients, photorealistic textures, 3d render, shadows';
+const NEGATIVE_PROMPTS = 'photographic texture, busy detail, thin lines, stippling, halftone, noise, grain, bevels, 3d shading, tiny symbols, watermark, text, logos, noodly details, micro-patterns, photorealistic rendering';
 
 /**
  * Style presets for different design approaches
+ * Optimized for FLUX.1-schnell (fast, clean results)
  */
 export const STYLE_PRESETS = {
   playful_flat: {
     name: 'Playful Flat Design',
     description: 'Bold shapes, vibrant colors, fun themes for play areas',
     prefix: 'Bold flat shapes, vibrant playground design, playful motifs,',
-    guidance: 5, // Lower CFG for more creative freedom
-    steps: 18
+    guidance: 5.5, // Optimized for FLUX - lower guidance = less artifacts
+    steps: 16 // FLUX.1-schnell optimal steps
   },
   geometric: {
     name: 'Geometric Abstract',
     description: 'Clean lines, mathematical patterns, modern aesthetics',
     prefix: 'Geometric abstract pattern, clean lines, mathematical precision, modern minimalist design,',
-    guidance: 5,
-    steps: 18
+    guidance: 5.5,
+    steps: 16
   },
   sport_court: {
     name: 'Sport Court Graphics',
     description: 'Athletic field markings, court layouts, sport-specific designs',
     prefix: 'Sport court graphics, athletic field design, clean court markings, professional sports surface,',
     guidance: 6, // Slightly higher CFG for more structured output
-    steps: 20
+    steps: 18
   }
 };
 
