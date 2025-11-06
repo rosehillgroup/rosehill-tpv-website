@@ -1,5 +1,8 @@
 # Dependencies
 node_modules/
+package-lock.json
+netlify/functions/package.json
+netlify/functions/package-lock.json
 
 # Build outputs
 # dist/  # Commented out - dist needs to be committed for deployment
