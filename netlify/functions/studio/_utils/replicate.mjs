@@ -500,7 +500,8 @@ export async function createText2ImagePrediction(params) {
   } = params;
 
   // Use FLUX.1-schnell for fast, clean results (optimized for designer-friendly outputs)
-  const modelId = process.env.MODEL_ID || 'black-forest-labs/flux-schnell';
+  // Note: Using hardcoded model to avoid stale env var issues
+  const modelId = 'black-forest-labs/flux-schnell';
 
   console.log(`[REPLICATE] Creating text→image prediction with ${modelId}`);
   console.log(`[REPLICATE] Size: ${width}×${height}, Steps: ${steps}, CFG: ${guidance}, Seed: ${seed}`);
