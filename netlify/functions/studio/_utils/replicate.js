@@ -15,20 +15,21 @@ function getReplicateClient() {
 }
 
 /**
- * Style preset configurations for FLUX prompts
+ * Style preset configurations for SDXL - enforces flat vector graphic aesthetic
+ * Strong prompts to avoid photorealistic/painterly outputs
  */
 const STYLE_PRESETS = {
   professional: {
-    prefix: 'clean vector graphic, professional design, flat colors, geometric shapes, modern minimal',
-    negative: 'gradients, shadows, 3d effects, photorealistic, textures, text, words, letters'
+    prefix: 'flat vector art, screen print design, bold graphic illustration, paper cutout style, logo design aesthetic, Adobe Illustrator style, simple geometric shapes, solid color fills, poster design, large color blocks, clean edges, corporate identity design',
+    negative: 'photorealistic, photograph, 3D render, painting, sketch, watercolor, airbrush, pencil drawing, gradients, shadows, lighting effects, depth, perspective, textures, fine details, intricate patterns, shading, highlights, reflections, blur, bokeh, text, words, letters, typography'
   },
   playful: {
-    prefix: 'playful vector illustration, friendly shapes, bold outlines, whimsical design, fun composition',
-    negative: 'gradients, shadows, 3d effects, photorealistic, detailed textures, text, words'
+    prefix: 'flat vector art, playful graphic illustration, bold cartoon style, paper craft design, fun poster art, simple colorful shapes, solid fills, friendly geometric forms, children\'s book illustration style, cut paper aesthetic, bold outlines, large simple areas',
+    negative: 'photorealistic, photograph, 3D render, detailed painting, watercolor, airbrush, pencil drawing, gradients, soft shadows, lighting effects, depth, perspective, fine textures, intricate details, shading, highlights, reflections, blur, sophisticated rendering, text, words'
   },
   geometric: {
-    prefix: 'geometric abstract design, clean lines, sharp angles, mathematical precision, pattern-based',
-    negative: 'organic shapes, gradients, shadows, 3d effects, photorealistic, text, words'
+    prefix: 'flat vector art, geometric abstract design, mathematical shapes, hard edge painting, constructivist poster, Bauhaus style, pure geometric forms, sharp angles, clean lines, color field design, minimalist graphic, architectural abstraction, precise geometry',
+    negative: 'photorealistic, photograph, 3D render, organic shapes, curved lines, painting textures, gradients, shadows, lighting, depth, perspective, fine details, decorative patterns, shading, soft edges, naturalistic forms, hand-drawn, sketchy, text, words'
   }
 };
 
@@ -174,8 +175,8 @@ export function estimateCost(count) {
 }
 
 /**
- * Generate concepts using SDXL + IP-Adapter (batch mode)
- * Fast generation with palette conditioning via image reference
+ * Generate concepts using SDXL (txt2img or img2img mode)
+ * Supports both text-to-image and image-to-image generation
  * @param {string} prompt - Enhanced prompt
  * @param {Object} options - Generation options
  * @returns {Promise<Array>} Array of {imageUrl, seed, index}
@@ -187,17 +188,23 @@ export async function generateConceptsSDXL(prompt, options = {}) {
     count = 6,
     width = 1024,
     height = 1024,
-    paletteSwatchUrl = null,
+    init_image = null, // Base64 data URI or URL for img2img
+    denoise_strength = 0.3, // For img2img: 0.25-0.35 (lower = more structure preservation)
+    paletteSwatchUrl = null, // Unused for now (IP-Adapter removed)
     style = 'professional',
     guidance = 7.5,
-    steps = 25,
-    ipAdapterScale = 0.9
+    steps = 25
   } = options;
 
   const preset = STYLE_PRESETS[style] || STYLE_PRESETS.professional;
 
-  console.log(`[REPLICATE] Generating ${count} concepts with SDXL (Stability AI)`);
+  const mode = init_image ? 'img2img' : 'txt2img';
+  console.log(`[REPLICATE] Generating ${count} concepts with SDXL ${mode} (Stability AI)`);
   console.log(`[REPLICATE] Size: ${width}×${height}, Steps: ${steps}, Guidance: ${guidance}`);
+
+  if (init_image) {
+    console.log(`[REPLICATE] img2img mode: denoise_strength=${denoise_strength}`);
+  }
 
   const startTime = Date.now();
   const concepts = [];
@@ -210,20 +217,30 @@ export async function generateConceptsSDXL(prompt, options = {}) {
       const seed = Math.floor(Math.random() * 1000000);
 
       // Use official Stability AI SDXL model
+      // Build model input (different for txt2img vs img2img)
+      const modelInput = {
+        prompt: prompt,
+        negative_prompt: preset.negative,
+        num_inference_steps: steps,
+        guidance_scale: guidance,
+        seed: seed,
+        scheduler: "K_EULER"
+      };
+
+      // Add mode-specific parameters
+      if (init_image) {
+        // img2img mode: use init_image and prompt_strength
+        modelInput.image = init_image;
+        modelInput.prompt_strength = denoise_strength; // How much to transform (0.25-0.35 = preserve structure)
+      } else {
+        // txt2img mode: specify dimensions
+        modelInput.width = width;
+        modelInput.height = height;
+      }
+
       const output = await replicate.run(
         "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
-        {
-          input: {
-            prompt: prompt,
-            negative_prompt: preset.negative,
-            width: width,
-            height: height,
-            num_inference_steps: steps,
-            guidance_scale: guidance,
-            seed: seed,
-            scheduler: "K_EULER"
-          }
-        }
+        { input: modelInput }
       );
 
       // SDXL returns URL or array

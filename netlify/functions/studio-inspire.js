@@ -7,6 +7,7 @@ import { clampToTPVPalette, autoRankConcepts } from './studio/_utils/postprocess
 import { selectModelAspect } from './studio/_utils/aspect-resolver.js';
 import { createPaletteSwatch } from './studio/_utils/palette-swatch.js';
 import { uploadToStorage } from './studio/_utils/exports.js';
+import { generateFlatStencil, renderStencilToSVG, rasterizeStencilToPNG } from './studio/_utils/stencil-generator.js';
 
 // TPV palette inline (avoid file loading in serverless)
 const TPV_PALETTE = [
@@ -143,25 +144,54 @@ export async function handler(event, context) {
 
     console.log('[INSPIRE] Target palette:', targetPalette.map(c => c.code).join(', '));
 
-    // Step 3: Create palette swatch for IP-Adapter
-    console.log('[INSPIRE] Creating palette swatch for IP-Adapter...');
-    const paletteSwatchUrl = await createPaletteSwatch(targetPalette, 'tpv-studio');
-    console.log('[INSPIRE] Palette swatch uploaded:', paletteSwatchUrl);
+    // Step 3: Generate flat composition stencil for img2img
+    console.log('[INSPIRE] Generating flat composition stencil...');
+    const stencilStartTime = Date.now();
 
-    // Step 4: Build enhanced prompt with color guidance
-    const enhancedPrompt = buildPalettePrompt(prompt, targetPalette, style);
+    // Generate geometric regions with colors
+    const stencilRegions = generateFlatStencil(
+      { width_m: aspectInfo.width / 100, height_m: aspectInfo.height / 100 }, // Normalized dimensions
+      targetPalette,
+      {
+        strategy: 'voronoi', // or 'bands', 'grid' based on theme
+        seed: Date.now(),
+        minRegions: 6,
+        maxRegions: 10,
+        minFeatureSize_m: 0.8
+      }
+    );
 
-    // Step 5: Generate concepts using SDXL + IP-Adapter
+    // Render to SVG
+    const stencilSVG = renderStencilToSVG(
+      stencilRegions,
+      { width_m: aspectInfo.width / 100, height_m: aspectInfo.height / 100 }
+    );
+
+    // Rasterize to PNG at model resolution
+    const stencilPNG = await rasterizeStencilToPNG(stencilSVG, aspectInfo.width, aspectInfo.height);
+
+    // Upload stencil to Supabase
+    const stencilFilename = `stencil_${Date.now()}.png`;
+    const stencilUrl = await uploadToStorage(stencilPNG, stencilFilename, 'tpv-studio');
+
+    const stencilDuration = Date.now() - stencilStartTime;
+    console.log(`[INSPIRE] Stencil generated and uploaded in ${stencilDuration}ms: ${stencilUrl}`);
+
+    // Step 4: Build simplified prompt for img2img (style only, not color lists)
+    // In img2img mode, the stencil provides color structure, so prompt focuses on style/theme only
+    const enhancedPrompt = `${prompt}. flat vector art, screen print design, bold graphic illustration, paper cutout style, clean edges, solid color fills, installer-friendly geometry`;
+
+    // Step 5: Generate concepts using SDXL img2img mode
     const genStartTime = Date.now();
     const rawConcepts = await generateConceptsSDXL(enhancedPrompt, {
       count,
       width: aspectInfo.width,
       height: aspectInfo.height,
-      paletteSwatchUrl: paletteSwatchUrl,
+      init_image: stencilUrl, // img2img: use flat stencil as base
+      denoise_strength: 0.3, // Preserve stencil structure (0.25-0.35 recommended)
       style,
-      guidance: 5.5,
-      steps: 28,
-      ipAdapterScale: 0.9
+      guidance: 6.0, // Slightly higher for better style adherence
+      steps: 20 // Fewer steps = cleaner, less detailed output
     });
 
     const genDuration = Date.now() - genStartTime;
