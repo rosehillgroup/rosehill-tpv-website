@@ -13,6 +13,7 @@
 
 [functions.esbuild]
   format = "esm"
+  # Force rebuild to clear cache
 
 [[edge_functions]]
   path = "/*"
