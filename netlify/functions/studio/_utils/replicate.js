@@ -7,9 +7,9 @@ import Replicate from 'replicate';
  * Initialize Replicate client
  */
 function getReplicateClient() {
-  const apiKey = process.env.REPLICATE_API_KEY;
+  const apiKey = process.env.REPLICATE_API_TOKEN;
   if (!apiKey) {
-    throw new Error('REPLICATE_API_KEY environment variable not set');
+    throw new Error('REPLICATE_API_TOKEN environment variable not set');
   }
   return new Replicate({ auth: apiKey });
 }
