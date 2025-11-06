@@ -14,6 +14,7 @@
     "chaikin-smooth": "^1.0.4",
     "cheerio": "^1.0.0-rc.12",
     "color-diff": "^1.4.0",
+    "d3-delaunay": "^6.0.4",
     "jose": "^5.2.0",
     "polygon-clipping": "^0.15.7",
     "potrace": "^2.1.8",
