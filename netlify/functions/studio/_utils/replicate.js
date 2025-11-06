@@ -172,3 +172,106 @@ export function estimateCost(count) {
     currency: 'USD'
   };
 }
+
+/**
+ * Generate concepts using SDXL + IP-Adapter (batch mode)
+ * Fast generation with palette conditioning via image reference
+ * @param {string} prompt - Enhanced prompt
+ * @param {Object} options - Generation options
+ * @returns {Promise<Array>} Array of {imageUrl, seed, index}
+ */
+export async function generateConceptsSDXL(prompt, options = {}) {
+  const replicate = getReplicateClient();
+
+  const {
+    count = 6,
+    width = 1024,
+    height = 1024,
+    paletteSwatchUrl = null,
+    style = 'professional',
+    guidance = 5.5,
+    steps = 28,
+    ipAdapterScale = 0.9
+  } = options;
+
+  const preset = STYLE_PRESETS[style] || STYLE_PRESETS.professional;
+
+  console.log(`[REPLICATE] Generating ${count} concepts with SDXL + IP-Adapter`);
+  console.log(`[REPLICATE] Size: ${width}×${height}, Steps: ${steps}, Guidance: ${guidance}`);
+  console.log(`[REPLICATE] IP-Adapter scale: ${ipAdapterScale}`);
+  if (paletteSwatchUrl) {
+    console.log(`[REPLICATE] Palette swatch: ${paletteSwatchUrl}`);
+  }
+
+  const startTime = Date.now();
+  const concepts = [];
+
+  try {
+    // Generate concepts sequentially (SDXL is fast: ~3-5s each)
+    for (let i = 0; i < count; i++) {
+      console.log(`[REPLICATE] Generating concept ${i + 1}/${count}...`);
+
+      const seed = Math.floor(Math.random() * 1000000);
+      const input = {
+        prompt: prompt,
+        negative_prompt: preset.negative,
+        width: width,
+        height: height,
+        num_inference_steps: steps,
+        guidance_scale: guidance,
+        seed: seed
+      };
+
+      // Add IP-Adapter image if palette swatch provided
+      if (paletteSwatchUrl) {
+        input.ip_adapter_image = paletteSwatchUrl;
+        input.ip_adapter_scale = ipAdapterScale;
+      }
+
+      const output = await replicate.run(
+        "chigozienri/ip_adapter-sdxl",
+        { input }
+      );
+
+      // SDXL returns URL or array
+      const imageUrl = Array.isArray(output) ? output[0] : output;
+
+      concepts.push({
+        id: `concept_${Date.now()}_${i}`,
+        imageUrl,
+        seed,
+        index: i
+      });
+
+      console.log(`[REPLICATE] Concept ${i + 1} complete: ${imageUrl}`);
+    }
+
+    const duration = Date.now() - startTime;
+    console.log(`[REPLICATE] Generated ${concepts.length} concepts in ${duration}ms`);
+
+    return concepts;
+
+  } catch (error) {
+    console.error('[REPLICATE] SDXL generation failed:', error);
+    throw new Error(`SDXL generation failed: ${error.message}`);
+  }
+}
+
+/**
+ * Estimate cost for SDXL generation
+ * SDXL pricing: ~$0.03 per image
+ * @param {number} count - Number of concepts
+ * @returns {Object} Cost estimate
+ */
+export function estimateCostSDXL(count) {
+  const costPerImage = 0.03;
+  const totalCost = count * costPerImage;
+
+  return {
+    count,
+    costPerImage,
+    totalCost,
+    currency: 'USD',
+    model: 'SDXL + IP-Adapter'
+  };
+}
