@@ -11,6 +11,9 @@
   node_bundler = "esbuild"
   included_files = ["motifs/**/*.svg"]
 
+[functions.esbuild]
+  format = "cjs"
+
 [[edge_functions]]
   path = "/*"
   function = "geo-cookie"
