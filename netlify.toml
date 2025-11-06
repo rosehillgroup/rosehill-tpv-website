@@ -12,7 +12,7 @@
   included_files = ["motifs/**/*.svg", "studio/**"]
 
 [functions.esbuild]
-  format = "esm"
+  format = "cjs"
   target = "node18"
   platform = "node"
 
