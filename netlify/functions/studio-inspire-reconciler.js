@@ -2,15 +2,16 @@
 // Rescues stuck jobs by checking Replicate status
 // Runs as backup safety net (e.g., every 1 minute via cron)
 
-import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
-import { downloadImage } from './studio/_utils/replicate.js';
-import { clampToTPVPalette, autoRankConcepts } from './studio/_utils/postprocess.js';
-import { uploadToStorage } from './studio/_utils/exports.js';
-
 const REPLICATE_API = 'https://api.replicate.com/v1/predictions';
 const STUCK_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
-export const handler = async(event, context) {
+exports.handler = async(event, context) => {
+  // Dynamic import of ESM utilities
+  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.js');
+  const { downloadImage } = await import('./studio/_utils/replicate.js');
+  const { clampToTPVPalette, autoRankConcepts } = await import('./studio/_utils/postprocess.js');
+  const { uploadToStorage } = await import('./studio/_utils/exports.js');
+
   try {
     console.log('[RECONCILER] Starting reconciliation check...');
 

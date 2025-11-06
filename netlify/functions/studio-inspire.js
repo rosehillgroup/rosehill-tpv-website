@@ -2,13 +2,6 @@
 // Generate AI concept images using SDXL + IP-Adapter with palette-locked conditioning
 // Fast generation (~20s for 6 concepts) with auto-ranking
 
-import { buildPalettePrompt, generateConceptsSDXL, downloadImage, estimateCostSDXL } from './studio/_utils/replicate.js';
-import { clampToTPVPalette, autoRankConcepts } from './studio/_utils/postprocess.js';
-import { selectModelAspect } from './studio/_utils/aspect-resolver.js';
-import { createPaletteSwatch } from './studio/_utils/palette-swatch.js';
-import { uploadToStorage } from './studio/_utils/exports.js';
-import { generateFlatStencil, renderStencilToSVG, rasterizeStencilToPNG } from './studio/_utils/stencil-generator.js';
-
 // TPV palette inline (avoid file loading in serverless)
 const TPV_PALETTE = [
   { code: "RH30", name: "Beige", hex: "#E4C4AA" },
@@ -98,7 +91,14 @@ function resolvePaletteColors(colorCodes) {
  *   }
  * }
  */
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
+  // Dynamic import of ESM utilities
+  const { buildPalettePrompt, generateConceptsSDXL, downloadImage, estimateCostSDXL } = await import('./studio/_utils/replicate.js');
+  const { clampToTPVPalette, autoRankConcepts } = await import('./studio/_utils/postprocess.js');
+  const { selectModelAspect } = await import('./studio/_utils/aspect-resolver.js');
+  const { createPaletteSwatch } = await import('./studio/_utils/palette-swatch.js');
+  const { uploadToStorage } = await import('./studio/_utils/exports.js');
+  const { generateFlatStencil, renderStencilToSVG, rasterizeStencilToPNG } = await import('./studio/_utils/stencil-generator.js');
   // Only accept POST
   if (event.httpMethod !== 'POST') {
     return {

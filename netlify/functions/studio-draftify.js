@@ -2,13 +2,6 @@
 // Vectorize selected concept into installable design with constraint checking
 // Replaces the old grammar-based design-generate endpoint
 
-import { downloadImage } from './studio/_utils/replicate.js';
-import { posterizeImage } from './studio/_utils/color-quantize.js';
-import { vectorizeImage, estimateQuality } from './studio/_utils/vectorize.js';
-import { autoRepair, generateRepairReport } from './studio/_utils/auto-repair.js';
-import { calculateBOM, calculateInstallerScore, checkRegionConstraints } from './studio/_utils/constraints.js';
-import { exportSVG, exportPNG, generateAllExports, uploadToStorage } from './studio/_utils/exports.js';
-
 /**
  * Convert vectorized regions (with SVG paths) to TPV region format (with points)
  * This is a simplified conversion - full implementation would parse SVG path strings
@@ -85,7 +78,14 @@ const DEFAULT_RULES = {
  *   }
  * }
  */
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
+  // Dynamic import of ESM utilities
+  const { downloadImage } = await import('./studio/_utils/replicate.js');
+  const { posterizeImage } = await import('./studio/_utils/color-quantize.js');
+  const { vectorizeImage, estimateQuality } = await import('./studio/_utils/vectorize.js');
+  const { autoRepair, generateRepairReport } = await import('./studio/_utils/auto-repair.js');
+  const { calculateBOM, calculateInstallerScore, checkRegionConstraints } = await import('./studio/_utils/constraints.js');
+  const { exportSVG, exportPNG, generateAllExports, uploadToStorage } = await import('./studio/_utils/exports.js');
   // Only accept POST
   if (event.httpMethod !== 'POST') {
     return {

@@ -2,14 +2,6 @@
 // Processes pending jobs from studio_jobs table
 // Invoked manually or via cron/scheduled function
 
-import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
-import { buildPalettePrompt, generateConceptsSDXL, downloadImage, estimateCostSDXL } from './studio/_utils/replicate.js';
-import { clampToTPVPalette, autoRankConcepts } from './studio/_utils/postprocess.js';
-import { selectModelAspect } from './studio/_utils/aspect-resolver.js';
-import { createPaletteSwatch } from './studio/_utils/palette-swatch.js';
-import { uploadToStorage } from './studio/_utils/exports.js';
-import { generateFlatStencil, renderStencilToSVG, rasterizeStencilToPNG } from './studio/_utils/stencil-generator.js';
-
 // TPV palette inline
 const TPV_PALETTE = [
   { code: "RH30", name: "Beige", hex: "#E4C4AA" },
@@ -61,7 +53,23 @@ function resolvePaletteColors(colorCodes) {
 /**
  * Process a single job (img2img pipeline)
  */
-async function processJob(job) {
+async function processJob(job, imports) {
+  // Extract imports
+  const {
+    getSupabaseServiceClient,
+    buildPalettePrompt,
+    generateConceptsSDXL,
+    downloadImage,
+    estimateCostSDXL,
+    clampToTPVPalette,
+    autoRankConcepts,
+    selectModelAspect,
+    createPaletteSwatch,
+    uploadToStorage,
+    generateFlatStencil,
+    renderStencilToSVG,
+    rasterizeStencilToPNG
+  } = imports;
   const startTime = Date.now();
   const { id: jobId, prompt, surface, palette_colors, style, count } = job;
 
@@ -275,7 +283,32 @@ async function processJob(job) {
  * GET /api/studio/inspire/worker
  * Processes one pending job per invocation
  */
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
+  // Dynamic import of ESM utilities
+  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.js');
+  const { buildPalettePrompt, generateConceptsSDXL, downloadImage, estimateCostSDXL } = await import('./studio/_utils/replicate.js');
+  const { clampToTPVPalette, autoRankConcepts } = await import('./studio/_utils/postprocess.js');
+  const { selectModelAspect } = await import('./studio/_utils/aspect-resolver.js');
+  const { createPaletteSwatch } = await import('./studio/_utils/palette-swatch.js');
+  const { uploadToStorage } = await import('./studio/_utils/exports.js');
+  const { generateFlatStencil, renderStencilToSVG, rasterizeStencilToPNG } = await import('./studio/_utils/stencil-generator.js');
+
+  const imports = {
+    getSupabaseServiceClient,
+    buildPalettePrompt,
+    generateConceptsSDXL,
+    downloadImage,
+    estimateCostSDXL,
+    clampToTPVPalette,
+    autoRankConcepts,
+    selectModelAspect,
+    createPaletteSwatch,
+    uploadToStorage,
+    generateFlatStencil,
+    renderStencilToSVG,
+    rasterizeStencilToPNG
+  };
+
   console.log('[WORKER] Starting inspire worker...');
 
   try {
@@ -327,7 +360,7 @@ export async function handler(event, context) {
 
     // Process job
     try {
-      const result = await processJob(job);
+      const result = await processJob(job, imports);
 
       // Mark job as completed
       const { error: completeError } = await supabase
