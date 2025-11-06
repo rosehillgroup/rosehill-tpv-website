@@ -2,11 +2,10 @@
 // Creates flat geometric compositions for img2img initialization
 // Generates installer-friendly structure: large shapes, flat colors, clean edges
 
-import { poissonDisc } from './composition.js';
-import { polygonCentroid, expandPolygon } from './geometry.js';
-import { SeededRandom } from './random.js';
-import Delaunay from 'd3-delaunay';
-
+const { poissonDisc } = require('./composition.js');
+const { polygonCentroid, expandPolygon } = require('./geometry.js');
+const { SeededRandom } = require('./random.js');
+const Delaunay = require('d3-delaunay');
 /**
  * Generate flat composition stencil
  * Creates geometric regions with assigned TPV colors
@@ -15,7 +14,7 @@ import Delaunay from 'd3-delaunay';
  * @param {Object} options - Generation options
  * @returns {Array} Array of colored regions with points
  */
-export function generateFlatStencil(surface, paletteColors, options = {}) {
+function generateFlatStencil(surface, paletteColors, options = {}) {
   const {
     strategy = 'voronoi', // 'voronoi', 'bands', 'grid'
     seed = Date.now(),
@@ -242,7 +241,7 @@ function generateGridStencil(surface, paletteColors, seed) {
  * @param {Object} surface - Surface dimensions
  * @returns {string} SVG string
  */
-export function renderStencilToSVG(regions, surface) {
+function renderStencilToSVG(regions, surface) {
   const { width_m, height_m } = surface;
 
   const svg = [];
@@ -307,3 +306,14 @@ export async function rasterizeStencilToPNG(svg, width, height) {
   console.log(`[STENCIL] Rasterized to ${pngBuffer.length} bytes`);
   return pngBuffer;
 }
+
+
+module.exports = {
+  generateFlatStencil,
+  generateVoronoiStencil,
+  generateBandStencil,
+  generateGridStencil,
+  renderStencilToSVG,
+  pointsToSVGPath,
+  Delaunay
+};

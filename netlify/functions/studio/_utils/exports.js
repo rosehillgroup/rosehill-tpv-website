@@ -1,9 +1,8 @@
 // Export Utilities for TPV Studio
 // SVG, PNG, DXF, and PDF exports
 
-import sharp from 'sharp';
-import { createClient } from '@supabase/supabase-js';
-
+const sharp = require('sharp');
+const { createClient } = require('@supabase/supabase-js');
 // RH Palette - inline to avoid file loading issues in serverless
 const RH_PALETTE_DATA = [
   { code: "RH30", name: "Beige", hex: "#E4C4AA" },
@@ -62,7 +61,7 @@ function pointsToPath(points) {
  * @param {Object} metadata - Design metadata
  * @param {Array} palette - Palette from LayoutSpec (with code, role, target_ratio)
  */
-export function exportSVG(regions, surface, metadata = {}, palette = null) {
+function exportSVG(regions, surface, metadata = {}, palette = null) {
   const { width_m, height_m } = surface;
   const paletteMap = loadPalette();
 
@@ -173,7 +172,7 @@ export async function exportPNG(svgContent, width = 1200) {
  * DXF Export Stub
  * Returns basic DXF header for now
  */
-export function exportDXF(regions, surface) {
+function exportDXF(regions, surface) {
   // Week 1 MVP: Basic stub
   // Full implementation would use dxf-writer or similar
   const { width_m, height_m } = surface;
@@ -210,7 +209,7 @@ EOF`;
  * PDF Export Stub
  * Returns basic PDF metadata for now
  */
-export function exportPDF(regions, surface, bom) {
+function exportPDF(regions, surface, bom) {
   // Week 1 MVP: Basic stub
   // Full implementation would use pdfkit
   return {
@@ -332,3 +331,16 @@ export async function generateAllExports(regions, surface, metadata, bom, palett
     throw error;
   }
 }
+
+
+module.exports = {
+  loadPalette,
+  pointsToPath,
+  exportSVG,
+  exportDXF,
+  exportPDF,
+  getContentType,
+  sharp,
+  RH_PALETTE_DATA,
+  RH_PALETTE
+};

@@ -1,8 +1,7 @@
 // Composition utilities for TPV Studio
 // Provides intelligent placement and spatial distribution
 
-import { SeededRandom } from './random.js';
-
+const { SeededRandom } = require('./random.js');
 /**
  * Poisson-disc sampling for evenly-spaced point distribution
  * @param {number} width - Surface width
@@ -12,7 +11,7 @@ import { SeededRandom } from './random.js';
  * @param {number} maxAttempts - Rejection sampling attempts (default 30)
  * @returns {Array} Array of {x, y} points
  */
-export function poissonDisc(width, height, minDist, seed, maxAttempts = 30) {
+function poissonDisc(width, height, minDist, seed, maxAttempts = 30) {
   const rng = new SeededRandom(seed);
   const cellSize = minDist / Math.sqrt(2);
   const gridWidth = Math.ceil(width / cellSize);
@@ -112,7 +111,7 @@ export function poissonDisc(width, height, minDist, seed, maxAttempts = 30) {
  * @param {Object} surface - {width_m, height_m}
  * @returns {Object} Named zones with bounds
  */
-export function getCompositionZones(theme, surface) {
+function getCompositionZones(theme, surface) {
   const { width_m: w, height_m: h } = surface;
 
   // Default zones (linear composition)
@@ -210,7 +209,7 @@ function getConstellationPoints(width, height, count) {
  * @param {function} flowField - Flow field function (x,y) -> {x,y}
  * @returns {Array} Array of {point, tangent} objects
  */
-export function sampleFlowAlongPath(path, flowField) {
+function sampleFlowAlongPath(path, flowField) {
   return path.map(p => {
     const flow = flowField(p.x, p.y);
     const angle = Math.atan2(flow.y, flow.x);
@@ -230,7 +229,7 @@ export function sampleFlowAlongPath(path, flowField) {
  * @param {number} seed - Random seed for jitter
  * @returns {Array} Distributed points
  */
-export function distributeAlongCurve(curve, count, seed = 0) {
+function distributeAlongCurve(curve, count, seed = 0) {
   const rng = new SeededRandom(seed);
   const points = [];
 
@@ -278,7 +277,7 @@ export function distributeAlongCurve(curve, count, seed = 0) {
  * @param {number} minGap - Minimum gap to maintain
  * @returns {boolean} True if clear
  */
-export function isZoneClear(zone, regions, minGap = 0.1) {
+function isZoneClear(zone, regions, minGap = 0.1) {
   const zoneCenter = {
     x: zone.x + zone.width / 2,
     y: zone.y + zone.height / 2
@@ -310,3 +309,15 @@ function calculateCentroid(points) {
   }
   return { x: cx / points.length, y: cy / points.length };
 }
+
+
+module.exports = {
+  poissonDisc,
+  getCompositionZones,
+  generateGridZones,
+  getConstellationPoints,
+  sampleFlowAlongPath,
+  distributeAlongCurve,
+  isZoneClear,
+  calculateCentroid
+};

@@ -1,8 +1,7 @@
 // Auto-Repair Utilities for TPV Studio
 // Automatically fixes constraint violations in vectorized designs
 
-import { checkRegionConstraints } from './constraints.js';
-
+const { checkRegionConstraints } = require('./constraints.js');
 /**
  * Default TPV installation rules
  */
@@ -156,7 +155,7 @@ function bufferRegion(region, bufferAmount = 0.05) {
  * @param {Object} rules - Constraint rules
  * @returns {Object} {repaired, removed}
  */
-export function removeSmallRegions(regions, rules = DEFAULT_RULES) {
+function removeSmallRegions(regions, rules = DEFAULT_RULES) {
   console.log(`[AUTO-REPAIR] Checking ${regions.length} regions for size violations...`);
 
   const kept = [];
@@ -186,7 +185,7 @@ export function removeSmallRegions(regions, rules = DEFAULT_RULES) {
  * @param {number} tolerance - Simplification tolerance (0.01 = 10mm)
  * @returns {Array} Simplified regions
  */
-export function simplifyRegions(regions, tolerance = 0.01) {
+function simplifyRegions(regions, tolerance = 0.01) {
   console.log(`[AUTO-REPAIR] Simplifying ${regions.length} regions (tolerance: ${tolerance * 1000}mm)...`);
 
   let totalPointsBefore = 0;
@@ -217,7 +216,7 @@ export function simplifyRegions(regions, tolerance = 0.01) {
  * @param {Object} rules - Constraint rules
  * @returns {Array} Buffered regions
  */
-export function expandThinRegions(regions, rules = DEFAULT_RULES) {
+function expandThinRegions(regions, rules = DEFAULT_RULES) {
   console.log(`[AUTO-REPAIR] Checking ${regions.length} regions for width violations...`);
 
   const minWidth = (rules.min_feature_mm || 120) / 1000; // Convert mm to m
@@ -248,7 +247,7 @@ export function expandThinRegions(regions, rules = DEFAULT_RULES) {
  * @param {Object} options - Repair options
  * @returns {Object} {repaired, violations, summary}
  */
-export function autoRepair(regions, options = {}) {
+function autoRepair(regions, options = {}) {
   const {
     rules = DEFAULT_RULES,
     removeSmall = true,
@@ -315,7 +314,7 @@ export function autoRepair(regions, options = {}) {
  * @param {Object} repairResult - Result from autoRepair()
  * @returns {string} Human-readable repair summary
  */
-export function generateRepairReport(repairResult) {
+function generateRepairReport(repairResult) {
   const { summary, removed, violations } = repairResult;
 
   const lines = [
@@ -337,3 +336,19 @@ export function generateRepairReport(repairResult) {
 
   return lines.join('\n');
 }
+
+
+module.exports = {
+  polygonArea,
+  polygonPerimeter,
+  shouldRemoveRegion,
+  isTooThin,
+  simplifyPoints,
+  bufferRegion,
+  removeSmallRegions,
+  simplifyRegions,
+  expandThinRegions,
+  autoRepair,
+  generateRepairReport,
+  DEFAULT_RULES
+};

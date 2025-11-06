@@ -76,7 +76,7 @@ function checkMinWidth(region, rules) {
 /**
  * Check constraints for a single region
  */
-export function checkRegionConstraints(region, rules) {
+function checkRegionConstraints(region, rules) {
   const violations = [];
 
   // Check minimum area
@@ -98,7 +98,7 @@ export function checkRegionConstraints(region, rules) {
  * Calculate installer score (0-100)
  * Based on RULES.md scoring system
  */
-export function calculateInstallerScore(allViolations) {
+function calculateInstallerScore(allViolations) {
   let score = 100;
 
   // Count violations by type
@@ -138,7 +138,7 @@ export function calculateInstallerScore(allViolations) {
  * Calculate Bill of Materials (BoM)
  * Returns color areas and percentages
  */
-export function calculateBOM(regions, palette) {
+function calculateBOM(regions, palette) {
   const colourAreas = {};
   let totalArea = 0;
 
@@ -165,7 +165,7 @@ export function calculateBOM(regions, palette) {
  * Assign colors to regions with area balancing and piece caps
  * Implements piece limits: base ≤12, accent ≤30, highlight ≤40
  */
-export function assignColors(regions, palette) {
+function assignColors(regions, palette) {
   if (regions.length === 0 || palette.length === 0) {
     return regions;
   }
@@ -275,3 +275,15 @@ export function assignColors(regions, palette) {
 
   return coloredRegions;
 }
+
+
+module.exports = {
+  polygonArea,
+  polygonPerimeter,
+  checkMinArea,
+  checkMinWidth,
+  checkRegionConstraints,
+  calculateInstallerScore,
+  calculateBOM,
+  assignColors
+};

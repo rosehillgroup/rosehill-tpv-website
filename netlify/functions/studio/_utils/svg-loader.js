@@ -1,10 +1,9 @@
 // SVG Loader for TPV Studio Motifs
 // Dynamically loads SVG files from /motifs/ directory and extracts path data
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
+const fs = require('fs');
+const path = require('path');
+const { fileURLToPath } = require('url');
 // Handle both ESM and bundled environments
 let __dirname;
 try {
@@ -94,7 +93,7 @@ function parseSVG(svgContent) {
  * @param {string} theme - Theme name (e.g., 'ocean', 'space')
  * @returns {Object|null} Motif data or null if not found
  */
-export function loadMotifFromFile(id, theme) {
+function loadMotifFromFile(id, theme) {
   const cacheKey = `${theme}:${id}`;
 
   // Check cache
@@ -155,7 +154,7 @@ export function loadMotifFromFile(id, theme) {
  * @param {string} theme - Theme name
  * @returns {Array} Array of motif IDs
  */
-export function listMotifsInTheme(theme) {
+function listMotifsInTheme(theme) {
   // Check cache
   if (THEME_INDEX_CACHE[theme]) {
     return THEME_INDEX_CACHE[theme];
@@ -192,7 +191,7 @@ export function listMotifsInTheme(theme) {
  * @param {function} rng - Random number generator
  * @returns {Object|null} Motif data
  */
-export function getRandomMotifFromTheme(theme, rng) {
+function getRandomMotifFromTheme(theme, rng) {
   const motifIds = listMotifsInTheme(theme);
 
   if (motifIds.length === 0) {
@@ -211,7 +210,7 @@ export function getRandomMotifFromTheme(theme, rng) {
  * List all available themes
  * @returns {Array} Array of theme names
  */
-export function listAvailableThemes() {
+function listAvailableThemes() {
   return Object.keys(THEME_FOLDERS);
 }
 
@@ -219,7 +218,7 @@ export function listAvailableThemes() {
  * Check if motifs directory exists and is accessible
  * @returns {boolean}
  */
-export function validateMotifsDirectory() {
+function validateMotifsDirectory() {
   const motifsDir = getMotifsDir();
 
   if (!fs.existsSync(motifsDir)) {
@@ -252,3 +251,20 @@ if (isValid) {
 } else {
   console.warn('[SVG LOADER] Warning: Motif directory validation failed');
 }
+
+
+module.exports = {
+  getMotifsDir,
+  parseSVG,
+  loadMotifFromFile,
+  listMotifsInTheme,
+  getRandomMotifFromTheme,
+  listAvailableThemes,
+  validateMotifsDirectory,
+  fs,
+  path,
+  THEME_FOLDERS,
+  MOTIF_CACHE,
+  THEME_INDEX_CACHE,
+  isValid
+};

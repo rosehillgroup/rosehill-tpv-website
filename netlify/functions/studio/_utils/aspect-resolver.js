@@ -20,7 +20,7 @@ const ASPECT_RATIOS = [
  * @param {number} targetHeight - Target height in meters
  * @returns {Object} {ratio, width, height, targetAspect}
  */
-export function selectModelAspect(targetWidth, targetHeight) {
+function selectModelAspect(targetWidth, targetHeight) {
   const targetAspect = targetWidth / targetHeight;
 
   console.log(`[ASPECT] Target dimensions: ${targetWidth}m × ${targetHeight}m (${targetAspect.toFixed(3)})`);
@@ -56,7 +56,7 @@ export function selectModelAspect(targetWidth, targetHeight) {
  * @param {number} targetHeight
  * @returns {boolean}
  */
-export function isCloseMatch(targetWidth, targetHeight) {
+function isCloseMatch(targetWidth, targetHeight) {
   const result = selectModelAspect(targetWidth, targetHeight);
   return result.aspectDiff < 0.05; // 5% tolerance
 }
@@ -65,10 +65,18 @@ export function isCloseMatch(targetWidth, targetHeight) {
  * Get all supported aspect ratios
  * @returns {Array} List of supported aspects
  */
-export function getSupportedAspects() {
+function getSupportedAspects() {
   return ASPECT_RATIOS.map(a => ({
     ratio: a.ratio,
     width: a.width,
     height: a.height
   }));
 }
+
+
+module.exports = {
+  selectModelAspect,
+  isCloseMatch,
+  getSupportedAspects,
+  ASPECT_RATIOS
+};

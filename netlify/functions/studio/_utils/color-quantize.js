@@ -1,9 +1,8 @@
 // Color quantization and palette mapping for TPV Studio
 // Maps AI-generated images to nearest TPV palette colors using ΔE2000
 
-import sharp from 'sharp';
-import { diff as deltaE } from 'color-diff';
-
+const sharp = require('sharp');
+const { diff as deltaE } = require('color-diff');
 /**
  * Convert hex color to Lab color space for ΔE2000 calculation
  * @param {string} hex - Hex color (e.g., '#FF5733')
@@ -44,7 +43,7 @@ function hexToLab(hex) {
  * @param {Array} palette - TPV palette [{code, hex, name}]
  * @returns {Object} Nearest palette color
  */
-export function findNearestColor(rgb, palette) {
+function findNearestColor(rgb, palette) {
   // Convert RGB to hex
   const hex = `#${rgb.r.toString(16).padStart(2, '0')}${rgb.g.toString(16).padStart(2, '0')}${rgb.b.toString(16).padStart(2, '0')}`;
 
@@ -296,3 +295,11 @@ export async function posterizeImage(imageBuffer, levels = 4) {
     throw error;
   }
 }
+
+
+module.exports = {
+  hexToLab,
+  findNearestColor,
+  hexToRgb,
+  sharp
+};

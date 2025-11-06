@@ -1,8 +1,7 @@
 // Painter utilities for TPV Studio
 // Role-aware compositing, SVG generation, and PNG rasterization
 
-import { polygonCentroid } from './geometry.js';
-
+const { polygonCentroid } = require('./geometry.js');
 /**
  * Paint SVG with role-aware layering
  * @param {Object} surface - {width_m, height_m}
@@ -12,7 +11,7 @@ import { polygonCentroid } from './geometry.js';
  * @param {Object} options - Rendering options
  * @returns {Object} {svg: string, metadata: Object}
  */
-export function paintSVG(surface, shapes, motifs, palette, options = {}) {
+function paintSVG(surface, shapes, motifs, palette, options = {}) {
   const { width_m, height_m } = surface;
   const dpi = options.dpi || 96;
   const edgeSoftening = options.edgeSoftening !== false; // default true
@@ -246,7 +245,7 @@ export async function rasterizeToPNG(svg, options = {}) {
  * @param {Object} palette - Color palette
  * @returns {Object} {layers: Array of {color, svg}}
  */
-export function exportCuttingLayers(surface, shapes, palette) {
+function exportCuttingLayers(surface, shapes, palette) {
   const { width_m, height_m } = surface;
   const layers = [];
 
@@ -295,7 +294,7 @@ export function exportCuttingLayers(surface, shapes, palette) {
  * @param {Object} constraints - Constraint thresholds
  * @returns {Object} {valid: boolean, violations: Array}
  */
-export function validateDesign(metadata, constraints = {}) {
+function validateDesign(metadata, constraints = {}) {
   const violations = [];
 
   // Default coverage targets
@@ -333,3 +332,13 @@ export function validateDesign(metadata, constraints = {}) {
     violations
   };
 }
+
+
+module.exports = {
+  paintSVG,
+  pointsToPathData,
+  calculateCoverage,
+  polygonArea,
+  exportCuttingLayers,
+  validateDesign
+};

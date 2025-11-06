@@ -1,8 +1,7 @@
 // Palette swatch generation for IP-Adapter conditioning
 // Creates SVG swatches from TPV color hex codes (serverless-friendly)
 
-import { uploadToStorage } from './exports.js';
-
+const { uploadToStorage } = require('./exports.js');
 /**
  * Generate a palette swatch as SVG buffer from color hex codes
  * Creates a grid of equal-sized color blocks
@@ -75,7 +74,7 @@ export async function createPaletteSwatch(colors, bucket = 'tpv-studio') {
  * @param {Array} colors - Array of {code, hex, name}
  * @returns {string} Averaged hex color
  */
-export function averagePaletteColor(colors) {
+function averagePaletteColor(colors) {
   if (colors.length === 1) {
     return colors[0].hex;
   }
@@ -103,3 +102,8 @@ export function averagePaletteColor(colors) {
 
   return avgHex;
 }
+
+
+module.exports = {
+  averagePaletteColor
+};

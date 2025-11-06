@@ -1,9 +1,8 @@
 // Geometry utilities for TPV Studio
 // Provides organic shape generation and polygon operations
 
-import polygonClipping from 'polygon-clipping';
-import chaikinSmooth from 'chaikin-smooth';
-
+const polygonClipping = require('polygon-clipping');
+const chaikinSmooth = require('chaikin-smooth');
 /**
  * Generate a superellipse (rounded rectangle with adjustable roundness)
  * @param {number} a - Semi-major axis (width/2)
@@ -13,7 +12,7 @@ import chaikinSmooth from 'chaikin-smooth';
  * @param {Object} center - {x, y} center point
  * @returns {Array} Array of {x, y} points
  */
-export function superellipse(a, b, n, segments = 64, center = {x: 0, y: 0}) {
+function superellipse(a, b, n, segments = 64, center = {x: 0, y: 0}) {
   const points = [];
 
   for (let i = 0; i < segments; i++) {
@@ -41,7 +40,7 @@ export function superellipse(a, b, n, segments = 64, center = {x: 0, y: 0}) {
  * @param {number|function} thickness - Constant or function(x,y)->thickness
  * @returns {Object} {outer: points[], inner: points[]}
  */
-export function offsetPolyline(centerline, thickness) {
+function offsetPolyline(centerline, thickness) {
   const thicknessFunc = typeof thickness === 'function'
     ? thickness
     : () => thickness;
@@ -101,7 +100,7 @@ export function offsetPolyline(centerline, thickness) {
  * @param {number} iterations - Number of smoothing passes (default 1)
  * @returns {Array} Smoothed points
  */
-export function smoothPolygon(points, iterations = 1) {
+function smoothPolygon(points, iterations = 1) {
   // Convert to [x,y] pairs for chaikin-smooth
   const coords = points.map(p => [p.x, p.y]);
 
@@ -119,7 +118,7 @@ export function smoothPolygon(points, iterations = 1) {
  * @param {Array} polygons - Array of polygons, each is array of {x, y} points
  * @returns {Array} Array of merged polygons
  */
-export function unionPolygons(polygons) {
+function unionPolygons(polygons) {
   if (polygons.length === 0) return [];
   if (polygons.length === 1) return polygons;
 
@@ -145,7 +144,7 @@ export function unionPolygons(polygons) {
  * @param {Array} points - Array of {x, y} points
  * @returns {number} Area in square units
  */
-export function polygonArea(points) {
+function polygonArea(points) {
   let area = 0;
   const n = points.length;
 
@@ -163,7 +162,7 @@ export function polygonArea(points) {
  * @param {Array} points - Array of {x, y} points
  * @returns {number} Perimeter in linear units
  */
-export function polygonPerimeter(points) {
+function polygonPerimeter(points) {
   let perimeter = 0;
   const n = points.length;
 
@@ -182,7 +181,7 @@ export function polygonPerimeter(points) {
  * @param {Array} points - Array of {x, y} points
  * @returns {Object} {x, y} centroid
  */
-export function polygonCentroid(points) {
+function polygonCentroid(points) {
   let cx = 0, cy = 0;
   let signedArea = 0;
   const n = points.length;
@@ -208,7 +207,7 @@ export function polygonCentroid(points) {
  * @param {Array} polygon - Array of {x, y} points
  * @returns {boolean}
  */
-export function pointInPolygon(point, polygon) {
+function pointInPolygon(point, polygon) {
   let inside = false;
   const n = polygon.length;
 
@@ -231,7 +230,7 @@ export function pointInPolygon(point, polygon) {
  * @param {number} offset - Offset distance (positive = expand, negative = shrink)
  * @returns {Array} Expanded polygon points
  */
-export function expandPolygon(points, offset) {
+function expandPolygon(points, offset) {
   const centroid = polygonCentroid(points);
 
   return points.map(p => {
@@ -259,7 +258,7 @@ export function expandPolygon(points, offset) {
  * @param {number} height
  * @returns {Array} Rectangle as polygon points
  */
-export function rectangle(x, y, width, height) {
+function rectangle(x, y, width, height) {
   return [
     { x, y },
     { x: x + width, y },
@@ -276,7 +275,7 @@ export function rectangle(x, y, width, height) {
  * @param {number} segments - Number of sides (default 32)
  * @returns {Array} Circle as polygon points
  */
-export function circle(cx, cy, radius, segments = 32) {
+function circle(cx, cy, radius, segments = 32) {
   const points = [];
 
   for (let i = 0; i < segments; i++) {
@@ -289,3 +288,20 @@ export function circle(cx, cy, radius, segments = 32) {
 
   return points;
 }
+
+
+module.exports = {
+  superellipse,
+  offsetPolyline,
+  smoothPolygon,
+  unionPolygons,
+  polygonArea,
+  polygonPerimeter,
+  polygonCentroid,
+  pointInPolygon,
+  expandPolygon,
+  rectangle,
+  circle,
+  polygonClipping,
+  chaikinSmooth
+};

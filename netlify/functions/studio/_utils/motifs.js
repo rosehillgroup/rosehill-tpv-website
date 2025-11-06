@@ -1,11 +1,10 @@
 // Motif utilities for TPV Studio
 // Handles SVG icon loading, intelligent placement, and thematic elements
 
-import { SeededRandom } from './random.js';
-import { pointInPolygon, polygonCentroid, expandPolygon } from './geometry.js';
-import { getCompositionZones } from './composition.js';
-import { loadMotifFromFile, listMotifsInTheme, getRandomMotifFromTheme } from './svg-loader.js';
-
+const { SeededRandom } = require('./random.js');
+const { pointInPolygon, polygonCentroid, expandPolygon } = require('./geometry.js');
+const { getCompositionZones } = require('./composition.js');
+const { loadMotifFromFile, listMotifsInTheme, getRandomMotifFromTheme } = require('./svg-loader.js');
 /**
  * SVG motif cache (now managed by svg-loader.js)
  */
@@ -17,7 +16,7 @@ const MOTIF_CACHE = {};
  * @param {string} theme - Optional theme hint (default: 'generic')
  * @returns {Object} Motif data with paths, viewBox, size range
  */
-export function loadMotif(id, theme = 'generic') {
+function loadMotif(id, theme = 'generic') {
   const cacheKey = `${theme}:${id}`;
 
   // Check cache
@@ -52,7 +51,7 @@ export function loadMotif(id, theme = 'generic') {
  * @param {string} theme - Theme name (ocean, space, food, gym, etc.)
  * @returns {Array} Array of motif IDs matching theme
  */
-export function findMotifsForTheme(theme) {
+function findMotifsForTheme(theme) {
   // Use SVG loader to get all motifs from theme folder
   const motifIds = listMotifsInTheme(theme);
 
@@ -76,7 +75,7 @@ export function findMotifsForTheme(theme) {
  * @param {number} seed - Random seed
  * @returns {Array} Array of placed motif instances
  */
-export function placeMotifs(
+function placeMotifs(
   motifSpecs,
   surface,
   flowField,
@@ -230,7 +229,7 @@ export function placeMotifs(
  * @param {Object} surface - Surface dimensions
  * @returns {Array} Default motif specifications
  */
-export function getDefaultMotifs(theme, surface) {
+function getDefaultMotifs(theme, surface) {
   const area_m2 = surface.width_m * surface.height_m;
   const motifIds = findMotifsForTheme(theme);
 
@@ -250,3 +249,12 @@ export function getDefaultMotifs(theme, surface) {
     colorRole: index === 0 ? 'highlight1' : 'highlight2' // Vary color roles for visual interest
   }));
 }
+
+
+module.exports = {
+  loadMotif,
+  findMotifsForTheme,
+  placeMotifs,
+  getDefaultMotifs,
+  MOTIF_CACHE
+};

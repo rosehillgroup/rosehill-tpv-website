@@ -1,14 +1,13 @@
 // Vectorization Utilities for TPV Studio
 // Converts raster images (PNG) to vector paths (SVG) using potrace
 
-import potrace from 'potrace';
-import sharp from 'sharp';
-
+const potrace = require('potrace');
+const sharp = require('sharp');
 /**
  * Vectorization parameters
  * These control the quality vs complexity tradeoff
  */
-export const VECTORIZE_PRESETS = {
+const VECTORIZE_PRESETS = {
   draft: {
     threshold: 128,
     turdSize: 100,     // Suppress speckles (higher = cleaner)
@@ -192,7 +191,7 @@ export async function vectorizeImage(imageBuffer, paletteColors, preset = 'balan
  * @param {Object} surface - Surface dimensions {width_m, height_m}
  * @returns {Array} TPV regions [{color, points: [{x, y}]}]
  */
-export function convertToTPVFormat(regions, surface) {
+function convertToTPVFormat(regions, surface) {
   console.log('[VECTORIZE] Converting to TPV polygon format...');
 
   // For now, return regions as-is with SVG paths
@@ -233,7 +232,7 @@ export async function simplifyPaths(regions, simplifyFactor = 0.5) {
  * @param {Array} regions - Vectorized regions
  * @returns {Object} {pathCount, avgPathsPerColor, complexity}
  */
-export function estimateQuality(regions) {
+function estimateQuality(regions) {
   const totalPaths = regions.reduce((sum, r) => sum + r.pathCount, 0);
   const avgPaths = totalPaths / regions.length;
   const complexity = totalPaths < 50 ? 'simple' : totalPaths < 200 ? 'moderate' : 'complex';
@@ -245,3 +244,14 @@ export function estimateQuality(regions) {
     colorLayers: regions.length
   };
 }
+
+
+module.exports = {
+  traceImage,
+  extractPathData,
+  convertToTPVFormat,
+  estimateQuality,
+  potrace,
+  sharp,
+  VECTORIZE_PRESETS
+};

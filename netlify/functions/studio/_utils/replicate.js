@@ -1,8 +1,7 @@
 // Replicate API client for FLUX.1 [pro] image generation
 // Handles palette-locked prompt engineering and concept generation
 
-import Replicate from 'replicate';
-
+const Replicate = require('replicate');
 /**
  * Initialize Replicate client
  */
@@ -41,7 +40,7 @@ const STYLE_PRESETS = {
  * @param {string} style - Style preset name
  * @returns {string} Enhanced prompt
  */
-export function buildPalettePrompt(userPrompt, paletteColors, style = 'professional') {
+function buildPalettePrompt(userPrompt, paletteColors, style = 'professional') {
   const preset = STYLE_PRESETS[style] || STYLE_PRESETS.professional;
 
   // Extract color descriptions
@@ -162,7 +161,7 @@ export async function downloadImage(url) {
  * @param {number} count - Number of concepts to generate
  * @returns {Object} Cost estimate
  */
-export function estimateCost(count) {
+function estimateCost(count) {
   const costPerImage = 0.055;
   const totalCost = count * costPerImage;
 
@@ -273,7 +272,7 @@ export async function generateConceptsSDXL(prompt, options = {}) {
  * @param {number} count - Number of concepts
  * @returns {Object} Cost estimate
  */
-export function estimateCostSDXL(count) {
+function estimateCostSDXL(count) {
   const costPerImage = 0.03;
   const totalCost = count * costPerImage;
 
@@ -285,3 +284,13 @@ export function estimateCostSDXL(count) {
     model: 'SDXL + IP-Adapter'
   };
 }
+
+
+module.exports = {
+  getReplicateClient,
+  buildPalettePrompt,
+  estimateCost,
+  estimateCostSDXL,
+  Replicate,
+  STYLE_PRESETS
+};
