@@ -190,26 +190,39 @@ async function handleSuccess(supabase, job, output, prediction_id) {
 /**
  * Handle simple mode success (Inspiration Mode)
  * Download → crop/pad → thumbnail → upload → complete
+ * WITH DETAILED TIMELINE TRACKING FOR PERFORMANCE DEBUGGING
  */
 async function handleSimpleSuccess(supabase, job, output) {
   const { downloadImage } = await import('./studio/_utils/replicate.mjs');
   const { cropPadToExactAR, makeThumbnail } = await import('./studio/_utils/image.mjs');
   const { uploadToStorage } = await import('./studio/_utils/exports.mjs');
 
+  // Timeline tracking
+  const timeline = [];
+  const mark = (label, extra = {}) => {
+    const entry = { t: new Date().toISOString(), label, ms: Date.now(), ...extra };
+    timeline.push(entry);
+    return entry;
+  };
+
+  const webhookReceivedMark = mark('webhook_received');
   const startTime = Date.now();
 
   try {
+    mark('postprocess_begin');
     console.log(`[SIMPLE] Processing simple mode output for job ${job.id}`);
 
     // Handle missing output
     if (!output || (Array.isArray(output) && output.length === 0)) {
       console.error(`[SIMPLE] No output from prediction for job ${job.id}`);
+      mark('error_no_output');
       await supabase
         .from('studio_jobs')
         .update({
           status: 'failed',
           error: 'No output from prediction',
-          completed_at: new Date().toISOString()
+          completed_at: new Date().toISOString(),
+          metadata: { ...job.metadata, timeline }
         })
         .eq('id', job.id);
 
@@ -219,7 +232,12 @@ async function handleSimpleSuccess(supabase, job, output) {
     // Download generated image
     const imageUrl = Array.isArray(output) ? output[0] : output;
     console.log(`[SIMPLE] Downloading: ${imageUrl}`);
+    mark('download_begin', { url: imageUrl });
+
+    const t0 = Date.now();
     const rawBuffer = await downloadImage(imageUrl);
+    const downloadMs = Date.now() - t0;
+    mark('download_complete', { duration_ms: downloadMs, size_bytes: rawBuffer.length });
 
     // Get target dimensions from job metadata
     const targetW = job.metadata?.target_dims?.w || 2000;
@@ -230,38 +248,70 @@ async function handleSimpleSuccess(supabase, job, output) {
     console.log(`[SIMPLE] Crop/pad: ${genW}×${genH} → ${targetW}×${targetH}`);
 
     // Crop/pad to exact aspect ratio
+    mark('crop_pad_begin');
+    const t1 = Date.now();
     const croppedBuffer = await cropPadToExactAR(rawBuffer, { targetW, targetH });
+    const cropPadMs = Date.now() - t1;
+    mark('crop_pad_complete', { duration_ms: cropPadMs, size_bytes: croppedBuffer.length });
 
     // Generate thumbnail
+    mark('thumbnail_begin');
+    const t2 = Date.now();
     const thumbnailBuffer = await makeThumbnail(croppedBuffer, 512);
+    const thumbnailMs = Date.now() - t2;
+    mark('thumbnail_complete', { duration_ms: thumbnailMs, size_bytes: thumbnailBuffer.length });
 
     // Upload to storage with signed URLs (private bucket)
     const finalFilename = `final_${job.id}_${Date.now()}.jpg`;
     const thumbFilename = `thumb_${job.id}_${Date.now()}.jpg`;
 
-    const finalUpload = await uploadToStorage(croppedBuffer, finalFilename, {
-      lifecycle: 'final',
-      jobId: job.id,
-      contentType: 'image/jpeg'
-    });
-
-    const thumbUpload = await uploadToStorage(thumbnailBuffer, thumbFilename, {
-      lifecycle: 'final',
-      jobId: job.id,
-      contentType: 'image/jpeg'
+    // Parallel uploads for speed
+    mark('upload_begin');
+    const t3 = Date.now();
+    const [finalUpload, thumbUpload] = await Promise.all([
+      uploadToStorage(croppedBuffer, finalFilename, {
+        lifecycle: 'final',
+        jobId: job.id,
+        contentType: 'image/jpeg'
+      }),
+      uploadToStorage(thumbnailBuffer, thumbFilename, {
+        lifecycle: 'final',
+        jobId: job.id,
+        contentType: 'image/jpeg'
+      })
+    ]);
+    const uploadMs = Date.now() - t3;
+    mark('upload_complete', {
+      duration_ms: uploadMs,
+      final_url: finalUpload.publicUrl,
+      thumb_url: thumbUpload.publicUrl
     });
 
     const processingDuration = Date.now() - startTime;
     const totalDuration = Date.now() - new Date(job.started_at).getTime();
+    const webhookLatency = webhookReceivedMark.ms - new Date(job.started_at).getTime();
 
-    // Log concise completion line
+    // Calculate step durations for logging
+    const stepDurations = {
+      download: downloadMs,
+      crop_pad: cropPadMs,
+      thumbnail: thumbnailMs,
+      upload: uploadMs,
+      webhook_latency: webhookLatency
+    };
+
+    // Log detailed timeline
     console.log(
       `[INSP] job=${job.id} status=completed ` +
+      `webhook_latency=${webhookLatency}ms ` +
+      `download=${downloadMs}ms crop_pad=${cropPadMs}ms ` +
+      `thumbnail=${thumbnailMs}ms upload=${uploadMs}ms ` +
       `processing=${processingDuration}ms total=${totalDuration}ms ` +
       `final_url=${finalUpload.publicUrl}`
     );
 
-    // Update job to completed
+    // Update job to completed with full timeline
+    mark('db_update_begin');
     await supabase
       .from('studio_jobs')
       .update({
@@ -281,24 +331,32 @@ async function handleSimpleSuccess(supabase, job, output) {
           ...job.metadata,
           processing_duration: processingDuration,
           total_duration: totalDuration,
+          webhook_latency: webhookLatency,
+          step_durations: stepDurations,
+          timeline: timeline,
           final_path: finalUpload.path,
           thumbnail_path: thumbUpload.path
         }
       })
       .eq('id', job.id);
+    mark('db_update_complete');
+
+    console.log(`[SIMPLE] Timeline for job ${job.id}:`, JSON.stringify(timeline, null, 2));
 
     return { statusCode: 200, body: 'Simple mode completed' };
 
   } catch (error) {
     console.error(`[SIMPLE] Processing failed for job ${job.id}:`, error);
+    mark('error', { message: error.message, stack: error.stack });
 
-    // Mark job as failed
+    // Mark job as failed with timeline
     await supabase
       .from('studio_jobs')
       .update({
         status: 'failed',
         error: `Processing failed: ${error.message}`,
-        completed_at: new Date().toISOString()
+        completed_at: new Date().toISOString(),
+        metadata: { ...job.metadata, timeline }
       })
       .eq('id', job.id);
 
