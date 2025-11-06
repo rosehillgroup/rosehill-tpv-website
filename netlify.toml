@@ -9,12 +9,13 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-  included_files = ["motifs/**/*.svg", "netlify/functions/studio/**"]
+  included_files = ["motifs/**/*.svg"]
 
 [functions.esbuild]
   target = "node18"
   platform = "node"
   format = "esm"  # Required for ESM module bundling
+  bundle = true    # Force bundling of all imports
   # Bundle everything - let esbuild handle native modules automatically
 
 [[edge_functions]]
