@@ -19,15 +19,18 @@ exports.handler = async (event, context) => {
     const supabase = getSupabaseServiceClient();
 
     // Create job in studio_jobs table
+    const surfaceData = surface || { width_m: 10, height_m: 10 };
+
     const { data: job, error: insertError } = await supabase
       .from('studio_jobs')
       .insert({
         status: 'pending',
         prompt: prompt.trim(),
         style: style || 'playful_flat',
+        surface: surfaceData, // Required NOT NULL column
         metadata: {
           mode: 'simple',
-          surface: surface || { width_m: 10, height_m: 10 },
+          surface: surfaceData,
           created_at: new Date().toISOString()
         }
       })
