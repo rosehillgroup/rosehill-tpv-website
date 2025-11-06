@@ -11,7 +11,10 @@
   node_bundler = "esbuild"
   included_files = ["motifs/**/*.svg"]
 
-# esbuild will auto-detect ESM from package.json "type": "module"
+[functions.esbuild]
+  format = "esm"
+  target = "node18"
+  platform = "node"
 
 [[edge_functions]]
   path = "/*"
