@@ -12,7 +12,7 @@
   included_files = ["motifs/**/*.svg"]
 
 [functions.esbuild]
-  format = "cjs"
+  format = "esm"
 
 [[edge_functions]]
   path = "/*"
