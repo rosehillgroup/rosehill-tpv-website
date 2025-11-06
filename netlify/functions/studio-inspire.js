@@ -165,8 +165,10 @@ export async function handler(event, context) {
     const enhancedPrompt = buildPalettePrompt(prompt, targetPalette, style);
 
     // Step 2: Generate concepts using FLUX.1 [pro]
-    const aspectRatio = `${Math.round(surface.width_m)}:${Math.round(surface.height_m)}`;
-    console.log('[INSPIRE] Aspect ratio:', aspectRatio);
+    // TPV surfaces are typically square, use 1:1 aspect ratio
+    const aspectRatio = '1:1';
+    console.log('[INSPIRE] Surface dimensions:', `${surface.width_m}m x ${surface.height_m}m`);
+    console.log('[INSPIRE] Using aspect ratio:', aspectRatio);
 
     const rawConcepts = await generateConcepts(enhancedPrompt, {
       count,
