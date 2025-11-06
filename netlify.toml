@@ -9,7 +9,7 @@
   directory = "netlify/functions"
   external_node_modules = ["jose", "@sanity/client", "@supabase/supabase-js", "replicate", "sharp", "potrace", "color-diff"]
   node_bundler = "esbuild"
-  included_files = ["motifs/**/*.svg", "studio/**"]
+  included_files = ["motifs/**/*.svg", "netlify/functions/studio/**"]
 
 [functions.esbuild]
   format = "cjs"
