@@ -189,19 +189,15 @@ export async function generateConceptsSDXL(prompt, options = {}) {
     height = 1024,
     paletteSwatchUrl = null,
     style = 'professional',
-    guidance = 5.5,
-    steps = 28,
+    guidance = 7.5,
+    steps = 25,
     ipAdapterScale = 0.9
   } = options;
 
   const preset = STYLE_PRESETS[style] || STYLE_PRESETS.professional;
 
-  console.log(`[REPLICATE] Generating ${count} concepts with SDXL + IP-Adapter`);
+  console.log(`[REPLICATE] Generating ${count} concepts with SDXL (Stability AI)`);
   console.log(`[REPLICATE] Size: ${width}×${height}, Steps: ${steps}, Guidance: ${guidance}`);
-  console.log(`[REPLICATE] IP-Adapter scale: ${ipAdapterScale}`);
-  if (paletteSwatchUrl) {
-    console.log(`[REPLICATE] Palette swatch: ${paletteSwatchUrl}`);
-  }
 
   const startTime = Date.now();
   const concepts = [];
@@ -212,25 +208,22 @@ export async function generateConceptsSDXL(prompt, options = {}) {
       console.log(`[REPLICATE] Generating concept ${i + 1}/${count}...`);
 
       const seed = Math.floor(Math.random() * 1000000);
-      const input = {
-        prompt: prompt,
-        negative_prompt: preset.negative,
-        width: width,
-        height: height,
-        num_inference_steps: steps,
-        guidance_scale: guidance,
-        seed: seed
-      };
 
-      // Add IP-Adapter image if palette swatch provided
-      if (paletteSwatchUrl) {
-        input.ip_adapter_image = paletteSwatchUrl;
-        input.ip_adapter_scale = ipAdapterScale;
-      }
-
+      // Use official Stability AI SDXL model
       const output = await replicate.run(
-        "chigozienri/ip_adapter-sdxl",
-        { input }
+        "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
+        {
+          input: {
+            prompt: prompt,
+            negative_prompt: preset.negative,
+            width: width,
+            height: height,
+            num_inference_steps: steps,
+            guidance_scale: guidance,
+            seed: seed,
+            scheduler: "K_EULER"
+          }
+        }
       );
 
       // SDXL returns URL or array
