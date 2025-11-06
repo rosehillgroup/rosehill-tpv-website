@@ -8,18 +8,14 @@
 # Functions configuration - ESM bundling with esbuild
 [functions]
   directory = "netlify/functions"
-  external_node_modules = ["sharp", "potrace"]  # Only native binary modules
   node_bundler = "esbuild"
   included_files = ["motifs/**/*.svg", "netlify/functions/studio/**"]
-
-# Force studio functions to bundle @supabase/supabase-js and other ESM deps
-[functions."studio-*"]
-  external_node_modules = ["sharp", "potrace"]  # Don't externalize supabase
 
 [functions.esbuild]
   target = "node18"
   platform = "node"
   format = "esm"  # Required for ESM module bundling
+  # Bundle everything - let esbuild handle native modules automatically
 
 [[edge_functions]]
   path = "/*"
