@@ -80,12 +80,12 @@ const DEFAULT_RULES = {
  */
 exports.handler = async function(event, context) {
   // Dynamic import of ESM utilities
-  const { downloadImage } = await import('./studio/_utils/replicate.js');
-  const { posterizeImage } = await import('./studio/_utils/color-quantize.js');
-  const { vectorizeImage, estimateQuality } = await import('./studio/_utils/vectorize.js');
-  const { autoRepair, generateRepairReport } = await import('./studio/_utils/auto-repair.js');
-  const { calculateBOM, calculateInstallerScore, checkRegionConstraints } = await import('./studio/_utils/constraints.js');
-  const { exportSVG, exportPNG, generateAllExports, uploadToStorage } = await import('./studio/_utils/exports.js');
+  const { downloadImage } = await import('./studio/_utils/replicate.mjs');
+  const { posterizeImage } = await import('./studio/_utils/color-quantize.mjs');
+  const { vectorizeImage, estimateQuality } = await import('./studio/_utils/vectorize.mjs');
+  const { autoRepair, generateRepairReport } = await import('./studio/_utils/auto-repair.mjs');
+  const { calculateBOM, calculateInstallerScore, checkRegionConstraints } = await import('./studio/_utils/constraints.mjs');
+  const { exportSVG, exportPNG, generateAllExports, uploadToStorage } = await import('./studio/_utils/exports.mjs');
   // Only accept POST
   if (event.httpMethod !== 'POST') {
     return {

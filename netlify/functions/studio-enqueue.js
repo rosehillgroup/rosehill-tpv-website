@@ -6,8 +6,8 @@ const SDXL_VERSION = '39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c55
 
 exports.handler = async(event, context) => {
   // Dynamic import of ESM utilities
-  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.js');
-  const { generateAndUploadStencil, buildReplicateInput } = await import('./studio/_utils/preprocessing.js');
+  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.mjs');
+  const { generateAndUploadStencil, buildReplicateInput } = await import('./studio/_utils/preprocessing.mjs');
 
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };

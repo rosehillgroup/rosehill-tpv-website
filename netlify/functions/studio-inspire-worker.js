@@ -285,13 +285,13 @@ async function processJob(job, imports) {
  */
 exports.handler = async function(event, context) {
   // Dynamic import of ESM utilities
-  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.js');
-  const { buildPalettePrompt, generateConceptsSDXL, downloadImage, estimateCostSDXL } = await import('./studio/_utils/replicate.js');
-  const { clampToTPVPalette, autoRankConcepts } = await import('./studio/_utils/postprocess.js');
-  const { selectModelAspect } = await import('./studio/_utils/aspect-resolver.js');
-  const { createPaletteSwatch } = await import('./studio/_utils/palette-swatch.js');
-  const { uploadToStorage } = await import('./studio/_utils/exports.js');
-  const { generateFlatStencil, renderStencilToSVG, rasterizeStencilToPNG } = await import('./studio/_utils/stencil-generator.js');
+  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.mjs');
+  const { buildPalettePrompt, generateConceptsSDXL, downloadImage, estimateCostSDXL } = await import('./studio/_utils/replicate.mjs');
+  const { clampToTPVPalette, autoRankConcepts } = await import('./studio/_utils/postprocess.mjs');
+  const { selectModelAspect } = await import('./studio/_utils/aspect-resolver.mjs');
+  const { createPaletteSwatch } = await import('./studio/_utils/palette-swatch.mjs');
+  const { uploadToStorage } = await import('./studio/_utils/exports.mjs');
+  const { generateFlatStencil, renderStencilToSVG, rasterizeStencilToPNG } = await import('./studio/_utils/stencil-generator.mjs');
 
   const imports = {
     getSupabaseServiceClient,

@@ -7,10 +7,10 @@ const STUCK_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
 exports.handler = async(event, context) => {
   // Dynamic import of ESM utilities
-  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.js');
-  const { downloadImage } = await import('./studio/_utils/replicate.js');
-  const { clampToTPVPalette, autoRankConcepts } = await import('./studio/_utils/postprocess.js');
-  const { uploadToStorage } = await import('./studio/_utils/exports.js');
+  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.mjs');
+  const { downloadImage } = await import('./studio/_utils/replicate.mjs');
+  const { clampToTPVPalette, autoRankConcepts } = await import('./studio/_utils/postprocess.mjs');
+  const { uploadToStorage } = await import('./studio/_utils/exports.mjs');
 
   try {
     console.log('[RECONCILER] Starting reconciliation check...');

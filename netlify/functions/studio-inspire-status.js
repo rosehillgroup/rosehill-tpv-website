@@ -21,7 +21,7 @@
  */
 exports.handler = async(event, context) => {
   // Dynamic import of ESM utilities
-  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.js');
+  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.mjs');
 
   // Only accept GET
   if (event.httpMethod !== 'GET') {
