@@ -99,6 +99,14 @@ export async function handler(event, context) {
 
     console.log('[INSPIRE-CREATE] Job created:', job.id);
 
+    // Fire-and-forget: Trigger enqueue function in background
+    const enqueueUrl = `${process.env.PUBLIC_BASE_URL || 'https://tpv.rosehill.group'}/.netlify/functions/studio-enqueue`;
+    fetch(enqueueUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ job_id: job.id })
+    }).catch(err => console.error('[INSPIRE-CREATE] Enqueue trigger failed:', err.message));
+
     // Build status URL
     const statusUrl = `/.netlify/functions/studio-inspire-status?jobId=${job.id}`;
 

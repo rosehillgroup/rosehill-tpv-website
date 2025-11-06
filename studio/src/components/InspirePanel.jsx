@@ -69,9 +69,12 @@ function InspirePanel({ onConceptsGenerated }) {
 
         switch (status.status) {
           case 'pending':
-            setProgress('Job queued. Waiting for background worker...');
+            setProgress('Job created. Preparing stencil and starting prediction...');
             break;
-          case 'processing':
+          case 'queued':
+            setProgress('Stencil generated. Waiting for GPU allocation...');
+            break;
+          case 'running':
             setProgress('Generating concepts with SDXL img2img pipeline...');
             break;
           default:
