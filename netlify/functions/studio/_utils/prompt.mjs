@@ -20,8 +20,8 @@ const NEGATIVE_PROMPTS = 'photographic texture, busy detail, thin lines, stippli
 export const STYLE_PRESETS = {
   playful_flat: {
     name: 'Playful Flat Design',
-    description: 'Bold shapes, vibrant colors, fun themes for play areas',
-    prefix: 'Bold flat shapes, vibrant playground design, playful motifs,',
+    description: 'Bold shapes, vibrant colors, fun themes',
+    prefix: 'Bold flat shapes, vibrant colors, simple geometric forms,',
     guidance: 3.5, // FLUX.1-schnell works best with 2-4 guidance
     steps: 4 // FLUX.1-schnell maximum (ultra-fast model)
   },
@@ -34,8 +34,8 @@ export const STYLE_PRESETS = {
   },
   sport_court: {
     name: 'Sport Court Graphics',
-    description: 'Athletic field markings, court layouts, sport-specific designs',
-    prefix: 'Sport court graphics, athletic field design, clean court markings, professional sports surface,',
+    description: 'Court line markings, field layouts, sport-specific graphics',
+    prefix: 'Court line markings, field graphics, clean geometric boundaries,',
     guidance: 3.5,
     steps: 4
   }
