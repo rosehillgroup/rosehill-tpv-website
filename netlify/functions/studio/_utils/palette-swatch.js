@@ -1,14 +1,13 @@
 // Palette swatch generation for IP-Adapter conditioning
-// Creates PNG swatches from TPV color hex codes
+// Creates SVG swatches from TPV color hex codes (serverless-friendly)
 
-import { createCanvas } from 'canvas';
 import { uploadToStorage } from './exports.js';
 
 /**
- * Generate a palette swatch PNG from color hex codes
+ * Generate a palette swatch as SVG buffer from color hex codes
  * Creates a grid of equal-sized color blocks
  * @param {Array} colors - Array of {code, hex, name}
- * @returns {Promise<Buffer>} PNG buffer
+ * @returns {Promise<Buffer>} SVG buffer (can be saved as PNG)
  */
 export async function buildPaletteSwatch(colors) {
   if (!colors || colors.length === 0) {
@@ -25,10 +24,10 @@ export async function buildPaletteSwatch(colors) {
   const width = cols * blockSize;
   const height = rows * blockSize;
 
-  console.log(`[SWATCH] Creating ${width}×${height} swatch for ${colorCount} colors`);
+  console.log(`[SWATCH] Creating ${width}×${height} SVG swatch for ${colorCount} colors`);
 
-  const canvas = createCanvas(width, height);
-  const ctx = canvas.getContext('2d');
+  // Build SVG string
+  let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`;
 
   // Draw color blocks
   colors.forEach((color, i) => {
@@ -37,13 +36,14 @@ export async function buildPaletteSwatch(colors) {
     const x = col * blockSize;
     const y = row * blockSize;
 
-    ctx.fillStyle = color.hex;
-    ctx.fillRect(x, y, blockSize, blockSize);
+    svg += `<rect x="${x}" y="${y}" width="${blockSize}" height="${blockSize}" fill="${color.hex}"/>`;
 
     console.log(`[SWATCH] Block ${i}: ${color.code} (${color.hex}) at (${x}, ${y})`);
   });
 
-  return canvas.toBuffer('image/png');
+  svg += '</svg>';
+
+  return Buffer.from(svg, 'utf8');
 }
 
 /**
@@ -51,14 +51,14 @@ export async function buildPaletteSwatch(colors) {
  * Returns a signed URL for use in IP-Adapter
  * @param {Array} colors - Array of {code, hex, name}
  * @param {string} bucket - Supabase bucket name (default: 'tpv-studio')
- * @returns {Promise<string>} Public URL to swatch PNG
+ * @returns {Promise<string>} Public URL to swatch SVG
  */
 export async function createPaletteSwatch(colors, bucket = 'tpv-studio') {
   const swatchBuffer = await buildPaletteSwatch(colors);
 
   // Create unique filename from color codes
   const colorCodes = colors.map(c => c.code).join('-');
-  const filename = `palette_swatch_${colorCodes}_${Date.now()}.png`;
+  const filename = `palette_swatch_${colorCodes}_${Date.now()}.svg`;
 
   console.log(`[SWATCH] Uploading to ${bucket}/${filename}`);
 
