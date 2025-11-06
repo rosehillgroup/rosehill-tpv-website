@@ -51,10 +51,10 @@ function InspirePanel({ onConceptsGenerated }) {
           ? selectedColors.map(c => ({ code: c.code, hex: c.hex, name: c.name }))
           : null,
         style,
-        count: 6
+        count: 2
       };
 
-      setProgress('Generating 6 concepts with FLUX.1 [pro]...');
+      setProgress('Generating 2 concepts with FLUX.1 [pro]...');
       console.log('[InspirePanel] Calling inspire API:', request);
 
       const response = await apiClient.inspire(request);
@@ -211,7 +211,7 @@ function InspirePanel({ onConceptsGenerated }) {
         style={{ width: '100%' }}
       >
         {loading && <span className="tpv-studio__spinner" />}
-        {loading ? 'Generating Concepts...' : 'Generate 6 Concepts ($0.33)'}
+        {loading ? 'Generating Concepts...' : 'Generate 2 Concepts ($0.11)'}
       </button>
 
       {!loading && (
@@ -221,7 +221,7 @@ function InspirePanel({ onConceptsGenerated }) {
           color: '#a0aec0',
           textAlign: 'center'
         }}>
-          ~60 seconds using FLUX.1 [pro] | Generates 6 concepts | Auto-quantized to TPV palette
+          ~20 seconds using FLUX.1 [pro] | Generates 2 concepts | Auto-quantized to TPV palette
         </p>
       )}
     </div>
