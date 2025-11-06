@@ -25,11 +25,9 @@ exports.handler = async (event, context) => {
         status: 'pending',
         prompt: prompt.trim(),
         style: style || 'playful_flat',
-        spec: {
-          surface: surface || { width_m: 10, height_m: 10 }
-        },
         metadata: {
           mode: 'simple',
+          surface: surface || { width_m: 10, height_m: 10 },
           created_at: new Date().toISOString()
         }
       })

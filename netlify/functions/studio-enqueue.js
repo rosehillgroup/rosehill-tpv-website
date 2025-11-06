@@ -46,9 +46,9 @@ exports.handler = async(event, context) => {
       const startTime = Date.now();
 
       // Extract job parameters
-      const userPrompt = job.prompt || job.spec?.prompt || 'abstract playground design';
+      const userPrompt = job.prompt || 'abstract playground design';
       const style = job.style || process.env.INSPIRE_MODEL_STYLE_DEFAULT || 'playful_flat';
-      const surface = job.spec?.surface || { width_m: 10, height_m: 10 };
+      const surface = job.metadata?.surface || { width_m: 10, height_m: 10 };
 
       // Build material-anchored prompt
       const { prompt, negative, guidance, steps } = buildStylePrompt({
