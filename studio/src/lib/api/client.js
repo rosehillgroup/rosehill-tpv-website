@@ -37,8 +37,66 @@ class APIClient {
     return response.json();
   }
 
-  // TPV Studio 2.0 - Inspire Stage
-  // Generate AI concept images using FLUX.1 [pro]
+  // TPV Studio 2.0 - Inspire Stage (Async Job Pattern)
+  // Create job and return jobId immediately (no timeout)
+  async inspireCreateJob(request) {
+    const response = await fetch('/.netlify/functions/studio-inspire-create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Job creation failed');
+    }
+
+    return response.json();
+  }
+
+  // Poll job status until completed or failed
+  async inspireGetStatus(jobId) {
+    const response = await fetch(`/.netlify/functions/studio-inspire-status?jobId=${jobId}`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Status fetch failed');
+    }
+
+    return response.json();
+  }
+
+  // Helper: Poll job until completion
+  async inspireWaitForCompletion(jobId, onProgress = null, pollInterval = 2000) {
+    return new Promise((resolve, reject) => {
+      const poll = async () => {
+        try {
+          const status = await this.inspireGetStatus(jobId);
+
+          if (onProgress) {
+            onProgress(status);
+          }
+
+          if (status.status === 'completed') {
+            resolve(status);
+          } else if (status.status === 'failed') {
+            reject(new Error(status.error || 'Job failed'));
+          } else {
+            // Still pending or processing, continue polling
+            setTimeout(poll, pollInterval);
+          }
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      poll();
+    });
+  }
+
+  // Legacy synchronous method (deprecated, kept for backward compatibility)
   async inspire(request) {
     const response = await fetch(API_ENDPOINTS.INSPIRE, {
       method: 'POST',

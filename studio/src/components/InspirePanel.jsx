@@ -38,7 +38,7 @@ function InspirePanel({ onConceptsGenerated }) {
   const handleGenerate = async () => {
     setLoading(true);
     setError(null);
-    setProgress('Building enhanced prompt with color guidance...');
+    setProgress('Creating job...');
 
     try {
       const request = {
@@ -54,16 +54,36 @@ function InspirePanel({ onConceptsGenerated }) {
         count: 6
       };
 
-      setProgress('Generating 6 concepts with SDXL + IP-Adapter...');
-      console.log('[InspirePanel] Calling inspire API:', request);
+      console.log('[InspirePanel] Creating async job:', request);
 
-      const response = await apiClient.inspire(request);
+      // Step 1: Create job (returns immediately, no timeout)
+      const jobResponse = await apiClient.inspireCreateJob(request);
+      const { jobId, estimatedDuration } = jobResponse;
 
-      console.log('[InspirePanel] Received concepts:', response);
+      console.log('[InspirePanel] Job created:', jobId);
+      setProgress(`Job created! Estimated time: ~${estimatedDuration}s. Waiting for worker...`);
+
+      // Step 2: Poll for completion with progress updates
+      const result = await apiClient.inspireWaitForCompletion(jobId, (status) => {
+        console.log('[InspirePanel] Status update:', status.status);
+
+        switch (status.status) {
+          case 'pending':
+            setProgress('Job queued. Waiting for background worker...');
+            break;
+          case 'processing':
+            setProgress('Generating concepts with SDXL img2img pipeline...');
+            break;
+          default:
+            setProgress(`Status: ${status.status}`);
+        }
+      }, 2000); // Poll every 2 seconds
+
+      console.log('[InspirePanel] Job completed:', result);
       setProgress('Concepts generated successfully!');
 
       // Pass concepts to parent
-      onConceptsGenerated(response.concepts, response.metadata);
+      onConceptsGenerated(result.concepts, result.metadata);
 
     } catch (err) {
       console.error('[InspirePanel] Error:', err);
@@ -78,7 +98,7 @@ function InspirePanel({ onConceptsGenerated }) {
     <div className="tpv-studio__card">
       <h2>Step 1: Inspire</h2>
       <p style={{ color: '#718096', marginBottom: '1.5rem' }}>
-        Generate AI concept images using SDXL + IP-Adapter (Economy)
+        Generate AI concept images using SDXL img2img with flat stencils
       </p>
 
       <div className="tpv-studio__form-group">
