@@ -272,7 +272,7 @@ export async function generateConceptsSDXL(prompt, options = {}) {
  * @param {number} count - Number of concepts
  * @returns {Object} Cost estimate
  */
-export export function estimateCostSDXL(count) {
+export function estimateCostSDXL(count) {
   const costPerImage = 0.03;
   const totalCost = count * costPerImage;
 

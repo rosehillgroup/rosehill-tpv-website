@@ -5,7 +5,7 @@
 import { poissonDisc } from './composition.mjs';
 import { polygonCentroid, expandPolygon } from './geometry.mjs';
 import { SeededRandom } from './random.mjs';
-import Delaunay from 'd3-delaunay';
+import { Delaunay } from 'd3-delaunay';
 /**
  * Generate flat composition stencil
  * Creates geometric regions with assigned TPV colors
