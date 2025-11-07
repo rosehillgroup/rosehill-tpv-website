@@ -1,7 +1,7 @@
 // Auto-Repair Utilities for TPV Studio
 // Automatically fixes constraint violations in vectorized designs
 
-import { checkRegionConstraints } from './constraints.mjs';
+import { checkRegionConstraints } from './constraints.js';
 /**
  * Default TPV installation rules
  */

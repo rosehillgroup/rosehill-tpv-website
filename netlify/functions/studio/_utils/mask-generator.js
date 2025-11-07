@@ -1,7 +1,7 @@
 // Mask Generator for TPV Studio Multi-Pass Pipeline
 // Generates binary masks with interior feathering for seamless compositing
 
-import { pointsToSVGPath } from './stencil-generator.mjs';
+import { pointsToSVGPath } from './stencil-generator.js';
 
 /**
  * Generate a binary mask for a single region with interior feathering

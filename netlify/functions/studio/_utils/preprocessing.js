@@ -1,9 +1,9 @@
 // TPV Studio - Preprocessing Utilities
 // Handles stencil generation and upload for SDXL img2img
 
-import { generateFlatStencil, renderStencilToSVG, rasterizeStencilToPNG } from './stencil-generator.mjs';
-import { selectModelAspect } from './aspect-resolver.mjs';
-import { uploadToStorage } from './exports.mjs';
+import { generateFlatStencil, renderStencilToSVG, rasterizeStencilToPNG } from './stencil-generator.js';
+import { selectModelAspect } from './aspect-resolver.js';
+import { uploadToStorage } from './exports.js';
 export const TPV_PALETTE = [
   { code: "RH30", name: "Beige", hex: "#E4C4AA" },
   { code: "RH31", name: "Cream", hex: "#E8E3D8" },

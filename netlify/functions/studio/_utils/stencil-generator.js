@@ -2,9 +2,9 @@
 // Creates flat geometric compositions for img2img initialization
 // Generates installer-friendly structure: large shapes, flat colors, clean edges
 
-import { poissonDisc } from './composition.mjs';
-import { polygonCentroid, expandPolygon } from './geometry.mjs';
-import { SeededRandom } from './random.mjs';
+import { poissonDisc } from './composition.js';
+import { polygonCentroid, expandPolygon } from './geometry.js';
+import { SeededRandom } from './random.js';
 import { Delaunay } from 'd3-delaunay';
 /**
  * Generate flat composition stencil

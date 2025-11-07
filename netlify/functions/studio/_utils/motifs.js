@@ -1,10 +1,10 @@
 // Motif utilities for TPV Studio
 // Handles SVG icon loading, intelligent placement, and thematic elements
 
-import { SeededRandom } from './random.mjs';
-import { pointInPolygon, polygonCentroid, expandPolygon } from './geometry.mjs';
-import { getCompositionZones } from './composition.mjs';
-import { loadMotifFromFile, listMotifsInTheme, getRandomMotifFromTheme } from './svg-loader.mjs';
+import { SeededRandom } from './random.js';
+import { pointInPolygon, polygonCentroid, expandPolygon } from './geometry.js';
+import { getCompositionZones } from './composition.js';
+import { loadMotifFromFile, listMotifsInTheme, getRandomMotifFromTheme } from './svg-loader.js';
 /**
  * SVG motif cache (now managed by svg-loader.js)
  */

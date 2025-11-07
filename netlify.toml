@@ -3,7 +3,7 @@
   command = "node build-installations.cjs && cd studio && npm install && npm run build && cp -r dist/* ."
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "20"
 
 # Functions configuration - bundle everything with esbuild
 [functions]
@@ -13,7 +13,7 @@
   included_files = ["motifs/**/*.svg"]
 
 [functions.esbuild]
-  target = "node18"
+  target = "node20"
   platform = "node"
   format = "esm"
   bundle = true

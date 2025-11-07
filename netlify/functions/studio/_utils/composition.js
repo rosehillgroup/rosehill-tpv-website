@@ -1,7 +1,7 @@
 // Composition utilities for TPV Studio
 // Provides intelligent placement and spatial distribution
 
-import { SeededRandom } from './random.mjs';
+import { SeededRandom } from './random.js';
 /**
  * Poisson-disc sampling for evenly-spaced point distribution
  * @param {number} width - Surface width

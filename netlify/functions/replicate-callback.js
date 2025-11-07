@@ -4,30 +4,11 @@
 
 import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
 import { downloadImage, generateDraftSDXL, refineRegionSDXL } from './studio/_utils/replicate.js';
-import { uploadByStage } from './studio/_utils/exports.js';
+import { uploadByStage, uploadToStorage } from './studio/_utils/exports.js';
 import { generateRoleMasks, generateMotifMasks } from './studio/_utils/mask-generator.js';
 import { quantizeWithDithering } from './studio/_utils/oklch-quantize.js';
 import { assessConceptQuality } from './studio/_utils/quality-gate.js';
-import { generateDraftSDXL, refineRegionSDXL } from './studio/_utils/replicate.js';
-import { uploadByStage } from './studio/_utils/exports.js';
-import { generateRoleMasks } from './studio/_utils/mask-generator.js';
-import { quantizeWithDithering } from './studio/_utils/oklch-quantize.js';
-import { assessConceptQuality } from './studio/_utils/quality-gate.js';
-import { downloadImage } from './studio/_utils/replicate.js';
-import { downloadImage } from './studio/_utils/replicate.js';
 import { cropPadToExactAR, makeThumbnail } from './studio/_utils/image.js';
-import { uploadToStorage } from './studio/_utils/exports.js';
-import { downloadImage } from './studio/_utils/replicate.js';
-import { uploadByStage } from './studio/_utils/exports.js';
-import { generateRoleMasks } from './studio/_utils/mask-generator.js';
-import { refineRegionSDXL } from './studio/_utils/replicate.js';
-import { downloadImage } from './studio/_utils/replicate.js';
-import { uploadByStage } from './studio/_utils/exports.js';
-import { downloadImage } from './studio/_utils/replicate.js';
-import { quantizeWithDithering } from './studio/_utils/oklch-quantize.js';
-import { assessConceptQuality } from './studio/_utils/quality-gate.js';
-import { uploadToStorage } from './studio/_utils/exports.js';
-import { refineRegionSDXL } from './studio/_utils/replicate.js';
 
 export const handler = async (event, context) => {
   // Dynamic import of ESM utilities
