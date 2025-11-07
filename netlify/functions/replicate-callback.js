@@ -65,16 +65,44 @@ function timingSafeEqHex(a, b) {
  * @returns {boolean} true if signature is valid
  */
 function verifyReplicateSignature(event, secret, maxSkewSeconds = 5 * 60) {
+  console.log('[WEBHOOK] Starting signature verification...');
+
   const header = getSignatureHeader(event.headers || {});
-  if (!header || !secret) return false;
+  console.log('[WEBHOOK] Signature header:', header ? 'present' : 'missing');
+
+  if (!header || !secret) {
+    console.error('[WEBHOOK] Missing header or secret', {
+      hasHeader: !!header,
+      hasSecret: !!secret
+    });
+    return false;
+  }
 
   const { t, v1 } = parseSigHeader(header);
-  if (!t || !v1) return false;
+  console.log('[WEBHOOK] Parsed signature parts:', {
+    hasTimestamp: !!t,
+    hasSignature: !!v1,
+    timestamp: t,
+    signatureLength: v1?.length
+  });
+
+  if (!t || !v1) {
+    console.error('[WEBHOOK] Missing timestamp or signature in header');
+    return false;
+  }
 
   // Replay protection
   const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - Number(t)) > maxSkewSeconds) {
-    console.error('[WEBHOOK] Signature timestamp outside allowed window', { t, now });
+  const skew = Math.abs(now - Number(t));
+  console.log('[WEBHOOK] Timestamp check:', {
+    now,
+    timestamp: t,
+    skew,
+    maxSkew: maxSkewSeconds
+  });
+
+  if (skew > maxSkewSeconds) {
+    console.error('[WEBHOOK] Signature timestamp outside allowed window', { t, now, skew });
     return false;
   }
 
@@ -82,14 +110,21 @@ function verifyReplicateSignature(event, secret, maxSkewSeconds = 5 * 60) {
   const signedPayload = `${t}.${raw.toString('utf8')}`;
   const expected = hmacHex(secret, signedPayload);
 
+  console.log('[WEBHOOK] HMAC comparison:', {
+    providedLength: v1.length,
+    expectedLength: expected.length,
+    providedPrefix: v1.substring(0, 8),
+    expectedPrefix: expected.substring(0, 8),
+    base64Encoded: !!event.isBase64Encoded,
+    bodyLength: raw.length
+  });
+
   if (!timingSafeEqHex(v1, expected)) {
-    console.error('[WEBHOOK] Invalid signature', {
-      base64: !!event.isBase64Encoded,
-      lenProvided: v1.length,
-      lenExpected: expected.length,
-    });
+    console.error('[WEBHOOK] HMAC mismatch');
     return false;
   }
+
+  console.log('[WEBHOOK] Signature verification SUCCESS');
   return true;
 }
 
