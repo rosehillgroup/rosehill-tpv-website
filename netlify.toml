@@ -9,7 +9,12 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
-  included_files = ["motifs/**/*.svg"]
+  included_files = [
+    "motifs/**/*.svg",
+    "netlify/functions/studio/**",
+    "node_modules/@supabase/**",
+    "node_modules/replicate/**"
+  ]
 
 [functions.esbuild]
   target = "node18"
