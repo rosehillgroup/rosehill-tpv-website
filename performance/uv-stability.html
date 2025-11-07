@@ -1389,7 +1389,7 @@
         async function fetchCitySuggestions(query) {
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased to 10s for cold starts
+                const timeoutId = setTimeout(() => controller.abort(), 15000); // Increased to 15s for cold starts
 
                 const res = await fetch(
                     `${SUPABASE_CONFIG.url}/functions/v1/city-search?q=${encodeURIComponent(query)}`,
@@ -1403,11 +1403,14 @@
                 );
                 clearTimeout(timeoutId);
 
-                if (!res.ok) throw new Error('Edge function failed');
+                if (!res.ok) {
+                    console.error(`Edge function error: ${res.status} ${res.statusText}`);
+                    throw new Error(`Edge function failed: ${res.status}`);
+                }
                 return await res.json();
 
             } catch (err) {
-                console.warn('City search API unavailable, using static fallback');
+                console.warn('City search API unavailable, using static fallback. Error:', err.message);
                 // Fallback to existing cities array (normalize to API format)
                 return cities.filter(c =>
                     c.city.toLowerCase().includes(query.toLowerCase()) ||
