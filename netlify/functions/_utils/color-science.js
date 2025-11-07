@@ -238,7 +238,7 @@ function rgbToHex(r, g, b) {
 // EXPORTS
 // ============================================================================
 
-module.exports = {
+export {
   PALETTE,
   rgbToOklab,
   oklabToRgb,

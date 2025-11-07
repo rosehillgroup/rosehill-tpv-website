@@ -1,7 +1,7 @@
 // Test file for color science functions
 // Run with: node test-color-science.js
 
-const {
+import {
   PALETTE,
   shareCodeToColors,
   hexToRgb,
@@ -10,7 +10,7 @@ const {
   decodeMix,
   rgbToOklab,
   deltaE
-} = require('./color-science.js');
+} from './color-science.js';
 
 console.log('=== TPV Color Science Tests ===\n');
 
