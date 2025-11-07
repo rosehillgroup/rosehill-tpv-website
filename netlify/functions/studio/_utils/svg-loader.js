@@ -3,16 +3,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
-// Handle both ESM and bundled environments
-let __dirname;
-try {
-  const __filename = fileURLToPath(import.meta.url);
-  __dirname = path.dirname(__filename);
-} catch (e) {
-  // Fallback for bundled/CommonJS environments (Netlify Functions)
-  __dirname = process.cwd();
-}
+// In bundled CJS environment, __dirname is automatically available
 
 // Theme name to folder mapping
 export const THEME_FOLDERS = {
