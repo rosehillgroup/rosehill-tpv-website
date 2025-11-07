@@ -119,19 +119,32 @@ AS $$
       similarity(c.name_ascii, query_text) AS sim_score
     FROM cities c
     WHERE similarity(c.name_ascii, query_text) > 0.3
+  ),
+  -- Deduplicate by (name, country, admin1) keeping the best match
+  -- Use ROW_NUMBER to pick the best tier + score + population for each unique city
+  deduped_cities AS (
+    SELECT
+      name, country, country_code, admin1, flag_emoji, lat, lon, population,
+      match_rank, sim_score,
+      ROW_NUMBER() OVER (
+        PARTITION BY name, country, admin1
+        ORDER BY
+          match_rank ASC,              -- Prefer earlier tier matches
+          sim_score DESC,               -- Higher similarity within same tier
+          population DESC NULLS LAST    -- Larger city as tiebreaker
+      ) AS rn
+    FROM ranked_cities
   )
-  -- Deduplicate by (name, country, admin1) and rank by:
-  --   1. Match tier (prefix > alternate > fuzzy)
-  --   2. Similarity score
-  --   3. Population (larger cities first)
-  SELECT DISTINCT ON (name, country, admin1)
+  -- Final results ordered by relevance (NOT alphabetically)
+  SELECT
     name, country, country_code, admin1, flag_emoji, lat, lon, population
-  FROM ranked_cities
+  FROM deduped_cities
+  WHERE rn = 1  -- Keep only the best match for each unique city
   ORDER BY
-    name, country, admin1,  -- GROUP BY keys for DISTINCT ON
-    match_rank ASC,         -- Tier 1 results first
-    sim_score DESC,         -- Higher similarity first
-    population DESC NULLS LAST  -- Larger cities first
+    match_rank ASC,              -- Tier 1 results first
+    sim_score DESC,              -- Higher similarity first
+    population DESC NULLS LAST,  -- Larger cities first within same tier+score
+    name ASC                     -- Alphabetical only as final tiebreaker
   LIMIT 12;
 $$;
 

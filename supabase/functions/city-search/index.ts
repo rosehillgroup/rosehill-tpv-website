@@ -1,18 +1,20 @@
 /**
- * City Search Edge Function
- * ==========================
- * Fast autocomplete API for global city search (150k+ cities).
- * Calls the city_autocomplete() Postgres function with fuzzy matching.
+ * Location Search Edge Function
+ * ==============================
+ * Fast autocomplete API for global location search (cities + countries).
+ * Calls the location_autocomplete() Postgres function with fuzzy matching.
  *
  * Deployment:
  *   supabase functions deploy city-search
  *
  * Usage:
  *   GET /functions/v1/city-search?q=paris
+ *   GET /functions/v1/city-search?q=germany
  *
  * Response:
  *   [
  *     {
+ *       "result_type": "city",
  *       "name": "Paris",
  *       "country": "France",
  *       "country_code": "FR",
@@ -21,6 +23,17 @@
  *       "lat": 48.8566,
  *       "lon": 2.3522,
  *       "population": 2138551
+ *     },
+ *     {
+ *       "result_type": "country",
+ *       "name": "France",
+ *       "country": "France",
+ *       "country_code": "FR",
+ *       "admin1": null,
+ *       "flag_emoji": "🇫🇷",
+ *       "lat": 46.2276,
+ *       "lon": 2.2137,
+ *       "population": 67390000
  *     }
  *   ]
  */
@@ -109,8 +122,8 @@ serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Call the city_autocomplete RPC function
-    const { data, error } = await supabase.rpc("city_autocomplete", {
+    // Call the location_autocomplete RPC function (searches cities + countries)
+    const { data, error } = await supabase.rpc("location_autocomplete", {
       query_text: query,
     });
 

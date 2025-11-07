@@ -319,6 +319,16 @@
             margin-top: 2px;
         }
 
+        /* Country Options - Special Styling */
+        .country-option {
+            background: linear-gradient(90deg, rgba(255, 107, 53, 0.05) 0%, transparent 100%);
+            border-left: 3px solid #ff6b35;
+        }
+
+        .country-option:hover {
+            background: linear-gradient(90deg, rgba(255, 107, 53, 0.1) 0%, #f8f9fa 100%);
+        }
+
         /* Location Info - Compact Layout */
         .location-info {
             background: #f8f9fa;
@@ -1400,6 +1410,7 @@
                     c.city.toLowerCase().includes(query.toLowerCase()) ||
                     c.country.toLowerCase().includes(query.toLowerCase())
                 ).slice(0, 12).map(c => ({
+                    result_type: 'city',  // Add result_type for consistency
                     name: c.city,
                     country: c.country,
                     lat: c.lat,
@@ -1433,17 +1444,30 @@
                         const results = await fetchCitySuggestions(query);
 
                         if (results && results.length > 0) {
-                            // Render with flag emoji and admin1 (state/province)
-                            dropdown.innerHTML = results.map(city => {
-                                const locationParts = [];
-                                if (city.admin1) locationParts.push(city.admin1);
-                                locationParts.push(city.country);
-                                const location = locationParts.join(', ');
+                            // Render with flag emoji, admin1, and country/city distinction
+                            dropdown.innerHTML = results.map(result => {
+                                const isCountry = result.result_type === 'country';
+
+                                let locationText = '';
+                                if (isCountry) {
+                                    // For countries, show continent or "Country"
+                                    locationText = result.continent || 'Country';
+                                } else {
+                                    // For cities, show state/province and country
+                                    const locationParts = [];
+                                    if (result.admin1) locationParts.push(result.admin1);
+                                    locationParts.push(result.country);
+                                    locationText = locationParts.join(', ');
+                                }
+
+                                // Add visual indicator for countries (globe icon)
+                                const typeIcon = isCountry ? '🌍 ' : '';
+                                const resultType = result.result_type || 'city';
 
                                 return `
-                                    <div class="city-option" onclick="selectCity(${city.lat}, ${city.lon}, '${city.name.replace(/'/g, "\\'")}', '${city.country.replace(/'/g, "\\'")}')">
-                                        <strong>${city.flag_emoji || ''} ${city.name}</strong>
-                                        <small>${location}</small>
+                                    <div class="city-option ${isCountry ? 'country-option' : ''}" onclick="selectLocation(${result.lat}, ${result.lon}, '${result.name.replace(/'/g, "\\'")}', '${result.country.replace(/'/g, "\\'")}', '${resultType}')">
+                                        <strong>${typeIcon}${result.flag_emoji || ''} ${result.name}</strong>
+                                        <small>${locationText}</small>
                                     </div>
                                 `;
                             }).join('');
@@ -1466,13 +1490,22 @@
             });
         }
 
-        // Select City from Search
-        function selectCity(lat, lon, city, country) {
+        // Select Location from Search (handles both cities and countries)
+        function selectLocation(lat, lon, name, country, resultType) {
             document.getElementById('cityDropdown').classList.remove('active');
-            document.getElementById('citySearch').value = `${city}, ${country}`;
-            map.flyTo({ center: [lon, lat], zoom: 5 });
-            handleLocationSelect(lat, lon, `${city}, ${country}`);
-            trackEvent('location_select', { city, country });
+            document.getElementById('citySearch').value = resultType === 'country' ? name : `${name}, ${country}`;
+
+            // Different zoom levels for cities vs countries
+            const zoom = resultType === 'country' ? 3.5 : 5;
+            map.flyTo({ center: [lon, lat], zoom: zoom });
+
+            handleLocationSelect(lat, lon, resultType === 'country' ? name : `${name}, ${country}`);
+            trackEvent('location_select', { name, country, type: resultType });
+        }
+
+        // Backward compatibility wrapper for old selectCity calls
+        function selectCity(lat, lon, city, country) {
+            selectLocation(lat, lon, city, country, 'city');
         }
 
         // Handle Map Click

@@ -2,6 +2,10 @@
 
 This guide walks you through deploying the upgraded city search system with 150,000+ cities.
 
+> **🔄 UPDATED:** The ranking algorithm was improved to fix alphabetical sorting issues. See `CITY_SEARCH_FIX.md` for details about the relevance ranking improvements.
+
+> **🌍 NEW:** Country search is now available! See `COUNTRY_SEARCH_DEPLOY.md` for instructions to add ~250 countries to the search, allowing users to search "Germany", "France", etc.
+
 ---
 
 ## Prerequisites
