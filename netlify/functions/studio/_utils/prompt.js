@@ -5,14 +5,14 @@
  * Material-first prompt anchoring - optimized for FLUX-dev
  * Describes TPV rubber granule properties before creative theme
  */
-const MATERIAL_PREFIX = 'Playground TPV rubber surfacing design';
-const MATERIAL_TAIL = 'flat vector look with large smooth shapes, installer-friendly geometry, no outlines, no text, no tiny elements, matte finish, soft ambient shadow only';
+const MATERIAL_PREFIX = 'Flat vector illustration of playground TPV rubber surfacing design, graphic design style, flat 2D, no photorealism';
+const MATERIAL_TAIL = 'bold flat vector aesthetic, large smooth geometric shapes, installer-friendly simple forms, clean matte finish, minimal soft shadows, no depth, no 3D, no texture, no outlines, no text, no tiny elements, pure flat design';
 
 /**
  * Unified negative prompts to avoid AI artifacts and unwanted outputs
  * Optimized for FLUX-dev to produce clean, installer-friendly results
  */
-const NEGATIVE_PROMPTS = 'busy pattern, fine texture, high-frequency detail, thin lines, hairline strokes, text, letters, numbers, bevel, emboss, metallic, glossy, photoreal, perspective props, stickers, clipart, grunge, graffiti, tiny symbols, noisy background, photographic texture, stippling, halftone, noodly details, micro-patterns';
+const NEGATIVE_PROMPTS = 'photorealistic, photo, photography, 3D render, 3D, depth, shadows, realistic lighting, perspective, busy pattern, fine texture, high-frequency detail, thin lines, hairline strokes, text, letters, numbers, bevel, emboss, metallic, glossy, shading, gradients, perspective props, stickers, clipart, grunge, graffiti, tiny symbols, noisy background, photographic texture, stippling, halftone, noodly details, micro-patterns, realistic, detailed texture';
 
 /**
  * Style presets for different design approaches
