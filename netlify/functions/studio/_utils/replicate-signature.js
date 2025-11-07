@@ -93,6 +93,12 @@ function verifyReplicateSignature(event, envVar = 'REPLICATE_WEBHOOK_SIGNING_SEC
 
   const raw = getRawBody(event);
 
+  console.log('[WEBHOOK] Body info:', {
+    isBase64Encoded: !!event.isBase64Encoded,
+    bodyLength: raw.length,
+    bodyPreview: raw.toString('utf8').substring(0, 100)
+  });
+
   let expectedB64;
   if (t) {
     // timestamped variant: HMAC(secret, `${t}.${rawBodyBytes}`)
@@ -103,7 +109,21 @@ function verifyReplicateSignature(event, envVar = 'REPLICATE_WEBHOOK_SIGNING_SEC
     expectedB64 = crypto.createHmac('sha256', secret).update(raw).digest('base64');
   }
 
-  return timingSafeEqualB64(receivedB64, expectedB64);
+  console.log('[WEBHOOK] HMAC comparison:', {
+    receivedPrefix: receivedB64.substring(0, 12),
+    expectedPrefix: expectedB64.substring(0, 12),
+    receivedLength: receivedB64.length,
+    expectedLength: expectedB64.length,
+    secretLength: secret.length
+  });
+
+  const ok = timingSafeEqualB64(receivedB64, expectedB64);
+  if (!ok) {
+    console.error('[WEBHOOK] HMAC verification failed');
+  } else {
+    console.log('[WEBHOOK] HMAC verification SUCCESS');
+  }
+  return ok;
 }
 
 module.exports = { verifyReplicateSignature };
