@@ -53,12 +53,12 @@ export function oklchToRGB(L, C, H) {
   // OKLCH to Oklab
   const hRad = H * Math.PI / 180;
   const a = C * Math.cos(hRad);
-  const b = C * Math.sin(hRad);
+  const bOklab = C * Math.sin(hRad);
 
   // Oklab to LMS
-  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
-  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
-  const s_ = L - 0.0894841775 * a - 1.2914855480 * b;
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * bOklab;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * bOklab;
+  const s_ = L - 0.0894841775 * a - 1.2914855480 * bOklab;
 
   const l = l_ * l_ * l_;
   const m = m_ * m_ * m_;
