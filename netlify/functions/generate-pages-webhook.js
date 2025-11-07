@@ -3,10 +3,8 @@ const { createClient } = require('@sanity/client');
 
 const fs = require('fs');
 const path = require('path');
-const { fileURLToPath } = require('url');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// __filename and __dirname are automatically available in CJS
 const rootDir = path.join(__dirname, '../../');
 
 function corsHeaders(origin) {
