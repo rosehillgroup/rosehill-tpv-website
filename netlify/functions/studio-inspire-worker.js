@@ -206,7 +206,7 @@ async function processJob(job, imports) {
         'tpv-studio'
       );
 
-      const sharp = (await import('sharp')).default;
+      const sharp = require('sharp');
       const thumbnailBuffer = await sharp(rankedConcept.buffer)
         .resize(400, null, { fit: 'contain' })
         .png()

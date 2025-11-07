@@ -1,6 +1,8 @@
-// CJS Canary - verifies CJS runtime loading works
 exports.handler = async () => ({
   statusCode: 200,
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ ok: true, runtime: 'cjs', ts: Date.now() }),
+  body: JSON.stringify({
+    mode: typeof __filename === 'string' ? 'CJS' : 'UNKNOWN',
+    node: process.version
+  })
 });

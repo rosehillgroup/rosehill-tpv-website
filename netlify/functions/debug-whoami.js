@@ -38,10 +38,10 @@ exports.handler = async function(event) {
       };
     }
     
-    // Step 3: Try importing jose
+    // Step 3: Try require jose
     let joseImport;
     try {
-      joseImport = await import('jose');
+      joseImport = require('jose');
     } catch (importError) {
       return {
         statusCode: 200,
