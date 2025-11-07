@@ -35,8 +35,8 @@ AS $$
     -- ========================================================================
     -- RANKING STRATEGY:
     -- Tier 1-2: Exact matches (country > city for exact matches)
-    -- Tier 3-4: Prefix matches (city > country for partial matches)
-    -- Tier 5-6: Alternate names and fuzzy matches
+    -- Tier 3: Prefix matches (BOTH cities and countries - population determines order)
+    -- Tier 4-5: Alternate names and fuzzy matches
     -- ========================================================================
 
     -- Tier 1: Exact country name match (HIGHEST PRIORITY)
@@ -78,7 +78,7 @@ AS $$
     UNION ALL
 
     -- Tier 3: City prefix match
-    -- e.g., "par" → Paris, "berl" → Berlin
+    -- e.g., "par" → Paris, "berl" → Berlin, "chin" → Chino (cities)
     SELECT
       'city' AS result_type,
       c.name,
@@ -97,8 +97,8 @@ AS $$
 
     UNION ALL
 
-    -- Tier 4: Country prefix match
-    -- e.g., "ger" → Germany
+    -- Tier 3: Country prefix match (SAME TIER as cities - population matters!)
+    -- e.g., "ger" → Germany, "chin" → China (country with 1.4B beats small cities)
     SELECT
       'country' AS result_type,
       co.name,
@@ -109,7 +109,7 @@ AS $$
       co.lat,
       co.lon,
       co.population,
-      4 AS match_rank,
+      3 AS match_rank,
       similarity(lower(co.name_ascii), lower(query_text)) AS sim_score
     FROM countries co
     WHERE co.name_ascii ILIKE query_text || '%'
@@ -117,7 +117,7 @@ AS $$
 
     UNION ALL
 
-    -- Tier 5: City alternate name prefix match
+    -- Tier 4: City alternate name prefix match
     -- e.g., "munich" → München
     SELECT
       'city' AS result_type,
@@ -129,14 +129,14 @@ AS $$
       c.lat,
       c.lon,
       c.population::BIGINT,
-      5 AS match_rank,
+      4 AS match_rank,
       similarity(lower(alt), lower(query_text)) AS sim_score
     FROM cities c, UNNEST(c.alt_names) AS alt
     WHERE alt ILIKE query_text || '%'
 
     UNION ALL
 
-    -- Tier 6: Fuzzy trigram match for cities (typos)
+    -- Tier 5: Fuzzy trigram match for cities (typos)
     -- e.g., "berln" → Berlin
     SELECT
       'city' AS result_type,
@@ -148,7 +148,7 @@ AS $$
       c.lat,
       c.lon,
       c.population::BIGINT,
-      6 AS match_rank,
+      5 AS match_rank,
       similarity(c.name_ascii, query_text) AS sim_score
     FROM cities c
     WHERE similarity(c.name_ascii, query_text) > 0.3
@@ -156,7 +156,7 @@ AS $$
 
     UNION ALL
 
-    -- Tier 7: Fuzzy match for countries (typos)
+    -- Tier 5: Fuzzy match for countries (typos)
     -- e.g., "germny" → Germany
     SELECT
       'country' AS result_type,
@@ -168,7 +168,7 @@ AS $$
       co.lat,
       co.lon,
       co.population,
-      7 AS match_rank,
+      5 AS match_rank,
       similarity(co.name_ascii, query_text) AS sim_score
     FROM countries co
     WHERE similarity(co.name_ascii, query_text) > 0.3

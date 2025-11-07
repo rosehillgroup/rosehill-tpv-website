@@ -1745,8 +1745,18 @@
                 lightBoost += 0.20;  // Additional 20% boost for very dark colors
             }
 
+            // Detect near-neutral colors (grays, black) and force them to true neutral
+            // Original colors with saturation < 5% should fade to pure gray, not tinted gray
+            const isNearNeutral = s < 5;
+
             // Apply fade: desaturate and lighten
-            const newS = Math.max(15, s * (1 - cfg.SAT_COEFF * lossFraction));  // Min 15% saturation
+            let newS;
+            if (isNearNeutral) {
+                // Force completely neutral (true gray) for near-neutral original colors
+                newS = 0;
+            } else {
+                newS = Math.max(15, s * (1 - cfg.SAT_COEFF * lossFraction));  // Min 15% saturation
+            }
             const newL = Math.min(96, l + (100 * lightBoost * lossFraction));  // Max 96% lightness
 
             // Convert back to hex
