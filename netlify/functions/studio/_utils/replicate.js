@@ -496,7 +496,9 @@ export async function createText2ImagePrediction(params) {
     scheduler = 'K_EULER',
     seed,
     num_outputs = 1,
-    webhook
+    webhook,
+    image = null,  // For img2img mode: URL or base64 data URI
+    denoise_strength = 0.6  // For img2img: 0-1, lower=closer to init image
   } = params;
 
   // Use FLUX.1-dev for high-quality, designer-friendly results
@@ -531,6 +533,13 @@ export async function createText2ImagePrediction(params) {
       // Add negative_prompt if model is flux-dev (not schnell)
       if (modelId.includes('flux-dev') && negative_prompt) {
         input.prompt = `${prompt} [negative: ${negative_prompt}]`;
+      }
+
+      // Add img2img parameters if image provided
+      if (image) {
+        input.image = image;
+        input.prompt_strength = denoise_strength; // FLUX uses prompt_strength (0-1)
+        console.log(`[REPLICATE] IMG2IMG mode: prompt_strength=${denoise_strength}`);
       }
     } else {
       // SDXL fallback (legacy)

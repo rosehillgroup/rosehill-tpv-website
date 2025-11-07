@@ -2,6 +2,7 @@
 // Handles stencil generation and upload for SDXL img2img
 
 import { generateFlatStencil, renderStencilToSVG, rasterizeStencilToPNG } from './stencil-generator.js';
+import { generateBriefStencil } from './brief-stencil.js';
 import { selectModelAspect } from './aspect-resolver.js';
 import { uploadToStorage } from './exports.js';
 export const TPV_PALETTE = [
@@ -100,6 +101,47 @@ export async function generateAndUploadStencil(inputs) {
       aspectInfo,
       targetPalette,
       stencilFilename
+    }
+  };
+}
+
+/**
+ * Generate brief-based stencil and upload to storage
+ * Used for Guided Mode (INSPIRE_GUIDED_MODE) with IMG2IMG
+ * @param {Object} brief - Design brief {title, mood, motifs, arrangement_notes}
+ * @param {Object} dimensions - {width, height} in pixels
+ * @param {string} jobId - Job identifier
+ * @param {Object} options - {seed, style}
+ * @returns {Promise<Object>} {stencilUrl, metadata}
+ */
+export async function generateAndUploadBriefStencil(brief, dimensions, jobId, options = {}) {
+  console.log(`[PREPROCESS] Generating brief-based stencil for "${brief.title || 'untitled'}"`);
+  console.log(`[PREPROCESS] Dimensions: ${dimensions.width}×${dimensions.height}`);
+
+  const startTime = Date.now();
+
+  // Generate stencil PNG buffer
+  const stencilPNG = await generateBriefStencil(brief, dimensions, options);
+
+  // Upload to storage
+  const stencilFilename = `brief_stencil_${jobId}_${Date.now()}.png`;
+  const stencilUrl = await uploadToStorage(stencilPNG, stencilFilename, 'tpv-studio');
+
+  const duration = Date.now() - startTime;
+
+  console.log(`[PREPROCESS] Brief stencil uploaded in ${duration}ms: ${stencilUrl}`);
+
+  return {
+    stencilUrl,
+    metadata: {
+      stencilFilename,
+      brief: {
+        title: brief.title,
+        motifCount: brief.motifs?.length || 0,
+        moodCount: brief.mood?.length || 0
+      },
+      dimensions,
+      generation_duration: duration
     }
   };
 }
