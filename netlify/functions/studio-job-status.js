@@ -1,13 +1,13 @@
 // TPV Studio - Get Job Status
 // Polls studio_jobs table for job status with Replicate reconciliation
 
-import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
-import { getPrediction } from './studio/_utils/replicate.js';
-import { downloadImage } from './studio/_utils/replicate.js';
-import { cropPadToExactAR, makeThumbnail } from './studio/_utils/image.js';
-import { uploadToStorage } from './studio/_utils/exports.js';
+const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
+const { getPrediction } = require('./studio/_utils/replicate.js');
+const { downloadImage } = require('./studio/_utils/replicate.js');
+const { cropPadToExactAR, makeThumbnail } = require('./studio/_utils/image.js');
+const { uploadToStorage } = require('./studio/_utils/exports.js');
 
-export const handler = async (event, context) => {
+exports.handler = async (event, context) => {
   // Dynamic import of ESM utilities
   
   

@@ -2,23 +2,16 @@
 // State machine for draft → region refinement → polish pipeline
 // Idempotent handling with prediction_id + job_id guard
 
-import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
-import { downloadImage, generateDraftSDXL, refineRegionSDXL } from './studio/_utils/replicate.js';
-import { uploadByStage, uploadToStorage } from './studio/_utils/exports.js';
-import { generateRoleMasks, generateMotifMasks } from './studio/_utils/mask-generator.js';
-import { quantizeWithDithering } from './studio/_utils/oklch-quantize.js';
-import { assessConceptQuality } from './studio/_utils/quality-gate.js';
-import { cropPadToExactAR, makeThumbnail } from './studio/_utils/image.js';
+const crypto = require('crypto');
+const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
+const { downloadImage, generateDraftSDXL, refineRegionSDXL } = require('./studio/_utils/replicate.js');
+const { uploadByStage, uploadToStorage } = require('./studio/_utils/exports.js');
+const { generateRoleMasks, generateMotifMasks } = require('./studio/_utils/mask-generator.js');
+const { quantizeWithDithering } = require('./studio/_utils/oklch-quantize.js');
+const { assessConceptQuality } = require('./studio/_utils/quality-gate.js');
+const { cropPadToExactAR, makeThumbnail } = require('./studio/_utils/image.js');
 
-export const handler = async (event, context) => {
-  // Dynamic import of ESM utilities
-  
-  
-  
-  
-  
-  
-  const crypto = await import('crypto');
+exports.handler = async (event, context) => {
 
   try {
     // 1. Verify webhook signature (idempotency layer 1)

@@ -3,13 +3,13 @@
 // Invoked manually or via cron/scheduled function
 
 // TPV palette inline
-import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
-import { buildPalettePrompt, generateConceptsSDXL, downloadImage, estimateCostSDXL } from './studio/_utils/replicate.js';
-import { clampToTPVPalette, autoRankConcepts } from './studio/_utils/postprocess.js';
-import { selectModelAspect } from './studio/_utils/aspect-resolver.js';
-import { createPaletteSwatch } from './studio/_utils/palette-swatch.js';
-import { uploadToStorage } from './studio/_utils/exports.js';
-import { generateFlatStencil, renderStencilToSVG, rasterizeStencilToPNG } from './studio/_utils/stencil-generator.js';
+const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
+const { buildPalettePrompt, generateConceptsSDXL, downloadImage, estimateCostSDXL } = require('./studio/_utils/replicate.js');
+const { clampToTPVPalette, autoRankConcepts } = require('./studio/_utils/postprocess.js');
+const { selectModelAspect } = require('./studio/_utils/aspect-resolver.js');
+const { createPaletteSwatch } = require('./studio/_utils/palette-swatch.js');
+const { uploadToStorage } = require('./studio/_utils/exports.js');
+const { generateFlatStencil, renderStencilToSVG, rasterizeStencilToPNG } = require('./studio/_utils/stencil-generator.js');
 
 const TPV_PALETTE = [
   { code: "RH30", name: "Beige", hex: "#E4C4AA" },
@@ -291,7 +291,7 @@ async function processJob(job, imports) {
  * GET /api/studio/inspire/worker
  * Processes one pending job per invocation
  */
-export const handler = async function(event, context) {
+exports.handler = async function(event, context) {
   // Dynamic import of ESM utilities
   
   

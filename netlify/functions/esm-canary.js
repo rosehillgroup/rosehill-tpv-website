@@ -1,13 +1,13 @@
-// ESM Canary - verifies ESM runtime loading works
-import os from 'node:os';
+// CJS Canary - verifies CJS runtime loading works
+const os = require('node:os');
 
-export const handler = async () => {
+exports.handler = async () => {
   return {
     statusCode: 200,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       ok: true,
-      esm: true,
+      cjs: true,
       platform: os.platform(),
       nodeVersion: process.version,
       ts: Date.now()

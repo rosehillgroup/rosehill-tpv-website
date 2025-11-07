@@ -3,12 +3,12 @@
 // Replaces the old grammar-based design-generate endpoint
 
 /**
-import { downloadImage } from './studio/_utils/replicate.js';
-import { posterizeImage } from './studio/_utils/color-quantize.js';
-import { vectorizeImage, estimateQuality } from './studio/_utils/vectorize.js';
-import { autoRepair, generateRepairReport } from './studio/_utils/auto-repair.js';
-import { calculateBOM, calculateInstallerScore, checkRegionConstraints } from './studio/_utils/constraints.js';
-import { exportSVG, exportPNG, generateAllExports, uploadToStorage } from './studio/_utils/exports.js';
+const { downloadImage } = require('./studio/_utils/replicate.js');
+const { posterizeImage } = require('./studio/_utils/color-quantize.js');
+const { vectorizeImage, estimateQuality } = require('./studio/_utils/vectorize.js');
+const { autoRepair, generateRepairReport } = require('./studio/_utils/auto-repair.js');
+const { calculateBOM, calculateInstallerScore, checkRegionConstraints } = require('./studio/_utils/constraints.js');
+const { exportSVG, exportPNG, generateAllExports, uploadToStorage } = require('./studio/_utils/exports.js');
 
  * Convert vectorized regions (with SVG paths) to TPV region format (with points)
  * This is a simplified conversion - full implementation would parse SVG path strings
@@ -85,7 +85,7 @@ const DEFAULT_RULES = {
  *   }
  * }
  */
-export const handler = async function(event, context) {
+exports.handler = async function(event, context) {
   // Dynamic import of ESM utilities
   
   

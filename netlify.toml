@@ -15,7 +15,7 @@
 [functions.esbuild]
   target = "node20"
   platform = "node"
-  format = "esm"
+  format = "cjs"
   bundle = true
   external_node_modules = []
 

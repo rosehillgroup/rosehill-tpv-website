@@ -1,16 +1,16 @@
 // TPV Studio - Enqueue Job
 // Generates stencil and starts Replicate prediction with webhook
 
-import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
-import { buildStylePrompt } from './studio/_utils/prompt.js';
-import { metersToPixels, pickNearestSize } from './studio/_utils/aspect-resolver.js';
-import { createText2ImagePrediction, estimateCostSimple } from './studio/_utils/replicate.js';
-import { generateAndUploadStencil, buildReplicateInput } from './studio/_utils/preprocessing.js';
+const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
+const { buildStylePrompt } = require('./studio/_utils/prompt.js');
+const { metersToPixels, pickNearestSize } = require('./studio/_utils/aspect-resolver.js');
+const { createText2ImagePrediction, estimateCostSimple } = require('./studio/_utils/replicate.js');
+const { generateAndUploadStencil, buildReplicateInput } = require('./studio/_utils/preprocessing.js');
 
 const REPLICATE_API = 'https://api.replicate.com/v1/predictions';
 const SDXL_VERSION = '39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b'; // stable-diffusion-xl-1024-v1-0
 
-export const handler = async(event, context) => {
+exports.handler = async(event, context) => {
   // Dynamic import of ESM utilities
   
 
