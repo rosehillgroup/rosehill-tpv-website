@@ -11,29 +11,113 @@ const { quantizeWithDithering } = require('./studio/_utils/oklch-quantize.js');
 const { assessConceptQuality } = require('./studio/_utils/quality-gate.js');
 const { cropPadToExactAR, makeThumbnail } = require('./studio/_utils/image.js');
 
+/**
+ * Helper: Get signature header (case-insensitive)
+ */
+function getSignatureHeader(headers) {
+  return headers['webhook-signature'] || headers['Webhook-Signature'] || '';
+}
+
+/**
+ * Helper: Parse Replicate's "t=timestamp,v1=signature" format
+ */
+function parseSigHeader(header) {
+  const parts = header.split(',');
+  const t = parts.find(p => p.startsWith('t='))?.split('=')[1];
+  const v1 = parts.find(p => p.startsWith('v1='))?.split('=')[1];
+  return { t, v1 };
+}
+
+/**
+ * Helper: Get raw body buffer (handle base64 encoding)
+ */
+function rawBodyBuffer(event) {
+  if (event.isBase64Encoded) {
+    return Buffer.from(event.body, 'base64');
+  }
+  return Buffer.from(event.body, 'utf8');
+}
+
+/**
+ * Helper: Compute HMAC-SHA256 hex
+ */
+function hmacHex(secret, data) {
+  return crypto.createHmac('sha256', secret)
+    .update(data)
+    .digest('hex');
+}
+
+/**
+ * Helper: Timing-safe hex string comparison
+ */
+function timingSafeEqHex(a, b) {
+  if (a.length !== b.length) return false;
+  const bufA = Buffer.from(a, 'hex');
+  const bufB = Buffer.from(b, 'hex');
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+/**
+ * Verify Replicate webhook signature
+ * @param {Object} event - Netlify event object
+ * @param {string} secret - REPLICATE_WEBHOOK_SIGNING_SECRET
+ * @param {number} maxSkewSeconds - Max allowed time difference (default 5 minutes)
+ * @returns {boolean} true if signature is valid
+ */
+function verifyReplicateSignature(event, secret, maxSkewSeconds = 5 * 60) {
+  const header = getSignatureHeader(event.headers || {});
+  if (!header || !secret) return false;
+
+  const { t, v1 } = parseSigHeader(header);
+  if (!t || !v1) return false;
+
+  // Replay protection
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - Number(t)) > maxSkewSeconds) {
+    console.error('[WEBHOOK] Signature timestamp outside allowed window', { t, now });
+    return false;
+  }
+
+  const raw = rawBodyBuffer(event);
+  const signedPayload = `${t}.${raw.toString('utf8')}`;
+  const expected = hmacHex(secret, signedPayload);
+
+  if (!timingSafeEqHex(v1, expected)) {
+    console.error('[WEBHOOK] Invalid signature', {
+      base64: !!event.isBase64Encoded,
+      lenProvided: v1.length,
+      lenExpected: expected.length,
+    });
+    return false;
+  }
+  return true;
+}
+
 exports.handler = async (event, context) => {
 
   try {
-    // 1. Verify webhook signature (idempotency layer 1)
-    const signature = event.headers['webhook-signature'] || event.headers['Webhook-Signature'];
+    // 1. Verify webhook authentication (two layers)
     const token = event.queryStringParameters?.token;
+    const signingSecret = process.env.REPLICATE_WEBHOOK_SIGNING_SECRET;
 
-    if (token !== process.env.REPLICATE_WEBHOOK_SECRET) {
-      console.error('[WEBHOOK] Invalid token');
-      return { statusCode: 401, body: 'Unauthorized' };
+    // Layer 1: URL token (simple auth, already working)
+    if (token && token !== process.env.REPLICATE_WEBHOOK_SECRET) {
+      console.error('[WEBHOOK] Invalid URL token');
+      return { statusCode: 401, body: 'Invalid token' };
     }
 
-    // Verify Replicate webhook signature if present
-    if (signature && process.env.REPLICATE_WEBHOOK_SECRET) {
-      const body = event.body;
-      const hash = crypto.createHmac('sha256', process.env.REPLICATE_WEBHOOK_SECRET)
-        .update(body)
-        .digest('hex');
-
-      if (signature !== hash) {
-        console.error('[WEBHOOK] Invalid signature');
+    // Layer 2: Replicate signature verification (proper cryptographic auth)
+    if (signingSecret) {
+      const signatureValid = verifyReplicateSignature(event, signingSecret);
+      if (!signatureValid) {
+        console.error('[WEBHOOK] Signature verification failed');
         return { statusCode: 401, body: 'Invalid signature' };
       }
+      console.log('[WEBHOOK] Signature verified successfully');
+    } else if (!token) {
+      // No auth configured at all
+      console.error('[WEBHOOK] No authentication configured (no token or signing secret)');
+      return { statusCode: 401, body: 'Unauthorized' };
     }
 
     const payload = JSON.parse(event.body || '{}');
