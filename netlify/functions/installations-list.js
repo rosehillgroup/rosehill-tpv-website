@@ -2,7 +2,7 @@
 // Returns paginated list with search capability
 
 /**
-import { createClient } from '@sanity/client';
+const { createClient } = require('@sanity/client');
 
  * Generate CORS headers with proper origin handling
  */
@@ -19,7 +19,7 @@ function corsHeaders(origin) {
 /**
  * Main handler
  */
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
   const headers = corsHeaders(event.headers.origin);
   
   // Handle preflight

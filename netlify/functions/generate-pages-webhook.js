@@ -1,9 +1,9 @@
 // Webhook to automatically generate installation pages when installations are created/updated
-import { createClient } from '@sanity/client';
+const { createClient } = require('@sanity/client');
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const fs = require('fs');
+const path = require('path');
+const { fileURLToPath } = require('url');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,7 +17,7 @@ function corsHeaders(origin) {
   };
 }
 
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
   const headers = corsHeaders();
   
   if (event.httpMethod === 'OPTIONS') {

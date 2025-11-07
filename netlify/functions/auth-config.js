@@ -1,7 +1,7 @@
 // Provides Auth0 configuration to admin pages
 // This endpoint returns the public Auth0 configuration needed by the browser
 
-export async function handler(event) {
+exports.handler = async function(event) {
   // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || '*',

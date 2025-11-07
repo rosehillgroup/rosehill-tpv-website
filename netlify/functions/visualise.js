@@ -41,9 +41,9 @@
  * }
  */
 
-import { uploadImageToSupabase, generateSAM2Mask, generateSimpleMask } from './_utils/sam2.js';
-import { shareCodeToColors } from './_utils/color-science.js';
-import Replicate from 'replicate';
+const { uploadImageToSupabase, generateSAM2Mask, generateSimpleMask } = require('./_utils/sam2.js');
+const { shareCodeToColors } = require('./_utils/color-science.js');
+const Replicate = require('replicate');
 
 // CORS headers
 const headers = {
@@ -53,7 +53,7 @@ const headers = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
-export default async (request) => {
+exports.handler = async (request) => {
   const startTime = Date.now();
 
   // Handle OPTIONS preflight

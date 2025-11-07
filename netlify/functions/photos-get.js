@@ -1,5 +1,5 @@
 // Public API to retrieve approved photos for display
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_PUBLIC_SUPABASE_URL;
@@ -16,7 +16,7 @@ const response = (statusCode, body) => ({
     body: JSON.stringify(body),
 });
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
     // Only accept GET requests
     if (event.httpMethod !== 'GET') {
         return response(405, { error: 'Method not allowed' });

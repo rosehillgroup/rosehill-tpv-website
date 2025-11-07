@@ -1,9 +1,9 @@
 // Netlify Function: Temporary upload handler 
 // Validates uploads and returns mock response until Sanity import is fixed
 
-import { createClient } from '@sanity/client';
+const { createClient } = require('@sanity/client');
 
-export async function handler(event) {
+exports.handler = async function(event) {
   // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || '*',

@@ -1,9 +1,9 @@
 // Test function to verify Auth0 JWT verification
 // Returns user info and roles to verify authentication is working
 
-import { requireEditorRole, errorResponse, successResponse } from './_utils/auth.js';
+const { requireEditorRole, errorResponse, successResponse } = require('./_utils/auth.js');
 
-export async function handler(event) {
+exports.handler = async function(event) {
   // CORS headers
   const headers = {
     'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || '*',

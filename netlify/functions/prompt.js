@@ -24,7 +24,7 @@
  * }
  */
 
-import Replicate from 'replicate';
+const Replicate = require('replicate');
 
 // CORS headers
 const headers = {
@@ -34,7 +34,7 @@ const headers = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
-export default async (request) => {
+exports.handler = async (request) => {
   const startTime = Date.now();
 
   // Handle OPTIONS preflight

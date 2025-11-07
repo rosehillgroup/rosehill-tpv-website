@@ -1,5 +1,5 @@
 // Minimal test function to check if basic Netlify function works
-import { requireEditorRole, errorResponse, successResponse } from './_utils/auth.js';
+const { requireEditorRole, errorResponse, successResponse } = require('./_utils/auth.js');
 
 function corsHeaders(origin) {
   return {
@@ -9,7 +9,7 @@ function corsHeaders(origin) {
   };
 }
 
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
   const headers = corsHeaders(event.headers.origin);
   
   if (event.httpMethod === 'OPTIONS') {

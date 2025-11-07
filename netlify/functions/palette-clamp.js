@@ -26,8 +26,8 @@
  * }
  */
 
-import sharp from 'sharp';
-import { PALETTE, hexToRgb, rgbToHex, rgbToOklab, deltaE } from './_utils/color-science.js';
+const sharp = require('sharp');
+const { PALETTE, hexToRgb, rgbToHex, rgbToOklab, deltaE } = require('./_utils/color-science.js');
 
 // CORS headers
 const headers = {
@@ -37,7 +37,7 @@ const headers = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
-export default async (request) => {
+exports.handler = async (request) => {
   const startTime = Date.now();
 
   // Handle OPTIONS preflight

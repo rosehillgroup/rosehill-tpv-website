@@ -27,7 +27,7 @@
  * }
  */
 
-import { uploadImageToSupabase, generateSAM2Mask, generateSimpleMask } from './_utils/sam2.js';
+const { uploadImageToSupabase, generateSAM2Mask, generateSimpleMask } = require('./_utils/sam2.js');
 
 // CORS headers
 const headers = {
@@ -37,7 +37,7 @@ const headers = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
-export default async (request) => {
+exports.handler = async (request) => {
   const startTime = Date.now();
 
   // Handle OPTIONS preflight

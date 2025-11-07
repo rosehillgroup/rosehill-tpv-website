@@ -1,7 +1,7 @@
 // Canary function to verify ESM loading works
-import { fileURLToPath } from 'url';
+const { fileURLToPath } = require('url');
 
-export const handler = async () => {
+exports.handler = async () => {
   const here = fileURLToPath(import.meta.url);
   return {
     statusCode: 200,

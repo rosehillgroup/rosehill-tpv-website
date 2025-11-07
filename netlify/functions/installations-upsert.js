@@ -1,10 +1,10 @@
 // Netlify Function: Create or update installation with automatic translation
 // Handles English input, translates to ES/FR/DE via DeepL, and saves to Sanity
 
-import { createClient } from '@sanity/client';
+const { createClient } = require('@sanity/client');
 
-import crypto from 'crypto';
-import { requireEditorRole, checkRateLimit, errorResponse, successResponse, safeLog } from './_utils/auth.js';
+const crypto = require('crypto');
+const { requireEditorRole, checkRateLimit, errorResponse, successResponse, safeLog } = require('./_utils/auth.js');
 
 /**
  * Generate CORS headers with proper origin handling
@@ -165,7 +165,7 @@ function calculateContentHash(data) {
 /**
  * Main handler
  */
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
   const headers = corsHeaders(event.headers.origin);
   
   // Handle preflight

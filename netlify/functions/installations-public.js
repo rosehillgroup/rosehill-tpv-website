@@ -1,7 +1,7 @@
 // Public API to get installations for the main website
 // No auth required, returns published installations only
 
-import { createClient } from '@sanity/client';
+const { createClient } = require('@sanity/client');
 
 function corsHeaders(origin) {
   return {
@@ -22,7 +22,7 @@ function blocksToPlainText(blocks) {
     .trim();
 }
 
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
   const headers = corsHeaders(event.headers.origin);
 
   if (event.httpMethod === 'OPTIONS') {

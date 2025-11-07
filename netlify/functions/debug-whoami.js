@@ -1,7 +1,7 @@
 // Debug version of whoami function to isolate the issue
 // This will test each step individually
 
-export async function handler(event) {
+exports.handler = async function(event) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',

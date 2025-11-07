@@ -1,7 +1,7 @@
 // Working installation save with DeepL translation
-import { createClient } from '@sanity/client';
+const { createClient } = require('@sanity/client');
 
-import crypto from 'crypto';
+const crypto = require('crypto');
 
 function corsHeaders(origin) {
   const allowed = process.env.ALLOWED_ORIGIN || origin || '*';
@@ -60,7 +60,7 @@ async function translateText(text, targetLang) {
   }
 }
 
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
   const headers = corsHeaders(event.headers.origin);
   
   if (event.httpMethod === 'OPTIONS') {

@@ -42,18 +42,18 @@
  * }
  */
 
-import Replicate from 'replicate';
-import { createClient } from '@supabase/supabase-js';
-import sharp from 'sharp';
-import {
+const Replicate = require('replicate');
+const { createClient } = require('@supabase/supabase-js');
+const sharp = require('sharp');
+const {
   PALETTE,
   shareCodeToColors,
   hexToRgb,
   rgbToHex,
   computeAverageBlend,
   decodeMix
-} from './_utils/color-science.js';
-import { uploadImageToSupabase, generateSAM2Mask, generateSimpleMask } from './_utils/sam2.js';
+} = require('./_utils/color-science.js');
+const { uploadImageToSupabase, generateSAM2Mask, generateSimpleMask } = require('./_utils/sam2.js');
 
 // Initialize clients
 const replicate = new Replicate({
@@ -73,7 +73,7 @@ const headers = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
-export default async (request) => {
+exports.handler = async (request) => {
   const startTime = Date.now();
 
   // Handle OPTIONS preflight

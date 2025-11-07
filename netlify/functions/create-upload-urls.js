@@ -1,5 +1,5 @@
 // ESM import
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE;
@@ -11,7 +11,7 @@ console.log('Environment check:', {
   bucket: BUCKET
 });
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
   try {
     if (event.httpMethod !== 'POST') {
       return { statusCode: 405, body: 'Method Not Allowed' };

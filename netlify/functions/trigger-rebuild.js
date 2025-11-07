@@ -1,5 +1,5 @@
 // Trigger a Netlify rebuild to generate static pages
-export async function handler(event, context) {
+exports.handler = async function(event, context) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
