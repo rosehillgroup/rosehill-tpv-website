@@ -1,5 +1,5 @@
-// CommonJS to match your current setup
-const { createClient } = require('@supabase/supabase-js');
+// ESM import
+import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE;

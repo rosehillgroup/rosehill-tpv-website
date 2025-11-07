@@ -2,6 +2,7 @@
   "name": "rosehill-tpv-website",
   "version": "1.0.0",
   "description": "Rosehill TPV Sports & Recreation Surfaces Website",
+  "type": "module",
   "scripts": {
     "test": "echo 'Admin interface available at /admin/' && echo 'Visit https://tpv.rosehill.group/admin/ to manage installations'",
     "dev": "echo 'This is a static site - open HTML files directly or serve via a local server'",
@@ -23,6 +24,6 @@
     "simplex-noise": "^4.0.3"
   },
   "engines": {
-    "node": "18.x"
+    "node": ">=20.18.1"
   }
 }
