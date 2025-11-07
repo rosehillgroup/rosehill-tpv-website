@@ -5,23 +5,14 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Functions configuration - ESM bundling with esbuild
+# Functions configuration - no bundling (use Node.js native resolution)
 [functions]
   directory = "netlify/functions"
-  node_bundler = "esbuild"
+  node_bundler = "none"
   included_files = [
     "motifs/**/*.svg",
-    "netlify/functions/studio/**",
-    "node_modules/@supabase/**",
-    "node_modules/replicate/**"
+    "netlify/functions/studio/**"
   ]
-
-[functions.esbuild]
-  target = "node18"
-  platform = "node"
-  format = "esm"  # Required for ESM module bundling
-  bundle = true    # Force bundling of all imports
-  # Bundle everything - let esbuild handle native modules automatically
 
 [[edge_functions]]
   path = "/*"
