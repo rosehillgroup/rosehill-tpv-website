@@ -90,7 +90,7 @@ exports.handler = async (event, context) => {
               .update({
                 status: 'completed',
                 completed_at: new Date().toISOString(),
-                result: {
+                outputs: {
                   final_url: finalUpload.publicUrl,
                   thumbnail_url: thumbUpload.publicUrl,
                   raw_output: imageUrl,
@@ -183,7 +183,7 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({
         jobId: updatedJob.id,
         status: updatedJob.status,
-        result: updatedJob.result,
+        result: updatedJob.outputs,
         error: updatedJob.error,
         metadata: updatedJob.metadata
       })
