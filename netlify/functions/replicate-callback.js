@@ -320,7 +320,7 @@ async function handleSimpleSuccess(supabase, job, output) {
 
     // Update job to completed with full timeline
     mark('db_update_begin');
-    await supabase
+    const { data: updateData, error: updateError } = await supabase
       .from('studio_jobs')
       .update({
         status: 'completed',
@@ -347,6 +347,13 @@ async function handleSimpleSuccess(supabase, job, output) {
         }
       })
       .eq('id', job.id);
+
+    if (updateError) {
+      console.error(`[SIMPLE] DB update failed for job ${job.id}:`, updateError);
+      throw new Error(`Database update failed: ${updateError.message}`);
+    }
+
+    console.log(`[SIMPLE] DB updated successfully for job ${job.id}`, updateData);
     mark('db_update_complete');
 
     console.log(`[SIMPLE] Timeline for job ${job.id}:`, JSON.stringify(timeline, null, 2));
