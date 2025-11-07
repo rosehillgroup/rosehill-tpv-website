@@ -48,13 +48,16 @@ function verifyReplicateSignature(event, signingSecretEnvVar = 'REPLICATE_WEBHOO
 
   // Construct signed content: webhook-id.webhook-timestamp.body
   const rawBody = getRawBody(event);
-  const signedContent = `${webhookId}.${webhookTimestamp}.${rawBody.toString('utf8')}`;
+  const bodyString = rawBody.toString('utf8');
+  const signedContent = `${webhookId}.${webhookTimestamp}.${bodyString}`;
 
   console.log('[WEBHOOK] Verification details:', {
     webhookId,
     webhookTimestamp,
     bodyLength: rawBody.length,
-    signingKeyLength: signingKey.length
+    signingKeyLength: signingKey.length,
+    signedContentPrefix: signedContent.substring(0, 80),
+    bodyPreview: bodyString.substring(0, 50)
   });
 
   // Parse webhook-signature header (space-delimited list: "v1,<sig1> v1,<sig2>")
