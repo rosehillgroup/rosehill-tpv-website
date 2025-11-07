@@ -12,7 +12,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { prompt, style, surface } = JSON.parse(event.body || '{}');
+    const { prompt, style, surface, seed } = JSON.parse(event.body || '{}');
 
     if (!prompt || !prompt.trim()) {
       throw new Error('Prompt is required');
@@ -33,6 +33,7 @@ exports.handler = async (event, context) => {
         metadata: {
           mode: 'simple',
           surface: surfaceData,
+          seed: seed, // Pass seed from frontend if provided
           created_at: new Date().toISOString()
         }
       })

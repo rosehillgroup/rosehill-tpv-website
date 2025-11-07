@@ -67,8 +67,8 @@ exports.handler = async(event, context) => {
       const { w: targetW, h: targetH } = metersToPixels(surface.width_m, surface.height_m, ppi);
       const nearest = pickNearestSize({ targetW, targetH });
 
-      // Generate random seed
-      const seed = Math.floor(Math.random() * 1000000);
+      // Use provided seed or generate random seed
+      const seed = job.metadata?.seed || Math.floor(Math.random() * 1000000);
 
       // Get model ID from env
       const modelId = process.env.MODEL_ID || 'stability-ai/sdxl';

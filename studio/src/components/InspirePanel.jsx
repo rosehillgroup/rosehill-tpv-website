@@ -17,6 +17,7 @@ function InspirePanel({ onConceptsGenerated }) {
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState(null);
   const [result, setResult] = useState(null);
+  const [metadata, setMetadata] = useState(null);
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -65,6 +66,7 @@ function InspirePanel({ onConceptsGenerated }) {
       console.log('[InspirePanel] Job completed:', jobResult);
       setProgress('Generation complete!');
       setResult(jobResult.result);
+      setMetadata(jobResult.metadata);
 
       // Notify parent with result
       if (onConceptsGenerated) {
@@ -80,9 +82,127 @@ function InspirePanel({ onConceptsGenerated }) {
     }
   };
 
-  const handleGenerateAnother = () => {
-    // Keep the same prompt and settings, just regenerate
-    handleGenerate();
+  const handleRegenerateWithSeed = async () => {
+    // Regenerate with the same seed for consistent results
+    if (!metadata?.seed) {
+      console.warn('[InspirePanel] No seed available for regeneration');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    setProgress('Regenerating with same seed...');
+
+    try {
+      const request = {
+        prompt: prompt.trim(),
+        surface: {
+          width_m: parseFloat(surfaceWidth),
+          height_m: parseFloat(surfaceHeight)
+        },
+        style,
+        seed: metadata.seed // Use the same seed
+      };
+
+      console.log('[InspirePanel] Regenerating with seed:', metadata.seed);
+
+      const jobResponse = await apiClient.inspireSimpleCreateJob(request);
+      const { jobId } = jobResponse;
+
+      setProgress(`Regenerating... Seed: ${metadata.seed}`);
+
+      const jobResult = await apiClient.inspireSimpleWaitForCompletion(jobId, (status) => {
+        switch (status.status) {
+          case 'pending':
+            setProgress('Job created. Starting generation...');
+            break;
+          case 'queued':
+            setProgress('Job queued. Waiting for GPU...');
+            break;
+          case 'running':
+            setProgress('Generating with same seed...');
+            break;
+          default:
+            setProgress(`Status: ${status.status}`);
+        }
+      }, 2000);
+
+      setProgress('Generation complete!');
+      setResult(jobResult.result);
+      setMetadata(jobResult.metadata);
+
+      if (onConceptsGenerated) {
+        onConceptsGenerated([jobResult.result], jobResult.metadata);
+      }
+
+    } catch (err) {
+      console.error('[InspirePanel] Regeneration error:', err);
+      setError(err.message);
+      setProgress(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGenerateNewSeed = async () => {
+    // Generate with a new random seed for variation
+    const newSeed = Math.floor(Math.random() * 1000000);
+
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    setProgress(`Generating with new seed: ${newSeed}...`);
+
+    try {
+      const request = {
+        prompt: prompt.trim(),
+        surface: {
+          width_m: parseFloat(surfaceWidth),
+          height_m: parseFloat(surfaceHeight)
+        },
+        style,
+        seed: newSeed // Use new random seed
+      };
+
+      console.log('[InspirePanel] Generating with new seed:', newSeed);
+
+      const jobResponse = await apiClient.inspireSimpleCreateJob(request);
+      const { jobId } = jobResponse;
+
+      setProgress(`Generating with seed ${newSeed}...`);
+
+      const jobResult = await apiClient.inspireSimpleWaitForCompletion(jobId, (status) => {
+        switch (status.status) {
+          case 'pending':
+            setProgress('Job created. Starting generation...');
+            break;
+          case 'queued':
+            setProgress('Job queued. Waiting for GPU...');
+            break;
+          case 'running':
+            setProgress('Generating with new seed...');
+            break;
+          default:
+            setProgress(`Status: ${status.status}`);
+        }
+      }, 2000);
+
+      setProgress('Generation complete!');
+      setResult(jobResult.result);
+      setMetadata(jobResult.metadata);
+
+      if (onConceptsGenerated) {
+        onConceptsGenerated([jobResult.result], jobResult.metadata);
+      }
+
+    } catch (err) {
+      console.error('[InspirePanel] New seed generation error:', err);
+      setError(err.message);
+      setProgress(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -219,6 +339,14 @@ function InspirePanel({ onConceptsGenerated }) {
                 <div style={{ fontSize: '0.875rem', color: '#718096' }}>
                   <p>Dimensions: {result.dimensions?.final?.w || 'N/A'} × {result.dimensions?.final?.h || 'N/A'} px</p>
                   <p>Surface: {surfaceWidth} × {surfaceHeight} meters</p>
+                  {metadata?.seed && (
+                    <p style={{ marginTop: '0.5rem' }}>
+                      <strong>Seed:</strong> {metadata.seed}
+                      <small style={{ display: 'block', marginTop: '0.25rem', color: '#a0aec0' }}>
+                        Use same seed for consistent variations
+                      </small>
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -233,23 +361,35 @@ function InspirePanel({ onConceptsGenerated }) {
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button
-              className="tpv-studio__button tpv-studio__button--secondary"
-              onClick={handleGenerateAnother}
-              disabled={loading}
-              style={{ flex: 1 }}
-            >
-              Generate Another
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                className="tpv-studio__button tpv-studio__button--secondary"
+                onClick={handleRegenerateWithSeed}
+                disabled={loading || !metadata?.seed}
+                style={{ flex: 1 }}
+                title={metadata?.seed ? `Regenerate with seed ${metadata.seed}` : 'No seed available'}
+              >
+                Regenerate Same
+              </button>
+              <button
+                className="tpv-studio__button tpv-studio__button--secondary"
+                onClick={handleGenerateNewSeed}
+                disabled={loading}
+                style={{ flex: 1 }}
+                title="Generate with a new random seed for variations"
+              >
+                New Variation
+              </button>
+            </div>
             {result.final_url && (
               <a
                 href={result.final_url}
                 download
                 className="tpv-studio__button tpv-studio__button--secondary"
-                style={{ flex: 1, textAlign: 'center', textDecoration: 'none' }}
+                style={{ textAlign: 'center', textDecoration: 'none' }}
               >
-                Download
+                Download Image
               </a>
             )}
           </div>
