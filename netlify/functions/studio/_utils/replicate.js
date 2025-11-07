@@ -499,9 +499,9 @@ export async function createText2ImagePrediction(params) {
     webhook
   } = params;
 
-  // Use FLUX.1-schnell for fast, clean results (optimized for designer-friendly outputs)
-  // Note: Using hardcoded model to avoid stale env var issues
-  const modelId = 'black-forest-labs/flux-schnell';
+  // Use FLUX.1-dev for high-quality, designer-friendly results
+  // Better quality than schnell with proper guidance and negative prompts
+  const modelId = 'black-forest-labs/flux-dev';
 
   console.log(`[REPLICATE] Creating text→image prediction with ${modelId}`);
   console.log(`[REPLICATE] Size: ${width}×${height}, Steps: ${steps}, CFG: ${guidance}, Seed: ${seed}`);
@@ -513,19 +513,25 @@ export async function createText2ImagePrediction(params) {
     // Build input based on model
     let input;
     if (modelId.includes('flux')) {
-      // FLUX models (schnell or dev)
+      // FLUX models (dev supports negative prompts, schnell doesn't)
       input = {
         prompt,
         width,
         height,
         num_inference_steps: steps,
-        guidance_scale: guidance,
+        guidance: guidance, // FLUX-dev uses 'guidance' not 'guidance_scale'
         seed,
         num_outputs,
         output_format: 'png',
         output_quality: 90,
+        prompt_upsampling: false, // We write good prompts!
         disable_safety_checker: false
       };
+
+      // Add negative_prompt if model is flux-dev (not schnell)
+      if (modelId.includes('flux-dev') && negative_prompt) {
+        input.prompt = `${prompt} [negative: ${negative_prompt}]`;
+      }
     } else {
       // SDXL fallback (legacy)
       input = {

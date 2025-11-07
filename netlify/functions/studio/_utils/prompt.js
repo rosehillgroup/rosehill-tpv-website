@@ -2,42 +2,43 @@
 // Material-first prompting with style presets
 
 /**
- * Material-first prompt anchoring - optimized for FLUX models
+ * Material-first prompt anchoring - optimized for FLUX-dev
  * Describes TPV rubber granule properties before creative theme
  */
-const MATERIAL_TAIL = 'flat vector poster style, rubber granule surfacing look, large smooth shapes, soft shadows only, bold silhouettes, clean joins, no gradients, no text, no outlines';
+const MATERIAL_PREFIX = 'Playground TPV rubber surfacing design';
+const MATERIAL_TAIL = 'flat vector look with large smooth shapes, installer-friendly geometry, no outlines, no text, no tiny elements, matte finish, soft ambient shadow only';
 
 /**
  * Unified negative prompts to avoid AI artifacts and unwanted outputs
- * Optimized for FLUX models to produce clean, designer-friendly results
+ * Optimized for FLUX-dev to produce clean, installer-friendly results
  */
-const NEGATIVE_PROMPTS = 'photographic texture, busy detail, thin lines, stippling, halftone, noise, grain, bevels, 3d shading, tiny symbols, watermark, text, logos, noodly details, micro-patterns, photorealistic rendering';
+const NEGATIVE_PROMPTS = 'busy pattern, fine texture, high-frequency detail, thin lines, hairline strokes, text, letters, numbers, bevel, emboss, metallic, glossy, photoreal, perspective props, stickers, clipart, grunge, graffiti, tiny symbols, noisy background, photographic texture, stippling, halftone, noodly details, micro-patterns';
 
 /**
  * Style presets for different design approaches
- * Optimized for FLUX.1-schnell (fast, clean results)
+ * Optimized for FLUX-dev (high-quality, designer-friendly results)
  */
 export const STYLE_PRESETS = {
   playful_flat: {
     name: 'Playful Flat Design',
     description: 'Bold shapes, vibrant colors, fun themes',
     prefix: 'Bold flat shapes, vibrant colors, simple geometric forms,',
-    guidance: 3.5, // FLUX.1-schnell works best with 2-4 guidance
-    steps: 4 // FLUX.1-schnell maximum (ultra-fast model)
+    guidance: 3.8, // FLUX-dev works best with 3-4 guidance (lower = less fussy)
+    steps: 20 // FLUX-dev good default for quality
   },
   geometric: {
     name: 'Geometric Abstract',
     description: 'Clean lines, mathematical patterns, modern aesthetics',
     prefix: 'Geometric abstract pattern, clean lines, mathematical precision, modern minimalist design,',
-    guidance: 3.5,
-    steps: 4
+    guidance: 3.8,
+    steps: 20
   },
   sport_court: {
     name: 'Sport Court Graphics',
     description: 'Court line markings, field layouts, sport-specific graphics',
     prefix: 'Court line markings, field graphics, clean geometric boundaries,',
-    guidance: 3.5,
-    steps: 4
+    guidance: 3.8,
+    steps: 20
   }
 };
 
@@ -79,10 +80,12 @@ export function buildStylePrompt({ user, style = null }) {
     .replace(/\s+/g, ' ') // Normalize whitespace
     .substring(0, 200); // Cap at 200 chars to avoid excessive length
 
-  // Build final prompt: style prefix + user prompt + material tail
-  const prompt = `${preset.prefix} ${sanitized}, ${MATERIAL_TAIL}`;
+  // Build final prompt: material prefix + style + user prompt + material tail
+  const prompt = `${MATERIAL_PREFIX}, ${preset.prefix} ${sanitized}, ${MATERIAL_TAIL}`;
 
-  console.log(`[PROMPT] Style: ${preset.name} | User: "${sanitized}" | Full: "${prompt}"`);
+  console.log(`[PROMPT] Style: ${preset.name} | User: "${sanitized}"`);
+  console.log(`[PROMPT] Full prompt: "${prompt}"`);
+  console.log(`[PROMPT] Negative: "${NEGATIVE_PROMPTS}"`);
 
   return {
     prompt,
