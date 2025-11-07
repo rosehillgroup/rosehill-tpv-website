@@ -1,4 +1,6 @@
 // Working installation save with Sanity but without translation
+import { createClient } from '@sanity/client';
+
 import crypto from 'crypto';
 
 function corsHeaders(origin) {
@@ -60,7 +62,7 @@ export async function handler(event, context) {
   }
   
   try {
-    const { createClient } = await import('@sanity/client');
+    
     const sanity = createClient({
       projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
       dataset: process.env.SANITY_DATASET || 'production',

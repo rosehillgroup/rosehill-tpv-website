@@ -2,8 +2,10 @@
 // Scheduled function to delete expired temp files (24h TTL)
 // Configure in netlify.toml: @daily or @hourly
 
-exports.handler = async (event, context) => {
-  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.mjs');
+import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
+
+export const handler = async (event, context) => {
+  
 
   try {
     console.log('[CLEANUP] Starting temp storage cleanup');

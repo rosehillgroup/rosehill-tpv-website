@@ -15,7 +15,7 @@ const response = (statusCode, body) => ({
     body: JSON.stringify(body),
 });
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
     // Check if Supabase is configured
     if (!supabaseUrl || !supabaseKey) {
         console.error('Supabase environment variables not configured');

@@ -1,6 +1,8 @@
 // Netlify Function: Create or update installation with automatic translation
 // Handles English input, translates to ES/FR/DE via DeepL, and saves to Sanity
 
+import { createClient } from '@sanity/client';
+
 import crypto from 'crypto';
 import { requireEditorRole, checkRateLimit, errorResponse, successResponse, safeLog } from './_utils/auth.js';
 
@@ -211,7 +213,7 @@ export async function handler(event, context) {
   
   try {
     // Create Sanity client
-    const { createClient } = await import('@sanity/client');
+    
     const sanity = createClient({
       projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
       dataset: process.env.SANITY_DATASET || 'production',

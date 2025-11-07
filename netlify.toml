@@ -5,14 +5,19 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Functions configuration - no bundling (use Node.js native resolution)
+# Functions configuration - bundle everything with esbuild
 [functions]
   directory = "netlify/functions"
-  node_bundler = "none"
-  included_files = [
-    "motifs/**/*.svg",
-    "netlify/functions/studio/**"
-  ]
+  node_bundler = "esbuild"
+  # CRITICAL: Only copy static assets, NOT code or node_modules
+  included_files = ["motifs/**/*.svg"]
+
+[functions.esbuild]
+  target = "node18"
+  platform = "node"
+  format = "esm"
+  bundle = true
+  external_node_modules = []
 
 [[edge_functions]]
   path = "/*"

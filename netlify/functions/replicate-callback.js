@@ -2,14 +2,41 @@
 // State machine for draft → region refinement → polish pipeline
 // Idempotent handling with prediction_id + job_id guard
 
-exports.handler = async (event, context) => {
+import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
+import { downloadImage, generateDraftSDXL, refineRegionSDXL } from './studio/_utils/replicate.js';
+import { uploadByStage } from './studio/_utils/exports.js';
+import { generateRoleMasks, generateMotifMasks } from './studio/_utils/mask-generator.js';
+import { quantizeWithDithering } from './studio/_utils/oklch-quantize.js';
+import { assessConceptQuality } from './studio/_utils/quality-gate.js';
+import { generateDraftSDXL, refineRegionSDXL } from './studio/_utils/replicate.js';
+import { uploadByStage } from './studio/_utils/exports.js';
+import { generateRoleMasks } from './studio/_utils/mask-generator.js';
+import { quantizeWithDithering } from './studio/_utils/oklch-quantize.js';
+import { assessConceptQuality } from './studio/_utils/quality-gate.js';
+import { downloadImage } from './studio/_utils/replicate.js';
+import { downloadImage } from './studio/_utils/replicate.js';
+import { cropPadToExactAR, makeThumbnail } from './studio/_utils/image.js';
+import { uploadToStorage } from './studio/_utils/exports.js';
+import { downloadImage } from './studio/_utils/replicate.js';
+import { uploadByStage } from './studio/_utils/exports.js';
+import { generateRoleMasks } from './studio/_utils/mask-generator.js';
+import { refineRegionSDXL } from './studio/_utils/replicate.js';
+import { downloadImage } from './studio/_utils/replicate.js';
+import { uploadByStage } from './studio/_utils/exports.js';
+import { downloadImage } from './studio/_utils/replicate.js';
+import { quantizeWithDithering } from './studio/_utils/oklch-quantize.js';
+import { assessConceptQuality } from './studio/_utils/quality-gate.js';
+import { uploadToStorage } from './studio/_utils/exports.js';
+import { refineRegionSDXL } from './studio/_utils/replicate.js';
+
+export const handler = async (event, context) => {
   // Dynamic import of ESM utilities
-  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.mjs');
-  const { downloadImage, generateDraftSDXL, refineRegionSDXL } = await import('./studio/_utils/replicate.mjs');
-  const { uploadByStage } = await import('./studio/_utils/exports.mjs');
-  const { generateRoleMasks, generateMotifMasks } = await import('./studio/_utils/mask-generator.mjs');
-  const { quantizeWithDithering } = await import('./studio/_utils/oklch-quantize.mjs');
-  const { assessConceptQuality } = await import('./studio/_utils/quality-gate.mjs');
+  
+  
+  
+  
+  
+  
   const crypto = await import('crypto');
 
   try {
@@ -156,12 +183,12 @@ async function handleSuccess(supabase, job, output, prediction_id) {
   }
 
   // === MULTI-PASS MODE HANDLER (Original Pipeline) ===
-  const { generateDraftSDXL, refineRegionSDXL } = await import('./studio/_utils/replicate.mjs');
-  const { uploadByStage } = await import('./studio/_utils/exports.mjs');
-  const { generateRoleMasks } = await import('./studio/_utils/mask-generator.mjs');
-  const { quantizeWithDithering } = await import('./studio/_utils/oklch-quantize.mjs');
-  const { assessConceptQuality } = await import('./studio/_utils/quality-gate.mjs');
-  const { downloadImage } = await import('./studio/_utils/replicate.mjs');
+  
+  
+  
+  
+  
+  
 
   const passType = job.metadata?.passType || 'draft';
   const pipelineState = job.metadata?.pipelineState || {};
@@ -193,9 +220,9 @@ async function handleSuccess(supabase, job, output, prediction_id) {
  * WITH DETAILED TIMELINE TRACKING FOR PERFORMANCE DEBUGGING
  */
 async function handleSimpleSuccess(supabase, job, output) {
-  const { downloadImage } = await import('./studio/_utils/replicate.mjs');
-  const { cropPadToExactAR, makeThumbnail } = await import('./studio/_utils/image.mjs');
-  const { uploadToStorage } = await import('./studio/_utils/exports.mjs');
+  
+  
+  
 
   // Timeline tracking
   const timeline = [];
@@ -369,10 +396,10 @@ async function handleSimpleSuccess(supabase, job, output) {
  * Next: Generate masks and launch region refinements
  */
 async function handleDraftPass(supabase, job, output, pipelineState) {
-  const { downloadImage } = await import('./studio/_utils/replicate.mjs');
-  const { uploadByStage } = await import('./studio/_utils/exports.mjs');
-  const { generateRoleMasks } = await import('./studio/_utils/mask-generator.mjs');
-  const { refineRegionSDXL } = await import('./studio/_utils/replicate.mjs');
+  
+  
+  
+  
 
   console.log(`[DRAFT] Processing draft output for job ${job.id}`);
 
@@ -536,8 +563,8 @@ async function handleDraftPass(supabase, job, output, pipelineState) {
  * Next: Check if all regions done, then launch final polish
  */
 async function handleRegionPass(supabase, job, output, passType, pipelineState) {
-  const { downloadImage } = await import('./studio/_utils/replicate.mjs');
-  const { uploadByStage } = await import('./studio/_utils/exports.mjs');
+  
+  
 
   console.log(`[REGION] Processing ${passType} output for job ${job.id}`);
 
@@ -623,10 +650,10 @@ async function handleRegionPass(supabase, job, output, passType, pipelineState) 
  * Next: If quality passes, mark complete. If fails, retry motif pass.
  */
 async function handleFinalPolish(supabase, job, pipelineState) {
-  const { downloadImage } = await import('./studio/_utils/replicate.mjs');
-  const { quantizeWithDithering } = await import('./studio/_utils/oklch-quantize.mjs');
-  const { assessConceptQuality } = await import('./studio/_utils/quality-gate.mjs');
-  const { uploadToStorage } = await import('./studio/_utils/exports.mjs');
+  
+  
+  
+  
 
   console.log(`[FINAL] Starting final polish for job ${job.id}`);
 
@@ -666,7 +693,7 @@ async function handleFinalPolish(supabase, job, pipelineState) {
     console.log(`[FINAL] Quality below threshold, retrying motif pass`);
 
     // Re-seed motif pass only (cheapest/highest visual lift)
-    const { refineRegionSDXL } = await import('./studio/_utils/replicate.mjs');
+    
 
     const newSeed = Math.floor(Math.random() * 1000000);
     const retryPrediction = await refineRegionSDXL(

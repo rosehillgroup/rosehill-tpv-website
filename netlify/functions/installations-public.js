@@ -1,6 +1,8 @@
 // Public API to get installations for the main website
 // No auth required, returns published installations only
 
+import { createClient } from '@sanity/client';
+
 function corsHeaders(origin) {
   return {
     'Access-Control-Allow-Origin': '*',
@@ -42,7 +44,7 @@ export async function handler(event, context) {
   const suffix = useLang === 'en' ? '' : `__${useLang}`;
   
   try {
-    const { createClient } = await import('@sanity/client');
+    
     const sanity = createClient({
       projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
       dataset: process.env.SANITY_DATASET || 'production',

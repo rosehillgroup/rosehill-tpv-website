@@ -2,6 +2,8 @@
 // Returns English fields only
 
 /**
+import { createClient } from '@sanity/client';
+
  * Generate CORS headers with proper origin handling
  */
 function corsHeaders(origin) {
@@ -57,7 +59,7 @@ export async function handler(event, context) {
   
   try {
     // Create Sanity client
-    const { createClient } = await import('@sanity/client');
+    
     const sanity = createClient({
       projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
       dataset: process.env.SANITY_DATASET || 'production',

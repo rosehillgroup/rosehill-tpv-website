@@ -1,10 +1,16 @@
 // TPV Studio - Get Job Status
 // Polls studio_jobs table for job status with Replicate reconciliation
 
-exports.handler = async (event, context) => {
+import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
+import { getPrediction } from './studio/_utils/replicate.js';
+import { downloadImage } from './studio/_utils/replicate.js';
+import { cropPadToExactAR, makeThumbnail } from './studio/_utils/image.js';
+import { uploadToStorage } from './studio/_utils/exports.js';
+
+export const handler = async (event, context) => {
   // Dynamic import of ESM utilities
-  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.mjs');
-  const { getPrediction } = await import('./studio/_utils/replicate.mjs');
+  
+  
 
   if (event.httpMethod !== 'GET') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
@@ -49,9 +55,9 @@ exports.handler = async (event, context) => {
             console.log(`[JOB-STATUS] Webhook missed! Triggering manual completion for job ${jobId}`);
 
             // Manually trigger the same completion logic as webhook
-            const { downloadImage } = await import('./studio/_utils/replicate.mjs');
-            const { cropPadToExactAR, makeThumbnail } = await import('./studio/_utils/image.mjs');
-            const { uploadToStorage } = await import('./studio/_utils/exports.mjs');
+            
+            
+            
 
             // Download and process image
             const imageUrl = Array.isArray(prediction.output) ? prediction.output[0] : prediction.output;

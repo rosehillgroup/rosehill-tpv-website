@@ -1,4 +1,6 @@
 // Webhook to automatically generate installation pages when installations are created/updated
+import { createClient } from '@sanity/client';
+
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -31,7 +33,7 @@ export async function handler(event, context) {
   }
   
   try {
-    const { createClient } = await import('@sanity/client');
+    
     const sanity = createClient({
       projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
       dataset: process.env.SANITY_DATASET || 'production',

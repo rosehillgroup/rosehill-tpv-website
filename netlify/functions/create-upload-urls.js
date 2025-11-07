@@ -11,7 +11,7 @@ console.log('Environment check:', {
   bucket: BUCKET
 });
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   try {
     if (event.httpMethod !== 'POST') {
       return { statusCode: 405, body: 'Method Not Allowed' };

@@ -3,6 +3,13 @@
 // Replaces the old grammar-based design-generate endpoint
 
 /**
+import { downloadImage } from './studio/_utils/replicate.js';
+import { posterizeImage } from './studio/_utils/color-quantize.js';
+import { vectorizeImage, estimateQuality } from './studio/_utils/vectorize.js';
+import { autoRepair, generateRepairReport } from './studio/_utils/auto-repair.js';
+import { calculateBOM, calculateInstallerScore, checkRegionConstraints } from './studio/_utils/constraints.js';
+import { exportSVG, exportPNG, generateAllExports, uploadToStorage } from './studio/_utils/exports.js';
+
  * Convert vectorized regions (with SVG paths) to TPV region format (with points)
  * This is a simplified conversion - full implementation would parse SVG path strings
  * @param {Array} vectorRegions - Regions with SVG paths
@@ -78,14 +85,14 @@ const DEFAULT_RULES = {
  *   }
  * }
  */
-exports.handler = async function(event, context) {
+export const handler = async function(event, context) {
   // Dynamic import of ESM utilities
-  const { downloadImage } = await import('./studio/_utils/replicate.mjs');
-  const { posterizeImage } = await import('./studio/_utils/color-quantize.mjs');
-  const { vectorizeImage, estimateQuality } = await import('./studio/_utils/vectorize.mjs');
-  const { autoRepair, generateRepairReport } = await import('./studio/_utils/auto-repair.mjs');
-  const { calculateBOM, calculateInstallerScore, checkRegionConstraints } = await import('./studio/_utils/constraints.mjs');
-  const { exportSVG, exportPNG, generateAllExports, uploadToStorage } = await import('./studio/_utils/exports.mjs');
+  
+  
+  
+  
+  
+  
   // Only accept POST
   if (event.httpMethod !== 'POST') {
     return {

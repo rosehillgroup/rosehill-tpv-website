@@ -16,7 +16,7 @@ const response = (statusCode, body) => ({
     body: JSON.stringify(body),
 });
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
     // Only accept GET requests
     if (event.httpMethod !== 'GET') {
         return response(405, { error: 'Method not allowed' });

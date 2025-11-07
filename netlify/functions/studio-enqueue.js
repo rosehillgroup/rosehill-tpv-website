@@ -1,12 +1,18 @@
 // TPV Studio - Enqueue Job
 // Generates stencil and starts Replicate prediction with webhook
 
+import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
+import { buildStylePrompt } from './studio/_utils/prompt.js';
+import { metersToPixels, pickNearestSize } from './studio/_utils/aspect-resolver.js';
+import { createText2ImagePrediction, estimateCostSimple } from './studio/_utils/replicate.js';
+import { generateAndUploadStencil, buildReplicateInput } from './studio/_utils/preprocessing.js';
+
 const REPLICATE_API = 'https://api.replicate.com/v1/predictions';
 const SDXL_VERSION = '39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b'; // stable-diffusion-xl-1024-v1-0
 
-exports.handler = async(event, context) => {
+export const handler = async(event, context) => {
   // Dynamic import of ESM utilities
-  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.mjs');
+  
 
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
@@ -39,9 +45,9 @@ exports.handler = async(event, context) => {
       // === SIMPLE MODE: Direct text→image (Inspiration Mode) ===
       console.log('[ENQUEUE] Using simple mode (Inspiration Mode)');
 
-      const { buildStylePrompt } = await import('./studio/_utils/prompt.mjs');
-      const { metersToPixels, pickNearestSize } = await import('./studio/_utils/aspect-resolver.mjs');
-      const { createText2ImagePrediction, estimateCostSimple } = await import('./studio/_utils/replicate.mjs');
+      
+      
+      
 
       const startTime = Date.now();
 
@@ -133,7 +139,7 @@ exports.handler = async(event, context) => {
       // === MULTI-PASS MODE: Stencil-based pipeline (Original) ===
       console.log('[ENQUEUE] Using multi-pass mode (original pipeline)');
 
-      const { generateAndUploadStencil, buildReplicateInput } = await import('./studio/_utils/preprocessing.mjs');
+      
 
       // Step 1: Generate stencil (2s)
       const { stencilUrl, metadata } = await generateAndUploadStencil({

@@ -41,7 +41,7 @@ async function sendNewSubmissionNotification(submissionData, submissionId) {
   }
 }
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   try {
     if (event.httpMethod !== 'POST') {
       return { statusCode: 405, body: 'Method Not Allowed' };

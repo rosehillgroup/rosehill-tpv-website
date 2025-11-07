@@ -3,6 +3,8 @@
 // Client polls this endpoint until status is 'completed' or 'failed'
 
 /**
+import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
+
  * Get Inspire Job Status Handler
  * GET /api/studio/inspire/status?jobId=<uuid>
  *
@@ -19,9 +21,9 @@
  *   completed_at: string (if completed/failed)
  * }
  */
-exports.handler = async(event, context) => {
+export const handler = async(event, context) => {
   // Dynamic import of ESM utilities
-  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.mjs');
+  
 
   // Only accept GET
   if (event.httpMethod !== 'GET') {

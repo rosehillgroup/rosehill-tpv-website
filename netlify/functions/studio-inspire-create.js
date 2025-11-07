@@ -3,6 +3,8 @@
 // Background worker picks up pending jobs and processes them
 
 /**
+import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
+
  * Create Inspire Job Handler
  * POST /api/studio/inspire/create
  *
@@ -23,9 +25,9 @@
  *   estimatedDuration: number (seconds)
  * }
  */
-exports.handler = async (event, context) => {
+export const handler = async (event, context) => {
   // Dynamic import of ESM utilities
-  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.mjs');
+  
 
   // Only accept POST
   if (event.httpMethod !== 'POST') {

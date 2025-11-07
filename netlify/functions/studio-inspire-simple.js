@@ -1,9 +1,11 @@
 // TPV Studio - Create Simple Mode Job
 // Creates a studio_jobs entry and triggers enqueue function
 
-exports.handler = async (event, context) => {
+import { getSupabaseServiceClient } from './studio/_utils/supabase.js';
+
+export const handler = async (event, context) => {
   // Dynamic import of ESM utilities
-  const { getSupabaseServiceClient } = await import('./studio/_utils/supabase.mjs');
+  
 
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
