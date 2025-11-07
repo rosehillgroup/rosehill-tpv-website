@@ -2,7 +2,7 @@
 // State machine for draft → region refinement → polish pipeline
 // Idempotent handling with prediction_id + job_id guard
 
-const crypto = require('crypto');
+const { verifyReplicateSignature } = require('./studio/_utils/replicate-signature.js');
 const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
 const { downloadImage, generateDraftSDXL, refineRegionSDXL } = require('./studio/_utils/replicate.js');
 const { uploadByStage, uploadToStorage } = require('./studio/_utils/exports.js');
@@ -11,148 +11,25 @@ const { quantizeWithDithering } = require('./studio/_utils/oklch-quantize.js');
 const { assessConceptQuality } = require('./studio/_utils/quality-gate.js');
 const { cropPadToExactAR, makeThumbnail } = require('./studio/_utils/image.js');
 
-/**
- * Helper: Get signature header (case-insensitive)
- */
-function getSignatureHeader(headers) {
-  return headers['webhook-signature'] || headers['Webhook-Signature'] || '';
-}
-
-/**
- * Helper: Parse Replicate's "v1,<base64-signature>" format
- */
-function parseSigHeader(header) {
-  // Replicate format: "v1,<base64-signature>"
-  const parts = header.split(',');
-  if (parts.length !== 2 || parts[0] !== 'v1') {
-    return { version: null, signature: null };
-  }
-  return { version: parts[0], signature: parts[1] };
-}
-
-/**
- * Helper: Get raw body buffer (handle base64 encoding)
- */
-function rawBodyBuffer(event) {
-  if (event.isBase64Encoded) {
-    return Buffer.from(event.body, 'base64');
-  }
-  return Buffer.from(event.body, 'utf8');
-}
-
-/**
- * Verify Replicate webhook signature
- * @param {Object} event - Netlify event object
- * @param {string} secret - REPLICATE_WEBHOOK_SIGNING_SECRET
- * @returns {boolean} true if signature is valid
- */
-function verifyReplicateSignature(event, secret) {
-  console.log('[WEBHOOK] Starting signature verification...');
-
-  const header = getSignatureHeader(event.headers || {});
-  console.log('[WEBHOOK] Signature header:', header ? 'present' : 'missing');
-  console.log('[WEBHOOK] Raw signature header value:', JSON.stringify(header));
-
-  if (!header || !secret) {
-    console.error('[WEBHOOK] Missing header or secret', {
-      hasHeader: !!header,
-      hasSecret: !!secret
-    });
-    return false;
-  }
-
-  const { version, signature } = parseSigHeader(header);
-  console.log('[WEBHOOK] Parsed signature:', {
-    hasVersion: !!version,
-    hasSignature: !!signature,
-    version,
-    signatureLength: signature?.length
-  });
-
-  if (!version || !signature) {
-    console.error('[WEBHOOK] Invalid signature header format');
-    return false;
-  }
-
-  // Get raw body and compute HMAC
-  const raw = rawBodyBuffer(event);
-
-  // Parse body to check for timestamp field
-  let bodyObj;
-  try {
-    bodyObj = JSON.parse(raw.toString('utf8'));
-    console.log('[WEBHOOK] Body fields:', Object.keys(bodyObj));
-    if (bodyObj.created_at) {
-      console.log('[WEBHOOK] Body has created_at:', bodyObj.created_at);
-    }
-    if (bodyObj.started_at) {
-      console.log('[WEBHOOK] Body has started_at:', bodyObj.started_at);
-    }
-    if (bodyObj.completed_at) {
-      console.log('[WEBHOOK] Body has completed_at:', bodyObj.completed_at);
-    }
-  } catch (e) {
-    console.log('[WEBHOOK] Could not parse body as JSON');
-  }
-
-  const expectedHmac = crypto.createHmac('sha256', secret)
-    .update(raw)
-    .digest('base64');
-
-  console.log('[WEBHOOK] HMAC comparison:', {
-    providedLength: signature.length,
-    expectedLength: expectedHmac.length,
-    providedPrefix: signature.substring(0, 8),
-    expectedPrefix: expectedHmac.substring(0, 8),
-    base64Encoded: !!event.isBase64Encoded,
-    bodyLength: raw.length,
-    bodyPreview: raw.toString('utf8').substring(0, 200)
-  });
-
-  // Timing-safe comparison of base64 strings
-  if (signature.length !== expectedHmac.length) {
-    console.error('[WEBHOOK] HMAC length mismatch');
-    return false;
-  }
-
-  const providedBuf = Buffer.from(signature, 'base64');
-  const expectedBuf = Buffer.from(expectedHmac, 'base64');
-
-  if (!crypto.timingSafeEqual(providedBuf, expectedBuf)) {
-    console.error('[WEBHOOK] HMAC mismatch');
-    return false;
-  }
-
-  console.log('[WEBHOOK] Signature verification SUCCESS');
-  return true;
-}
-
 exports.handler = async (event, context) => {
 
   try {
     // 1. Verify webhook authentication (two layers)
     const token = event.queryStringParameters?.token;
-    const signingSecret = process.env.REPLICATE_WEBHOOK_SIGNING_SECRET;
 
-    // Layer 1: URL token (simple auth, already working)
-    if (token && token !== process.env.REPLICATE_WEBHOOK_SECRET) {
+    // Layer 1: Optional URL token check (backward compatible)
+    if (process.env.REPLICATE_WEBHOOK_TOKEN && token !== process.env.REPLICATE_WEBHOOK_TOKEN) {
       console.error('[WEBHOOK] Invalid URL token');
       return { statusCode: 401, body: 'Invalid token' };
     }
 
-    // Layer 2: Replicate signature verification (proper cryptographic auth)
-    if (signingSecret) {
-      const signatureValid = verifyReplicateSignature(event, signingSecret);
-      if (!signatureValid) {
-        console.error('[WEBHOOK] Signature verification failed');
-        return { statusCode: 401, body: 'Invalid signature' };
-      }
-      console.log('[WEBHOOK] Signature verified successfully');
-    } else if (!token) {
-      // No auth configured at all
-      console.error('[WEBHOOK] No authentication configured (no token or signing secret)');
-      return { statusCode: 401, body: 'Unauthorized' };
+    // Layer 2: Primary signature verification (expert-provided implementation)
+    if (!verifyReplicateSignature(event, 'REPLICATE_WEBHOOK_SIGNING_SECRET')) {
+      console.error('[WEBHOOK] Signature verification failed');
+      return { statusCode: 401, body: 'Invalid signature' };
     }
+
+    console.log('[WEBHOOK] Authentication successful');
 
     const payload = JSON.parse(event.body || '{}');
     const { id: prediction_id, status, output, error: predictionError } = payload;
