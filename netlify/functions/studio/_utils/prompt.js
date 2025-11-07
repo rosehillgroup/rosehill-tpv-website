@@ -1,42 +1,123 @@
 // Prompt Builder for TPV Studio Inspiration Mode
-// Material-first prompting with style presets
+// Implements the full buildFluxPrompt() from the design plan
 
 /**
- * Material-first prompt anchoring - optimized for FLUX-dev
- * Describes TPV rubber granule properties before creative theme
+ * Build FLUX prompt from structured design brief
+ * @param {Object} brief - Design brief with title, mood, motifs, arrangement_notes
+ * @param {Object} options - Optional overrides (simplicity, etc.)
+ * @returns {Object} {positive, negative, guidance, steps}
  */
-const MATERIAL_PREFIX = 'Flat vector illustration of playground TPV rubber surfacing design, graphic design style, flat 2D, no photorealism';
-const MATERIAL_TAIL = 'bold flat vector aesthetic, large smooth geometric shapes, installer-friendly simple forms, clean matte finish, minimal soft shadows, no depth, no 3D, no texture, no outlines, no text, no tiny elements, pure flat design';
+export function buildFluxPrompt(brief, options = {}) {
+  // Extract brief components
+  const theme = brief?.title ? `Theme: ${brief.title}.` : "";
+  const mood = (brief?.mood || []).length ? `Mood: ${brief.mood.join(", ")}.` : "";
+
+  const motifs = (brief?.motifs || [])
+    .map(m => `${m.name} x${m.count || 1}`)
+    .join(", ");
+  const motifsLine = motifs ? `Motifs: ${motifs} as bold, simple silhouettes.` : "";
+
+  const composition = brief?.arrangement_notes
+    ? `Composition: ${brief.arrangement_notes}`
+    : `Composition: 2–3 broad flowing bands, generous spacing, minimal overlaps.`;
+
+  // Build positive prompt
+  const positive = [
+    "Flat vector illustration of playground TPV rubber surfacing design, graphic design style, flat 2D, no photorealism",
+    "flat vector look with large smooth shapes",
+    "installer-friendly geometry",
+    "no outlines, no text, no tiny elements",
+    "matte finish, soft ambient shadow only",
+    theme,
+    mood,
+    motifsLine,
+    composition,
+    "bold flat vector aesthetic, large smooth geometric shapes, installer-friendly simple forms, clean matte finish, minimal soft shadows, no depth, no 3D, no texture, pure flat design"
+  ].filter(Boolean).join(", ");
+
+  // Build negative prompt - front-loaded with anti-realism terms
+  let negative = [
+    "photorealistic", "photo", "photography", "3D render", "3D", "depth",
+    "shadows", "realistic lighting", "perspective",
+    "busy pattern", "fine texture", "high-frequency detail",
+    "thin lines", "hairline strokes", "text", "letters", "numbers",
+    "bevel", "emboss", "metallic", "glossy", "shading", "gradients",
+    "perspective props", "stickers", "clipart", "grunge", "graffiti",
+    "tiny symbols", "noisy background", "photographic texture",
+    "stippling", "halftone", "noodly details", "micro-patterns",
+    "realistic", "detailed texture"
+  ].join(", ");
+
+  // Apply simplicity enhancement if requested
+  if (options.simplicity === 'high' || options.trySimpler) {
+    negative += ", complex shapes, overlapping elements, busy composition, small details, intricate patterns";
+  }
+
+  // FLUX-dev parameters
+  const guidance = options.guidance || 3.8;  // Lower = less fussy
+  const steps = options.steps || 20;
+
+  return {
+    positive,
+    negative,
+    guidance,
+    steps
+  };
+}
 
 /**
- * Unified negative prompts to avoid AI artifacts and unwanted outputs
- * Optimized for FLUX-dev to produce clean, installer-friendly results
+ * Build prompt from simple user text (backward compatibility)
+ * Wraps user text in TPV design context
+ * @param {string} userPrompt - Simple user description
+ * @param {Object} options - Optional overrides (style, simplicity, etc.)
+ * @returns {Object} {positive, negative, guidance, steps}
  */
-const NEGATIVE_PROMPTS = 'photorealistic, photo, photography, 3D render, 3D, depth, shadows, realistic lighting, perspective, busy pattern, fine texture, high-frequency detail, thin lines, hairline strokes, text, letters, numbers, bevel, emboss, metallic, glossy, shading, gradients, perspective props, stickers, clipart, grunge, graffiti, tiny symbols, noisy background, photographic texture, stippling, halftone, noodly details, micro-patterns, realistic, detailed texture';
+export function buildSimplePrompt(userPrompt, options = {}) {
+  let brief = {
+    title: userPrompt,
+    mood: [],
+    motifs: [],
+    arrangement_notes: null
+  };
+
+  // Apply style preset if provided
+  if (options.style) {
+    brief = applyStylePreset(brief, options.style);
+  }
+
+  return buildFluxPrompt(brief, options);
+}
 
 /**
  * Style presets for different design approaches
- * Optimized for FLUX-dev (high-quality, designer-friendly results)
+ * These can enhance the brief with style-specific hints
  */
 export const STYLE_PRESETS = {
   playful_flat: {
     name: 'Playful Flat Design',
     description: 'Bold shapes, vibrant colors, fun themes',
-    prefix: 'Bold flat shapes, vibrant colors, simple geometric forms,',
-    guidance: 3.8, // FLUX-dev works best with 3-4 guidance (lower = less fussy)
-    steps: 20 // FLUX-dev good default for quality
+    moodHints: ['playful', 'vibrant', 'fun'],
+    guidance: 3.8,
+    steps: 20
   },
   geometric: {
     name: 'Geometric Abstract',
     description: 'Clean lines, mathematical patterns, modern aesthetics',
-    prefix: 'Geometric abstract pattern, clean lines, mathematical precision, modern minimalist design,',
+    moodHints: ['minimal', 'modern', 'geometric'],
     guidance: 3.8,
     steps: 20
   },
   sport_court: {
     name: 'Sport Court Graphics',
     description: 'Court line markings, field layouts, sport-specific graphics',
-    prefix: 'Court line markings, field graphics, clean geometric boundaries,',
+    moodHints: ['athletic', 'structured', 'functional'],
+    guidance: 3.8,
+    steps: 20
+  },
+  tpv_flat_minimal: {
+    name: 'TPV Flat Minimal',
+    description: 'Ultra-simple, installer-friendly, large clean shapes',
+    moodHints: ['minimal', 'clean', 'simple'],
     guidance: 3.8,
     steps: 20
   }
@@ -44,7 +125,7 @@ export const STYLE_PRESETS = {
 
 /**
  * Get style preset by ID
- * @param {string} styleId - Style preset ID (playful_flat, geometric, sport_court)
+ * @param {string} styleId - Style preset ID
  * @returns {Object} Style preset
  */
 export function getStylePreset(styleId) {
@@ -59,40 +140,18 @@ export function getStylePreset(styleId) {
 }
 
 /**
- * Build complete prompt with material anchoring
- * @param {Object} params - Prompt parameters
- * @param {string} params.user - User's creative prompt
- * @param {string} params.style - Style preset ID (optional, defaults to env var)
- * @returns {Object} {prompt, negative, guidance, steps, style}
+ * Enhance brief with style preset hints
+ * @param {Object} brief - Design brief
+ * @param {string} styleId - Style preset ID
+ * @returns {Object} Enhanced brief
  */
-export function buildStylePrompt({ user, style = null }) {
-  // Get style preset
-  const preset = getStylePreset(style);
-
-  // Validate user input
-  if (!user || user.trim().length === 0) {
-    throw new Error('User prompt cannot be empty');
-  }
-
-  // Sanitize user input (remove any unwanted characters or patterns)
-  const sanitized = user
-    .trim()
-    .replace(/\s+/g, ' ') // Normalize whitespace
-    .substring(0, 200); // Cap at 200 chars to avoid excessive length
-
-  // Build final prompt: material prefix + style + user prompt + material tail
-  const prompt = `${MATERIAL_PREFIX}, ${preset.prefix} ${sanitized}, ${MATERIAL_TAIL}`;
-
-  console.log(`[PROMPT] Style: ${preset.name} | User: "${sanitized}"`);
-  console.log(`[PROMPT] Full prompt: "${prompt}"`);
-  console.log(`[PROMPT] Negative: "${NEGATIVE_PROMPTS}"`);
+export function applyStylePreset(brief, styleId) {
+  const style = getStylePreset(styleId);
 
   return {
-    prompt,
-    negative: NEGATIVE_PROMPTS,
-    guidance: preset.guidance,
-    steps: preset.steps,
-    style: preset.name
+    ...brief,
+    mood: [...(brief.mood || []), ...style.moodHints],
+    style_preset: styleId
   };
 }
 
@@ -118,23 +177,39 @@ export function extractThemes(userPrompt) {
 }
 
 /**
- * Validate prompt parameters
- * @param {Object} params - Prompt parameters
+ * Validate brief structure
+ * @param {Object} brief - Design brief
  * @returns {Object} {valid, errors}
  */
-export function validatePrompt(params) {
+export function validateBrief(brief) {
   const errors = [];
 
-  if (!params.user || typeof params.user !== 'string') {
-    errors.push('User prompt is required and must be a string');
-  } else if (params.user.trim().length === 0) {
-    errors.push('User prompt cannot be empty');
-  } else if (params.user.length > 500) {
-    errors.push('User prompt too long (max 500 characters)');
+  if (!brief || typeof brief !== 'object') {
+    errors.push('Brief must be an object');
+    return { valid: false, errors };
   }
 
-  if (params.style && !STYLE_PRESETS[params.style]) {
-    errors.push(`Invalid style preset: ${params.style}`);
+  // Title or motifs required
+  if (!brief.title && (!brief.motifs || brief.motifs.length === 0)) {
+    errors.push('Brief must have either a title or motifs');
+  }
+
+  // Validate motifs structure
+  if (brief.motifs) {
+    if (!Array.isArray(brief.motifs)) {
+      errors.push('Motifs must be an array');
+    } else {
+      brief.motifs.forEach((motif, i) => {
+        if (!motif.name) {
+          errors.push(`Motif ${i} missing name`);
+        }
+      });
+    }
+  }
+
+  // Validate mood
+  if (brief.mood && !Array.isArray(brief.mood)) {
+    errors.push('Mood must be an array of strings');
   }
 
   return {

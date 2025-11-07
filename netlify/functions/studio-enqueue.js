@@ -2,10 +2,18 @@
 // Generates stencil and starts Replicate prediction with webhook
 
 const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
-const { buildStylePrompt } = require('./studio/_utils/prompt.js');
+const { buildSimplePrompt, buildFluxPrompt } = require('./studio/_utils/prompt.js');
 const { metersToPixels, pickNearestSize } = require('./studio/_utils/aspect-resolver.js');
 const { createText2ImagePrediction, estimateCostSimple } = require('./studio/_utils/replicate.js');
 const { generateAndUploadStencil, buildReplicateInput } = require('./studio/_utils/preprocessing.js');
+
+// Dynamic import for ESM modules
+let refineToDesignBrief, isDesignDirectorEnabled;
+(async () => {
+  const designDirector = await import('./studio/_utils/design-director.js');
+  refineToDesignBrief = designDirector.refineToDesignBrief;
+  isDesignDirectorEnabled = designDirector.isDesignDirectorEnabled;
+})();
 
 const REPLICATE_API = 'https://api.replicate.com/v1/predictions';
 const SDXL_VERSION = '39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b'; // stable-diffusion-xl-1024-v1-0
@@ -56,11 +64,46 @@ exports.handler = async(event, context) => {
       const style = job.style || process.env.INSPIRE_MODEL_STYLE_DEFAULT || 'playful_flat';
       const surface = job.surface || job.metadata?.surface || { width_m: 10, height_m: 10 };
 
-      // Build material-anchored prompt
-      const { prompt, negative, guidance, steps } = buildStylePrompt({
-        user: userPrompt,
-        style
-      });
+      // Build material-anchored prompt using new prompt builder
+      let prompt, negative, guidance, steps;
+
+      // Check if Design Director LLM is enabled for brief refinement
+      if (isDesignDirectorEnabled && isDesignDirectorEnabled()) {
+        console.log('[ENQUEUE] Using Design Director for brief refinement');
+
+        try {
+          // Refine user text into structured brief with LLM
+          const brief = await refineToDesignBrief(userPrompt, {
+            surface,
+            style
+          });
+
+          console.log(`[ENQUEUE] Design Director refined: "${brief.title}" (${brief.motifs?.length || 0} motifs)`);
+
+          // Build FLUX prompt from structured brief
+          const promptResult = buildFluxPrompt(brief, { style });
+          prompt = promptResult.positive;
+          negative = promptResult.negative;
+          guidance = promptResult.guidance;
+          steps = promptResult.steps;
+
+        } catch (error) {
+          console.error('[ENQUEUE] Design Director failed, falling back to simple prompt:', error.message);
+          // Fall back to simple prompt if LLM fails
+          const result = buildSimplePrompt(userPrompt, { style });
+          prompt = result.positive;
+          negative = result.negative;
+          guidance = result.guidance;
+          steps = result.steps;
+        }
+      } else {
+        // Simple mode: wrap user text in brief structure without LLM
+        const result = buildSimplePrompt(userPrompt, { style });
+        prompt = result.positive;
+        negative = result.negative;
+        guidance = result.guidance;
+        steps = result.steps;
+      }
 
       // Convert surface dimensions to pixels and find nearest SDXL size
       const ppi = parseInt(process.env.IMG_PPI || '200');

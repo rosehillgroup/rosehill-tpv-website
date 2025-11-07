@@ -9,6 +9,7 @@
     "deploy": "echo 'Site deploys automatically via Netlify when pushed to main branch'"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
     "@sanity/client": "^6.22.7",
     "@sanity/image-url": "^1.2.0",
     "@supabase/supabase-js": "^2.38.0",
