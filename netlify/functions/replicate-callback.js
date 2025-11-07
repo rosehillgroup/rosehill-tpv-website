@@ -325,15 +325,12 @@ async function handleSimpleSuccess(supabase, job, output) {
       .update({
         status: 'completed',
         completed_at: new Date().toISOString(),
-        result: {
+        outputs: {
           final_url: finalUpload.publicUrl,
           thumbnail_url: thumbUpload.publicUrl,
-          raw_output: imageUrl,
-          dimensions: {
-            target: { w: targetW, h: targetH },
-            gen: { w: genW, h: genH },
-            final: { w: targetW, h: targetH }
-          }
+          final_path: finalUpload.path,
+          thumbnail_path: thumbUpload.path,
+          raw_output: imageUrl
         },
         metadata: {
           ...job.metadata,
@@ -342,8 +339,11 @@ async function handleSimpleSuccess(supabase, job, output) {
           webhook_latency: webhookLatency,
           step_durations: stepDurations,
           timeline: timeline,
-          final_path: finalUpload.path,
-          thumbnail_path: thumbUpload.path
+          dimensions: {
+            target: { w: targetW, h: targetH },
+            gen: { w: genW, h: genH },
+            final: { w: targetW, h: targetH }
+          }
         }
       })
       .eq('id', job.id);
