@@ -69,6 +69,8 @@ function verifyReplicateSignature(event, secret, maxSkewSeconds = 5 * 60) {
 
   const header = getSignatureHeader(event.headers || {});
   console.log('[WEBHOOK] Signature header:', header ? 'present' : 'missing');
+  console.log('[WEBHOOK] Raw signature header value:', JSON.stringify(header));
+  console.log('[WEBHOOK] Header length:', header?.length);
 
   if (!header || !secret) {
     console.error('[WEBHOOK] Missing header or secret', {
