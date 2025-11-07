@@ -19,13 +19,15 @@ function getSignatureHeader(headers) {
 }
 
 /**
- * Helper: Parse Replicate's "t=timestamp,v1=signature" format
+ * Helper: Parse Replicate's "v1,<base64-signature>" format
  */
 function parseSigHeader(header) {
+  // Replicate format: "v1,<base64-signature>"
   const parts = header.split(',');
-  const t = parts.find(p => p.startsWith('t='))?.split('=')[1];
-  const v1 = parts.find(p => p.startsWith('v1='))?.split('=')[1];
-  return { t, v1 };
+  if (parts.length !== 2 || parts[0] !== 'v1') {
+    return { version: null, signature: null };
+  }
+  return { version: parts[0], signature: parts[1] };
 }
 
 /**
@@ -39,38 +41,17 @@ function rawBodyBuffer(event) {
 }
 
 /**
- * Helper: Compute HMAC-SHA256 hex
- */
-function hmacHex(secret, data) {
-  return crypto.createHmac('sha256', secret)
-    .update(data)
-    .digest('hex');
-}
-
-/**
- * Helper: Timing-safe hex string comparison
- */
-function timingSafeEqHex(a, b) {
-  if (a.length !== b.length) return false;
-  const bufA = Buffer.from(a, 'hex');
-  const bufB = Buffer.from(b, 'hex');
-  return crypto.timingSafeEqual(bufA, bufB);
-}
-
-/**
  * Verify Replicate webhook signature
  * @param {Object} event - Netlify event object
  * @param {string} secret - REPLICATE_WEBHOOK_SIGNING_SECRET
- * @param {number} maxSkewSeconds - Max allowed time difference (default 5 minutes)
  * @returns {boolean} true if signature is valid
  */
-function verifyReplicateSignature(event, secret, maxSkewSeconds = 5 * 60) {
+function verifyReplicateSignature(event, secret) {
   console.log('[WEBHOOK] Starting signature verification...');
 
   const header = getSignatureHeader(event.headers || {});
   console.log('[WEBHOOK] Signature header:', header ? 'present' : 'missing');
   console.log('[WEBHOOK] Raw signature header value:', JSON.stringify(header));
-  console.log('[WEBHOOK] Header length:', header?.length);
 
   if (!header || !secret) {
     console.error('[WEBHOOK] Missing header or secret', {
@@ -80,48 +61,44 @@ function verifyReplicateSignature(event, secret, maxSkewSeconds = 5 * 60) {
     return false;
   }
 
-  const { t, v1 } = parseSigHeader(header);
-  console.log('[WEBHOOK] Parsed signature parts:', {
-    hasTimestamp: !!t,
-    hasSignature: !!v1,
-    timestamp: t,
-    signatureLength: v1?.length
+  const { version, signature } = parseSigHeader(header);
+  console.log('[WEBHOOK] Parsed signature:', {
+    hasVersion: !!version,
+    hasSignature: !!signature,
+    version,
+    signatureLength: signature?.length
   });
 
-  if (!t || !v1) {
-    console.error('[WEBHOOK] Missing timestamp or signature in header');
+  if (!version || !signature) {
+    console.error('[WEBHOOK] Invalid signature header format');
     return false;
   }
 
-  // Replay protection
-  const now = Math.floor(Date.now() / 1000);
-  const skew = Math.abs(now - Number(t));
-  console.log('[WEBHOOK] Timestamp check:', {
-    now,
-    timestamp: t,
-    skew,
-    maxSkew: maxSkewSeconds
-  });
-
-  if (skew > maxSkewSeconds) {
-    console.error('[WEBHOOK] Signature timestamp outside allowed window', { t, now, skew });
-    return false;
-  }
-
+  // Get raw body and compute HMAC
   const raw = rawBodyBuffer(event);
-  const signedPayload = `${t}.${raw.toString('utf8')}`;
-  const expected = hmacHex(secret, signedPayload);
+  const expectedHmac = crypto.createHmac('sha256', secret)
+    .update(raw)
+    .digest('base64');
 
   console.log('[WEBHOOK] HMAC comparison:', {
-    providedLength: v1.length,
-    expectedLength: expected.length,
-    providedPrefix: v1.substring(0, 8),
-    expectedPrefix: expected.substring(0, 8),
+    providedLength: signature.length,
+    expectedLength: expectedHmac.length,
+    providedPrefix: signature.substring(0, 8),
+    expectedPrefix: expectedHmac.substring(0, 8),
     base64Encoded: !!event.isBase64Encoded,
     bodyLength: raw.length
   });
 
-  if (!timingSafeEqHex(v1, expected)) {
+  // Timing-safe comparison of base64 strings
+  if (signature.length !== expectedHmac.length) {
+    console.error('[WEBHOOK] HMAC length mismatch');
+    return false;
+  }
+
+  const providedBuf = Buffer.from(signature, 'base64');
+  const expectedBuf = Buffer.from(expectedHmac, 'base64');
+
+  if (!crypto.timingSafeEqual(providedBuf, expectedBuf)) {
     console.error('[WEBHOOK] HMAC mismatch');
     return false;
   }
