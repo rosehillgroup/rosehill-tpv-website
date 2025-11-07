@@ -18,7 +18,7 @@ exports.handler = async (event, context) => {
     const token = event.queryStringParameters?.token;
 
     // Layer 1: Primary auth via URL token (required)
-    if (!token || token !== process.env.REPLICATE_WEBHOOK_TOKEN) {
+    if (!token || token !== process.env.REPLICATE_WEBHOOK_SECRET) {
       console.error('[WEBHOOK] Invalid or missing URL token');
       return { statusCode: 401, body: 'Unauthorized' };
     }
