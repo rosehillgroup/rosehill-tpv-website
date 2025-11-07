@@ -76,6 +76,25 @@ function verifyReplicateSignature(event, secret) {
 
   // Get raw body and compute HMAC
   const raw = rawBodyBuffer(event);
+
+  // Parse body to check for timestamp field
+  let bodyObj;
+  try {
+    bodyObj = JSON.parse(raw.toString('utf8'));
+    console.log('[WEBHOOK] Body fields:', Object.keys(bodyObj));
+    if (bodyObj.created_at) {
+      console.log('[WEBHOOK] Body has created_at:', bodyObj.created_at);
+    }
+    if (bodyObj.started_at) {
+      console.log('[WEBHOOK] Body has started_at:', bodyObj.started_at);
+    }
+    if (bodyObj.completed_at) {
+      console.log('[WEBHOOK] Body has completed_at:', bodyObj.completed_at);
+    }
+  } catch (e) {
+    console.log('[WEBHOOK] Could not parse body as JSON');
+  }
+
   const expectedHmac = crypto.createHmac('sha256', secret)
     .update(raw)
     .digest('base64');
@@ -86,7 +105,8 @@ function verifyReplicateSignature(event, secret) {
     providedPrefix: signature.substring(0, 8),
     expectedPrefix: expectedHmac.substring(0, 8),
     base64Encoded: !!event.isBase64Encoded,
-    bodyLength: raw.length
+    bodyLength: raw.length,
+    bodyPreview: raw.toString('utf8').substring(0, 200)
   });
 
   // Timing-safe comparison of base64 strings
