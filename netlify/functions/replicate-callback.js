@@ -2,7 +2,7 @@
 // State machine for draft → region refinement → polish pipeline
 // Idempotent handling with prediction_id + job_id guard
 
-const { verifyReplicateSignature } = require('./studio/_utils/replicate-signature.js');
+const { verifyReplicateSignature, getSigHeader } = require('./studio/_utils/replicate-signature.js');
 const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
 const { downloadImage, generateDraftSDXL, refineRegionSDXL } = require('./studio/_utils/replicate.js');
 const { uploadByStage, uploadToStorage } = require('./studio/_utils/exports.js');
@@ -14,19 +14,31 @@ const { cropPadToExactAR, makeThumbnail } = require('./studio/_utils/image.js');
 exports.handler = async (event, context) => {
 
   try {
-    // 1. Verify webhook authentication (two layers)
+    // 1. Verify webhook authentication (URL token + optional signature)
     const token = event.queryStringParameters?.token;
 
-    // Layer 1: Optional URL token check (backward compatible)
-    if (process.env.REPLICATE_WEBHOOK_TOKEN && token !== process.env.REPLICATE_WEBHOOK_TOKEN) {
-      console.error('[WEBHOOK] Invalid URL token');
-      return { statusCode: 401, body: 'Invalid token' };
+    // Layer 1: Primary auth via URL token (required)
+    if (!token || token !== process.env.REPLICATE_WEBHOOK_TOKEN) {
+      console.error('[WEBHOOK] Invalid or missing URL token');
+      return { statusCode: 401, body: 'Unauthorized' };
     }
 
-    // Layer 2: Primary signature verification (expert-provided implementation)
-    if (!verifyReplicateSignature(event, 'REPLICATE_WEBHOOK_SIGNING_SECRET')) {
-      console.error('[WEBHOOK] Signature verification failed');
-      return { statusCode: 401, body: 'Invalid signature' };
+    // Layer 2: Optional signature verification (if header present)
+    const rawBody = event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString('utf8') : event.body;
+    const { verified, reason } = verifyReplicateSignature({
+      headers: event.headers,
+      rawBody,
+      signingKey: process.env.REPLICATE_WEBHOOK_SIGNING_SECRET || ''
+    });
+
+    if (getSigHeader(event.headers)) {
+      if (!verified) {
+        console.error('[WEBHOOK] Signature verification failed:', reason);
+        return { statusCode: 401, body: 'Invalid signature' };
+      }
+      console.log('[WEBHOOK] Signature verified');
+    } else {
+      console.warn('[WEBHOOK] Unsigned webhook (allowed via URL token)');
     }
 
     console.log('[WEBHOOK] Authentication successful');
