@@ -1060,8 +1060,8 @@
             LEGACY_K: 2.4,
 
             // Color transform coefficients
-            LIGHT_BOOST: { low: 0.10, mid: 0.08, high: 0.06 },  // Lightness increase by initial L
-            SAT_COEFF: 0.9                // Saturation reduction strength (0.9 = stronger)
+            LIGHT_BOOST: { low: 0.35, mid: 0.25, high: 0.15 },  // Lightness increase by initial L
+            SAT_COEFF: 0.7                // Saturation reduction strength (0.7 = moderate)
         };
 
         // Shorthand access
@@ -1395,7 +1395,10 @@
                     `${SUPABASE_CONFIG.url}/functions/v1/city-search?q=${encodeURIComponent(query)}`,
                     {
                         signal: controller.signal,
-                        headers: { 'apikey': SUPABASE_CONFIG.anonKey }
+                        headers: {
+                            'apikey': SUPABASE_CONFIG.anonKey,
+                            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
+                        }
                     }
                 );
                 clearTimeout(timeoutId);
@@ -1719,7 +1722,7 @@
         }
 
         // Apply fade to hex color using perceptual HSL transformation
-        // More dramatic than old model, less aggressive than calculator
+        // Simulates EPDM fading with white base material showing through
         function applyFade(hex, lossFraction) {
             if (lossFraction === 0) return hex;
 
@@ -1729,15 +1732,21 @@
             const [h, s, l] = hexToHsl(hex);
 
             // Adaptive lightness boost based on initial lightness
-            // Dark colors (L<35): boost more (0.10)
-            // Light colors (L>80): boost less (0.06)
-            // Mid-range: moderate boost (0.08)
-            const lightBoost = (l < 35) ? cfg.LIGHT_BOOST.low :
-                               (l > 80) ? cfg.LIGHT_BOOST.high :
-                               cfg.LIGHT_BOOST.mid;
+            // Dark colors (L<35): boost more (0.35)
+            // Light colors (L>80): boost less (0.15)
+            // Mid-range: moderate boost (0.25)
+            let lightBoost = (l < 35) ? cfg.LIGHT_BOOST.low :
+                             (l > 80) ? cfg.LIGHT_BOOST.high :
+                             cfg.LIGHT_BOOST.mid;
+
+            // Extra boost for very dark colors to simulate white base showing through
+            // This prevents black/dark grey from appearing darker when faded
+            if (l < 20) {
+                lightBoost += 0.20;  // Additional 20% boost for very dark colors
+            }
 
             // Apply fade: desaturate and lighten
-            const newS = Math.max(8, s * (1 - cfg.SAT_COEFF * lossFraction));  // Min 8% saturation
+            const newS = Math.max(15, s * (1 - cfg.SAT_COEFF * lossFraction));  // Min 15% saturation
             const newL = Math.min(96, l + (100 * lightBoost * lossFraction));  // Max 96% lightness
 
             // Convert back to hex
