@@ -27,25 +27,37 @@ export function buildFluxPrompt(brief, options = {}) {
     "flat vector look with large smooth shapes",
     "installer-friendly geometry",
     "no outlines, no text, no tiny elements",
-    "matte finish, soft ambient shadow only",
+    "flat TPV rubber surfacing plan, solid colour fills only, crisp vector edges, no gradients",
+    "hard-edged offset shadow regions as separate shapes (single tone), no lighting, no transparency, no depth shading",
     theme,
     mood,
     motifsLine,
     composition,
-    "bold flat vector aesthetic, large smooth geometric shapes, installer-friendly simple forms, clean matte finish, minimal soft shadows, no depth, no 3D, no texture, pure flat design"
+    "bold flat vector aesthetic, large smooth geometric shapes, installer-friendly simple forms, posterized look, flat fills, print-ready, no gradients, crisp boundaries, no feathering, no depth, no 3D, no texture, pure flat design"
   ].filter(Boolean).join(", ");
 
-  // Build negative prompt - front-loaded with anti-realism terms
+  // Build negative prompt - comprehensive anti-gradient, anti-soft-shadow terms
   let negative = [
+    // Soft shadow & blur elimination
+    "soft shadow", "soft shadows", "feathered shadow", "feathered shadows",
+    "blur", "gaussian blur", "motion blur", "radial blur",
+    "airbrush", "glow", "inner glow", "outer glow",
+    "lighting effects", "specular highlight", "reflective", "glossy",
+    "vignette", "lens flare", "bloom", "halo effect",
+    // Gradient elimination
+    "gradient", "gradients", "radial gradient", "linear gradient", "color gradient",
+    "smooth transition", "fade", "feathering", "soft edges",
+    // 3D & depth cues
     "photorealistic", "photo", "photography", "3D render", "3D", "depth",
-    "shadows", "realistic lighting", "perspective",
+    "realistic lighting", "perspective", "shadows",
+    "bevel", "emboss", "metallic", "shading", "3D shading",
+    // Texture & complexity
     "busy pattern", "fine texture", "high-frequency detail",
     "thin lines", "hairline strokes", "text", "letters", "numbers",
-    "bevel", "emboss", "metallic", "glossy", "shading", "gradients",
     "perspective props", "stickers", "clipart", "grunge", "graffiti",
     "tiny symbols", "noisy background", "photographic texture",
     "stippling", "halftone", "noodly details", "micro-patterns",
-    "realistic", "detailed texture"
+    "realistic", "detailed texture", "transparency", "translucent", "opacity"
   ].join(", ");
 
   // Apply simplicity enhancement if requested
@@ -53,9 +65,9 @@ export function buildFluxPrompt(brief, options = {}) {
     negative += ", complex shapes, overlapping elements, busy composition, small details, intricate patterns";
   }
 
-  // FLUX-dev parameters
-  const guidance = options.guidance || 3.8;  // Lower = less fussy
-  const steps = options.steps || 20;
+  // FLUX-dev parameters - conservative for crisp output
+  const guidance = options.guidance || 3.6;  // Lower = less soft shading (3.5-4.5 range)
+  const steps = options.steps || 20;  // 18-22 range for clean results
 
   return {
     positive,
@@ -97,28 +109,28 @@ export const STYLE_PRESETS = {
     name: 'Playful Flat Design',
     description: 'Bold shapes, vibrant colors, fun themes',
     moodHints: ['playful', 'vibrant', 'fun'],
-    guidance: 3.8,
+    guidance: 3.6,
     steps: 20
   },
   geometric: {
     name: 'Geometric Abstract',
     description: 'Clean lines, mathematical patterns, modern aesthetics',
     moodHints: ['minimal', 'modern', 'geometric'],
-    guidance: 3.8,
+    guidance: 3.6,
     steps: 20
   },
   sport_court: {
     name: 'Sport Court Graphics',
     description: 'Court line markings, field layouts, sport-specific graphics',
     moodHints: ['athletic', 'structured', 'functional'],
-    guidance: 3.8,
+    guidance: 3.6,
     steps: 20
   },
   tpv_flat_minimal: {
     name: 'TPV Flat Minimal',
     description: 'Ultra-simple, installer-friendly, large clean shapes',
     moodHints: ['minimal', 'clean', 'simple'],
-    guidance: 3.8,
+    guidance: 3.6,
     steps: 20
   }
 };

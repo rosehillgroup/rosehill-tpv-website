@@ -101,7 +101,8 @@ exports.handler = async(event, context) => {
       const webhookUrl = `${process.env.PUBLIC_BASE_URL}/.netlify/functions/replicate-callback?token=${encodeURIComponent(process.env.REPLICATE_WEBHOOK_SECRET)}`;
 
       // Create IMG2IMG prediction with stencil
-      const denoise_strength = parseFloat(process.env.IMG2IMG_DENOISE_STRENGTH || '0.6');
+      // Lower denoise (0.25-0.35) = crisper stencil adherence, flatter output
+      const denoise_strength = parseFloat(process.env.IMG2IMG_DENOISE_STRENGTH || '0.3');
       const modelId = process.env.MODEL_ID || 'black-forest-labs/flux-dev';
 
       console.log('[ENQUEUE] Creating IMG2IMG prediction with stencil...');
