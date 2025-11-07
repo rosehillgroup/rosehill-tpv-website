@@ -13,6 +13,8 @@ function InspirePanel({ onConceptsGenerated }) {
   const [surfaceWidth, setSurfaceWidth] = useState(DEFAULT_SURFACE.width_m);
   const [surfaceHeight, setSurfaceHeight] = useState(DEFAULT_SURFACE.height_m);
   const [style, setStyle] = useState('playful_flat');
+  const [mode, setMode] = useState('inspiration'); // 'inspiration' or 'guided'
+  const [simplicity, setSimplicity] = useState(50); // 0-100 slider
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState(null);
@@ -32,7 +34,9 @@ function InspirePanel({ onConceptsGenerated }) {
           width_m: parseFloat(surfaceWidth),
           height_m: parseFloat(surfaceHeight)
         },
-        style
+        style,
+        mode, // 'inspiration' or 'guided'
+        simplicity: simplicity > 70 ? 'high' : simplicity > 30 ? 'medium' : 'low' // Convert slider to category
       };
 
       console.log('[InspirePanel] Creating simple mode job:', request);
@@ -102,6 +106,8 @@ function InspirePanel({ onConceptsGenerated }) {
           height_m: parseFloat(surfaceHeight)
         },
         style,
+        mode,
+        simplicity: simplicity > 70 ? 'high' : simplicity > 30 ? 'medium' : 'low',
         seed: metadata.seed // Use the same seed
       };
 
@@ -162,6 +168,8 @@ function InspirePanel({ onConceptsGenerated }) {
           height_m: parseFloat(surfaceHeight)
         },
         style,
+        mode,
+        simplicity: simplicity > 70 ? 'high' : simplicity > 30 ? 'medium' : 'low',
         seed: newSeed // Use new random seed
       };
 
@@ -200,6 +208,71 @@ function InspirePanel({ onConceptsGenerated }) {
       console.error('[InspirePanel] New seed generation error:', err);
       setError(err.message);
       setProgress(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTrySimpler = async () => {
+    // Regenerate with high simplicity to remove complex details
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    setProgress('Generating simpler version...');
+
+    // Temporarily boost simplicity to 'high'
+    const originalSimplicity = simplicity;
+    setSimplicity(85); // Set to high range
+
+    try {
+      const request = {
+        prompt: prompt.trim(),
+        surface: {
+          width_m: parseFloat(surfaceWidth),
+          height_m: parseFloat(surfaceHeight)
+        },
+        style,
+        mode,
+        simplicity: 'high', // Force high simplicity
+        seed: metadata?.seed // Use same seed if available
+      };
+
+      console.log('[InspirePanel] Generating simpler version with high simplicity');
+
+      const jobResponse = await apiClient.inspireSimpleCreateJob(request);
+      const { jobId } = jobResponse;
+
+      setProgress('Generating simpler design...');
+
+      const jobResult = await apiClient.inspireSimpleWaitForCompletion(jobId, (status) => {
+        switch (status.status) {
+          case 'pending':
+            setProgress('Job created. Starting generation...');
+            break;
+          case 'queued':
+            setProgress('Job queued. Waiting for GPU...');
+            break;
+          case 'running':
+            setProgress('Generating simpler version...');
+            break;
+          default:
+            setProgress(`Status: ${status.status}`);
+        }
+      }, 2000);
+
+      setProgress('Simpler version complete!');
+      setResult(jobResult.result);
+      setMetadata(jobResult.metadata);
+
+      if (onConceptsGenerated) {
+        onConceptsGenerated([jobResult.result], jobResult.metadata);
+      }
+
+    } catch (err) {
+      console.error('[InspirePanel] Try simpler error:', err);
+      setError(err.message);
+      setProgress(null);
+      setSimplicity(originalSimplicity); // Restore original simplicity on error
     } finally {
       setLoading(false);
     }
@@ -275,6 +348,42 @@ function InspirePanel({ onConceptsGenerated }) {
         </select>
       </div>
 
+      <div className="tpv-studio__form-group">
+        <label className="tpv-studio__label">Generation Mode</label>
+        <select
+          className="tpv-studio__select"
+          value={mode}
+          onChange={(e) => setMode(e.target.value)}
+          disabled={loading}
+        >
+          <option value="inspiration">Inspiration Mode - Fast text-to-image</option>
+          <option value="guided">Guided Mode - Stencil-guided (experimental)</option>
+        </select>
+        <small style={{ color: '#718096', display: 'block', marginTop: '0.5rem' }}>
+          {mode === 'inspiration'
+            ? 'Direct generation without stencil guidance'
+            : 'Uses AI-generated layout stencils for more controlled composition'}
+        </small>
+      </div>
+
+      <div className="tpv-studio__form-group">
+        <label className="tpv-studio__label">
+          Simplicity: {simplicity > 70 ? 'High' : simplicity > 30 ? 'Medium' : 'Low'} ({simplicity})
+        </label>
+        <input
+          type="range"
+          className="tpv-studio__slider"
+          min="0"
+          max="100"
+          value={simplicity}
+          onChange={(e) => setSimplicity(parseInt(e.target.value))}
+          disabled={loading}
+          style={{ width: '100%' }}
+        />
+        <small style={{ color: '#718096', display: 'block', marginTop: '0.5rem' }}>
+          Higher values reduce complexity and fine details for cleaner, installer-friendly designs
+        </small>
+      </div>
 
       {error && (
         <div style={{
@@ -382,6 +491,15 @@ function InspirePanel({ onConceptsGenerated }) {
                 New Variation
               </button>
             </div>
+            <button
+              className="tpv-studio__button tpv-studio__button--secondary"
+              onClick={handleTrySimpler}
+              disabled={loading}
+              style={{ width: '100%' }}
+              title="Regenerate with high simplicity to reduce complexity"
+            >
+              Try Simpler Version
+            </button>
             {result.final_url && (
               <a
                 href={result.final_url}
