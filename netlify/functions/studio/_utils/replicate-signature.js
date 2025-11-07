@@ -9,57 +9,80 @@ function timingSafeEqualB64(aB64, bB64) {
 }
 
 function getRawBody(event) {
-  // IMPORTANT: use the raw body bytes exactly as delivered to Lambda
-  if (event.isBase64Encoded) {
-    return Buffer.from(event.body || '', 'base64'); // raw bytes
-  }
-  // For non-base64, AWS/APIGW gives us a UTF-8 string; HMAC over those bytes
+  if (event.isBase64Encoded) return Buffer.from(event.body || '', 'base64');
   return Buffer.from(event.body || '', 'utf8');
 }
 
+// NEW: normalize header (handles quotes, arrays, stray whitespace)
+function normalizeHeader(val) {
+  if (!val) return '';
+  let s = Array.isArray(val) ? val[0] : String(val);
+  s = s.trim();
+  // strip a single pair of wrapping quotes (either " or ')
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    s = s.slice(1, -1);
+  }
+  return s.trim();
+}
+
 function parseReplicateSigHeader(headerValue = '') {
-  // Accept: "v1,<base64>" OR "v1=<base64>" OR "t=<ts>,v1=<base64>"
-  const parts = headerValue.split(',').map(s => s.trim());
+  const h = normalizeHeader(headerValue);
+
+  // Accept forms:
+  //  A) "v1,<base64>"
+  //  B) "v1=<base64>"
+  //  C) "t=<ts>,v1=<base64>"
+  //  D) "<base64>" (bare)
   let t = null, v1 = null;
+
+  // A) v1,<base64>
+  if (/^v1,/.test(h)) {
+    v1 = h.slice(3).replace(/^,/, '').trim();
+    return { t, v1 };
+  }
+
+  // B/C) find v1=... and optionally t=...
+  const parts = h.split(',').map(s => s.trim());
   for (const p of parts) {
     if (p.startsWith('t=')) t = p.slice(2);
     else if (p.startsWith('v1=')) v1 = p.slice(3);
-    else if (p.startsWith('v1')) {
-      // handle "v1,<base64>" or just "<base64>"
-      const maybe = p.split('=');
-      v1 = maybe.length === 2 ? maybe[1] : p.replace(/^v1[:=]?/, '').replace(/^,/, '').trim();
-    } else if (!p.includes('=')) {
-      // bare base64
-      v1 = p;
-    }
   }
-  return { t, v1 };
+  if (v1) return { t, v1 };
+
+  // D) bare base64 (no prefix)
+  if (/^[A-Za-z0-9+/=]+$/.test(h)) {
+    v1 = h;
+    return { t, v1 };
+  }
+
+  // Last chance: "v1:<base64>" or "v1 <base64>"
+  const m = /^v1[:\s]+(.+)$/.exec(h);
+  if (m) return { t, v1: m[1].trim() };
+
+  return { t: null, v1: null };
 }
 
-function verifyReplicateSignature(event, signingSecretEnvVar = 'REPLICATE_WEBHOOK_SIGNING_SECRET') {
-  const secret = (process.env[signingSecretEnvVar] || '').trim();
+function verifyReplicateSignature(event, envVar = 'REPLICATE_WEBHOOK_SIGNING_SECRET') {
+  const secret = (process.env[envVar] || '').trim();
   if (!secret) {
     console.warn('[WEBHOOK] No signing secret set');
     return false;
   }
 
-  // Header name can vary in case; normalize
-  const h = event.headers || {};
-  const sigHeader =
-    h['replicate-signature'] ||
-    h['Replicate-Signature'] ||
-    h['REPLICATE-SIGNATURE'] ||
-    h['replicate-webhook-signature'] ||
-    h['Replicate-Webhook-Signature'] ||
-    h['webhook-signature'] ||
-    h['Webhook-Signature'];
+  const headers = event.headers || {};
+  const rawHeader =
+    headers['replicate-signature'] ??
+    headers['Replicate-Signature'] ??
+    headers['REPLICATE-SIGNATURE'] ??
+    headers['replicate-webhook-signature'] ??
+    headers['Replicate-Webhook-Signature'];
 
-  if (!sigHeader) {
+  if (!rawHeader) {
     console.error('[WEBHOOK] Missing Replicate-Signature header');
     return false;
   }
 
-  const { t, v1: receivedB64 } = parseReplicateSigHeader(String(sigHeader));
+  const { t, v1: receivedB64 } = parseReplicateSigHeader(rawHeader);
   if (!receivedB64) {
     console.error('[WEBHOOK] Signature header parse failed');
     return false;
@@ -67,25 +90,17 @@ function verifyReplicateSignature(event, signingSecretEnvVar = 'REPLICATE_WEBHOO
 
   const raw = getRawBody(event);
 
-  // Compute according to the header shape:
-  // - If a timestamp "t" is present: HMAC(secret, `${t}.${rawBodyString}`)
-  // - Else: HMAC(secret, rawBodyBytes)
   let expectedB64;
   if (t) {
-    const data = Buffer.concat([Buffer.from(String(t) + '.', 'utf8'), raw]);
-    expectedB64 = crypto.createHmac('sha256', secret).update(data).digest('base64');
+    // timestamped variant: HMAC(secret, `${t}.${rawBodyBytes}`)
+    const buf = Buffer.concat([Buffer.from(String(t) + '.', 'utf8'), raw]);
+    expectedB64 = crypto.createHmac('sha256', secret).update(buf).digest('base64');
   } else {
+    // simple variant: HMAC(secret, rawBodyBytes)
     expectedB64 = crypto.createHmac('sha256', secret).update(raw).digest('base64');
   }
 
-  const ok = timingSafeEqualB64(receivedB64, expectedB64);
-  if (!ok) {
-    console.error('[WEBHOOK] HMAC mismatch', {
-      receivedPrefix: receivedB64.substring(0, 8),
-      expectedPrefix: expectedB64.substring(0, 8)
-    });
-  }
-  return ok;
+  return timingSafeEqualB64(receivedB64, expectedB64);
 }
 
 module.exports = { verifyReplicateSignature };
