@@ -75,10 +75,13 @@ function verifyReplicateSignature(event, envVar = 'REPLICATE_WEBHOOK_SIGNING_SEC
     headers['Replicate-Signature'] ??
     headers['REPLICATE-SIGNATURE'] ??
     headers['replicate-webhook-signature'] ??
-    headers['Replicate-Webhook-Signature'];
+    headers['Replicate-Webhook-Signature'] ??
+    headers['webhook-signature'] ??
+    headers['Webhook-Signature'];
 
   if (!rawHeader) {
     console.error('[WEBHOOK] Missing Replicate-Signature header');
+    console.error('[WEBHOOK] Available headers:', Object.keys(headers).join(', '));
     return false;
   }
 
