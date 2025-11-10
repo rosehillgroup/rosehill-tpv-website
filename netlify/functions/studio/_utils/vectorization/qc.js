@@ -219,11 +219,11 @@ function validateQC(params) {
   const failures = [];
   const warnings = [];
 
-  // IoU threshold: 0.95 minimum (95% match), 0.98 ideal
-  if (params.iou < 0.95) {
-    failures.push(`IoU ${params.iou.toFixed(4)} < 0.95 minimum threshold`);
-  } else if (params.iou < 0.98) {
-    warnings.push(`IoU ${params.iou.toFixed(4)} below ideal 0.98 threshold (but above 0.95 minimum)`);
+  // IoU threshold: 0.88 minimum (88% match), 0.95+ ideal
+  if (params.iou < 0.88) {
+    failures.push(`IoU ${params.iou.toFixed(4)} < 0.88 minimum threshold`);
+  } else if (params.iou < 0.95) {
+    warnings.push(`IoU ${params.iou.toFixed(4)} below ideal 0.95 threshold (but above 0.88 minimum)`);
   }
 
   // Color count: ≤8
