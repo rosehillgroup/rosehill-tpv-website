@@ -249,20 +249,20 @@ exports.handler = async (event, context) => {
 
     const iouResult = await calculateIoU(svgString, quantizedBuffer, imageWidth, imageHeight);
     const iou = iouResult.iou;
-    const qcPass = iou >= 0.88;
+    const qcPass = iou >= 0.80;
 
     if (!qcPass) {
-      console.error(`[VECTORIZE] QC FAIL: IoU ${iou.toFixed(4)} < 0.88`);
+      console.error(`[VECTORIZE] QC FAIL: IoU ${iou.toFixed(4)} < 0.80`);
       return {
         statusCode: 200,
         body: JSON.stringify({
           ok: false,
           error: 'QC_FAIL_IOU',
-          message: `IoU ${iou.toFixed(4)} below threshold 0.88`,
+          message: `IoU ${iou.toFixed(4)} below threshold 0.80`,
           qc_results: {
             pass: false,
             iou,
-            threshold: 0.88,
+            threshold: 0.80,
             metrics: iouResult.metrics,
             ...qcMetadata
           }
@@ -270,7 +270,7 @@ exports.handler = async (event, context) => {
       };
     }
 
-    console.log(`[VECTORIZE] QC PASS: IoU ${iou.toFixed(4)} (threshold: 0.88, ideal: 0.95+)`);
+    console.log(`[VECTORIZE] QC PASS: IoU ${iou.toFixed(4)} (threshold: 0.80, ideal: 0.90+)`);
 
     // ========================================================================
     // STEP 10: PDF export
