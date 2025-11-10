@@ -313,8 +313,22 @@ exports.handler = async (event, context) => {
     console.log(`[VECTORIZE] Uploaded SVG: ${svgUrl}`);
 
     // ========================================================================
-    // STEP 11: Return results
+    // STEP 11: Update job in database
     // ========================================================================
+
+    console.log(`[VECTORIZE] Updating job ${job_id} with vectorization results...`);
+
+    // Fetch latest job state to avoid overwriting data
+    const { data: latestJob, error: fetchError } = await supabase
+      .from('studio_jobs')
+      .select('metadata, outputs')
+      .eq('id', job_id)
+      .single();
+
+    if (fetchError) {
+      console.error(`[VECTORIZE] Failed to fetch job ${job_id}:`, fetchError);
+      throw fetchError;
+    }
 
     const duration = Date.now() - startTime;
 
@@ -328,8 +342,48 @@ exports.handler = async (event, context) => {
       iou
     };
 
+    const qc_results = {
+      pass: true,
+      iou,
+      color_count: colorPalette.length,
+      region_count: constrainedPaths.length,
+      min_feature_mm: constraintMetrics.min_feature_mm,
+      min_radius_mm: constraintMetrics.min_radius_mm,
+      ...qcMetadata
+    };
+
+    // Update job with vectorization results
+    const { error: updateError } = await supabase
+      .from('studio_jobs')
+      .update({
+        metadata: {
+          ...latestJob.metadata,
+          vectorization: {
+            svg_url: svgUrl,
+            metrics,
+            qc_results,
+            completed_at: new Date().toISOString()
+          }
+        },
+        outputs: {
+          ...latestJob.outputs,
+          svg_url: svgUrl
+        }
+      })
+      .eq('id', job_id);
+
+    if (updateError) {
+      console.error(`[VECTORIZE] Failed to update job ${job_id}:`, updateError);
+      throw updateError;
+    }
+
+    console.log(`[VECTORIZE] Job ${job_id} updated successfully`);
     console.log(`[VECTORIZE] Completed in ${duration}ms`);
     console.log(`[VECTORIZE] SVG: ${svgUrl}`);
+
+    // ========================================================================
+    // STEP 12: Return results
+    // ========================================================================
 
     return {
       statusCode: 200,
@@ -337,15 +391,7 @@ exports.handler = async (event, context) => {
         ok: true,
         svg_url: svgUrl,
         metrics,
-        qc_results: {
-          pass: true,
-          iou,
-          color_count: colorPalette.length,
-          region_count: constrainedPaths.length,
-          min_feature_mm: constraintMetrics.min_feature_mm,
-          min_radius_mm: constraintMetrics.min_radius_mm,
-          ...qcMetadata
-        }
+        qc_results
       })
     };
 
