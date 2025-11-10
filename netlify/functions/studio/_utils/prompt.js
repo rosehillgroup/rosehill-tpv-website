@@ -46,6 +46,7 @@ function buildFluxPrompt(brief, options = {}) {
     "installer-friendly geometry",
     "bold silhouettes",
     "no outlines, no text, no tiny elements",
+    "bright vibrant colours, high saturation, colorful playground aesthetic",
     "uniform flat colours (strictly no gradients)",
     "optional single offset hard shadow shape per motif (one flat colour), no blur, no feathering, no inner shading, decal-style",
     "matte finish",
@@ -78,6 +79,9 @@ function buildFluxPrompt(brief, options = {}) {
     "tonal variation", "lighting effects", "soft shading",
     "smooth gradients between colours", "smooth gradients between color regions",
     "subtle shading", "matte lighting", "ambient lighting",
+    // Color quality (prevent muted/grey tones)
+    "muted colors", "desaturated", "washed out", "pale", "grey tones",
+    "monochrome", "low saturation", "dull colors", "faded",
     // Unwanted styles
     "grunge", "graffiti", "clipart clutter",
     "realistic texture", "depth", "transparency",
