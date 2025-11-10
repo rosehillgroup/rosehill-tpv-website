@@ -19,13 +19,29 @@
  */
 async function traceRegions(quantizedBuffer, palette) {
   const ImageTracer = (await import('imagetracerjs')).default;
+  const sharp = (await import('sharp')).default;
 
   console.log('[TRACER] Tracing regions with ImageTracer...');
 
   try {
-    // Convert buffer to data URL for ImageTracer
-    const base64 = quantizedBuffer.toString('base64');
-    const dataUrl = `data:image/png;base64,${base64}`;
+    // Get image dimensions and raw pixel data
+    const metadata = await sharp(quantizedBuffer).metadata();
+    const { width, height } = metadata;
+
+    // Convert to raw RGBA data for ImageTracer
+    const { data } = await sharp(quantizedBuffer)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    console.log(`[TRACER] Image: ${width}×${height}px, ${data.length} bytes`);
+
+    // Create ImageData-like object for ImageTracer
+    const imageData = {
+      data: new Uint8ClampedArray(data),
+      width,
+      height
+    };
 
     // Configure ImageTracer options
     const options = {
@@ -60,19 +76,9 @@ async function traceRegions(quantizedBuffer, palette) {
       }))
     };
 
-    // Trace image
+    // Trace image using imagedataToSVG (works in Node.js)
     console.log('[TRACER] Running ImageTracer...');
-    const svgString = await new Promise((resolve, reject) => {
-      try {
-        ImageTracer.imageToSVG(
-          dataUrl,
-          (svgStr) => resolve(svgStr),
-          options
-        );
-      } catch (error) {
-        reject(error);
-      }
-    });
+    const svgString = ImageTracer.imagedataToSVG(imageData, options);
 
     console.log('[TRACER] Tracing complete, parsing SVG...');
 
