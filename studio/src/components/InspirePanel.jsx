@@ -1,52 +1,41 @@
 import React, { useState } from 'react';
 import { apiClient } from '../lib/api/client.js';
-import { DEFAULT_SURFACE } from '../lib/constants.js';
-
-const STYLE_PRESETS = [
-  { value: 'playful_flat', label: 'Playful Flat Design', description: 'Bold shapes, vibrant colors, fun themes' },
-  { value: 'geometric', label: 'Geometric Abstract', description: 'Clean lines, mathematical patterns' },
-  { value: 'sport_court', label: 'Sport Court Graphics', description: 'Athletic field markings, court layouts' }
-];
 
 function InspirePanel({ onConceptsGenerated }) {
   const [prompt, setPrompt] = useState('');
-  const [surfaceWidth, setSurfaceWidth] = useState(DEFAULT_SURFACE.width_m);
-  const [surfaceHeight, setSurfaceHeight] = useState(DEFAULT_SURFACE.height_m);
-  const [style, setStyle] = useState('playful_flat');
-  const [mode, setMode] = useState('inspiration'); // 'inspiration' or 'guided'
-  const [simplicity, setSimplicity] = useState(50); // 0-100 slider
+  const [lengthMM, setLengthMM] = useState(5000);  // Changed to mm (5000mm = 5m)
+  const [widthMM, setWidthMM] = useState(5000);    // Changed to mm (5000mm = 5m)
+  const [maxColours, setMaxColours] = useState(6);  // New: max colours (1-8, default 6)
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState(null);
   const [result, setResult] = useState(null);
   const [metadata, setMetadata] = useState(null);
+  const [qcResults, setQcResults] = useState(null);  // New: QC results
 
   const handleGenerate = async () => {
     setLoading(true);
     setError(null);
     setResult(null);
+    setQcResults(null);
     setProgress('Creating job...');
 
     try {
       const request = {
         prompt: prompt.trim(),
-        surface: {
-          width_m: parseFloat(surfaceWidth),
-          height_m: parseFloat(surfaceHeight)
-        },
-        style,
-        mode, // 'inspiration' or 'guided'
-        simplicity: simplicity > 70 ? 'high' : simplicity > 30 ? 'medium' : 'low' // Convert slider to category
+        lengthMM: parseInt(lengthMM),
+        widthMM: parseInt(widthMM),
+        maxColours: parseInt(maxColours)
       };
 
-      console.log('[InspirePanel] Creating simple mode job:', request);
+      console.log('[InspirePanel] Creating Flux Dev job:', request);
 
-      // Step 1: Create job (returns immediately, no timeout)
+      // Step 1: Create job (returns immediately)
       const jobResponse = await apiClient.inspireSimpleCreateJob(request);
       const { jobId, estimatedDuration } = jobResponse;
 
       console.log('[InspirePanel] Job created:', jobId);
-      setProgress(`Job created! Estimated time: ~${estimatedDuration}s. Generating...`);
+      setProgress(`Job created! Estimated time: ~${estimatedDuration || 30}s. Generating...`);
 
       // Step 2: Poll for completion with progress updates
       const jobResult = await apiClient.inspireSimpleWaitForCompletion(jobId, (status) => {
@@ -60,7 +49,7 @@ function InspirePanel({ onConceptsGenerated }) {
             setProgress('Job queued. Waiting for GPU...');
             break;
           case 'running':
-            setProgress('Generating inspiration with SDXL...');
+            setProgress('Generating with Flux Dev...');
             break;
           default:
             setProgress(`Status: ${status.status}`);
@@ -71,6 +60,7 @@ function InspirePanel({ onConceptsGenerated }) {
       setProgress('Generation complete!');
       setResult(jobResult.result);
       setMetadata(jobResult.metadata);
+      setQcResults(jobResult.qc_results || null);
 
       // Notify parent with result
       if (onConceptsGenerated) {
@@ -86,99 +76,30 @@ function InspirePanel({ onConceptsGenerated }) {
     }
   };
 
-  const handleRegenerateWithSeed = async () => {
-    // Regenerate with the same seed for consistent results
-    if (!metadata?.seed) {
-      console.warn('[InspirePanel] No seed available for regeneration');
-      return;
-    }
 
-    setLoading(true);
-    setError(null);
-    setResult(null);
-    setProgress('Regenerating with same seed...');
-
-    try {
-      const request = {
-        prompt: prompt.trim(),
-        surface: {
-          width_m: parseFloat(surfaceWidth),
-          height_m: parseFloat(surfaceHeight)
-        },
-        style,
-        mode,
-        simplicity: simplicity > 70 ? 'high' : simplicity > 30 ? 'medium' : 'low',
-        seed: metadata.seed // Use the same seed
-      };
-
-      console.log('[InspirePanel] Regenerating with seed:', metadata.seed);
-
-      const jobResponse = await apiClient.inspireSimpleCreateJob(request);
-      const { jobId } = jobResponse;
-
-      setProgress(`Regenerating... Seed: ${metadata.seed}`);
-
-      const jobResult = await apiClient.inspireSimpleWaitForCompletion(jobId, (status) => {
-        switch (status.status) {
-          case 'pending':
-            setProgress('Job created. Starting generation...');
-            break;
-          case 'queued':
-            setProgress('Job queued. Waiting for GPU...');
-            break;
-          case 'running':
-            setProgress('Generating with same seed...');
-            break;
-          default:
-            setProgress(`Status: ${status.status}`);
-        }
-      }, 2000);
-
-      setProgress('Generation complete!');
-      setResult(jobResult.result);
-      setMetadata(jobResult.metadata);
-
-      if (onConceptsGenerated) {
-        onConceptsGenerated([jobResult.result], jobResult.metadata);
-      }
-
-    } catch (err) {
-      console.error('[InspirePanel] Regeneration error:', err);
-      setError(err.message);
-      setProgress(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleGenerateNewSeed = async () => {
+  const handleNewGeneration = async () => {
     // Generate with a new random seed for variation
-    const newSeed = Math.floor(Math.random() * 1000000);
-
     setLoading(true);
     setError(null);
     setResult(null);
-    setProgress(`Generating with new seed: ${newSeed}...`);
+    setQcResults(null);
+    setProgress('Generating new variation...');
 
     try {
       const request = {
         prompt: prompt.trim(),
-        surface: {
-          width_m: parseFloat(surfaceWidth),
-          height_m: parseFloat(surfaceHeight)
-        },
-        style,
-        mode,
-        simplicity: simplicity > 70 ? 'high' : simplicity > 30 ? 'medium' : 'low',
-        seed: newSeed // Use new random seed
+        lengthMM: parseInt(lengthMM),
+        widthMM: parseInt(widthMM),
+        maxColours: parseInt(maxColours),
+        seed: Math.floor(Math.random() * 1000000) // New random seed
       };
 
-      console.log('[InspirePanel] Generating with new seed:', newSeed);
+      console.log('[InspirePanel] Generating new variation');
 
       const jobResponse = await apiClient.inspireSimpleCreateJob(request);
       const { jobId } = jobResponse;
 
-      setProgress(`Generating with seed ${newSeed}...`);
+      setProgress('Generating new variation...');
 
       const jobResult = await apiClient.inspireSimpleWaitForCompletion(jobId, (status) => {
         switch (status.status) {
@@ -189,7 +110,7 @@ function InspirePanel({ onConceptsGenerated }) {
             setProgress('Job queued. Waiting for GPU...');
             break;
           case 'running':
-            setProgress('Generating with new seed...');
+            setProgress('Generating with Flux Dev...');
             break;
           default:
             setProgress(`Status: ${status.status}`);
@@ -199,13 +120,14 @@ function InspirePanel({ onConceptsGenerated }) {
       setProgress('Generation complete!');
       setResult(jobResult.result);
       setMetadata(jobResult.metadata);
+      setQcResults(jobResult.qc_results || null);
 
       if (onConceptsGenerated) {
         onConceptsGenerated([jobResult.result], jobResult.metadata);
       }
 
     } catch (err) {
-      console.error('[InspirePanel] New seed generation error:', err);
+      console.error('[InspirePanel] New generation error:', err);
       setError(err.message);
       setProgress(null);
     } finally {
@@ -214,30 +136,23 @@ function InspirePanel({ onConceptsGenerated }) {
   };
 
   const handleTrySimpler = async () => {
-    // Regenerate with high simplicity to remove complex details
+    // Regenerate with try_simpler flag for stricter simplification
     setLoading(true);
     setError(null);
     setResult(null);
+    setQcResults(null);
     setProgress('Generating simpler version...');
-
-    // Temporarily boost simplicity to 'high'
-    const originalSimplicity = simplicity;
-    setSimplicity(85); // Set to high range
 
     try {
       const request = {
         prompt: prompt.trim(),
-        surface: {
-          width_m: parseFloat(surfaceWidth),
-          height_m: parseFloat(surfaceHeight)
-        },
-        style,
-        mode,
-        simplicity: 'high', // Force high simplicity
-        seed: metadata?.seed // Use same seed if available
+        lengthMM: parseInt(lengthMM),
+        widthMM: parseInt(widthMM),
+        maxColours: parseInt(maxColours),
+        trySimpler: true  // New: try_simpler flag
       };
 
-      console.log('[InspirePanel] Generating simpler version with high simplicity');
+      console.log('[InspirePanel] Generating with try_simpler flag');
 
       const jobResponse = await apiClient.inspireSimpleCreateJob(request);
       const { jobId } = jobResponse;
@@ -253,7 +168,7 @@ function InspirePanel({ onConceptsGenerated }) {
             setProgress('Job queued. Waiting for GPU...');
             break;
           case 'running':
-            setProgress('Generating simpler version...');
+            setProgress('Generating simpler version with Flux Dev...');
             break;
           default:
             setProgress(`Status: ${status.status}`);
@@ -263,6 +178,7 @@ function InspirePanel({ onConceptsGenerated }) {
       setProgress('Simpler version complete!');
       setResult(jobResult.result);
       setMetadata(jobResult.metadata);
+      setQcResults(jobResult.qc_results || null);
 
       if (onConceptsGenerated) {
         onConceptsGenerated([jobResult.result], jobResult.metadata);
@@ -272,7 +188,6 @@ function InspirePanel({ onConceptsGenerated }) {
       console.error('[InspirePanel] Try simpler error:', err);
       setError(err.message);
       setProgress(null);
-      setSimplicity(originalSimplicity); // Restore original simplicity on error
     } finally {
       setLoading(false);
     }
@@ -280,9 +195,9 @@ function InspirePanel({ onConceptsGenerated }) {
 
   return (
     <div className="tpv-studio__card">
-      <h2>TPV Studio - Inspiration Mode</h2>
+      <h2>TPV Studio - Flux Dev Generation</h2>
       <p style={{ color: '#718096', marginBottom: '1.5rem' }}>
-        Generate creative playground surface designs with AI - no color restrictions
+        Generate installer-friendly playground surface designs with AI
       </p>
 
       <div className="tpv-studio__form-group">
@@ -291,97 +206,63 @@ function InspirePanel({ onConceptsGenerated }) {
           className="tpv-studio__textarea"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="e.g., abstract playground design with bold geometric shapes and vibrant colors..."
+          placeholder="e.g., calm ocean theme with fish and seaweed..."
           rows={3}
           disabled={loading}
         />
         <small style={{ color: '#718096', display: 'block', marginTop: '0.5rem' }}>
-          Describe your design vision. AI will generate inspiration freely - color-match later with separate tool.
+          Describe your design vision. AI will create installer-friendly layouts with clean shapes.
         </small>
       </div>
 
       <div className="tpv-studio__form-group">
-        <label className="tpv-studio__label">Surface Dimensions</label>
+        <label className="tpv-studio__label">Surface Dimensions (mm)</label>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <div style={{ flex: 1 }}>
             <input
               className="tpv-studio__input"
               type="number"
-              value={surfaceWidth}
-              onChange={(e) => setSurfaceWidth(e.target.value)}
-              min="2"
-              max="20"
-              step="0.5"
+              value={lengthMM}
+              onChange={(e) => setLengthMM(e.target.value)}
+              min="2000"
+              max="20000"
+              step="100"
               disabled={loading}
             />
-            <small>Width (meters)</small>
+            <small>Length (mm)</small>
           </div>
           <div style={{ flex: 1 }}>
             <input
               className="tpv-studio__input"
               type="number"
-              value={surfaceHeight}
-              onChange={(e) => setSurfaceHeight(e.target.value)}
-              min="2"
-              max="20"
-              step="0.5"
+              value={widthMM}
+              onChange={(e) => setWidthMM(e.target.value)}
+              min="2000"
+              max="20000"
+              step="100"
               disabled={loading}
             />
-            <small>Height (meters)</small>
+            <small>Width (mm)</small>
           </div>
         </div>
       </div>
 
       <div className="tpv-studio__form-group">
-        <label className="tpv-studio__label">Style Preset</label>
-        <select
-          className="tpv-studio__select"
-          value={style}
-          onChange={(e) => setStyle(e.target.value)}
-          disabled={loading}
-        >
-          {STYLE_PRESETS.map(preset => (
-            <option key={preset.value} value={preset.value}>
-              {preset.label} - {preset.description}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="tpv-studio__form-group">
-        <label className="tpv-studio__label">Generation Mode</label>
-        <select
-          className="tpv-studio__select"
-          value={mode}
-          onChange={(e) => setMode(e.target.value)}
-          disabled={loading}
-        >
-          <option value="inspiration">Inspiration Mode - Fast text-to-image</option>
-          <option value="guided">Guided Mode - Stencil-guided (experimental)</option>
-        </select>
-        <small style={{ color: '#718096', display: 'block', marginTop: '0.5rem' }}>
-          {mode === 'inspiration'
-            ? 'Direct generation without stencil guidance'
-            : 'Uses AI-generated layout stencils for more controlled composition'}
-        </small>
-      </div>
-
-      <div className="tpv-studio__form-group">
         <label className="tpv-studio__label">
-          Simplicity: {simplicity > 70 ? 'High' : simplicity > 30 ? 'Medium' : 'Low'} ({simplicity})
+          Max Colours: {maxColours}
         </label>
         <input
           type="range"
           className="tpv-studio__slider"
-          min="0"
-          max="100"
-          value={simplicity}
-          onChange={(e) => setSimplicity(parseInt(e.target.value))}
+          min="1"
+          max="8"
+          value={maxColours}
+          onChange={(e) => setMaxColours(parseInt(e.target.value))}
           disabled={loading}
           style={{ width: '100%' }}
         />
         <small style={{ color: '#718096', display: 'block', marginTop: '0.5rem' }}>
-          Higher values reduce complexity and fine details for cleaner, installer-friendly designs
+          Maximum number of colours (1-8). Fewer colours = simpler, more installer-friendly designs.
         </small>
       </div>
 
@@ -416,7 +297,7 @@ function InspirePanel({ onConceptsGenerated }) {
         style={{ width: '100%' }}
       >
         {loading && <span className="tpv-studio__spinner" />}
-        {loading ? 'Generating Inspiration...' : 'Generate Inspiration ($0.003)'}
+        {loading ? 'Generating with Flux Dev...' : 'Generate Design (~$0.025)'}
       </button>
 
       {!loading && !result && (
@@ -426,13 +307,39 @@ function InspirePanel({ onConceptsGenerated }) {
           color: '#a0aec0',
           textAlign: 'center'
         }}>
-          ~20-40 seconds using SDXL | Simple mode | No color restrictions
+          ~30-40 seconds using Flux Dev | Installer-friendly designs
         </p>
       )}
 
       {result && !loading && (
         <div style={{ marginTop: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1rem' }}>Generated Inspiration</h3>
+          <h3 style={{ marginBottom: '1rem' }}>Generated Design</h3>
+
+          {/* QC Results Badge */}
+          {qcResults && (
+            <div style={{
+              padding: '1rem',
+              background: qcResults.pass ? '#c6f6d5' : '#fed7d7',
+              color: qcResults.pass ? '#22543d' : '#742a2a',
+              borderRadius: '8px',
+              marginBottom: '1rem',
+              fontSize: '0.875rem'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <strong style={{ fontSize: '1rem' }}>
+                  {qcResults.pass ? '✓ QC Pass' : '✗ QC Fail'}
+                </strong>
+                <span>Score: {qcResults.score}/100</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+                <span>Regions: {qcResults.region_count || 'N/A'}</span>
+                <span>Colours: {qcResults.colour_count || 'N/A'}</span>
+                <span>Min Feature: {qcResults.min_feature_mm ? `${qcResults.min_feature_mm}mm` : 'N/A'}</span>
+                <span>Min Radius: {qcResults.min_radius_mm ? `${qcResults.min_radius_mm}mm` : 'N/A'}</span>
+              </div>
+            </div>
+          )}
+
           <div style={{
             display: 'grid',
             gap: '1rem',
@@ -442,18 +349,16 @@ function InspirePanel({ onConceptsGenerated }) {
               <div>
                 <img
                   src={result.final_url}
-                  alt="Generated inspiration"
+                  alt="Generated design"
                   style={{ width: '100%', borderRadius: '8px', marginBottom: '0.5rem' }}
                 />
                 <div style={{ fontSize: '0.875rem', color: '#718096' }}>
                   <p>Dimensions: {result.dimensions?.final?.w || 'N/A'} × {result.dimensions?.final?.h || 'N/A'} px</p>
-                  <p>Surface: {surfaceWidth} × {surfaceHeight} meters</p>
+                  <p>Surface: {lengthMM}mm × {widthMM}mm ({(lengthMM/1000).toFixed(1)}m × {(widthMM/1000).toFixed(1)}m)</p>
+                  <p>Max Colours: {maxColours}</p>
                   {metadata?.seed && (
                     <p style={{ marginTop: '0.5rem' }}>
                       <strong>Seed:</strong> {metadata.seed}
-                      <small style={{ display: 'block', marginTop: '0.25rem', color: '#a0aec0' }}>
-                        Use same seed for consistent variations
-                      </small>
                     </p>
                   )}
                 </div>
@@ -463,7 +368,7 @@ function InspirePanel({ onConceptsGenerated }) {
               <div>
                 <img
                   src={result.thumbnail_url}
-                  alt="Generated inspiration thumbnail"
+                  alt="Generated design thumbnail"
                   style={{ width: '100%', borderRadius: '8px' }}
                 />
               </div>
@@ -471,34 +376,23 @@ function InspirePanel({ onConceptsGenerated }) {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button
-                className="tpv-studio__button tpv-studio__button--secondary"
-                onClick={handleRegenerateWithSeed}
-                disabled={loading || !metadata?.seed}
-                style={{ flex: 1 }}
-                title={metadata?.seed ? `Regenerate with seed ${metadata.seed}` : 'No seed available'}
-              >
-                Regenerate Same
-              </button>
-              <button
-                className="tpv-studio__button tpv-studio__button--secondary"
-                onClick={handleGenerateNewSeed}
-                disabled={loading}
-                style={{ flex: 1 }}
-                title="Generate with a new random seed for variations"
-              >
-                New Variation
-              </button>
-            </div>
             <button
               className="tpv-studio__button tpv-studio__button--secondary"
               onClick={handleTrySimpler}
               disabled={loading}
               style={{ width: '100%' }}
-              title="Regenerate with high simplicity to reduce complexity"
+              title="Regenerate with stricter simplification parameters"
             >
-              Try Simpler Version
+              Try Simpler
+            </button>
+            <button
+              className="tpv-studio__button tpv-studio__button--secondary"
+              onClick={handleNewGeneration}
+              disabled={loading}
+              style={{ width: '100%' }}
+              title="Generate a new variation with different random seed"
+            >
+              New Generation
             </button>
             {result.final_url && (
               <a

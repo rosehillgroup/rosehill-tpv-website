@@ -12,7 +12,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { prompt, style, surface, seed } = JSON.parse(event.body || '{}');
+    const { prompt, surface, max_colours, try_simpler, seed } = JSON.parse(event.body || '{}');
 
     if (!prompt || !prompt.trim()) {
       throw new Error('Prompt is required');
@@ -21,17 +21,20 @@ exports.handler = async (event, context) => {
     const supabase = getSupabaseServiceClient();
 
     // Create job in studio_jobs table
-    const surfaceData = surface || { width_m: 10, height_m: 10 };
+    const surfaceData = surface || { width_mm: 5000, height_mm: 5000 };
+    const maxColours = max_colours || 6;
+    const trySimpler = try_simpler || false;
 
     const { data: job, error: insertError } = await supabase
       .from('studio_jobs')
       .insert({
         status: 'pending',
         prompt: prompt.trim(),
-        style: style || 'playful_flat',
         surface: surfaceData, // Required NOT NULL column
+        max_colours: maxColours,
+        try_simpler: trySimpler,
         metadata: {
-          mode: 'simple',
+          mode: 'flux_dev',
           surface: surfaceData,
           seed: seed, // Pass seed from frontend if provided
           created_at: new Date().toISOString()
@@ -42,7 +45,7 @@ exports.handler = async (event, context) => {
 
     if (insertError) throw insertError;
 
-    console.log(`[INSPIRE-SIMPLE] Created job ${job.id}`);
+    console.log(`[INSPIRE-SIMPLE] Created Flux Dev job ${job.id} (max_colours=${maxColours}, try_simpler=${trySimpler})`);
 
     // Trigger enqueue function
     const enqueueUrl = `${process.env.PUBLIC_BASE_URL}/.netlify/functions/studio-enqueue`;
