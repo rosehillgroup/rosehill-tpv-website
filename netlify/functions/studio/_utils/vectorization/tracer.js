@@ -114,15 +114,25 @@ async function traceRegions(quantizedBuffer, palette) {
 function parseSVGPaths(svgString, palette) {
   const paths = [];
 
-  // Extract path elements using regex
-  const pathRegex = /<path[^>]*d="([^"]+)"[^>]*fill="([^"]+)"/g;
+  // Extract path elements - handle fill and d attributes in any order
+  const pathRegex = /<path([^>]*)>/g;
   let match;
   let matchCount = 0;
 
   while ((match = pathRegex.exec(svgString)) !== null) {
+    const pathTag = match[1];
+
+    // Extract d attribute
+    const dMatch = pathTag.match(/d="([^"]+)"/);
+    if (!dMatch) continue;
+
+    // Extract fill attribute
+    const fillMatch = pathTag.match(/fill="([^"]+)"/);
+    if (!fillMatch) continue;
+
     matchCount++;
-    const dAttribute = match[1];
-    const fillColor = match[2];
+    const dAttribute = dMatch[1];
+    const fillColor = fillMatch[1];
 
     console.log(`[TRACER-PARSER] Path ${matchCount}: fill=${fillColor}, d length=${dAttribute.length}`);
 
