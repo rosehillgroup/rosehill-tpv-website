@@ -1749,8 +1749,9 @@
             }
 
             // Detect near-neutral colors (grays, black) and force them to true neutral
-            // Original colors with saturation < 5% should fade to pure gray, not tinted gray
-            const isNearNeutral = s < 5;
+            // Original colors with saturation < 10% should fade to pure gray, not tinted gray
+            // Increased threshold to catch Black (#231F20) which has ~6% saturation
+            const isNearNeutral = s < 10;
 
             // Apply fade: desaturate and lighten
             let newS;
