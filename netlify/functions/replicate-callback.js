@@ -546,7 +546,7 @@ async function triggerVectorization(job, imageUrl) {
 
     // Update job with vectorization results
     const supabase = getSupabaseServiceClient();
-    await supabase
+    const { error: updateError } = await supabase
       .from('studio_jobs')
       .update({
         metadata: {
@@ -565,7 +565,13 @@ async function triggerVectorization(job, imageUrl) {
       })
       .eq('id', job.id);
 
+    if (updateError) {
+      console.error(`[VECTORIZE-TRIGGER] Database update failed for job ${job.id}:`, updateError);
+      throw updateError;
+    }
+
     console.log(`[VECTORIZE-TRIGGER] Job ${job.id} updated with vector outputs`);
+    console.log(`[VECTORIZE-TRIGGER] SVG URL stored in outputs: ${result.svg_url}`);
 
   } catch (error) {
     console.error(`[VECTORIZE-TRIGGER] Error for job ${job.id}:`, error);
