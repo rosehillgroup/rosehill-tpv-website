@@ -84,15 +84,16 @@ export async function initiatePass2(brief, pass1ResultUrl, options = {}) {
   });
 
   // ADD PASS 2 CLEANUP/SIMPLIFICATION DIRECTIVES
-  const pass2Positive = `${basePositive}, simplified clean composition, remove tiny scattered elements, large bold shapes only, installer-friendly scale, clean flat silhouettes, remove visual clutter`;
+  // CRITICAL: Emphasize flat matte aesthetic (no photorealistic lighting)
+  const pass2Positive = `${basePositive}, simplified clean composition, remove tiny scattered elements, large bold shapes only, installer-friendly scale, clean flat silhouettes, remove visual clutter, STRICTLY FLAT MATTE COLOURS WITH NO LIGHTING EFFECTS, completely flat vector aesthetic, pure flat color zones with hard edges, no depth or dimension, paper cutout style`;
 
-  const pass2Negative = `${baseNegative}, small scattered details, tiny dots, fine texture, scattered artifacts, visual clutter, busy areas, gradient shading in background bands, small decorative elements, texture noise, speckles, small stars, tiny objects`;
+  const pass2Negative = `${baseNegative}, small scattered details, tiny dots, fine texture, scattered artifacts, visual clutter, busy areas, gradient shading in background bands, small decorative elements, texture noise, speckles, small stars, tiny objects, SOFT SHADOWS, DROP SHADOWS, CAST SHADOWS, LIGHTING EFFECTS, SHADING, HIGHLIGHTS, REFLECTIONS, 3D LIGHTING, AMBIENT OCCLUSION, DEPTH CUES, PHOTOREALISTIC RENDERING, REALISTIC LIGHTING, VOLUMETRIC EFFECTS, LIGHT RAYS, SHADOW GRADIENTS, SOFT EDGES ON SHADOWS`;
 
-  // Pass 2 uses LOWER prompt_strength for cleanup (preserve colors/layout, refine details)
+  // Pass 2 uses MODERATE prompt_strength for cleanup while enforcing flat aesthetic
   const pass2Options = {
     aspect_ratio: options.aspect_ratio || '1:1',
-    denoise: options.try_simpler ? 0.60 : 0.50,  // Lower = preserve more, just clean up
-    guidance: 3.0,  // Slightly lower to allow smoothing
+    denoise: options.try_simpler ? 0.60 : 0.55,  // Slightly higher to follow prompt more strictly
+    guidance: 3.2,  // Slightly higher to enforce flat aesthetic
     steps: steps,
     seed: options.seed,
     webhook: options.webhook
