@@ -6,8 +6,8 @@
 // 2. Embed PNG in PDF using jsPDF (or similar)
 // 3. Add metadata and installation notes
 
-import { Resvg } from '@resvg/resvg-js';
-import sharp from 'sharp';
+
+
 
 /**
  * Generate PDF from SVG
@@ -21,6 +21,8 @@ import sharp from 'sharp';
  * @returns {Promise<Buffer>} PDF buffer
  */
 export async function generatePDF(svgString, options = {}) {
+  const { Resvg } = await import('@resvg/resvg-js');
+
   console.log('[PDF-GEN] Generating PDF...');
 
   try {

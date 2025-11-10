@@ -7,8 +7,8 @@
 // 3. Extract path coordinates from SVG output
 // 4. Return structured path data for further processing
 
-import ImageTracer from 'imagetracerjs';
-import sharp from 'sharp';
+
+
 
 /**
  * Trace regions from quantized image
@@ -18,6 +18,8 @@ import sharp from 'sharp';
  * @returns {Promise<Object>} {paths, metadata}
  */
 export async function traceRegions(quantizedBuffer, palette) {
+  const ImageTracer = (await import('imagetracerjs')).default;
+
   console.log('[TRACER] Tracing regions with ImageTracer...');
 
   try {

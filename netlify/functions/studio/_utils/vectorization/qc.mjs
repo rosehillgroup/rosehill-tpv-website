@@ -7,7 +7,7 @@
 // 3. Calculate IoU (Intersection over Union) ≥ 0.98
 // 4. Report detailed metrics
 
-import sharp from 'sharp';
+
 
 /**
  * Calculate IoU (Intersection over Union) between vector and raster
@@ -20,6 +20,8 @@ import sharp from 'sharp';
  * @returns {Promise<Object>} {iou, metrics}
  */
 export async function calculateIoU(svgString, quantizedBuffer, width, height) {
+  const sharp = (await import('sharp')).default;
+
   console.log('[QC] Calculating IoU...');
 
   try {
@@ -129,6 +131,8 @@ export async function calculateIoU(svgString, quantizedBuffer, width, height) {
  * @returns {Promise<Buffer>} Diff image (red = mismatch)
  */
 export async function generateDiffImage(svgString, quantizedBuffer, width, height) {
+  const sharp = (await import('sharp')).default;
+
   console.log('[QC] Generating diff image...');
 
   try {

@@ -7,8 +7,6 @@
 // 3. Calculate color variance in local neighborhoods
 // 4. Flag as gradient if soft transitions exceed threshold
 
-import sharp from 'sharp';
-
 /**
  * Detect gradients and soft shadows in raster image
  * Used as QC gate to reject photorealistic outputs
@@ -17,6 +15,8 @@ import sharp from 'sharp';
  * @returns {Promise<Object>} {hasGradients, confidence, metrics}
  */
 export async function detectGradients(imageBuffer) {
+  const sharp = (await import('sharp')).default;
+
   console.log('[GRADIENT-DETECTOR] Analyzing image for soft shadows...');
 
   try {

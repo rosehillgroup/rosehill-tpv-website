@@ -7,7 +7,7 @@
 // 3. Map each pixel to nearest cluster centroid
 // 4. Return quantized image buffer and palette
 
-import sharp from 'sharp';
+
 
 /**
  * Quantize image colors using K-means clustering
@@ -17,6 +17,8 @@ import sharp from 'sharp';
  * @returns {Promise<Object>} {buffer, palette, metadata}
  */
 export async function quantizeColors(imageBuffer, maxColors = 6) {
+  const sharp = (await import('sharp')).default;
+
   console.log(`[QUANTIZER] Reducing to ${maxColors} colors using K-means...`);
 
   try {

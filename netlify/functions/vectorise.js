@@ -15,36 +15,6 @@
 
 const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
 
-// Dynamic imports for ESM modules
-let quantizeColors, detectGradients, traceRegions, simplifyPaths, enforceConstraints, calculateIoU, generateSVG, generatePDF;
-
-(async () => {
-  // Lazy load helper modules
-  const quantizer = await import('./studio/_utils/vectorization/quantizer.mjs');
-  quantizeColors = quantizer.quantizeColors;
-
-  const gradientDetector = await import('./studio/_utils/vectorization/gradient-detector.mjs');
-  detectGradients = gradientDetector.detectGradients;
-
-  const tracer = await import('./studio/_utils/vectorization/tracer.mjs');
-  traceRegions = tracer.traceRegions;
-
-  const simplifier = await import('./studio/_utils/vectorization/simplifier.mjs');
-  simplifyPaths = simplifier.simplifyPaths;
-
-  const constraints = await import('./studio/_utils/vectorization/constraints.mjs');
-  enforceConstraints = constraints.enforceConstraints;
-
-  const qc = await import('./studio/_utils/vectorization/qc.mjs');
-  calculateIoU = qc.calculateIoU;
-
-  const svgGen = await import('./studio/_utils/vectorization/svg-generator.mjs');
-  generateSVG = svgGen.generateSVG;
-
-  const pdfGen = await import('./studio/_utils/vectorization/pdf-generator.mjs');
-  generatePDF = pdfGen.generatePDF;
-})();
-
 /**
  * Vectorization endpoint handler
  *
@@ -57,6 +27,26 @@ let quantizeColors, detectGradients, traceRegions, simplifyPaths, enforceConstra
  * @returns {Promise<Object>} {ok, svg_url, pdf_url, metrics, qc_results}
  */
 exports.handler = async (event, context) => {
+  // Import ESM modules dynamically inside handler
+  const [
+    { quantizeColors },
+    { detectGradients },
+    { traceRegions },
+    { simplifyPaths },
+    { enforceConstraints },
+    { calculateIoU },
+    { generateSVG },
+    { generatePDF }
+  ] = await Promise.all([
+    import('./studio/_utils/vectorization/quantizer.mjs'),
+    import('./studio/_utils/vectorization/gradient-detector.mjs'),
+    import('./studio/_utils/vectorization/tracer.mjs'),
+    import('./studio/_utils/vectorization/simplifier.mjs'),
+    import('./studio/_utils/vectorization/constraints.mjs'),
+    import('./studio/_utils/vectorization/qc.mjs'),
+    import('./studio/_utils/vectorization/svg-generator.mjs'),
+    import('./studio/_utils/vectorization/pdf-generator.mjs')
+  ]);
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
