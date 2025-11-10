@@ -70,7 +70,8 @@ class APIClient {
             }
 
             // Check if vectorization is complete
-            const hasVectorization = status.outputs?.svg_url || status.metadata?.vectorization?.svg_url;
+            // Note: API returns outputs as "result", not "outputs"
+            const hasVectorization = status.result?.svg_url || status.metadata?.vectorization?.svg_url;
 
             if (hasVectorization) {
               // Vectorization complete - resolve immediately

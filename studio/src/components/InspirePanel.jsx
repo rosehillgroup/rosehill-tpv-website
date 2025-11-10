@@ -49,7 +49,8 @@ function InspirePanel({ onConceptsGenerated }) {
         const currentPass = status.metadata?.pass || 1;
 
         // Check for vectorization status
-        const hasVectorization = status.outputs?.svg_url || status.metadata?.vectorization?.svg_url;
+        // Note: API returns outputs as "result", not "outputs"
+        const hasVectorization = status.result?.svg_url || status.metadata?.vectorization?.svg_url;
 
         switch (status.status) {
           case 'pending':

@@ -34,8 +34,10 @@ async function generatePDF(svgString, options = {}) {
 
     console.log('[PDF-GEN] Rendering SVG to PNG with resvg...');
 
-    // Calculate appropriate DPI for print (300 DPI is standard)
-    const dpi = 300;
+    // Calculate appropriate DPI for large format print
+    // 150 DPI is sufficient for large playground surfaces viewed from distance
+    // (300 DPI would create 3.5B pixels for 5m×5m, causing memory issues)
+    const dpi = 150;
 
     // Convert mm to inches, then to pixels
     const widthInches = width_mm / 25.4;
