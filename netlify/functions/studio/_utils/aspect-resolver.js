@@ -1,5 +1,5 @@
-// Aspect Ratio Resolver for TPV Studio Inspiration Mode
-// Finds nearest model size for target aspect ratio
+// Aspect Ratio Resolver for TPV Studio (Flux Dev)
+// Resolves aspect ratios for Flux Dev generation
 
 /**
  * Calculate target pixel dimensions from meters
@@ -8,13 +8,50 @@
  * @param {number} ppi - Pixels per meter (default: 200)
  * @returns {Object} {w, h, ppi}
  */
-export function metersToPixels(width_m, height_m, ppi = 200) {
+function metersToPixels(width_m, height_m, ppi = 200) {
   const w = Math.round(width_m * ppi);
   const h = Math.round(height_m * ppi);
 
   console.log(`[AR] Surface: ${width_m}×${height_m}m @ ${ppi}px/m → Target: ${w}×${h}px`);
 
   return { w, h, ppi };
+}
+
+/**
+ * Resolve aspect ratio string for Flux Dev from pixel dimensions
+ * @param {number} width - Width in pixels
+ * @param {number} height - Height in pixels
+ * @returns {string} Aspect ratio string (e.g., "1:1", "16:9", "4:3")
+ */
+function resolveAspectRatio(width, height) {
+  const ratio = width / height;
+
+  // Flux Dev supported aspect ratios
+  const aspectRatios = [
+    { value: '1:1', ratio: 1.0, label: 'Square' },
+    { value: '16:9', ratio: 16/9, label: 'Landscape' },
+    { value: '9:16', ratio: 9/16, label: 'Portrait' },
+    { value: '4:3', ratio: 4/3, label: 'Standard Landscape' },
+    { value: '3:4', ratio: 3/4, label: 'Standard Portrait' },
+    { value: '21:9', ratio: 21/9, label: 'Ultrawide' },
+    { value: '9:21', ratio: 9/21, label: 'Ultratall' }
+  ];
+
+  // Find nearest aspect ratio
+  let nearest = aspectRatios[0];
+  let minDiff = Math.abs(ratio - nearest.ratio);
+
+  for (const ar of aspectRatios) {
+    const diff = Math.abs(ratio - ar.ratio);
+    if (diff < minDiff) {
+      minDiff = diff;
+      nearest = ar;
+    }
+  }
+
+  console.log(`[AR] ${width}×${height}px (${ratio.toFixed(3)}) → ${nearest.value} ${nearest.label}`);
+
+  return nearest.value;
 }
 
 /**
@@ -25,7 +62,7 @@ export function metersToPixels(width_m, height_m, ppi = 200) {
  * @param {number} params.longSide - Max long side (default: 1024)
  * @returns {Object} Nearest size {w, h, ar, diff, label}
  */
-export function pickNearestSize({ targetW, targetH, longSide = 1024 }) {
+function pickNearestSize({ targetW, targetH, longSide = 1024 }) {
   const targetAR = targetW / targetH;
 
   // Supported SDXL aspect ratios (expanded list for better matches)
@@ -73,7 +110,7 @@ export function pickNearestSize({ targetW, targetH, longSide = 1024 }) {
  * @param {number} targetHeight - Target height in meters
  * @returns {Object} {ratio, width, height, targetAspect}
  */
-export function selectModelAspect(targetWidth, targetHeight) {
+function selectModelAspect(targetWidth, targetHeight) {
   const { w: targetW, h: targetH } = metersToPixels(targetWidth, targetHeight);
   const nearest = pickNearestSize({ targetW, targetH });
 
@@ -87,5 +124,11 @@ export function selectModelAspect(targetWidth, targetHeight) {
   };
 }
 
-
+// CommonJS exports
+module.exports = {
+  metersToPixels,
+  resolveAspectRatio,
+  pickNearestSize,
+  selectModelAspect
+};
 
