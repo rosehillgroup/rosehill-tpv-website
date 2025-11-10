@@ -48,6 +48,9 @@ function InspirePanel({ onConceptsGenerated }) {
         const isTwoPass = status.metadata?.mode === 'flux_dev_two_pass';
         const currentPass = status.metadata?.pass || 1;
 
+        // Check for vectorization status
+        const hasVectorization = status.outputs?.svg_url || status.metadata?.vectorization?.svg_url;
+
         switch (status.status) {
           case 'pending':
             if (isTwoPass && currentPass === 2) {
@@ -76,6 +79,13 @@ function InspirePanel({ onConceptsGenerated }) {
             break;
           case 'pass1_complete':
             setProgress('Pass 1 complete! Starting cleanup pass...');
+            break;
+          case 'completed':
+            if (hasVectorization) {
+              setProgress('Vectorization complete! Design ready for installation.');
+            } else {
+              setProgress('Generation complete! Vectorizing...');
+            }
             break;
           default:
             setProgress(`Status: ${status.status}`);
@@ -406,6 +416,45 @@ function InspirePanel({ onConceptsGenerated }) {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {/* Vectorization download buttons (if available) */}
+            {(result.svg_url || result.pdf_url) && (
+              <div style={{
+                padding: '1rem',
+                background: '#c6f6d5',
+                borderRadius: '8px',
+                marginBottom: '0.5rem'
+              }}>
+                <div style={{ marginBottom: '0.5rem', fontWeight: 'bold', color: '#22543d' }}>
+                  ✓ Vector Files Ready
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {result.svg_url && (
+                    <a
+                      href={result.svg_url}
+                      download
+                      className="tpv-studio__button tpv-studio__button--primary"
+                      style={{ flex: 1, textAlign: 'center', textDecoration: 'none', fontSize: '0.875rem' }}
+                    >
+                      Download SVG
+                    </a>
+                  )}
+                  {result.pdf_url && (
+                    <a
+                      href={result.pdf_url}
+                      download
+                      className="tpv-studio__button tpv-studio__button--primary"
+                      style={{ flex: 1, textAlign: 'center', textDecoration: 'none', fontSize: '0.875rem' }}
+                    >
+                      Download PDF
+                    </a>
+                  )}
+                </div>
+                <small style={{ display: 'block', marginTop: '0.5rem', color: '#22543d' }}>
+                  Installer-ready vector files with manufacturing constraints
+                </small>
+              </div>
+            )}
+
             <button
               className="tpv-studio__button tpv-studio__button--secondary"
               onClick={handleTrySimpler}
@@ -431,7 +480,7 @@ function InspirePanel({ onConceptsGenerated }) {
                 className="tpv-studio__button tpv-studio__button--secondary"
                 style={{ textAlign: 'center', textDecoration: 'none' }}
               >
-                Download Image
+                Download Raster Image
               </a>
             )}
           </div>
