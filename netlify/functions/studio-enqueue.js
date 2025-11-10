@@ -216,17 +216,15 @@ exports.handler = async (event, context) => {
         max_colours: maxColours,
         seed,
         webhook: webhookUrl,
-        try_simpler: trySimpler,
-        use_stencil_guidance: true
+        try_simpler: trySimpler
       });
 
       predictionId = pass2Result.predictionId;
       status = pass2Result.status;
       model = pass2Result.model;
       version = pass2Result.version;
-      stencilUrl = pass2Result.composite_image_url || pass1ResultUrl;
 
-      console.log(`[ENQUEUE] Pass 2 initiated: ${predictionId}`);
+      console.log(`[ENQUEUE] Pass 2 (cleanup) initiated: ${predictionId}`);
 
     } else {
       // ============================================================
@@ -311,9 +309,7 @@ exports.handler = async (event, context) => {
     } else if (currentPass === 2) {
       metadata.pass2_prediction_id = predictionId;
       metadata.pass1_result_url = pass1ResultUrl;
-      if (stencilUrl) {
-        metadata.composite_guidance_url = stencilUrl;
-      }
+      metadata.cleanup_mode = true;  // Pass 2 is cleanup/simplification
     } else {
       // Legacy mode
       metadata.stencil_url = stencilUrl;

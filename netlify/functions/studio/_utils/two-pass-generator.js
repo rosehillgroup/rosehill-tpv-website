@@ -1,12 +1,9 @@
 // Two-Pass Flux Dev Generation System
 // Pass 1: Text-to-image (vibrant, creative concept with no stencil)
-// Pass 2: Img2img refinement (composition guidance using Pass 1 + faint stencil overlay)
+// Pass 2: Cleanup/simplification (remove small artifacts, simplify for installation)
 
 import { generateConceptFluxDev } from './replicate.js';
 import { buildFluxPrompt } from './prompt.js';
-import { generateBriefStencil } from './brief-stencil.js';
-import { compositeStencilOntoImage } from './composite-guidance.js';
-import { uploadToStorage } from './exports.js';
 
 /**
  * Initiate Pass 1: Pure text-to-image generation
@@ -63,8 +60,8 @@ export async function initiatePass1(brief, options = {}) {
 }
 
 /**
- * Initiate Pass 2: Img2img refinement with composition guidance
- * Uses Pass 1 result as base + faint stencil overlay for spatial guidance
+ * Initiate Pass 2: Cleanup/simplification pass
+ * Uses Pass 1 result to remove small artifacts and simplify for installation
  *
  * @param {Object} brief - Design brief
  * @param {string} pass1ResultUrl - URL of Pass 1 generated image
@@ -72,77 +69,43 @@ export async function initiatePass1(brief, options = {}) {
  * @param {string} options.aspect_ratio - Aspect ratio
  * @param {number} options.seed - Random seed (should match Pass 1)
  * @param {string} options.webhook - Webhook URL
- * @param {boolean} options.use_stencil_guidance - Whether to composite stencil (default: true)
- * @returns {Promise<Object>} {predictionId, status, model, compositeImageUrl}
+ * @param {boolean} options.try_simpler - Extra simplification (from Try Simpler button)
+ * @returns {Promise<Object>} {predictionId, status, model}
  */
 export async function initiatePass2(brief, pass1ResultUrl, options = {}) {
-  console.log('[TWO-PASS] Initiating Pass 2: Composition refinement');
+  console.log('[TWO-PASS] Initiating Pass 2: Cleanup/Simplification');
   console.log(`[TWO-PASS] Pass 1 result: ${pass1ResultUrl}`);
+  console.log('[TWO-PASS] Pass 2 will remove small artifacts and simplify for installation');
 
-  const useStencilGuidance = options.use_stencil_guidance !== false;
-  let initImageUrl = pass1ResultUrl;
-  let compositeImageUrl = null;
-
-  // Optional: Composite faint stencil onto Pass 1 result for spatial guidance
-  if (useStencilGuidance) {
-    try {
-      console.log('[TWO-PASS] Generating semantic stencil for composition guidance');
-
-      // Generate stencil at same dimensions as Pass 1 result
-      const stencilBuffer = await generateBriefStencil(
-        brief,
-        { width: 1024, height: 1024 },  // Standard dimensions
-        { seed: options.seed }
-      );
-
-      // Composite stencil at 15% opacity onto Pass 1 result
-      const compositedBuffer = await compositeStencilOntoImage(
-        pass1ResultUrl,
-        stencilBuffer,
-        15  // 15% opacity - barely visible hint
-      );
-
-      // Upload composited image
-      const filename = `pass2_composite_${Date.now()}.png`;
-      const uploadResult = await uploadToStorage(compositedBuffer, filename, {
-        lifecycle: 'temp',
-        contentType: 'image/png'
-      });
-
-      compositeImageUrl = uploadResult.publicUrl;
-      initImageUrl = compositeImageUrl;
-
-      console.log(`[TWO-PASS] Composited stencil guidance: ${compositeImageUrl}`);
-    } catch (error) {
-      console.error('[TWO-PASS] Failed to composite stencil guidance:', error);
-      console.log('[TWO-PASS] Falling back to Pass 1 result only (no stencil guidance)');
-      // Continue with Pass 1 result only
-    }
-  }
-
-  // Build prompt (same as Pass 1)
-  const { positive, negative, guidance, steps } = buildFluxPrompt(brief, {
+  // Build base prompt
+  const { positive: basePositive, negative: baseNegative, guidance, steps } = buildFluxPrompt(brief, {
     max_colours: options.max_colours || 6,
     try_simpler: options.try_simpler || false
   });
 
-  // Pass 2 uses LOWER prompt_strength for refinement (not replacement)
+  // ADD PASS 2 CLEANUP/SIMPLIFICATION DIRECTIVES
+  const pass2Positive = `${basePositive}, simplified clean composition, remove tiny scattered elements, large bold shapes only, installer-friendly scale, clean flat silhouettes, remove visual clutter`;
+
+  const pass2Negative = `${baseNegative}, small scattered details, tiny dots, fine texture, scattered artifacts, visual clutter, busy areas, gradient shading in background bands, small decorative elements, texture noise, speckles, small stars, tiny objects`;
+
+  // Pass 2 uses LOWER prompt_strength for cleanup (preserve colors/layout, refine details)
   const pass2Options = {
     aspect_ratio: options.aspect_ratio || '1:1',
-    denoise: options.try_simpler ? 0.60 : 0.55,  // Medium - refine composition
-    guidance: guidance,
+    denoise: options.try_simpler ? 0.60 : 0.50,  // Lower = preserve more, just clean up
+    guidance: 3.0,  // Slightly lower to allow smoothing
     steps: steps,
     seed: options.seed,
     webhook: options.webhook
   };
 
   console.log('[TWO-PASS] Pass 2 parameters:', pass2Options);
+  console.log('[TWO-PASS] Pass 2 focus: Remove small artifacts, simplify shapes, flatten colors');
 
-  // Generate with Pass 1 result (+ optional stencil guidance) as init image
+  // Generate with Pass 1 result as init image (NO stencil overlay)
   const result = await generateConceptFluxDev(
-    positive,
-    negative,
-    initImageUrl,  // Pass 1 result or composited version
+    pass2Positive,
+    pass2Negative,
+    pass1ResultUrl,  // Use Pass 1 result directly, no stencil
     pass2Options
   );
 
@@ -151,13 +114,12 @@ export async function initiatePass2(brief, pass1ResultUrl, options = {}) {
   return {
     ...result,
     pass: 2,
-    mode: 'img2img-refinement',
+    mode: 'img2img-cleanup',
     pass1_result_url: pass1ResultUrl,
-    composite_image_url: compositeImageUrl,
-    stencil_guidance_used: useStencilGuidance && compositeImageUrl !== null,
+    cleanup_mode: true,
     prompt: {
-      positive,
-      negative
+      positive: pass2Positive,
+      negative: pass2Negative
     },
     parameters: pass2Options
   };

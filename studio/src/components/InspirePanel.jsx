@@ -60,7 +60,7 @@ function InspirePanel({ onConceptsGenerated }) {
             if (isTwoPass && currentPass === 1) {
               setProgress('Pass 1/2: Creating vibrant concept (queued)...');
             } else if (isTwoPass && currentPass === 2) {
-              setProgress('Pass 2/2: Refining composition (queued)...');
+              setProgress('Pass 2/2: Cleaning up & simplifying (queued)...');
             } else {
               setProgress('Job queued. Waiting for GPU...');
             }
@@ -69,13 +69,13 @@ function InspirePanel({ onConceptsGenerated }) {
             if (isTwoPass && currentPass === 1) {
               setProgress('Pass 1/2: Generating vibrant concept...');
             } else if (isTwoPass && currentPass === 2) {
-              setProgress('Pass 2/2: Refining composition...');
+              setProgress('Pass 2/2: Removing artifacts & simplifying...');
             } else {
               setProgress('Generating with Flux Dev...');
             }
             break;
           case 'pass1_complete':
-            setProgress('Pass 1 complete! Starting Pass 2...');
+            setProgress('Pass 1 complete! Starting cleanup pass...');
             break;
           default:
             setProgress(`Status: ${status.status}`);
