@@ -11,7 +11,7 @@
  * @param {number} options.steps - Override steps (18-20)
  * @returns {Object} {positive, negative, guidance, steps, denoise}
  */
-export function buildFluxPrompt(brief, options = {}) {
+function buildFluxPrompt(brief, options = {}) {
   const max_colours = options.max_colours || 6;
   const try_simpler = options.try_simpler || false;
 
@@ -100,7 +100,7 @@ export function buildFluxPrompt(brief, options = {}) {
  * @param {Object} originalBrief - Original design brief
  * @returns {Object} Simplified brief with stricter constraints
  */
-export function createSimplifiedBrief(originalBrief) {
+function createSimplifiedBrief(originalBrief) {
   return {
     ...originalBrief,
     composition: {
@@ -116,7 +116,7 @@ export function createSimplifiedBrief(originalBrief) {
  * @param {Object} brief - Design brief
  * @returns {Object} {valid, errors}
  */
-export function validateBrief(brief) {
+function validateBrief(brief) {
   const errors = [];
 
   if (!brief || typeof brief !== 'object') {
@@ -204,3 +204,10 @@ export function validateBrief(brief) {
     errors
   };
 }
+
+// CommonJS exports
+module.exports = {
+  buildFluxPrompt,
+  createSimplifiedBrief,
+  validateBrief
+};
