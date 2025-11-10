@@ -190,13 +190,21 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error('[JOB-STATUS ERROR]', error);
+    console.error('[JOB-STATUS ERROR]', {
+      message: error.message,
+      details: error.stack,
+      hint: error.hint || '',
+      code: error.code || ''
+    });
     return {
       statusCode: 500,
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ error: error.message })
+      body: JSON.stringify({
+        error: error.message,
+        hint: 'Check Netlify function logs for details'
+      })
     };
   }
 };

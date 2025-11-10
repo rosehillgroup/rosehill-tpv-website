@@ -8,7 +8,7 @@ const { downloadImage, generateDraftSDXL, refineRegionSDXL } = require('./studio
 const { uploadByStage, uploadToStorage } = require('./studio/_utils/exports.js');
 const { generateRoleMasks, generateMotifMasks } = require('./studio/_utils/mask-generator.js');
 const { quantizeWithDithering } = require('./studio/_utils/oklch-quantize.js');
-const { assessConceptQuality } = require('./studio/_utils/quality-gate.js');
+const { assessConceptQuality, checkFluxDevQuality, shouldRetryGeneration } = require('./studio/_utils/quality-gate.js');
 const { cropPadToExactAR, makeThumbnail } = require('./studio/_utils/image.js');
 
 exports.handler = async (event, context) => {
@@ -157,9 +157,9 @@ async function handleFailure(supabase, job, error) {
 async function handleSuccess(supabase, job, output, prediction_id) {
   const mode = job.metadata?.mode;
 
-  // === SIMPLE MODE HANDLER (Inspiration Mode) ===
-  if (mode === 'simple') {
-    console.log(`[WEBHOOK] Job ${job.id} succeeded (simple mode)`);
+  // === FLUX DEV / SIMPLE MODE HANDLER (Inspiration Mode) ===
+  if (mode === 'simple' || mode === 'flux_dev') {
+    console.log(`[WEBHOOK] Job ${job.id} succeeded (${mode} mode)`);
     return handleSimpleSuccess(supabase, job, output);
   }
 
@@ -247,6 +247,21 @@ async function handleSimpleSuccess(supabase, job, output) {
     const downloadMs = Date.now() - t0;
     mark('download_complete', { duration_ms: downloadMs, size_bytes: rawBuffer.length });
 
+    // Run QC check for Flux Dev mode
+    let qcResults = null;
+    if (job.metadata?.mode === 'flux_dev') {
+      mark('qc_begin');
+      console.log(`[SIMPLE] Running Flux Dev QC for job ${job.id}`);
+      try {
+        qcResults = await checkFluxDevQuality(imageUrl, job.metadata?.brief || {}, job.max_colours || 6);
+        mark('qc_complete', { pass: qcResults.pass, score: qcResults.score });
+        console.log(`[SIMPLE] QC Results: ${qcResults.pass ? 'PASS' : 'FAIL'} (score: ${qcResults.score}/100)`);
+      } catch (qcError) {
+        console.error(`[SIMPLE] QC check failed:`, qcError);
+        // Continue even if QC fails - we still want to complete the job
+      }
+    }
+
     // Get target dimensions from job metadata
     const targetW = job.metadata?.target_dims?.w || 2000;
     const targetH = job.metadata?.target_dims?.h || 2000;
@@ -318,13 +333,14 @@ async function handleSimpleSuccess(supabase, job, output) {
       `final_url=${finalUpload.publicUrl}`
     );
 
-    // Update job to completed with full timeline
+    // Update job to completed with full timeline and QC results
     mark('db_update_begin');
     const { data: updateData, error: updateError } = await supabase
       .from('studio_jobs')
       .update({
         status: 'completed',
         completed_at: new Date().toISOString(),
+        qc_results: qcResults,  // Add QC results
         outputs: {
           final_url: finalUpload.publicUrl,
           thumbnail_url: thumbUpload.publicUrl,
