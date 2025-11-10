@@ -81,12 +81,54 @@ async function flattenGradients(imageBuffer, options = {}) {
     console.log('[FLATTEN] Step 4/5: Edge hardening...');
 
     // Apply sharpening to crisp up edges
-    const hardened = await sharp(cleaned, {
+    const hardenedRaw = await sharp(cleaned, {
       raw: { width, height, channels }
     })
       .sharpen({ sigma: 1.0, m1: 1.0, m2: 0.5 })
+      .raw()
+      .toBuffer();
+
+    // Snap pixels back to exact palette colors (filtering may have created interpolated values)
+    console.log('[FLATTEN] Snapping to exact palette colors...');
+    const snapped = Buffer.alloc(hardenedRaw.length);
+
+    for (let i = 0; i < hardenedRaw.length; i += channels) {
+      const r = hardenedRaw[i];
+      const g = hardenedRaw[i + 1];
+      const b = hardenedRaw[i + 2];
+      const a = channels === 4 ? hardenedRaw[i + 3] : 255;
+
+      // Find nearest palette color (Euclidean distance in RGB)
+      let minDist = Infinity;
+      let nearestColor = palette[0];
+
+      for (const paletteColor of palette) {
+        const dist = Math.sqrt(
+          Math.pow(r - paletteColor.r, 2) +
+          Math.pow(g - paletteColor.g, 2) +
+          Math.pow(b - paletteColor.b, 2)
+        );
+
+        if (dist < minDist) {
+          minDist = dist;
+          nearestColor = paletteColor;
+        }
+      }
+
+      snapped[i] = nearestColor.r;
+      snapped[i + 1] = nearestColor.g;
+      snapped[i + 2] = nearestColor.b;
+      if (channels === 4) snapped[i + 3] = a;
+    }
+
+    // Convert back to PNG
+    const hardened = await sharp(snapped, {
+      raw: { width, height, channels }
+    })
       .png()
       .toBuffer();
+
+    console.log(`[FLATTEN] Snapped to exact ${palette.length} palette colors`);
 
     // ========================================================================
     // STEP 5: Re-check gradients
