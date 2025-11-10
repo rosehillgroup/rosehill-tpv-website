@@ -20,28 +20,28 @@ let quantizeColors, detectGradients, traceRegions, simplifyPaths, enforceConstra
 
 (async () => {
   // Lazy load helper modules
-  const quantizer = await import('./studio/_utils/vectorization/quantizer.js');
+  const quantizer = await import('./studio/_utils/vectorization/quantizer.mjs');
   quantizeColors = quantizer.quantizeColors;
 
-  const gradientDetector = await import('./studio/_utils/vectorization/gradient-detector.js');
+  const gradientDetector = await import('./studio/_utils/vectorization/gradient-detector.mjs');
   detectGradients = gradientDetector.detectGradients;
 
-  const tracer = await import('./studio/_utils/vectorization/tracer.js');
+  const tracer = await import('./studio/_utils/vectorization/tracer.mjs');
   traceRegions = tracer.traceRegions;
 
-  const simplifier = await import('./studio/_utils/vectorization/simplifier.js');
+  const simplifier = await import('./studio/_utils/vectorization/simplifier.mjs');
   simplifyPaths = simplifier.simplifyPaths;
 
-  const constraints = await import('./studio/_utils/vectorization/constraints.js');
+  const constraints = await import('./studio/_utils/vectorization/constraints.mjs');
   enforceConstraints = constraints.enforceConstraints;
 
-  const qc = await import('./studio/_utils/vectorization/qc.js');
+  const qc = await import('./studio/_utils/vectorization/qc.mjs');
   calculateIoU = qc.calculateIoU;
 
-  const svgGen = await import('./studio/_utils/vectorization/svg-generator.js');
+  const svgGen = await import('./studio/_utils/vectorization/svg-generator.mjs');
   generateSVG = svgGen.generateSVG;
 
-  const pdfGen = await import('./studio/_utils/vectorization/pdf-generator.js');
+  const pdfGen = await import('./studio/_utils/vectorization/pdf-generator.mjs');
   generatePDF = pdfGen.generatePDF;
 })();
 
