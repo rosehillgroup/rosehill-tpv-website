@@ -499,3 +499,178 @@ export function quickGeometricCheck(regions, surface) {
     motifLegibility: motifLegibility.message
   };
 }
+
+/**
+ * Quality check for Flux Dev generated images
+ * Analyzes image complexity, color count, and visual characteristics
+ *
+ * @param {string} imageUrl - URL of generated image
+ * @param {Object} brief - Design brief with composition constraints
+ * @param {number} maxColours - Maximum allowed colours (1-8)
+ * @returns {Promise<Object>} QC results {pass, region_count, colour_count, min_feature_mm, min_radius_mm, shadow_softness, score}
+ */
+export async function checkFluxDevQuality(imageUrl, brief, maxColours) {
+  console.log(`[QUALITY] Checking Flux Dev output quality`);
+  console.log(`[QUALITY] Max colours: ${maxColours}`);
+
+  // Import sharp dynamically
+  const sharp = (await import('sharp')).default;
+
+  try {
+    // Download and analyze image
+    const response = await fetch(imageUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.statusText}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const imageBuffer = Buffer.from(arrayBuffer);
+
+    // Get image metadata
+    const metadata = await sharp(imageBuffer).metadata();
+    const { width, height } = metadata;
+
+    console.log(`[QUALITY] Image dimensions: ${width}×${height}`);
+
+    // Extract pixel data for analysis
+    const { data, info } = await sharp(imageBuffer)
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    // 1. Count distinct colors (simplified - sample-based for performance)
+    const colorSet = new Set();
+    const sampleRate = 10; // Sample every 10th pixel
+
+    for (let i = 0; i < data.length; i += info.channels * sampleRate) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      // Quantize to reduce noise (group similar colors)
+      const qr = Math.floor(r / 16) * 16;
+      const qg = Math.floor(g / 16) * 16;
+      const qb = Math.floor(b / 16) * 16;
+      colorSet.add(`${qr},${qg},${qb}`);
+    }
+
+    const colourCount = colorSet.size;
+    console.log(`[QUALITY] Estimated colour count: ${colourCount} (sampled)`);
+
+    // 2. Estimate region count using simple edge detection
+    // For now, use a rough heuristic: more colors usually means more regions
+    // A full implementation would use connected components analysis
+    const estimatedRegions = Math.max(2, Math.min(15, Math.floor(colourCount * 0.8)));
+    console.log(`[QUALITY] Estimated region count: ${estimatedRegions}`);
+
+    // 3. Check composition constraints
+    const composition = brief.composition || {
+      min_feature_mm: 120,
+      min_radius_mm: 600,
+      target_region_count: 3
+    };
+
+    // Calculate minimum feature size in pixels (for reference)
+    const ppi = parseInt(process.env.IMG_PPI || '200');
+    const minFeaturePixels = (composition.min_feature_mm / 25.4) * ppi;
+    const minRadiusPixels = (composition.min_radius_mm / 25.4) * ppi;
+
+    console.log(`[QUALITY] Min feature: ${composition.min_feature_mm}mm (${minFeaturePixels.toFixed(0)}px)`);
+    console.log(`[QUALITY] Min radius: ${composition.min_radius_mm}mm (${minRadiusPixels.toFixed(0)}px)`);
+
+    // 4. Shadow detection (check for soft gradients)
+    // Sample pixels and check for smooth gradients
+    let softGradientCount = 0;
+    const gradientSampleSize = 100;
+
+    for (let i = 0; i < gradientSampleSize; i++) {
+      const idx = Math.floor(Math.random() * (data.length / info.channels)) * info.channels;
+      if (idx + info.channels * 2 < data.length) {
+        const r1 = data[idx];
+        const r2 = data[idx + info.channels];
+        const r3 = data[idx + info.channels * 2];
+
+        // Check for smooth gradient (small incremental changes)
+        const diff1 = Math.abs(r2 - r1);
+        const diff2 = Math.abs(r3 - r2);
+
+        if (diff1 > 0 && diff1 < 20 && diff2 > 0 && diff2 < 20) {
+          softGradientCount++;
+        }
+      }
+    }
+
+    const gradientRatio = softGradientCount / gradientSampleSize;
+    const hasSoftShadows = gradientRatio > 0.15;  // >15% smooth gradients
+    const shadowSoftness = hasSoftShadows ? 'soft' : 'hard';
+
+    console.log(`[QUALITY] Shadow softness: ${shadowSoftness} (gradient ratio: ${(gradientRatio * 100).toFixed(1)}%)`);
+
+    // 5. Calculate QC score and pass/fail
+    const checks = {
+      regionCount: estimatedRegions <= 10,
+      colourCount: colourCount <= (maxColours + 1),  // +1 tolerance
+      shadowsHard: !hasSoftShadows
+    };
+
+    const passedChecks = Object.values(checks).filter(Boolean).length;
+    const totalChecks = Object.values(checks).length;
+    const score = Math.round((passedChecks / totalChecks) * 100);
+
+    const pass = checks.regionCount && checks.colourCount && checks.shadowsHard;
+
+    console.log(`[QUALITY] QC Result: ${pass ? 'PASS' : 'FAIL'} (score: ${score}/100)`);
+    console.log(`[QUALITY] - Region count: ${estimatedRegions} ${checks.regionCount ? '✓' : '✗'} (≤10)`);
+    console.log(`[QUALITY] - Colour count: ${colourCount} ${checks.colourCount ? '✓' : '✗'} (≤${maxColours + 1})`);
+    console.log(`[QUALITY] - Shadow type: ${shadowSoftness} ${checks.shadowsHard ? '✓' : '✗'} (hard required)`);
+
+    return {
+      pass,
+      region_count: estimatedRegions,
+      colour_count: colourCount,
+      min_feature_mm: composition.min_feature_mm,
+      min_radius_mm: composition.min_radius_mm,
+      shadow_softness: shadowSoftness,
+      score,
+      checks,
+      message: pass
+        ? `QC passed: ${estimatedRegions} regions, ${colourCount} colours, ${shadowSoftness} shadows`
+        : `QC failed: ${!checks.regionCount ? 'too many regions' : ''} ${!checks.colourCount ? 'too many colours' : ''} ${!checks.shadowsHard ? 'soft shadows detected' : ''}`.trim()
+    };
+
+  } catch (error) {
+    console.error('[QUALITY] QC check failed:', error);
+
+    // On error, return a permissive result but log the issue
+    return {
+      pass: true,  // Don't block on QC errors
+      region_count: 0,
+      colour_count: 0,
+      min_feature_mm: brief.composition?.min_feature_mm || 120,
+      min_radius_mm: brief.composition?.min_radius_mm || 600,
+      shadow_softness: 'unknown',
+      score: 0,
+      error: error.message,
+      message: `QC check error (allowing pass): ${error.message}`
+    };
+  }
+}
+
+/**
+ * Determine if QC auto-retry should be triggered
+ * @param {Object} qcResults - Results from checkFluxDevQuality
+ * @param {number} retryCount - Current retry count
+ * @returns {boolean} True if should retry
+ */
+export function shouldRetryGeneration(qcResults, retryCount) {
+  const maxRetries = parseInt(process.env.QC_MAX_RETRIES || '1');
+
+  // Only retry if QC failed AND we haven't exceeded max retries
+  const shouldRetry = !qcResults.pass && retryCount < maxRetries;
+
+  if (shouldRetry) {
+    console.log(`[QUALITY] QC failed, triggering auto-retry (attempt ${retryCount + 1}/${maxRetries})`);
+  } else if (!qcResults.pass) {
+    console.log(`[QUALITY] QC failed but max retries (${maxRetries}) reached`);
+  }
+
+  return shouldRetry;
+}

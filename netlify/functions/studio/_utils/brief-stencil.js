@@ -5,30 +5,30 @@
 import sharp from 'sharp';
 
 /**
- * Generate a simple stencil from a design brief
- * Creates black/white layout guide showing motif placements
- * @param {Object} brief - Design brief {title, mood, motifs, arrangement_notes}
+ * Generate a simple stencil from a design brief with composition guidance
+ * Creates flat composition: 2-4 broad colored regions + up to 2 large motif blobs
+ * @param {Object} brief - Design brief {title, mood, composition, motifs, arrangement_notes}
  * @param {Object} dimensions - {width, height} in pixels
- * @param {Object} options - {seed, style}
+ * @param {Object} options - {seed}
  * @returns {Promise<Buffer>} PNG buffer of stencil
  */
 export async function generateBriefStencil(brief, dimensions, options = {}) {
   const { width, height } = dimensions;
   const { seed = Date.now() } = options;
 
+  // Extract composition parameters
+  const composition = brief.composition || {
+    target_region_count: 3,
+    min_feature_mm: 120,
+    min_radius_mm: 600
+  };
+
   console.log(`[BRIEF-STENCIL] Generating ${width}×${height} stencil for "${brief.title || 'untitled'}"`);
+  console.log(`[BRIEF-STENCIL] Target regions: ${composition.target_region_count}`);
   console.log(`[BRIEF-STENCIL] Motifs: ${brief.motifs?.length || 0}`);
 
-  // For now, generate a simple geometric layout guide
-  // This will be a minimalist black/white composition showing:
-  // - Simple shapes representing motif positions
-  // - Flowing curves suggesting arrangement
-  // - Generous negative space (white background)
-
-  const motifCount = brief.motifs?.reduce((sum, m) => sum + (m.count || 1), 0) || 3;
-
-  // Create an SVG layout guide
-  const svg = generateLayoutSVG(brief, width, height, seed);
+  // Create an SVG layout guide using composition parameters
+  const svg = generateLayoutSVG(brief, width, height, seed, composition);
 
   // Rasterize to PNG using sharp
   const buffer = await sharp(Buffer.from(svg))
@@ -41,15 +41,17 @@ export async function generateBriefStencil(brief, dimensions, options = {}) {
 }
 
 /**
- * Generate SVG layout guide from brief
+ * Generate SVG layout guide from brief using composition parameters
  * @param {Object} brief - Design brief
  * @param {number} width - Canvas width
  * @param {number} height - Canvas height
  * @param {number} seed - Random seed
+ * @param {Object} composition - Composition parameters
  * @returns {string} SVG markup
  */
-function generateLayoutSVG(brief, width, height, seed) {
+function generateLayoutSVG(brief, width, height, seed, composition) {
   const motifs = brief.motifs || [];
+  const targetRegions = composition.target_region_count || 3;
 
   // Simple seeded random
   let rngState = seed;
@@ -62,12 +64,13 @@ function generateLayoutSVG(brief, width, height, seed) {
   let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">`;
   svg += `<rect width="${width}" height="${height}" fill="white"/>`;
 
-  // If no motifs, create simple flowing bands
-  if (motifs.length === 0) {
-    svg += generateSimpleBands(width, height, random);
-  } else {
-    // Generate simple shapes for each motif
-    svg += generateMotifShapes(motifs, width, height, random);
+  // Generate broad colored regions (2-4 regions as background)
+  svg += generateBroadRegions(width, height, targetRegions, random);
+
+  // Add up to 2 large motif blobs on top (limit to keep it simple)
+  const maxMotifBlobs = Math.min(2, motifs.length);
+  if (maxMotifBlobs > 0) {
+    svg += generateMotifBlobs(motifs.slice(0, maxMotifBlobs), width, height, random, composition);
   }
 
   svg += '</svg>';
@@ -75,98 +78,97 @@ function generateLayoutSVG(brief, width, height, seed) {
 }
 
 /**
- * Generate simple flowing bands as fallback layout
+ * Generate broad colored regions (background bands)
+ * Creates 2-4 large regions with generous spacing
  * @param {number} width - Canvas width
  * @param {number} height - Canvas height
+ * @param {number} targetRegions - Number of regions to create (2-4)
  * @param {Function} random - Random function
  * @returns {string} SVG path markup
  */
-function generateSimpleBands(width, height, random) {
+function generateBroadRegions(width, height, targetRegions, random) {
   let svg = '';
 
-  // Create 2-3 flowing horizontal bands
-  const numBands = 2 + Math.floor(random() * 2);
-  const bandHeight = height / (numBands + 1);
+  // Create flowing horizontal bands (2-4 regions)
+  const numRegions = Math.max(2, Math.min(4, targetRegions));
+  const regionHeight = height / numRegions;
 
-  for (let i = 0; i < numBands; i++) {
-    const y = bandHeight * (i + 0.5 + (random() - 0.5) * 0.3);
-    const amplitude = bandHeight * 0.3;
-    const wavelength = width / (2 + random() * 2);
+  for (let i = 0; i < numRegions; i++) {
+    const y = regionHeight * i;
+    const amplitude = regionHeight * 0.15;  // Gentle waves
+    const wavelength = width / (1 + random());
 
-    // Create wavy path
+    // Create wavy path for top edge
     let path = `M 0,${y}`;
-    for (let x = 0; x <= width; x += wavelength / 10) {
+    for (let x = 0; x <= width; x += wavelength / 8) {
       const wave = Math.sin((x / wavelength) * Math.PI * 2) * amplitude;
       path += ` L ${x},${y + wave}`;
     }
 
-    // Close the shape with some thickness
-    const thickness = bandHeight * 0.6;
-    for (let x = width; x >= 0; x -= wavelength / 10) {
-      const wave = Math.sin((x / wavelength) * Math.PI * 2) * amplitude;
-      path += ` L ${x},${y + wave + thickness}`;
-    }
+    // Go down to bottom edge
+    path += ` L ${width},${y + regionHeight}`;
+    path += ` L 0,${y + regionHeight}`;
     path += ' Z';
 
-    svg += `<path d="${path}" fill="black" opacity="0.3"/>`;
+    // Use varying opacity to create visual distinction between regions
+    const opacity = 0.15 + (i % 2) * 0.1;
+    svg += `<path d="${path}" fill="black" opacity="${opacity}"/>`;
   }
 
   return svg;
 }
 
 /**
- * Generate simple shapes representing motifs
- * @param {Array} motifs - Array of {name, count}
+ * Generate large motif blobs (limit to 2 for simplicity)
+ * Creates simple geometric shapes representing key motifs
+ * @param {Array} motifs - Array of {name, count, size_m} (max 2)
  * @param {number} width - Canvas width
  * @param {number} height - Canvas height
  * @param {Function} random - Random function
+ * @param {Object} composition - Composition parameters for sizing
  * @returns {string} SVG shapes markup
  */
-function generateMotifShapes(motifs, width, height, random) {
+function generateMotifBlobs(motifs, width, height, random, composition) {
   let svg = '';
 
-  // Calculate total motif count
-  const totalMotifs = motifs.reduce((sum, m) => sum + (m.count || 1), 0);
+  // Only place up to 2 large motif blobs (spec requirement)
+  const maxBlobs = Math.min(2, motifs.length);
 
-  // Place each motif as a simple geometric shape
-  let placedCount = 0;
-  for (const motif of motifs) {
-    const count = motif.count || 1;
+  for (let i = 0; i < maxBlobs; i++) {
+    const motif = motifs[i];
 
-    for (let i = 0; i < count; i++) {
-      placedCount++;
+    // Position blobs with generous spacing
+    const x = width * (0.25 + i * 0.5);  // 25% and 75% positions
+    const y = height * (0.3 + random() * 0.4);  // 30-70% vertical
 
-      // Distribute shapes across canvas with some randomness
-      // Use a simple grid-based approach with jitter
-      const gridCols = Math.ceil(Math.sqrt(totalMotifs * (width / height)));
-      const gridRows = Math.ceil(totalMotifs / gridCols);
+    // Calculate size from motif size_m if available, otherwise use composition min_feature_mm
+    let sizePixels;
+    if (motif.size_m && Array.isArray(motif.size_m)) {
+      // Convert meters to pixels (assuming 200 PPI as default)
+      const avgSizeM = (motif.size_m[0] + motif.size_m[1]) / 2;
+      const ppi = parseInt(process.env.IMG_PPI || '200');
+      sizePixels = (avgSizeM * 39.37 * ppi);  // m → inches → pixels
+    } else {
+      // Use min_feature_mm as fallback
+      const minFeatureMM = composition.min_feature_mm || 120;
+      const ppi = parseInt(process.env.IMG_PPI || '200');
+      sizePixels = (minFeatureMM / 25.4 * ppi);  // mm → inches → pixels
+    }
 
-      const col = placedCount % gridCols;
-      const row = Math.floor((placedCount - 1) / gridCols);
+    // Ensure size is reasonable relative to canvas
+    sizePixels = Math.min(sizePixels, Math.min(width, height) * 0.4);
+    sizePixels = Math.max(sizePixels, Math.min(width, height) * 0.15);
 
-      const cellWidth = width / gridCols;
-      const cellHeight = height / gridRows;
+    // Create large rounded shape (circle or rounded square)
+    const shapeType = Math.floor(random() * 2);
 
-      const x = cellWidth * (col + 0.5 + (random() - 0.5) * 0.4);
-      const y = cellHeight * (row + 0.5 + (random() - 0.5) * 0.4);
-
-      // Size based on canvas dimensions
-      const size = Math.min(cellWidth, cellHeight) * (0.3 + random() * 0.3);
-
-      // Simple shape: circle, rectangle, or rounded rectangle
-      const shapeType = Math.floor(random() * 3);
-
-      if (shapeType === 0) {
-        // Circle
-        svg += `<circle cx="${x}" cy="${y}" r="${size/2}" fill="black" opacity="0.4"/>`;
-      } else if (shapeType === 1) {
-        // Rectangle
-        svg += `<rect x="${x-size/2}" y="${y-size/2}" width="${size}" height="${size}" fill="black" opacity="0.4"/>`;
-      } else {
-        // Rounded rectangle
-        const rx = size * 0.2;
-        svg += `<rect x="${x-size/2}" y="${y-size/2}" width="${size}" height="${size}" rx="${rx}" fill="black" opacity="0.4"/>`;
-      }
+    if (shapeType === 0) {
+      // Large circle blob
+      svg += `<circle cx="${x}" cy="${y}" r="${sizePixels/2}" fill="black" opacity="0.35"/>`;
+    } else {
+      // Large rounded square blob
+      const rx = sizePixels * 0.25;  // 25% radius for smooth corners
+      svg += `<rect x="${x-sizePixels/2}" y="${y-sizePixels/2}" width="${sizePixels}" height="${sizePixels}" rx="${rx}" fill="black" opacity="0.35"/>`;
     }
   }
 
