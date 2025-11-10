@@ -2,18 +2,31 @@
 // Implements the full buildFluxPrompt() from the design plan
 
 /**
- * Build FLUX prompt from structured design brief
- * @param {Object} brief - Design brief with title, mood, motifs, arrangement_notes
- * @param {Object} options - Optional overrides (simplicity, etc.)
- * @returns {Object} {positive, negative, guidance, steps}
+ * Build FLUX prompt from structured design brief with composition object
+ * @param {Object} brief - Design brief with title, mood, composition, motifs, arrangement_notes
+ * @param {Object} options - Optional overrides
+ * @param {number} options.max_colours - Maximum colours allowed (1-8, default 6)
+ * @param {boolean} options.try_simpler - Apply stricter simplification parameters
+ * @param {number} options.guidance - Override guidance (3.5-4.5)
+ * @param {number} options.steps - Override steps (18-20)
+ * @returns {Object} {positive, negative, guidance, steps, denoise}
  */
 export function buildFluxPrompt(brief, options = {}) {
+  const max_colours = options.max_colours || 6;
+  const try_simpler = options.try_simpler || false;
+
   // Extract brief components
   const theme = brief?.title ? `Theme: ${brief.title}.` : "";
   const mood = (brief?.mood || []).length ? `Mood: ${brief.mood.join(", ")}.` : "";
 
+  // Build motifs line with size information if available
   const motifs = (brief?.motifs || [])
-    .map(m => `${m.name} x${m.count || 1}`)
+    .map(m => {
+      if (m.size_m && Array.isArray(m.size_m)) {
+        return `${m.name} x${m.count || 1} (${m.size_m[0]}-${m.size_m[1]}m)`;
+      }
+      return `${m.name} x${m.count || 1}`;
+    })
     .join(", ");
   const motifsLine = motifs ? `Motifs: ${motifs} as bold, simple silhouettes.` : "";
 
@@ -23,169 +36,79 @@ export function buildFluxPrompt(brief, options = {}) {
 
   // Build positive prompt
   const positive = [
-    "Flat vector illustration of playground TPV rubber surfacing design, graphic design style, flat 2D, no photorealism",
+    "Playground TPV rubber surfacing design",
     "flat vector look with large smooth shapes",
     "installer-friendly geometry",
+    "bold silhouettes",
     "no outlines, no text, no tiny elements",
-    "flat TPV rubber surfacing plan, solid colour fills only, crisp vector edges, no gradients",
-    "hard-edged offset shadow regions as separate shapes (single tone), no lighting, no transparency, no depth shading",
+    "uniform flat colours (no gradients)",
+    "optional hard drop-shadows with crisp edges (decal-style)",
+    "matte finish",
+    "overhead view",
     theme,
     mood,
     motifsLine,
     composition,
-    "bold flat vector aesthetic, large smooth geometric shapes, installer-friendly simple forms, posterized look, flat fills, print-ready, no gradients, crisp boundaries, no feathering, no depth, no 3D, no texture, pure flat design"
+    `Keep total colours ≤ ${max_colours}.`
   ].filter(Boolean).join(", ");
 
   // Build negative prompt - comprehensive anti-gradient, anti-soft-shadow terms
   let negative = [
-    // Soft shadow & blur elimination
-    "soft shadow", "soft shadows", "feathered shadow", "feathered shadows",
-    "blur", "gaussian blur", "motion blur", "radial blur",
-    "airbrush", "glow", "inner glow", "outer glow",
-    "lighting effects", "specular highlight", "reflective", "glossy",
-    "vignette", "lens flare", "bloom", "halo effect",
-    // Gradient elimination
-    "gradient", "gradients", "radial gradient", "linear gradient", "color gradient",
-    "smooth transition", "fade", "feathering", "soft edges",
-    // 3D & depth cues
-    "photorealistic", "photo", "photography", "3D render", "3D", "depth",
-    "realistic lighting", "perspective", "shadows",
-    "bevel", "emboss", "metallic", "shading", "3D shading",
-    // Texture & complexity
+    // Complexity & detail
     "busy pattern", "fine texture", "high-frequency detail",
-    "thin lines", "hairline strokes", "text", "letters", "numbers",
-    "perspective props", "stickers", "clipart", "grunge", "graffiti",
-    "tiny symbols", "noisy background", "photographic texture",
-    "stippling", "halftone", "noodly details", "micro-patterns",
-    "realistic", "detailed texture", "transparency", "translucent", "opacity"
+    "thin lines", "hairline strokes",
+    "text", "letters", "numbers",
+    // Rendering effects
+    "metallic", "glossy", "photoreal", "photorealistic", "3D render", "3D",
+    "perspective", "bevel", "emboss",
+    // Gradients & soft effects (CRITICAL)
+    "gradient", "gradients", "gradient shading",
+    "soft shadows", "soft shadow", "feathered shadows",
+    "airbrush", "blur", "glow",
+    // Unwanted styles
+    "grunge", "graffiti", "clipart clutter",
+    "realistic texture", "depth", "transparency"
   ].join(", ");
 
-  // Apply simplicity enhancement if requested
-  if (options.simplicity === 'high' || options.trySimpler) {
-    negative += ", complex shapes, overlapping elements, busy composition, small details, intricate patterns";
+  // Apply "Try Simpler" adjustments
+  if (try_simpler) {
+    negative += ", simplify shapes, fewer regions, larger silhouettes, complex shapes, overlapping elements, busy composition, small details, intricate patterns";
   }
 
-  // FLUX-dev parameters - conservative for crisp output
-  const guidance = options.guidance || 3.6;  // Lower = less soft shading (3.5-4.5 range)
-  const steps = options.steps || 20;  // 18-22 range for clean results
+  // FLUX-dev parameters
+  let guidance = parseFloat(options.guidance || process.env.FLUX_DEV_GUIDANCE || '3.6');
+  let steps = parseInt(options.steps || process.env.FLUX_DEV_STEPS || '20');
+  let denoise = parseFloat(options.denoise || process.env.FLUX_DEV_DENOISE || '0.30');
+
+  // Apply "Try Simpler" parameter adjustments (spec section 5)
+  if (try_simpler) {
+    denoise = Math.max(0.20, denoise - 0.05);
+  }
 
   return {
     positive,
     negative,
     guidance,
-    steps
+    steps,
+    denoise
   };
 }
 
 /**
- * Build prompt from simple user text (backward compatibility)
- * Wraps user text in TPV design context
- * @param {string} userPrompt - Simple user description
- * @param {Object} options - Optional overrides (style, simplicity, etc.)
- * @returns {Object} {positive, negative, guidance, steps}
+ * Create simplified brief for "Try Simpler" functionality
+ * Increases min feature and radius constraints
+ * @param {Object} originalBrief - Original design brief
+ * @returns {Object} Simplified brief with stricter constraints
  */
-export function buildSimplePrompt(userPrompt, options = {}) {
-  let brief = {
-    title: userPrompt,
-    mood: [],
-    motifs: [],
-    arrangement_notes: null
-  };
-
-  // Apply style preset if provided
-  if (options.style) {
-    brief = applyStylePreset(brief, options.style);
-  }
-
-  return buildFluxPrompt(brief, options);
-}
-
-/**
- * Style presets for different design approaches
- * These can enhance the brief with style-specific hints
- */
-export const STYLE_PRESETS = {
-  playful_flat: {
-    name: 'Playful Flat Design',
-    description: 'Bold shapes, vibrant colors, fun themes',
-    moodHints: ['playful', 'vibrant', 'fun'],
-    guidance: 3.6,
-    steps: 20
-  },
-  geometric: {
-    name: 'Geometric Abstract',
-    description: 'Clean lines, mathematical patterns, modern aesthetics',
-    moodHints: ['minimal', 'modern', 'geometric'],
-    guidance: 3.6,
-    steps: 20
-  },
-  sport_court: {
-    name: 'Sport Court Graphics',
-    description: 'Court line markings, field layouts, sport-specific graphics',
-    moodHints: ['athletic', 'structured', 'functional'],
-    guidance: 3.6,
-    steps: 20
-  },
-  tpv_flat_minimal: {
-    name: 'TPV Flat Minimal',
-    description: 'Ultra-simple, installer-friendly, large clean shapes',
-    moodHints: ['minimal', 'clean', 'simple'],
-    guidance: 3.6,
-    steps: 20
-  }
-};
-
-/**
- * Get style preset by ID
- * @param {string} styleId - Style preset ID
- * @returns {Object} Style preset
- */
-export function getStylePreset(styleId) {
-  const defaultStyle = process.env.INSPIRE_MODEL_STYLE_DEFAULT || 'playful_flat';
-  const style = STYLE_PRESETS[styleId] || STYLE_PRESETS[defaultStyle];
-
-  if (!STYLE_PRESETS[styleId]) {
-    console.warn(`[PROMPT] Unknown style "${styleId}", using default: ${defaultStyle}`);
-  }
-
-  return style;
-}
-
-/**
- * Enhance brief with style preset hints
- * @param {Object} brief - Design brief
- * @param {string} styleId - Style preset ID
- * @returns {Object} Enhanced brief
- */
-export function applyStylePreset(brief, styleId) {
-  const style = getStylePreset(styleId);
-
+export function createSimplifiedBrief(originalBrief) {
   return {
-    ...brief,
-    mood: [...(brief.mood || []), ...style.moodHints],
-    style_preset: styleId
+    ...originalBrief,
+    composition: {
+      ...originalBrief.composition,
+      min_feature_mm: 160,  // Increased from 120mm
+      min_radius_mm: 800     // Increased from 600mm
+    }
   };
-}
-
-/**
- * Extract key themes from user prompt for metadata
- * @param {string} userPrompt - User's creative prompt
- * @returns {Array<string>} Key themes/keywords
- */
-export function extractThemes(userPrompt) {
-  if (!userPrompt || userPrompt.trim().length === 0) {
-    return [];
-  }
-
-  // Simple keyword extraction (can be enhanced with NLP later)
-  const themes = userPrompt
-    .toLowerCase()
-    .replace(/[^\w\s]/g, ' ') // Remove punctuation
-    .split(/\s+/)
-    .filter(word => word.length > 3) // Filter out short words
-    .slice(0, 5); // Take top 5 keywords
-
-  return themes;
 }
 
 /**
@@ -201,9 +124,55 @@ export function validateBrief(brief) {
     return { valid: false, errors };
   }
 
-  // Title or motifs required
-  if (!brief.title && (!brief.motifs || brief.motifs.length === 0)) {
-    errors.push('Brief must have either a title or motifs');
+  // Title required
+  if (!brief.title) {
+    errors.push('Brief must have a title');
+  }
+
+  // Validate composition object (required in new schema)
+  if (!brief.composition || typeof brief.composition !== 'object') {
+    errors.push('Brief must have a composition object');
+  } else {
+    const comp = brief.composition;
+
+    // Validate coverage ratios
+    if (typeof comp.base_coverage !== 'number' || comp.base_coverage < 0 || comp.base_coverage > 1) {
+      errors.push('composition.base_coverage must be a number between 0 and 1');
+    }
+    if (typeof comp.accent_coverage !== 'number' || comp.accent_coverage < 0 || comp.accent_coverage > 1) {
+      errors.push('composition.accent_coverage must be a number between 0 and 1');
+    }
+    if (typeof comp.highlight_coverage !== 'number' || comp.highlight_coverage < 0 || comp.highlight_coverage > 1) {
+      errors.push('composition.highlight_coverage must be a number between 0 and 1');
+    }
+
+    // Validate shape density
+    if (!['low', 'medium'].includes(comp.shape_density)) {
+      errors.push('composition.shape_density must be "low" or "medium"');
+    }
+
+    // Validate detail level
+    if (!['low', 'medium'].includes(comp.max_detail_level)) {
+      errors.push('composition.max_detail_level must be "low" or "medium"');
+    }
+
+    // Validate feature sizes
+    if (typeof comp.min_feature_mm !== 'number' || comp.min_feature_mm < 100) {
+      errors.push('composition.min_feature_mm must be a number >= 100');
+    }
+    if (typeof comp.min_radius_mm !== 'number' || comp.min_radius_mm < 300) {
+      errors.push('composition.min_radius_mm must be a number >= 300');
+    }
+
+    // Validate region count
+    if (typeof comp.target_region_count !== 'number' || comp.target_region_count < 2 || comp.target_region_count > 10) {
+      errors.push('composition.target_region_count must be a number between 2 and 10');
+    }
+
+    // Validate avoid array
+    if (!Array.isArray(comp.avoid)) {
+      errors.push('composition.avoid must be an array');
+    }
   }
 
   // Validate motifs structure
@@ -211,9 +180,15 @@ export function validateBrief(brief) {
     if (!Array.isArray(brief.motifs)) {
       errors.push('Motifs must be an array');
     } else {
+      if (brief.motifs.length > 4) {
+        errors.push('Maximum 4 motifs allowed');
+      }
       brief.motifs.forEach((motif, i) => {
         if (!motif.name) {
           errors.push(`Motif ${i} missing name`);
+        }
+        if (motif.size_m && !Array.isArray(motif.size_m)) {
+          errors.push(`Motif ${i} size_m must be an array [min, max]`);
         }
       });
     }
