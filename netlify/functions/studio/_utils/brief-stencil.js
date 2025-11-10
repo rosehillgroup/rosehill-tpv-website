@@ -25,7 +25,9 @@ export async function generateBriefStencil(brief, dimensions, options = {}) {
 
   console.log(`[BRIEF-STENCIL] Generating ${width}×${height} stencil for "${brief.title || 'untitled'}"`);
   console.log(`[BRIEF-STENCIL] Target regions: ${composition.target_region_count}`);
-  console.log(`[BRIEF-STENCIL] Motifs: ${brief.motifs?.length || 0}`);
+
+  const totalMotifCount = (brief.motifs || []).reduce((sum, m) => sum + (m.count || 1), 0);
+  console.log(`[BRIEF-STENCIL] Motifs: ${brief.motifs?.length || 0} types, ${totalMotifCount} individual shapes`);
 
   // Create an SVG layout guide using composition parameters
   const svg = generateLayoutSVG(brief, width, height, seed, composition);
@@ -70,10 +72,10 @@ function generateLayoutSVG(brief, width, height, seed, composition) {
   // Generate broad colored regions (2-4 regions as background)
   svg += generateBroadRegions(width, height, targetRegions, random);
 
-  // Add semantic motif shapes (fish, seaweed, etc.) - up to 3 motifs
-  const maxMotifs = Math.min(3, motifs.length);
-  if (maxMotifs > 0) {
-    svg += generateSemanticMotifs(motifs.slice(0, maxMotifs), width, height, random, composition);
+  // Add semantic motif shapes (fish, seaweed, etc.)
+  // generateSemanticMotifs will expand counts and cap at 5 total shapes
+  if (motifs.length > 0) {
+    svg += generateSemanticMotifs(motifs, width, height, random, composition);
   }
 
   svg += '</svg>';
@@ -134,19 +136,32 @@ function generateBroadRegions(width, height, targetRegions, random) {
 function generateSemanticMotifs(motifs, width, height, random, composition) {
   let svg = '';
 
-  // Position motifs with generous spacing
+  // Expand motifs based on count (e.g., {name: "fish", count: 3} becomes 3 fish entries)
+  const expandedMotifs = [];
+  for (const motif of motifs) {
+    const count = Math.min(motif.count || 1, 5);  // Cap at 5 per motif type
+    for (let i = 0; i < count; i++) {
+      expandedMotifs.push({ ...motif, count: 1 });  // Individual instances
+    }
+  }
+
+  console.log(`[BRIEF-STENCIL] Expanded ${motifs.length} motif types to ${expandedMotifs.length} individual shapes`);
+
+  // Position motifs with generous spacing (support up to 5 individual shapes)
   const positions = [
-    { x: 0.25, y: 0.35 },  // Left
-    { x: 0.75, y: 0.45 },  // Right
-    { x: 0.50, y: 0.60 }   // Center-bottom
+    { x: 0.20, y: 0.35 },  // Left
+    { x: 0.50, y: 0.40 },  // Center
+    { x: 0.80, y: 0.35 },  // Right
+    { x: 0.35, y: 0.65 },  // Lower left
+    { x: 0.65, y: 0.65 }   // Lower right
   ];
 
-  for (let i = 0; i < motifs.length; i++) {
-    const motif = motifs[i];
+  for (let i = 0; i < Math.min(expandedMotifs.length, 5); i++) {
+    const motif = expandedMotifs[i];
     const pos = positions[i];
 
     const x = width * pos.x;
-    const y = height * (pos.y + (random() - 0.5) * 0.1);  // Small vertical variation
+    const y = height * (pos.y + (random() - 0.5) * 0.08);  // Small vertical variation
 
     // Calculate size
     let sizePixels;

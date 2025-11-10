@@ -19,20 +19,25 @@ function buildFluxPrompt(brief, options = {}) {
   const theme = brief?.title ? `Theme: ${brief.title}.` : "";
   const mood = (brief?.mood || []).length ? `Mood: ${brief.mood.join(", ")}.` : "";
 
-  // Build motifs line with size information if available
+  // Build motifs line with explicit natural language counts
   const motifs = (brief?.motifs || [])
     .map(m => {
+      const count = m.count || 1;
+      const countWord = ['one', 'two', 'three', 'four', 'five'][count - 1] || count;
+      const plural = count > 1 ? 's' : '';
+
       if (m.size_m && Array.isArray(m.size_m)) {
-        return `${m.name} x${m.count || 1} (${m.size_m[0]}-${m.size_m[1]}m)`;
+        return `${countWord} large ${m.name} silhouette${plural} (${m.size_m[0]}-${m.size_m[1]}m)`;
       }
-      return `${m.name} x${m.count || 1}`;
+      return `${countWord} ${m.name} silhouette${plural}`;
     })
     .join(", ");
-  const motifsLine = motifs ? `Motifs: ${motifs} as bold, simple silhouettes.` : "";
+  const motifsLine = motifs ? `${motifs} evenly spaced across surface.` : "";
 
+  // Build layout-first composition instructions (not concept-art language)
   const composition = brief?.arrangement_notes
     ? `Composition: ${brief.arrangement_notes}`
-    : `Composition: 2–3 broad flowing bands, generous spacing, minimal overlaps.`;
+    : `Composition: Three wide horizontal surfacing bands for background zones. Clear gaps between motifs; avoid crowding.`;
 
   // Build positive prompt with stencil reinterpretation guidance
   const positive = [
@@ -52,7 +57,8 @@ function buildFluxPrompt(brief, options = {}) {
     `Limit palette to ≤ ${max_colours} flat colours total.`,
     // Prompt Flux to reinterpret stencil shapes rather than copy them
     "Treat composition guide loosely, freely reinterpret abstract shapes to match the theme",
-    motifs ? "Replace geometric blobs with actual motif silhouettes" : ""
+    motifs ? "Encourage creative interpretation of motifs; vary their poses and orientation" : "",
+    motifs ? "Draw ALL motif silhouettes specified, evenly distributed" : ""
   ].filter(Boolean).join(", ");
 
   // Build negative prompt - comprehensive anti-gradient, anti-soft-shadow terms
@@ -68,6 +74,10 @@ function buildFluxPrompt(brief, options = {}) {
     "gradient", "gradients", "gradient shading",
     "soft shadows", "soft shadow", "feathered shadows",
     "airbrush", "blur", "glow",
+    // Tonal variation & lighting (NEW - kills subtle shading)
+    "tonal variation", "lighting effects", "soft shading",
+    "smooth gradients between colours", "smooth gradients between color regions",
+    "subtle shading", "matte lighting", "ambient lighting",
     // Unwanted styles
     "grunge", "graffiti", "clipart clutter",
     "realistic texture", "depth", "transparency",
@@ -82,11 +92,11 @@ function buildFluxPrompt(brief, options = {}) {
   }
 
   // FLUX-dev parameters
-  // Higher denoise (0.75) gives model more freedom to reinterpret stencil
-  // Moderate guidance (3.5) balances prompt adherence with creative freedom
-  let guidance = parseFloat(options.guidance || process.env.FLUX_DEV_GUIDANCE || '3.5');
+  // Higher denoise (0.78) gives model more freedom to draw multiple motifs
+  // Lower guidance (3.3) reduces stencil edge dominance
+  let guidance = parseFloat(options.guidance || process.env.FLUX_DEV_GUIDANCE || '3.3');
   let steps = parseInt(options.steps || process.env.FLUX_DEV_STEPS || '20');
-  let denoise = parseFloat(options.denoise || process.env.FLUX_DEV_DENOISE || '0.75');
+  let denoise = parseFloat(options.denoise || process.env.FLUX_DEV_DENOISE || '0.78');
 
   // Apply "Try Simpler" parameter adjustments (spec section 5)
   if (try_simpler) {
