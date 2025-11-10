@@ -90,7 +90,7 @@ exports.handler = async (event, context) => {
       throw new Error(`Failed to fetch image: ${imageResponse.statusText}`);
     }
 
-    const rasterBuffer = Buffer.from(await imageResponse.arrayBuffer());
+    let rasterBuffer = Buffer.from(await imageResponse.arrayBuffer());
 
     // Get dimensions
     const metadata = await sharp(rasterBuffer).metadata();
