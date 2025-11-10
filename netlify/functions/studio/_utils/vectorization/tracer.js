@@ -81,6 +81,8 @@ async function traceRegions(quantizedBuffer, palette) {
     const svgString = ImageTracer.imagedataToSVG(imageData, options);
 
     console.log('[TRACER] Tracing complete, parsing SVG...');
+    console.log(`[TRACER] SVG output length: ${svgString.length} bytes`);
+    console.log(`[TRACER] SVG preview (first 500 chars): ${svgString.substring(0, 500)}`);
 
     // Parse SVG to extract path data
     const paths = parseSVGPaths(svgString, palette);
@@ -115,16 +117,23 @@ function parseSVGPaths(svgString, palette) {
   // Extract path elements using regex
   const pathRegex = /<path[^>]*d="([^"]+)"[^>]*fill="([^"]+)"/g;
   let match;
+  let matchCount = 0;
 
   while ((match = pathRegex.exec(svgString)) !== null) {
+    matchCount++;
     const dAttribute = match[1];
     const fillColor = match[2];
+
+    console.log(`[TRACER-PARSER] Path ${matchCount}: fill=${fillColor}, d length=${dAttribute.length}`);
 
     // Parse path d attribute to points
     const points = parsePathD(dAttribute);
 
+    console.log(`[TRACER-PARSER] Parsed ${points.length} points`);
+
     if (points.length < 3) {
       // Skip degenerate paths
+      console.log(`[TRACER-PARSER] Skipping degenerate path (${points.length} points)`);
       continue;
     }
 
@@ -142,6 +151,8 @@ function parseSVGPaths(svgString, palette) {
       area: calculatePolygonArea(points)
     });
   }
+
+  console.log(`[TRACER-PARSER] Found ${matchCount} path matches, kept ${paths.length} valid paths`);
 
   // Sort by area (largest first) for proper layering
   paths.sort((a, b) => b.area - a.area);
