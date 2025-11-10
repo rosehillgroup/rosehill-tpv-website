@@ -511,9 +511,12 @@ async function triggerVectorization(job, imageUrl) {
 
   try {
     // Get surface dimensions from job
-    const widthMM = job.surface?.width_m ? job.surface.width_m * 1000 : 5000;
-    const heightMM = job.surface?.height_m ? job.surface.height_m * 1000 : 5000;
+    const widthMM = job.surface?.width_mm || (job.surface?.width_m ? job.surface.width_m * 1000 : 5000);
+    const heightMM = job.surface?.height_mm || (job.surface?.height_m ? job.surface.height_m * 1000 : 5000);
     const maxColours = job.max_colours || 6;
+
+    console.log(`[VECTORIZE-TRIGGER] Surface dimensions: ${widthMM}mm × ${heightMM}mm`);
+    console.log(`[VECTORIZE-TRIGGER] Max colours: ${maxColours}`);
 
     // Call vectorize function
     const vectorizeUrl = `${process.env.PUBLIC_BASE_URL}/.netlify/functions/vectorise`;
@@ -529,12 +532,16 @@ async function triggerVectorization(job, imageUrl) {
       })
     });
 
+    console.log(`[VECTORIZE-TRIGGER] Vectorize response status: ${response.status}`);
+
     if (!response.ok) {
       const errorData = await response.json();
+      console.error(`[VECTORIZE-TRIGGER] Vectorize endpoint error:`, errorData);
       throw new Error(`Vectorization failed: ${errorData.error || 'Unknown error'}`);
     }
 
     const result = await response.json();
+    console.log(`[VECTORIZE-TRIGGER] Vectorize result:`, JSON.stringify(result, null, 2));
 
     if (!result.ok) {
       throw new Error(`Vectorization QC failed: ${result.error || result.message}`);
@@ -545,12 +552,24 @@ async function triggerVectorization(job, imageUrl) {
     console.log(`[VECTORIZE-TRIGGER] QC: IoU=${result.qc_results.iou.toFixed(4)}`);
 
     // Update job with vectorization results
+    // Fetch latest job state first to avoid overwriting data
     const supabase = getSupabaseServiceClient();
+    const { data: latestJob, error: fetchError } = await supabase
+      .from('studio_jobs')
+      .select('metadata, outputs')
+      .eq('id', job.id)
+      .single();
+
+    if (fetchError) {
+      console.error(`[VECTORIZE-TRIGGER] Failed to fetch latest job ${job.id}:`, fetchError);
+      throw fetchError;
+    }
+
     const { error: updateError } = await supabase
       .from('studio_jobs')
       .update({
         metadata: {
-          ...job.metadata,
+          ...latestJob.metadata,
           vectorization: {
             svg_url: result.svg_url,
             metrics: result.metrics,
@@ -559,7 +578,7 @@ async function triggerVectorization(job, imageUrl) {
           }
         },
         outputs: {
-          ...job.outputs,
+          ...latestJob.outputs,
           svg_url: result.svg_url
         }
       })
