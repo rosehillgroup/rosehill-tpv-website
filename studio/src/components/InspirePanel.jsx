@@ -41,6 +41,7 @@ function InspirePanel({ onConceptsGenerated }) {
       setProgress(`Job created! ${estimatedMsg}`);
 
       // Step 2: Poll for completion with progress updates
+      let vectorizationStartTime = null;
       const jobResult = await apiClient.inspireSimpleWaitForCompletion(jobId, (status) => {
         console.log('[InspirePanel] Status update:', status.status);
 
@@ -83,9 +84,25 @@ function InspirePanel({ onConceptsGenerated }) {
             break;
           case 'completed':
             if (hasVectorization) {
-              setProgress('Vectorization complete! Design ready for installation.');
+              setProgress('✓ Vectorization complete! Installer-ready design available.');
             } else {
-              setProgress('Generation complete! Vectorizing...');
+              // Show informative vectorization progress
+              if (!vectorizationStartTime) {
+                vectorizationStartTime = Date.now();
+              }
+              const elapsed = Math.floor((Date.now() - vectorizationStartTime) / 1000);
+
+              if (elapsed < 5) {
+                setProgress('🎨 Generation complete! Converting to vectors (detecting gradients)...');
+              } else if (elapsed < 10) {
+                setProgress('🎨 Vectorizing: Quantizing colors and tracing regions...');
+              } else if (elapsed < 18) {
+                setProgress('🎨 Vectorizing: Running quality checks and simplifying paths...');
+              } else if (elapsed < 25) {
+                setProgress('🎨 Vectorizing: Applying manufacturing constraints (min features, radii)...');
+              } else {
+                setProgress('🎨 Vectorizing: Finalizing installer-ready SVG (~25-30s total)...');
+              }
             }
             break;
           default:
@@ -352,9 +369,9 @@ function InspirePanel({ onConceptsGenerated }) {
         </p>
       )}
 
-      {result && !loading && (
+      {result?.svg_url && !loading && (
         <div style={{ marginTop: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1rem' }}>Generated Design</h3>
+          <h3 style={{ marginBottom: '1rem' }}>Installer-Ready Design</h3>
 
           {/* QC Results Badge */}
           {qcResults && (
@@ -386,17 +403,18 @@ function InspirePanel({ onConceptsGenerated }) {
             gap: '1rem',
             marginBottom: '1rem'
           }}>
-            {result.final_url && (
+            {result.svg_url && (
               <div>
                 <img
-                  src={result.final_url}
-                  alt="Generated design"
+                  src={result.svg_url}
+                  alt="Installer-ready vector design"
                   style={{ width: '100%', borderRadius: '8px', marginBottom: '0.5rem' }}
                 />
                 <div style={{ fontSize: '0.875rem', color: '#718096' }}>
-                  <p>Dimensions: {result.dimensions?.final?.w || 'N/A'} × {result.dimensions?.final?.h || 'N/A'} px</p>
+                  <p>Format: Scalable Vector Graphics (SVG)</p>
                   <p>Surface: {lengthMM}mm × {widthMM}mm ({(lengthMM/1000).toFixed(1)}m × {(widthMM/1000).toFixed(1)}m)</p>
-                  <p>Max Colours: {maxColours}</p>
+                  <p>Colours: {qcResults?.colour_count || maxColours}</p>
+                  <p>Manufacturing constraints applied: ✓ Min feature {qcResults?.min_feature_mm || 120}mm, Min radius {qcResults?.min_radius_mm || 600}mm</p>
                   {metadata?.seed && (
                     <p style={{ marginTop: '0.5rem' }}>
                       <strong>Seed:</strong> {metadata.seed}
@@ -405,43 +423,20 @@ function InspirePanel({ onConceptsGenerated }) {
                 </div>
               </div>
             )}
-            {result.thumbnail_url && !result.final_url && (
-              <div>
-                <img
-                  src={result.thumbnail_url}
-                  alt="Generated design thumbnail"
-                  style={{ width: '100%', borderRadius: '8px' }}
-                />
-              </div>
-            )}
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {/* Vectorization download button (if available) */}
-            {result.svg_url && (
-              <div style={{
-                padding: '1rem',
-                background: '#c6f6d5',
-                borderRadius: '8px',
-                marginBottom: '0.5rem'
-              }}>
-                <div style={{ marginBottom: '0.5rem', fontWeight: 'bold', color: '#22543d' }}>
-                  ✓ Installer-Ready Vector File
-                </div>
-                <a
-                  href={result.svg_url}
-                  download
-                  className="tpv-studio__button tpv-studio__button--primary"
-                  style={{ width: '100%', textAlign: 'center', textDecoration: 'none', fontSize: '0.875rem', display: 'block' }}
-                >
-                  Download SVG
-                </a>
-                <small style={{ display: 'block', marginTop: '0.5rem', color: '#22543d' }}>
-                  Scalable vector with manufacturing constraints applied
-                </small>
-              </div>
-            )}
+            {/* Primary download button */}
+            <a
+              href={result.svg_url}
+              download
+              className="tpv-studio__button tpv-studio__button--primary"
+              style={{ width: '100%', textAlign: 'center', textDecoration: 'none' }}
+            >
+              Download Installer-Ready SVG
+            </a>
 
+            {/* Regeneration options */}
             <button
               className="tpv-studio__button tpv-studio__button--secondary"
               onClick={handleTrySimpler}
@@ -460,14 +455,17 @@ function InspirePanel({ onConceptsGenerated }) {
             >
               New Generation
             </button>
+
+            {/* Optional: Backup raster download */}
             {result.final_url && (
               <a
                 href={result.final_url}
                 download
                 className="tpv-studio__button tpv-studio__button--secondary"
-                style={{ textAlign: 'center', textDecoration: 'none' }}
+                style={{ textAlign: 'center', textDecoration: 'none', fontSize: '0.75rem', padding: '0.5rem' }}
+                title="Download original raster image (backup reference only)"
               >
-                Download Raster Image
+                Download Raster Reference (JPG)
               </a>
             )}
           </div>
