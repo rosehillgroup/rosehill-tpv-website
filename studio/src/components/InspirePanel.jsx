@@ -416,8 +416,8 @@ function InspirePanel({ onConceptsGenerated }) {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {/* Vectorization download buttons (if available) */}
-            {(result.svg_url || result.pdf_url) && (
+            {/* Vectorization download button (if available) */}
+            {result.svg_url && (
               <div style={{
                 padding: '1rem',
                 background: '#c6f6d5',
@@ -425,32 +425,18 @@ function InspirePanel({ onConceptsGenerated }) {
                 marginBottom: '0.5rem'
               }}>
                 <div style={{ marginBottom: '0.5rem', fontWeight: 'bold', color: '#22543d' }}>
-                  ✓ Vector Files Ready
+                  ✓ Installer-Ready Vector File
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {result.svg_url && (
-                    <a
-                      href={result.svg_url}
-                      download
-                      className="tpv-studio__button tpv-studio__button--primary"
-                      style={{ flex: 1, textAlign: 'center', textDecoration: 'none', fontSize: '0.875rem' }}
-                    >
-                      Download SVG
-                    </a>
-                  )}
-                  {result.pdf_url && (
-                    <a
-                      href={result.pdf_url}
-                      download
-                      className="tpv-studio__button tpv-studio__button--primary"
-                      style={{ flex: 1, textAlign: 'center', textDecoration: 'none', fontSize: '0.875rem' }}
-                    >
-                      Download PDF
-                    </a>
-                  )}
-                </div>
+                <a
+                  href={result.svg_url}
+                  download
+                  className="tpv-studio__button tpv-studio__button--primary"
+                  style={{ width: '100%', textAlign: 'center', textDecoration: 'none', fontSize: '0.875rem', display: 'block' }}
+                >
+                  Download SVG
+                </a>
                 <small style={{ display: 'block', marginTop: '0.5rem', color: '#22543d' }}>
-                  Installer-ready vector files with manufacturing constraints
+                  Scalable vector with manufacturing constraints applied
                 </small>
               </div>
             )}
