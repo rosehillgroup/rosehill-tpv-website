@@ -20,7 +20,7 @@
  * @param {Object} options.metadata - Job metadata
  * @returns {Promise<Buffer>} PDF buffer
  */
-export async function generatePDF(svgString, options = {}) {
+async function generatePDF(svgString, options = {}) {
   const { Resvg } = await import('@resvg/resvg-js');
 
   console.log('[PDF-GEN] Generating PDF...');
@@ -96,7 +96,7 @@ export async function generatePDF(svgString, options = {}) {
  * @param {Object} options - PDF options
  * @returns {Promise<Buffer>} PDF buffer
  */
-export async function generateEnhancedPDF(svgString, options = {}) {
+async function generateEnhancedPDF(svgString, options = {}) {
   // TODO: Implement full PDF generation with:
   // - Cover page with project details
   // - Installation instructions
@@ -134,7 +134,7 @@ function createPDFMetadata(metadata) {
  * @param {Buffer} pdfBuffer - PDF buffer
  * @returns {Object} {valid, errors}
  */
-export function validatePDF(pdfBuffer) {
+function validatePDF(pdfBuffer) {
   const errors = [];
 
   // Check PDF magic number (%PDF)
@@ -166,7 +166,7 @@ export function validatePDF(pdfBuffer) {
  * @param {Object} options - Generation options
  * @returns {number} Estimated size in bytes
  */
-export function estimatePDFSize(svgString, options = {}) {
+function estimatePDFSize(svgString, options = {}) {
   const { width_mm = 5000, height_mm = 5000 } = options;
 
   // Rough estimate based on dimensions
@@ -186,3 +186,10 @@ export function estimatePDFSize(svgString, options = {}) {
 
   return Math.round(estimatedPdfSize);
 }
+
+module.exports = {
+  generatePDF,
+  generateEnhancedPDF,
+  validatePDF,
+  estimatePDFSize
+};

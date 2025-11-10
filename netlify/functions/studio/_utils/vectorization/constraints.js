@@ -22,7 +22,7 @@
  * @param {number} dimensions.image_height - Image height in pixels
  * @returns {Object} {paths, metrics}
  */
-export function enforceConstraints(paths, dimensions) {
+function enforceConstraints(paths, dimensions) {
   console.log('[CONSTRAINTS] Enforcing manufacturing constraints...');
   console.log(`[CONSTRAINTS] Surface: ${dimensions.width_mm}×${dimensions.height_mm}mm`);
   console.log(`[CONSTRAINTS] Image: ${dimensions.image_width}×${dimensions.image_height}px`);
@@ -212,7 +212,7 @@ function distance(p1, p2) {
  * @param {Array<Object>} points - Path points
  * @returns {number} Approximate radius in pixels
  */
-export function calculateMinBoundingCircleRadius(points) {
+function calculateMinBoundingCircleRadius(points) {
   if (points.length === 0) return 0;
 
   // Simple approximation: use centroid and furthest point
@@ -232,3 +232,8 @@ export function calculateMinBoundingCircleRadius(points) {
 
   return maxDist;
 }
+
+module.exports = {
+  enforceConstraints,
+  calculateMinBoundingCircleRadius
+};

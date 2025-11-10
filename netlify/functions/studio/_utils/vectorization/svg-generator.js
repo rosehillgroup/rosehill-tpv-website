@@ -17,7 +17,7 @@
  * @param {Object} metadata - Additional metadata
  * @returns {string} SVG string
  */
-export function generateSVG(paths, dimensions, metadata = {}) {
+function generateSVG(paths, dimensions, metadata = {}) {
   console.log('[SVG-GEN] Generating SVG...');
 
   const { width, height } = dimensions;
@@ -144,7 +144,7 @@ function rgbToHex(color) {
  * @param {Object} options - Advanced options
  * @returns {string} Enhanced SVG string
  */
-export function generateAdvancedSVG(paths, dimensions, options = {}) {
+function generateAdvancedSVG(paths, dimensions, options = {}) {
   // TODO: Implement advanced SVG features:
   // - Layer organization by type (base, accent, highlight)
   // - Clipping paths for complex overlaps
@@ -162,7 +162,7 @@ export function generateAdvancedSVG(paths, dimensions, options = {}) {
  * @param {string} svgString - Input SVG
  * @returns {string} Optimized SVG
  */
-export function optimizeSVG(svgString) {
+function optimizeSVG(svgString) {
   // Simple optimization - reduce decimal places
   let optimized = svgString;
 
@@ -190,7 +190,7 @@ export function optimizeSVG(svgString) {
  * @param {string} svgString - SVG to validate
  * @returns {Object} {valid, errors}
  */
-export function validateSVG(svgString) {
+function validateSVG(svgString) {
   const errors = [];
 
   // Check for opening tag
@@ -223,3 +223,10 @@ export function validateSVG(svgString) {
     errors
   };
 }
+
+module.exports = {
+  generateSVG,
+  generateAdvancedSVG,
+  optimizeSVG,
+  validateSVG
+};

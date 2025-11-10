@@ -17,7 +17,7 @@
  * @param {Array<Object>} palette - Color palette [{r, g, b}]
  * @returns {Promise<Object>} {paths, metadata}
  */
-export async function traceRegions(quantizedBuffer, palette) {
+async function traceRegions(quantizedBuffer, palette) {
   const ImageTracer = (await import('imagetracerjs')).default;
 
   console.log('[TRACER] Tracing regions with ImageTracer...');
@@ -341,3 +341,7 @@ function calculatePolygonArea(points) {
 
   return Math.abs(area / 2);
 }
+
+module.exports = {
+  traceRegions
+};

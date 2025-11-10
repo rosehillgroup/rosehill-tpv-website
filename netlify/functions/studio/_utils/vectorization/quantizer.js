@@ -16,7 +16,7 @@
  * @param {number} maxColors - Maximum colors (1-8)
  * @returns {Promise<Object>} {buffer, palette, metadata}
  */
-export async function quantizeColors(imageBuffer, maxColors = 6) {
+async function quantizeColors(imageBuffer, maxColors = 6) {
   const sharp = (await import('sharp')).default;
 
   console.log(`[QUANTIZER] Reducing to ${maxColors} colors using K-means...`);
@@ -274,3 +274,7 @@ function colorDistance(c1, c2) {
   const db = c1.b - c2.b;
   return Math.sqrt(dr * dr + dg * dg + db * db);
 }
+
+module.exports = {
+  quantizeColors
+};

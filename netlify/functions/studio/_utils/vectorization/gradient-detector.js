@@ -14,7 +14,7 @@
  * @param {Buffer} imageBuffer - PNG/JPEG buffer
  * @returns {Promise<Object>} {hasGradients, confidence, metrics}
  */
-export async function detectGradients(imageBuffer) {
+async function detectGradients(imageBuffer) {
   const sharp = (await import('sharp')).default;
 
   console.log('[GRADIENT-DETECTOR] Analyzing image for soft shadows...');
@@ -201,3 +201,7 @@ function applySobelEdgeDetection(data, width, height) {
 
   return gradients;
 }
+
+module.exports = {
+  detectGradients
+};

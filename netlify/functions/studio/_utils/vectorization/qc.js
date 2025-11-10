@@ -19,7 +19,7 @@
  * @param {number} height - Image height
  * @returns {Promise<Object>} {iou, metrics}
  */
-export async function calculateIoU(svgString, quantizedBuffer, width, height) {
+async function calculateIoU(svgString, quantizedBuffer, width, height) {
   const sharp = (await import('sharp')).default;
 
   console.log('[QC] Calculating IoU...');
@@ -130,7 +130,7 @@ export async function calculateIoU(svgString, quantizedBuffer, width, height) {
  * @param {number} height - Image height
  * @returns {Promise<Buffer>} Diff image (red = mismatch)
  */
-export async function generateDiffImage(svgString, quantizedBuffer, width, height) {
+async function generateDiffImage(svgString, quantizedBuffer, width, height) {
   const sharp = (await import('sharp')).default;
 
   console.log('[QC] Generating diff image...');
@@ -215,7 +215,7 @@ export async function generateDiffImage(svgString, quantizedBuffer, width, heigh
  * @param {number} params.min_radius_mm - Min radius
  * @returns {Object} {pass, failures, warnings}
  */
-export function validateQC(params) {
+function validateQC(params) {
   const failures = [];
   const warnings = [];
 
@@ -262,3 +262,9 @@ export function validateQC(params) {
     warnings
   };
 }
+
+module.exports = {
+  calculateIoU,
+  generateDiffImage,
+  validateQC
+};

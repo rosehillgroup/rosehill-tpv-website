@@ -14,7 +14,7 @@
  * @param {number} options.epsilon - Simplification tolerance (default: auto-calculated)
  * @returns {Array<Object>} Simplified paths
  */
-export function simplifyPaths(paths, options = {}) {
+function simplifyPaths(paths, options = {}) {
   console.log('[SIMPLIFIER] Simplifying paths with Douglas-Peucker...');
 
   const simplifiedPaths = paths.map((path, idx) => {
@@ -154,7 +154,7 @@ function distance(p1, p2) {
  * @param {Array<Object>} points - Array of {x, y} points
  * @returns {number} Total length in pixels
  */
-export function calculatePathLength(points) {
+function calculatePathLength(points) {
   let length = 0;
 
   for (let i = 1; i < points.length; i++) {
@@ -172,7 +172,7 @@ export function calculatePathLength(points) {
  * @param {number} angleThreshold - Min angle change to be considered a corner (degrees)
  * @returns {Array<number>} Indices of corner points
  */
-export function detectCorners(points, angleThreshold = 30) {
+function detectCorners(points, angleThreshold = 30) {
   const corners = [];
 
   for (let i = 1; i < points.length - 1; i++) {
@@ -198,3 +198,9 @@ export function detectCorners(points, angleThreshold = 30) {
 
   return corners;
 }
+
+module.exports = {
+  simplifyPaths,
+  calculatePathLength,
+  detectCorners
+};
