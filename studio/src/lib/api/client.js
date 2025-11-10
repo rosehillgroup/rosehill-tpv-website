@@ -53,7 +53,7 @@ class APIClient {
   async inspireSimpleWaitForCompletion(jobId, onProgress = null, pollInterval = 2000) {
     return new Promise((resolve, reject) => {
       let completedAt = null;
-      const maxWaitAfterCompletion = 15000; // Wait up to 15s for vectorization after completion
+      const maxWaitAfterCompletion = 35000; // Wait up to 35s for vectorization after completion (takes ~24s)
 
       const poll = async () => {
         try {
