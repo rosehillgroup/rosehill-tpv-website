@@ -542,7 +542,6 @@ async function triggerVectorization(job, imageUrl) {
 
     console.log(`[VECTORIZE-TRIGGER] Success for job ${job.id}`);
     console.log(`[VECTORIZE-TRIGGER] SVG: ${result.svg_url}`);
-    console.log(`[VECTORIZE-TRIGGER] PDF: ${result.pdf_url}`);
     console.log(`[VECTORIZE-TRIGGER] QC: IoU=${result.qc_results.iou.toFixed(4)}`);
 
     // Update job with vectorization results
@@ -554,7 +553,6 @@ async function triggerVectorization(job, imageUrl) {
           ...job.metadata,
           vectorization: {
             svg_url: result.svg_url,
-            pdf_url: result.pdf_url,
             metrics: result.metrics,
             qc_results: result.qc_results,
             completed_at: new Date().toISOString()
@@ -562,8 +560,7 @@ async function triggerVectorization(job, imageUrl) {
         },
         outputs: {
           ...job.outputs,
-          svg_url: result.svg_url,
-          pdf_url: result.pdf_url
+          svg_url: result.svg_url
         }
       })
       .eq('id', job.id);
