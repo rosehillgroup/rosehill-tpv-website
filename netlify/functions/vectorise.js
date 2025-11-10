@@ -7,9 +7,9 @@
 // 3. K-means color quantization (reduce to ≤8 colors)
 // 4. Region tracing with ImageTracer
 // 5. Douglas-Peucker simplification
-// 6. Min feature/radius enforcement (120mm, 600mm)
-// 7. SVG assembly
-// 8. QC validation (IoU ≥ 0.80)
+// 6. QC validation (IoU ≥ 0.80) - validates tracing accuracy
+// 7. Min feature/radius enforcement (120mm, 600mm)
+// 8. SVG assembly
 // 9. Upload to storage and return URL
 
 const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
@@ -205,10 +205,53 @@ exports.handler = async (event, context) => {
     console.log(`[VECTORIZE] Simplified ${simplifiedPaths.length} paths`);
 
     // ========================================================================
-    // STEP 7: Min feature/radius enforcement
+    // STEP 6: QC validation (IoU) - BEFORE manufacturing constraints
+    // ========================================================================
+    // Validate tracing accuracy before removing small features
+    // This ensures complex designs can pass QC
+
+    console.log('[VECTORIZE] Stage 6/9: QC validation (IoU)...');
+
+    // Generate temporary SVG from simplified paths (before constraints)
+    const qcSvgString = generateSVG(
+      simplifiedPaths,
+      { width: imageWidth, height: imageHeight },
+      {
+        job_id,
+        surface_dimensions: { width: width_mm, height: height_mm }
+      }
+    );
+
+    const iouResult = await calculateIoU(qcSvgString, quantizedBuffer, imageWidth, imageHeight);
+    const iou = iouResult.iou;
+    const qcPass = iou >= 0.80;
+
+    if (!qcPass) {
+      console.error(`[VECTORIZE] QC FAIL: IoU ${iou.toFixed(4)} < 0.80`);
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          ok: false,
+          error: 'QC_FAIL_IOU',
+          message: `IoU ${iou.toFixed(4)} below threshold 0.80 (tracing accuracy check)`,
+          qc_results: {
+            pass: false,
+            iou,
+            threshold: 0.80,
+            metrics: iouResult.metrics,
+            ...qcMetadata
+          }
+        })
+      };
+    }
+
+    console.log(`[VECTORIZE] QC PASS: IoU ${iou.toFixed(4)} (threshold: 0.80, ideal: 0.90+)`);
+
+    // ========================================================================
+    // STEP 7: Min feature/radius enforcement (AFTER QC)
     // ========================================================================
 
-    console.log('[VECTORIZE] Stage 6/9: Enforcing manufacturing constraints...');
+    console.log('[VECTORIZE] Stage 7/9: Enforcing manufacturing constraints...');
 
     const constraintsResult = enforceConstraints(simplifiedPaths, {
       width_mm,
@@ -223,10 +266,10 @@ exports.handler = async (event, context) => {
     console.log(`[VECTORIZE] Constrained to ${constrainedPaths.length} paths (removed ${constraintMetrics.features_removed})`);
 
     // ========================================================================
-    // STEP 8: SVG assembly
+    // STEP 8: SVG assembly (final, with constraints applied)
     // ========================================================================
 
-    console.log('[VECTORIZE] Stage 7/9: Assembling SVG...');
+    console.log('[VECTORIZE] Stage 8/9: Assembling final SVG...');
 
     const svgString = generateSVG(
       constrainedPaths,
@@ -238,37 +281,6 @@ exports.handler = async (event, context) => {
     );
 
     console.log(`[VECTORIZE] Generated SVG: ${svgString.length} bytes`);
-
-    // ========================================================================
-    // STEP 9: QC validation (IoU)
-    // ========================================================================
-
-    console.log('[VECTORIZE] Stage 8/9: QC validation (IoU)...');
-
-    const iouResult = await calculateIoU(svgString, quantizedBuffer, imageWidth, imageHeight);
-    const iou = iouResult.iou;
-    const qcPass = iou >= 0.80;
-
-    if (!qcPass) {
-      console.error(`[VECTORIZE] QC FAIL: IoU ${iou.toFixed(4)} < 0.80`);
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          ok: false,
-          error: 'QC_FAIL_IOU',
-          message: `IoU ${iou.toFixed(4)} below threshold 0.80`,
-          qc_results: {
-            pass: false,
-            iou,
-            threshold: 0.80,
-            metrics: iouResult.metrics,
-            ...qcMetadata
-          }
-        })
-      };
-    }
-
-    console.log(`[VECTORIZE] QC PASS: IoU ${iou.toFixed(4)} (threshold: 0.80, ideal: 0.90+)`);
 
     // ========================================================================
     // STEP 10: Upload SVG to Supabase storage
