@@ -34,7 +34,7 @@ function buildFluxPrompt(brief, options = {}) {
     ? `Composition: ${brief.arrangement_notes}`
     : `Composition: 2–3 broad flowing bands, generous spacing, minimal overlaps.`;
 
-  // Build positive prompt
+  // Build positive prompt with stencil reinterpretation guidance
   const positive = [
     "Playground TPV rubber surfacing design",
     "flat vector look with large smooth shapes",
@@ -49,7 +49,10 @@ function buildFluxPrompt(brief, options = {}) {
     mood,
     motifsLine,
     composition,
-    `Keep total colours ≤ ${max_colours}.`
+    `Keep total colours ≤ ${max_colours}.`,
+    // Prompt Flux to reinterpret stencil shapes rather than copy them
+    "Treat composition guide loosely, freely reinterpret abstract shapes to match the theme",
+    motifs ? "Replace geometric blobs with actual motif silhouettes" : ""
   ].filter(Boolean).join(", ");
 
   // Build negative prompt - comprehensive anti-gradient, anti-soft-shadow terms
@@ -67,7 +70,10 @@ function buildFluxPrompt(brief, options = {}) {
     "airbrush", "blur", "glow",
     // Unwanted styles
     "grunge", "graffiti", "clipart clutter",
-    "realistic texture", "depth", "transparency"
+    "realistic texture", "depth", "transparency",
+    // Anti-copy stencil directives
+    "literal tracing of input shapes", "preserving exact blobs",
+    "copying circle silhouettes", "exact duplication of geometric shapes"
   ].join(", ");
 
   // Apply "Try Simpler" adjustments
@@ -76,9 +82,10 @@ function buildFluxPrompt(brief, options = {}) {
   }
 
   // FLUX-dev parameters
-  let guidance = parseFloat(options.guidance || process.env.FLUX_DEV_GUIDANCE || '3.6');
+  // Lower guidance reduces "copy pressure" from stencil edges
+  let guidance = parseFloat(options.guidance || process.env.FLUX_DEV_GUIDANCE || '3.3');
   let steps = parseInt(options.steps || process.env.FLUX_DEV_STEPS || '20');
-  let denoise = parseFloat(options.denoise || process.env.FLUX_DEV_DENOISE || '0.30');
+  let denoise = parseFloat(options.denoise || process.env.FLUX_DEV_DENOISE || '0.65');
 
   // Apply "Try Simpler" parameter adjustments (spec section 5)
   if (try_simpler) {

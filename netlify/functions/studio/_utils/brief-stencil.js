@@ -30,13 +30,16 @@ export async function generateBriefStencil(brief, dimensions, options = {}) {
   // Create an SVG layout guide using composition parameters
   const svg = generateLayoutSVG(brief, width, height, seed, composition);
 
-  // Rasterize to PNG using sharp
+  // Rasterize to PNG using sharp with blur and de-contrast
+  // to reduce "copy pressure" in Flux Dev img2img
   const buffer = await sharp(Buffer.from(svg))
     .resize(width, height)
+    .blur(2.5)  // Soften edges to reduce edge-field dominance
+    .linear(0.75, 32)  // Reduce contrast by 25% and add 32-level grey overlay
     .png()
     .toBuffer();
 
-  console.log(`[BRIEF-STENCIL] Generated ${buffer.length} byte PNG stencil`);
+  console.log(`[BRIEF-STENCIL] Generated ${buffer.length} byte PNG stencil (blurred + de-contrasted)`);
   return buffer;
 }
 
