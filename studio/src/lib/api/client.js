@@ -49,9 +49,12 @@ class APIClient {
     return response.json();
   }
 
-  // Helper: Poll simple mode job until completion
+  // Helper: Poll simple mode job until completion (with vectorization support)
   async inspireSimpleWaitForCompletion(jobId, onProgress = null, pollInterval = 2000) {
     return new Promise((resolve, reject) => {
+      let completedAt = null;
+      const maxWaitAfterCompletion = 15000; // Wait up to 15s for vectorization after completion
+
       const poll = async () => {
         try {
           const status = await this.inspireSimpleGetStatus(jobId);
@@ -61,7 +64,32 @@ class APIClient {
           }
 
           if (status.status === 'completed') {
-            resolve(status);
+            // Mark when we first saw completion
+            if (!completedAt) {
+              completedAt = Date.now();
+            }
+
+            // Check if vectorization is complete
+            const hasVectorization = status.outputs?.svg_url || status.metadata?.vectorization?.svg_url;
+
+            if (hasVectorization) {
+              // Vectorization complete - resolve immediately
+              console.log('[API] Vectorization complete, resolving');
+              resolve(status);
+            } else {
+              // Check if we've waited long enough for vectorization
+              const waitTime = Date.now() - completedAt;
+
+              if (waitTime >= maxWaitAfterCompletion) {
+                // Timeout - resolve anyway (vectorization may have failed or is still running)
+                console.log('[API] Vectorization timeout, resolving without vectors');
+                resolve(status);
+              } else {
+                // Keep polling for vectorization
+                console.log(`[API] Waiting for vectorization... (${Math.round(waitTime / 1000)}s)`);
+                setTimeout(poll, pollInterval);
+              }
+            }
           } else if (status.status === 'failed') {
             reject(new Error(status.error || 'Job failed'));
           } else {
