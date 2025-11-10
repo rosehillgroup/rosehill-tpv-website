@@ -48,14 +48,16 @@ async function traceRegions(quantizedBuffer, palette) {
       // Tracing options
       ltres: 0.1,          // Line threshold (lower = more accurate)
       qtres: 1,            // Quad threshold
-      pathomit: 8,         // Omit paths smaller than 8px
+      pathomit: 0,         // Don't omit any paths (we'll filter later)
 
-      // Color quantization (already done, but keep consistent)
-      colorsampling: 0,    // Disable sampling (use exact colors)
+      // Color quantization - use manual palette mode
+      colorsampling: 2,    // 2 = manual palette (don't resample colors)
       numberofcolors: palette.length,
+      mincolorratio: 0,    // Include all colors, even rare ones
+      colorquantcycles: 1, // Minimal quantization (colors already quantized)
 
       // Smoothing options
-      blurradius: 0,       // No blur (already quantized)
+      blurradius: 0,       // No blur (already posterized)
       blurdelta: 0,
 
       // Layer options
@@ -67,7 +69,7 @@ async function traceRegions(quantizedBuffer, palette) {
       scale: 1,            // Keep original scale
       roundcoords: 2,      // Round to 2 decimal places
 
-      // Color palette (convert to hex)
+      // Color palette - ImageTracer needs exact format
       palette: palette.map(c => ({
         r: c.r,
         g: c.g,
@@ -75,6 +77,8 @@ async function traceRegions(quantizedBuffer, palette) {
         a: 255
       }))
     };
+
+    console.log(`[TRACER] Using manual palette with ${palette.length} colors`);
 
     // Trace image using imagedataToSVG (works in Node.js)
     console.log('[TRACER] Running ImageTracer...');
