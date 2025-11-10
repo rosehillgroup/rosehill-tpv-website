@@ -70,10 +70,10 @@ function generateLayoutSVG(brief, width, height, seed, composition) {
   // Generate broad colored regions (2-4 regions as background)
   svg += generateBroadRegions(width, height, targetRegions, random);
 
-  // Add up to 2 large motif blobs on top (limit to keep it simple)
-  const maxMotifBlobs = Math.min(2, motifs.length);
-  if (maxMotifBlobs > 0) {
-    svg += generateMotifBlobs(motifs.slice(0, maxMotifBlobs), width, height, random, composition);
+  // Add semantic motif shapes (fish, seaweed, etc.) - up to 3 motifs
+  const maxMotifs = Math.min(3, motifs.length);
+  if (maxMotifs > 0) {
+    svg += generateSemanticMotifs(motifs.slice(0, maxMotifs), width, height, random, composition);
   }
 
   svg += '</svg>';
@@ -122,60 +122,200 @@ function generateBroadRegions(width, height, targetRegions, random) {
 }
 
 /**
- * Generate large motif blobs (limit to 2 for simplicity)
- * Creates simple geometric shapes representing key motifs
- * @param {Array} motifs - Array of {name, count, size_m} (max 2)
+ * Generate semantic motif shapes based on motif names
+ * Creates recognizable silhouettes (fish, seaweed, etc.) instead of generic blobs
+ * @param {Array} motifs - Array of {name, count, size_m}
  * @param {number} width - Canvas width
  * @param {number} height - Canvas height
  * @param {Function} random - Random function
  * @param {Object} composition - Composition parameters for sizing
  * @returns {string} SVG shapes markup
  */
-function generateMotifBlobs(motifs, width, height, random, composition) {
+function generateSemanticMotifs(motifs, width, height, random, composition) {
   let svg = '';
 
-  // Only place up to 2 large motif blobs (spec requirement)
-  const maxBlobs = Math.min(2, motifs.length);
+  // Position motifs with generous spacing
+  const positions = [
+    { x: 0.25, y: 0.35 },  // Left
+    { x: 0.75, y: 0.45 },  // Right
+    { x: 0.50, y: 0.60 }   // Center-bottom
+  ];
 
-  for (let i = 0; i < maxBlobs; i++) {
+  for (let i = 0; i < motifs.length; i++) {
     const motif = motifs[i];
+    const pos = positions[i];
 
-    // Position blobs with generous spacing
-    const x = width * (0.25 + i * 0.5);  // 25% and 75% positions
-    const y = height * (0.3 + random() * 0.4);  // 30-70% vertical
+    const x = width * pos.x;
+    const y = height * (pos.y + (random() - 0.5) * 0.1);  // Small vertical variation
 
-    // Calculate size from motif size_m if available, otherwise use composition min_feature_mm
+    // Calculate size
     let sizePixels;
     if (motif.size_m && Array.isArray(motif.size_m)) {
-      // Convert meters to pixels (assuming 200 PPI as default)
       const avgSizeM = (motif.size_m[0] + motif.size_m[1]) / 2;
       const ppi = parseInt(process.env.IMG_PPI || '200');
-      sizePixels = (avgSizeM * 39.37 * ppi);  // m → inches → pixels
+      sizePixels = (avgSizeM * 39.37 * ppi);
     } else {
-      // Use min_feature_mm as fallback
       const minFeatureMM = composition.min_feature_mm || 120;
       const ppi = parseInt(process.env.IMG_PPI || '200');
-      sizePixels = (minFeatureMM / 25.4 * ppi);  // mm → inches → pixels
+      sizePixels = (minFeatureMM / 25.4 * ppi);
     }
 
-    // Ensure size is reasonable relative to canvas
-    sizePixels = Math.min(sizePixels, Math.min(width, height) * 0.4);
-    sizePixels = Math.max(sizePixels, Math.min(width, height) * 0.15);
+    // Ensure size is reasonable
+    sizePixels = Math.min(sizePixels, Math.min(width, height) * 0.35);
+    sizePixels = Math.max(sizePixels, Math.min(width, height) * 0.12);
 
-    // Create large rounded shape (circle or rounded square)
-    const shapeType = Math.floor(random() * 2);
+    // Determine motif type from name and generate appropriate shape
+    const motifType = classifyMotif(motif.name);
+    const rotation = random() * 360;  // Random rotation for variety
 
-    if (shapeType === 0) {
-      // Large circle blob
-      svg += `<circle cx="${x}" cy="${y}" r="${sizePixels/2}" fill="black" opacity="0.35"/>`;
-    } else {
-      // Large rounded square blob
-      const rx = sizePixels * 0.25;  // 25% radius for smooth corners
-      svg += `<rect x="${x-sizePixels/2}" y="${y-sizePixels/2}" width="${sizePixels}" height="${sizePixels}" rx="${rx}" fill="black" opacity="0.35"/>`;
+    console.log(`[BRIEF-STENCIL] Drawing ${motifType} for "${motif.name}" at (${x.toFixed(0)}, ${y.toFixed(0)}) size ${sizePixels.toFixed(0)}px`);
+
+    switch (motifType) {
+      case 'fish':
+        svg += generateFishShape(x, y, sizePixels, rotation, random);
+        break;
+      case 'seaweed':
+        svg += generateSeaweedShape(x, y, sizePixels, random);
+        break;
+      case 'star':
+        svg += generateStarShape(x, y, sizePixels, rotation);
+        break;
+      case 'shell':
+        svg += generateShellShape(x, y, sizePixels, rotation, random);
+        break;
+      default:
+        svg += generateOrganicBlobShape(x, y, sizePixels, random);
     }
   }
 
   return svg;
+}
+
+/**
+ * Classify motif type from name string
+ */
+function classifyMotif(name) {
+  const nameLower = name.toLowerCase();
+
+  if (nameLower.includes('fish') || nameLower.includes('shark') || nameLower.includes('dolphin')) {
+    return 'fish';
+  }
+  if (nameLower.includes('seaweed') || nameLower.includes('kelp') || nameLower.includes('plant') || nameLower.includes('coral')) {
+    return 'seaweed';
+  }
+  if (nameLower.includes('star') || nameLower.includes('starfish')) {
+    return 'star';
+  }
+  if (nameLower.includes('shell') || nameLower.includes('clam') || nameLower.includes('oyster')) {
+    return 'shell';
+  }
+
+  return 'organic';  // Generic organic blob fallback
+}
+
+/**
+ * Generate fish silhouette with body, tail notch, and fin
+ */
+function generateFishShape(x, y, size, rotation, random) {
+  const scale = size / 200;  // Base size 200px
+
+  // Simple fish silhouette: body (ellipse-like), tail with notch, dorsal fin
+  const path = `
+    M ${x + 60*scale},${y}
+    C ${x + 100*scale},${y - 20*scale} ${x + 120*scale},${y - 10*scale} ${x + 140*scale},${y}
+    L ${x + 150*scale},${y - 15*scale}
+    L ${x + 145*scale},${y}
+    L ${x + 150*scale},${y + 15*scale}
+    L ${x + 140*scale},${y}
+    C ${x + 120*scale},${y + 10*scale} ${x + 100*scale},${y + 25*scale} ${x + 60*scale},${y + 30*scale}
+    C ${x + 40*scale},${y + 30*scale} ${x + 20*scale},${y + 25*scale} ${x},${y + 15*scale}
+    C ${x - 20*scale},${y + 5*scale} ${x - 20*scale},${y - 5*scale} ${x},${y - 15*scale}
+    C ${x + 20*scale},${y - 25*scale} ${x + 40*scale},${y - 30*scale} ${x + 60*scale},${y}
+    Z
+  `;
+
+  return `<path d="${path.trim()}" fill="black" opacity="0.3" transform="rotate(${rotation} ${x} ${y})"/>`;
+}
+
+/**
+ * Generate seaweed/kelp silhouette - tall S-curve with blunt tips
+ */
+function generateSeaweedShape(x, y, size, random) {
+  const scale = size / 200;
+  const waveAmplitude = 15 * scale * (0.8 + random() * 0.4);
+
+  // Tall S-curve seaweed frond
+  const path = `
+    M ${x - waveAmplitude},${y - size/2}
+    Q ${x + waveAmplitude},${y - size/3} ${x - waveAmplitude/2},${y}
+    Q ${x + waveAmplitude},${y + size/3} ${x},${y + size/2}
+    L ${x + 8*scale},${y + size/2}
+    Q ${x + waveAmplitude + 8*scale},${y + size/3} ${x - waveAmplitude/2 + 8*scale},${y}
+    Q ${x + waveAmplitude + 8*scale},${y - size/3} ${x - waveAmplitude + 8*scale},${y - size/2}
+    Z
+  `;
+
+  return `<path d="${path.trim()}" fill="black" opacity="0.3"/>`;
+}
+
+/**
+ * Generate starfish shape - 5-pointed star
+ */
+function generateStarShape(x, y, size, rotation) {
+  const outerRadius = size / 2;
+  const innerRadius = outerRadius * 0.4;
+
+  let path = `M ${x},${y - outerRadius}`;
+
+  for (let i = 0; i < 5; i++) {
+    const outerAngle = (i * 72 - 90) * Math.PI / 180;
+    const innerAngle = ((i + 0.5) * 72 - 90) * Math.PI / 180;
+
+    path += ` L ${x + Math.cos(innerAngle) * innerRadius},${y + Math.sin(innerAngle) * innerRadius}`;
+    path += ` L ${x + Math.cos(outerAngle + Math.PI/2.5) * outerRadius},${y + Math.sin(outerAngle + Math.PI/2.5) * outerRadius}`;
+  }
+
+  path += ' Z';
+
+  return `<path d="${path}" fill="black" opacity="0.3" transform="rotate(${rotation} ${x} ${y})"/>`;
+}
+
+/**
+ * Generate shell shape - simple clamshell silhouette
+ */
+function generateShellShape(x, y, size, rotation, random) {
+  const scale = size / 200;
+
+  // Simple clamshell with ridges (simplified)
+  const path = `
+    M ${x},${y - size/2}
+    Q ${x + size/2},${y - size/3} ${x + size/2.5},${y + size/2.5}
+    Q ${x},${y + size/3} ${x - size/2.5},${y + size/2.5}
+    Q ${x - size/2},${y - size/3} ${x},${y - size/2}
+    Z
+  `;
+
+  return `<path d="${path.trim()}" fill="black" opacity="0.3" transform="rotate(${rotation} ${x} ${y})"/>`;
+}
+
+/**
+ * Generate organic blob shape as fallback
+ */
+function generateOrganicBlobShape(x, y, size, random) {
+  // Irregular rounded blob using bezier curves
+  const r = size / 2;
+  const variation = 0.3;
+
+  const path = `
+    M ${x},${y - r * (1 + (random() - 0.5) * variation)}
+    Q ${x + r * (1 + (random() - 0.5) * variation)},${y - r * 0.5} ${x + r * (1 + (random() - 0.5) * variation)},${y}
+    Q ${x + r * (1 + (random() - 0.5) * variation)},${y + r * 0.5} ${x},${y + r * (1 + (random() - 0.5) * variation)}
+    Q ${x - r * (1 + (random() - 0.5) * variation)},${y + r * 0.5} ${x - r * (1 + (random() - 0.5) * variation)},${y}
+    Q ${x - r * (1 + (random() - 0.5) * variation)},${y - r * 0.5} ${x},${y - r * (1 + (random() - 0.5) * variation)}
+    Z
+  `;
+
+  return `<path d="${path.trim()}" fill="black" opacity="0.25"/>`;
 }
 
 /**

@@ -41,15 +41,15 @@ function buildFluxPrompt(brief, options = {}) {
     "installer-friendly geometry",
     "bold silhouettes",
     "no outlines, no text, no tiny elements",
-    "uniform flat colours (no gradients)",
-    "optional hard drop-shadows with crisp edges (decal-style)",
+    "uniform flat colours (strictly no gradients)",
+    "optional single offset hard shadow shape per motif (one flat colour), no blur, no feathering, no inner shading, decal-style",
     "matte finish",
     "overhead view",
     theme,
     mood,
     motifsLine,
     composition,
-    `Keep total colours ≤ ${max_colours}.`,
+    `Limit palette to ≤ ${max_colours} flat colours total.`,
     // Prompt Flux to reinterpret stencil shapes rather than copy them
     "Treat composition guide loosely, freely reinterpret abstract shapes to match the theme",
     motifs ? "Replace geometric blobs with actual motif silhouettes" : ""
@@ -82,10 +82,11 @@ function buildFluxPrompt(brief, options = {}) {
   }
 
   // FLUX-dev parameters
-  // Lower guidance reduces "copy pressure" from stencil edges
-  let guidance = parseFloat(options.guidance || process.env.FLUX_DEV_GUIDANCE || '3.3');
+  // Higher denoise (0.75) gives model more freedom to reinterpret stencil
+  // Moderate guidance (3.5) balances prompt adherence with creative freedom
+  let guidance = parseFloat(options.guidance || process.env.FLUX_DEV_GUIDANCE || '3.5');
   let steps = parseInt(options.steps || process.env.FLUX_DEV_STEPS || '20');
-  let denoise = parseFloat(options.denoise || process.env.FLUX_DEV_DENOISE || '0.65');
+  let denoise = parseFloat(options.denoise || process.env.FLUX_DEV_DENOISE || '0.75');
 
   // Apply "Try Simpler" parameter adjustments (spec section 5)
   if (try_simpler) {
