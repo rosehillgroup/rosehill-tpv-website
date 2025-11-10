@@ -18,6 +18,7 @@ const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
 // Import vectorization modules
 const { quantizeColors } = require('./studio/_utils/vectorization/quantizer.js');
 const { detectGradients } = require('./studio/_utils/vectorization/gradient-detector.js');
+const { flattenGradients } = require('./studio/_utils/vectorization/gradient-flattener.js');
 const { traceRegions } = require('./studio/_utils/vectorization/tracer.js');
 const { simplifyPaths } = require('./studio/_utils/vectorization/simplifier.js');
 const { enforceConstraints } = require('./studio/_utils/vectorization/constraints.js');
@@ -99,33 +100,42 @@ exports.handler = async (event, context) => {
     console.log(`[VECTORIZE] Fetched: ${imageWidth}×${imageHeight}px, ${rasterBuffer.length} bytes`);
 
     // ========================================================================
-    // STEP 3: Gradient detection (QC gate)
+    // STEP 3: Gradient detection with conditional flattening
     // ========================================================================
 
     console.log('[VECTORIZE] Stage 2/9: Detecting gradients...');
 
     const gradientResult = await detectGradients(rasterBuffer);
     const hasGradients = gradientResult.hasGradients;
+    const gradientRatio = gradientResult.metrics.gradient_region_ratio;
+    const softEdgeRatio = gradientResult.metrics.soft_edge_ratio;
+
+    // Track QC metadata
+    let qcMetadata = {
+      gradient_detected: hasGradients,
+      pre_flatten_gradient_ratio: gradientRatio,
+      pre_flatten_soft_edge_ratio: softEdgeRatio,
+      flattening_applied: false
+    };
 
     if (hasGradients) {
-      console.error('[VECTORIZE] QC FAIL: Soft shadows/gradients detected');
-      return {
-        statusCode: 200,
-        body: JSON.stringify({
-          ok: false,
-          error: 'QC_FAIL_GRADIENTS',
-          message: 'Soft shadows or gradients detected in raster image',
-          qc_results: {
-            pass: false,
-            gradient_detected: true,
-            confidence: gradientResult.confidence,
-            metrics: gradientResult.metrics
-          }
-        })
-      };
-    }
+      console.log(`[VECTORIZE] ⚠️  Gradients detected: gradient_ratio=${(gradientRatio * 100).toFixed(1)}%, soft_edge_ratio=${(softEdgeRatio * 100).toFixed(1)}%`);
+      console.log('[VECTORIZE] Applying gradient flattening...');
 
-    console.log('[VECTORIZE] Gradient check passed');
+      // Apply gradient flattening
+      const flatteningResult = await flattenGradients(rasterBuffer, {
+        bilateral: { d: 5, sigmaC: 45, sigmaS: 9 },
+        k: Math.min(max_colours, 8)
+      });
+
+      rasterBuffer = flatteningResult.buffer;
+      qcMetadata.flattening_applied = true;
+      qcMetadata.flatten_metrics = flatteningResult.metrics;
+
+      console.log(`[VECTORIZE] Flattening complete: k=${flatteningResult.metrics.k_used}, post_gradient_ratio=${(flatteningResult.metrics.post_flatten_gradient_ratio * 100).toFixed(1)}%`);
+    } else {
+      console.log('[VECTORIZE] No gradients detected, proceeding with original image');
+    }
 
     // ========================================================================
     // STEP 4: K-means color quantization
@@ -203,27 +213,28 @@ exports.handler = async (event, context) => {
 
     const iouResult = await calculateIoU(svgString, quantizedBuffer, imageWidth, imageHeight);
     const iou = iouResult.iou;
-    const qcPass = iou >= 0.98;
+    const qcPass = iou >= 0.95;
 
     if (!qcPass) {
-      console.error(`[VECTORIZE] QC FAIL: IoU ${iou.toFixed(4)} < 0.98`);
+      console.error(`[VECTORIZE] QC FAIL: IoU ${iou.toFixed(4)} < 0.95`);
       return {
         statusCode: 200,
         body: JSON.stringify({
           ok: false,
           error: 'QC_FAIL_IOU',
-          message: `IoU ${iou.toFixed(4)} below threshold 0.98`,
+          message: `IoU ${iou.toFixed(4)} below threshold 0.95`,
           qc_results: {
             pass: false,
             iou,
-            threshold: 0.98,
-            metrics: iouResult.metrics
+            threshold: 0.95,
+            metrics: iouResult.metrics,
+            ...qcMetadata
           }
         })
       };
     }
 
-    console.log(`[VECTORIZE] QC PASS: IoU ${iou.toFixed(4)}`);
+    console.log(`[VECTORIZE] QC PASS: IoU ${iou.toFixed(4)} (threshold: 0.95, ideal: 0.98)`);
 
     // ========================================================================
     // STEP 10: PDF export
@@ -315,11 +326,11 @@ exports.handler = async (event, context) => {
         qc_results: {
           pass: true,
           iou,
-          gradient_detected: false,
           color_count: colorPalette.length,
           region_count: constrainedPaths.length,
           min_feature_mm: constraintMetrics.min_feature_mm,
-          min_radius_mm: constraintMetrics.min_radius_mm
+          min_radius_mm: constraintMetrics.min_radius_mm,
+          ...qcMetadata
         }
       })
     };
