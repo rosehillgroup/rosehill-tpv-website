@@ -1,6 +1,7 @@
 // TPV Studio - Flux Dev Job Enqueue
-// Streamlined single-pipeline generation following spec
-// Pipeline: prompt → refine → stencil → Flux Dev img2img → QC → save
+// Two-Pass Generation Pipeline:
+// Pass 1: prompt → refine → text-to-image (no stencil) → bright, creative concept
+// Pass 2: prompt → Pass 1 result + faint stencil → img2img refinement → final output
 
 const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
 const { buildFluxPrompt, createSimplifiedBrief } = require('./studio/_utils/prompt.js');
@@ -9,10 +10,15 @@ const { generateConceptFluxDev, estimateCost } = require('./studio/_utils/replic
 const { generateBriefStencil } = require('./studio/_utils/brief-stencil.js');
 
 // Dynamic import for ESM modules
-let refineToDesignBrief;
+let refineToDesignBrief, initiatePass1, initiatePass2, isTwoPassEnabled;
 (async () => {
   const designDirector = await import('./studio/_utils/design-director.js');
   refineToDesignBrief = designDirector.refineToDesignBrief;
+
+  const twoPassGenerator = await import('./studio/_utils/two-pass-generator.js');
+  initiatePass1 = twoPassGenerator.initiatePass1;
+  initiatePass2 = twoPassGenerator.initiatePass2;
+  isTwoPassEnabled = twoPassGenerator.isTwoPassEnabled;
 })();
 
 // Helper to upload stencil to Supabase temp storage
@@ -156,46 +162,106 @@ exports.handler = async (event, context) => {
     console.log(`[ENQUEUE] Target: ${targetW}×${targetH}px, Aspect: ${aspectRatio}`);
 
     // ========================================================================
-    // STEP 5: Generate stencil from brief + surface dimensions
+    // STEP 5: Determine if this is Pass 1 or Pass 2
     // ========================================================================
 
-    console.log('[ENQUEUE] Generating stencil...');
+    const currentPass = job.metadata?.pass || 1;
+    const twoPassMode = isTwoPassEnabled && isTwoPassEnabled();
 
-    const stencilBuffer = await generateBriefStencil(
-      brief,
-      { width: 1024, height: 1024 },  // Stencil at standard size
-      { seed }
-    );
+    console.log(`[ENQUEUE] Mode: ${twoPassMode ? 'Two-Pass' : 'Single-Pass'}, Current Pass: ${currentPass}`);
 
     // ========================================================================
-    // STEP 6: Upload stencil to temp storage
+    // STEP 6: Generate prediction based on pass
     // ========================================================================
-
-    console.log('[ENQUEUE] Uploading stencil to storage...');
-    const stencilUrl = await uploadStencilToStorage(stencilBuffer, job_id);
-    console.log(`[ENQUEUE] Stencil uploaded: ${stencilUrl}`);
-
-    // ========================================================================
-    // STEP 7: Create Flux Dev prediction (img2img)
-    // ========================================================================
-
-    console.log('[ENQUEUE] Creating Flux Dev prediction...');
 
     const webhookUrl = `${process.env.PUBLIC_BASE_URL}/.netlify/functions/replicate-callback?token=${encodeURIComponent(process.env.REPLICATE_WEBHOOK_SECRET)}`;
 
-    const { predictionId, status, model, version } = await generateConceptFluxDev(
-      positive,
-      negative,
-      stencilUrl,
-      {
+    let predictionId, status, model, version, pass1ResultUrl, stencilUrl;
+
+    if (twoPassMode && currentPass === 1) {
+      // ============================================================
+      // PASS 1: Text-to-Image (No Stencil)
+      // ============================================================
+      console.log('[ENQUEUE] Initiating Pass 1: Text-to-image (no stencil)');
+
+      const pass1Result = await initiatePass1(brief, {
         aspect_ratio: aspectRatio,
-        denoise,
-        guidance,
-        steps,
+        max_colours: maxColours,
         seed,
         webhook: webhookUrl
+      });
+
+      predictionId = pass1Result.predictionId;
+      status = pass1Result.status;
+      model = pass1Result.model;
+      version = pass1Result.version;
+
+      console.log(`[ENQUEUE] Pass 1 initiated: ${predictionId}`);
+
+    } else if (twoPassMode && currentPass === 2) {
+      // ============================================================
+      // PASS 2: Img2Img Refinement (Pass 1 result + stencil guidance)
+      // ============================================================
+      console.log('[ENQUEUE] Initiating Pass 2: Img2img refinement');
+
+      pass1ResultUrl = job.metadata?.pass1_result_url;
+      if (!pass1ResultUrl) {
+        throw new Error('Pass 2 requires pass1_result_url in job metadata');
       }
-    );
+
+      console.log(`[ENQUEUE] Using Pass 1 result: ${pass1ResultUrl}`);
+
+      const pass2Result = await initiatePass2(brief, pass1ResultUrl, {
+        aspect_ratio: aspectRatio,
+        max_colours: maxColours,
+        seed,
+        webhook: webhookUrl,
+        try_simpler: trySimpler,
+        use_stencil_guidance: true
+      });
+
+      predictionId = pass2Result.predictionId;
+      status = pass2Result.status;
+      model = pass2Result.model;
+      version = pass2Result.version;
+      stencilUrl = pass2Result.composite_image_url || pass1ResultUrl;
+
+      console.log(`[ENQUEUE] Pass 2 initiated: ${predictionId}`);
+
+    } else {
+      // ============================================================
+      // FALLBACK: Single-Pass with Stencil (Legacy Mode)
+      // ============================================================
+      console.log('[ENQUEUE] Using legacy single-pass mode with stencil');
+
+      const stencilBuffer = await generateBriefStencil(
+        brief,
+        { width: 1024, height: 1024 },
+        { seed }
+      );
+
+      stencilUrl = await uploadStencilToStorage(stencilBuffer, job_id);
+      console.log(`[ENQUEUE] Stencil uploaded: ${stencilUrl}`);
+
+      const result = await generateConceptFluxDev(
+        positive,
+        negative,
+        stencilUrl,
+        {
+          aspect_ratio: aspectRatio,
+          denoise,
+          guidance,
+          steps,
+          seed,
+          webhook: webhookUrl
+        }
+      );
+
+      predictionId = result.predictionId;
+      status = result.status;
+      model = result.model;
+      version = result.version;
+    }
 
     const enqueueDuration = Date.now() - startTime;
     const costEstimate = estimateCost(1);
@@ -208,8 +274,50 @@ exports.handler = async (event, context) => {
     );
 
     // ========================================================================
-    // STEP 8: Update job to queued with metadata
+    // STEP 7: Update job to queued with metadata
     // ========================================================================
+
+    const metadata = {
+      ...job.metadata,
+      mode: twoPassMode ? 'flux_dev_two_pass' : 'flux_dev',
+      pass: currentPass,
+      model,
+      version,
+      seed,
+      ppi,
+      aspect_ratio: aspectRatio,
+      target_dims: { w: targetW, h: targetH },
+      steps,
+      guidance,
+      denoise,
+      max_colours: maxColours,
+      try_simpler: trySimpler,
+      brief: {
+        title: brief.title,
+        motif_count: brief.motifs?.length || 0,
+        mood_count: brief.mood?.length || 0,
+        target_region_count: brief.composition?.target_region_count || 0,
+        full_brief: brief  // Store full brief for Pass 2
+      },
+      prompt: positive,
+      negative_prompt: negative,
+      cost_estimate: costEstimate.totalCost,
+      enqueue_duration: enqueueDuration
+    };
+
+    // Add pass-specific metadata
+    if (currentPass === 1) {
+      metadata.pass1_prediction_id = predictionId;
+    } else if (currentPass === 2) {
+      metadata.pass2_prediction_id = predictionId;
+      metadata.pass1_result_url = pass1ResultUrl;
+      if (stencilUrl) {
+        metadata.composite_guidance_url = stencilUrl;
+      }
+    } else {
+      // Legacy mode
+      metadata.stencil_url = stencilUrl;
+    }
 
     await supabase
       .from('studio_jobs')
@@ -217,32 +325,7 @@ exports.handler = async (event, context) => {
         status: 'queued',
         prediction_id: predictionId,
         started_at: new Date().toISOString(),
-        metadata: {
-          ...job.metadata,
-          mode: 'flux_dev',
-          model,
-          version,
-          seed,
-          ppi,
-          aspect_ratio: aspectRatio,
-          target_dims: { w: targetW, h: targetH },
-          steps,
-          guidance,
-          denoise,
-          max_colours: maxColours,
-          try_simpler: trySimpler,
-          brief: {
-            title: brief.title,
-            motif_count: brief.motifs?.length || 0,
-            mood_count: brief.mood?.length || 0,
-            target_region_count: brief.composition?.target_region_count || 0
-          },
-          prompt: positive,
-          negative_prompt: negative,
-          stencil_url: stencilUrl,
-          cost_estimate: costEstimate.totalCost,
-          enqueue_duration: enqueueDuration
-        }
+        metadata
       })
       .eq('id', job_id);
 
@@ -251,8 +334,9 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({
         ok: true,
         prediction_id: predictionId,
-        mode: 'flux_dev',
-        estimated_duration: 30  // Flux Dev takes ~30s
+        mode: twoPassMode ? 'flux_dev_two_pass' : 'flux_dev',
+        pass: currentPass,
+        estimated_duration: twoPassMode ? (currentPass === 1 ? 60 : 30) : 30  // Pass 1: ~30s + Pass 2: ~30s = 60s total
       })
     };
 

@@ -35,21 +35,47 @@ function InspirePanel({ onConceptsGenerated }) {
       const { jobId, estimatedDuration } = jobResponse;
 
       console.log('[InspirePanel] Job created:', jobId);
-      setProgress(`Job created! Estimated time: ~${estimatedDuration || 30}s. Generating...`);
+      const estimatedMsg = estimatedDuration >= 60
+        ? `Estimated time: ~${estimatedDuration}s (two-pass generation). Pass 1/2 starting...`
+        : `Estimated time: ~${estimatedDuration || 30}s. Generating...`;
+      setProgress(`Job created! ${estimatedMsg}`);
 
       // Step 2: Poll for completion with progress updates
       const jobResult = await apiClient.inspireSimpleWaitForCompletion(jobId, (status) => {
         console.log('[InspirePanel] Status update:', status.status);
 
+        // Detect two-pass mode from metadata
+        const isTwoPass = status.metadata?.mode === 'flux_dev_two_pass';
+        const currentPass = status.metadata?.pass || 1;
+
         switch (status.status) {
           case 'pending':
-            setProgress('Job created. Starting generation...');
+            if (isTwoPass && currentPass === 2) {
+              setProgress('Pass 1 complete! Starting Pass 2 refinement...');
+            } else {
+              setProgress('Job created. Starting generation...');
+            }
             break;
           case 'queued':
-            setProgress('Job queued. Waiting for GPU...');
+            if (isTwoPass && currentPass === 1) {
+              setProgress('Pass 1/2: Creating vibrant concept (queued)...');
+            } else if (isTwoPass && currentPass === 2) {
+              setProgress('Pass 2/2: Refining composition (queued)...');
+            } else {
+              setProgress('Job queued. Waiting for GPU...');
+            }
             break;
           case 'running':
-            setProgress('Generating with Flux Dev...');
+            if (isTwoPass && currentPass === 1) {
+              setProgress('Pass 1/2: Generating vibrant concept...');
+            } else if (isTwoPass && currentPass === 2) {
+              setProgress('Pass 2/2: Refining composition...');
+            } else {
+              setProgress('Generating with Flux Dev...');
+            }
+            break;
+          case 'pass1_complete':
+            setProgress('Pass 1 complete! Starting Pass 2...');
             break;
           default:
             setProgress(`Status: ${status.status}`);
@@ -57,7 +83,11 @@ function InspirePanel({ onConceptsGenerated }) {
       }, 2000); // Poll every 2 seconds
 
       console.log('[InspirePanel] Job completed:', jobResult);
-      setProgress('Generation complete!');
+
+      // Show completion message based on mode
+      const isTwoPass = jobResult.metadata?.mode === 'flux_dev_two_pass';
+      setProgress(isTwoPass ? 'Two-pass generation complete!' : 'Generation complete!');
+
       setResult(jobResult.result);
       setMetadata(jobResult.metadata);
       setQcResults(jobResult.qc_results || null);

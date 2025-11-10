@@ -15,17 +15,17 @@ export function getReplicateClient() {
 }
 
 /**
- * Generate concept image using Flux Dev with img2img stencil guidance
- * Streamlined single-pipeline generation following TPV Studio spec
+ * Generate concept image using Flux Dev
+ * Supports both text-to-image (no stencil) and img2img (with stencil)
  *
  * @param {string} positivePrompt - Full positive prompt from buildFluxPrompt()
  * @param {string} negativePrompt - Negative prompt
- * @param {string} stencilImageUrl - URL of stencil PNG (init image for img2img)
- * @param {Object} options - Generation options
+ * @param {string|null} stencilImageUrl - URL of stencil PNG (init image for img2img), or null for text-to-image
+ * @param {Object} options - Generation options (all parameters should come from prompt.js)
  * @param {string} options.aspect_ratio - Aspect ratio (e.g., "1:1", "4:3", "16:9")
- * @param {number} options.denoise - Denoise strength 0.20-0.35 (default 0.30)
- * @param {number} options.guidance - Guidance scale 3.5-4.5 (default 3.6)
- * @param {number} options.steps - Inference steps 18-20 (default 20)
+ * @param {number} options.denoise - Prompt strength 0.0-1.0 (for img2img mode)
+ * @param {number} options.guidance - Guidance scale
+ * @param {number} options.steps - Inference steps
  * @param {number} options.seed - Random seed (optional)
  * @param {string} options.webhook - Webhook URL for completion callback
  * @returns {Promise<Object>} {predictionId, status, model}
@@ -33,38 +33,53 @@ export function getReplicateClient() {
 export async function generateConceptFluxDev(positivePrompt, negativePrompt, stencilImageUrl, options = {}) {
   const replicate = getReplicateClient();
 
+  // All parameters come from options (populated by prompt.js)
+  // No hardcoded defaults here - prompt.js is source of truth
   const {
     aspect_ratio = '1:1',
-    denoise = parseFloat(process.env.FLUX_DEV_DENOISE || '0.30'),
-    guidance = parseFloat(process.env.FLUX_DEV_GUIDANCE || '3.6'),
-    steps = parseInt(process.env.FLUX_DEV_STEPS || '20'),
+    denoise,  // Required from options
+    guidance,  // Required from options
+    steps,  // Required from options
     seed = Math.floor(Math.random() * 1000000),
     webhook = null
   } = options;
 
-  const modelId = 'black-forest-labs/flux-dev';
+  // Validate required parameters
+  if (denoise === undefined || guidance === undefined || steps === undefined) {
+    throw new Error('Missing required parameters: denoise, guidance, and steps must be provided in options');
+  }
 
-  console.log(`[REPLICATE] Generating concept with ${modelId}`);
-  console.log(`[REPLICATE] Aspect: ${aspect_ratio}, Steps: ${steps}, Guidance: ${guidance}, Denoise: ${denoise}`);
+  const modelId = 'black-forest-labs/flux-dev';
+  const mode = stencilImageUrl ? 'img2img' : 'text-to-image';
+
+  console.log(`[REPLICATE] Generating concept with ${modelId} (${mode})`);
+  console.log(`[REPLICATE] Aspect: ${aspect_ratio}, Steps: ${steps}, Guidance: ${guidance}, Prompt Strength: ${denoise}`);
   console.log(`[REPLICATE] Seed: ${seed}`);
+  if (stencilImageUrl) console.log(`[REPLICATE] Init image: ${stencilImageUrl}`);
   if (webhook) console.log(`[REPLICATE] Webhook: ${webhook}`);
 
   const startTime = Date.now();
 
   try {
-    // Build Flux Dev input for img2img
+    // Build Flux Dev input
+    // For text-to-image: omit image and prompt_strength
+    // For img2img: include image and prompt_strength
     const input = {
       prompt: positivePrompt,
-      image: stencilImageUrl,  // Init image for img2img
-      prompt_strength: denoise,  // Maps to denoise (0.0-1.0, lower = closer to stencil)
       aspect_ratio: aspect_ratio,
       num_inference_steps: steps,
-      guidance: guidance,  // Flux uses 'guidance' not 'guidance_scale'
+      guidance: guidance,
       seed: seed,
       output_format: 'png',
       output_quality: 90,
       disable_safety_checker: false
     };
+
+    // Add img2img-specific parameters only when stencil is provided
+    if (stencilImageUrl) {
+      input.image = stencilImageUrl;
+      input.prompt_strength = denoise;  // 0.0-1.0, higher = more transformation
+    }
 
     // Add negative prompt inline (Flux Dev doesn't have separate negative_prompt param)
     if (negativePrompt && negativePrompt.trim().length > 0) {

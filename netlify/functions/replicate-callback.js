@@ -156,21 +156,29 @@ async function handleFailure(supabase, job, error) {
  */
 async function handleSuccess(supabase, job, output, prediction_id) {
   const mode = job.metadata?.mode;
+  const pass = job.metadata?.pass;
 
-  // === FLUX DEV / SIMPLE MODE HANDLER (Inspiration Mode) ===
+  // === TWO-PASS FLUX DEV HANDLER ===
+  if (mode === 'flux_dev_two_pass') {
+    console.log(`[WEBHOOK] Job ${job.id} succeeded (two-pass mode, pass ${pass})`);
+
+    if (pass === 1) {
+      return handlePass1Success(supabase, job, output);
+    } else if (pass === 2) {
+      return handlePass2Success(supabase, job, output);
+    } else {
+      console.error(`[WEBHOOK] Unknown pass number: ${pass}`);
+      return { statusCode: 500, body: 'Unknown pass number' };
+    }
+  }
+
+  // === FLUX DEV / SIMPLE MODE HANDLER (Single-Pass Inspiration Mode) ===
   if (mode === 'simple' || mode === 'flux_dev') {
     console.log(`[WEBHOOK] Job ${job.id} succeeded (${mode} mode)`);
     return handleSimpleSuccess(supabase, job, output);
   }
 
   // === MULTI-PASS MODE HANDLER (Original Pipeline) ===
-  
-  
-  
-  
-  
-  
-
   const passType = job.metadata?.passType || 'draft';
   const pipelineState = job.metadata?.pipelineState || {};
 
@@ -193,6 +201,94 @@ async function handleSuccess(supabase, job, output, prediction_id) {
       console.error(`[WEBHOOK] Unknown pass type: ${passType}`);
       return { statusCode: 500, body: 'Unknown pass type' };
   }
+}
+
+/**
+ * Handle Pass 1 success (Two-Pass Mode)
+ * Store Pass 1 result, update status, trigger Pass 2
+ */
+async function handlePass1Success(supabase, job, output) {
+  console.log(`[PASS1] Processing Pass 1 success for job ${job.id}`);
+
+  try {
+    // Get Pass 1 result URL
+    const pass1ResultUrl = Array.isArray(output) ? output[0] : output;
+    console.log(`[PASS1] Pass 1 result: ${pass1ResultUrl}`);
+
+    // Update job with Pass 1 result and status
+    await supabase
+      .from('studio_jobs')
+      .update({
+        status: 'pass1_complete',
+        metadata: {
+          ...job.metadata,
+          pass1_result_url: pass1ResultUrl,
+          pass1_completed_at: new Date().toISOString()
+        }
+      })
+      .eq('id', job.id);
+
+    console.log(`[PASS1] Job ${job.id} marked as pass1_complete`);
+
+    // Trigger Pass 2 by updating job to pending with pass=2, then calling enqueue
+    await supabase
+      .from('studio_jobs')
+      .update({
+        status: 'pending',
+        metadata: {
+          ...job.metadata,
+          pass: 2,
+          pass1_result_url: pass1ResultUrl,
+          pass1_completed_at: new Date().toISOString()
+        }
+      })
+      .eq('id', job.id);
+
+    console.log(`[PASS1] Triggering Pass 2 for job ${job.id}`);
+
+    // Call enqueue function to start Pass 2
+    const enqueueUrl = `${process.env.PUBLIC_BASE_URL}/.netlify/functions/studio-enqueue`;
+    const enqueueResponse = await fetch(enqueueUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ job_id: job.id })
+    });
+
+    if (!enqueueResponse.ok) {
+      const errorData = await enqueueResponse.json();
+      throw new Error(`Pass 2 enqueue failed: ${errorData.error || 'Unknown error'}`);
+    }
+
+    console.log(`[PASS1] Pass 2 enqueued successfully for job ${job.id}`);
+
+    return { statusCode: 200, body: 'Pass 1 complete, Pass 2 initiated' };
+
+  } catch (error) {
+    console.error(`[PASS1] Error processing Pass 1 success:`, error);
+
+    await supabase
+      .from('studio_jobs')
+      .update({
+        status: 'failed',
+        error: `Pass 1 → Pass 2 transition failed: ${error.message}`
+      })
+      .eq('id', job.id);
+
+    return { statusCode: 500, body: error.message };
+  }
+}
+
+/**
+ * Handle Pass 2 success (Two-Pass Mode)
+ * Download → crop/pad → thumbnail → upload → mark as completed
+ * This is the final pass - user sees this result
+ */
+async function handlePass2Success(supabase, job, output) {
+  console.log(`[PASS2] Processing Pass 2 success (final) for job ${job.id}`);
+
+  // Process Pass 2 result the same way as simple mode
+  // But store both Pass 1 and Pass 2 URLs in outputs
+  return handleSimpleSuccess(supabase, job, output);
 }
 
 /**
