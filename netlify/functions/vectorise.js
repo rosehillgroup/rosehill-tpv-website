@@ -141,13 +141,49 @@ exports.handler = async (event, context) => {
     // STEP 4: K-means color quantization
     // ========================================================================
 
-    console.log('[VECTORIZE] Stage 3/9: Quantizing colors...');
+    let quantizedBuffer;
+    let colorPalette;
 
-    const quantizationResult = await quantizeColors(rasterBuffer, max_colours);
-    const quantizedBuffer = quantizationResult.buffer;
-    const colorPalette = quantizationResult.palette;
+    if (qcMetadata.flattening_applied) {
+      // Skip quantization - flattening already posterized to exact colors
+      console.log('[VECTORIZE] Stage 3/9: Using flattened image (skipping redundant quantization)...');
 
-    console.log(`[VECTORIZE] Quantized to ${colorPalette.length} colors`);
+      quantizedBuffer = rasterBuffer;
+
+      // Extract actual colors from flattened image
+      const { data: rawData, info } = await sharp(rasterBuffer)
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+
+      const channels = info.channels;
+      const uniqueColors = new Set();
+
+      for (let i = 0; i < rawData.length; i += channels) {
+        const r = rawData[i];
+        const g = rawData[i + 1];
+        const b = rawData[i + 2];
+        uniqueColors.add(`${r},${g},${b}`);
+      }
+
+      colorPalette = Array.from(uniqueColors).map(colorStr => {
+        const [r, g, b] = colorStr.split(',').map(Number);
+        return { r, g, b };
+      });
+
+      console.log(`[VECTORIZE] Extracted ${colorPalette.length} unique colors from flattened image`);
+      colorPalette.forEach((c, i) => {
+        console.log(`    Color ${i + 1}: rgb(${c.r}, ${c.g}, ${c.b})`);
+      });
+    } else {
+      // No flattening - apply quantization
+      console.log('[VECTORIZE] Stage 3/9: Quantizing colors...');
+
+      const quantizationResult = await quantizeColors(rasterBuffer, max_colours);
+      quantizedBuffer = quantizationResult.buffer;
+      colorPalette = quantizationResult.palette;
+
+      console.log(`[VECTORIZE] Quantized to ${colorPalette.length} colors`);
+    }
 
     // ========================================================================
     // STEP 5: Region tracing with ImageTracer
