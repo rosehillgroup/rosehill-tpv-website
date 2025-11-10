@@ -1,17 +1,16 @@
 // TPV Studio - Vectorization Pipeline
-// Converts raster outputs to installer-ready SVG/PDF with manufacturing constraints
+// Converts raster outputs to installer-ready SVG with manufacturing constraints
 //
 // Pipeline stages:
 // 1. Fetch & decode raster image
-// 2. Gradient detection (fail QC if soft shadows detected)
+// 2. Gradient detection with automatic flattening
 // 3. K-means color quantization (reduce to ≤8 colors)
 // 4. Region tracing with ImageTracer
 // 5. Douglas-Peucker simplification
 // 6. Min feature/radius enforcement (120mm, 600mm)
 // 7. SVG assembly
-// 8. QC validation (IoU ≥ 0.98)
-// 9. PDF export with resvg-js
-// 10. Upload to storage and return URLs
+// 8. QC validation (IoU ≥ 0.80)
+// 9. Upload to storage and return URL
 
 const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
 
@@ -24,7 +23,6 @@ const { simplifyPaths } = require('./studio/_utils/vectorization/simplifier.js')
 const { enforceConstraints } = require('./studio/_utils/vectorization/constraints.js');
 const { calculateIoU } = require('./studio/_utils/vectorization/qc.js');
 const { generateSVG } = require('./studio/_utils/vectorization/svg-generator.js');
-const { generatePDF } = require('./studio/_utils/vectorization/pdf-generator.js');
 
 /**
  * Vectorization endpoint handler
@@ -35,7 +33,7 @@ const { generatePDF } = require('./studio/_utils/vectorization/pdf-generator.js'
  * @param {number} event.body.width_mm - Surface width in millimeters
  * @param {number} event.body.height_mm - Surface height in millimeters
  * @param {number} event.body.max_colours - Maximum colors (1-8)
- * @returns {Promise<Object>} {ok, svg_url, pdf_url, metrics, qc_results}
+ * @returns {Promise<Object>} {ok, svg_url, metrics, qc_results}
  */
 exports.handler = async (event, context) => {
   if (event.httpMethod !== 'POST') {
@@ -273,24 +271,12 @@ exports.handler = async (event, context) => {
     console.log(`[VECTORIZE] QC PASS: IoU ${iou.toFixed(4)} (threshold: 0.80, ideal: 0.90+)`);
 
     // ========================================================================
-    // STEP 10: PDF export
+    // STEP 10: Upload SVG to Supabase storage
     // ========================================================================
+    // Note: PDF generation skipped - SVG is already perfect for print/installation
+    // Large format surfaces (5m×5m) would require 3.5B pixels at 300 DPI
 
-    console.log('[VECTORIZE] Stage 9/9: Generating PDF...');
-
-    const pdfBuffer = await generatePDF(svgString, {
-      width_mm,
-      height_mm,
-      metadata: { job_id }
-    });
-
-    console.log(`[VECTORIZE] Generated PDF: ${pdfBuffer.length} bytes`);
-
-    // ========================================================================
-    // STEP 11: Upload to Supabase storage
-    // ========================================================================
-
-    console.log('[VECTORIZE] Uploading SVG and PDF to storage...');
+    console.log('[VECTORIZE] Stage 9/9: Uploading SVG to storage...');
 
     const supabase = getSupabaseServiceClient();
 
@@ -312,28 +298,10 @@ exports.handler = async (event, context) => {
 
     const svgUrl = svgUrlData.publicUrl;
 
-    // Upload PDF
-    const pdfFileName = `vectors/${job_id}_${Date.now()}.pdf`;
-    const { data: pdfData, error: pdfError } = await supabase.storage
-      .from('studio-temp')
-      .upload(pdfFileName, pdfBuffer, {
-        contentType: 'application/pdf',
-        cacheControl: '3600',
-        upsert: false
-      });
-
-    if (pdfError) throw new Error(`PDF upload failed: ${pdfError.message}`);
-
-    const { data: pdfUrlData } = supabase.storage
-      .from('studio-temp')
-      .getPublicUrl(pdfFileName);
-
-    const pdfUrl = pdfUrlData.publicUrl;
-
-    console.log(`[VECTORIZE] Uploaded: SVG=${svgUrl}, PDF=${pdfUrl}`);
+    console.log(`[VECTORIZE] Uploaded SVG: ${svgUrl}`);
 
     // ========================================================================
-    // STEP 12: Return results
+    // STEP 11: Return results
     // ========================================================================
 
     const duration = Date.now() - startTime;
@@ -350,14 +318,12 @@ exports.handler = async (event, context) => {
 
     console.log(`[VECTORIZE] Completed in ${duration}ms`);
     console.log(`[VECTORIZE] SVG: ${svgUrl}`);
-    console.log(`[VECTORIZE] PDF: ${pdfUrl}`);
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         ok: true,
         svg_url: svgUrl,
-        pdf_url: pdfUrl,
         metrics,
         qc_results: {
           pass: true,
