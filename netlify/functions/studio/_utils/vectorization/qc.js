@@ -26,15 +26,19 @@ async function calculateIoU(svgString, quantizedBuffer, width, height) {
 
   try {
     // ========================================================================
-    // STEP 1: Re-rasterize SVG at original dimensions
+    // STEP 1: Re-rasterize SVG at same resolution (nearest-neighbor)
     // ========================================================================
+    // Use nearest-neighbor to match the upscaling applied before vectorization
 
-    console.log(`[QC] Re-rasterizing SVG at ${width}×${height}px...`);
+    console.log(`[QC] Re-rasterizing SVG at ${width}×${height}px (nearest-neighbor)...`);
 
     const svgBuffer = Buffer.from(svgString);
 
     const rasterizedVector = await sharp(svgBuffer)
-      .resize(width, height, { fit: 'fill' })
+      .resize(width, height, {
+        kernel: 'nearest', // Nearest-neighbor like-for-like comparison
+        fit: 'fill'
+      })
       .png()
       .toBuffer();
 

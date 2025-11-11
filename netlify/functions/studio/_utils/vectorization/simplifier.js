@@ -20,10 +20,13 @@ function simplifyPaths(paths, options = {}) {
   const simplifiedPaths = paths.map((path, idx) => {
     const originalPointCount = path.points.length;
 
-    // Calculate adaptive epsilon based on path bounds
-    // Larger paths can tolerate more simplification
-    const pathSize = Math.max(path.bounds.width, path.bounds.height);
-    const epsilon = options.epsilon || calculateAdaptiveEpsilon(pathSize);
+    // Calculate adaptive epsilon based on path bbox diagonal
+    // Using diagonal gives better size estimation than max(width, height)
+    const bboxDiagonal = Math.sqrt(
+      path.bounds.width * path.bounds.width +
+      path.bounds.height * path.bounds.height
+    );
+    const epsilon = options.epsilon || calculateAdaptiveEpsilon(bboxDiagonal);
 
     // Apply Douglas-Peucker
     const simplifiedPoints = douglasPeucker(path.points, epsilon);
@@ -50,18 +53,25 @@ function simplifyPaths(paths, options = {}) {
 }
 
 /**
- * Calculate adaptive epsilon based on path size
- * Larger paths can handle more aggressive simplification
+ * Calculate adaptive epsilon based on bbox diagonal
+ * Size-aware simplification with special handling for small shapes
  *
- * @param {number} pathSize - Path dimension (width or height)
- * @returns {number} Epsilon value
+ * @param {number} bboxDiagonal - Path bbox diagonal in pixels
+ * @returns {number} Epsilon value in pixels
  */
-function calculateAdaptiveEpsilon(pathSize) {
-  // Base epsilon: 0.5% of path size
-  // Min: 1.0px for small features
+function calculateAdaptiveEpsilon(bboxDiagonal) {
+  // Base epsilon: 0.25% of bbox diagonal (reduced from 0.5% for better accuracy)
+  // Min: 0.5px for precision
   // Max: 5.0px for large areas
-  const epsilon = pathSize * 0.005;
-  return Math.max(1.0, Math.min(5.0, epsilon));
+  let epsilon = bboxDiagonal * 0.0025;
+
+  // For small shapes (diagonal < 150px), use gentler simplification
+  if (bboxDiagonal < 150) {
+    // Clamp to max 0.3px for small features
+    epsilon = Math.min(epsilon, 0.3);
+  }
+
+  return Math.max(0.5, Math.min(5.0, epsilon));
 }
 
 /**

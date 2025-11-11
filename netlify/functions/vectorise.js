@@ -24,6 +24,11 @@ const { enforceConstraints } = require('./studio/_utils/vectorization/constraint
 const { calculateIoU } = require('./studio/_utils/vectorization/qc.js');
 const { generateSVG } = require('./studio/_utils/vectorization/svg-generator.js');
 
+// ========================================================================
+// Vectorization Configuration
+// ========================================================================
+const UPSCALE_FACTOR = 2; // 2x or 3x upscaling for better tracing accuracy
+
 /**
  * Vectorization endpoint handler
  *
@@ -92,10 +97,29 @@ exports.handler = async (event, context) => {
 
     // Get dimensions
     const metadata = await sharp(rasterBuffer).metadata();
-    const imageWidth = metadata.width;
-    const imageHeight = metadata.height;
+    const originalWidth = metadata.width;
+    const originalHeight = metadata.height;
 
-    console.log(`[VECTORIZE] Fetched: ${imageWidth}×${imageHeight}px, ${rasterBuffer.length} bytes`);
+    console.log(`[VECTORIZE] Fetched: ${originalWidth}×${originalHeight}px, ${rasterBuffer.length} bytes`);
+
+    // ========================================================================
+    // STEP 1.5: Upscale for better tracing accuracy
+    // ========================================================================
+    // Upscale with nearest-neighbor to kill anti-alias noise
+
+    const imageWidth = originalWidth * UPSCALE_FACTOR;
+    const imageHeight = originalHeight * UPSCALE_FACTOR;
+
+    console.log(`[VECTORIZE] Upscaling ${UPSCALE_FACTOR}x with nearest-neighbor: ${originalWidth}×${originalHeight} → ${imageWidth}×${imageHeight}px`);
+
+    rasterBuffer = await sharp(rasterBuffer)
+      .resize(imageWidth, imageHeight, {
+        kernel: 'nearest', // Nearest-neighbor (no smoothing)
+        fit: 'fill'
+      })
+      .toBuffer();
+
+    console.log(`[VECTORIZE] Upscaled successfully`);
 
     // ========================================================================
     // STEP 3: Gradient detection with conditional flattening

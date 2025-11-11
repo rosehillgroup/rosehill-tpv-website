@@ -67,7 +67,7 @@ async function traceRegions(quantizedBuffer, palette) {
       strokewidth: 0,      // No strokes, only fills
       linefilter: false,   // Keep all paths
       scale: 1,            // Keep original scale
-      roundcoords: 2,      // Round to 2 decimal places
+      roundcoords: 3,      // Round to 3 decimal places for better precision
 
       // Color palette - ImageTracer needs exact format
       palette: palette.map(c => ({
@@ -217,8 +217,8 @@ function parsePathD(d) {
           const endX = coords[i + 2];
           const endY = coords[i + 3];
 
-          // Sample quadratic curve (simple linear approximation for now)
-          const steps = 5;
+          // Sample quadratic curve with higher density for accuracy
+          const steps = 10;
           for (let t = 1; t <= steps; t++) {
             const tNorm = t / steps;
             const x = (1 - tNorm) * (1 - tNorm) * currentX +
@@ -244,8 +244,8 @@ function parsePathD(d) {
           const endX = coords[i + 4];
           const endY = coords[i + 5];
 
-          // Sample cubic curve (simple linear approximation)
-          const steps = 10;
+          // Sample cubic curve with higher density for accuracy
+          const steps = 20;
           for (let t = 1; t <= steps; t++) {
             const tNorm = t / steps;
             const x = Math.pow(1 - tNorm, 3) * currentX +
