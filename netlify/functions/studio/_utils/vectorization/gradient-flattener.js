@@ -162,6 +162,7 @@ async function flattenGradients(imageBuffer, options = {}) {
 
 /**
  * Posterize image using k-means clustering in Lab color space
+ * Preserves original RGB colors by mapping Lab clusters to nearest originals
  * @param {Buffer} data - Raw RGBA pixel data
  * @param {number} width - Image width
  * @param {number} height - Image height
@@ -170,7 +171,20 @@ async function flattenGradients(imageBuffer, options = {}) {
  * @returns {Object} {posterized, palette}
  */
 async function posterizeLabKMeans(data, width, height, channels, k) {
-  // Extract RGB pixels (skip alpha for clustering)
+  // STEP 1: Extract unique original RGB colors BEFORE clustering
+  const uniqueRgbColors = new Map();
+  for (let i = 0; i < data.length; i += channels) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const key = `${r},${g},${b}`;
+    uniqueRgbColors.set(key, { r, g, b });
+  }
+
+  const originalColors = Array.from(uniqueRgbColors.values());
+  console.log(`[FLATTEN] Found ${originalColors.length} unique original colors`);
+
+  // STEP 2: Extract RGB pixels (skip alpha for clustering)
   const pixels = [];
   for (let i = 0; i < data.length; i += channels) {
     const r = data[i];
@@ -179,16 +193,33 @@ async function posterizeLabKMeans(data, width, height, channels, k) {
     pixels.push({ r, g, b });
   }
 
-  // Convert RGB to Lab
+  // STEP 3: Convert RGB to Lab
   const labPixels = pixels.map(rgbToLab);
 
-  // K-means clustering in Lab space
+  // STEP 4: K-means clustering in Lab space
   const labCentroids = kMeansClustering(labPixels, k, 20);
 
-  // Convert centroids back to RGB
-  const rgbPalette = labCentroids.map(labToRgb);
+  // STEP 5: Map each Lab centroid to nearest ORIGINAL RGB color
+  // This preserves exact input colors instead of creating Lab→RGB conversions
+  const rgbPalette = labCentroids.map(labCentroid => {
+    // Find nearest original color in Lab space
+    let minDist = Infinity;
+    let nearestOriginal = originalColors[0];
 
-  console.log(`[FLATTEN] K-means converged: ${rgbPalette.length} colors`);
+    for (const originalRgb of originalColors) {
+      const originalLab = rgbToLab(originalRgb);
+      const dist = labDistance(labCentroid, originalLab);
+
+      if (dist < minDist) {
+        minDist = dist;
+        nearestOriginal = originalRgb;
+      }
+    }
+
+    return nearestOriginal;
+  });
+
+  console.log(`[FLATTEN] K-means converged: ${rgbPalette.length} colors (mapped to original RGB)`);
 
   // Map each pixel to nearest centroid
   const posterized = Buffer.alloc(data.length);

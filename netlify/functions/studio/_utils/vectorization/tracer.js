@@ -46,9 +46,9 @@ async function traceRegions(quantizedBuffer, palette) {
     // Configure ImageTracer options
     const options = {
       // Tracing options
-      ltres: 0.1,          // Line threshold (lower = more accurate)
-      qtres: 1,            // Quad threshold
-      pathomit: 0,         // Don't omit any paths (we'll filter later)
+      ltres: 1.0,          // Line threshold (higher = smoother, straighter edges)
+      qtres: 1.0,          // Quad threshold (higher = smoother curves)
+      pathomit: 8,         // Omit tiny paths (< 8px, likely noise)
 
       // Color quantization - use manual palette mode
       colorsampling: 2,    // 2 = manual palette (don't resample colors)

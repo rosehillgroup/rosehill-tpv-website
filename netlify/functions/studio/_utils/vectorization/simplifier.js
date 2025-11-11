@@ -60,18 +60,18 @@ function simplifyPaths(paths, options = {}) {
  * @returns {number} Epsilon value in pixels
  */
 function calculateAdaptiveEpsilon(bboxDiagonal) {
-  // Base epsilon: 0.25% of bbox diagonal (reduced from 0.5% for better accuracy)
-  // Min: 0.5px for precision
-  // Max: 5.0px for large areas
-  let epsilon = bboxDiagonal * 0.0025;
+  // Base epsilon: 0.5% of bbox diagonal for smoother edges
+  // Min: 1.0px for smoothing jagged edges
+  // Max: 8.0px for large areas
+  let epsilon = bboxDiagonal * 0.005;
 
-  // For small shapes (diagonal < 150px), use gentler simplification
+  // For small shapes (diagonal < 150px), still smooth but preserve detail
   if (bboxDiagonal < 150) {
-    // Clamp to max 0.3px for small features
-    epsilon = Math.min(epsilon, 0.3);
+    // Clamp to max 1.0px for small features
+    epsilon = Math.min(epsilon, 1.0);
   }
 
-  return Math.max(0.5, Math.min(5.0, epsilon));
+  return Math.max(1.0, Math.min(8.0, epsilon));
 }
 
 /**
