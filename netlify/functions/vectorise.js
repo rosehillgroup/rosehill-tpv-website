@@ -3,14 +3,15 @@
 //
 // Pipeline stages:
 // 1. Fetch & decode raster image
-// 2. Gradient detection with automatic flattening
-// 3. K-means color quantization (reduce to ≤8 colors)
-// 4. Region tracing with ImageTracer
-// 5. Douglas-Peucker simplification
-// 6. QC validation (IoU ≥ 0.80) - validates tracing accuracy
-// 7. Min feature/radius enforcement (120mm, 600mm)
-// 8. SVG assembly
-// 9. Upload to storage and return URL
+// 2. Gradient detection with automatic flattening (at original resolution)
+// 3. Upscale 2x with nearest-neighbor for tracing accuracy
+// 4. K-means color quantization (reduce to ≤8 colors)
+// 5. Region tracing with ImageTracer
+// 6. Douglas-Peucker simplification
+// 7. QC validation (IoU ≥ 0.80) - validates tracing accuracy
+// 8. Min feature/radius enforcement (120mm, 600mm)
+// 9. SVG assembly
+// 10. Upload to storage and return URL
 
 const { getSupabaseServiceClient } = require('./studio/_utils/supabase.js');
 
@@ -83,7 +84,7 @@ exports.handler = async (event, context) => {
     // STEP 2: Fetch and decode raster image
     // ========================================================================
 
-    console.log('[VECTORIZE] Stage 1/9: Fetching raster image...');
+    console.log('[VECTORIZE] Stage 1/10: Fetching raster image...');
 
     const sharp = (await import('sharp')).default;
 
@@ -103,29 +104,11 @@ exports.handler = async (event, context) => {
     console.log(`[VECTORIZE] Fetched: ${originalWidth}×${originalHeight}px, ${rasterBuffer.length} bytes`);
 
     // ========================================================================
-    // STEP 1.5: Upscale for better tracing accuracy
+    // STEP 2: Gradient detection with conditional flattening (BEFORE upscaling)
     // ========================================================================
-    // Upscale with nearest-neighbor to kill anti-alias noise
+    // Process gradients at original resolution to avoid memory issues
 
-    const imageWidth = originalWidth * UPSCALE_FACTOR;
-    const imageHeight = originalHeight * UPSCALE_FACTOR;
-
-    console.log(`[VECTORIZE] Upscaling ${UPSCALE_FACTOR}x with nearest-neighbor: ${originalWidth}×${originalHeight} → ${imageWidth}×${imageHeight}px`);
-
-    rasterBuffer = await sharp(rasterBuffer)
-      .resize(imageWidth, imageHeight, {
-        kernel: 'nearest', // Nearest-neighbor (no smoothing)
-        fit: 'fill'
-      })
-      .toBuffer();
-
-    console.log(`[VECTORIZE] Upscaled successfully`);
-
-    // ========================================================================
-    // STEP 3: Gradient detection with conditional flattening
-    // ========================================================================
-
-    console.log('[VECTORIZE] Stage 2/9: Detecting gradients...');
+    console.log('[VECTORIZE] Stage 2/10: Detecting gradients...');
 
     const gradientResult = await detectGradients(rasterBuffer);
     const hasGradients = gradientResult.hasGradients;
@@ -160,6 +143,26 @@ exports.handler = async (event, context) => {
     }
 
     // ========================================================================
+    // STEP 3: Upscale for better tracing accuracy (AFTER gradient flattening)
+    // ========================================================================
+    // Upscale with nearest-neighbor to kill anti-alias noise
+    // Done after flattening to avoid processing 4x more pixels in k-means
+
+    const imageWidth = originalWidth * UPSCALE_FACTOR;
+    const imageHeight = originalHeight * UPSCALE_FACTOR;
+
+    console.log(`[VECTORIZE] Stage 3/10: Upscaling ${UPSCALE_FACTOR}x with nearest-neighbor: ${originalWidth}×${originalHeight} → ${imageWidth}×${imageHeight}px`);
+
+    rasterBuffer = await sharp(rasterBuffer)
+      .resize(imageWidth, imageHeight, {
+        kernel: 'nearest', // Nearest-neighbor (no smoothing)
+        fit: 'fill'
+      })
+      .toBuffer();
+
+    console.log(`[VECTORIZE] Upscaled successfully`);
+
+    // ========================================================================
     // STEP 4: K-means color quantization
     // ========================================================================
 
@@ -168,7 +171,7 @@ exports.handler = async (event, context) => {
 
     if (qcMetadata.flattening_applied) {
       // Skip quantization - flattening already posterized to exact colors
-      console.log('[VECTORIZE] Stage 3/9: Using flattened image (skipping redundant quantization)...');
+      console.log('[VECTORIZE] Stage 4/10: Using flattened image (skipping redundant quantization)...');
 
       quantizedBuffer = rasterBuffer;
 
@@ -198,7 +201,7 @@ exports.handler = async (event, context) => {
       });
     } else {
       // No flattening - apply quantization
-      console.log('[VECTORIZE] Stage 3/9: Quantizing colors...');
+      console.log('[VECTORIZE] Stage 4/10: Quantizing colors...');
 
       const quantizationResult = await quantizeColors(rasterBuffer, max_colours);
       quantizedBuffer = quantizationResult.buffer;
@@ -211,7 +214,7 @@ exports.handler = async (event, context) => {
     // STEP 5: Region tracing with ImageTracer
     // ========================================================================
 
-    console.log('[VECTORIZE] Stage 4/9: Tracing regions...');
+    console.log('[VECTORIZE] Stage 5/10: Tracing regions...');
 
     const tracingResult = await traceRegions(quantizedBuffer, colorPalette);
     const tracedPaths = tracingResult.paths;
@@ -222,7 +225,7 @@ exports.handler = async (event, context) => {
     // STEP 6: Douglas-Peucker simplification
     // ========================================================================
 
-    console.log('[VECTORIZE] Stage 5/9: Simplifying paths...');
+    console.log('[VECTORIZE] Stage 6/10: Simplifying paths...');
 
     const simplifiedPaths = simplifyPaths(tracedPaths);
 
@@ -234,7 +237,7 @@ exports.handler = async (event, context) => {
     // Validate tracing accuracy before removing small features
     // This ensures complex designs can pass QC
 
-    console.log('[VECTORIZE] Stage 6/9: QC validation (IoU)...');
+    console.log('[VECTORIZE] Stage 7/10: QC validation (IoU)...');
 
     // Generate temporary SVG from simplified paths (before constraints)
     const qcSvgString = generateSVG(
@@ -275,7 +278,7 @@ exports.handler = async (event, context) => {
     // STEP 7: Min feature/radius enforcement (AFTER QC)
     // ========================================================================
 
-    console.log('[VECTORIZE] Stage 7/9: Enforcing manufacturing constraints...');
+    console.log('[VECTORIZE] Stage 8/10: Enforcing manufacturing constraints...');
 
     const constraintsResult = enforceConstraints(simplifiedPaths, {
       width_mm,
@@ -293,7 +296,7 @@ exports.handler = async (event, context) => {
     // STEP 8: SVG assembly (final, with constraints applied)
     // ========================================================================
 
-    console.log('[VECTORIZE] Stage 8/9: Assembling final SVG...');
+    console.log('[VECTORIZE] Stage 9/10: Assembling final SVG...');
 
     const svgString = generateSVG(
       constrainedPaths,
@@ -312,7 +315,7 @@ exports.handler = async (event, context) => {
     // Note: PDF generation skipped - SVG is already perfect for print/installation
     // Large format surfaces (5m×5m) would require 3.5B pixels at 300 DPI
 
-    console.log('[VECTORIZE] Stage 9/9: Uploading SVG to storage...');
+    console.log('[VECTORIZE] Stage 10/10: Uploading SVG to storage...');
 
     const supabase = getSupabaseServiceClient();
 
