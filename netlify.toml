@@ -1,7 +1,7 @@
 [build]
   publish = "."
   command = "node build-installations.cjs"
-  ignore = "bash -c '[[ $(git diff --name-only $CACHED_COMMIT_REF $COMMIT_REF | grep -v \"^studio/\" | wc -l) -eq 0 ]]'"
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ':!studio/'"
 
 [build.environment]
   NODE_VERSION = "20"
