@@ -125,7 +125,7 @@ function selectModelAspect(targetWidth, targetHeight) {
 }
 
 // CommonJS exports
-module.exports = {
+export {
   metersToPixels,
   resolveAspectRatio,
   pickNearestSize,

@@ -228,7 +228,7 @@ function validateBrief(brief) {
 }
 
 // CommonJS exports
-module.exports = {
+export {
   buildFluxPrompt,
   createSimplifiedBrief,
   validateBrief

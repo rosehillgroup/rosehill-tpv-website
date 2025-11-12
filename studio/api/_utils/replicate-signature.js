@@ -1,6 +1,6 @@
 // replicate-signature.js - Replicate webhook signature verification
 // Based on community patterns for Replicate webhook signing
-const crypto = require('crypto');
+import crypto from 'crypto';
 
 function getSigHeader(headers) {
   // case-insensitive; handle both Replicate-Signature and X-Replicate-Signature
@@ -53,4 +53,4 @@ function verifyReplicateSignature({ headers, rawBody, signingKey }) {
   return { verified: timingSafeEqBase64(parsed.v1, expected), reason: 'mismatch' };
 }
 
-module.exports = { verifyReplicateSignature, getSigHeader };
+export { verifyReplicateSignature, getSigHeader };
