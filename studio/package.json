@@ -10,10 +10,24 @@
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@supabase/supabase-js": "^2.38.0"
+    "@supabase/supabase-js": "^2.38.0",
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@resvg/resvg-js": "^2.6.2",
+    "chaikin-smooth": "^1.0.4",
+    "color-diff": "^1.4.0",
+    "d3-delaunay": "^6.0.4",
+    "imagetracerjs": "^1.2.6",
+    "polygon-clipping": "^0.15.7",
+    "potrace": "^2.1.8",
+    "replicate": "^0.32.0",
+    "sharp": "^0.34.4",
+    "simplex-noise": "^4.0.3"
   },
   "devDependencies": {
     "vite": "^5.0.0",
     "@vitejs/plugin-react": "^4.2.0"
+  },
+  "engines": {
+    "node": ">=20.18.1"
   }
 }
