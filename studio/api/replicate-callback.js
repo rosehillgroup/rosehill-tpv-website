@@ -269,7 +269,8 @@ async function handlePass1Success(res, supabase, job, output) {
     console.log(`[PASS1] Triggering Pass 2 for job ${job.id}`);
 
     // Call enqueue function to start Pass 2
-    const enqueueUrl = `${process.env.PUBLIC_BASE_URL}/api/studio-enqueue`;
+    const baseUrl = (process.env.PUBLIC_BASE_URL || '').replace(/\/$/, '');
+    const enqueueUrl = `${baseUrl}/api/studio-enqueue`;
     const enqueueResponse = await fetch(enqueueUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -537,7 +538,8 @@ async function triggerVectorization(job, imageUrl) {
     console.log(`[VECTORIZE-TRIGGER] Max colours: ${maxColours}`);
 
     // Call vectorize function
-    const vectorizeUrl = `${process.env.PUBLIC_BASE_URL}/api/vectorise`;
+    const baseUrl = (process.env.PUBLIC_BASE_URL || '').replace(/\/$/, '');
+    const vectorizeUrl = `${baseUrl}/api/vectorise`;
     const response = await fetch(vectorizeUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

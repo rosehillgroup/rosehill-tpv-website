@@ -164,7 +164,9 @@ export default async function handler(req, res) {
     // STEP 6: Generate prediction based on pass
     // ========================================================================
 
-    const webhookUrl = `${process.env.PUBLIC_BASE_URL}/api/replicate-callback?token=${encodeURIComponent(process.env.REPLICATE_WEBHOOK_SECRET)}`;
+    // Remove trailing slash from PUBLIC_BASE_URL to avoid double slashes
+    const baseUrl = (process.env.PUBLIC_BASE_URL || '').replace(/\/$/, '');
+    const webhookUrl = `${baseUrl}/api/replicate-callback?token=${encodeURIComponent(process.env.REPLICATE_WEBHOOK_SECRET)}`;
 
     let predictionId, status, model, version, pass1ResultUrl, stencilUrl;
 
