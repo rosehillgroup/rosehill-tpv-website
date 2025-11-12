@@ -4,13 +4,13 @@
 export const BASE_URL = '/studio';
 
 export const API_ENDPOINTS = {
-  // Legacy endpoints (deprecated)
-  DESIGN_PLAN: '/.netlify/functions/studio-design-plan',
-  DESIGN_GENERATE: '/.netlify/functions/studio-design-generate',
+  // Legacy endpoints (deprecated - migrated to Vercel)
+  DESIGN_PLAN: '/api/studio-design-plan',
+  DESIGN_GENERATE: '/api/studio-design-generate',
 
-  // TPV Studio 2.0 - AI-first workflow
-  INSPIRE: '/.netlify/functions/studio-inspire',
-  DRAFTIFY: '/.netlify/functions/studio-draftify'
+  // TPV Studio 2.0 - AI-first workflow (migrated to Vercel)
+  INSPIRE: '/api/studio-inspire-simple',
+  DRAFTIFY: '/api/studio-draftify'
 };
 
 export const SUPABASE_CONFIG = {

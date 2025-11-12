@@ -21,7 +21,7 @@ class APIClient {
       payload.seed = request.seed;
     }
 
-    const response = await fetch('/.netlify/functions/studio-inspire-simple', {
+    const response = await fetch('/api/studio-inspire-simple', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -39,7 +39,7 @@ class APIClient {
 
   // Poll simple mode job status until completed or failed
   async inspireSimpleGetStatus(jobId) {
-    const response = await fetch(`/.netlify/functions/studio-job-status?jobId=${jobId}`);
+    const response = await fetch(`/api/studio-job-status?jobId=${jobId}`);
 
     if (!response.ok) {
       const error = await response.json();
