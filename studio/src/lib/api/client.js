@@ -130,6 +130,40 @@ class APIClient {
 
     return response.json();
   }
+
+  // TPV Studio 3.0 - Geometric Generator
+  // Generate native SVG design without AI raster pipeline
+  async generateGeometric(request) {
+    const payload = {
+      brief: request.prompt || request.brief,
+      canvas: {
+        width_mm: request.lengthMM || 5000,
+        height_mm: request.widthMM || 5000
+      },
+      options: {
+        mood: request.mood || 'playful',
+        composition: request.composition || 'mixed',
+        colorCount: request.maxColours || request.colorCount || 5,
+        seed: request.seed
+      },
+      validate: true
+    };
+
+    const response = await fetch(API_ENDPOINTS.GEOMETRIC_GENERATE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Geometric generation failed');
+    }
+
+    return response.json();
+  }
 }
 
 export const apiClient = new APIClient();

@@ -2,10 +2,20 @@ import React, { useState } from 'react';
 import { apiClient } from '../lib/api/client.js';
 
 function InspirePanel({ onConceptsGenerated }) {
+  // Mode selection
+  const [mode, setMode] = useState('ai');  // 'ai' or 'geometric'
+
+  // Common fields
   const [prompt, setPrompt] = useState('');
   const [lengthMM, setLengthMM] = useState(5000);  // Changed to mm (5000mm = 5m)
   const [widthMM, setWidthMM] = useState(5000);    // Changed to mm (5000mm = 5m)
   const [maxColours, setMaxColours] = useState(6);  // New: max colours (1-8, default 6)
+
+  // Geometric-specific fields
+  const [mood, setMood] = useState('playful');  // playful, serene, energetic, bold, calm
+  const [composition, setComposition] = useState('mixed');  // bands, islands, motifs, mixed
+
+  // State
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [progress, setProgress] = useState(null);
@@ -14,6 +24,70 @@ function InspirePanel({ onConceptsGenerated }) {
   const [qcResults, setQcResults] = useState(null);  // New: QC results
 
   const handleGenerate = async () => {
+    if (mode === 'geometric') {
+      return handleGenerateGeometric();
+    } else {
+      return handleGenerateAI();
+    }
+  };
+
+  const handleGenerateGeometric = async () => {
+    setLoading(true);
+    setError(null);
+    setResult(null);
+    setQcResults(null);
+    setProgress('Generating geometric design...');
+
+    try {
+      const request = {
+        prompt: prompt.trim(),
+        lengthMM: parseInt(lengthMM),
+        widthMM: parseInt(widthMM),
+        maxColours: parseInt(maxColours),
+        mood,
+        composition
+      };
+
+      console.log('[InspirePanel] Generating geometric design:', request);
+
+      const response = await apiClient.generateGeometric(request);
+
+      console.log('[InspirePanel] Geometric generation complete:', response);
+
+      if (!response.success) {
+        throw new Error(response.error || 'Geometric generation failed');
+      }
+
+      // Convert SVG string to data URL for display
+      const svgBlob = new Blob([response.svg], { type: 'image/svg+xml' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+
+      setProgress('✓ Geometric design generated!');
+      setResult({ svg_url: svgUrl, svg: response.svg });
+      setMetadata(response.metadata);
+      setQcResults(response.validation ? {
+        pass: response.validation.pass,
+        score: response.validation.pass ? 100 : 50,
+        colour_count: response.metadata.colorCount,
+        region_count: response.metadata.layerCount,
+        min_feature_mm: 120,
+        min_radius_mm: 600
+      } : null);
+
+      if (onConceptsGenerated) {
+        onConceptsGenerated([{ svg_url: svgUrl, svg: response.svg }], response.metadata);
+      }
+
+    } catch (err) {
+      console.error('[InspirePanel] Geometric generation error:', err);
+      setError(err.message);
+      setProgress(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGenerateAI = async () => {
     setLoading(true);
     setError(null);
     setResult(null);
@@ -253,10 +327,58 @@ function InspirePanel({ onConceptsGenerated }) {
 
   return (
     <div className="tpv-studio__card">
-      <h2>TPV Studio - Flux Dev Generation</h2>
+      <h2>TPV Studio - Design Generation</h2>
       <p style={{ color: '#718096', marginBottom: '1.5rem' }}>
-        Generate installer-friendly playground surface designs with AI
+        Generate installer-friendly playground surface designs
       </p>
+
+      {/* Mode Selector */}
+      <div className="tpv-studio__form-group">
+        <label className="tpv-studio__label">Generation Mode</label>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            onClick={() => setMode('ai')}
+            disabled={loading}
+            style={{
+              flex: 1,
+              padding: '0.75rem',
+              border: '2px solid',
+              borderColor: mode === 'ai' ? '#1a365d' : '#e2e8f0',
+              background: mode === 'ai' ? '#1a365d' : 'white',
+              color: mode === 'ai' ? 'white' : '#2d3748',
+              borderRadius: '8px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontWeight: mode === 'ai' ? '600' : '400',
+              transition: 'all 0.2s'
+            }}
+          >
+            🤖 AI Mode
+          </button>
+          <button
+            onClick={() => setMode('geometric')}
+            disabled={loading}
+            style={{
+              flex: 1,
+              padding: '0.75rem',
+              border: '2px solid',
+              borderColor: mode === 'geometric' ? '#ff6b35' : '#e2e8f0',
+              background: mode === 'geometric' ? '#ff6b35' : 'white',
+              color: mode === 'geometric' ? 'white' : '#2d3748',
+              borderRadius: '8px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontWeight: mode === 'geometric' ? '600' : '400',
+              transition: 'all 0.2s'
+            }}
+          >
+            📐 Geometric Mode
+          </button>
+        </div>
+        <small style={{ color: '#718096', display: 'block', marginTop: '0.5rem' }}>
+          {mode === 'ai'
+            ? 'AI generates designs from scratch using Flux Dev (~40s, $0.025)'
+            : 'Native SVG generation with pure geometric shapes (~instant, free)'}
+        </small>
+      </div>
 
       <div className="tpv-studio__form-group">
         <label className="tpv-studio__label">Design Description</label>
@@ -324,6 +446,48 @@ function InspirePanel({ onConceptsGenerated }) {
         </small>
       </div>
 
+      {/* Geometric Mode Options */}
+      {mode === 'geometric' && (
+        <>
+          <div className="tpv-studio__form-group">
+            <label className="tpv-studio__label">Mood</label>
+            <select
+              className="tpv-studio__input"
+              value={mood}
+              onChange={(e) => setMood(e.target.value)}
+              disabled={loading}
+            >
+              <option value="playful">Playful - Bright, cheerful colors</option>
+              <option value="serene">Serene - Calm, peaceful tones</option>
+              <option value="energetic">Energetic - Vibrant, dynamic colors</option>
+              <option value="bold">Bold - Striking, dramatic palette</option>
+              <option value="calm">Calm - Soft, gentle hues</option>
+            </select>
+            <small style={{ color: '#718096', display: 'block', marginTop: '0.5rem' }}>
+              Color palette mood and intensity
+            </small>
+          </div>
+
+          <div className="tpv-studio__form-group">
+            <label className="tpv-studio__label">Composition</label>
+            <select
+              className="tpv-studio__input"
+              value={composition}
+              onChange={(e) => setComposition(e.target.value)}
+              disabled={loading}
+            >
+              <option value="mixed">Mixed - Bands, islands & motifs</option>
+              <option value="bands">Bands - Flowing ribbons</option>
+              <option value="islands">Islands - Organic blobs</option>
+              <option value="motifs">Motifs - Scattered shapes</option>
+            </select>
+            <small style={{ color: '#718096', display: 'block', marginTop: '0.5rem' }}>
+              Layout structure and element types
+            </small>
+          </div>
+        </>
+      )}
+
       {error && (
         <div style={{
           padding: '1rem',
@@ -355,7 +519,9 @@ function InspirePanel({ onConceptsGenerated }) {
         style={{ width: '100%' }}
       >
         {loading && <span className="tpv-studio__spinner" />}
-        {loading ? 'Generating with Flux Dev...' : 'Generate Design (~$0.025)'}
+        {loading
+          ? (mode === 'geometric' ? 'Generating geometric design...' : 'Generating with Flux Dev...')
+          : (mode === 'geometric' ? 'Generate Geometric Design (Free)' : 'Generate Design (~$0.025)')}
       </button>
 
       {!loading && !result && (
@@ -365,7 +531,9 @@ function InspirePanel({ onConceptsGenerated }) {
           color: '#a0aec0',
           textAlign: 'center'
         }}>
-          ~30-40 seconds using Flux Dev | Installer-friendly designs
+          {mode === 'geometric'
+            ? 'Instant generation with native SVG shapes'
+            : '~30-40 seconds using Flux Dev | Installer-friendly designs'}
         </p>
       )}
 

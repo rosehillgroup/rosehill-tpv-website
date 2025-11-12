@@ -10,7 +10,10 @@ export const API_ENDPOINTS = {
 
   // TPV Studio 2.0 - AI-first workflow (migrated to Vercel)
   INSPIRE: '/api/studio-inspire-simple',
-  DRAFTIFY: '/api/studio-draftify'
+  DRAFTIFY: '/api/studio-draftify',
+
+  // TPV Studio 3.0 - Geometric mode (native SVG generation)
+  GEOMETRIC_GENERATE: '/api/studio-generate-geometric'
 };
 
 export const SUPABASE_CONFIG = {
