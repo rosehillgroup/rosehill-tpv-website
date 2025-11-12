@@ -1,6 +1,7 @@
 [build]
   publish = "."
-  command = "node build-installations.cjs && cd studio && npm install && npm run build && cp -r dist/* ."
+  command = "node build-installations.cjs"
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF studio/"
 
 [build.environment]
   NODE_VERSION = "20"
@@ -45,41 +46,42 @@
   force = true
 
 # Studio API endpoints - TPV Studio 2.0 (AI-first workflow)
-[[redirects]]
-  from = "/api/studio/inspire"
-  to = "/.netlify/functions/studio-inspire-simple"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/studio/draftify"
-  to = "/.netlify/functions/studio-draftify"
-  status = 200
-  force = true
-
-# Legacy Studio API endpoints (deprecated)
-[[redirects]]
-  from = "/api/studio/design/plan"
-  to = "/.netlify/functions/studio-design-plan"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/studio/design/generate"
-  to = "/.netlify/functions/studio-design-generate"
-  status = 200
-  force = true
-
-# Studio app - serve index.html for all /studio routes (SPA fallback)
-[[redirects]]
-  from = "/studio"
-  to = "/studio/index.html"
-  status = 200
-
-[[redirects]]
-  from = "/studio/*"
-  to = "/studio/index.html"
-  status = 200
+# MIGRATED TO VERCEL - These endpoints now served from Vercel deployment
+# [[redirects]]
+#   from = "/api/studio/inspire"
+#   to = "/.netlify/functions/studio-inspire-simple"
+#   status = 200
+#   force = true
+#
+# [[redirects]]
+#   from = "/api/studio/draftify"
+#   to = "/.netlify/functions/studio-draftify"
+#   status = 200
+#   force = true
+#
+# # Legacy Studio API endpoints (deprecated)
+# [[redirects]]
+#   from = "/api/studio/design/plan"
+#   to = "/.netlify/functions/studio-design-plan"
+#   status = 200
+#   force = true
+#
+# [[redirects]]
+#   from = "/api/studio/design/generate"
+#   to = "/.netlify/functions/studio-design-generate"
+#   status = 200
+#   force = true
+#
+# # Studio app - serve index.html for all /studio routes (SPA fallback)
+# [[redirects]]
+#   from = "/studio"
+#   to = "/studio/index.html"
+#   status = 200
+#
+# [[redirects]]
+#   from = "/studio/*"
+#   to = "/studio/index.html"
+#   status = 200
 
 # Redirects for multilingual routing
 [[redirects]]
