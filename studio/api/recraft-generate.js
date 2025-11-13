@@ -40,7 +40,6 @@ export default async function handler(req, res) {
       prompt,
       width_mm,
       length_mm,
-      max_colours = parseInt(process.env.RECRAFT_MAX_COLOURS_DEFAULT || '6', 10),
       seed = null
     } = req.body;
 
@@ -66,18 +65,9 @@ export default async function handler(req, res) {
       });
     }
 
-    // Validate max_colours range
-    if (max_colours < 3 || max_colours > 8) {
-      return res.status(400).json({
-        success: false,
-        error: 'max_colours must be between 3 and 8'
-      });
-    }
-
     console.log('[RECRAFT-GENERATE] New request:', {
       prompt: prompt.substring(0, 100) + '...',
       dimensions: `${width_mm}mm x ${length_mm}mm`,
-      max_colours,
       seed
     });
 
@@ -99,7 +89,6 @@ export default async function handler(req, res) {
       },
       width_mm,
       length_mm,
-      max_colours,
       attempt_current: 0,
       attempt_max: parseInt(process.env.RECRAFT_MAX_RETRIES || '3', 10),
       validation_history: [],
@@ -150,7 +139,6 @@ export default async function handler(req, res) {
         prompt,
         width_mm,
         length_mm,
-        max_colours,
         seed: jobData.metadata.seed,
         correction: null, // First attempt, no correction
         webhook: webhookUrl,

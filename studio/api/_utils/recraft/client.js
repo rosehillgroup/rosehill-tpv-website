@@ -1,7 +1,8 @@
 // Recraft API client for SVG vector generation via Replicate
-// TPV Studio Recraft integration - direct SVG output with TPV surfacing constraints
+// TPV Studio Recraft integration - direct SVG output
 
 import Replicate from 'replicate';
+import { simplifyPrompt } from './prompt-simplifier.js';
 
 /**
  * Initialize Replicate client
@@ -15,34 +16,20 @@ function getReplicateClient() {
 }
 
 /**
- * Build TPV-optimized prompt for Recraft
- * @param {string} userPrompt - User's design description
- * @param {number} maxColours - Maximum color palette size
+ * Build prompt for Recraft (ultra-simplified)
+ * Just returns the simplified prompt - Recraft handles vector output naturally
+ * @param {string} simplifiedPrompt - Pre-simplified clean prompt from simplifyPrompt()
  * @param {string|null} correction - Inspector's suggested correction from previous attempt
- * @returns {string} Enhanced prompt with TPV constraints
+ * @returns {string} Final prompt for Recraft
  */
-export function buildRecraftPrompt(userPrompt, maxColours, correction = null) {
-  const baseConstraints = `Playground TPV rubber surfacing design, overhead top-down view.
-Flat vector illustration with large smooth shapes and bold silhouettes.
-No buildings, no playground equipment, no slides, no climbing frames, no benches, no people.
-No outlines or strokes, flat fills only, strictly no gradients or texture or shading.
-Installer-friendly geometry with big contiguous regions and minimal small details.
-Limit palette to ${maxColours} flat colours, harmonious and playful.`;
+export function buildRecraftPrompt(simplifiedPrompt, correction = null) {
+  // If there's a correction from inspector, append it
+  if (correction) {
+    return `${simplifiedPrompt}. ${correction}`;
+  }
 
-  const userSection = `User description: ${userPrompt}`;
-
-  const focusPoints = `Focus on:
-- Simple, abstract shapes that suggest the theme.
-- Large character or motif silhouettes if relevant (fish, stars, leaves, etc.).
-- Clear separation between colour regions.
-- Overhead view, strictly 2D, no perspective or isometric.`;
-
-  // Add correction from inspector if provided (retry attempt)
-  const correctionSection = correction
-    ? `\n\nIMPORTANT CORRECTIONS FROM PREVIOUS ATTEMPT:\n${correction}`
-    : '';
-
-  return `${baseConstraints}\n\n${userSection}\n\n${focusPoints}${correctionSection}`;
+  // Otherwise just return the clean simplified prompt
+  return simplifiedPrompt;
 }
 
 /**
@@ -84,10 +71,9 @@ export function calculateDimensions(width_mm, length_mm) {
 /**
  * Generate SVG using Recraft via Replicate
  * @param {object} params - Generation parameters
- * @param {string} params.prompt - User prompt (will be enhanced with TPV constraints)
+ * @param {string} params.prompt - User prompt (will be simplified via Claude)
  * @param {number} params.width_mm - Canvas width in mm
  * @param {number} params.length_mm - Canvas height in mm
- * @param {number} params.max_colours - Maximum palette size (3-8)
  * @param {number} params.seed - Random seed for reproducibility
  * @param {string} params.correction - Inspector correction from previous attempt (for retries)
  * @param {string} params.webhook - Webhook URL for async callback
@@ -99,7 +85,6 @@ export async function generateRecraftSvg(params) {
     prompt,
     width_mm,
     length_mm,
-    max_colours,
     seed = Math.floor(Math.random() * 1000000),
     correction = null,
     webhook = null,
@@ -109,23 +94,24 @@ export async function generateRecraftSvg(params) {
   // Validate required parameters
   if (!prompt) throw new Error('prompt is required');
   if (!width_mm || !length_mm) throw new Error('width_mm and length_mm are required');
-  if (!max_colours || max_colours < 3 || max_colours > 8) {
-    throw new Error('max_colours must be between 3 and 8');
-  }
 
   const replicate = getReplicateClient();
   const modelId = process.env.RECRAFT_MODEL || 'recraft-ai/recraft-v3-svg';
 
-  // Build enhanced prompt
-  const enhancedPrompt = buildRecraftPrompt(prompt, max_colours, correction);
+  // Simplify prompt via Claude (removes problematic words)
+  const simplifiedPrompt = await simplifyPrompt(prompt);
+
+  // Build final prompt (just simplified prompt + optional correction)
+  const finalPrompt = buildRecraftPrompt(simplifiedPrompt, correction);
 
   // Calculate pixel dimensions
   const { width_px, height_px, aspect_ratio } = calculateDimensions(width_mm, length_mm);
 
   console.log(`[RECRAFT] Generating SVG with ${modelId}`);
   console.log(`[RECRAFT] Job ID: ${jobId || 'none'}`);
+  console.log(`[RECRAFT] Original prompt: ${prompt}`);
+  console.log(`[RECRAFT] Simplified prompt: ${simplifiedPrompt}`);
   console.log(`[RECRAFT] Dimensions: ${width_mm}mm x ${length_mm}mm → ${width_px}px x ${height_px}px (${aspect_ratio})`);
-  console.log(`[RECRAFT] Max colours: ${max_colours}`);
   console.log(`[RECRAFT] Seed: ${seed}`);
   if (correction) console.log(`[RECRAFT] Correction applied: ${correction.substring(0, 100)}...`);
   if (webhook) console.log(`[RECRAFT] Webhook: ${webhook}`);
@@ -133,22 +119,15 @@ export async function generateRecraftSvg(params) {
   const startTime = Date.now();
 
   try {
-    // Build Recraft input
-    // Note: Actual Recraft API parameters may vary - adjust based on model documentation
+    // Build Recraft input - ultra-simple
     const input = {
-      prompt: enhancedPrompt,
+      prompt: finalPrompt,
       width: width_px,
       height: height_px,
       seed: seed,
       style: 'any', // Recraft style: "any" allows colorful vector illustrations
       output_format: 'svg'
     };
-
-    // Try to pass color_palette_size if Recraft supports it
-    // If not supported, inspector will validate color count
-    if (max_colours) {
-      input.color_palette_size = max_colours;
-    }
 
     // Create prediction with optional webhook
     const predictionConfig = {

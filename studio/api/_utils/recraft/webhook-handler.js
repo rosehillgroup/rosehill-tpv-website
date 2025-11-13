@@ -49,7 +49,7 @@ export async function handleRecraftSuccess(res, supabase, job, output) {
     console.log(`[RECRAFT-WEBHOOK] SVG metadata:`, svgMetadata);
 
     // Quick preliminary check
-    const quickCheck = quickSvgCheck(svgString, job.max_colours || 6);
+    const quickCheck = quickSvgCheck(svgString);
     console.log(`[RECRAFT-WEBHOOK] Quick check:`, quickCheck);
 
     // Generate PNG previews
@@ -87,8 +87,7 @@ export async function handleRecraftSuccess(res, supabase, job, output) {
         svgString,
         previewPng: preview,
         width_mm: job.width_mm,
-        length_mm: job.length_mm,
-        max_colours: job.max_colours || 6
+        length_mm: job.length_mm
       });
     } catch (inspectorError) {
       console.error('[RECRAFT-WEBHOOK] Inspector failed:', inspectorError);
@@ -202,7 +201,6 @@ export async function handleRecraftSuccess(res, supabase, job, output) {
         prompt: job.prompt,
         width_mm: job.width_mm,
         length_mm: job.length_mm,
-        max_colours: job.max_colours || 6,
         seed: job.metadata?.seed + attempt, // Vary seed slightly
         correction: inspectorResult.suggested_prompt_correction,
         webhook: webhookUrl,

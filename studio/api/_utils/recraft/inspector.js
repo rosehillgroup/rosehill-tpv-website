@@ -45,7 +45,6 @@ Rules:
  * @param {Buffer} params.previewPng - PNG preview of the SVG
  * @param {number} params.width_mm - Surface width in mm
  * @param {number} params.length_mm - Surface length in mm
- * @param {number} params.max_colours - Maximum allowed colors
  * @returns {array} Messages array for Claude API
  */
 function buildInspectorUserPrompt(params) {
@@ -54,8 +53,7 @@ function buildInspectorUserPrompt(params) {
     svgString,
     previewPng,
     width_mm,
-    length_mm,
-    max_colours
+    length_mm
   } = params;
 
   // Convert PNG buffer to base64
@@ -67,7 +65,6 @@ Original user brief:
 "${userPrompt}"
 
 Surface size: ${width_mm}mm x ${length_mm}mm
-Maximum allowed colours: ${max_colours}
 
 SVG code:
 \`\`\`svg
@@ -88,7 +85,6 @@ Rules for PASS:
    • No textures or noise.
    • No strokes, outlines, or visible borders around shapes.
    • No transparency: all fills should be fully opaque.
-   • Total number of distinct fill colours should be ≤ ${max_colours}.
 
 3. Content Match
    • Main motifs should match the theme of the user brief.
@@ -100,7 +96,6 @@ In "suggested_prompt_correction", write a short instruction to the next generato
 • "remove all buildings and 3D structures, keep only flat ground shapes and fish silhouettes"
 • "remove gradients and shading, use flat colours only"
 • "limit the design to 4 large blobs and 3 fish silhouettes, no tiny details"
-• "reduce color palette to ${max_colours} colors maximum, combine similar tones"
 
 Respond with JSON only.`;
 
@@ -133,7 +128,6 @@ Respond with JSON only.`;
  * @param {Buffer} params.previewPng - PNG preview for visual inspection
  * @param {number} params.width_mm - Canvas width in mm
  * @param {number} params.length_mm - Canvas height in mm
- * @param {number} params.max_colours - Maximum allowed colors
  * @returns {Promise<object>} { pass: boolean, reasons: string[], suggested_prompt_correction: string }
  */
 export async function inspectSvgCompliance(params) {
@@ -142,8 +136,7 @@ export async function inspectSvgCompliance(params) {
     svgString,
     previewPng,
     width_mm,
-    length_mm,
-    max_colours
+    length_mm
   } = params;
 
   // Validate inputs
@@ -151,9 +144,8 @@ export async function inspectSvgCompliance(params) {
   if (!svgString) throw new Error('svgString is required');
   if (!previewPng || !Buffer.isBuffer(previewPng)) throw new Error('previewPng Buffer is required');
   if (!width_mm || !length_mm) throw new Error('width_mm and length_mm are required');
-  if (!max_colours) throw new Error('max_colours is required');
 
-  console.log(`[INSPECTOR] Validating SVG (${svgString.length} bytes, ${max_colours} max colors)`);
+  console.log(`[INSPECTOR] Validating SVG (${svgString.length} bytes)`);
 
   const client = getAnthropicClient();
   const startTime = Date.now();
@@ -166,8 +158,7 @@ export async function inspectSvgCompliance(params) {
       svgString,
       previewPng,
       width_mm,
-      length_mm,
-      max_colours
+      length_mm
     });
 
     // Call Claude Haiku with vision
@@ -274,10 +265,9 @@ export async function inspectSvgCompliance(params) {
  * Quick SVG code-only check (no vision, faster but less accurate)
  * Useful for preliminary validation before running full inspector
  * @param {string} svgString - SVG code
- * @param {number} max_colours - Maximum allowed colors
- * @returns {object} { hasGradients, hasStrokes, estimatedColors, issues }
+ * @returns {object} { hasGradients, hasStrokes, hasFilters, issues }
  */
-export function quickSvgCheck(svgString, max_colours) {
+export function quickSvgCheck(svgString) {
   const issues = [];
 
   // Check for gradients
@@ -299,15 +289,6 @@ export function quickSvgCheck(svgString, max_colours) {
     issues.push('Contains filter effects');
   }
 
-  // Estimate color count
-  const fillMatches = svgString.match(/fill=["']#[0-9a-f]{6}["']/gi) || [];
-  const uniqueColors = new Set(fillMatches.map(m => m.match(/#[0-9a-f]{6}/i)[0].toLowerCase()));
-  const estimatedColors = uniqueColors.size;
-
-  if (estimatedColors > max_colours) {
-    issues.push(`Estimated ${estimatedColors} colors (max: ${max_colours})`);
-  }
-
   // Check for common 3D/perspective indicators
   if (/isometric|perspective|3d/i.test(svgString)) {
     issues.push('SVG code mentions 3D/perspective keywords');
@@ -317,7 +298,6 @@ export function quickSvgCheck(svgString, max_colours) {
     hasGradients,
     hasStrokes,
     hasFilters,
-    estimatedColors,
     issues,
     quickPass: issues.length === 0
   };
