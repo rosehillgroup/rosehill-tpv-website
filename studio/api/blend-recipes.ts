@@ -114,6 +114,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       minPct: 0.10,   // Minimum 10% per component
       mode: 'parts',  // Output as whole number parts
       parts: {
+        enabled: true,
         total: 12,    // Aim for 12 parts total
         minPer: 1     // Minimum 1 part per component
       },
@@ -144,7 +145,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         components: recipe.components.map(c => ({
           code: c.code,
           name: tpvColours.find(col => col.code === c.code)?.name || c.code,
-          weight: c.weight,
+          weight: c.pct,
           parts: recipe.parts ? recipe.parts[c.code] : null
         }))
       }));
