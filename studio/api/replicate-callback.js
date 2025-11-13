@@ -1,5 +1,5 @@
-// TPV Studio - Multi-Pass Replicate Webhook Callback (Vercel)
-// State machine for draft → region refinement → polish pipeline
+// TPV Studio - Replicate Webhook Callback (Vercel)
+// Handles mood board generation (single-pass) and legacy multi-pass pipeline
 // Idempotent handling with prediction_id + job_id guard
 
 import { verifyReplicateSignature, getSigHeader } from './_utils/replicate-signature.js';
@@ -194,8 +194,8 @@ async function handleSuccess(res, supabase, job, output, prediction_id) {
   const mode = job.metadata?.mode;
   const pass = job.metadata?.pass;
 
-  // === TWO-PASS FLUX DEV HANDLER ===
-  if (mode === 'flux_dev_two_pass') {
+  // === TWO-PASS MOOD BOARD / FLUX DEV HANDLER ===
+  if (mode === 'flux_dev_two_pass' || mode === 'mood_board_two_pass') {
     console.log(`[WEBHOOK] Job ${job.id} succeeded (two-pass mode, pass ${pass})`);
 
     if (pass === 1) {
@@ -208,8 +208,8 @@ async function handleSuccess(res, supabase, job, output, prediction_id) {
     }
   }
 
-  // === FLUX DEV / SIMPLE MODE HANDLER (Single-Pass Inspiration Mode) ===
-  if (mode === 'simple' || mode === 'flux_dev') {
+  // === MOOD BOARD / FLUX DEV / SIMPLE MODE HANDLER (Single-Pass) ===
+  if (mode === 'simple' || mode === 'flux_dev' || mode === 'mood_board') {
     console.log(`[WEBHOOK] Job ${job.id} succeeded (${mode} mode)`);
     return handleSimpleSuccess(res, supabase, job, output);
   }
