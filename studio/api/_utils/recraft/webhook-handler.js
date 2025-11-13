@@ -215,6 +215,7 @@ export async function handleRecraftSuccess(res, supabase, job, output) {
       await supabase
         .from('studio_jobs')
         .update({
+          prediction_id: nextPrediction.predictionId, // Top-level for webhook lookup
           metadata: {
             ...job.metadata,
             prediction_id: nextPrediction.predictionId,
