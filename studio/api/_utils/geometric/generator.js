@@ -11,6 +11,7 @@ import {
   getRandomMotifFromCategory,
   getAllCategories
 } from './motifs-generated.js';
+import { parseBrief } from './brief-parser.js';
 
 /**
  * Generate a complete geometric SVG design
@@ -336,53 +337,6 @@ function escapeXML(str) {
     .replace(/'/g, '&apos;');
 }
 
-/**
- * Parse a design brief using Claude Haiku to extract parameters
- * @param {string} brief - User's design brief
- * @param {object} defaultCanvas - Default canvas dimensions
- * @returns {object} Parsed parameters for generateGeometricSVG
- */
-export async function parseBrief(brief, defaultCanvas = { width_mm: 15000, height_mm: 15000 }) {
-  // TODO: Integrate with Claude Haiku API to parse brief
-  // For now, use simple keyword detection
-
-  const briefLower = brief.toLowerCase();
-
-  // Detect mood
-  let mood = 'playful'; // default
-  if (briefLower.includes('serene') || briefLower.includes('calm') || briefLower.includes('peaceful')) {
-    mood = 'serene';
-  } else if (briefLower.includes('energetic') || briefLower.includes('vibrant') || briefLower.includes('dynamic')) {
-    mood = 'energetic';
-  } else if (briefLower.includes('bold') || briefLower.includes('striking') || briefLower.includes('dramatic')) {
-    mood = 'bold';
-  }
-
-  // Detect composition preference
-  let composition = 'mixed'; // default
-  if (briefLower.includes('bands') || briefLower.includes('ribbon') || briefLower.includes('stripe')) {
-    composition = 'bands';
-  } else if (briefLower.includes('island') || briefLower.includes('blob') || briefLower.includes('organic')) {
-    composition = 'islands';
-  } else if (briefLower.includes('motif') || briefLower.includes('icon') || briefLower.includes('symbol')) {
-    composition = 'motifs';
-  }
-
-  // Detect color count
-  let colorCount = 5; // default
-  const colorMatch = brief.match(/(\d+)\s*colou?rs?/i);
-  if (colorMatch) {
-    colorCount = Math.max(3, Math.min(8, parseInt(colorMatch[1])));
-  }
-
-  return {
-    brief,
-    canvas: defaultCanvas,
-    options: {
-      mood,
-      composition,
-      colorCount,
-      seed: Date.now()
-    }
-  };
-}
+// parseBrief() is now imported from ./brief-parser.js (Claude Haiku integration)
+// Export it for backward compatibility
+export { parseBrief };
