@@ -140,7 +140,7 @@ export async function generateRecraftSvg(params) {
       width: width_px,
       height: height_px,
       seed: seed,
-      style: 'line_art', // Recraft style: "any", "engraving", "line_art", "line_circuit", "linocut"
+      style: 'any', // Recraft style: "any" allows colorful vector illustrations
       output_format: 'svg'
     };
 
