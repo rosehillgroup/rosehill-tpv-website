@@ -4,7 +4,7 @@
 
 import { getSupabaseServiceClient } from './_utils/supabase.js';
 import { generateRecraftSvg } from './_utils/recraft/client.js';
-import { nanoid } from 'nanoid';
+import { randomUUID } from 'crypto';
 
 /**
  * Generate vector design using Recraft AI
@@ -81,8 +81,8 @@ export default async function handler(req, res) {
       seed
     });
 
-    // Generate job ID
-    const jobId = nanoid(16);
+    // Generate job ID (UUID format required by Supabase)
+    const jobId = randomUUID();
 
     // Initialize Supabase client
     const supabase = getSupabaseServiceClient();
