@@ -4,7 +4,15 @@
 
 import { PaletteExtractor } from './_utils/extraction/extractor.ts';
 import { SmartBlendSolver } from './_utils/colour/smartSolver.ts';
-import tpvColours from './_utils/data/rosehill_tpv_21_colours.json' assert { type: 'json' };
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const tpvColours = JSON.parse(
+  readFileSync(join(__dirname, '_utils/data/rosehill_tpv_21_colours.json'), 'utf-8')
+);
 
 /**
  * Generate TPV blend recipes from SVG colors
