@@ -2,17 +2,10 @@
 // POST /api/blend-recipes
 // Extracts colors from Recraft SVG and generates blend recipes
 
-import { PaletteExtractor } from './_utils/extraction/extractor.ts';
-import { SmartBlendSolver } from './_utils/colour/smartSolver.ts';
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const tpvColours = JSON.parse(
-  readFileSync(join(__dirname, '_utils/data/rosehill_tpv_21_colours.json'), 'utf-8')
-);
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { PaletteExtractor } from './_utils/extraction/extractor';
+import { SmartBlendSolver } from './_utils/colour/smartSolver';
+import tpvColours from './_utils/data/rosehill_tpv_21_colours.json';
 
 /**
  * Generate TPV blend recipes from SVG colors
@@ -46,7 +39,7 @@ const tpvColours = JSON.parse(
  *   }>
  * }
  */
-export default async function handler(req, res) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Only accept POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({
