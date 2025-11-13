@@ -513,7 +513,7 @@ function InspirePanel({ onConceptsGenerated }) {
         </p>
       )}
 
-      {result?.final_url && !loading && (
+      {(result?.final_url || result?.svg_url) && !loading && (
         <div style={{ marginTop: '1.5rem' }}>
           <h3 style={{ marginBottom: '1rem' }}>Generated Design</h3>
 
