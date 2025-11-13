@@ -89,7 +89,7 @@ export function buildMotifPlan(themes, complexity = 'medium') {
       plan.hero = {
         name: selectMotif(roleMapping.hero, primaryTheme, 'hero'),
         count: 1,
-        size_mm: [1200, 1500] // 1.2m - 1.5m
+        size_mm: [18000, 22000] // Scaled 15x for viewBox/nominalSize
       };
       break;
 
@@ -98,7 +98,7 @@ export function buildMotifPlan(themes, complexity = 'medium') {
       plan.hero = {
         name: selectMotif(roleMapping.hero, primaryTheme, 'hero'),
         count: 1,
-        size_mm: [1000, 1400]
+        size_mm: [15000, 21000] // Scaled 15x
       };
 
       // 3-4 support motifs
@@ -106,7 +106,7 @@ export function buildMotifPlan(themes, complexity = 'medium') {
       plan.support.push({
         name: selectMotif(roleMapping.support, primaryTheme, 'support'),
         count: supportCount,
-        size_mm: [600, 900]
+        size_mm: [9000, 13500] // Scaled 15x
       });
 
       // Optional second support type from secondary theme
@@ -114,7 +114,7 @@ export function buildMotifPlan(themes, complexity = 'medium') {
         plan.support.push({
           name: selectMotif(ROLE_MAPPINGS[secondaryTheme].support, secondaryTheme, 'support'),
           count: 2,
-          size_mm: [600, 900]
+          size_mm: [9000, 13500] // Scaled 15x
         });
       }
       break;
@@ -124,20 +124,20 @@ export function buildMotifPlan(themes, complexity = 'medium') {
       plan.hero = {
         name: selectMotif(roleMapping.hero, primaryTheme, 'hero'),
         count: 1,
-        size_mm: [1000, 1500]
+        size_mm: [15000, 22500] // Scaled 15x
       };
 
       // Multiple support motif types
       plan.support.push({
         name: selectMotif(roleMapping.support, primaryTheme, 'support', 0),
         count: 4,
-        size_mm: [600, 900]
+        size_mm: [9000, 13500] // Scaled 15x
       });
 
       plan.support.push({
         name: selectMotif(roleMapping.support, primaryTheme, 'support', 1),
         count: 2,
-        size_mm: [500, 800]
+        size_mm: [7500, 12000] // Scaled 15x
       });
 
       // Accent motifs for visual interest
@@ -145,7 +145,7 @@ export function buildMotifPlan(themes, complexity = 'medium') {
         plan.accent.push({
           name: selectMotif(roleMapping.accent, primaryTheme, 'accent'),
           count: 6,
-          size_mm: [300, 500]
+          size_mm: [4500, 7500] // Scaled 15x
         });
       }
       break;

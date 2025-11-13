@@ -286,13 +286,20 @@ export function generateHeroOrbit(canvas, motifPlan, palette, seed) {
   // 1. Background bands (2-3 diagonal bands for visual interest)
   const bandCount = 2 + Math.floor(random() * 2); // 2 or 3
   for (let i = 0; i < bandCount; i++) {
-    const direction = random() < 0.5 ? 'diagonal_right' : 'diagonal_left';
+    const direction = random() < 0.5 ? 'diagonal' : 'horizontal';
     const width = 800 + random() * 700; // 800-1500mm
     const curvature = 0.2 + random() * 0.3; // Gentle curves
 
-    layers.bands.push(
-      generateBand(canvas, direction, width, curvature, seed + i * 100)
-    );
+    layers.bands.push({
+      path: generateBand(canvas, {
+        width,
+        direction,
+        curvature,
+        seed: seed + i * 100
+      }),
+      width,
+      direction
+    });
   }
 
   // 2. Hero placement (centre or centre-top depending on aspect ratio)
@@ -399,7 +406,16 @@ export function generateTrail(canvas, motifPlan, palette, seed) {
   const bandWidth = 800 + random() * 400; // 800-1200mm
   const curvature = 0.3 + random() * 0.3; // Moderate flow
 
-  const mainBand = generateBand(canvas, direction, bandWidth, curvature, seed);
+  const mainBand = {
+    path: generateBand(canvas, {
+      width: bandWidth,
+      direction,
+      curvature,
+      seed
+    }),
+    width: bandWidth,
+    direction
+  };
   layers.bands.push(mainBand);
 
   // Generate spine points for the band path (for motif placement)
@@ -453,9 +469,17 @@ export function generateTrail(canvas, motifPlan, palette, seed) {
   // 4. Secondary background band for visual interest
   if (random() < 0.7) {
     const secondaryDirection = direction === 'horizontal' ? 'vertical' : 'horizontal';
-    layers.bands.push(
-      generateBand(canvas, secondaryDirection, 600 + random() * 300, 0.2, seed + 500)
-    );
+    const secondaryWidth = 600 + random() * 300;
+    layers.bands.push({
+      path: generateBand(canvas, {
+        width: secondaryWidth,
+        direction: secondaryDirection,
+        curvature: 0.2,
+        seed: seed + 500
+      }),
+      width: secondaryWidth,
+      direction: secondaryDirection
+    });
   }
 
   layers.motifPlacements = enforceMinSpacing(layers.motifPlacements, 350);
@@ -562,9 +586,17 @@ export function generateCluster(canvas, motifPlan, palette, seed) {
   }
 
   // 6. Background bands around cluster
-  layers.bands.push(
-    generateBand(canvas, 'horizontal', 700 + random() * 400, 0.25, seed + 100)
-  );
+  const bandWidth = 700 + random() * 400;
+  layers.bands.push({
+    path: generateBand(canvas, {
+      width: bandWidth,
+      direction: 'horizontal',
+      curvature: 0.25,
+      seed: seed + 100
+    }),
+    width: bandWidth,
+    direction: 'horizontal'
+  });
 
   layers.motifPlacements = enforceMinSpacing(layers.motifPlacements, 250); // Tighter spacing for cluster
 
@@ -616,9 +648,16 @@ export function generateStripedStory(canvas, motifPlan, palette, seed) {
     const bandWidth = stripeSize * 0.8; // Slightly smaller than stripe
     const curvature = 0.15 + random() * 0.15; // Gentle curves
 
-    layers.bands.push(
-      generateBand(canvas, direction, bandWidth, curvature, seed + i * 200)
-    );
+    layers.bands.push({
+      path: generateBand(canvas, {
+        width: bandWidth,
+        direction,
+        curvature,
+        seed: seed + i * 200
+      }),
+      width: bandWidth,
+      direction
+    });
   }
 
   // 2. Hero goes in middle stripe
