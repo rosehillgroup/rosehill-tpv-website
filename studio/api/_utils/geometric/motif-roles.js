@@ -11,9 +11,9 @@ import { MOTIF_LIBRARY, getMotifsByCategory } from './motifs-generated.js';
  */
 export const ROLE_MAPPINGS = {
   ocean: {
-    hero: ['whale', 'octopus', 'shark', 'dolphin'],
-    support: ['fish', 'turtle', 'crab', 'jellyfish', 'seahorse'],
-    accent: ['starfish', 'shell', 'wave', 'coral', 'bubble']
+    hero: ['ocean_01_whale', 'ocean_16_sea_turtle', 'ocean_03_buoy', 'ocean_07_lighthouse'],
+    support: ['ocean_08_fish', 'ocean_09_penguin', 'ocean_05_plant_coral', 'ocean_20_seaweed', 'ocean_19_fishing'],
+    accent: ['ocean_12_starfish', 'ocean_02_wave', 'ocean_06_pearl', 'ocean_18_iceberg']
   },
   space: {
     hero: ['rocket', 'planet', 'astronaut', 'satellite', 'ufo'],

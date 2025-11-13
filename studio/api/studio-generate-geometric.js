@@ -73,7 +73,9 @@ export default async function handler(req, res) {
       options: {
         ...parsedParams.options,
         ...options
-      }
+      },
+      layout: parsedParams.layout,      // Pass layout (recipe, complexity)
+      metadata: parsedParams.metadata   // Pass metadata (themes, reasoning)
     };
 
     // Generate SVG
