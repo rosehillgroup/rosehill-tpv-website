@@ -537,9 +537,11 @@ function InspirePanel({ onConceptsGenerated }) {
         </p>
       )}
 
-      {result?.svg_url && !loading && (
+      {(result?.svg_url || result?.final_url) && !loading && (
         <div style={{ marginTop: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1rem' }}>Installer-Ready Design</h3>
+          <h3 style={{ marginBottom: '1rem' }}>
+            {result?.svg_url ? 'Installer-Ready Design' : 'Generated Design (Vectorizing...)'}
+          </h3>
 
           {/* QC Results Badge */}
           {qcResults && (
@@ -571,18 +573,20 @@ function InspirePanel({ onConceptsGenerated }) {
             gap: '1rem',
             marginBottom: '1rem'
           }}>
-            {result.svg_url && (
+            {(result.svg_url || result.final_url) && (
               <div>
                 <img
-                  src={result.svg_url}
-                  alt="Installer-ready vector design"
+                  src={result.svg_url || result.final_url}
+                  alt={result.svg_url ? "Installer-ready vector design" : "Generated design (raster)"}
                   style={{ width: '100%', borderRadius: '8px', marginBottom: '0.5rem' }}
                 />
                 <div style={{ fontSize: '0.875rem', color: '#718096' }}>
-                  <p>Format: Scalable Vector Graphics (SVG)</p>
+                  <p>
+                    Format: {result.svg_url ? 'Scalable Vector Graphics (SVG)' : 'JPEG (Raster - Vectorization in progress)'}
+                  </p>
                   <p>Surface: {lengthMM}mm × {widthMM}mm ({(lengthMM/1000).toFixed(1)}m × {(widthMM/1000).toFixed(1)}m)</p>
                   <p>Colours: {qcResults?.colour_count || maxColours}</p>
-                  <p>Manufacturing constraints applied: ✓ Min feature {qcResults?.min_feature_mm || 120}mm, Min radius {qcResults?.min_radius_mm || 600}mm</p>
+                  <p>Manufacturing constraints {result.svg_url ? 'applied' : 'pending'}: ✓ Min feature {qcResults?.min_feature_mm || 120}mm, Min radius {qcResults?.min_radius_mm || 600}mm</p>
                   {metadata?.seed && (
                     <p style={{ marginTop: '0.5rem' }}>
                       <strong>Seed:</strong> {metadata.seed}
@@ -596,12 +600,12 @@ function InspirePanel({ onConceptsGenerated }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {/* Primary download button */}
             <a
-              href={result.svg_url}
+              href={result.svg_url || result.final_url}
               download
               className="tpv-studio__button tpv-studio__button--primary"
               style={{ width: '100%', textAlign: 'center', textDecoration: 'none' }}
             >
-              Download Installer-Ready SVG
+              {result.svg_url ? 'Download Installer-Ready SVG' : 'Download Design (JPG)'}
             </a>
 
             {/* Regeneration options */}
@@ -624,8 +628,8 @@ function InspirePanel({ onConceptsGenerated }) {
               New Generation
             </button>
 
-            {/* Optional: Backup raster download */}
-            {result.final_url && (
+            {/* Optional: Backup raster download (only show if we have SVG, since JPG is primary otherwise) */}
+            {result.svg_url && result.final_url && (
               <a
                 href={result.final_url}
                 download

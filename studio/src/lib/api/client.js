@@ -69,31 +69,47 @@ class APIClient {
               completedAt = Date.now();
             }
 
-            // Check if vectorization is complete
+            // Check if vectorization is complete or if we have raster output
             // Note: API returns outputs as "result", not "outputs"
             console.log('[API] Checking for vectorization:', {
               result: status.result,
               metadata_vectorization: status.metadata?.vectorization,
               has_result_svg: !!status.result?.svg_url,
-              has_metadata_svg: !!status.metadata?.vectorization?.svg_url
+              has_metadata_svg: !!status.metadata?.vectorization?.svg_url,
+              has_final_url: !!status.result?.final_url
             });
             const hasVectorization = status.result?.svg_url || status.metadata?.vectorization?.svg_url;
+            const hasRasterOutput = status.result?.final_url;
 
             if (hasVectorization) {
               // Vectorization complete - resolve immediately
-              console.log('[API] Vectorization complete, resolving');
+              console.log('[API] Vectorization complete, resolving with SVG');
               resolve(status);
+            } else if (hasRasterOutput) {
+              // We have raster output - wait a bit for vectorization but don't block too long
+              const waitTime = Date.now() - completedAt;
+              const reducedWaitTime = 10000; // Only wait 10s for vectorization when we have JPG
+
+              if (waitTime >= reducedWaitTime) {
+                // Resolve with raster - vectorization may complete in background
+                console.log('[API] Resolving with raster output (JPG), vectorization pending');
+                resolve(status);
+              } else {
+                // Keep polling for vectorization (but shorter wait)
+                console.log(`[API] Have JPG, waiting for vectorization... (${Math.round(waitTime / 1000)}s/${Math.round(reducedWaitTime / 1000)}s)`);
+                setTimeout(poll, pollInterval);
+              }
             } else {
-              // Check if we've waited long enough for vectorization
+              // No output at all yet - keep waiting with original timeout
               const waitTime = Date.now() - completedAt;
 
               if (waitTime >= maxWaitAfterCompletion) {
-                // Timeout - resolve anyway (vectorization may have failed or is still running)
-                console.log('[API] Vectorization timeout, resolving without vectors');
-                resolve(status);
+                // Timeout - something went wrong
+                console.log('[API] Timeout with no output, rejecting');
+                reject(new Error('Job completed but no output received'));
               } else {
-                // Keep polling for vectorization
-                console.log(`[API] Waiting for vectorization... (${Math.round(waitTime / 1000)}s)`);
+                // Keep polling
+                console.log(`[API] Waiting for output... (${Math.round(waitTime / 1000)}s)`);
                 setTimeout(poll, pollInterval);
               }
             }
