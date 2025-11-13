@@ -1,38 +1,14 @@
-// TPV Studio - Flux Dev Job Enqueue (Vercel)
-// Two-Pass Generation Pipeline:
-// Pass 1: prompt → refine → text-to-image (no stencil) → bright, creative concept
-// Pass 2: prompt → Pass 1 result + faint stencil → img2img refinement → final output
+// TPV Studio - Mood Board Generator Job Enqueue (Vercel)
+// Single-Pass Generation Pipeline:
+// prompt → refine with Claude → text-to-image → atmospheric mood board
+// Two-pass mode DISABLED for mood boards (preserve expressive atmosphere)
 
 import { getSupabaseServiceClient } from './_utils/supabase.js';
-import { buildFluxPrompt, createSimplifiedBrief } from './_utils/prompt.js';
+import { buildFluxPrompt } from './_utils/prompt.js';
 import { metersToPixels, resolveAspectRatio } from './_utils/aspect-resolver.js';
 import { generateConceptFluxDev, estimateCost } from './_utils/replicate.js';
-import { generateBriefStencil } from './_utils/brief-stencil.js';
 import { refineToDesignBrief } from './_utils/design-director.js';
 import { initiatePass1, initiatePass2, isTwoPassEnabled } from './_utils/two-pass-generator.js';
-
-// Helper to upload stencil to Supabase temp storage
-async function uploadStencilToStorage(buffer, jobId) {
-  const supabase = getSupabaseServiceClient();
-  const fileName = `stencils/${jobId}_${Date.now()}.png`;
-
-  const { data, error } = await supabase.storage
-    .from('studio-temp')
-    .upload(fileName, buffer, {
-      contentType: 'image/png',
-      cacheControl: '3600',
-      upsert: false
-    });
-
-  if (error) throw new Error(`Stencil upload failed: ${error.message}`);
-
-  // Get public URL
-  const { data: urlData } = supabase.storage
-    .from('studio-temp')
-    .getPublicUrl(fileName);
-
-  return urlData.publicUrl;
-}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -66,11 +42,9 @@ export default async function handler(req, res) {
     // ========================================================================
 
     const userPrompt = job.prompt || 'abstract playground design';
-    const maxColours = job.max_colours || 6;
-    const trySimpler = job.try_simpler || false;
     const retryCount = job.retry_count || 0;
 
-    // Surface dimensions (support both mm and m formats)
+    // Surface dimensions (for aspect ratio calculation only)
     let surface;
     if (job.surface) {
       surface = {
@@ -84,60 +58,32 @@ export default async function handler(req, res) {
     // Seed for reproducibility
     const seed = job.metadata?.seed || Math.floor(Math.random() * 1000000);
 
-    console.log(`[ENQUEUE] Params: prompt="${userPrompt}", max_colours=${maxColours}, try_simpler=${trySimpler}, retry=${retryCount}`);
+    console.log(`[ENQUEUE] Params: prompt="${userPrompt}", retry=${retryCount}`);
     console.log(`[ENQUEUE] Surface: ${surface.width_m}m × ${surface.height_m}m`);
 
     // ========================================================================
-    // STEP 2: Refine prompt with Design Director → brief JSON
+    // STEP 2: Refine prompt with Design Director → mood board description
     // ========================================================================
 
     console.log('[ENQUEUE] Refining prompt with Design Director...');
 
-    let brief;
+    let refinedPrompt;
     try {
-      brief = await refineToDesignBrief(userPrompt, {
-        surface,
-        max_colours: maxColours
-      });
-      console.log(`[ENQUEUE] Brief refined: "${brief.title}" (${brief.motifs?.length || 0} motifs, ${brief.composition?.target_region_count || 0} regions)`);
+      refinedPrompt = await refineToDesignBrief(userPrompt);
+      console.log(`[ENQUEUE] Mood board description refined: "${refinedPrompt.slice(0, 80)}..."`);
     } catch (error) {
       console.error('[ENQUEUE] Design Director failed:', error.message);
-      // Create fallback brief with composition
-      brief = {
-        title: userPrompt,
-        mood: ['playful'],
-        composition: {
-          base_coverage: 0.55,
-          accent_coverage: 0.30,
-          highlight_coverage: 0.15,
-          shape_density: 'low',
-          max_detail_level: 'low',
-          min_feature_mm: 120,
-          min_radius_mm: 600,
-          target_region_count: 3,
-          avoid: ['thin outlines', 'text', 'tiny shapes']
-        },
-        motifs: [],
-        arrangement_notes: 'Simple playground design with generous spacing and clean composition.'
-      };
-    }
-
-    // Apply "Try Simpler" adjustments if requested
-    if (trySimpler) {
-      console.log('[ENQUEUE] Applying "Try Simpler" adjustments');
-      brief = createSimplifiedBrief(brief);
+      // Use simple fallback
+      refinedPrompt = `A playful playground mood board inspired by "${userPrompt}". Rich colours, expressive atmosphere, and imaginative visual storytelling create an inviting playground concept.`;
     }
 
     // ========================================================================
-    // STEP 3: Build Flux prompt from brief + max_colours
+    // STEP 3: Build Flux prompt from refined description
     // ========================================================================
 
     console.log('[ENQUEUE] Building Flux prompt...');
 
-    const { positive, negative, guidance, steps, denoise } = buildFluxPrompt(brief, {
-      max_colours: maxColours,
-      try_simpler: trySimpler
-    });
+    const { positive, negative, guidance, steps, denoise } = buildFluxPrompt(refinedPrompt);
 
     console.log(`[ENQUEUE] Prompt params: guidance=${guidance}, steps=${steps}, denoise=${denoise}`);
 
@@ -172,13 +118,12 @@ export default async function handler(req, res) {
 
     if (twoPassMode && currentPass === 1) {
       // ============================================================
-      // PASS 1: Text-to-Image (No Stencil)
+      // PASS 1: Text-to-Image Mood Board
       // ============================================================
-      console.log('[ENQUEUE] Initiating Pass 1: Text-to-image (no stencil)');
+      console.log('[ENQUEUE] Initiating Pass 1: Mood board text-to-image');
 
-      const pass1Result = await initiatePass1(brief, {
+      const pass1Result = await initiatePass1(refinedPrompt, {
         aspect_ratio: aspectRatio,
-        max_colours: maxColours,
         seed,
         webhook: webhookUrl
       });
@@ -192,9 +137,10 @@ export default async function handler(req, res) {
 
     } else if (twoPassMode && currentPass === 2) {
       // ============================================================
-      // PASS 2: Img2Img Refinement (Pass 1 result + stencil guidance)
+      // PASS 2: Quality Refinement (SHOULD NOT BE USED FOR MOOD BOARDS)
       // ============================================================
-      console.log('[ENQUEUE] Initiating Pass 2: Img2img refinement');
+      console.warn('[ENQUEUE] WARNING: Pass 2 should be DISABLED for mood boards');
+      console.log('[ENQUEUE] Initiating Pass 2: Quality refinement');
 
       pass1ResultUrl = job.metadata?.pass1_result_url;
       if (!pass1ResultUrl) {
@@ -203,12 +149,10 @@ export default async function handler(req, res) {
 
       console.log(`[ENQUEUE] Using Pass 1 result: ${pass1ResultUrl}`);
 
-      const pass2Result = await initiatePass2(brief, pass1ResultUrl, {
+      const pass2Result = await initiatePass2(refinedPrompt, pass1ResultUrl, {
         aspect_ratio: aspectRatio,
-        max_colours: maxColours,
         seed,
-        webhook: webhookUrl,
-        try_simpler: trySimpler
+        webhook: webhookUrl
       });
 
       predictionId = pass2Result.predictionId;
@@ -216,27 +160,18 @@ export default async function handler(req, res) {
       model = pass2Result.model;
       version = pass2Result.version;
 
-      console.log(`[ENQUEUE] Pass 2 (cleanup) initiated: ${predictionId}`);
+      console.log(`[ENQUEUE] Pass 2 initiated: ${predictionId}`);
 
     } else {
       // ============================================================
-      // FALLBACK: Single-Pass with Stencil (Legacy Mode)
+      // SINGLE-PASS: Pure Text-to-Image (Default for Mood Boards)
       // ============================================================
-      console.log('[ENQUEUE] Using legacy single-pass mode with stencil');
-
-      const stencilBuffer = await generateBriefStencil(
-        brief,
-        { width: 1024, height: 1024 },
-        { seed }
-      );
-
-      stencilUrl = await uploadStencilToStorage(stencilBuffer, job_id);
-      console.log(`[ENQUEUE] Stencil uploaded: ${stencilUrl}`);
+      console.log('[ENQUEUE] Using single-pass mood board generation');
 
       const result = await generateConceptFluxDev(
         positive,
         negative,
-        stencilUrl,
+        null,  // No init image for mood boards
         {
           aspect_ratio: aspectRatio,
           denoise,
@@ -257,9 +192,9 @@ export default async function handler(req, res) {
     const costEstimate = estimateCost(1);
 
     console.log(
-      `[FLUX-DEV] job=${job_id} prediction=${predictionId} model=${model} ` +
+      `[MOOD-BOARD] job=${job_id} prediction=${predictionId} model=${model} ` +
       `steps=${steps} guidance=${guidance} denoise=${denoise} ar=${aspectRatio} ` +
-      `seed=${seed} colours=${maxColours} retry=${retryCount} simpler=${trySimpler} ` +
+      `seed=${seed} retry=${retryCount} ` +
       `duration=${enqueueDuration}ms cost=${costEstimate.totalCost.toFixed(4)}`
     );
 
@@ -269,7 +204,7 @@ export default async function handler(req, res) {
 
     const metadata = {
       ...job.metadata,
-      mode: twoPassMode ? 'flux_dev_two_pass' : 'flux_dev',
+      mode: twoPassMode ? 'mood_board_two_pass' : 'mood_board',
       pass: currentPass,
       model,
       version,
@@ -280,15 +215,7 @@ export default async function handler(req, res) {
       steps,
       guidance,
       denoise,
-      max_colours: maxColours,
-      try_simpler: trySimpler,
-      brief: {
-        title: brief.title,
-        motif_count: brief.motifs?.length || 0,
-        mood_count: brief.mood?.length || 0,
-        target_region_count: brief.composition?.target_region_count || 0,
-        full_brief: brief  // Store full brief for Pass 2
-      },
+      refined_prompt: refinedPrompt,
       prompt: positive,
       negative_prompt: negative,
       cost_estimate: costEstimate.totalCost,
@@ -301,10 +228,7 @@ export default async function handler(req, res) {
     } else if (currentPass === 2) {
       metadata.pass2_prediction_id = predictionId;
       metadata.pass1_result_url = pass1ResultUrl;
-      metadata.cleanup_mode = true;  // Pass 2 is cleanup/simplification
-    } else {
-      // Legacy mode
-      metadata.stencil_url = stencilUrl;
+      metadata.refinement_mode = true;  // Pass 2 is quality refinement (should be disabled)
     }
 
     await supabase
@@ -320,9 +244,9 @@ export default async function handler(req, res) {
     return res.status(200).json({
       ok: true,
       prediction_id: predictionId,
-      mode: twoPassMode ? 'flux_dev_two_pass' : 'flux_dev',
+      mode: twoPassMode ? 'mood_board_two_pass' : 'mood_board',
       pass: currentPass,
-      estimated_duration: twoPassMode ? (currentPass === 1 ? 60 : 30) : 30  // Pass 1: ~30s + Pass 2: ~30s = 60s total
+      estimated_duration: 30  // Single-pass mood boards: ~30s
     });
 
   } catch (error) {

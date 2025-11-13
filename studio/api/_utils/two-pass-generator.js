@@ -1,34 +1,31 @@
-// Two-Pass Flux Dev Generation System
-// Pass 1: Text-to-image (vibrant, creative concept with no stencil)
-// Pass 2: Cleanup/simplification (remove small artifacts, simplify for installation)
+// Flux Dev Mood Board Generation System
+// Pass 1: Text-to-image mood board generation (atmospheric concept art)
+// Pass 2: DISABLED for mood boards (preserve expressive atmosphere)
 
 import { generateConceptFluxDev } from './replicate.js';
 import { buildFluxPrompt } from './prompt.js';
 
 /**
- * Initiate Pass 1: Pure text-to-image generation
- * No stencil, full creative freedom for vibrant colors and multiple motifs
+ * Initiate Pass 1: Pure text-to-image mood board generation
+ * Full creative freedom for atmospheric concept art
  *
- * @param {Object} brief - Design brief from Design Director
+ * @param {string} refinedPrompt - Refined mood board description from Design Director
  * @param {Object} options - Generation options
  * @param {string} options.aspect_ratio - Aspect ratio
  * @param {number} options.seed - Random seed
  * @param {string} options.webhook - Webhook URL
  * @returns {Promise<Object>} {predictionId, status, model}
  */
-export async function initiatePass1(brief, options = {}) {
-  console.log('[TWO-PASS] Initiating Pass 1: Text-to-image (no stencil)');
+export async function initiatePass1(refinedPrompt, options = {}) {
+  console.log('[TWO-PASS] Initiating Pass 1: Mood board text-to-image');
 
-  // Build prompt with bright/colorful emphasis
-  const { positive, negative, guidance, steps } = buildFluxPrompt(brief, {
-    max_colours: options.max_colours || 6,
-    try_simpler: false
-  });
+  // Build mood board prompt
+  const { positive, negative, guidance, steps, denoise } = buildFluxPrompt(refinedPrompt);
 
-  // Pass 1 uses HIGH prompt_strength for full creative freedom
+  // Pass 1 parameters for mood boards
   const pass1Options = {
     aspect_ratio: options.aspect_ratio || '1:1',
-    denoise: 0.95,  // Very high - no init image to preserve
+    denoise: denoise,  // Use value from buildFluxPrompt (default 0.95)
     guidance: guidance,
     steps: steps,
     seed: options.seed,
@@ -37,11 +34,11 @@ export async function initiatePass1(brief, options = {}) {
 
   console.log('[TWO-PASS] Pass 1 parameters:', pass1Options);
 
-  // Generate without stencil (null)
+  // Generate without init image (pure text-to-image)
   const result = await generateConceptFluxDev(
     positive,
     negative,
-    null,  // No stencil = pure text-to-image
+    null,  // No init image = pure text-to-image
     pass1Options
   );
 
@@ -60,53 +57,49 @@ export async function initiatePass1(brief, options = {}) {
 }
 
 /**
- * Initiate Pass 2: Cleanup/simplification pass
- * Uses Pass 1 result to remove small artifacts and simplify for installation
+ * Initiate Pass 2: Quality refinement pass (DISABLED FOR MOOD BOARDS)
+ * NOTE: Two-pass mode should remain DISABLED for mood board generation
+ * This function is preserved for potential future use but should not be called
  *
- * @param {Object} brief - Design brief
+ * @param {string} refinedPrompt - Refined mood board description
  * @param {string} pass1ResultUrl - URL of Pass 1 generated image
  * @param {Object} options - Generation options
  * @param {string} options.aspect_ratio - Aspect ratio
  * @param {number} options.seed - Random seed (should match Pass 1)
  * @param {string} options.webhook - Webhook URL
- * @param {boolean} options.try_simpler - Extra simplification (from Try Simpler button)
  * @returns {Promise<Object>} {predictionId, status, model}
  */
-export async function initiatePass2(brief, pass1ResultUrl, options = {}) {
-  console.log('[TWO-PASS] Initiating Pass 2: Cleanup/Simplification');
+export async function initiatePass2(refinedPrompt, pass1ResultUrl, options = {}) {
+  console.warn('[TWO-PASS] WARNING: Pass 2 should be DISABLED for mood boards');
+  console.log('[TWO-PASS] Initiating Pass 2: Quality refinement');
   console.log(`[TWO-PASS] Pass 1 result: ${pass1ResultUrl}`);
-  console.log('[TWO-PASS] Pass 2 will remove small artifacts and simplify for installation');
 
-  // Build base prompt
-  const { positive: basePositive, negative: baseNegative, guidance, steps } = buildFluxPrompt(brief, {
-    max_colours: options.max_colours || 6,
-    try_simpler: options.try_simpler || false
-  });
+  // Build base prompt (mood board style)
+  const { positive: basePositive, negative: baseNegative, guidance, steps } = buildFluxPrompt(refinedPrompt);
 
-  // ADD PASS 2 CLEANUP/SIMPLIFICATION DIRECTIVES
-  // CRITICAL: Emphasize flat matte aesthetic (no photorealistic lighting)
-  const pass2Positive = `${basePositive}, simplified clean composition, remove tiny scattered elements, large bold shapes only, installer-friendly scale, clean flat silhouettes, remove visual clutter, STRICTLY FLAT MATTE COLOURS WITH NO LIGHTING EFFECTS, completely flat vector aesthetic, pure flat color zones with hard edges, no depth or dimension, paper cutout style`;
+  // ADD MINIMAL QUALITY REFINEMENT (preserve atmosphere and gradients)
+  const pass2Positive = `${basePositive}, enhanced cohesion, refined composition, professional finish`;
 
-  const pass2Negative = `${baseNegative}, small scattered details, tiny dots, fine texture, scattered artifacts, visual clutter, busy areas, gradient shading in background bands, small decorative elements, texture noise, speckles, small stars, tiny objects, SOFT SHADOWS, DROP SHADOWS, CAST SHADOWS, LIGHTING EFFECTS, SHADING, HIGHLIGHTS, REFLECTIONS, 3D LIGHTING, AMBIENT OCCLUSION, DEPTH CUES, PHOTOREALISTIC RENDERING, REALISTIC LIGHTING, VOLUMETRIC EFFECTS, LIGHT RAYS, SHADOW GRADIENTS, SOFT EDGES ON SHADOWS`;
+  const pass2Negative = `${baseNegative}, low quality, blurry, distorted, excessive noise`;
 
-  // Pass 2 uses MODERATE prompt_strength for cleanup while enforcing flat aesthetic
+  // Pass 2 uses light touch to preserve mood board atmosphere
   const pass2Options = {
     aspect_ratio: options.aspect_ratio || '1:1',
-    denoise: options.try_simpler ? 0.60 : 0.55,  // Slightly higher to follow prompt more strictly
-    guidance: 3.2,  // Slightly higher to enforce flat aesthetic
+    denoise: 0.25,  // Very low - preserve Pass 1 atmosphere
+    guidance: guidance,
     steps: steps,
     seed: options.seed,
     webhook: options.webhook
   };
 
   console.log('[TWO-PASS] Pass 2 parameters:', pass2Options);
-  console.log('[TWO-PASS] Pass 2 focus: Remove small artifacts, simplify shapes, flatten colors');
+  console.log('[TWO-PASS] Pass 2 focus: Light quality refinement only');
 
-  // Generate with Pass 1 result as init image (NO stencil overlay)
+  // Generate with Pass 1 result as init image
   const result = await generateConceptFluxDev(
     pass2Positive,
     pass2Negative,
-    pass1ResultUrl,  // Use Pass 1 result directly, no stencil
+    pass1ResultUrl,
     pass2Options
   );
 
@@ -115,9 +108,9 @@ export async function initiatePass2(brief, pass1ResultUrl, options = {}) {
   return {
     ...result,
     pass: 2,
-    mode: 'img2img-cleanup',
+    mode: 'img2img-refinement',
     pass1_result_url: pass1ResultUrl,
-    cleanup_mode: true,
+    cleanup_mode: false,
     prompt: {
       positive: pass2Positive,
       negative: pass2Negative

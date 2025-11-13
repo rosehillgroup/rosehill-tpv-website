@@ -1,111 +1,26 @@
-// Prompt Builder for TPV Studio Inspiration Mode
-// Implements the full buildFluxPrompt() from the design plan
+// Prompt Builder for TPV Studio Mood Board Generator
+// Implements mood board generation with rich, atmospheric prompts
 
 /**
- * Build FLUX prompt from structured design brief with composition object
- * @param {Object} brief - Design brief with title, mood, composition, motifs, arrangement_notes
+ * Build FLUX prompt from refined mood board description
+ * @param {string} refinedPrompt - Refined 1-3 sentence mood board description from Claude
  * @param {Object} options - Optional overrides
- * @param {number} options.max_colours - Maximum colours allowed (1-8, default 6)
- * @param {boolean} options.try_simpler - Apply stricter simplification parameters
- * @param {number} options.guidance - Override guidance (3.5-4.5)
- * @param {number} options.steps - Override steps (18-20)
+ * @param {number} options.guidance - Override guidance (3.0-4.5, default 4.0)
+ * @param {number} options.steps - Override steps (20-25, default 22)
+ * @param {number} options.denoise - Override denoise (0.90-1.0, default 0.95)
  * @returns {Object} {positive, negative, guidance, steps, denoise}
  */
-function buildFluxPrompt(brief, options = {}) {
-  const max_colours = options.max_colours || 6;
-  const try_simpler = options.try_simpler || false;
+function buildFluxPrompt(refinedPrompt, options = {}) {
+  // Build positive prompt using mood board template
+  const positive = `Playground concept art mood board, rich colours and expressive atmosphere, cinematic lighting, soft gradients, painterly textures, cohesive composition, modern design inspiration, creative environmental storytelling. Theme: ${refinedPrompt}. Overhead or angled perspective, harmonious colour palette, organic shapes, playful forms, depth and visual interest, professional mood board aesthetic, high-quality concept illustration.`;
 
-  // Extract brief components
-  const theme = brief?.title ? `Theme: ${brief.title}.` : "";
-  const mood = (brief?.mood || []).length ? `Mood: ${brief.mood.join(", ")}.` : "";
+  // Build negative prompt - removes aesthetic-breaking elements but allows gradients/shadows/depth
+  const negative = `text, letters, numbers, logos, watermarks, distorted faces, human portraits, glitch artifacts, excessive noise, low-resolution textures, overexposed highlights, extreme surrealism, gore, dismemberment, photoreal product mockups, 3D CAD renders, technical diagrams, blueprint layouts, vector-flat graphic style, geometric lineart surfaces, repetitive tiling, warped anatomy, broken perspectives`;
 
-  // Build motifs line with explicit natural language counts
-  const motifs = (brief?.motifs || [])
-    .map(m => {
-      const count = m.count || 1;
-      const countWord = ['one', 'two', 'three', 'four', 'five'][count - 1] || count;
-      const plural = count > 1 ? 's' : '';
-
-      if (m.size_m && Array.isArray(m.size_m)) {
-        return `${countWord} large ${m.name} silhouette${plural} (${m.size_m[0]}-${m.size_m[1]}m)`;
-      }
-      return `${countWord} ${m.name} silhouette${plural}`;
-    })
-    .join(", ");
-  const motifsLine = motifs ? `${motifs} evenly spaced across surface.` : "";
-
-  // Build layout-first composition instructions (not concept-art language)
-  const composition = brief?.arrangement_notes
-    ? `Composition: ${brief.arrangement_notes}`
-    : `Composition: Three wide horizontal surfacing bands for background zones. Clear gaps between motifs; avoid crowding.`;
-
-  // Build positive prompt with stencil reinterpretation guidance
-  const positive = [
-    "Playground TPV rubber surfacing design",
-    "flat vector look with large smooth shapes",
-    "installer-friendly geometry",
-    "bold silhouettes",
-    "no outlines, no text, no tiny elements",
-    "bright vibrant colours, high saturation, colorful playground aesthetic",
-    "uniform flat colours (strictly no gradients)",
-    "optional single offset hard shadow shape per motif (one flat colour), no blur, no feathering, no inner shading, decal-style",
-    "matte finish",
-    "overhead view",
-    theme,
-    mood,
-    motifsLine,
-    composition,
-    `Limit palette to ≤ ${max_colours} flat colours total.`,
-    // Prompt Flux to reinterpret stencil shapes rather than copy them
-    "Treat composition guide loosely, freely reinterpret abstract shapes to match the theme",
-    motifs ? "Encourage creative interpretation of motifs; vary their poses and orientation" : "",
-    motifs ? "Draw ALL motif silhouettes specified, evenly distributed" : ""
-  ].filter(Boolean).join(", ");
-
-  // Build negative prompt - comprehensive anti-gradient, anti-soft-shadow terms
-  let negative = [
-    // Complexity & detail
-    "busy pattern", "fine texture", "high-frequency detail",
-    "thin lines", "hairline strokes",
-    "text", "letters", "numbers",
-    // Rendering effects
-    "metallic", "glossy", "photoreal", "photorealistic", "3D render", "3D",
-    "perspective", "bevel", "emboss",
-    // Gradients & soft effects (CRITICAL)
-    "gradient", "gradients", "gradient shading",
-    "soft shadows", "soft shadow", "feathered shadows",
-    "airbrush", "blur", "glow",
-    // Tonal variation & lighting (NEW - kills subtle shading)
-    "tonal variation", "lighting effects", "soft shading",
-    "smooth gradients between colours", "smooth gradients between color regions",
-    "subtle shading", "matte lighting", "ambient lighting",
-    // Color quality (prevent muted/grey tones)
-    "muted colors", "desaturated", "washed out", "pale", "grey tones",
-    "monochrome", "low saturation", "dull colors", "faded",
-    // Unwanted styles
-    "grunge", "graffiti", "clipart clutter",
-    "realistic texture", "depth", "transparency",
-    // Anti-copy stencil directives
-    "literal tracing of input shapes", "preserving exact blobs",
-    "copying circle silhouettes", "exact duplication of geometric shapes"
-  ].join(", ");
-
-  // Apply "Try Simpler" adjustments
-  if (try_simpler) {
-    negative += ", simplify shapes, fewer regions, larger silhouettes, complex shapes, overlapping elements, busy composition, small details, intricate patterns";
-  }
-
-  // FLUX-dev parameters
-  // Higher denoise (0.78) gives model more freedom to draw multiple motifs
-  // Lower guidance (3.3) reduces stencil edge dominance
-  let guidance = parseFloat(options.guidance || process.env.FLUX_DEV_GUIDANCE || '3.3');
-  let steps = parseInt(options.steps || process.env.FLUX_DEV_STEPS || '20');
-  let denoise = parseFloat(options.denoise || process.env.FLUX_DEV_DENOISE || '0.78');
-
-  // Apply "Try Simpler" parameter adjustments (spec section 5)
-  if (try_simpler) {
-    denoise = Math.max(0.20, denoise - 0.05);
-  }
+  // FLUX-dev parameters optimized for mood boards
+  const guidance = parseFloat(options.guidance || process.env.FLUX_DEV_GUIDANCE || '4.0');
+  const steps = parseInt(options.steps || process.env.FLUX_DEV_STEPS || '22');
+  const denoise = parseFloat(options.denoise || process.env.FLUX_DEV_DENOISE || '0.95');
 
   return {
     positive,
@@ -116,120 +31,7 @@ function buildFluxPrompt(brief, options = {}) {
   };
 }
 
-/**
- * Create simplified brief for "Try Simpler" functionality
- * Increases min feature and radius constraints
- * @param {Object} originalBrief - Original design brief
- * @returns {Object} Simplified brief with stricter constraints
- */
-function createSimplifiedBrief(originalBrief) {
-  return {
-    ...originalBrief,
-    composition: {
-      ...originalBrief.composition,
-      min_feature_mm: 160,  // Increased from 120mm
-      min_radius_mm: 800     // Increased from 600mm
-    }
-  };
-}
-
-/**
- * Validate brief structure
- * @param {Object} brief - Design brief
- * @returns {Object} {valid, errors}
- */
-function validateBrief(brief) {
-  const errors = [];
-
-  if (!brief || typeof brief !== 'object') {
-    errors.push('Brief must be an object');
-    return { valid: false, errors };
-  }
-
-  // Title required
-  if (!brief.title) {
-    errors.push('Brief must have a title');
-  }
-
-  // Validate composition object (required in new schema)
-  if (!brief.composition || typeof brief.composition !== 'object') {
-    errors.push('Brief must have a composition object');
-  } else {
-    const comp = brief.composition;
-
-    // Validate coverage ratios
-    if (typeof comp.base_coverage !== 'number' || comp.base_coverage < 0 || comp.base_coverage > 1) {
-      errors.push('composition.base_coverage must be a number between 0 and 1');
-    }
-    if (typeof comp.accent_coverage !== 'number' || comp.accent_coverage < 0 || comp.accent_coverage > 1) {
-      errors.push('composition.accent_coverage must be a number between 0 and 1');
-    }
-    if (typeof comp.highlight_coverage !== 'number' || comp.highlight_coverage < 0 || comp.highlight_coverage > 1) {
-      errors.push('composition.highlight_coverage must be a number between 0 and 1');
-    }
-
-    // Validate shape density
-    if (!['low', 'medium'].includes(comp.shape_density)) {
-      errors.push('composition.shape_density must be "low" or "medium"');
-    }
-
-    // Validate detail level
-    if (!['low', 'medium'].includes(comp.max_detail_level)) {
-      errors.push('composition.max_detail_level must be "low" or "medium"');
-    }
-
-    // Validate feature sizes
-    if (typeof comp.min_feature_mm !== 'number' || comp.min_feature_mm < 100) {
-      errors.push('composition.min_feature_mm must be a number >= 100');
-    }
-    if (typeof comp.min_radius_mm !== 'number' || comp.min_radius_mm < 300) {
-      errors.push('composition.min_radius_mm must be a number >= 300');
-    }
-
-    // Validate region count
-    if (typeof comp.target_region_count !== 'number' || comp.target_region_count < 2 || comp.target_region_count > 10) {
-      errors.push('composition.target_region_count must be a number between 2 and 10');
-    }
-
-    // Validate avoid array
-    if (!Array.isArray(comp.avoid)) {
-      errors.push('composition.avoid must be an array');
-    }
-  }
-
-  // Validate motifs structure
-  if (brief.motifs) {
-    if (!Array.isArray(brief.motifs)) {
-      errors.push('Motifs must be an array');
-    } else {
-      if (brief.motifs.length > 4) {
-        errors.push('Maximum 4 motifs allowed');
-      }
-      brief.motifs.forEach((motif, i) => {
-        if (!motif.name) {
-          errors.push(`Motif ${i} missing name`);
-        }
-        if (motif.size_m && !Array.isArray(motif.size_m)) {
-          errors.push(`Motif ${i} size_m must be an array [min, max]`);
-        }
-      });
-    }
-  }
-
-  // Validate mood
-  if (brief.mood && !Array.isArray(brief.mood)) {
-    errors.push('Mood must be an array of strings');
-  }
-
-  return {
-    valid: errors.length === 0,
-    errors
-  };
-}
-
 // CommonJS exports
 export {
-  buildFluxPrompt,
-  createSimplifiedBrief,
-  validateBrief
+  buildFluxPrompt
 };
