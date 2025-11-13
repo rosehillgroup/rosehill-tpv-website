@@ -1,15 +1,15 @@
-// Recraft Webhook Handler - Immediate Completion with Inspector Feedback
-// Processes Replicate callbacks for Recraft SVG generation with compliance validation
-// User can click "Simplify" button to regenerate if needed
+// Recraft Webhook Handler - Simple Immediate Completion
+// Processes Replicate callbacks for Recraft SVG generation
+// Customer decides if design is suitable
 
 import { downloadSvg } from './client.js';
-import { inspectSvgCompliance, quickSvgCheck } from './inspector.js';
+import { quickSvgCheck } from './inspector.js';
 import { generatePreviewSet, extractSvgMetadata } from '../svg/renderer.js';
 import { uploadToStorage } from '../exports.js';
 
 /**
- * Handle successful Recraft prediction - immediate completion with inspector feedback
- * No automatic retries - user can click "Simplify" button to regenerate
+ * Handle successful Recraft prediction - immediate completion
+ * Customer decides if design is suitable
  * @param {object} res - Express response object
  * @param {object} supabase - Supabase client
  * @param {object} job - Job record from database
@@ -18,7 +18,7 @@ import { uploadToStorage } from '../exports.js';
  */
 export async function handleRecraftSuccess(res, supabase, job, output) {
   const jobId = job.id;
-  const attempt = (job.attempt_current || 0) + 1;
+  const attempt = 1;
 
   console.log(`[RECRAFT-WEBHOOK] Processing generation for job ${jobId}`);
 
@@ -79,40 +79,6 @@ export async function handleRecraftSuccess(res, supabase, job, output) {
 
     console.log(`[RECRAFT-WEBHOOK] Uploaded attempt ${attempt} files`);
 
-    // Run inspector with Claude Haiku
-    let inspectorResult;
-
-    try {
-      inspectorResult = await inspectSvgCompliance({
-        userPrompt: job.prompt,
-        svgString,
-        previewPng: preview,
-        width_mm: job.width_mm,
-        length_mm: job.length_mm
-      });
-    } catch (inspectorError) {
-      console.error('[RECRAFT-WEBHOOK] Inspector failed:', inspectorError);
-
-      // Fail-safe: mark as non-compliant if inspector errors
-      inspectorResult = {
-        pass: false,
-        reasons: ['Inspector technical error: ' + inspectorError.message],
-        suggested_prompt_correction: 'simplify design significantly',
-        elapsed: 0
-      };
-    }
-
-    // Update validation history
-    const validationHistory = job.validation_history || [];
-    validationHistory.push({
-      attempt,
-      pass: inspectorResult.pass,
-      reasons: inspectorResult.reasons,
-      correction: inspectorResult.suggested_prompt_correction,
-      timestamp: new Date().toISOString(),
-      elapsed_ms: inspectorResult.elapsed
-    });
-
     // Update attempt URLs
     const allAttemptUrls = job.all_attempt_urls || [];
     allAttemptUrls.push({
@@ -120,13 +86,11 @@ export async function handleRecraftSuccess(res, supabase, job, output) {
       svg_url: svgUpload.publicUrl,
       png_url: pngUpload.publicUrl,
       thumb_url: thumbUpload.publicUrl,
-      passed: inspectorResult.pass,
       metadata: svgMetadata,
       quick_check: quickCheck
     });
 
-    // Always complete after first generation (user can click "Simplify" to regenerate)
-    console.log(`[RECRAFT-WEBHOOK] Generation complete - Inspector ${inspectorResult.pass ? 'PASSED' : 'FLAGGED ISSUES'}`);
+    console.log(`[RECRAFT-WEBHOOK] Generation complete`);
 
     // Upload final files
     const finalPrefix = `recraft/${jobId}/final`;
@@ -149,38 +113,32 @@ export async function handleRecraftSuccess(res, supabase, job, output) {
       { lifecycle: 'final' }
     );
 
-    // Update job as completed (regardless of inspector result)
+    // Update job as completed
     await supabase
       .from('studio_jobs')
       .update({
         status: 'completed',
-        compliant: inspectorResult.pass,
+        compliant: null, // Customer decides
         attempt_current: attempt,
-        validation_history: validationHistory,
         all_attempt_urls: allAttemptUrls,
-        inspector_final_reasons: inspectorResult.pass ? [] : inspectorResult.reasons,
+        inspector_final_reasons: [],
         outputs: {
           svg_url: finalSvg.publicUrl,
           png_url: finalPng.publicUrl,
           thumbnail_url: finalThumb.publicUrl,
           metadata: svgMetadata,
-          inspector_pass: inspectorResult.pass,
-          inspector_reasons: inspectorResult.reasons,
-          suggested_correction: inspectorResult.suggested_prompt_correction
+          quick_check: quickCheck
         },
         updated_at: new Date().toISOString()
       })
       .eq('id', jobId);
 
-    console.log(`[RECRAFT-WEBHOOK] Job ${jobId} marked as completed (compliant: ${inspectorResult.pass})`);
+    console.log(`[RECRAFT-WEBHOOK] Job ${jobId} marked as completed`);
 
     return res.status(200).json({
       ok: true,
       status: 'completed',
-      attempt,
-      compliant: inspectorResult.pass,
-      inspector_reasons: inspectorResult.reasons,
-      suggested_correction: inspectorResult.suggested_prompt_correction
+      attempt
     });
   } catch (error) {
     console.error(`[RECRAFT-WEBHOOK] Error processing attempt ${attempt}:`, error);
