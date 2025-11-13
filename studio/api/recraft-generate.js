@@ -164,6 +164,7 @@ export default async function handler(req, res) {
         .from('studio_jobs')
         .update({
           status: 'queued',
+          prediction_id: prediction.predictionId, // Top-level for webhook lookup
           metadata: {
             ...jobData.metadata,
             prediction_id: prediction.predictionId,
