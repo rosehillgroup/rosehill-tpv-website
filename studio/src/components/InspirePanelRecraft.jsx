@@ -3,6 +3,7 @@
 
 import { useState } from 'react';
 import { apiClient } from '../lib/api/client.js';
+import BlendRecipesDisplay from './BlendRecipesDisplay.jsx';
 
 export default function InspirePanelRecraft() {
   // Form state
@@ -20,6 +21,10 @@ export default function InspirePanelRecraft() {
   // Progress tracking
   const [progressMessage, setProgressMessage] = useState('');
   const [attemptInfo, setAttemptInfo] = useState(null);
+
+  // Blend recipes state
+  const [blendRecipes, setBlendRecipes] = useState(null);
+  const [generatingBlends, setGeneratingBlends] = useState(false);
 
   // Handle form submission
   const handleGenerate = async () => {
@@ -94,6 +99,8 @@ export default function InspirePanelRecraft() {
     setError(null);
     setProgressMessage('');
     setAttemptInfo(null);
+    setBlendRecipes(null);
+    setGeneratingBlends(false);
   };
 
   // Download SVG
@@ -107,6 +114,47 @@ export default function InspirePanelRecraft() {
   const handleDownloadPNG = () => {
     if (result?.png_url) {
       window.open(result.png_url, '_blank');
+    }
+  };
+
+  // Generate TPV blend recipes from the SVG
+  const handleGenerateBlends = async () => {
+    if (!result?.svg_url) {
+      setError('No SVG available to analyze');
+      return;
+    }
+
+    setGeneratingBlends(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/blend-recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          svg_url: result.svg_url,
+          job_id: jobId,
+          max_colors: 8,
+          max_components: 2
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate blend recipes');
+      }
+
+      if (data.success) {
+        setBlendRecipes(data.recipes);
+      } else {
+        throw new Error(data.error || 'Unknown error generating recipes');
+      }
+    } catch (err) {
+      console.error('Blend generation failed:', err);
+      setError(err.message);
+    } finally {
+      setGeneratingBlends(false);
     }
   };
 
@@ -211,11 +259,26 @@ export default function InspirePanelRecraft() {
             <button onClick={handleDownloadPNG} className="download-button png">
               Download PNG Preview
             </button>
+            <button
+              onClick={handleGenerateBlends}
+              disabled={generatingBlends}
+              className="blend-button"
+            >
+              {generatingBlends ? 'Generating Recipes...' : 'Generate TPV Blend Recipes'}
+            </button>
             <button onClick={handleNewGeneration} className="new-generation-button">
               New Generation
             </button>
           </div>
         </div>
+      )}
+
+      {/* Blend Recipes Display */}
+      {blendRecipes && (
+        <BlendRecipesDisplay
+          recipes={blendRecipes}
+          onClose={() => setBlendRecipes(null)}
+        />
       )}
 
       <style jsx>{`
@@ -410,6 +473,20 @@ export default function InspirePanelRecraft() {
 
         .download-button.png:hover {
           background: #45a049;
+        }
+
+        .blend-button {
+          background: #ff6b35;
+          color: white;
+        }
+
+        .blend-button:hover:not(:disabled) {
+          background: #e55a2b;
+        }
+
+        .blend-button:disabled {
+          background: #ccc;
+          cursor: not-allowed;
         }
 
         .new-generation-button {
