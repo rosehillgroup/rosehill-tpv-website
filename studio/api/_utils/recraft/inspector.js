@@ -196,8 +196,34 @@ export async function inspectSvgCompliance(params) {
       resultText = resultText.replace(/^```\n?/, '').replace(/\n?```$/, '');
     }
 
+    // Extract just the JSON object (Claude sometimes adds text after the JSON)
+    // Find the first { and match it with its closing }
+    const jsonStart = resultText.indexOf('{');
+    if (jsonStart === -1) {
+      throw new Error('No JSON object found in response');
+    }
+
+    let braceCount = 0;
+    let jsonEnd = -1;
+    for (let i = jsonStart; i < resultText.length; i++) {
+      if (resultText[i] === '{') braceCount++;
+      if (resultText[i] === '}') {
+        braceCount--;
+        if (braceCount === 0) {
+          jsonEnd = i + 1;
+          break;
+        }
+      }
+    }
+
+    if (jsonEnd === -1) {
+      throw new Error('Unclosed JSON object in response');
+    }
+
+    const jsonText = resultText.substring(jsonStart, jsonEnd);
+
     // Parse JSON
-    const result = JSON.parse(resultText);
+    const result = JSON.parse(jsonText);
 
     // Validate structure
     if (typeof result.pass !== 'boolean') {
