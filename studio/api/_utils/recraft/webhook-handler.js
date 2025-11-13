@@ -193,7 +193,7 @@ export async function handleRecraftSuccess(res, supabase, job, output) {
         .eq('id', jobId);
 
       // Build webhook URL for next attempt
-      const baseUrl = process.env.PUBLIC_BASE_URL;
+      const baseUrl = (process.env.PUBLIC_BASE_URL || '').replace(/\/$/, ''); // Remove trailing slash
       const webhookToken = process.env.REPLICATE_WEBHOOK_SECRET;
       const webhookUrl = `${baseUrl}/api/replicate-callback?token=${webhookToken}`;
 

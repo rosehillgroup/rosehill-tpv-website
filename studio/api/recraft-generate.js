@@ -131,7 +131,7 @@ export default async function handler(req, res) {
     console.log(`[RECRAFT-GENERATE] Job created: ${jobId}`);
 
     // Build webhook URL
-    const baseUrl = process.env.PUBLIC_BASE_URL;
+    const baseUrl = (process.env.PUBLIC_BASE_URL || '').replace(/\/$/, ''); // Remove trailing slash
     const webhookToken = process.env.REPLICATE_WEBHOOK_SECRET;
 
     if (!baseUrl || !webhookToken) {
