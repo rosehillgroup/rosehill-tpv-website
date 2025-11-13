@@ -111,7 +111,7 @@ export async function generateRecraftSvg(params) {
   console.log(`[RECRAFT] Job ID: ${jobId || 'none'}`);
   console.log(`[RECRAFT] Original prompt: ${prompt}`);
   console.log(`[RECRAFT] Simplified prompt: ${simplifiedPrompt}`);
-  console.log(`[RECRAFT] Dimensions: ${width_mm}mm x ${length_mm}mm → ${width_px}px x ${height_px}px (${aspect_ratio})`);
+  console.log(`[RECRAFT] Dimensions: ${width_mm}mm x ${length_mm}mm → aspect ratio ${aspect_ratio}`);
   console.log(`[RECRAFT] Seed: ${seed}`);
   if (correction) console.log(`[RECRAFT] Correction applied: ${correction.substring(0, 100)}...`);
   if (webhook) console.log(`[RECRAFT] Webhook: ${webhook}`);
@@ -122,8 +122,7 @@ export async function generateRecraftSvg(params) {
     // Build Recraft input - ultra-simple
     const input = {
       prompt: finalPrompt,
-      width: width_px,
-      height: height_px,
+      aspect_ratio: aspect_ratio, // Use aspect ratio string like "16:9", "4:3", etc.
       seed: seed,
       style: 'any', // Recraft style: "any" allows colorful vector illustrations
       output_format: 'svg'
@@ -155,34 +154,6 @@ export async function generateRecraftSvg(params) {
     };
   } catch (error) {
     console.error('[RECRAFT] Failed to create prediction:', error.message);
-
-    // Check for specific Recraft errors
-    if (error.message?.includes('color_palette_size')) {
-      console.warn('[RECRAFT] Model does not support color_palette_size parameter, will rely on prompt + inspector');
-      // Retry without color_palette_size
-      const inputWithoutColor = { ...input };
-      delete inputWithoutColor.color_palette_size;
-
-      try {
-        const prediction = await replicate.predictions.create({
-          model: modelId,
-          input: inputWithoutColor,
-          webhook,
-          webhook_events_filter: webhook ? ['completed'] : undefined
-        });
-
-        return {
-          predictionId: prediction.id,
-          status: prediction.status,
-          model: modelId,
-          urls: prediction.urls || {},
-          elapsed: Date.now() - startTime
-        };
-      } catch (retryError) {
-        throw new Error(`Recraft generation failed: ${retryError.message}`);
-      }
-    }
-
     throw new Error(`Recraft generation failed: ${error.message}`);
   }
 }
