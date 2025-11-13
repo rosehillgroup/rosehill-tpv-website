@@ -49,12 +49,9 @@ class APIClient {
     return response.json();
   }
 
-  // Helper: Poll simple mode job until completion (with vectorization support)
+  // Helper: Poll simple mode job until completion (JPG output)
   async inspireSimpleWaitForCompletion(jobId, onProgress = null, pollInterval = 2000) {
     return new Promise((resolve, reject) => {
-      let completedAt = null;
-      const maxWaitAfterCompletion = 35000; // Wait up to 35s for vectorization after completion (takes ~24s)
-
       const poll = async () => {
         try {
           const status = await this.inspireSimpleGetStatus(jobId);
@@ -64,54 +61,16 @@ class APIClient {
           }
 
           if (status.status === 'completed') {
-            // Mark when we first saw completion
-            if (!completedAt) {
-              completedAt = Date.now();
-            }
-
-            // Check if vectorization is complete or if we have raster output
-            // Note: API returns outputs as "result", not "outputs"
-            console.log('[API] Checking for vectorization:', {
-              result: status.result,
-              metadata_vectorization: status.metadata?.vectorization,
-              has_result_svg: !!status.result?.svg_url,
-              has_metadata_svg: !!status.metadata?.vectorization?.svg_url,
-              has_final_url: !!status.result?.final_url
-            });
-            const hasVectorization = status.result?.svg_url || status.metadata?.vectorization?.svg_url;
+            // Job complete - check for JPG output
             const hasRasterOutput = status.result?.final_url;
 
-            if (hasVectorization) {
-              // Vectorization complete - resolve immediately
-              console.log('[API] Vectorization complete, resolving with SVG');
+            if (hasRasterOutput) {
+              console.log('[API] Job complete with JPG output, resolving');
               resolve(status);
-            } else if (hasRasterOutput) {
-              // We have raster output - wait a bit for vectorization but don't block too long
-              const waitTime = Date.now() - completedAt;
-              const reducedWaitTime = 10000; // Only wait 10s for vectorization when we have JPG
-
-              if (waitTime >= reducedWaitTime) {
-                // Resolve with raster - vectorization may complete in background
-                console.log('[API] Resolving with raster output (JPG), vectorization pending');
-                resolve(status);
-              } else {
-                // Keep polling for vectorization (but shorter wait)
-                console.log(`[API] Have JPG, waiting for vectorization... (${Math.round(waitTime / 1000)}s/${Math.round(reducedWaitTime / 1000)}s)`);
-                setTimeout(poll, pollInterval);
-              }
             } else {
-              // No output at all yet - keep waiting with original timeout
-              const waitTime = Date.now() - completedAt;
-
-              if (waitTime >= maxWaitAfterCompletion) {
-                // Timeout - something went wrong
-                console.log('[API] Timeout with no output, rejecting');
-                reject(new Error('Job completed but no output received'));
-              } else {
-                // Keep polling
-                console.log(`[API] Waiting for output... (${Math.round(waitTime / 1000)}s)`);
-                setTimeout(poll, pollInterval);
-              }
+              // No output - something went wrong
+              console.log('[API] Job completed but no output received');
+              reject(new Error('Job completed but no output received'));
             }
           } else if (status.status === 'failed') {
             reject(new Error(status.error || 'Job failed'));

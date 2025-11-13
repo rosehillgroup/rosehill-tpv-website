@@ -123,10 +123,6 @@ function InspirePanel({ onConceptsGenerated }) {
         const isTwoPass = status.metadata?.mode === 'flux_dev_two_pass';
         const currentPass = status.metadata?.pass || 1;
 
-        // Check for vectorization status
-        // Note: API returns outputs as "result", not "outputs"
-        const hasVectorization = status.result?.svg_url || status.metadata?.vectorization?.svg_url;
-
         switch (status.status) {
           case 'pending':
             if (isTwoPass && currentPass === 2) {
@@ -157,27 +153,7 @@ function InspirePanel({ onConceptsGenerated }) {
             setProgress('Pass 1 complete! Starting cleanup pass...');
             break;
           case 'completed':
-            if (hasVectorization) {
-              setProgress('✓ Vectorization complete! Installer-ready design available.');
-            } else {
-              // Show informative vectorization progress
-              if (!vectorizationStartTime) {
-                vectorizationStartTime = Date.now();
-              }
-              const elapsed = Math.floor((Date.now() - vectorizationStartTime) / 1000);
-
-              if (elapsed < 5) {
-                setProgress('🎨 Generation complete! Converting to vectors (detecting gradients)...');
-              } else if (elapsed < 10) {
-                setProgress('🎨 Vectorizing: Quantizing colors and tracing regions...');
-              } else if (elapsed < 18) {
-                setProgress('🎨 Vectorizing: Running quality checks and simplifying paths...');
-              } else if (elapsed < 25) {
-                setProgress('🎨 Vectorizing: Applying manufacturing constraints (min features, radii)...');
-              } else {
-                setProgress('🎨 Vectorizing: Finalizing installer-ready SVG (~25-30s total)...');
-              }
-            }
+            setProgress('✓ Generation complete! High-quality design ready.');
             break;
           default:
             setProgress(`Status: ${status.status}`);
@@ -537,11 +513,9 @@ function InspirePanel({ onConceptsGenerated }) {
         </p>
       )}
 
-      {(result?.svg_url || result?.final_url) && !loading && (
+      {result?.final_url && !loading && (
         <div style={{ marginTop: '1.5rem' }}>
-          <h3 style={{ marginBottom: '1rem' }}>
-            {result?.svg_url ? 'Installer-Ready Design' : 'Generated Design (Vectorizing...)'}
-          </h3>
+          <h3 style={{ marginBottom: '1rem' }}>Generated Design</h3>
 
           {/* QC Results Badge */}
           {qcResults && (
@@ -573,20 +547,17 @@ function InspirePanel({ onConceptsGenerated }) {
             gap: '1rem',
             marginBottom: '1rem'
           }}>
-            {(result.svg_url || result.final_url) && (
+            {result.final_url && (
               <div>
                 <img
-                  src={result.svg_url || result.final_url}
-                  alt={result.svg_url ? "Installer-ready vector design" : "Generated design (raster)"}
+                  src={result.final_url}
+                  alt="Generated design"
                   style={{ width: '100%', borderRadius: '8px', marginBottom: '0.5rem' }}
                 />
                 <div style={{ fontSize: '0.875rem', color: '#718096' }}>
-                  <p>
-                    Format: {result.svg_url ? 'Scalable Vector Graphics (SVG)' : 'JPEG (Raster - Vectorization in progress)'}
-                  </p>
+                  <p>Format: JPEG (High-quality raster)</p>
                   <p>Surface: {lengthMM}mm × {widthMM}mm ({(lengthMM/1000).toFixed(1)}m × {(widthMM/1000).toFixed(1)}m)</p>
                   <p>Colours: {qcResults?.colour_count || maxColours}</p>
-                  <p>Manufacturing constraints {result.svg_url ? 'applied' : 'pending'}: ✓ Min feature {qcResults?.min_feature_mm || 120}mm, Min radius {qcResults?.min_radius_mm || 600}mm</p>
                   {metadata?.seed && (
                     <p style={{ marginTop: '0.5rem' }}>
                       <strong>Seed:</strong> {metadata.seed}
@@ -600,12 +571,12 @@ function InspirePanel({ onConceptsGenerated }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {/* Primary download button */}
             <a
-              href={result.svg_url || result.final_url}
+              href={result.final_url}
               download
               className="tpv-studio__button tpv-studio__button--primary"
               style={{ width: '100%', textAlign: 'center', textDecoration: 'none' }}
             >
-              {result.svg_url ? 'Download Installer-Ready SVG' : 'Download Design (JPG)'}
+              Download Design (JPG)
             </a>
 
             {/* Regeneration options */}
@@ -627,19 +598,6 @@ function InspirePanel({ onConceptsGenerated }) {
             >
               New Generation
             </button>
-
-            {/* Optional: Backup raster download (only show if we have SVG, since JPG is primary otherwise) */}
-            {result.svg_url && result.final_url && (
-              <a
-                href={result.final_url}
-                download
-                className="tpv-studio__button tpv-studio__button--secondary"
-                style={{ textAlign: 'center', textDecoration: 'none', fontSize: '0.75rem', padding: '0.5rem' }}
-                title="Download original raster image (backup reference only)"
-              >
-                Download Raster Reference (JPG)
-              </a>
-            )}
           </div>
         </div>
       )}

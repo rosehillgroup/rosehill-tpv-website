@@ -462,15 +462,8 @@ async function handleSimpleSuccess(res, supabase, job, output) {
       `final_url=${finalUpload.publicUrl}`
     );
 
-    // Trigger async vectorization (non-blocking)
-    // Only for Flux Dev modes (not SDXL)
-    if (job.metadata?.mode === 'flux_dev' || job.metadata?.mode === 'flux_dev_two_pass') {
-      console.log(`[VECTORIZE-TRIGGER] Initiating vectorization for job ${job.id}`);
-      triggerVectorization(job, finalUpload.publicUrl).catch(err => {
-        console.error(`[VECTORIZE-TRIGGER] Failed for job ${job.id}:`, err);
-        // Don't fail the job - vectorization is optional
-      });
-    }
+    // Vectorization removed - AI mode serves high-quality JPG only
+    // Color matching can be implemented later as a separate feature
 
     // Update job to completed with full timeline and QC results
     mark('db_update_begin');
@@ -531,124 +524,6 @@ async function handleSimpleSuccess(res, supabase, job, output) {
       .eq('id', job.id);
 
     return res.status(500).send(error.message);
-  }
-}
-
-/**
- * Trigger async vectorization (non-blocking)
- * Converts raster to SVG/PDF with manufacturing constraints
- */
-async function triggerVectorization(job, imageUrl) {
-  console.log(`[VECTORIZE-TRIGGER] Starting vectorization for job ${job.id}`);
-  console.log(`[VECTORIZE-TRIGGER] Image URL: ${imageUrl}`);
-
-  try {
-    // Get surface dimensions from job
-    const widthMM = job.surface?.width_mm || (job.surface?.width_m ? job.surface.width_m * 1000 : 5000);
-    const heightMM = job.surface?.height_mm || (job.surface?.height_m ? job.surface.height_m * 1000 : 5000);
-    const maxColours = job.max_colours || 6;
-
-    console.log(`[VECTORIZE-TRIGGER] Surface dimensions: ${widthMM}mm × ${heightMM}mm`);
-    console.log(`[VECTORIZE-TRIGGER] Max colours: ${maxColours}`);
-
-    // Call vectorize function
-    const baseUrl = (process.env.PUBLIC_BASE_URL || '').replace(/\/$/, '');
-    const vectorizeUrl = `${baseUrl}/api/vectorise`;
-    const response = await fetch(vectorizeUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        image_url: imageUrl,
-        job_id: job.id,
-        width_mm: widthMM,
-        height_mm: heightMM,
-        max_colours: maxColours
-      })
-    });
-
-    console.log(`[VECTORIZE-TRIGGER] Vectorize response status: ${response.status}`);
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error(`[VECTORIZE-TRIGGER] Vectorize endpoint error:`, errorData);
-      throw new Error(`Vectorization failed: ${errorData.error || 'Unknown error'}`);
-    }
-
-    const result = await response.json();
-    console.log(`[VECTORIZE-TRIGGER] Vectorize result:`, JSON.stringify(result, null, 2));
-
-    if (!result.ok) {
-      throw new Error(`Vectorization QC failed: ${result.error || result.message}`);
-    }
-
-    console.log(`[VECTORIZE-TRIGGER] Success for job ${job.id}`);
-    console.log(`[VECTORIZE-TRIGGER] SVG: ${result.svg_url}`);
-    console.log(`[VECTORIZE-TRIGGER] QC: IoU=${result.qc_results.iou.toFixed(4)}`);
-
-    // Update job with vectorization results
-    // Fetch latest job state first to avoid overwriting data
-    const supabase = getSupabaseServiceClient();
-    const { data: latestJob, error: fetchError } = await supabase
-      .from('studio_jobs')
-      .select('metadata, outputs')
-      .eq('id', job.id)
-      .single();
-
-    if (fetchError) {
-      console.error(`[VECTORIZE-TRIGGER] Failed to fetch latest job ${job.id}:`, fetchError);
-      throw fetchError;
-    }
-
-    const { error: updateError } = await supabase
-      .from('studio_jobs')
-      .update({
-        metadata: {
-          ...latestJob.metadata,
-          vectorization: {
-            svg_url: result.svg_url,
-            metrics: result.metrics,
-            qc_results: result.qc_results,
-            completed_at: new Date().toISOString()
-          }
-        },
-        outputs: {
-          ...latestJob.outputs,
-          svg_url: result.svg_url
-        }
-      })
-      .eq('id', job.id);
-
-    if (updateError) {
-      console.error(`[VECTORIZE-TRIGGER] Database update failed for job ${job.id}:`, updateError);
-      throw updateError;
-    }
-
-    console.log(`[VECTORIZE-TRIGGER] Job ${job.id} updated with vector outputs`);
-    console.log(`[VECTORIZE-TRIGGER] SVG URL stored in outputs: ${result.svg_url}`);
-
-  } catch (error) {
-    console.error(`[VECTORIZE-TRIGGER] Error for job ${job.id}:`, error);
-
-    // Update job with vectorization error (non-fatal)
-    try {
-      const supabase = getSupabaseServiceClient();
-      await supabase
-        .from('studio_jobs')
-        .update({
-          metadata: {
-            ...job.metadata,
-            vectorization: {
-              error: error.message,
-              failed_at: new Date().toISOString()
-            }
-          }
-        })
-        .eq('id', job.id);
-    } catch (updateError) {
-      console.error(`[VECTORIZE-TRIGGER] Failed to update job with error:`, updateError);
-    }
-
-    throw error;
   }
 }
 
