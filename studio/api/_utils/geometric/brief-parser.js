@@ -47,7 +47,7 @@ Extract the mood, composition type, color count (3-8), and relevant themes from 
       {
         input: {
           prompt: `${systemPrompt}\n\n${userPrompt}`,
-          max_tokens: 500,
+          max_tokens: 1024,
           temperature: 0.3  // Lower temperature for more consistent parsing
         }
       }
