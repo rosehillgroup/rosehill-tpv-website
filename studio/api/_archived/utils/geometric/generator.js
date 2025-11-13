@@ -79,7 +79,8 @@ export async function generateGeometricSVG(params) {
 
   // Bands from recipe
   recipeLayers.bands.forEach((band, i) => {
-    const color = palette[(i + 1) % palette.length];
+    // Use composition engine assigned color if present, otherwise use default rotation
+    const color = band.color || palette[(i + 1) % palette.length];
     layers.push({
       id: `band-${i}`,
       type: 'band',
@@ -90,8 +91,9 @@ export async function generateGeometricSVG(params) {
 
   // Islands from recipe
   recipeLayers.islands.forEach((island, i) => {
+    // Use composition engine assigned color if present, otherwise use default rotation
     const colorIdx = (i + recipeLayers.bands.length + 1) % palette.length;
-    const color = palette[colorIdx];
+    const color = island.color || palette[colorIdx];
     layers.push({
       id: `island-${i}`,
       type: 'island',
@@ -102,7 +104,8 @@ export async function generateGeometricSVG(params) {
 
   // Motifs from recipe with role-based color assignment
   recipeLayers.motifPlacements.forEach((placement, i) => {
-    const color = assignColorByRole(placement.role, palette, i);
+    // Use composition engine assigned color if present, otherwise fallback to role-based assignment
+    const color = placement.color || assignColorByRole(placement.role, palette, i);
 
     const motifDef = MOTIF_LIBRARY[placement.motif];
     if (!motifDef) {

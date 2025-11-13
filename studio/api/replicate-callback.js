@@ -1,5 +1,5 @@
 // TPV Studio - Replicate Webhook Callback (Vercel)
-// Handles mood board generation (single-pass) and legacy multi-pass pipeline
+// Handles Recraft vector AI (with inspector loop), mood board generation, and legacy multi-pass pipeline
 // Idempotent handling with prediction_id + job_id guard
 
 import { verifyReplicateSignature, getSigHeader } from './_utils/replicate-signature.js';
@@ -7,6 +7,7 @@ import { getSupabaseServiceClient } from './_utils/supabase.js';
 import { downloadImage } from './_utils/replicate.js';
 import { uploadByStage, uploadToStorage } from './_utils/exports.js';
 import { cropPadToExactAR, makeThumbnail } from './_utils/image.js';
+import { handleRecraftSuccess } from './_utils/recraft/webhook-handler.js';
 
 // Optional quality checking - only used if available
 // This allows the webhook to work even if quality-gate module has issues
@@ -206,6 +207,12 @@ async function handleSuccess(res, supabase, job, output, prediction_id) {
       console.error(`[WEBHOOK] Unknown pass number: ${pass}`);
       return res.status(500).send('Unknown pass number');
     }
+  }
+
+  // === RECRAFT VECTOR AI MODE HANDLER ===
+  if (job.mode_type === 'recraft_vector') {
+    console.log(`[WEBHOOK] Job ${job.id} succeeded (Recraft vector mode)`);
+    return handleRecraftSuccess(res, supabase, job, output);
   }
 
   // === MOOD BOARD / FLUX DEV / SIMPLE MODE HANDLER (Single-Pass) ===

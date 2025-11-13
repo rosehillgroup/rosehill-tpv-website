@@ -3,6 +3,7 @@
 
 import { generateBand } from './bands.js';
 import { generateBlob } from './islands.js';
+import { applyCompositionRules, COMPOSITION_TYPES } from './composition-engine.js';
 
 /**
  * Seeded random number generator (LCG)
@@ -377,7 +378,18 @@ export function generateHeroOrbit(canvas, motifPlan, palette, seed) {
   layers.motifPlacements = enforceMinSpacing(layers.motifPlacements, 300);
 
   console.log(`[RECIPE:HERO_ORBIT] Generated ${layers.motifPlacements.length} motif placements`);
-  return layers;
+
+  // Apply composition engine rules for centerpiece design
+  const enhancedLayers = applyCompositionRules({
+    layers,
+    canvas,
+    motifPlan,
+    palette,
+    compositionType: COMPOSITION_TYPES.CENTERPIECE,
+    designPrinciples: ['hierarchy', 'flow', 'balance']
+  });
+
+  return enhancedLayers;
 }
 
 /**
@@ -485,7 +497,18 @@ export function generateTrail(canvas, motifPlan, palette, seed) {
   layers.motifPlacements = enforceMinSpacing(layers.motifPlacements, 350);
 
   console.log(`[RECIPE:TRAIL] Generated ${layers.motifPlacements.length} motif placements`);
-  return layers;
+
+  // Apply composition engine rules for flow design
+  const enhancedLayers = applyCompositionRules({
+    layers,
+    canvas,
+    motifPlan,
+    palette,
+    compositionType: COMPOSITION_TYPES.FLOW,
+    designPrinciples: ['hierarchy', 'flow', 'balance']
+  });
+
+  return enhancedLayers;
 }
 
 /**
@@ -601,7 +624,18 @@ export function generateCluster(canvas, motifPlan, palette, seed) {
   layers.motifPlacements = enforceMinSpacing(layers.motifPlacements, 250); // Tighter spacing for cluster
 
   console.log(`[RECIPE:CLUSTER] Generated ${layers.motifPlacements.length} motif placements`);
-  return layers;
+
+  // Apply composition engine rules for cluster design
+  const enhancedLayers = applyCompositionRules({
+    layers,
+    canvas,
+    motifPlan,
+    palette,
+    compositionType: COMPOSITION_TYPES.CLUSTER,
+    designPrinciples: ['hierarchy', 'balance', 'rhythm']
+  });
+
+  return enhancedLayers;
 }
 
 /**
@@ -726,7 +760,18 @@ export function generateStripedStory(canvas, motifPlan, palette, seed) {
   layers.motifPlacements = enforceMinSpacing(layers.motifPlacements, 350);
 
   console.log(`[RECIPE:STRIPED_STORY] Generated ${layers.motifPlacements.length} motif placements`);
-  return layers;
+
+  // Apply composition engine rules for striped design
+  const enhancedLayers = applyCompositionRules({
+    layers,
+    canvas,
+    motifPlan,
+    palette,
+    compositionType: COMPOSITION_TYPES.STRIPED,
+    designPrinciples: ['hierarchy', 'balance', 'rhythm']
+  });
+
+  return enhancedLayers;
 }
 
 // ============================================================================

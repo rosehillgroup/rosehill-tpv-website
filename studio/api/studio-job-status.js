@@ -157,13 +157,38 @@ export default async function handler(req, res) {
       .eq('id', jobId)
       .single();
 
-    return res.status(200).json({
+    // Build base response
+    const response = {
       jobId: updatedJob.id,
       status: updatedJob.status,
       result: updatedJob.outputs,
       error: updatedJob.error,
       metadata: updatedJob.metadata
-    });
+    };
+
+    // Add Recraft-specific fields if this is a Recraft vector job
+    if (updatedJob.mode_type === 'recraft_vector') {
+      response.recraft = {
+        attempt_current: updatedJob.attempt_current || 0,
+        attempt_max: updatedJob.attempt_max || 3,
+        compliant: updatedJob.compliant,
+        validation_history: updatedJob.validation_history || [],
+        all_attempts: updatedJob.all_attempt_urls || [],
+        inspector_reasons: updatedJob.inspector_final_reasons || [],
+        max_colours: updatedJob.max_colours || 6
+      };
+
+      // Add helpful status messages based on attempt progress
+      if (updatedJob.status === 'retrying') {
+        response.progress_message = `Quality check ${updatedJob.attempt_current}/${updatedJob.attempt_max} - refining design...`;
+      } else if (updatedJob.status === 'completed' && updatedJob.compliant) {
+        response.progress_message = `✓ Design passed compliance checks`;
+      } else if (updatedJob.status === 'failed' && updatedJob.compliant === false) {
+        response.progress_message = `⚠ Best-effort design (did not pass all checks)`;
+      }
+    }
+
+    return res.status(200).json(response);
 
   } catch (error) {
     console.error('[JOB-STATUS ERROR]', {

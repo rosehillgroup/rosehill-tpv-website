@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from './lib/api/auth.js';
-import InspirePanel from './components/InspirePanel.jsx';
+import InspirePanelRecraft from './components/InspirePanelRecraft.jsx';
 
 function SignInForm() {
   const [email, setEmail] = useState('');
@@ -26,7 +26,7 @@ function SignInForm() {
     <div className="tpv-studio">
       <div className="tpv-studio__header">
         <h1>TPV Studio</h1>
-        <p>AI-powered playground surface design tool</p>
+        <p>AI-powered vector designs for playground surfaces</p>
       </div>
       <div className="tpv-studio__container">
         <div className="tpv-studio__card" style={{ maxWidth: '400px', margin: '2rem auto' }}>
@@ -157,12 +157,12 @@ function App() {
   return (
     <div className="tpv-studio">
       <header className="tpv-studio__header">
-        <h1>TPV Studio - Inspiration Mode</h1>
-        <p>AI-powered playground surface design inspiration tool</p>
+        <h1>TPV Studio - Vector AI</h1>
+        <p>AI-powered vector designs for playground surfaces</p>
       </header>
 
       <main className="tpv-studio__container">
-        <InspirePanel />
+        <InspirePanelRecraft />
       </main>
     </div>
   );
