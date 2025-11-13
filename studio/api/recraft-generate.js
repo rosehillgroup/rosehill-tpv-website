@@ -93,6 +93,10 @@ export default async function handler(req, res) {
       mode_type: 'recraft_vector',
       status: 'pending',
       prompt: prompt,
+      surface: {
+        width_mm,
+        height_mm: length_mm
+      },
       width_mm,
       length_mm,
       max_colours,
