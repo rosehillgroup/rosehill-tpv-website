@@ -6,6 +6,8 @@
 -- Add new columns for Recraft mode
 ALTER TABLE studio_jobs
 ADD COLUMN IF NOT EXISTS mode_type VARCHAR(50),
+ADD COLUMN IF NOT EXISTS width_mm INT,
+ADD COLUMN IF NOT EXISTS length_mm INT,
 ADD COLUMN IF NOT EXISTS attempt_current INT DEFAULT 0,
 ADD COLUMN IF NOT EXISTS attempt_max INT DEFAULT 3,
 ADD COLUMN IF NOT EXISTS validation_history JSONB DEFAULT '[]'::jsonb,
@@ -16,6 +18,8 @@ ADD COLUMN IF NOT EXISTS max_colours INT DEFAULT 6;
 
 -- Add comments to document new columns
 COMMENT ON COLUMN studio_jobs.mode_type IS 'Generation mode: recraft_vector (replaces flux_dev and geometric modes)';
+COMMENT ON COLUMN studio_jobs.width_mm IS 'Surface width in millimeters';
+COMMENT ON COLUMN studio_jobs.length_mm IS 'Surface length/height in millimeters';
 COMMENT ON COLUMN studio_jobs.attempt_current IS 'Current retry attempt number (0-indexed)';
 COMMENT ON COLUMN studio_jobs.attempt_max IS 'Maximum retries allowed before marking as failed';
 COMMENT ON COLUMN studio_jobs.validation_history IS 'Array of validation attempts: [{ attempt, pass, reasons[], correction }]';
