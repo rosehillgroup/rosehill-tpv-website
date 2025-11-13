@@ -33,39 +33,52 @@ export function buildRecraftPrompt(simplifiedPrompt, correction = null) {
 }
 
 /**
- * Calculate aspect ratio and pixel dimensions from mm dimensions
+ * Calculate aspect ratio from mm dimensions
+ * Maps to nearest supported Recraft aspect ratio
  * @param {number} width_mm - Width in millimeters
  * @param {number} length_mm - Height/length in millimeters
- * @returns {object} { width_px, height_px, aspect_ratio }
+ * @returns {object} { aspect_ratio }
  */
 export function calculateDimensions(width_mm, length_mm) {
-  const canvasPx = parseInt(process.env.RECRAFT_CANVAS_PX || '2048', 10);
+  // Calculate actual ratio
+  const actualRatio = width_mm / length_mm;
 
-  // Calculate ratio
-  const ratio = width_mm / length_mm;
+  // Recraft supported aspect ratios (from model docs)
+  const supportedRatios = [
+    { name: '1:1', value: 1.0 },
+    { name: '4:3', value: 4/3 },
+    { name: '3:4', value: 3/4 },
+    { name: '3:2', value: 3/2 },
+    { name: '2:3', value: 2/3 },
+    { name: '16:9', value: 16/9 },
+    { name: '9:16', value: 9/16 },
+    { name: '1:2', value: 1/2 },
+    { name: '2:1', value: 2.0 },
+    { name: '7:5', value: 7/5 },
+    { name: '5:7', value: 5/7 },
+    { name: '4:5', value: 4/5 },
+    { name: '5:4', value: 5/4 },
+    { name: '3:5', value: 3/5 },
+    { name: '5:3', value: 5/3 }
+  ];
 
-  let width_px, height_px;
+  // Find nearest supported ratio
+  let nearest = supportedRatios[0];
+  let minDiff = Math.abs(actualRatio - nearest.value);
 
-  if (ratio >= 1) {
-    // Wider than tall (landscape)
-    width_px = canvasPx;
-    height_px = Math.round(canvasPx / ratio);
-  } else {
-    // Taller than wide (portrait)
-    height_px = canvasPx;
-    width_px = Math.round(canvasPx * ratio);
+  for (const supported of supportedRatios) {
+    const diff = Math.abs(actualRatio - supported.value);
+    if (diff < minDiff) {
+      minDiff = diff;
+      nearest = supported;
+    }
   }
 
-  // Ensure dimensions are at least 256px (Recraft minimum)
-  width_px = Math.max(256, width_px);
-  height_px = Math.max(256, height_px);
-
-  // Format aspect ratio string
-  const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
-  const divisor = gcd(Math.round(ratio * 100), 100);
-  const aspect_ratio = `${Math.round(ratio * 100) / divisor}:${100 / divisor}`;
-
-  return { width_px, height_px, aspect_ratio };
+  return {
+    aspect_ratio: nearest.name,
+    actual_ratio: actualRatio,
+    mapped_ratio: nearest.value
+  };
 }
 
 /**
@@ -104,14 +117,14 @@ export async function generateRecraftSvg(params) {
   // Build final prompt (just simplified prompt + optional correction)
   const finalPrompt = buildRecraftPrompt(simplifiedPrompt, correction);
 
-  // Calculate pixel dimensions
-  const { width_px, height_px, aspect_ratio } = calculateDimensions(width_mm, length_mm);
+  // Calculate aspect ratio (maps to nearest supported Recraft ratio)
+  const { aspect_ratio, actual_ratio, mapped_ratio } = calculateDimensions(width_mm, length_mm);
 
   console.log(`[RECRAFT] Generating SVG with ${modelId}`);
   console.log(`[RECRAFT] Job ID: ${jobId || 'none'}`);
   console.log(`[RECRAFT] Original prompt: ${prompt}`);
   console.log(`[RECRAFT] Simplified prompt: ${simplifiedPrompt}`);
-  console.log(`[RECRAFT] Dimensions: ${width_mm}mm x ${length_mm}mm → aspect ratio ${aspect_ratio}`);
+  console.log(`[RECRAFT] Dimensions: ${width_mm}mm x ${length_mm}mm (${actual_ratio.toFixed(2)}) → ${aspect_ratio} (${mapped_ratio.toFixed(2)})`);
   console.log(`[RECRAFT] Seed: ${seed}`);
   if (correction) console.log(`[RECRAFT] Correction applied: ${correction.substring(0, 100)}...`);
   if (webhook) console.log(`[RECRAFT] Webhook: ${webhook}`);
