@@ -4,7 +4,13 @@
 import { generatePalette } from './palette.js';
 import { generateBands } from './bands.js';
 import { generateIslands } from './islands.js';
-import { placeMotifs, MOTIF_LIBRARY } from './motifs.js';
+import {
+  placeMotifs,
+  MOTIF_LIBRARY,
+  getMotifsByCategory,
+  getRandomMotifFromCategory,
+  getAllCategories
+} from './motifs-generated.js';
 
 /**
  * Generate a complete geometric SVG design
@@ -172,51 +178,103 @@ function determineComposition(compositionType, brief, random) {
 function selectMotifs(count, brief, random) {
   const briefLower = brief.toLowerCase();
 
-  // Default motif pool
-  const availableMotifs = ['circle', 'star', 'fish'];
+  // Category keyword mapping
+  const categoryKeywords = {
+    ocean: ['ocean', 'sea', 'water', 'marine', 'wave', 'fish', 'whale', 'dolphin', 'coral', 'beach', 'aquatic'],
+    space: ['space', 'star', 'planet', 'rocket', 'astronaut', 'galaxy', 'cosmic', 'celestial', 'universe'],
+    nature: ['nature', 'tree', 'leaf', 'plant', 'forest', 'garden', 'eco', 'green', 'environment'],
+    fastfood: ['food', 'burger', 'pizza', 'restaurant', 'cafe', 'kitchen', 'snack', 'fries', 'fastfood'],
+    gym: ['gym', 'fitness', 'sport', 'exercise', 'workout', 'training', 'athletic', 'health'],
+    transport: ['car', 'bus', 'train', 'transport', 'vehicle', 'traffic', 'road', 'travel'],
+    landmarks: ['landmark', 'building', 'monument', 'city', 'architecture', 'tower', 'structure'],
+    alphabet: ['letter', 'alphabet', 'text', 'typography', 'abc', 'character'],
+    spring: ['spring', 'flower', 'blossom', 'bloom', 'seasonal', 'garden', 'floral'],
+    trees: ['tree', 'forest', 'woodland', 'pine', 'oak', 'jungle']
+  };
 
-  // Keyword matching (placeholder for future expansion with real motif library)
-  let preferredMotif = null;
-  if (briefLower.includes('star') || briefLower.includes('celestial')) {
-    preferredMotif = 'star';
-  } else if (briefLower.includes('fish') || briefLower.includes('ocean') || briefLower.includes('water')) {
-    preferredMotif = 'fish';
-  } else if (briefLower.includes('circle') || briefLower.includes('dot') || briefLower.includes('bubble')) {
-    preferredMotif = 'circle';
-  }
-
-  // Build motif specs
-  const specs = [];
-
-  if (preferredMotif) {
-    // Use preferred motif for 60% of instances
-    const preferredCount = Math.ceil(count * 0.6);
-    specs.push({
-      name: preferredMotif,
-      count: preferredCount,
-      size_m: [0.6, 1.2]
-    });
-
-    // Fill remaining with random selection
-    const remaining = count - preferredCount;
-    if (remaining > 0) {
-      const otherMotif = availableMotifs.filter(m => m !== preferredMotif)[Math.floor(random() * 2)];
-      specs.push({
-        name: otherMotif,
-        count: remaining,
-        size_m: [0.6, 1.0]
+  // Detect matching categories
+  const matchedCategories = [];
+  for (const [category, keywords] of Object.entries(categoryKeywords)) {
+    const matches = keywords.filter(keyword => briefLower.includes(keyword));
+    if (matches.length > 0) {
+      matchedCategories.push({
+        category,
+        strength: matches.length
       });
     }
-  } else {
-    // Distribute evenly across available motifs
-    const perMotif = Math.ceil(count / availableMotifs.length);
-    availableMotifs.forEach(motifName => {
-      specs.push({
-        name: motifName,
-        count: Math.min(perMotif, count - specs.reduce((sum, s) => sum + s.count, 0)),
-        size_m: [0.6, 1.0]
+  }
+
+  // Sort by match strength
+  matchedCategories.sort((a, b) => b.strength - a.strength);
+
+  // Select motifs from matched categories
+  const specs = [];
+  let remainingCount = count;
+
+  if (matchedCategories.length > 0) {
+    // Use top 1-2 matched categories
+    const primaryCategory = matchedCategories[0].category;
+    const primaryMotifs = getMotifsByCategory(primaryCategory);
+
+    if (primaryMotifs.length > 0) {
+      // 70% from primary category
+      const primaryCount = Math.ceil(count * 0.7);
+      const selectedPrimary = [];
+
+      // Select random unique motifs from primary category
+      for (let i = 0; i < primaryCount && selectedPrimary.length < primaryMotifs.length; i++) {
+        const motifKey = getRandomMotifFromCategory(primaryCategory, random() * 10000);
+        if (motifKey && !selectedPrimary.includes(motifKey)) {
+          selectedPrimary.push(motifKey);
+        }
+      }
+
+      selectedPrimary.forEach(motifKey => {
+        specs.push({
+          name: motifKey,
+          count: 1,
+          size_m: [0.6, 1.2]
+        });
       });
-    });
+
+      remainingCount -= selectedPrimary.length;
+    }
+
+    // Fill remaining with secondary category if available
+    if (remainingCount > 0 && matchedCategories.length > 1) {
+      const secondaryCategory = matchedCategories[1].category;
+      const secondaryMotifs = getMotifsByCategory(secondaryCategory);
+
+      if (secondaryMotifs.length > 0) {
+        for (let i = 0; i < remainingCount; i++) {
+          const motifKey = getRandomMotifFromCategory(secondaryCategory, random() * 10000);
+          if (motifKey) {
+            specs.push({
+              name: motifKey,
+              count: 1,
+              size_m: [0.6, 1.0]
+            });
+          }
+        }
+        remainingCount = 0;
+      }
+    }
+  }
+
+  // Fallback: random selection from all categories
+  if (remainingCount > 0) {
+    const allCategories = getAllCategories();
+    for (let i = 0; i < remainingCount; i++) {
+      const randomCategory = allCategories[Math.floor(random() * allCategories.length)];
+      const motifKey = getRandomMotifFromCategory(randomCategory, random() * 10000);
+      if (motifKey) {
+        specs.push({
+          name: motifKey,
+          count: 1,
+          size_m: [0.6, 1.0]
+        });
+      }
+    }
   }
 
   return specs.filter(s => s.count > 0);

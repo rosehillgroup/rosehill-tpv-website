@@ -51,3 +51,6 @@ data/
 # Studio built artifacts (generated during deployment)
 studio/assets/
 studio/index.html
+# Environment files with secrets
+.env.vercel
+netlify-env.json
