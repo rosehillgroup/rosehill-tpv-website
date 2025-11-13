@@ -10,12 +10,6 @@ import Replicate from 'replicate';
  * @returns {Promise<object>} Parsed parameters {mood, composition, colorCount, themes}
  */
 export async function parseWithClaude(brief, defaultCanvas = { width_mm: 15000, height_mm: 15000 }) {
-  // Claude Haiku integration disabled - keyword parsing works excellently
-  // Re-enable when correct Replicate model path is confirmed
-  console.log('[BRIEF-PARSER] Using keyword-based parsing (Claude disabled)');
-  return fallbackParsing(brief);
-
-  /* Disabled until correct model path is confirmed
   const apiKey = process.env.REPLICATE_API_TOKEN;
   if (!apiKey) {
     console.warn('[BRIEF-PARSER] REPLICATE_API_TOKEN not set, falling back to keyword parsing');
@@ -98,7 +92,6 @@ Extract the mood, composition type, color count (3-8), and relevant themes from 
     console.warn('[BRIEF-PARSER] Falling back to keyword parsing');
     return fallbackParsing(brief);
   }
-  */
 }
 
 /**
