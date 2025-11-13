@@ -43,7 +43,7 @@ Extract the mood, composition type, color count (3-8), and relevant themes from 
     console.log('[BRIEF-PARSER] Using Claude Haiku for brief analysis');
 
     const output = await replicate.run(
-      "anthropic/claude-3-haiku",
+      "anthropic/claude-3-5-haiku",
       {
         input: {
           prompt: `${systemPrompt}\n\n${userPrompt}`,

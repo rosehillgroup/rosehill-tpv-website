@@ -547,15 +547,15 @@ function InspirePanel({ onConceptsGenerated }) {
             gap: '1rem',
             marginBottom: '1rem'
           }}>
-            {result.final_url && (
+            {(result.final_url || result.svg_url) && (
               <div>
                 <img
-                  src={result.final_url}
+                  src={result.svg_url || result.final_url}
                   alt="Generated design"
                   style={{ width: '100%', borderRadius: '8px', marginBottom: '0.5rem' }}
                 />
                 <div style={{ fontSize: '0.875rem', color: '#718096' }}>
-                  <p>Format: JPEG (High-quality raster)</p>
+                  <p>Format: {result.svg_url ? 'SVG (Vector)' : 'JPEG (High-quality raster)'}</p>
                   <p>Surface: {lengthMM}mm × {widthMM}mm ({(lengthMM/1000).toFixed(1)}m × {(widthMM/1000).toFixed(1)}m)</p>
                   <p>Colours: {qcResults?.colour_count || maxColours}</p>
                   {metadata?.seed && (
@@ -571,12 +571,12 @@ function InspirePanel({ onConceptsGenerated }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {/* Primary download button */}
             <a
-              href={result.final_url}
-              download
+              href={result.svg_url || result.final_url}
+              download={result.svg_url ? 'design.svg' : 'design.jpg'}
               className="tpv-studio__button tpv-studio__button--primary"
               style={{ width: '100%', textAlign: 'center', textDecoration: 'none' }}
             >
-              Download Design (JPG)
+              Download Design ({result.svg_url ? 'SVG' : 'JPG'})
             </a>
 
             {/* Regeneration options */}
