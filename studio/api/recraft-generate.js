@@ -90,7 +90,7 @@ export default async function handler(req, res) {
       width_mm,
       length_mm,
       attempt_current: 0,
-      attempt_max: parseInt(process.env.RECRAFT_MAX_RETRIES || '3', 10),
+      attempt_max: 1, // Single generation - user can click "Simplify" to regenerate
       validation_history: [],
       compliant: null,
       all_attempt_urls: [],

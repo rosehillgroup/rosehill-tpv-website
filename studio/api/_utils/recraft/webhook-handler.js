@@ -1,13 +1,15 @@
-// Recraft Webhook Handler - Inspector Loop & Retry Logic
+// Recraft Webhook Handler - Immediate Completion with Inspector Feedback
 // Processes Replicate callbacks for Recraft SVG generation with compliance validation
+// User can click "Simplify" button to regenerate if needed
 
-import { downloadSvg, generateRecraftSvg } from './client.js';
+import { downloadSvg } from './client.js';
 import { inspectSvgCompliance, quickSvgCheck } from './inspector.js';
 import { generatePreviewSet, extractSvgMetadata } from '../svg/renderer.js';
 import { uploadToStorage } from '../exports.js';
 
 /**
- * Handle successful Recraft prediction with inspector loop
+ * Handle successful Recraft prediction - immediate completion with inspector feedback
+ * No automatic retries - user can click "Simplify" button to regenerate
  * @param {object} res - Express response object
  * @param {object} supabase - Supabase client
  * @param {object} job - Job record from database
@@ -17,9 +19,8 @@ import { uploadToStorage } from '../exports.js';
 export async function handleRecraftSuccess(res, supabase, job, output) {
   const jobId = job.id;
   const attempt = (job.attempt_current || 0) + 1;
-  const maxAttempts = job.attempt_max || 3;
 
-  console.log(`[RECRAFT-WEBHOOK] Processing attempt ${attempt}/${maxAttempts} for job ${jobId}`);
+  console.log(`[RECRAFT-WEBHOOK] Processing generation for job ${jobId}`);
 
   try {
     // Extract SVG URL from Replicate output
@@ -124,158 +125,63 @@ export async function handleRecraftSuccess(res, supabase, job, output) {
       quick_check: quickCheck
     });
 
-    // Decision point: pass, retry, or fail
-    if (inspectorResult.pass) {
-      // SUCCESS - Design passed compliance
-      console.log(`[RECRAFT-WEBHOOK] ✓ Design PASSED compliance on attempt ${attempt}`);
+    // Always complete after first generation (user can click "Simplify" to regenerate)
+    console.log(`[RECRAFT-WEBHOOK] Generation complete - Inspector ${inspectorResult.pass ? 'PASSED' : 'FLAGGED ISSUES'}`);
 
-      // Upload final files
-      const finalPrefix = `recraft/${jobId}/final`;
+    // Upload final files
+    const finalPrefix = `recraft/${jobId}/final`;
 
-      const finalSvg = await uploadToStorage(
-        Buffer.from(svgString, 'utf-8'),
-        `${finalPrefix}/design.svg`,
-        { lifecycle: 'final' }
-      );
+    const finalSvg = await uploadToStorage(
+      Buffer.from(svgString, 'utf-8'),
+      `${finalPrefix}/design.svg`,
+      { lifecycle: 'final' }
+    );
 
-      const finalPng = await uploadToStorage(
-        preview,
-        `${finalPrefix}/design.png`,
-        { lifecycle: 'final' }
-      );
+    const finalPng = await uploadToStorage(
+      preview,
+      `${finalPrefix}/design.png`,
+      { lifecycle: 'final' }
+    );
 
-      const finalThumb = await uploadToStorage(
-        thumbnail,
-        `${finalPrefix}/thumb.png`,
-        { lifecycle: 'final' }
-      );
+    const finalThumb = await uploadToStorage(
+      thumbnail,
+      `${finalPrefix}/thumb.png`,
+      { lifecycle: 'final' }
+    );
 
-      // Update job as completed
-      await supabase
-        .from('studio_jobs')
-        .update({
-          status: 'completed',
-          compliant: true,
-          attempt_current: attempt,
-          validation_history: validationHistory,
-          all_attempt_urls: allAttemptUrls,
-          inspector_final_reasons: [],
-          outputs: {
-            svg_url: finalSvg.publicUrl,
-            png_url: finalPng.publicUrl,
-            thumbnail_url: finalThumb.publicUrl,
-            metadata: svgMetadata
-          },
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', jobId);
+    // Update job as completed (regardless of inspector result)
+    await supabase
+      .from('studio_jobs')
+      .update({
+        status: 'completed',
+        compliant: inspectorResult.pass,
+        attempt_current: attempt,
+        validation_history: validationHistory,
+        all_attempt_urls: allAttemptUrls,
+        inspector_final_reasons: inspectorResult.pass ? [] : inspectorResult.reasons,
+        outputs: {
+          svg_url: finalSvg.publicUrl,
+          png_url: finalPng.publicUrl,
+          thumbnail_url: finalThumb.publicUrl,
+          metadata: svgMetadata,
+          inspector_pass: inspectorResult.pass,
+          inspector_reasons: inspectorResult.reasons,
+          suggested_correction: inspectorResult.suggested_prompt_correction
+        },
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', jobId);
 
-      console.log(`[RECRAFT-WEBHOOK] Job ${jobId} marked as completed`);
+    console.log(`[RECRAFT-WEBHOOK] Job ${jobId} marked as completed (compliant: ${inspectorResult.pass})`);
 
-      return res.status(200).json({ ok: true, status: 'completed', attempt });
-    } else if (attempt < maxAttempts) {
-      // RETRY - Design failed but we have attempts left
-      console.log(`[RECRAFT-WEBHOOK] ⚠ Design FAILED compliance, retrying (${attempt}/${maxAttempts})`);
-      console.log(`[RECRAFT-WEBHOOK] Issues: ${inspectorResult.reasons.join(', ')}`);
-      console.log(`[RECRAFT-WEBHOOK] Correction: ${inspectorResult.suggested_prompt_correction}`);
-
-      // Update job to retrying status
-      await supabase
-        .from('studio_jobs')
-        .update({
-          status: 'retrying',
-          attempt_current: attempt,
-          validation_history: validationHistory,
-          all_attempt_urls: allAttemptUrls,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', jobId);
-
-      // Build webhook URL for next attempt
-      const baseUrl = (process.env.PUBLIC_BASE_URL || '').replace(/\/$/, ''); // Remove trailing slash
-      const webhookToken = process.env.REPLICATE_WEBHOOK_SECRET;
-      const webhookUrl = `${baseUrl}/api/replicate-callback?token=${webhookToken}`;
-
-      // Trigger new Recraft generation with correction
-      const nextPrediction = await generateRecraftSvg({
-        prompt: job.prompt,
-        width_mm: job.width_mm,
-        length_mm: job.length_mm,
-        seed: job.metadata?.seed + attempt, // Vary seed slightly
-        correction: inspectorResult.suggested_prompt_correction,
-        webhook: webhookUrl,
-        jobId
-      });
-
-      console.log(`[RECRAFT-WEBHOOK] Started retry attempt ${attempt + 1}: ${nextPrediction.predictionId}`);
-
-      // Update job with new prediction ID
-      await supabase
-        .from('studio_jobs')
-        .update({
-          prediction_id: nextPrediction.predictionId, // Top-level for webhook lookup
-          metadata: {
-            ...job.metadata,
-            prediction_id: nextPrediction.predictionId,
-            last_correction: inspectorResult.suggested_prompt_correction
-          },
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', jobId);
-
-      return res.status(200).json({ ok: true, status: 'retrying', attempt });
-    } else {
-      // FAILED - Max attempts reached
-      console.log(`[RECRAFT-WEBHOOK] ✗ Design FAILED after ${maxAttempts} attempts`);
-      console.log(`[RECRAFT-WEBHOOK] Final issues: ${inspectorResult.reasons.join(', ')}`);
-
-      // Upload last attempt as final (marked non-compliant)
-      const finalPrefix = `recraft/${jobId}/final`;
-
-      const finalSvg = await uploadToStorage(
-        Buffer.from(svgString, 'utf-8'),
-        `${finalPrefix}/design.svg`,
-        { lifecycle: 'final' }
-      );
-
-      const finalPng = await uploadToStorage(
-        preview,
-        `${finalPrefix}/design.png`,
-        { lifecycle: 'final' }
-      );
-
-      const finalThumb = await uploadToStorage(
-        thumbnail,
-        `${finalPrefix}/thumb.png`,
-        { lifecycle: 'final' }
-      );
-
-      // Update job as failed (but with outputs)
-      await supabase
-        .from('studio_jobs')
-        .update({
-          status: 'failed',
-          compliant: false,
-          attempt_current: attempt,
-          validation_history: validationHistory,
-          all_attempt_urls: allAttemptUrls,
-          inspector_final_reasons: inspectorResult.reasons,
-          outputs: {
-            svg_url: finalSvg.publicUrl,
-            png_url: finalPng.publicUrl,
-            thumbnail_url: finalThumb.publicUrl,
-            metadata: svgMetadata,
-            warning: 'This design did not pass compliance checks and is not production-ready'
-          },
-          error: `Failed compliance after ${maxAttempts} attempts: ${inspectorResult.reasons.join('; ')}`,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', jobId);
-
-      console.log(`[RECRAFT-WEBHOOK] Job ${jobId} marked as failed (non-compliant)`);
-
-      return res.status(200).json({ ok: true, status: 'failed', attempt });
-    }
+    return res.status(200).json({
+      ok: true,
+      status: 'completed',
+      attempt,
+      compliant: inspectorResult.pass,
+      inspector_reasons: inspectorResult.reasons,
+      suggested_correction: inspectorResult.suggested_prompt_correction
+    });
   } catch (error) {
     console.error(`[RECRAFT-WEBHOOK] Error processing attempt ${attempt}:`, error);
 
