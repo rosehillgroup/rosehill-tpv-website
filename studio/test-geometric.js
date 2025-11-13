@@ -14,62 +14,189 @@ if (!fs.existsSync(OUTPUT_DIR)) {
   fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 }
 
-// Test cases with different themes
+// Test cases with different recipes, themes, and complexity levels
 const testCases = [
+  // Hero Orbit Recipe Tests
   {
-    name: 'ocean-theme',
-    brief: 'Playful ocean theme with waves and marine life',
+    name: 'ocean-hero-orbit-medium',
+    brief: 'Playful ocean theme with whale and fish',
     options: {
       mood: 'playful',
-      composition: 'mixed',
+      composition: 'motifs',
       colorCount: 5,
       seed: 12345
+    },
+    layout: {
+      recipe: 'hero_orbit',
+      complexity: 'medium'
+    },
+    metadata: {
+      themes: ['ocean']
     }
   },
   {
-    name: 'space-theme',
-    brief: 'Cosmic space adventure with stars and planets',
+    name: 'space-hero-orbit-complex',
+    brief: 'Energetic space adventure with rocket and stars',
     options: {
       mood: 'energetic',
       composition: 'motifs',
       colorCount: 6,
       seed: 23456
+    },
+    layout: {
+      recipe: 'hero_orbit',
+      complexity: 'complex'
+    },
+    metadata: {
+      themes: ['space']
     }
   },
+
+  // Trail Recipe Tests
   {
-    name: 'gym-fitness',
-    brief: 'Athletic gym fitness center design',
+    name: 'transport-trail-medium',
+    brief: 'Dynamic transport journey with vehicles',
     options: {
-      mood: 'bold',
+      mood: 'energetic',
       composition: 'mixed',
-      colorCount: 4,
+      colorCount: 5,
       seed: 34567
+    },
+    layout: {
+      recipe: 'trail',
+      complexity: 'medium'
+    },
+    metadata: {
+      themes: ['transport']
     }
   },
   {
-    name: 'nature-forest',
-    brief: 'Serene forest nature with trees and plants',
+    name: 'nature-trail-simple',
+    brief: 'Serene nature path through the forest',
     options: {
       mood: 'serene',
+      composition: 'mixed',
+      colorCount: 4,
+      seed: 45678
+    },
+    layout: {
+      recipe: 'trail',
+      complexity: 'simple'
+    },
+    metadata: {
+      themes: ['nature']
+    }
+  },
+
+  // Cluster Recipe Tests
+  {
+    name: 'gym-cluster-medium',
+    brief: 'Bold gym fitness equipment cluster',
+    options: {
+      mood: 'bold',
       composition: 'islands',
       colorCount: 5,
-      seed: 45678
+      seed: 56789
+    },
+    layout: {
+      recipe: 'cluster',
+      complexity: 'medium'
+    },
+    metadata: {
+      themes: ['gym']
     }
   },
   {
-    name: 'fastfood-cafe',
-    brief: 'Vibrant cafe with burgers and pizza',
+    name: 'fastfood-cluster-complex',
+    brief: 'Playful cafe with burgers, pizza, and fries',
     options: {
       mood: 'playful',
-      composition: 'motifs',
+      composition: 'islands',
       colorCount: 6,
-      seed: 56789
+      seed: 67890
+    },
+    layout: {
+      recipe: 'cluster',
+      complexity: 'complex'
+    },
+    metadata: {
+      themes: ['fastfood']
+    }
+  },
+
+  // Striped Story Recipe Tests
+  {
+    name: 'spring-striped-medium',
+    brief: 'Calm spring garden with flowers and butterflies',
+    options: {
+      mood: 'calm',
+      composition: 'bands',
+      colorCount: 5,
+      seed: 78901
+    },
+    layout: {
+      recipe: 'striped_story',
+      complexity: 'medium'
+    },
+    metadata: {
+      themes: ['spring']
+    }
+  },
+  {
+    name: 'landmarks-striped-complex',
+    brief: 'Bold cityscape with towers and buildings',
+    options: {
+      mood: 'bold',
+      composition: 'bands',
+      colorCount: 6,
+      seed: 89012
+    },
+    layout: {
+      recipe: 'striped_story',
+      complexity: 'complex'
+    },
+    metadata: {
+      themes: ['landmarks']
+    }
+  },
+
+  // Auto-selection tests (no recipe specified)
+  {
+    name: 'trees-auto-select',
+    brief: 'Serene woodland with oak and pine trees',
+    options: {
+      mood: 'serene',
+      composition: 'mixed',
+      colorCount: 5,
+      seed: 90123
+    },
+    layout: {
+      complexity: 'medium'
+    },
+    metadata: {
+      themes: ['trees']
+    }
+  },
+  {
+    name: 'alphabet-auto-select',
+    brief: 'Playful alphabet learning playground',
+    options: {
+      mood: 'playful',
+      composition: 'mixed',
+      colorCount: 6,
+      seed: 101234
+    },
+    layout: {
+      complexity: 'simple'
+    },
+    metadata: {
+      themes: ['alphabet']
     }
   }
 ];
 
 async function runTests() {
-  console.log('🧪 Testing Geometric Generator with New Motif Library\n');
+  console.log('🧪 Testing Geometric Generator with Motif Roles & Layout Recipes\n');
 
   const canvas = {
     width_mm: 5000,
@@ -80,12 +207,15 @@ async function runTests() {
     try {
       console.log(`\n📐 Generating: ${testCase.name}`);
       console.log(`   Brief: "${testCase.brief}"`);
-      console.log(`   Options:`, testCase.options);
+      console.log(`   Recipe: ${testCase.layout?.recipe || 'auto'}, Complexity: ${testCase.layout?.complexity || 'medium'}`);
+      console.log(`   Theme: ${testCase.metadata?.themes?.join(', ') || 'none'}`);
 
       const result = await generateGeometricSVG({
         brief: testCase.brief,
         canvas,
-        options: testCase.options
+        options: testCase.options,
+        layout: testCase.layout || {},
+        metadata: testCase.metadata || {}
       });
 
       // Save SVG to file
@@ -112,9 +242,12 @@ async function runTests() {
   console.log('\n\n🎉 Test run complete!');
   console.log(`📂 Output directory: ${OUTPUT_DIR}`);
   console.log('\nNext steps:');
-  console.log('1. Review generated SVG files');
-  console.log('2. Check that motifs match the themes (ocean → ocean motifs, etc.)');
-  console.log('3. Verify color palettes and composition');
+  console.log('1. Review generated SVG files for each recipe (hero_orbit, trail, cluster, striped_story)');
+  console.log('2. Verify hero motifs are prominent (30-40% of canvas)');
+  console.log('3. Check that support motifs complement heroes without competing');
+  console.log('4. Confirm layouts follow recipe patterns (orbital, trail, cluster, striped)');
+  console.log('5. Verify motifs match themes (ocean → whale/fish, space → rocket/stars, etc.)');
+  console.log('6. Check color palettes show role-based assignment (hero = accent, support = mid-palette)');
 }
 
 runTests().catch(err => {

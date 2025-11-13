@@ -1,17 +1,12 @@
 // Main SVG Generator for TPV Studio Geometric Mode
 // Orchestrates palette, bands, islands, and motifs into complete SVG
+// Now uses motif roles and layout recipes for professional playground designs
 
 import { generatePalette } from './palette.js';
-import { generateBands } from './bands.js';
-import { generateIslands } from './islands.js';
-import {
-  placeMotifs,
-  MOTIF_LIBRARY,
-  getMotifsByCategory,
-  getRandomMotifFromCategory,
-  getAllCategories
-} from './motifs-generated.js';
+import { MOTIF_LIBRARY } from './motifs-generated.js';
 import { parseBrief } from './brief-parser.js';
+import { buildMotifPlan, validateMotifPlan } from './motif-roles.js';
+import { chooseRecipe, getRecipeFunction } from './layout-recipes.js';
 
 /**
  * Generate a complete geometric SVG design
@@ -29,7 +24,9 @@ export async function generateGeometricSVG(params) {
   const {
     brief = 'Abstract geometric design',
     canvas = { width_mm: 15000, height_mm: 15000 },
-    options = {}
+    options = {},
+    layout = {},
+    metadata = {}
   } = params;
 
   const {
@@ -39,20 +36,36 @@ export async function generateGeometricSVG(params) {
     seed = Date.now()
   } = options;
 
-  // Seeded random for deterministic generation
-  let rng = seed;
-  const random = () => {
-    rng = (rng * 1664525 + 1013904223) % 4294967296;
-    return rng / 4294967296;
-  };
+  const themes = metadata.themes || [];
+  console.log('[GENERATOR] Starting generation:', { brief, mood, composition, themes, layout });
 
   // Step 1: Generate color palette
   const palette = generatePalette(colorCount, { mood, seed });
+  console.log('[GENERATOR] Palette:', palette);
 
-  // Step 2: Determine composition structure
-  const structure = determineComposition(composition, brief, random);
+  // Step 2: Build or validate motif plan
+  const complexity = layout.complexity || 'medium';
+  const motifPlan = layout.motif_plan
+    ? validateMotifPlan(layout.motif_plan)
+    : buildMotifPlan(themes.length > 0 ? themes : 'nature', complexity);
 
-  // Step 3: Generate SVG layers
+  console.log('[GENERATOR] Motif plan:', motifPlan);
+
+  // Step 3: Select layout recipe
+  const recipeName = layout.recipe || chooseRecipe(composition, themes, mood);
+  console.log('[GENERATOR] Using recipe:', recipeName);
+
+  const recipeFunction = getRecipeFunction(recipeName);
+
+  // Step 4: Generate layout using recipe
+  const recipeLayers = recipeFunction(canvas, motifPlan, palette, seed);
+  console.log('[GENERATOR] Recipe generated:', {
+    bands: recipeLayers.bands.length,
+    islands: recipeLayers.islands.length,
+    motifs: recipeLayers.motifPlacements.length
+  });
+
+  // Step 5: Convert recipe output to SVG layers
   const layers = [];
 
   // Background layer (always present)
@@ -64,221 +77,123 @@ export async function generateGeometricSVG(params) {
     svg: `<rect id="bg" x="0" y="0" width="${canvas.width_mm}" height="${canvas.height_mm}" fill="${bgColor}"/>`
   });
 
-  // Generate bands if requested
-  if (structure.bands > 0) {
-    const bands = generateBands(canvas, structure.bands, seed + 1000);
-    bands.forEach((band, i) => {
-      const color = palette[(i + 1) % palette.length];
-      layers.push({
-        id: `band-${i}`,
-        type: 'band',
-        color,
-        svg: `<path id="band-${i}" class="geometric-band" fill="${color}" d="${band.path}"/>`
-      });
+  // Bands from recipe
+  recipeLayers.bands.forEach((band, i) => {
+    const color = palette[(i + 1) % palette.length];
+    layers.push({
+      id: `band-${i}`,
+      type: 'band',
+      color,
+      svg: `<path id="band-${i}" class="geometric-band" fill="${color}" d="${band.path}"/>`
     });
-  }
+  });
 
-  // Generate islands if requested
-  if (structure.islands > 0) {
-    const islands = generateIslands(canvas, structure.islands, seed + 2000);
-    islands.forEach((island, i) => {
-      const colorIdx = (i + structure.bands + 1) % palette.length;
-      const color = palette[colorIdx];
-      layers.push({
-        id: `island-${i}`,
-        type: 'island',
-        color,
-        svg: `<path id="island-${i}" class="geometric-island" fill="${color}" d="${island.path}"/>`
-      });
+  // Islands from recipe
+  recipeLayers.islands.forEach((island, i) => {
+    const colorIdx = (i + recipeLayers.bands.length + 1) % palette.length;
+    const color = palette[colorIdx];
+    layers.push({
+      id: `island-${i}`,
+      type: 'island',
+      color,
+      svg: `<path id="island-${i}" class="geometric-island" fill="${color}" d="${island.path}"/>`
     });
-  }
+  });
 
-  // Generate motifs if requested
-  if (structure.motifs > 0) {
-    const motifSpecs = selectMotifs(structure.motifs, brief, random);
-    const placedMotifs = placeMotifs(canvas, motifSpecs, seed + 3000);
+  // Motifs from recipe with role-based color assignment
+  recipeLayers.motifPlacements.forEach((placement, i) => {
+    const color = assignColorByRole(placement.role, palette, i);
 
-    placedMotifs.forEach((motif, i) => {
-      const colorIdx = (i + structure.bands + structure.islands + 1) % palette.length;
-      const color = palette[colorIdx];
+    const motifDef = MOTIF_LIBRARY[placement.motif];
+    if (!motifDef) {
+      console.warn(`[GENERATOR] Motif not found: ${placement.motif}`);
+      return;
+    }
 
-      const motifDef = MOTIF_LIBRARY[motif.name];
-      const transforms = [];
-      if (motif.x !== 0 || motif.y !== 0) {
-        transforms.push(`translate(${motif.x.toFixed(2)} ${motif.y.toFixed(2)})`);
-      }
-      if (motif.rotation !== 0) {
-        transforms.push(`rotate(${motif.rotation.toFixed(2)})`);
-      }
-      if (motif.scale !== 1.0) {
-        transforms.push(`scale(${motif.scale.toFixed(3)})`);
-      }
+    // Calculate scale from size_mm
+    const targetSize = placement.size_mm;
+    const scale = targetSize / motifDef.nominalSize;
 
-      const transformAttr = transforms.length > 0 ? ` transform="${transforms.join(' ')}"` : '';
+    const transforms = [];
+    if (placement.x !== 0 || placement.y !== 0) {
+      transforms.push(`translate(${placement.x.toFixed(2)} ${placement.y.toFixed(2)})`);
+    }
+    if (placement.rotation) {
+      transforms.push(`rotate(${placement.rotation.toFixed(2)})`);
+    }
+    if (scale !== 1.0) {
+      transforms.push(`scale(${scale.toFixed(3)})`);
+    }
 
-      layers.push({
-        id: `motif-${i}`,
-        type: 'motif',
-        color,
-        motifName: motif.name,
-        svg: `<path id="motif-${i}" class="geometric-motif" data-motif="${motif.name}" fill="${color}"${transformAttr} d="${motifDef.pathData}"/>`
-      });
+    const transformAttr = transforms.length > 0 ? ` transform="${transforms.join(' ')}"` : '';
+
+    layers.push({
+      id: `motif-${i}`,
+      type: 'motif',
+      role: placement.role,
+      color,
+      motifName: placement.motif,
+      svg: `<path id="motif-${i}" class="geometric-motif" data-motif="${placement.motif}" data-role="${placement.role}" fill="${color}"${transformAttr} d="${motifDef.pathData}"/>`
     });
-  }
+  });
 
-  // Step 4: Build complete SVG document
+  // Step 6: Build complete SVG document
   const svg = buildSVG(canvas, layers, palette, brief, seed);
 
-  // Step 5: Collect metadata
-  const metadata = {
+  // Step 7: Collect metadata
+  const generationMetadata = {
     brief,
     canvas,
     palette,
     colorCount: palette.length,
     mood,
-    composition: structure,
+    composition: {
+      recipe: recipeName,
+      complexity,
+      bands: recipeLayers.bands.length,
+      islands: recipeLayers.islands.length,
+      motifs: recipeLayers.motifPlacements.length
+    },
+    themes,
     seed,
     layerCount: layers.length,
     generatedAt: new Date().toISOString()
   };
 
-  return { svg, metadata };
+  return { svg, metadata: generationMetadata };
 }
 
 /**
- * Determine composition structure based on type and brief
+ * Assign color to motif based on its role
+ * Hero motifs get high-contrast accent colors
+ * Support motifs get mid-palette colors
+ * Accent motifs harmonize with background
  * @private
  */
-function determineComposition(compositionType, brief, random) {
-  // Default structures for each type
-  const templates = {
-    bands: { bands: 2, islands: 0, motifs: 0 },
-    islands: { bands: 0, islands: 3, motifs: 0 },
-    motifs: { bands: 0, islands: 0, motifs: 8 },
-    mixed: { bands: 1, islands: 2, motifs: 4 }
-  };
+function assignColorByRole(role, palette, index) {
+  const paletteLength = palette.length;
 
-  let structure = templates[compositionType] || templates.mixed;
+  switch (role) {
+    case 'hero':
+      // Use vibrant accent color from end of palette
+      return palette[paletteLength - 1];
 
-  // Add slight random variation
-  if (compositionType === 'mixed') {
-    structure = {
-      bands: Math.floor(1 + random() * 2), // 1-2 bands
-      islands: Math.floor(2 + random() * 2), // 2-3 islands
-      motifs: Math.floor(3 + random() * 5) // 3-7 motifs
-    };
+    case 'support':
+      // Use mid-palette colors, cycling through them
+      const midStart = Math.floor(paletteLength / 3);
+      const midEnd = Math.floor((paletteLength * 2) / 3);
+      const midRange = midEnd - midStart;
+      return palette[midStart + (index % Math.max(1, midRange))];
+
+    case 'accent':
+      // Use colors that harmonize with background
+      const accentIdx = 1 + (index % Math.max(1, paletteLength - 2));
+      return palette[accentIdx];
+
+    default:
+      // Fallback: cycle through palette
+      return palette[(index + 1) % paletteLength];
   }
-
-  return structure;
-}
-
-/**
- * Select appropriate motifs based on brief keywords
- * @private
- */
-function selectMotifs(count, brief, random) {
-  const briefLower = brief.toLowerCase();
-
-  // Category keyword mapping
-  const categoryKeywords = {
-    ocean: ['ocean', 'sea', 'water', 'marine', 'wave', 'fish', 'whale', 'dolphin', 'coral', 'beach', 'aquatic'],
-    space: ['space', 'star', 'planet', 'rocket', 'astronaut', 'galaxy', 'cosmic', 'celestial', 'universe'],
-    nature: ['nature', 'tree', 'leaf', 'plant', 'forest', 'garden', 'eco', 'green', 'environment'],
-    fastfood: ['food', 'burger', 'pizza', 'restaurant', 'cafe', 'kitchen', 'snack', 'fries', 'fastfood'],
-    gym: ['gym', 'fitness', 'sport', 'exercise', 'workout', 'training', 'athletic', 'health'],
-    transport: ['car', 'bus', 'train', 'transport', 'vehicle', 'traffic', 'road', 'travel'],
-    landmarks: ['landmark', 'building', 'monument', 'city', 'architecture', 'tower', 'structure'],
-    alphabet: ['letter', 'alphabet', 'text', 'typography', 'abc', 'character'],
-    spring: ['spring', 'flower', 'blossom', 'bloom', 'seasonal', 'garden', 'floral'],
-    trees: ['tree', 'forest', 'woodland', 'pine', 'oak', 'jungle']
-  };
-
-  // Detect matching categories
-  const matchedCategories = [];
-  for (const [category, keywords] of Object.entries(categoryKeywords)) {
-    const matches = keywords.filter(keyword => briefLower.includes(keyword));
-    if (matches.length > 0) {
-      matchedCategories.push({
-        category,
-        strength: matches.length
-      });
-    }
-  }
-
-  // Sort by match strength
-  matchedCategories.sort((a, b) => b.strength - a.strength);
-
-  // Select motifs from matched categories
-  const specs = [];
-  let remainingCount = count;
-
-  if (matchedCategories.length > 0) {
-    // Use top 1-2 matched categories
-    const primaryCategory = matchedCategories[0].category;
-    const primaryMotifs = getMotifsByCategory(primaryCategory);
-
-    if (primaryMotifs.length > 0) {
-      // 70% from primary category
-      const primaryCount = Math.ceil(count * 0.7);
-      const selectedPrimary = [];
-
-      // Select random unique motifs from primary category
-      for (let i = 0; i < primaryCount && selectedPrimary.length < primaryMotifs.length; i++) {
-        const motifKey = getRandomMotifFromCategory(primaryCategory, random() * 10000);
-        if (motifKey && !selectedPrimary.includes(motifKey)) {
-          selectedPrimary.push(motifKey);
-        }
-      }
-
-      selectedPrimary.forEach(motifKey => {
-        specs.push({
-          name: motifKey,
-          count: 1,
-          size_m: [0.6, 1.2]
-        });
-      });
-
-      remainingCount -= selectedPrimary.length;
-    }
-
-    // Fill remaining with secondary category if available
-    if (remainingCount > 0 && matchedCategories.length > 1) {
-      const secondaryCategory = matchedCategories[1].category;
-      const secondaryMotifs = getMotifsByCategory(secondaryCategory);
-
-      if (secondaryMotifs.length > 0) {
-        for (let i = 0; i < remainingCount; i++) {
-          const motifKey = getRandomMotifFromCategory(secondaryCategory, random() * 10000);
-          if (motifKey) {
-            specs.push({
-              name: motifKey,
-              count: 1,
-              size_m: [0.6, 1.0]
-            });
-          }
-        }
-        remainingCount = 0;
-      }
-    }
-  }
-
-  // Fallback: random selection from all categories
-  if (remainingCount > 0) {
-    const allCategories = getAllCategories();
-    for (let i = 0; i < remainingCount; i++) {
-      const randomCategory = allCategories[Math.floor(random() * allCategories.length)];
-      const motifKey = getRandomMotifFromCategory(randomCategory, random() * 10000);
-      if (motifKey) {
-        specs.push({
-          name: motifKey,
-          count: 1,
-          size_m: [0.6, 1.0]
-        });
-      }
-    }
-  }
-
-  return specs.filter(s => s.count > 0);
 }
 
 /**

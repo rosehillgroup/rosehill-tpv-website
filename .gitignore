@@ -54,3 +54,4 @@ studio/index.html
 # Environment files with secrets
 .env.vercel
 netlify-env.json
+studio/test-outputs/

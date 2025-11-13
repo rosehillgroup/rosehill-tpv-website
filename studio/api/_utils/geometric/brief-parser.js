@@ -25,6 +25,8 @@ Available categories:
 - Moods: playful, serene, energetic, bold, calm
 - Compositions: bands (horizontal stripes), islands (organic blobs), motifs (themed icons), mixed (combination)
 - Themes: ocean, space, nature, fastfood, gym, transport, landmarks, alphabet, spring, trees
+- Layout Recipes: hero_orbit (focal motif with orbiting elements), trail (path-following design), cluster (dense grouping in one area), striped_story (horizontal/vertical bands with distributed motifs)
+- Complexity: simple (clean, minimal), medium (balanced variety), complex (rich, detailed)
 
 Respond ONLY with valid JSON (no markdown, no explanations) in this exact format:
 {
@@ -32,12 +34,16 @@ Respond ONLY with valid JSON (no markdown, no explanations) in this exact format
   "composition": "bands|islands|motifs|mixed",
   "colorCount": 3-8,
   "themes": ["theme1", "theme2"],
+  "layout": {
+    "recipe": "hero_orbit|trail|cluster|striped_story",
+    "complexity": "simple|medium|complex"
+  },
   "reasoning": "brief explanation"
 }`;
 
   const userPrompt = `Design brief: "${brief}"
 
-Extract the mood, composition type, color count (3-8), and relevant themes from this brief.`;
+Extract the mood, composition type, color count (3-8), relevant themes, layout recipe, and complexity level from this brief.`;
 
   try {
     console.log('[BRIEF-PARSER] Using Claude Haiku for brief analysis');
@@ -73,6 +79,7 @@ Extract the mood, composition type, color count (3-8), and relevant themes from 
       composition: parsed.composition,
       colorCount: parsed.colorCount,
       themes: parsed.themes,
+      layout: parsed.layout,
       reasoning: parsed.reasoning
     });
 
@@ -82,6 +89,10 @@ Extract the mood, composition type, color count (3-8), and relevant themes from 
       composition: validateComposition(parsed.composition),
       colorCount: validateColorCount(parsed.colorCount),
       themes: Array.isArray(parsed.themes) ? parsed.themes.filter(t => typeof t === 'string') : [],
+      layout: {
+        recipe: validateRecipe(parsed.layout?.recipe),
+        complexity: validateComplexity(parsed.layout?.complexity)
+      },
       reasoning: parsed.reasoning || 'Claude Haiku analysis'
     };
 
@@ -155,6 +166,10 @@ function fallbackParsing(brief) {
     composition,
     colorCount,
     themes,
+    layout: {
+      recipe: null, // Will be auto-selected by generator
+      complexity: 'medium' // Default complexity
+    },
     reasoning: 'Keyword-based fallback parsing'
   };
 }
@@ -185,6 +200,22 @@ function validateColorCount(count) {
 }
 
 /**
+ * Validate layout recipe parameter
+ */
+function validateRecipe(recipe) {
+  const validRecipes = ['hero_orbit', 'trail', 'cluster', 'striped_story'];
+  return validRecipes.includes(recipe) ? recipe : null; // null means auto-select
+}
+
+/**
+ * Validate complexity parameter
+ */
+function validateComplexity(complexity) {
+  const validComplexities = ['simple', 'medium', 'complex'];
+  return validComplexities.includes(complexity) ? complexity : 'medium';
+}
+
+/**
  * Enhanced parse brief with Claude Haiku integration
  * @param {string} brief - User's design brief
  * @param {object} defaultCanvas - Default canvas dimensions
@@ -203,6 +234,10 @@ export async function parseBrief(brief, defaultCanvas = { width_mm: 15000, heigh
       composition: parsed.composition,
       colorCount: parsed.colorCount,
       seed: Date.now()
+    },
+    layout: {
+      recipe: parsed.layout.recipe,
+      complexity: parsed.layout.complexity
     },
     metadata: {
       themes: parsed.themes,
