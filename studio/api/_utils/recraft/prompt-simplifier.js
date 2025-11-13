@@ -59,7 +59,7 @@ Examples:
 Output ONLY the simplified prompt (1-10 words). No explanation, no quotes, no extra text.`;
 
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-3-haiku-20240307',
       max_tokens: 100,
       temperature: 0.3,
       system: systemPrompt,
