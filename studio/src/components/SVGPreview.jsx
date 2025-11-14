@@ -1,13 +1,110 @@
 // TPV Studio - SVG Preview Component
-// Shows TPV blend SVG with color legend
+// Shows TPV blend SVG with color legend and color highlighting
 
+import { useEffect, useRef, useState } from 'react';
 import ColorLegend from './ColorLegend';
 
 export default function SVGPreview({
   blendSvgUrl,
   recipes,
-  onColorClick // (colorData) => void - callback when user clicks a color
+  onColorClick, // (colorData) => void - callback when user clicks a color
+  selectedColor // Current color being edited (to highlight)
 }) {
+  const [highlightMask, setHighlightMask] = useState(null);
+  const canvasRef = useRef(null);
+
+  // Create highlight mask when a color is selected
+  useEffect(() => {
+    if (!selectedColor || !blendSvgUrl) {
+      setHighlightMask(null);
+      return;
+    }
+
+    const createHighlightMask = async () => {
+      try {
+        // Load the SVG image
+        const img = new Image();
+        img.src = blendSvgUrl;
+
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+
+        // Create canvas to analyze colors
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext('2d');
+
+        // Draw SVG
+        ctx.drawImage(img, 0, 0);
+
+        // Get image data
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        // Parse selected color (hex to RGB)
+        const targetHex = selectedColor.blendHex || selectedColor.hex;
+        const targetRgb = hexToRgb(targetHex);
+
+        // Create mask (white where color matches, transparent elsewhere)
+        const maskData = ctx.createImageData(canvas.width, canvas.height);
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const a = data[i + 3];
+
+          // Check if pixel matches target color (with small tolerance)
+          if (a > 0 && colorMatches(r, g, b, targetRgb)) {
+            // White pixel for mask
+            maskData.data[i] = 255;
+            maskData.data[i + 1] = 255;
+            maskData.data[i + 2] = 255;
+            maskData.data[i + 3] = 180; // Semi-transparent
+          } else {
+            // Transparent
+            maskData.data[i + 3] = 0;
+          }
+        }
+
+        // Draw mask to canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.putImageData(maskData, 0, 0);
+
+        // Convert to data URL
+        setHighlightMask(canvas.toDataURL());
+      } catch (error) {
+        console.error('[SVGPreview] Failed to create highlight mask:', error);
+        setHighlightMask(null);
+      }
+    };
+
+    createHighlightMask();
+  }, [selectedColor, blendSvgUrl]);
+
+  // Helper: Convert hex to RGB
+  const hexToRgb = (hex) => {
+    const cleanHex = hex.replace('#', '');
+    return {
+      r: parseInt(cleanHex.substring(0, 2), 16),
+      g: parseInt(cleanHex.substring(2, 4), 16),
+      b: parseInt(cleanHex.substring(4, 6), 16)
+    };
+  };
+
+  // Helper: Check if colors match (with tolerance)
+  const colorMatches = (r, g, b, target) => {
+    const tolerance = 15; // Allow small variations
+    return (
+      Math.abs(r - target.r) <= tolerance &&
+      Math.abs(g - target.g) <= tolerance &&
+      Math.abs(b - target.b) <= tolerance
+    );
+  };
+
   if (!blendSvgUrl) {
     return null;
   }
@@ -16,19 +113,41 @@ export default function SVGPreview({
     <div className="svg-preview">
       <div className="preview-header">
         <h3>TPV Blend Design</h3>
+        {selectedColor && (
+          <span className="editing-hint">
+            Editing: {selectedColor.hex || selectedColor.blendHex}
+          </span>
+        )}
       </div>
 
       {/* SVG Display with Color Legend */}
       <div className="svg-display-container">
         <div className="svg-panel">
           <div className="svg-wrapper">
-            <img src={blendSvgUrl} alt="TPV blend design" className="svg-image" />
+            <div className="svg-image-container">
+              <img src={blendSvgUrl} alt="TPV blend design" className="svg-image" />
+              {highlightMask && (
+                <img
+                  src={highlightMask}
+                  alt="Color highlight"
+                  className="svg-highlight-mask"
+                  style={{
+                    mixBlendMode: 'multiply',
+                    filter: 'drop-shadow(0 0 8px rgba(255, 107, 53, 0.8))'
+                  }}
+                />
+              )}
+            </div>
           </div>
         </div>
 
         {recipes && recipes.length > 0 && (
           <div className="legend-sidebar">
-            <ColorLegend recipes={recipes} onColorClick={onColorClick} />
+            <ColorLegend
+              recipes={recipes}
+              onColorClick={onColorClick}
+              selectedColor={selectedColor}
+            />
           </div>
         )}
       </div>
@@ -76,11 +195,43 @@ export default function SVGPreview({
           justify-content: center;
         }
 
+        .svg-image-container {
+          position: relative;
+          display: inline-block;
+        }
+
         .svg-image {
           max-width: 100%;
           height: auto;
           display: block;
           border-radius: 4px;
+        }
+
+        .svg-highlight-mask {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+          border-radius: 4px;
+          animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 0.7;
+          }
+          50% {
+            opacity: 1;
+          }
+        }
+
+        .editing-hint {
+          font-size: 0.9rem;
+          color: #ff6b35;
+          font-weight: 500;
+          margin-left: 1rem;
         }
 
         .legend-sidebar {

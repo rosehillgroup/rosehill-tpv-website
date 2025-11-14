@@ -3,11 +3,19 @@
 
 export default function ColorLegend({
   recipes,
-  onColorClick // (colorData) => void - callback when user clicks a color
+  onColorClick, // (colorData) => void - callback when user clicks a color
+  selectedColor // Currently selected/editing color
 }) {
   if (!recipes || recipes.length === 0) {
     return null;
   }
+
+  // Check if a recipe is currently selected
+  const isSelected = (recipe) => {
+    if (!selectedColor) return false;
+    const selectedHex = selectedColor.blendHex || selectedColor.hex;
+    return recipe.blendColor.hex === selectedHex || recipe.targetColor.hex === selectedHex;
+  };
 
   return (
     <div className="color-legend">
@@ -19,7 +27,7 @@ export default function ColorLegend({
         {recipes.map((recipe, idx) => (
           <div
             key={idx}
-            className={`color-item ${onColorClick ? 'clickable' : ''}`}
+            className={`color-item ${onColorClick ? 'clickable' : ''} ${isSelected(recipe) ? 'selected' : ''}`}
             onClick={() => {
               if (onColorClick) {
                 onColorClick({
@@ -32,7 +40,7 @@ export default function ColorLegend({
                 });
               }
             }}
-            title={onColorClick ? 'Click to edit this color' : ''}
+            title={onColorClick ? 'Click to edit this colour' : ''}
           >
             <div
               className="color-swatch"
@@ -102,6 +110,14 @@ export default function ColorLegend({
           border-color: #ff6b35;
           background: #fff9f7;
           box-shadow: 0 2px 4px rgba(255, 107, 53, 0.15);
+          transform: translateX(2px);
+        }
+
+        .color-item.selected {
+          border-color: #ff6b35;
+          border-width: 2px;
+          background: #fff9f7;
+          box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
           transform: translateX(2px);
         }
 

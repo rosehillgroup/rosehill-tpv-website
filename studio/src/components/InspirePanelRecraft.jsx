@@ -520,6 +520,7 @@ export default function InspirePanelRecraft() {
               blendSvgUrl={blendSvgUrl}
               recipes={blendRecipes}
               onColorClick={handleColorClick}
+              selectedColor={selectedColor}
             />
           )}
 
