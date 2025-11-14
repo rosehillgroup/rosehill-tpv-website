@@ -7,7 +7,7 @@ export interface PaletteColour {
   lab: Lab;
   areaPct: number;
   pageIds?: number[];
-  source: 'pdf' | 'raster';
+  source: 'pdf' | 'raster' | 'svg';
   metadata?: {
     frequency?: number;
     pixels?: number;
@@ -202,42 +202,54 @@ export function combineColourSources(
 
 export function validateFileType(filename: string): {
   isValid: boolean;
-  type: 'pdf' | 'image' | null;
+  type: 'pdf' | 'image' | 'svg' | null;
   format?: string;
 } {
   const ext = filename.toLowerCase().split('.').pop();
-  
+
   if (!ext) {
     return { isValid: false, type: null };
   }
-  
-  const imageFormats = ['png', 'jpg', 'jpeg', 'svg', 'webp'];
+
+  const rasterFormats = ['png', 'jpg', 'jpeg', 'webp'];
+  const svgFormats = ['svg'];
   const pdfFormats = ['pdf'];
-  
+
   if (pdfFormats.includes(ext)) {
     return { isValid: true, type: 'pdf', format: ext };
   }
-  
-  if (imageFormats.includes(ext)) {
+
+  if (svgFormats.includes(ext)) {
+    return { isValid: true, type: 'svg', format: ext };
+  }
+
+  if (rasterFormats.includes(ext)) {
     return { isValid: true, type: 'image', format: ext };
   }
-  
+
   return { isValid: false, type: null };
 }
 
 export function estimateExtractionComplexity(
   fileSize: number,
-  fileType: 'pdf' | 'image'
+  fileType: 'pdf' | 'image' | 'svg'
 ): 'low' | 'medium' | 'high' {
   const MB = 1024 * 1024;
-  
+
   if (fileType === 'pdf') {
     if (fileSize < 2 * MB) return 'low';
     if (fileSize < 10 * MB) return 'medium';
     return 'high';
   }
-  
-  // Image files
+
+  if (fileType === 'svg') {
+    // SVG parsing is fast, complexity is mainly based on file size
+    if (fileSize < 5 * MB) return 'low';
+    if (fileSize < 15 * MB) return 'medium';
+    return 'high';
+  }
+
+  // Raster image files
   if (fileSize < 1 * MB) return 'low';
   if (fileSize < 5 * MB) return 'medium';
   return 'high';

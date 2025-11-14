@@ -1,8 +1,9 @@
 // import { PDFExtractor } from './pdf'; // PDF extraction not used in serverless environment
 import { RasterExtractor } from './raster';
-import { 
+import { SVGExtractor } from './svg';
+import {
   ColourSpaceConverter,
-  generateColourId, 
+  generateColourId,
   combineColourSources,
   validateFileType,
   estimateExtractionComplexity,
@@ -30,13 +31,14 @@ export interface ExtractionResult {
   metadata: {
     filename: string;
     fileSize: number;
-    fileType: 'pdf' | 'image';
+    fileType: 'pdf' | 'image' | 'svg';
     extractionTime: number;
     complexity: 'low' | 'medium' | 'high';
-    sources: ('pdf' | 'raster')[];
+    sources: ('pdf' | 'raster' | 'svg')[];
     totalColours: {
       pdf?: number;
       raster?: number;
+      svg?: number;
       combined: number;
     };
   };
@@ -48,6 +50,7 @@ export class PaletteExtractor {
   private converter: ColourSpaceConverter;
   // private pdfExtractor: PDFExtractor; // PDF extraction not used
   private rasterExtractor: RasterExtractor;
+  private svgExtractor: SVGExtractor;
 
   constructor(options: ExtractionOptions = {}) {
     this.options = {
@@ -73,6 +76,10 @@ export class PaletteExtractor {
       maxColours: this.options.maxColours,
       minPercentage: this.options.minAreaPct,
       ...this.options.rasterOptions
+    });
+    this.svgExtractor = new SVGExtractor({
+      maxColours: this.options.maxColours,
+      minPercentage: this.options.minAreaPct
     });
   }
 
@@ -106,6 +113,7 @@ export class PaletteExtractor {
     try {
       let pdfColours: PaletteColour[] = [];
       let rasterColours: PaletteColour[] = [];
+      let svgColours: PaletteColour[] = [];
 
       // Skip server-side PDF processing entirely - client handles everything
       if (fileValidation.type === 'pdf') {
@@ -114,12 +122,43 @@ export class PaletteExtractor {
         console.info('Skipping server-side PDF processing - relying on client-side extraction');
       }
 
+      // Extract from SVG files (fast, direct parsing)
+      if (fileValidation.type === 'svg') {
+        try {
+          progressLoader?.updateProgress('extracting', 30, 'Parsing SVG colors...');
+          const svgResult = await this.svgExtractor.extract(
+            fileBuffer,
+            fileValidation.format!
+          );
+
+          svgColours = svgResult.colours.map(color => ({
+            id: generateColourId(color.rgb, 'svg'),
+            rgb: color.rgb,
+            lab: this.converter.rgbToLab(color.rgb),
+            areaPct: color.percentage,
+            source: 'svg' as const,
+            metadata: {
+              pixels: color.pixels,
+              percentage: color.percentage
+            }
+          }));
+
+          sources.push('svg');
+
+          if (svgColours.length === 0) {
+            warnings.push('No significant colors found in SVG');
+          }
+        } catch (error) {
+          throw new Error(`SVG extraction failed: ${error.message}`);
+        }
+      }
+
       // Extract from raster images
       if (fileValidation.type === 'image') {
         try {
           progressLoader?.updateProgress('extracting', 40, 'Analyzing raster image colors...');
           const rasterResult = await this.rasterExtractor.extract(
-            fileBuffer, 
+            fileBuffer,
             fileValidation.format!
           );
 
@@ -147,11 +186,7 @@ export class PaletteExtractor {
 
       // Combine color sources
       progressLoader?.updateProgress('processing', 70, 'Combining and filtering colors...');
-      let palette = combineColourSources(
-        pdfColours, 
-        rasterColours, 
-        this.options.combineStrategy
-      );
+      let palette = [...pdfColours, ...svgColours, ...rasterColours];
 
       // Post-processing
       palette = this.converter.filterInsignificant(
@@ -189,6 +224,7 @@ export class PaletteExtractor {
           sources,
           totalColours: {
             pdf: pdfColours.length || undefined,
+            svg: svgColours.length || undefined,
             raster: rasterColours.length || undefined,
             combined: palette.length
           }
