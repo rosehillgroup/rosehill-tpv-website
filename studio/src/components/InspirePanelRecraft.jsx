@@ -250,6 +250,8 @@ export default function InspirePanelRecraft() {
     console.log('[TPV-STUDIO] Color clicked:', colorData);
     setSelectedColor(colorData);
     setColorEditorOpen(true);
+    // Close recipes display when editing - user must regenerate after edits
+    setShowFinalRecipes(false);
   };
 
   // Handle color change from ColorEditorPanel
@@ -473,13 +475,6 @@ export default function InspirePanelRecraft() {
                   </>
                 )}
               </div>
-            </div>
-          )}
-
-          {/* SVG Preview */}
-          {result.svg_url && (
-            <div className="svg-preview">
-              <img src={result.svg_url} alt="Generated design" className="design-preview" />
             </div>
           )}
 

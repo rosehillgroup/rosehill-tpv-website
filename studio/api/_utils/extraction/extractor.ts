@@ -189,9 +189,12 @@ export class PaletteExtractor {
       let palette = [...pdfColours, ...svgColours, ...rasterColours];
 
       // Post-processing
+      // Allow near-white and near-black colors to capture backgrounds
       palette = this.converter.filterInsignificant(
-        palette, 
-        this.options.minAreaPct
+        palette,
+        this.options.minAreaPct,
+        false, // excludeNearWhite: allow light backgrounds (L > 95)
+        false  // excludeNearBlack: allow dark backgrounds (L < 5)
       );
       
       palette = this.converter.sortByImportance(palette);
