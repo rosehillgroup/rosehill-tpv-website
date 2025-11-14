@@ -1,8 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createRequire } from 'module';
 import { SmartBlendSolver } from './_utils/colour/smartSolver.js';
 import { calculateBlendColor, type BlendComponent, type TPVColor } from './_utils/colour/blendColor.js';
 import { ColourSpaceConverter } from './_utils/extraction/utils.js';
-import tpvColours from './_utils/data/rosehill_tpv_21_colours.json' assert { type: 'json' };
+
+const require = createRequire(import.meta.url);
+const tpvColours = require('./_utils/data/rosehill_tpv_21_colours.json');
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
