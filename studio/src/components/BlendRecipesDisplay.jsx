@@ -277,12 +277,13 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
         .recipes-table {
           border: 1px solid #e0e0e0;
           border-radius: 6px;
-          overflow: hidden;
+          overflow-x: auto;
+          overflow-y: visible;
         }
 
         .table-header {
           display: grid;
-          grid-template-columns: 120px 110px 90px 1fr 140px 50px;
+          grid-template-columns: 120px 110px 90px 1fr 140px 60px;
           background: #1a365d;
           color: white;
           font-weight: 600;
@@ -301,7 +302,7 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
 
         .recipe-row {
           display: grid;
-          grid-template-columns: 120px 110px 90px 1fr 140px 50px;
+          grid-template-columns: 120px 110px 90px 1fr 140px 60px;
           padding: 1.25rem 1.5rem;
           gap: 1.5rem;
           align-items: center;
@@ -422,24 +423,25 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
 
         /* Expand Button */
         .expand-button {
-          width: 28px;
-          height: 28px;
-          border: 1px solid #ddd;
+          width: 32px;
+          height: 32px;
+          border: 2px solid #ff6b35;
           background: white;
           border-radius: 4px;
           cursor: pointer;
-          font-size: 1.2rem;
+          font-size: 1.3rem;
           line-height: 1;
-          color: #666;
+          color: #ff6b35;
+          font-weight: bold;
           transition: all 0.2s;
           justify-self: center;
           align-self: center;
         }
 
         .expand-button:hover {
-          background: #f0f0f0;
-          border-color: #999;
-          color: #333;
+          background: #ff6b35;
+          border-color: #ff6b35;
+          color: white;
         }
 
         /* Alternative Recipes Section */
@@ -543,7 +545,7 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
         @media (max-width: 1024px) {
           .table-header,
           .recipe-row {
-            grid-template-columns: 100px 100px 80px 1fr 120px 40px;
+            grid-template-columns: 100px 100px 80px 1fr 120px 50px;
             gap: 1rem;
             font-size: 0.9rem;
             padding: 1rem 1.25rem;

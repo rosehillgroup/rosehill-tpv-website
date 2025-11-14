@@ -61,27 +61,22 @@ export default function SVGPreview({
         const targetRgb = hexToRgb(targetHex);
         console.log('[SVGPreview] Target color:', targetHex, targetRgb);
 
-        // Create mask (white where color matches, transparent elsewhere)
-        const maskData = ctx.createImageData(canvas.width, canvas.height);
+        // First pass: identify all matching pixels
+        const matches = new Set();
         let matchCount = 0;
 
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
-          const a = data[i + 3];
+        for (let y = 0; y < canvas.height; y++) {
+          for (let x = 0; x < canvas.width; x++) {
+            const i = (y * canvas.width + x) * 4;
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const a = data[i + 3];
 
-          // Check if pixel matches target color (with small tolerance)
-          if (a > 0 && colorMatches(r, g, b, targetRgb)) {
-            // Orange glow pixel for mask
-            maskData.data[i] = 255;
-            maskData.data[i + 1] = 107;
-            maskData.data[i + 2] = 53;
-            maskData.data[i + 3] = 200; // Semi-transparent orange
-            matchCount++;
-          } else {
-            // Transparent
-            maskData.data[i + 3] = 0;
+            if (a > 0 && colorMatches(r, g, b, targetRgb)) {
+              matches.add(`${x},${y}`);
+              matchCount++;
+            }
           }
         }
 
@@ -91,6 +86,33 @@ export default function SVGPreview({
           console.warn('[SVGPreview] No pixels matched the target color');
           setHighlightMask(null);
           return;
+        }
+
+        // Second pass: find edges and draw white outline
+        const maskData = ctx.createImageData(canvas.width, canvas.height);
+
+        for (let y = 0; y < canvas.height; y++) {
+          for (let x = 0; x < canvas.width; x++) {
+            const i = (y * canvas.width + x) * 4;
+            const isMatch = matches.has(`${x},${y}`);
+
+            if (isMatch) {
+              // Check if this pixel is on the edge (has non-matching neighbors)
+              const isEdge =
+                !matches.has(`${x-1},${y}`) ||
+                !matches.has(`${x+1},${y}`) ||
+                !matches.has(`${x},${y-1}`) ||
+                !matches.has(`${x},${y+1}`);
+
+              if (isEdge) {
+                // Draw white outline pixel
+                maskData.data[i] = 255;     // R
+                maskData.data[i + 1] = 255; // G
+                maskData.data[i + 2] = 255; // B
+                maskData.data[i + 3] = 255; // A (fully opaque)
+              }
+            }
+          }
         }
 
         // Draw mask to canvas
@@ -236,12 +258,13 @@ export default function SVGPreview({
           height: 100%;
           pointer-events: none;
           border-radius: 4px;
+          filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
           animation: pulse 2s ease-in-out infinite;
         }
 
         @keyframes pulse {
           0%, 100% {
-            opacity: 0.7;
+            opacity: 0.8;
           }
           50% {
             opacity: 1;
