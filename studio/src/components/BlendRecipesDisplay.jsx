@@ -139,6 +139,21 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
                   {recipe.alternativeRecipes.map((alt, altIdx) => (
                     <div key={altIdx} className="alternative-row">
                       <div className="alt-label">Option {altIdx + 2}:</div>
+                      <div className="alt-swatches">
+                        <div className="swatch-pair-small">
+                          <div
+                            className="color-swatch-small original"
+                            style={{ backgroundColor: recipe.targetColor.hex }}
+                            title={`Image colour: ${recipe.targetColor.hex}`}
+                          />
+                          <span className="swatch-arrow-small">→</span>
+                          <div
+                            className="color-swatch-small blend"
+                            style={{ backgroundColor: alt.blendColor.hex }}
+                            title={`TPV blend: ${alt.blendColor.hex}`}
+                          />
+                        </div>
+                      </div>
                       <div className="alt-formula">
                         {alt.components.map((comp, compIdx) => (
                           <span key={compIdx} className="formula-component">
@@ -417,6 +432,8 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
           line-height: 1;
           color: #666;
           transition: all 0.2s;
+          justify-self: center;
+          align-self: center;
         }
 
         .expand-button:hover {
@@ -441,7 +458,7 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
 
         .alternative-row {
           display: grid;
-          grid-template-columns: 80px 1fr 140px;
+          grid-template-columns: 80px 90px 1fr 140px;
           gap: 1rem;
           padding: 0.5rem;
           margin-bottom: 0.5rem;
@@ -455,6 +472,41 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
           font-size: 0.85rem;
           color: #666;
           font-weight: 500;
+        }
+
+        .alt-swatches {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .swatch-pair-small {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .color-swatch-small {
+          width: 28px;
+          height: 28px;
+          border-radius: 4px;
+          border: 2px solid #ddd;
+          flex-shrink: 0;
+        }
+
+        .color-swatch-small.original {
+          border-color: #999;
+        }
+
+        .color-swatch-small.blend {
+          border-color: #ff6b35;
+        }
+
+        .swatch-arrow-small {
+          font-size: 1rem;
+          color: #ff6b35;
+          font-weight: bold;
+          margin: 0 2px;
         }
 
         .alt-formula {
