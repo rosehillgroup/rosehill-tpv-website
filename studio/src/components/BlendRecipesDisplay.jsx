@@ -275,7 +275,7 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
 
         .table-header {
           display: grid;
-          grid-template-columns: 120px 140px 100px 1fr 160px 50px;
+          grid-template-columns: 120px 110px 90px 1fr 140px 50px;
           background: #1a365d;
           color: white;
           font-weight: 600;
@@ -294,7 +294,7 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
 
         .recipe-row {
           display: grid;
-          grid-template-columns: 120px 140px 100px 1fr 160px 50px;
+          grid-template-columns: 120px 110px 90px 1fr 140px 50px;
           padding: 1.25rem 1.5rem;
           gap: 1.5rem;
           align-items: center;
@@ -482,7 +482,7 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
         @media (max-width: 1024px) {
           .table-header,
           .recipe-row {
-            grid-template-columns: 100px 120px 90px 1fr 140px 45px;
+            grid-template-columns: 100px 100px 80px 1fr 120px 40px;
             gap: 1rem;
             font-size: 0.9rem;
             padding: 1rem 1.25rem;

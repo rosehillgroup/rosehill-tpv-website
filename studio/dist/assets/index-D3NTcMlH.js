@@ -180,7 +180,7 @@ ${g}`}class fe extends Error{constructor({message:e,code:r,cause:n,name:i}){var 
 
         .table-header {
           display: grid;
-          grid-template-columns: 120px 140px 100px 1fr 160px 50px;
+          grid-template-columns: 120px 110px 90px 1fr 140px 50px;
           background: #1a365d;
           color: white;
           font-weight: 600;
@@ -199,7 +199,7 @@ ${g}`}class fe extends Error{constructor({message:e,code:r,cause:n,name:i}){var 
 
         .recipe-row {
           display: grid;
-          grid-template-columns: 120px 140px 100px 1fr 160px 50px;
+          grid-template-columns: 120px 110px 90px 1fr 140px 50px;
           padding: 1.25rem 1.5rem;
           gap: 1.5rem;
           align-items: center;
@@ -387,7 +387,7 @@ ${g}`}class fe extends Error{constructor({message:e,code:r,cause:n,name:i}){var 
         @media (max-width: 1024px) {
           .table-header,
           .recipe-row {
-            grid-template-columns: 100px 120px 90px 1fr 140px 45px;
+            grid-template-columns: 100px 100px 80px 1fr 120px 40px;
             gap: 1rem;
             font-size: 0.9rem;
             padding: 1rem 1.25rem;
@@ -1150,4 +1150,4 @@ ${g}`}class fe extends Error{constructor({message:e,code:r,cause:n,name:i}){var 
           font-size: 0.9rem;
         }
       `})]})}function NM(){const[t,e]=I.useState(""),[r,n]=I.useState(""),[i,s]=I.useState(""),[o,a]=I.useState(!1),l=async u=>{u.preventDefault(),s(""),a(!0);try{await Zu.signIn(t,r)}catch(c){s(c.message||"Sign in failed")}finally{a(!1)}};return b.jsxs("div",{className:"tpv-studio",children:[b.jsxs("div",{className:"tpv-studio__header",children:[b.jsx("h1",{children:"TPV Studio"}),b.jsx("p",{children:"AI-powered vector designs for playground surfaces"})]}),b.jsx("div",{className:"tpv-studio__container",children:b.jsxs("div",{className:"tpv-studio__card",style:{maxWidth:"400px",margin:"2rem auto"},children:[b.jsx("h2",{style:{marginBottom:"1rem"},children:"Sign In"}),b.jsx("p",{style:{marginBottom:"1.5rem",color:"#718096"},children:"Please sign in with your @rosehill.group account"}),i&&b.jsx("div",{style:{padding:"0.75rem",marginBottom:"1rem",backgroundColor:"#FEE",color:"#C00",borderRadius:"4px",fontSize:"0.875rem"},children:i}),b.jsxs("form",{onSubmit:l,children:[b.jsxs("div",{style:{marginBottom:"1rem"},children:[b.jsx("label",{style:{display:"block",marginBottom:"0.5rem",fontWeight:"500"},children:"Email"}),b.jsx("input",{type:"email",value:t,onChange:u=>e(u.target.value),placeholder:"you@rosehill.group",required:!0,style:{width:"100%",padding:"0.75rem",border:"1px solid #e2e8f0",borderRadius:"4px",fontSize:"1rem"}})]}),b.jsxs("div",{style:{marginBottom:"1.5rem"},children:[b.jsx("label",{style:{display:"block",marginBottom:"0.5rem",fontWeight:"500"},children:"Password"}),b.jsx("input",{type:"password",value:r,onChange:u=>n(u.target.value),required:!0,style:{width:"100%",padding:"0.75rem",border:"1px solid #e2e8f0",borderRadius:"4px",fontSize:"1rem"}})]}),b.jsx("button",{type:"submit",disabled:o,style:{width:"100%",padding:"0.75rem",backgroundColor:"#ff6b35",color:"white",border:"none",borderRadius:"4px",fontSize:"1rem",fontWeight:"600",cursor:o?"not-allowed":"pointer",opacity:o?.6:1},children:o?"Signing in...":"Sign In"})]}),b.jsx("p",{style:{marginTop:"1.5rem",fontSize:"0.875rem",color:"#718096",textAlign:"center"},children:"Don't have an account? Contact your administrator."})]})})]})}function IM(){const[t,e]=I.useState(null),[r,n]=I.useState(!0);return I.useEffect(()=>{Zu.getSession().then(s=>{e((s==null?void 0:s.user)||null),n(!1)});const{data:i}=Zu.onAuthStateChange((s,o)=>{e((o==null?void 0:o.user)||null)});return()=>i==null?void 0:i.unsubscribe()},[]),r?b.jsx("div",{className:"tpv-studio",children:b.jsx("div",{className:"tpv-studio__container",children:b.jsxs("div",{className:"tpv-studio__empty",children:[b.jsx("div",{className:"tpv-studio__spinner"}),b.jsx("p",{children:"Loading..."})]})})}):t?b.jsxs("div",{className:"tpv-studio",children:[b.jsxs("header",{className:"tpv-studio__header",children:[b.jsx("h1",{children:"TPV Studio - Vector AI"}),b.jsx("p",{children:"AI-powered vector designs for playground surfaces"})]}),b.jsx("main",{className:"tpv-studio__container",children:b.jsx(AM,{})})]}):b.jsx(NM,{})}Kl.createRoot(document.getElementById("root")).render(b.jsx(v.StrictMode,{children:b.jsx(IM,{})}))});export default LM();
-//# sourceMappingURL=index-fLg0cZui.js.map
+//# sourceMappingURL=index-D3NTcMlH.js.map
