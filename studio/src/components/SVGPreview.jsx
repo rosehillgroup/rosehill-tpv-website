@@ -10,7 +10,6 @@ export default function SVGPreview({
   recipes
 }) {
   const [viewMode, setViewMode] = useState('side-by-side'); // 'side-by-side' | 'original' | 'blend'
-  const [showColorMap, setShowColorMap] = useState(true);
 
   if (!originalSvgUrl) {
     return null;
@@ -30,69 +29,28 @@ export default function SVGPreview({
       <div className="preview-header">
         <h3>Design Preview</h3>
 
-        <div className="preview-controls">
-          <div className="view-mode-buttons">
-            <button
-              className={`mode-button ${viewMode === 'side-by-side' ? 'active' : ''}`}
-              onClick={() => setViewMode('side-by-side')}
-            >
-              Side by Side
-            </button>
-            <button
-              className={`mode-button ${viewMode === 'original' ? 'active' : ''}`}
-              onClick={() => setViewMode('original')}
-            >
-              Original
-            </button>
-            <button
-              className={`mode-button ${viewMode === 'blend' ? 'active' : ''}`}
-              onClick={() => setViewMode('blend')}
-              disabled={!blendSvgUrl}
-            >
-              TPV Blend
-            </button>
-          </div>
-
+        <div className="view-mode-buttons">
           <button
-            className="toggle-map-button"
-            onClick={() => setShowColorMap(!showColorMap)}
+            className={`mode-button ${viewMode === 'side-by-side' ? 'active' : ''}`}
+            onClick={() => setViewMode('side-by-side')}
           >
-            {showColorMap ? 'Hide' : 'Show'} Color Map
+            Side by Side
+          </button>
+          <button
+            className={`mode-button ${viewMode === 'original' ? 'active' : ''}`}
+            onClick={() => setViewMode('original')}
+          >
+            Original
+          </button>
+          <button
+            className={`mode-button ${viewMode === 'blend' ? 'active' : ''}`}
+            onClick={() => setViewMode('blend')}
+            disabled={!blendSvgUrl}
+          >
+            TPV Blend
           </button>
         </div>
       </div>
-
-      {/* Color Mapping Legend */}
-      {showColorMap && colorMappingArray.length > 0 && (
-        <div className="color-mapping-legend">
-          <h4>Color Mapping</h4>
-          <div className="mapping-grid">
-            {colorMappingArray.map((mapping, idx) => (
-              <div key={idx} className="mapping-item">
-                <div className="mapping-swatches">
-                  <div
-                    className="swatch original"
-                    style={{ backgroundColor: mapping.original }}
-                    title={`Original: ${mapping.original}`}
-                  />
-                  <span className="arrow">→</span>
-                  <div
-                    className="swatch blend"
-                    style={{ backgroundColor: mapping.blend }}
-                    title={`Blend: ${mapping.blend}`}
-                  />
-                </div>
-                <div className="mapping-info">
-                  <span className="coverage">{mapping.coverage.toFixed(1)}% coverage</span>
-                  <span className={`quality-indicator ${mapping.quality.toLowerCase()}`}>
-                    {mapping.quality} (ΔE {mapping.deltaE.toFixed(2)})
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* SVG Display */}
       <div className={`svg-display-container ${viewMode}`}>
@@ -146,6 +104,38 @@ export default function SVGPreview({
         )}
       </div>
 
+      {/* Color Mapping Legend */}
+      {colorMappingArray.length > 0 && (
+        <div className="color-mapping-legend">
+          <h4>Color Mapping</h4>
+          <div className="mapping-grid">
+            {colorMappingArray.map((mapping, idx) => (
+              <div key={idx} className="mapping-item">
+                <div className="mapping-swatches">
+                  <div
+                    className="swatch original"
+                    style={{ backgroundColor: mapping.original }}
+                    title={`Original: ${mapping.original}`}
+                  />
+                  <span className="arrow">→</span>
+                  <div
+                    className="swatch blend"
+                    style={{ backgroundColor: mapping.blend }}
+                    title={`Blend: ${mapping.blend}`}
+                  />
+                </div>
+                <div className="mapping-info">
+                  <span className="coverage">{mapping.coverage.toFixed(1)}% coverage</span>
+                  <span className={`quality-indicator ${mapping.quality.toLowerCase()}`}>
+                    {mapping.quality} (ΔE {mapping.deltaE.toFixed(2)})
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <style jsx>{`
         .svg-preview {
           background: #fff;
@@ -168,13 +158,6 @@ export default function SVGPreview({
           margin: 0;
           color: #1a365d;
           font-size: 1.5rem;
-        }
-
-        .preview-controls {
-          display: flex;
-          gap: 1rem;
-          align-items: center;
-          flex-wrap: wrap;
         }
 
         .view-mode-buttons {
@@ -211,30 +194,13 @@ export default function SVGPreview({
           cursor: not-allowed;
         }
 
-        .toggle-map-button {
-          padding: 0.5rem 1rem;
-          border: 1px solid #ddd;
-          background: white;
-          border-radius: 4px;
-          cursor: pointer;
-          font-weight: 500;
-          color: #666;
-          transition: all 0.2s;
-        }
-
-        .toggle-map-button:hover {
-          background: #f9f9f9;
-          border-color: #999;
-          color: #333;
-        }
-
         /* Color Mapping Legend */
         .color-mapping-legend {
           background: #f9f9f9;
           border: 1px solid #e0e0e0;
           border-radius: 6px;
           padding: 1rem;
-          margin-bottom: 1.5rem;
+          margin-top: 1.5rem;
         }
 
         .color-mapping-legend h4 {
@@ -394,21 +360,12 @@ export default function SVGPreview({
             align-items: flex-start;
           }
 
-          .preview-controls {
-            width: 100%;
-            flex-direction: column;
-          }
-
           .view-mode-buttons {
             width: 100%;
           }
 
           .mode-button {
             flex: 1;
-          }
-
-          .toggle-map-button {
-            width: 100%;
           }
 
           .svg-display-container.side-by-side {
