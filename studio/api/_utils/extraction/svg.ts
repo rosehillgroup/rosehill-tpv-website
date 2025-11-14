@@ -54,16 +54,16 @@ export class SVGExtractor {
         ? dimensions.width * dimensions.height
         : 1000000; // Default if no dimensions found
 
-      // Extract all colors from SVG elements
+      // Extract all colors from SVG elements (area-weighted)
       const colorCounts = this.extractColors(svgText);
 
-      // Calculate percentages
-      const totalCount = Array.from(colorCounts.values()).reduce((sum, count) => sum + count, 0);
+      // Calculate percentages from area-weighted scores
+      const totalWeight = Array.from(colorCounts.values()).reduce((sum, weight) => sum + weight, 0);
 
       const colours: SVGColor[] = Array.from(colorCounts.entries())
-        .map(([hexColor, count]) => {
+        .map(([hexColor, weight]) => {
           const rgb = this.hexToRgb(hexColor);
-          const percentage = (count / totalCount) * 100;
+          const percentage = (weight / totalWeight) * 100;
           return {
             rgb,
             percentage,
@@ -121,12 +121,53 @@ export class SVGExtractor {
 
   /**
    * Extract all colors from SVG elements
-   * Returns a map of hex colors to their occurrence counts
+   * Returns a map of hex colors to their area-weighted scores
+   * Large elements (like background rects) get higher weight based on pixel area
    */
   private extractColors(svgText: string): Map<string, number> {
     const colorCounts = new Map<string, number>();
 
-    // Extract fill colors
+    // Parse SVG dimensions for area calculations
+    const dimensions = this.parseSVGDimensions(svgText);
+    const svgWidth = dimensions.width || 1000;
+    const svgHeight = dimensions.height || 1000;
+    const svgArea = svgWidth * svgHeight;
+
+    // Extract rect elements with area-based weighting for backgrounds
+    const rectMatches = svgText.matchAll(/<rect[^>]*>/gi);
+    for (const match of rectMatches) {
+      const rectTag = match[0];
+
+      // Extract fill color
+      const fillMatch = rectTag.match(/fill=["']([^"']+)["']/i);
+      const color = fillMatch ? this.normalizeColor(fillMatch[1]) : null;
+
+      if (color) {
+        // Calculate rect area
+        const widthMatch = rectTag.match(/width=["']([^"']+)["']/i);
+        const heightMatch = rectTag.match(/height=["']([^"']+)["']/i);
+
+        if (widthMatch && heightMatch) {
+          const width = parseFloat(widthMatch[1]);
+          const height = parseFloat(heightMatch[1]);
+
+          if (!isNaN(width) && !isNaN(height)) {
+            // Weight by percentage of total SVG area
+            const rectArea = width * height;
+            const areaWeight = (rectArea / svgArea) * 100;
+
+            // Add area-weighted score (min 1.0 to ensure it counts)
+            colorCounts.set(color, (colorCounts.get(color) || 0) + Math.max(1.0, areaWeight));
+            continue; // Skip adding this as regular fill below
+          }
+        }
+
+        // Rect without dimensions, use default weight
+        colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+      }
+    }
+
+    // Extract fill colors from non-rect elements
     const fillMatches = svgText.matchAll(/fill=["']([^"']+)["']/gi);
     for (const match of fillMatches) {
       const color = this.normalizeColor(match[1]);

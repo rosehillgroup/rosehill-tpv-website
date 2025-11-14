@@ -1,5 +1,5 @@
-// TPV Studio - Color Editor Panel
-// Simple color picker for visual editing
+// TPV Studio - Colour Editor Panel
+// Simple colour picker for visual editing
 
 import { useState, useEffect } from 'react';
 import { ChromePicker } from 'react-color';
@@ -46,12 +46,12 @@ export default function ColorEditorPanel({
   return (
     <div className="color-editor-panel">
       <div className="editor-header">
-        <h3>Edit Color</h3>
+        <h3>Edit Colour</h3>
         <button onClick={onClose} className="close-button">×</button>
       </div>
 
       <div className="editor-content">
-        {/* Color Info */}
+        {/* Colour Info */}
         <div className="color-info-section">
           <div className="color-display">
             <div className="swatch-pair">
@@ -59,7 +59,7 @@ export default function ColorEditorPanel({
                 <div
                   className="swatch original"
                   style={{ backgroundColor: color.originalHex || color.hex }}
-                  title="Original color"
+                  title="Original colour"
                 />
                 <span className="swatch-label">Original</span>
               </div>
@@ -68,7 +68,7 @@ export default function ColorEditorPanel({
                 <div
                   className="swatch current"
                   style={{ backgroundColor: selectedHex }}
-                  title="Current color"
+                  title="Current colour"
                 />
                 <span className="swatch-label">Current</span>
               </div>
@@ -87,9 +87,9 @@ export default function ColorEditorPanel({
           </div>
         </div>
 
-        {/* Color Picker */}
+        {/* Colour Picker */}
         <div className="picker-section">
-          <h4>Choose Color</h4>
+          <h4>Choose Colour</h4>
           <ChromePicker
             color={selectedHex}
             onChange={handleColorChange}

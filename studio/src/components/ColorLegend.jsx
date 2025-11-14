@@ -1,5 +1,5 @@
-// TPV Studio - Color Legend Component
-// Displays clickable color swatches for the TPV blend SVG
+// TPV Studio - Colour Legend Component
+// Displays clickable colour swatches for the TPV blend SVG
 
 export default function ColorLegend({
   recipes,
@@ -12,7 +12,7 @@ export default function ColorLegend({
   return (
     <div className="color-legend">
       <div className="legend-header">
-        <span className="legend-title">Colors</span>
+        <span className="legend-title">Colours</span>
         {onColorClick && <span className="edit-hint">(click to edit)</span>}
       </div>
       <div className="legend-colors">

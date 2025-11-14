@@ -465,7 +465,7 @@ export default function InspirePanelRecraft() {
                 {arMapping.layout.mode === 'framing' && (
                   <>
                     <span>•</span>
-                    <span className="layout-note">Panel centered with base color surround</span>
+                    <span className="layout-note">Panel centred with base colour surround</span>
                   </>
                 )}
                 {arMapping.layout.mode === 'tiling' && (

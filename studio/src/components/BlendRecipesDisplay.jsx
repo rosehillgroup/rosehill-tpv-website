@@ -1,5 +1,5 @@
 // TPV Studio - Blend Recipes Display Component
-// Shows extracted colors and TPV blend recipes in compact format
+// Shows extracted colours and TPV blend recipes in compact format
 
 import { useState } from 'react';
 
@@ -9,7 +9,7 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
   if (!recipes || recipes.length === 0) {
     return (
       <div className="blend-recipes-empty">
-        <p>No colors extracted from design.</p>
+        <p>No colours extracted from design.</p>
         <button onClick={onClose} className="close-button">Close</button>
       </div>
     );
@@ -50,7 +50,7 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
       {/* Compact Recipe Table */}
       <div className="recipes-table">
         <div className="table-header">
-          <div className="col-swatch">Color</div>
+          <div className="col-swatch">Colour</div>
           <div className="col-hex">Hex</div>
           <div className="col-coverage">Coverage</div>
           <div className="col-blend">Blend Formula</div>
@@ -66,19 +66,26 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
             <div key={idx} className="table-row">
               {/* Main Recipe Row */}
               <div className="recipe-row">
-                {/* Original Color Swatch */}
+                {/* Color Swatches */}
                 <div className="col-swatch">
                   <div className="swatch-pair">
-                    <div
-                      className="color-swatch original"
-                      style={{ backgroundColor: recipe.targetColor.hex }}
-                      title={`Original: ${recipe.targetColor.hex}`}
-                    />
-                    <div
-                      className="color-swatch blend"
-                      style={{ backgroundColor: recipe.blendColor.hex }}
-                      title={`Blend: ${recipe.blendColor.hex}`}
-                    />
+                    <div className="swatch-group">
+                      <div
+                        className="color-swatch original"
+                        style={{ backgroundColor: recipe.targetColor.hex }}
+                        title={`Image colour: ${recipe.targetColor.hex}`}
+                      />
+                      <span className="swatch-label">Image</span>
+                    </div>
+                    <span className="swatch-arrow">→</span>
+                    <div className="swatch-group">
+                      <div
+                        className="color-swatch blend"
+                        style={{ backgroundColor: recipe.blendColor.hex }}
+                        title={`TPV blend: ${recipe.blendColor.hex}`}
+                      />
+                      <span className="swatch-label">TPV</span>
+                    </div>
                   </div>
                 </div>
 
@@ -299,9 +306,17 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
           background: #f9f9f9;
         }
 
-        /* Swatch Pair (Original + Blend) */
+        /* Swatch Pair (Image + TPV Blend) */
         .swatch-pair {
           display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .swatch-group {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
           gap: 4px;
         }
 
@@ -319,6 +334,21 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
 
         .color-swatch.blend {
           border-color: #ff6b35;
+        }
+
+        .swatch-label {
+          font-size: 0.7rem;
+          color: #666;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .swatch-arrow {
+          font-size: 1.2rem;
+          color: #ff6b35;
+          font-weight: bold;
+          margin: 0 2px;
         }
 
         /* Columns */
