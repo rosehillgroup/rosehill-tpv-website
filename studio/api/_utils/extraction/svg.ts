@@ -164,15 +164,31 @@ export class SVGExtractor {
         const heightMatch = rectTag.match(/height=["']([^"']+)["']/i);
 
         if (widthMatch && heightMatch) {
-          const width = parseFloat(widthMatch[1]);
-          const height = parseFloat(heightMatch[1]);
+          const widthStr = widthMatch[1];
+          const heightStr = heightMatch[1];
+
+          // Parse dimensions (handle percentages)
+          let width: number;
+          let height: number;
+
+          if (widthStr.includes('%')) {
+            width = (parseFloat(widthStr) / 100) * svgWidth;
+          } else {
+            width = parseFloat(widthStr);
+          }
+
+          if (heightStr.includes('%')) {
+            height = (parseFloat(heightStr) / 100) * svgHeight;
+          } else {
+            height = parseFloat(heightStr);
+          }
 
           if (!isNaN(width) && !isNaN(height)) {
             // Weight by percentage of total SVG area
             const rectArea = width * height;
             const areaWeight = (rectArea / svgArea) * 100;
 
-            console.info(`[SVG] Rect ${color}: ${width}x${height} = ${rectArea} (${areaWeight.toFixed(1)}% of total)`);
+            console.info(`[SVG] Rect ${color}: ${widthStr}x${heightStr} = ${width.toFixed(0)}x${height.toFixed(0)} = ${rectArea.toFixed(0)} (${areaWeight.toFixed(1)}% of total)`);
 
             // Add area-weighted score (min 1.0 to ensure it counts)
             colorCounts.set(color, (colorCounts.get(color) || 0) + Math.max(1.0, areaWeight));
