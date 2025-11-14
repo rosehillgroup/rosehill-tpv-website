@@ -105,10 +105,10 @@ export default function SVGPreview({
                 !matches.has(`${x},${y+1}`);
 
               if (isEdge) {
-                // Draw white outline pixel
+                // Draw bright pink/purple outline pixel
                 maskData.data[i] = 255;     // R
-                maskData.data[i + 1] = 255; // G
-                maskData.data[i + 2] = 255; // B
+                maskData.data[i + 1] = 0;   // G
+                maskData.data[i + 2] = 255; // B (magenta/bright pink)
                 maskData.data[i + 3] = 255; // A (fully opaque)
               }
             }
@@ -258,7 +258,7 @@ export default function SVGPreview({
           height: 100%;
           pointer-events: none;
           border-radius: 4px;
-          filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 4px rgba(255, 255, 255, 0.8));
+          filter: drop-shadow(0 0 3px rgba(255, 0, 255, 0.8)) drop-shadow(0 0 1px rgba(0, 0, 0, 0.6));
           animation: pulse 2s ease-in-out infinite;
         }
 
