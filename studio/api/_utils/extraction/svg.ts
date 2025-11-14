@@ -71,8 +71,8 @@ export class SVGExtractor {
           };
         })
         .filter(color => color.percentage >= this.options.minPercentage)
-        .sort((a, b) => b.percentage - a.percentage)
-        .slice(0, this.options.maxColours);
+        .sort((a, b) => b.percentage - a.percentage);
+        // DON'T truncate yet - need to check coverage first!
 
       // Check if we should add white as background
       // If total coverage is < 80%, assume transparent background is white
@@ -90,6 +90,9 @@ export class SVGExtractor {
         // Re-sort after adding white
         colours.sort((a, b) => b.percentage - a.percentage);
       }
+
+      // NOW truncate to maxColours (after potentially adding white)
+      colours = colours.slice(0, this.options.maxColours);
 
       const elapsed = Date.now() - startTime;
       console.info(`[SVG] Extracted ${colours.length} colors in ${elapsed}ms`);
