@@ -244,24 +244,42 @@ export class RasterExtractor {
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
         console.info(`K-means attempt ${attempt + 1}/${MAX_RETRIES} with k=${actualK}`);
-        
+
         const labData = sampledLab.map(lab => [lab.L, lab.a, lab.b]);
-        
-        const result = kmeans(labData, actualK, {
-          maxIterations: this.options.iterations,
-          tolerance: 1.0,
-          seed: Date.now() + attempt * 1000 // Different seed per attempt
-        });
-        
-        if (!result || result.length === 0) {
+
+        // Use kmeans-js class-based API
+        const km = new kmeans({ K: actualK });
+        km.cluster(labData);
+
+        let iterations = 0;
+        const maxIterations = this.options.iterations || 20;
+
+        while (km.step() && iterations < maxIterations) {
+          km.findClosestCentroids();
+          km.moveCentroids();
+
+          if (km.hasConverged()) {
+            console.info(`K-means converged in ${iterations} iterations`);
+            break;
+          }
+          iterations++;
+        }
+
+        if (!km.centroids || km.centroids.length === 0) {
           throw new Error(`K-means returned empty result on attempt ${attempt + 1}`);
         }
-        
-        console.info(`K-means attempt ${attempt + 1}: success with ${result.length} clusters`);
-        
+
+        console.info(`K-means attempt ${attempt + 1}: success with ${km.centroids.length} clusters in ${iterations} iterations`);
+
+        // Convert kmeans-js output to expected format
+        const result = km.centroids.map((centroid, idx) => ({
+          centroid: centroid,
+          cluster: km.clusters[idx] || []
+        }));
+
         // Convert Lab centroids back to RGB and map to full dataset
         return this.convertLabClustersToRGB(result, pixels, labPixels);
-        
+
       } catch (error) {
         console.warn(`K-means attempt ${attempt + 1} failed:`, error.message);
         if (attempt === MAX_RETRIES - 1) {
