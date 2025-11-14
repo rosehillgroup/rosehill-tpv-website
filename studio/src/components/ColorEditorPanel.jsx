@@ -13,7 +13,7 @@ export default function ColorEditorPanel({
   onClose
 }) {
   const [selectedHex, setSelectedHex] = useState(color?.hex || '#000000');
-  const [recipes, setRecipes] = useState(currentRecipe ? [currentRecipe] : []);
+  const [recipes, setRecipes] = useState([]);
   const [selectedRecipeIndex, setSelectedRecipeIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -55,6 +55,13 @@ export default function ColorEditorPanel({
       setLoading(false);
     }
   }, [onRecipeChange]);
+
+  // Fetch recipes immediately when panel opens
+  useEffect(() => {
+    if (color?.hex) {
+      fetchRecipes(color.hex);
+    }
+  }, [color?.hex, fetchRecipes]);
 
   // Handle color change with debouncing
   const handleColorChange = (colorResult) => {
