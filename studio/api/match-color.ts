@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { SmartBlendSolver } from './_utils/colour/smartSolver';
-import { calculateBlendColor, type BlendComponent, type TPVColor } from './_utils/colour/blendColor';
-import { ColourSpaceConverter } from './_utils/extraction/utils';
+import { SmartBlendSolver } from './_utils/colour/smartSolver.js';
+import { calculateBlendColor, type BlendComponent, type TPVColor } from './_utils/colour/blendColor.js';
+import { ColourSpaceConverter } from './_utils/extraction/utils.js';
 import tpvColours from './_utils/data/rosehill_tpv_21_colours.json';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -110,6 +110,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const solveTime = Date.now() - startTime;
 
+    if (recipes.length === 0) {
+      console.error('[MATCH-COLOR] No recipes found for color:', hex);
+      return res.status(404).json({
+        success: false,
+        error: 'No matching recipes found for this color'
+      });
+    }
+
     console.log(`[MATCH-COLOR] Completed in ${solveTime}ms, best ΔE: ${recipes[0].deltaE.toFixed(2)}`);
 
     return res.status(200).json({
@@ -128,9 +136,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (err) {
     console.error('[MATCH-COLOR] Error:', err);
+    const errorMessage = err instanceof Error ? err.message : 'Internal server error';
     return res.status(500).json({
       success: false,
-      error: err.message || 'Internal server error'
+      error: errorMessage,
+      details: err instanceof Error ? err.stack : String(err)
     });
   }
 }
