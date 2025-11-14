@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { apiClient } from '../lib/api/client.js';
 import BlendRecipesDisplay from './BlendRecipesDisplay.jsx';
 import SVGPreview from './SVGPreview.jsx';
+import ColorEditorPanel from './ColorEditorPanel.jsx';
 import { buildColorMapping } from '../utils/colorMapping.js';
 import { recolorSVG } from '../utils/svgRecolor.js';
 import { mapDimensionsToRecraft, getLayoutDescription, needsLayoutWarning } from '../utils/aspectRatioMapping.js';
@@ -34,6 +35,11 @@ export default function InspirePanelRecraft() {
   const [generatingBlends, setGeneratingBlends] = useState(false);
   const [blendSvgUrl, setBlendSvgUrl] = useState(null);
   const [colorMapping, setColorMapping] = useState(null);
+
+  // Color editor state
+  const [colorEditorOpen, setColorEditorOpen] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [editedColors, setEditedColors] = useState(new Map()); // originalHex -> {newHex, recipe}
 
   // Handle form submission
   const handleGenerate = async () => {
@@ -127,6 +133,9 @@ export default function InspirePanelRecraft() {
     setBlendSvgUrl(null);
     setColorMapping(null);
     setArMapping(null);
+    setColorEditorOpen(false);
+    setSelectedColor(null);
+    setEditedColors(new Map());
   };
 
   // Download SVG
@@ -197,6 +206,87 @@ export default function InspirePanelRecraft() {
       setError(err.message);
     } finally {
       setGeneratingBlends(false);
+    }
+  };
+
+  // Handle color click from SVGPreview
+  const handleColorClick = (colorData) => {
+    console.log('[TPV-STUDIO] Color clicked:', colorData);
+    setSelectedColor(colorData);
+    setColorEditorOpen(true);
+  };
+
+  // Handle color change from ColorEditorPanel
+  const handleColorChange = async (newHex) => {
+    if (!selectedColor) return;
+
+    console.log('[TPV-STUDIO] Color changed:', selectedColor.hex, '->', newHex);
+
+    // Update edited colors map
+    const updated = new Map(editedColors);
+    const existing = updated.get(selectedColor.originalHex) || {};
+    updated.set(selectedColor.originalHex, {
+      ...existing,
+      newHex
+    });
+    setEditedColors(updated);
+
+    // Update selected color
+    setSelectedColor({
+      ...selectedColor,
+      hex: newHex
+    });
+
+    // Regenerate blend SVG with updated colors
+    await regenerateBlendSVG();
+  };
+
+  // Handle recipe change from ColorEditorPanel
+  const handleRecipeChange = async (newRecipe) => {
+    if (!selectedColor) return;
+
+    console.log('[TPV-STUDIO] Recipe changed:', newRecipe);
+
+    // Update edited colors map
+    const updated = new Map(editedColors);
+    const existing = updated.get(selectedColor.originalHex) || {};
+    updated.set(selectedColor.originalHex, {
+      ...existing,
+      recipe: newRecipe
+    });
+    setEditedColors(updated);
+
+    // Regenerate blend SVG with new recipe
+    await regenerateBlendSVG();
+  };
+
+  // Regenerate blend SVG with edited colors
+  const regenerateBlendSVG = async () => {
+    if (!result?.svg_url || !colorMapping) return;
+
+    try {
+      // Build updated color mapping with edits
+      const updatedMapping = new Map(colorMapping);
+
+      editedColors.forEach((edit, originalHex) => {
+        if (edit.recipe) {
+          updatedMapping.set(originalHex, {
+            blendHex: edit.recipe.blendColor.hex,
+            recipeId: edit.recipe.id,
+            deltaE: edit.recipe.deltaE,
+            quality: edit.recipe.quality,
+            components: edit.recipe.components
+          });
+        }
+      });
+
+      // Recolor SVG with updated mapping
+      const { dataUrl, stats } = await recolorSVG(result.svg_url, updatedMapping);
+      setBlendSvgUrl(dataUrl);
+      setColorMapping(updatedMapping);
+      console.log('[TPV-STUDIO] Blend SVG regenerated with edits:', stats);
+    } catch (err) {
+      console.error('[TPV-STUDIO] Failed to regenerate blend SVG:', err);
     }
   };
 
@@ -348,6 +438,7 @@ export default function InspirePanelRecraft() {
           blendSvgUrl={blendSvgUrl}
           colorMapping={colorMapping}
           recipes={blendRecipes}
+          onColorClick={handleColorClick}
         />
       )}
 
@@ -359,6 +450,20 @@ export default function InspirePanelRecraft() {
             setBlendRecipes(null);
             setBlendSvgUrl(null);
             setColorMapping(null);
+          }}
+        />
+      )}
+
+      {/* Color Editor Panel */}
+      {colorEditorOpen && selectedColor && (
+        <ColorEditorPanel
+          color={selectedColor}
+          currentRecipe={selectedColor.recipe}
+          onRecipeChange={handleRecipeChange}
+          onColorChange={handleColorChange}
+          onClose={() => {
+            setColorEditorOpen(false);
+            setSelectedColor(null);
           }}
         />
       )}

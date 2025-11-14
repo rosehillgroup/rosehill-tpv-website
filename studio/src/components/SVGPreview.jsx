@@ -7,7 +7,8 @@ export default function SVGPreview({
   originalSvgUrl,
   blendSvgUrl,
   colorMapping,
-  recipes
+  recipes,
+  onColorClick // (colorData) => void - callback when user clicks a color
 }) {
   const [viewMode, setViewMode] = useState('side-by-side'); // 'side-by-side' | 'original' | 'blend'
 
@@ -107,31 +108,51 @@ export default function SVGPreview({
       {/* Color Mapping Legend */}
       {colorMappingArray.length > 0 && (
         <div className="color-mapping-legend">
-          <h4>Color Mapping</h4>
+          <h4>Color Mapping {onColorClick && <span className="edit-hint">(click to edit)</span>}</h4>
           <div className="mapping-grid">
-            {colorMappingArray.map((mapping, idx) => (
-              <div key={idx} className="mapping-item">
-                <div className="mapping-swatches">
-                  <div
-                    className="swatch original"
-                    style={{ backgroundColor: mapping.original }}
-                    title={`Original: ${mapping.original}`}
-                  />
-                  <span className="arrow">→</span>
-                  <div
-                    className="swatch blend"
-                    style={{ backgroundColor: mapping.blend }}
-                    title={`Blend: ${mapping.blend}`}
-                  />
+            {colorMappingArray.map((mapping, idx) => {
+              const recipe = recipes[idx];
+              return (
+                <div
+                  key={idx}
+                  className={`mapping-item ${onColorClick ? 'clickable' : ''}`}
+                  onClick={() => {
+                    if (onColorClick && recipe) {
+                      // Pass full color data to parent
+                      onColorClick({
+                        hex: mapping.original,
+                        originalHex: mapping.original,
+                        blendHex: mapping.blend,
+                        areaPct: mapping.coverage,
+                        recipe: recipe.chosenRecipe,
+                        targetColor: recipe.targetColor
+                      });
+                    }
+                  }}
+                  title={onColorClick ? 'Click to edit this color' : ''}
+                >
+                  <div className="mapping-swatches">
+                    <div
+                      className="swatch original"
+                      style={{ backgroundColor: mapping.original }}
+                      title={`Original: ${mapping.original}`}
+                    />
+                    <span className="arrow">→</span>
+                    <div
+                      className="swatch blend"
+                      style={{ backgroundColor: mapping.blend }}
+                      title={`Blend: ${mapping.blend}`}
+                    />
+                  </div>
+                  <div className="mapping-info">
+                    <span className="coverage">{mapping.coverage.toFixed(1)}% coverage</span>
+                    <span className={`quality-indicator ${mapping.quality.toLowerCase()}`}>
+                      {mapping.quality} (ΔE {mapping.deltaE.toFixed(2)})
+                    </span>
+                  </div>
                 </div>
-                <div className="mapping-info">
-                  <span className="coverage">{mapping.coverage.toFixed(1)}% coverage</span>
-                  <span className={`quality-indicator ${mapping.quality.toLowerCase()}`}>
-                    {mapping.quality} (ΔE {mapping.deltaE.toFixed(2)})
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -210,6 +231,13 @@ export default function SVGPreview({
           font-weight: 600;
         }
 
+        .edit-hint {
+          font-size: 0.8rem;
+          color: #ff6b35;
+          font-weight: normal;
+          margin-left: 0.5rem;
+        }
+
         .mapping-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -224,6 +252,18 @@ export default function SVGPreview({
           padding: 0.5rem;
           border-radius: 4px;
           border: 1px solid #e8e8e8;
+          transition: all 0.2s;
+        }
+
+        .mapping-item.clickable {
+          cursor: pointer;
+        }
+
+        .mapping-item.clickable:hover {
+          border-color: #ff6b35;
+          background: #fff9f7;
+          box-shadow: 0 2px 4px rgba(255, 107, 53, 0.15);
+          transform: translateY(-1px);
         }
 
         .mapping-swatches {

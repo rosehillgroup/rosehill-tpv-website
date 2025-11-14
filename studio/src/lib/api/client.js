@@ -110,6 +110,32 @@ class APIClient {
     });
   }
 
+  /**
+   * Match a single color to TPV blend recipes
+   * @param {string} hex - Hex color to match (e.g., "#3A5F8C" or "3A5F8C")
+   * @param {number} maxComponents - Maximum blend components (1-3, default: 2)
+   * @returns {Promise} { success, targetColor, recipes, metadata }
+   */
+  async matchColor(hex, maxComponents = 2) {
+    const response = await fetch('/api/match-color', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        hex,
+        max_components: maxComponents
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Color matching failed');
+    }
+
+    return response.json();
+  }
+
   // ============================================================================
   // LEGACY METHODS (Deprecated - kept for backwards compatibility)
   // ============================================================================
