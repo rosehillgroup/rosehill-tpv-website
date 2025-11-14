@@ -7,12 +7,16 @@ import BlendRecipesDisplay from './BlendRecipesDisplay.jsx';
 import SVGPreview from './SVGPreview.jsx';
 import { buildColorMapping } from '../utils/colorMapping.js';
 import { recolorSVG } from '../utils/svgRecolor.js';
+import { mapDimensionsToRecraft, getLayoutDescription, needsLayoutWarning } from '../utils/aspectRatioMapping.js';
 
 export default function InspirePanelRecraft() {
   // Form state
   const [prompt, setPrompt] = useState('');
   const [lengthMM, setLengthMM] = useState(5000);
   const [widthMM, setWidthMM] = useState(5000);
+
+  // Aspect ratio mapping
+  const [arMapping, setArMapping] = useState(null);
 
   // Generation state
   const [generating, setGenerating] = useState(false);
@@ -47,11 +51,25 @@ export default function InspirePanelRecraft() {
     setAttemptInfo(null);
 
     try {
-      // Create job
+      // Map dimensions to canonical Recraft aspect ratio
+      const mapping = mapDimensionsToRecraft(lengthMM, widthMM);
+      setArMapping(mapping);
+
+      console.log('[TPV-STUDIO] AR Mapping:', mapping);
+      console.log('[TPV-STUDIO] Layout:', getLayoutDescription(mapping));
+
+      // Update progress message with layout info
+      if (needsLayoutWarning(mapping)) {
+        setProgressMessage(`Generating ${mapping.canonical.name} design panel...`);
+      } else {
+        setProgressMessage('Initializing...');
+      }
+
+      // Create job with canonical dimensions
       const response = await apiClient.generateRecraft({
         prompt: prompt.trim(),
-        lengthMM,
-        widthMM
+        lengthMM: mapping.recraft.height,  // Note: Recraft uses height as length
+        widthMM: mapping.recraft.width
       });
 
       if (!response.success) {
@@ -108,6 +126,7 @@ export default function InspirePanelRecraft() {
     setGeneratingBlends(false);
     setBlendSvgUrl(null);
     setColorMapping(null);
+    setArMapping(null);
   };
 
   // Download SVG
@@ -266,6 +285,32 @@ export default function InspirePanelRecraft() {
           <div className="results-header">
             <h3>Your Design</h3>
           </div>
+
+          {/* Aspect Ratio Info */}
+          {arMapping && (
+            <div className={`ar-info ${arMapping.layout.mode}`}>
+              <div className="ar-info-header">
+                <strong>Layout:</strong> {arMapping.layout.reason}
+              </div>
+              <div className="ar-info-details">
+                <span>Requested: {arMapping.user.formatted}</span>
+                <span>•</span>
+                <span>Generated: {arMapping.canonical.name} panel</span>
+                {arMapping.layout.mode === 'framing' && (
+                  <>
+                    <span>•</span>
+                    <span className="layout-note">Panel centered with base color surround</span>
+                  </>
+                )}
+                {arMapping.layout.mode === 'tiling' && (
+                  <>
+                    <span>•</span>
+                    <span className="layout-note">Pattern will repeat along length</span>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* SVG Preview */}
           {result.svg_url && (
@@ -461,6 +506,52 @@ export default function InspirePanelRecraft() {
         .results-header h3 {
           margin: 0;
           color: #1a365d;
+        }
+
+        /* Aspect Ratio Info */
+        .ar-info {
+          padding: 0.75rem 1rem;
+          border-radius: 6px;
+          margin-bottom: 1rem;
+          font-size: 0.9rem;
+        }
+
+        .ar-info.full {
+          background: #e8f5e9;
+          border: 1px solid #c8e6c9;
+        }
+
+        .ar-info.framing {
+          background: #fff3e0;
+          border: 1px solid #ffe0b2;
+        }
+
+        .ar-info.tiling {
+          background: #e3f2fd;
+          border: 1px solid #bbdefb;
+        }
+
+        .ar-info-header {
+          color: #333;
+          margin-bottom: 0.5rem;
+        }
+
+        .ar-info-details {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          align-items: center;
+          color: #666;
+          font-size: 0.85rem;
+        }
+
+        .ar-info-details span {
+          white-space: nowrap;
+        }
+
+        .layout-note {
+          color: #ff6b35;
+          font-weight: 500;
         }
 
         .svg-preview {
