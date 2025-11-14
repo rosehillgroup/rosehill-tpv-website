@@ -447,6 +447,7 @@ export default function InspirePanelRecraft() {
         }
 
         .download-button,
+        .blend-button,
         .new-generation-button {
           flex: 1;
           padding: 0.75rem;
