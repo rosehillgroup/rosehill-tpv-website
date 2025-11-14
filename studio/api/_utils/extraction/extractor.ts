@@ -55,7 +55,7 @@ export class PaletteExtractor {
   constructor(options: ExtractionOptions = {}) {
     this.options = {
       maxColours: options.maxColours ?? 15,
-      minAreaPct: options.minAreaPct ?? 1,
+      minAreaPct: options.minAreaPct ?? 0, // Include all colors, even small design elements
       combineStrategy: options.combineStrategy ?? 'merge',
       rasterFallback: options.rasterFallback ?? true,
       pdfOptions: {

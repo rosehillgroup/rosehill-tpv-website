@@ -32,7 +32,7 @@ export class SVGExtractor {
   constructor(options: SVGExtractorOptions = {}) {
     this.options = {
       maxColours: options.maxColours ?? 20,
-      minPercentage: options.minPercentage ?? 0.5
+      minPercentage: options.minPercentage ?? 0 // Include all colors, even tiny accents
     };
   }
 
