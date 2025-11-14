@@ -1,161 +1,37 @@
 // TPV Studio - SVG Preview Component
-// Shows side-by-side comparison of original and blend-colored SVG
+// Shows TPV blend SVG with color legend
 
-import { useState } from 'react';
+import ColorLegend from './ColorLegend';
 
 export default function SVGPreview({
-  originalSvgUrl,
   blendSvgUrl,
-  colorMapping,
   recipes,
   onColorClick // (colorData) => void - callback when user clicks a color
 }) {
-  const [viewMode, setViewMode] = useState('side-by-side'); // 'side-by-side' | 'original' | 'blend'
-
-  if (!originalSvgUrl) {
+  if (!blendSvgUrl) {
     return null;
   }
-
-  // Build color mapping array for legend
-  const colorMappingArray = recipes ? recipes.map(recipe => ({
-    original: recipe.targetColor.hex,
-    blend: recipe.blendColor.hex,
-    coverage: recipe.targetColor.areaPct,
-    quality: recipe.chosenRecipe.quality,
-    deltaE: recipe.chosenRecipe.deltaE
-  })) : [];
 
   return (
     <div className="svg-preview">
       <div className="preview-header">
-        <h3>Design Preview</h3>
-
-        <div className="view-mode-buttons">
-          <button
-            className={`mode-button ${viewMode === 'side-by-side' ? 'active' : ''}`}
-            onClick={() => setViewMode('side-by-side')}
-          >
-            Side by Side
-          </button>
-          <button
-            className={`mode-button ${viewMode === 'original' ? 'active' : ''}`}
-            onClick={() => setViewMode('original')}
-          >
-            Original
-          </button>
-          <button
-            className={`mode-button ${viewMode === 'blend' ? 'active' : ''}`}
-            onClick={() => setViewMode('blend')}
-            disabled={!blendSvgUrl}
-          >
-            TPV Blend
-          </button>
-        </div>
+        <h3>TPV Blend Design</h3>
       </div>
 
-      {/* SVG Display */}
-      <div className={`svg-display-container ${viewMode}`}>
-        {viewMode === 'side-by-side' && (
-          <>
-            <div className="svg-panel">
-              <div className="panel-label">Original Design</div>
-              <div className="svg-wrapper">
-                <img src={originalSvgUrl} alt="Original design" className="svg-image" />
-              </div>
-            </div>
-
-            {blendSvgUrl && (
-              <div className="svg-panel">
-                <div className="panel-label blend-label">TPV Blend Colors</div>
-                <div className="svg-wrapper">
-                  <img src={blendSvgUrl} alt="TPV blend design" className="svg-image" />
-                </div>
-              </div>
-            )}
-
-            {!blendSvgUrl && (
-              <div className="svg-panel placeholder">
-                <div className="panel-label">TPV Blend Colors</div>
-                <div className="svg-wrapper">
-                  <div className="placeholder-content">
-                    <p>Blend colors will appear here once recipes are generated</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-
-        {viewMode === 'original' && (
-          <div className="svg-panel single">
-            <div className="panel-label">Original Design</div>
-            <div className="svg-wrapper">
-              <img src={originalSvgUrl} alt="Original design" className="svg-image" />
-            </div>
+      {/* SVG Display with Color Legend */}
+      <div className="svg-display-container">
+        <div className="svg-panel">
+          <div className="svg-wrapper">
+            <img src={blendSvgUrl} alt="TPV blend design" className="svg-image" />
           </div>
-        )}
+        </div>
 
-        {viewMode === 'blend' && blendSvgUrl && (
-          <div className="svg-panel single">
-            <div className="panel-label blend-label">TPV Blend Colors</div>
-            <div className="svg-wrapper">
-              <img src={blendSvgUrl} alt="TPV blend design" className="svg-image" />
-            </div>
+        {recipes && recipes.length > 0 && (
+          <div className="legend-sidebar">
+            <ColorLegend recipes={recipes} onColorClick={onColorClick} />
           </div>
         )}
       </div>
-
-      {/* Color Mapping Legend */}
-      {colorMappingArray.length > 0 && (
-        <div className="color-mapping-legend">
-          <h4>Color Mapping {onColorClick && <span className="edit-hint">(click to edit)</span>}</h4>
-          <div className="mapping-grid">
-            {colorMappingArray.map((mapping, idx) => {
-              const recipe = recipes[idx];
-              return (
-                <div
-                  key={idx}
-                  className={`mapping-item ${onColorClick ? 'clickable' : ''}`}
-                  onClick={() => {
-                    if (onColorClick && recipe) {
-                      // Pass full color data to parent
-                      onColorClick({
-                        hex: mapping.original,
-                        originalHex: mapping.original,
-                        blendHex: mapping.blend,
-                        areaPct: mapping.coverage,
-                        recipe: recipe.chosenRecipe,
-                        targetColor: recipe.targetColor
-                      });
-                    }
-                  }}
-                  title={onColorClick ? 'Click to edit this color' : ''}
-                >
-                  <div className="mapping-swatches">
-                    <div
-                      className="swatch original"
-                      style={{ backgroundColor: mapping.original }}
-                      title={`Original: ${mapping.original}`}
-                    />
-                    <span className="arrow">→</span>
-                    <div
-                      className="swatch blend"
-                      style={{ backgroundColor: mapping.blend }}
-                      title={`Blend: ${mapping.blend}`}
-                    />
-                  </div>
-                  <div className="mapping-info">
-                    <span className="coverage">{mapping.coverage.toFixed(1)}% coverage</span>
-                    <span className={`quality-indicator ${mapping.quality.toLowerCase()}`}>
-                      {mapping.quality} (ΔE {mapping.deltaE.toFixed(2)})
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       <style jsx>{`
         .svg-preview {
@@ -167,12 +43,7 @@ export default function SVGPreview({
         }
 
         .preview-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
           margin-bottom: 1.5rem;
-          flex-wrap: wrap;
-          gap: 1rem;
         }
 
         .preview-header h3 {
@@ -181,193 +52,25 @@ export default function SVGPreview({
           font-size: 1.5rem;
         }
 
-        .view-mode-buttons {
-          display: flex;
-          gap: 0.5rem;
-          background: #f0f0f0;
-          padding: 0.25rem;
-          border-radius: 6px;
-        }
-
-        .mode-button {
-          padding: 0.5rem 1rem;
-          border: none;
-          background: transparent;
-          border-radius: 4px;
-          cursor: pointer;
-          font-weight: 500;
-          color: #666;
-          transition: all 0.2s;
-        }
-
-        .mode-button:hover:not(:disabled) {
-          background: #e0e0e0;
-          color: #333;
-        }
-
-        .mode-button.active {
-          background: #1a365d;
-          color: white;
-        }
-
-        .mode-button:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        /* Color Mapping Legend */
-        .color-mapping-legend {
-          background: #f9f9f9;
-          border: 1px solid #e0e0e0;
-          border-radius: 6px;
-          padding: 1rem;
-          margin-top: 1.5rem;
-        }
-
-        .color-mapping-legend h4 {
-          margin: 0 0 0.75rem 0;
-          color: #333;
-          font-size: 0.95rem;
-          font-weight: 600;
-        }
-
-        .edit-hint {
-          font-size: 0.8rem;
-          color: #ff6b35;
-          font-weight: normal;
-          margin-left: 0.5rem;
-        }
-
-        .mapping-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: 0.75rem;
-        }
-
-        .mapping-item {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-          background: white;
-          padding: 0.5rem;
-          border-radius: 4px;
-          border: 1px solid #e8e8e8;
-          transition: all 0.2s;
-        }
-
-        .mapping-item.clickable {
-          cursor: pointer;
-        }
-
-        .mapping-item.clickable:hover {
-          border-color: #ff6b35;
-          background: #fff9f7;
-          box-shadow: 0 2px 4px rgba(255, 107, 53, 0.15);
-          transform: translateY(-1px);
-        }
-
-        .mapping-swatches {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .mapping-swatches .swatch {
-          width: 32px;
-          height: 32px;
-          border-radius: 4px;
-          border: 2px solid #ddd;
-          flex-shrink: 0;
-        }
-
-        .mapping-swatches .swatch.original {
-          border-color: #999;
-        }
-
-        .mapping-swatches .swatch.blend {
-          border-color: #ff6b35;
-        }
-
-        .mapping-swatches .arrow {
-          color: #666;
-          font-weight: bold;
-        }
-
-        .mapping-info {
-          display: flex;
-          flex-direction: column;
-          gap: 0.25rem;
-          font-size: 0.8rem;
-        }
-
-        .mapping-info .coverage {
-          color: #666;
-        }
-
-        .quality-indicator {
-          font-weight: 600;
-          font-size: 0.75rem;
-        }
-
-        .quality-indicator.excellent {
-          color: #2e7d32;
-        }
-
-        .quality-indicator.good {
-          color: #ef6c00;
-        }
-
-        .quality-indicator.fair {
-          color: #c62828;
-        }
-
         /* SVG Display */
         .svg-display-container {
-          display: grid;
+          display: flex;
           gap: 1.5rem;
-        }
-
-        .svg-display-container.side-by-side {
-          grid-template-columns: 1fr 1fr;
-        }
-
-        .svg-display-container.original,
-        .svg-display-container.blend {
-          grid-template-columns: 1fr;
+          align-items: flex-start;
         }
 
         .svg-panel {
+          flex: 1;
           border: 1px solid #e0e0e0;
           border-radius: 6px;
           overflow: hidden;
           background: #fafafa;
         }
 
-        .svg-panel.single {
-          max-width: 800px;
-          margin: 0 auto;
-        }
-
-        .svg-panel.placeholder {
-          background: #f0f0f0;
-        }
-
-        .panel-label {
-          background: #1a365d;
-          color: white;
-          padding: 0.75rem 1rem;
-          font-weight: 600;
-          font-size: 0.95rem;
-        }
-
-        .panel-label.blend-label {
-          background: #ff6b35;
-        }
-
         .svg-wrapper {
           padding: 2rem;
           background: white;
-          min-height: 300px;
+          min-height: 400px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -380,14 +83,8 @@ export default function SVGPreview({
           border-radius: 4px;
         }
 
-        .placeholder-content {
-          text-align: center;
-          color: #999;
-          padding: 2rem;
-        }
-
-        .placeholder-content p {
-          margin: 0;
+        .legend-sidebar {
+          flex-shrink: 0;
         }
 
         @media (max-width: 768px) {
@@ -395,30 +92,17 @@ export default function SVGPreview({
             padding: 1rem;
           }
 
-          .preview-header {
+          .svg-display-container {
             flex-direction: column;
-            align-items: flex-start;
-          }
-
-          .view-mode-buttons {
-            width: 100%;
-          }
-
-          .mode-button {
-            flex: 1;
-          }
-
-          .svg-display-container.side-by-side {
-            grid-template-columns: 1fr;
           }
 
           .svg-wrapper {
             padding: 1rem;
-            min-height: 200px;
+            min-height: 250px;
           }
 
-          .mapping-grid {
-            grid-template-columns: 1fr;
+          .legend-sidebar {
+            width: 100%;
           }
         }
       `}</style>

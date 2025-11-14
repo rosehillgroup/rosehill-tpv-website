@@ -35,6 +35,7 @@ export default function InspirePanelRecraft() {
   const [generatingBlends, setGeneratingBlends] = useState(false);
   const [blendSvgUrl, setBlendSvgUrl] = useState(null);
   const [colorMapping, setColorMapping] = useState(null);
+  const [showFinalRecipes, setShowFinalRecipes] = useState(false);
 
   // Color editor state
   const [colorEditorOpen, setColorEditorOpen] = useState(false);
@@ -129,9 +130,13 @@ export default function InspirePanelRecraft() {
 
       if (finalStatus.status === 'completed') {
         setProgressMessage('✓ Design ready!');
-      }
+        setGenerating(false);
 
-      setGenerating(false);
+        // Auto-generate TPV blend recipes
+        if (finalStatus.result?.svg_url) {
+          await handleGenerateBlends(finalStatus.result.svg_url, response.jobId);
+        }
+      }
     } catch (err) {
       console.error('Generation failed:', err);
       setError(err.message);
@@ -154,6 +159,7 @@ export default function InspirePanelRecraft() {
     setGeneratingBlends(false);
     setBlendSvgUrl(null);
     setColorMapping(null);
+    setShowFinalRecipes(false);
     setArMapping(null);
     setColorEditorOpen(false);
     setSelectedColor(null);
@@ -174,23 +180,27 @@ export default function InspirePanelRecraft() {
     }
   };
 
-  // Generate TPV blend recipes from the SVG
-  const handleGenerateBlends = async () => {
-    if (!result?.svg_url) {
+  // Generate TPV blend recipes from the SVG (auto-called after SVG generation)
+  const handleGenerateBlends = async (svgUrl = null, jobIdParam = null) => {
+    const svg_url = svgUrl || result?.svg_url;
+    const job_id = jobIdParam || jobId;
+
+    if (!svg_url) {
       setError('No SVG available to analyze');
       return;
     }
 
     setGeneratingBlends(true);
     setError(null);
+    setProgressMessage('Extracting colors from design...');
 
     try {
       const response = await fetch('/api/blend-recipes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          svg_url: result.svg_url,
-          job_id: jobId,
+          svg_url,
+          job_id,
           max_colors: 8,
           max_components: 2
         })
@@ -203,6 +213,7 @@ export default function InspirePanelRecraft() {
       }
 
       if (data.success) {
+        setProgressMessage('Matching TPV granule colors...');
         setBlendRecipes(data.recipes);
 
         // Build color mapping
@@ -211,9 +222,11 @@ export default function InspirePanelRecraft() {
 
         // Generate recolored SVG
         try {
+          setProgressMessage('Generating TPV blend preview...');
           console.log('[TPV-STUDIO] Generating recolored SVG...');
-          const { dataUrl, stats } = await recolorSVG(result.svg_url, mapping);
+          const { dataUrl, stats } = await recolorSVG(svg_url, mapping);
           setBlendSvgUrl(dataUrl);
+          setProgressMessage('✓ TPV blend ready!');
           console.log('[TPV-STUDIO] Recolored SVG generated:', stats);
         } catch (svgError) {
           console.error('[TPV-STUDIO] Failed to generate recolored SVG:', svgError);
@@ -226,6 +239,7 @@ export default function InspirePanelRecraft() {
     } catch (err) {
       console.error('Blend generation failed:', err);
       setError(err.message);
+      setProgressMessage('');
     } finally {
       setGeneratingBlends(false);
     }
@@ -246,11 +260,7 @@ export default function InspirePanelRecraft() {
 
     // Update edited colors map
     const updated = new Map(editedColors);
-    const existing = updated.get(selectedColor.originalHex) || {};
-    updated.set(selectedColor.originalHex, {
-      ...existing,
-      newHex
-    });
+    updated.set(selectedColor.originalHex, { newHex });
     setEditedColors(updated);
 
     // Update selected color
@@ -259,45 +269,25 @@ export default function InspirePanelRecraft() {
       hex: newHex
     });
 
-    // Regenerate blend SVG with updated colors
-    await regenerateBlendSVG();
-  };
-
-  // Handle recipe change from ColorEditorPanel
-  const handleRecipeChange = async (newRecipe) => {
-    if (!selectedColor) return;
-
-    console.log('[TPV-STUDIO] Recipe changed:', newRecipe);
-
-    // Update edited colors map
-    const updated = new Map(editedColors);
-    const existing = updated.get(selectedColor.originalHex) || {};
-    updated.set(selectedColor.originalHex, {
-      ...existing,
-      recipe: newRecipe
-    });
-    setEditedColors(updated);
-
-    // Regenerate blend SVG with new recipe
-    await regenerateBlendSVG();
+    // Regenerate blend SVG with updated color
+    await regenerateBlendSVG(updated, newHex);
   };
 
   // Regenerate blend SVG with edited colors
-  const regenerateBlendSVG = async () => {
+  const regenerateBlendSVG = async (updatedEdits = null, immediateHex = null) => {
     if (!result?.svg_url || !colorMapping) return;
 
     try {
       // Build updated color mapping with edits
       const updatedMapping = new Map(colorMapping);
+      const edits = updatedEdits || editedColors;
 
-      editedColors.forEach((edit, originalHex) => {
-        if (edit.recipe) {
+      edits.forEach((edit, originalHex) => {
+        if (edit.newHex) {
+          // Update the blend hex to the new color chosen by user
           updatedMapping.set(originalHex, {
-            blendHex: edit.recipe.blendColor.hex,
-            recipeId: edit.recipe.id,
-            deltaE: edit.recipe.deltaE,
-            quality: edit.recipe.quality,
-            components: edit.recipe.components
+            ...updatedMapping.get(originalHex),
+            blendHex: edit.newHex
           });
         }
       });
@@ -309,6 +299,68 @@ export default function InspirePanelRecraft() {
       console.log('[TPV-STUDIO] Blend SVG regenerated with edits:', stats);
     } catch (err) {
       console.error('[TPV-STUDIO] Failed to regenerate blend SVG:', err);
+    }
+  };
+
+  // Finalize and generate TPV blend recipes for edited colors
+  const handleFinalizeRecipes = async () => {
+    if (!editedColors || editedColors.size === 0) {
+      // No edits, just show existing recipes
+      setShowFinalRecipes(true);
+      return;
+    }
+
+    setGeneratingBlends(true);
+    setProgressMessage('Generating final TPV blend recipes...');
+    setError(null);
+
+    try {
+      // Match each edited color to find best TPV recipe
+      const updatedRecipes = await Promise.all(
+        blendRecipes.map(async (recipe) => {
+          const edit = editedColors.get(recipe.targetColor.hex);
+
+          if (edit?.newHex) {
+            // Color was edited, fetch new recipe
+            const response = await fetch('/api/match-color', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                hex: edit.newHex,
+                max_components: 2
+              })
+            });
+
+            const data = await response.json();
+
+            if (data.success && data.recipes && data.recipes.length > 0) {
+              // Use the best matching recipe (first one)
+              const bestRecipe = data.recipes[0];
+              return {
+                targetColor: {
+                  ...recipe.targetColor,
+                  hex: edit.newHex // Update to show edited color
+                },
+                chosenRecipe: bestRecipe,
+                blendColor: bestRecipe.blendColor,
+                alternativeRecipes: data.recipes.slice(1, 3) // Include 2 alternatives
+              };
+            }
+          }
+
+          // No edit or matching failed, return original recipe
+          return recipe;
+        })
+      );
+
+      setBlendRecipes(updatedRecipes);
+      setShowFinalRecipes(true);
+      setProgressMessage('✓ Recipes ready!');
+    } catch (err) {
+      console.error('[TPV-STUDIO] Failed to finalize recipes:', err);
+      setError(err.message);
+    } finally {
+      setGeneratingBlends(false);
     }
   };
 
@@ -439,13 +491,6 @@ export default function InspirePanelRecraft() {
             <button onClick={handleDownloadPNG} className="download-button png">
               Download PNG Preview
             </button>
-            <button
-              onClick={handleGenerateBlends}
-              disabled={generatingBlends}
-              className="blend-button"
-            >
-              {generatingBlends ? 'Generating Recipes...' : 'Generate TPV Blend Recipes'}
-            </button>
             <button onClick={handleNewGeneration} className="new-generation-button">
               New Generation
             </button>
@@ -453,25 +498,46 @@ export default function InspirePanelRecraft() {
         </div>
       )}
 
+      {/* TPV Blend Progress */}
+      {generatingBlends && (
+        <div className="progress-section">
+          <div className="progress-bar">
+            <div className="progress-bar-fill" />
+          </div>
+          <p className="progress-message">{progressMessage}</p>
+        </div>
+      )}
+
       {/* SVG Preview Component */}
-      {blendRecipes && result?.svg_url && (
+      {blendSvgUrl && blendRecipes && (
         <SVGPreview
-          originalSvgUrl={result.svg_url}
           blendSvgUrl={blendSvgUrl}
-          colorMapping={colorMapping}
           recipes={blendRecipes}
           onColorClick={handleColorClick}
         />
       )}
 
+      {/* Generate Final Recipes Button */}
+      {blendSvgUrl && blendRecipes && !showFinalRecipes && !generatingBlends && (
+        <div className="finalize-section">
+          <button
+            onClick={handleFinalizeRecipes}
+            className="finalize-button"
+          >
+            Generate TPV Blend Recipes
+          </button>
+          <p className="finalize-hint">
+            Adjust colors above if needed, then generate the final blend recipes
+          </p>
+        </div>
+      )}
+
       {/* Blend Recipes Display */}
-      {blendRecipes && (
+      {showFinalRecipes && blendRecipes && (
         <BlendRecipesDisplay
           recipes={blendRecipes}
           onClose={() => {
-            setBlendRecipes(null);
-            setBlendSvgUrl(null);
-            setColorMapping(null);
+            setShowFinalRecipes(false);
           }}
         />
       )}
@@ -480,36 +546,6 @@ export default function InspirePanelRecraft() {
       {colorEditorOpen && selectedColor && (
         <ColorEditorPanel
           color={selectedColor}
-          currentRecipe={selectedColor.recipe}
-          initialRecipes={(() => {
-            // Find the full recipe data from blendRecipes
-            if (!blendRecipes) return null;
-
-            const matchingRecipe = blendRecipes.find(
-              r => r.targetColor?.hex?.toLowerCase() === selectedColor.hex?.toLowerCase()
-            );
-
-            if (!matchingRecipe) {
-              console.warn('[TPV-STUDIO] No matching recipe found for color:', selectedColor.hex);
-              return null;
-            }
-
-            // Combine chosenRecipe and alternativeRecipes into format ColorEditorPanel expects
-            const allRecipes = [
-              matchingRecipe.chosenRecipe,
-              ...(matchingRecipe.alternativeRecipes || [])
-            ].map((recipe, idx) => ({
-              id: recipe.id || `recipe_${idx + 1}`,
-              deltaE: recipe.deltaE,
-              quality: recipe.quality,
-              components: recipe.components,
-              blendColor: recipe.blendColor || matchingRecipe.blendColor
-            }));
-
-            console.log('[TPV-STUDIO] Passing initial recipes:', allRecipes.length);
-            return allRecipes;
-          })()}
-          onRecipeChange={handleRecipeChange}
           onColorChange={handleColorChange}
           onClose={() => {
             setColorEditorOpen(false);
@@ -780,6 +816,40 @@ export default function InspirePanelRecraft() {
 
         .new-generation-button:hover {
           background: #d0d0d0;
+        }
+
+        /* Finalize Section */
+        .finalize-section {
+          background: #fff9f7;
+          border: 2px solid #ff6b35;
+          border-radius: 8px;
+          padding: 1.5rem;
+          margin-top: 1.5rem;
+          text-align: center;
+        }
+
+        .finalize-button {
+          width: 100%;
+          max-width: 400px;
+          padding: 1rem 2rem;
+          background: #ff6b35;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          font-size: 1.1rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+
+        .finalize-button:hover {
+          background: #e55a2b;
+        }
+
+        .finalize-hint {
+          margin: 0.75rem 0 0 0;
+          color: #666;
+          font-size: 0.9rem;
         }
       `}</style>
     </div>
