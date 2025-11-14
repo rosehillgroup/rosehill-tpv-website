@@ -169,6 +169,16 @@ export class SVGExtractor {
       }
     }
 
+    // Extract colors from gradient stop-color attributes
+    const stopColorMatches = svgText.matchAll(/stop-color=["']([^"']+)["']/gi);
+    for (const match of stopColorMatches) {
+      const color = this.normalizeColor(match[1]);
+      if (color) {
+        // Gradient colors are important visual components
+        colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+      }
+    }
+
     // If no colors found, try to extract from CSS in <style> tags
     const cssStyleMatches = svgText.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi);
     for (const match of cssStyleMatches) {

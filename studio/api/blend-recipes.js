@@ -1,1 +1,2617 @@
-var Lt=Object.create;var ct=Object.defineProperty;var Tt=Object.getOwnPropertyDescriptor;var Dt=Object.getOwnPropertyNames;var St=Object.getPrototypeOf,$t=Object.prototype.hasOwnProperty;var It=(s,t)=>()=>(t||s((t={exports:{}}).exports,t),t.exports);var At=(s,t,e,r)=>{if(t&&typeof t=="object"||typeof t=="function")for(let n of Dt(t))!$t.call(s,n)&&n!==e&&ct(s,n,{get:()=>t[n],enumerable:!(r=Tt(t,n))||r.enumerable});return s};var _t=(s,t,e)=>(e=s!=null?Lt(St(s)):{},At(t||!s||!s.__esModule?ct(e,"default",{value:s,enumerable:!0}):e,s));var lt=It((F,V)=>{var F,J;J=(function(){function s(t){var e,r,n,o,a;t==null&&(t={}),this.K=(e=t.K)!=null?e:5,this.maxIterations=(r=t.maxIterations)!=null?r:100,this.enableConvergenceTest=(n=t.enableConvergenceTest)!=null?n:!0,this.tolerance=(o=t.tolerance)!=null?o:1e-9,this.initialize=(a=t.initialize)!=null?a:s.initializeForgy}return s.prototype.cluster=function(t){var e;if(this.X=t,this.prevCentroids=[],this.clusters=[],this.currentIteration=0,e=[this.X.length,this.X[0].length],this.m=e[0],this.n=e[1],this.m==null||this.n==null||this.m<this.K||this.n<1)throw"You must pass more data";return this.centroids=this.initialize(this.X,this.K,this.m,this.n)},s.prototype.step=function(){return this.currentIteration++<this.maxIterations},s.prototype.autoCluster=function(t){var e;for(this.cluster(t),e=[];this.step()&&(this.findClosestCentroids(),this.moveCentroids(),!this.hasConverged());)e.push(void 0);return e},s.initializeForgy=function(t,e,r,n){var o,a,c;for(c=[],o=a=0;0<=e?a<e:a>e;o=0<=e?++a:--a)c.push(t[Math.floor(Math.random()*r)]);return c},s.initializeInRange=function(t,e,r,n){var o,a,c,i,l,u,h,m,p,f,b,x,d,g;for(a=h=0;0<=n?h<n:h>n;a=0<=n?++h:--h)l=1/0;for(a=m=0;0<=n?m<n:m>n;a=0<=n?++m:--m)i=-1/0;for(p=0,b=t.length;p<b;p++)for(u=t[p],a=f=0,x=u.length;f<x;a=++f)o=u[a],l[a]=Math.min(l[a],o),i[a]=Math.max(i[a],o);for(g=[],c=d=0;0<=e?d<e:d>e;c=0<=e?++d:--d)g.push((function(){var R,w;for(w=[],o=R=0;0<=n?R<n:R>n;o=0<=n?++R:--R)w.push(Math.random()*(i[o]-l[o])+l[o]);return w})());return g},s.prototype.findClosestCentroids=function(){var t,e,r,n,o,a,c,i,l,u,h,m,p,f,b,x,d,g;for(this.enableConvergenceTest&&(this.prevCentroids=(function(){var R,w,C,v;for(C=this.centroids,v=[],R=0,w=C.length;R<w;R++)c=C[R],v.push(c.slice(0));return v}).call(this)),this.clusters=(function(){var R,w,C;for(C=[],r=R=0,w=this.K;0<=w?R<w:R>w;r=0<=w?++R:--R)C.push([]);return C}).call(this),b=this.X,g=[],r=u=0,p=b.length;u<p;r=++u){for(i=b[r],e=0,l=1/0,x=this.centroids,n=h=0,f=x.length;h<f;n=++h){for(t=x[n],a=0,o=m=0,d=i.length;0<=d?m<d:m>d;o=0<=d?++m:--m)a+=(i[o]-t[o])*(i[o]-t[o]);a<l&&(e=n,l=a)}g.push(this.clusters[e].push(r))}return g},s.prototype.moveCentroids=function(){var t,e,r,n,o,a,c,i,l;for(i=this.clusters,l=[],r=a=0,c=i.length;a<c;r=++a)t=i[r],!(t.length<1)&&l.push((function(){var u,h,m,p,f;for(f=[],n=u=0,p=this.n;0<=p?u<p:u>p;n=0<=p?++u:--u){for(o=0,h=0,m=t.length;h<m;h++)e=t[h],o+=this.X[e][n];f.push(this.centroids[r][n]=o/t.length)}return f}).call(this));return l},s.prototype.hasConverged=function(){var t,e,r,n,o,a,c;if(!this.enableConvergenceTest)return!1;for(e=n=0,a=this.n;0<=a?n<a:n>a;e=0<=a?++n:--n)for(r=o=0,c=this.m;0<=c?o<c:o>c;r=0<=c?++o:--o)if(t=Math.abs(this.prevCentroids[e][r]-this.centroids[e][r]),this.tolerance>t)return!0;return!1},s})();(typeof V<"u"&&V!==null?V.exports:void 0)!=null||typeof F<"u"&&F!==null?V.exports=F=J:window.kMeans=J});var pt=_t(lt(),1);import mt from"sharp";var _={Xn:.95047,Yn:1,Zn:1.08883},jt=[[.4124564,.3575761,.1804375],[.2126729,.7151522,.072175],[.0193339,.119192,.9503041]],kt=[[3.2404542,-1.5371385,-.4985314],[-.969266,1.8760108,.041556],[.0556434,-.2040259,1.0572252]];function Q(s){return s<=.04045?s/12.92:Math.pow((s+.055)/1.055,2.4)}function tt(s){return s<=.0031308?s*12.92:1.055*Math.pow(s,1/2.4)-.055}function j(s){return{R:Q(s.R/255),G:Q(s.G/255),B:Q(s.B/255)}}function $(s){return{R:Math.round(tt(s.R)*255),G:Math.round(tt(s.G)*255),B:Math.round(tt(s.B)*255)}}function T(s){let[t,e,r]=jt;return{X:t[0]*s.R+t[1]*s.G+t[2]*s.B,Y:e[0]*s.R+e[1]*s.G+e[2]*s.B,Z:r[0]*s.R+r[1]*s.G+r[2]*s.B}}function Vt(s){let[t,e,r]=kt;return{R:t[0]*s.X+t[1]*s.Y+t[2]*s.Z,G:e[0]*s.X+e[1]*s.Y+e[2]*s.Z,B:r[0]*s.X+r[1]*s.Y+r[2]*s.Z}}function et(s){let t=.20689655172413793;return s>Math.pow(t,3)?Math.pow(s,1/3):s/(3*t*t)+4/29}function nt(s){let t=.20689655172413793;return s>t?Math.pow(s,3):3*t*t*(s-4/29)}function D(s){let t=et(s.X/_.Xn),e=et(s.Y/_.Yn),r=et(s.Z/_.Zn);return{L:116*e-16,a:500*(t-e),b:200*(e-r)}}function Ft(s){let t=(s.L+16)/116,e=s.a/500+t,r=t-s.b/200;return{X:_.Xn*nt(e),Y:_.Yn*nt(t),Z:_.Zn*nt(r)}}function ut(s){let t=j(s),e=T(t);return D(e)}function ht(s){let t=Ft(s),e=Vt(t);return $(e)}var q=class{constructor(t={}){this.options={maxColours:t.maxColours??20,minPercentage:t.minPercentage??.5,resampleSize:t.resampleSize??400,iterations:t.iterations??20}}async extract(t,e){let r=Date.now();try{let n=mt(Buffer.from(t)),o=await n.metadata();if(!o.width||!o.height)throw new Error("Invalid image dimensions");let a=Math.max(o.width,o.height),c=a>this.options.resampleSize?this.options.resampleSize/a:1,i=Math.round(o.width*c),l=Math.round(o.height*c),{data:u,info:h}=await n.resize(i,l,{kernel:mt.kernel.lanczos3,fit:"fill"}).removeAlpha().raw().toBuffer({resolveWithObject:!0}),m=[];for(let d=0;d<u.length;d+=3)m.push({R:u[d],G:u[d+1],B:u[d+2]});let p=this.performKMeans(m,this.options.maxColours),f=m.length,b=p.map((d,g)=>{let R=d.centroid,w={R:Math.round(Math.max(0,Math.min(255,R[0]))),G:Math.round(Math.max(0,Math.min(255,R[1]))),B:Math.round(Math.max(0,Math.min(255,R[2])))},C=d.cluster.length,v=C/f*100;return{rgb:w,pixels:C,percentage:v}}).filter(d=>d.percentage>=this.options.minPercentage).sort((d,g)=>g.percentage-d.percentage),x=Date.now()-r;return console.info(`Final palette: ${b.length} colors, top 5 areas: ${b.slice(0,5).map(d=>d.percentage.toFixed(1)+"%").join(", ")}`),console.info(`Extraction completed in ${x}ms`),{colours:b,metadata:{width:o.width,height:o.height,totalPixels:o.width*o.height,format:e}}}catch(n){throw new Error(`Raster extraction failed: ${n.message}`)}}async extractFromCanvas(t){try{let e=t.getContext("2d");if(!e)throw new Error("Could not get canvas context");let r=e.getImageData(0,0,t.width,t.height),n=[];for(let i=0;i<r.data.length;i+=4)n.push({R:r.data[i],G:r.data[i+1],B:r.data[i+2]});let o=this.performKMeans(n,this.options.maxColours),a=n.length;return{colours:o.map(i=>{let l=i.centroid,u={R:Math.round(Math.max(0,Math.min(255,l[0]))),G:Math.round(Math.max(0,Math.min(255,l[1]))),B:Math.round(Math.max(0,Math.min(255,l[2])))},h=i.cluster.length,m=h/a*100;return{rgb:u,pixels:h,percentage:m}}).filter(i=>i.percentage>=this.options.minPercentage).sort((i,l)=>l.percentage-i.percentage),metadata:{width:t.width,height:t.height,totalPixels:a,format:"canvas"}}}catch(e){throw new Error(`Canvas extraction failed: ${e.message}`)}}performKMeans(t,e){console.info(`K-means input: ${t.length} pixels, requesting ${e} clusters`);let r=[],n=0;for(let l of t)try{let u=j(l),h=T(u),m=D(h);if(isNaN(m.L)||isNaN(m.a)||isNaN(m.b)){n++;continue}r.push(m)}catch{n++;continue}if(n>0&&console.info(`NaN dropped: ${n}`),r.length===0)return console.warn("No valid Lab pixels, using RGB fallback"),this.simpleDominantColors(t,e);let o=Math.min(r.length,5e3),a=r.length>o?this.sampleArray(r,o):r;console.info(`Using ${a.length} sampled pixels`);let c=this.calculateOptimalK(a,e);if(console.info(`Adjusted k from ${e} to ${c}`),c<=1){let l=this.calculateAverageColor(t);return console.info("Single color case, using average:",l),[{centroid:[l.R,l.G,l.B],cluster:t.map(u=>[u.R,u.G,u.B])}]}let i=3;for(let l=0;l<i;l++)try{console.info(`K-means attempt ${l+1}/${i} with k=${c}`);let u=a.map(b=>[b.L,b.a,b.b]),h=new pt.default({K:c});h.cluster(u);let m=0,p=this.options.iterations||20;for(;h.step()&&m<p;){if(h.findClosestCentroids(),h.moveCentroids(),h.hasConverged()){console.info(`K-means converged in ${m} iterations`);break}m++}if(!h.centroids||h.centroids.length===0)throw new Error(`K-means returned empty result on attempt ${l+1}`);console.info(`K-means attempt ${l+1}: success with ${h.centroids.length} clusters in ${m} iterations`);let f=h.centroids.map((b,x)=>({centroid:b,cluster:h.clusters[x]||[]}));return this.convertLabClustersToRGB(f,t,r)}catch(u){if(console.warn(`K-means attempt ${l+1} failed:`,u.message),l===i-1)return console.warn("All k-means attempts failed, using fallback method"),this.simpleDominantColors(t,c)}return this.simpleDominantColors(t,c)}calculateOptimalK(t,e){let r=new Set;for(let o of t){let a=Math.round(o.L/4)*4,c=Math.round(o.a/2)*2,i=Math.round(o.b/2)*2;r.add(`${a},${c},${i}`)}let n=r.size;if(n<64)return Math.min(n,10,e);{let o=Math.round(Math.sqrt(n/2));return Math.max(6,Math.min(o,18,e))}}convertLabClustersToRGB(t,e,r){let n=[];for(let o of t){let[a,c,i]=o.centroid;try{let l={X:95.047*Math.pow((a+16)/116+c/500,3)/100,Y:100*Math.pow((a+16)/116,3)/100,Z:108.883*Math.pow((a+16)/116-i/200,3)/100},u=l.X*3.2406+l.Y*-1.5372+l.Z*-.4986,h=l.X*-.9689+l.Y*1.8758+l.Z*.0415,m=l.X*.0557+l.Y*-.204+l.Z*1.057,p=x=>(x=Math.max(0,Math.min(1,x)),x<=.0031308?12.92*x:1.055*Math.pow(x,1/2.4)-.055),f={R:Math.round(p(u)*255),G:Math.round(p(h)*255),B:Math.round(p(m)*255)},b=[];for(let x=0;x<r.length;x++){let d=r[x],g=Math.sqrt(Math.pow(d.L-a,2)+Math.pow(d.a-c,2)+Math.pow(d.b-i,2)),R=1/0,w=0;for(let C=0;C<e.length;C++){let v=Math.sqrt(Math.pow(e[C].R-f.R,2)+Math.pow(e[C].G-f.G,2)+Math.pow(e[C].B-f.B,2));v<R&&(R=v,w=C)}b.push([e[w].R,e[w].G,e[w].B])}n.push({centroid:[f.R,f.G,f.B],cluster:b.length>0?b:[[f.R,f.G,f.B]]})}catch(l){console.warn("Failed to convert Lab cluster to RGB:",l);let u=this.calculateAverageColor(e);n.push({centroid:[u.R,u.G,u.B],cluster:e.map(h=>[h.R,h.G,h.B])})}}return n}sampleArray(t,e){if(t.length<=e)return t;let r=t.length/e,n=[];for(let o=0;o<t.length;o+=r)n.push(t[Math.floor(o)]);return n.slice(0,e)}findClosestCluster(t,e){let r=1/0,n=e[0];for(let o of e){let a=Math.sqrt(Math.pow(t[0][0]-o[0],2)+Math.pow(t[0][1]-o[1],2)+Math.pow(t[0][2]-o[2],2));a<r&&(r=a,n=o)}return n}simpleDominantColors(t,e){console.info("Using simple color quantization fallback");let r=new Map,n=t.length;for(let c of t){let i={R:Math.floor(c.R/6)*6,G:Math.floor(c.G/6)*6,B:Math.floor(c.B/6)*6},l=`${i.R},${i.G},${i.B}`,u=r.get(l);if(u)u.count++;else{let h;try{let m=j(i),p=T(m);h=D(p)}catch{}r.set(l,{count:1,rgb:i,lab:h})}}let o=Array.from(r.entries()).filter(([c,i])=>i.lab!==void 0).map(([c,i])=>({key:c,rgb:i.rgb,lab:i.lab,count:i.count,percentage:i.count/n*100}));console.info(`Pre-merge: ${o.length} quantized colors`),o=this.mergeNearbyColors(o).filter(c=>c.lab!==void 0);let a=o.sort((c,i)=>i.count-c.count).slice(0,e);return console.info(`Post-merge: ${a.length} final colors`),a.map(c=>({centroid:[c.rgb.R,c.rgb.G,c.rgb.B],cluster:t.filter(i=>{let l={R:Math.floor(i.R/6)*6,G:Math.floor(i.G/6)*6,B:Math.floor(i.B/6)*6};return`${l.R},${l.G},${l.B}`===c.key}).map(i=>[i.R,i.G,i.B])}))}mergeNearbyColors(t){t.sort((a,c)=>c.percentage-a.percentage);let o=[];for(let a of t){let c=!1;if(a.percentage>=.75){o.push(a);continue}for(let i of o){if(!a.lab||!i.lab)continue;let l=Math.sqrt(Math.pow(a.lab.L-i.lab.L,2)+Math.pow(a.lab.a-i.lab.a,2)+Math.pow(a.lab.b-i.lab.b,2)),u=Math.abs(a.lab.a-i.lab.a),h=Math.abs(a.lab.b-i.lab.b);if(l<=1.5&&u<=8&&h<=8){let m=i.percentage+a.percentage,p=i.count+a.count;i.rgb={R:Math.round((i.rgb.R*i.count+a.rgb.R*a.count)/p),G:Math.round((i.rgb.G*i.count+a.rgb.G*a.count)/p),B:Math.round((i.rgb.B*i.count+a.rgb.B*a.count)/p)},i.lab={L:(i.lab.L*i.percentage+a.lab.L*a.percentage)/m,a:(i.lab.a*i.percentage+a.lab.a*a.percentage)/m,b:(i.lab.b*i.percentage+a.lab.b*a.percentage)/m},i.count=p,i.percentage=m,c=!0;break}}c||o.push(a)}return o}calculateAverageColor(t){if(t.length===0)return{R:0,G:0,B:0};let e=t.reduce((r,n)=>({R:r.R+n.R,G:r.G+n.G,B:r.B+n.B}),{R:0,G:0,B:0});return{R:Math.round(e.R/t.length),G:Math.round(e.G/t.length),B:Math.round(e.B/t.length)}}};var X=class{constructor(t={}){this.options={maxColours:t.maxColours??20,minPercentage:t.minPercentage??.5}}async extract(t,e){let r=Date.now();try{let n=new TextDecoder("utf-8").decode(t);console.info(`[SVG] Parsing SVG (${t.byteLength} bytes)`);let o=this.parseSVGDimensions(n),a=o.width&&o.height?o.width*o.height:1e6,c=this.extractColors(n),i=Array.from(c.values()).reduce((h,m)=>h+m,0),l=Array.from(c.entries()).map(([h,m])=>{let p=this.hexToRgb(h),f=m/i*100;return{rgb:p,percentage:f,pixels:Math.round(f/100*a)}}).filter(h=>h.percentage>=this.options.minPercentage).sort((h,m)=>m.percentage-h.percentage).slice(0,this.options.maxColours),u=Date.now()-r;return console.info(`[SVG] Extracted ${l.length} colors in ${u}ms`),{colours:l,metadata:{width:o.width,height:o.height,totalPixels:a,format:e}}}catch(n){throw new Error(`SVG extraction failed: ${n.message}`)}}parseSVGDimensions(t){let e=t.match(/viewBox=["']([^"']+)["']/i);if(e){let[,,,o,a]=e[1].split(/\s+/).map(parseFloat);if(!isNaN(o)&&!isNaN(a))return{width:o,height:a}}let r=t.match(/width=["']([^"']+)["']/i),n=t.match(/height=["']([^"']+)["']/i);if(r&&n){let o=parseFloat(r[1]),a=parseFloat(n[1]);if(!isNaN(o)&&!isNaN(a))return{width:o,height:a}}return{width:null,height:null}}extractColors(t){let e=new Map,r=t.matchAll(/fill=["']([^"']+)["']/gi);for(let c of r){let i=this.normalizeColor(c[1]);i&&e.set(i,(e.get(i)||0)+1)}let n=t.matchAll(/stroke=["']([^"']+)["']/gi);for(let c of n){let i=this.normalizeColor(c[1]);i&&e.set(i,(e.get(i)||0)+.5)}let o=t.matchAll(/style=["']([^"']+)["']/gi);for(let c of o){let i=c[1],l=i.match(/fill:\s*([^;]+)/i);if(l){let h=this.normalizeColor(l[1]);h&&e.set(h,(e.get(h)||0)+1)}let u=i.match(/stroke:\s*([^;]+)/i);if(u){let h=this.normalizeColor(u[1]);h&&e.set(h,(e.get(h)||0)+.5)}}let a=t.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi);for(let c of a){let i=c[1],l=i.matchAll(/fill:\s*([^;}\s]+)/gi);for(let h of l){let m=this.normalizeColor(h[1]);m&&e.set(m,(e.get(m)||0)+1)}let u=i.matchAll(/stroke:\s*([^;}\s]+)/gi);for(let h of u){let m=this.normalizeColor(h[1]);m&&e.set(m,(e.get(m)||0)+.5)}}return e}normalizeColor(t){let e=t.trim().toLowerCase();if(e==="none"||e==="transparent"||e==="currentcolor")return null;if(e.match(/^#[0-9a-f]{3,6}$/))return e.length===4?`#${e[1]}${e[1]}${e[2]}${e[2]}${e[3]}${e[3]}`:e;let r=e.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);if(r){let o=parseInt(r[1],10),a=parseInt(r[2],10),c=parseInt(r[3],10);return this.rgbToHex({R:o,G:a,B:c})}let n={white:"#ffffff",black:"#000000",red:"#ff0000",green:"#008000",blue:"#0000ff",yellow:"#ffff00",cyan:"#00ffff",magenta:"#ff00ff",gray:"#808080",grey:"#808080",orange:"#ffa500",purple:"#800080",brown:"#a52a2a",pink:"#ffc0cb"};return n[e]?n[e]:null}hexToRgb(t){let e=t.replace("#",""),r=parseInt(e.substring(0,2),16),n=parseInt(e.substring(2,4),16),o=parseInt(e.substring(4,6),16);return{R:r,G:n,B:o}}rgbToHex(t){let e=r=>Math.round(Math.max(0,Math.min(255,r))).toString(16).padStart(2,"0");return`#${e(t.R)}${e(t.G)}${e(t.B)}`}};var N=class{constructor(t={}){this.options={whitePoint:t.whitePoint??"D65",gamma:t.gamma??2.4}}rgbToLab(t){return ut(t)}rgbToHex(t){let e=r=>Math.round(Math.max(0,Math.min(255,r))).toString(16).padStart(2,"0");return`#${e(t.R)}${e(t.G)}${e(t.B)}`}hexToRgb(t){let e=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(t);if(!e)throw new Error(`Invalid hex color: ${t}`);return{R:parseInt(e[1],16),G:parseInt(e[2],16),B:parseInt(e[3],16)}}calculateDeltaE(t,e){let r=t.L-e.L,n=t.a-e.a,o=t.b-e.b;return Math.sqrt(r*r+n*n+o*o)}deduplicate(t,e=5){let r=[];for(let n of t)if(!r.some(a=>this.calculateDeltaE(a.lab,n.lab)<e))r.push(n);else{let a=r.find(c=>this.calculateDeltaE(c.lab,n.lab)<e);a&&(a.areaPct+=n.areaPct,a.pageIds&&n.pageIds&&(a.pageIds=[...new Set([...a.pageIds,...n.pageIds])]))}return r}normalizeAreas(t){let e=t.reduce((r,n)=>r+n.areaPct,0);return e===0?t:t.map(r=>({...r,areaPct:r.areaPct/e*100}))}filterInsignificant(t,e=1,r=!0,n=!0){return t.filter(o=>!(o.areaPct<e||r&&o.lab.L>95||n&&o.lab.L<5))}sortByImportance(t){return t.sort((e,r)=>{if(Math.abs(e.areaPct-r.areaPct)>1)return r.areaPct-e.areaPct;let n=Math.sqrt(e.lab.a*e.lab.a+e.lab.b*e.lab.b);return Math.sqrt(r.lab.a*r.lab.a+r.lab.b*r.lab.b)-n})}};function W(s,t){let e=new N().rgbToHex(s),r=Array.from(e).reduce((n,o)=>(n=(n<<5)-n+o.charCodeAt(0),n&n),0);return`${t}_${Math.abs(r).toString(36)}`}function dt(s){let t=s.toLowerCase().split(".").pop();if(!t)return{isValid:!1,type:null};let e=["png","jpg","jpeg","webp"],r=["svg"];return["pdf"].includes(t)?{isValid:!0,type:"pdf",format:t}:r.includes(t)?{isValid:!0,type:"svg",format:t}:e.includes(t)?{isValid:!0,type:"image",format:t}:{isValid:!1,type:null}}function gt(s,t){return t==="pdf"?s<2*1048576?"low":s<10*1048576?"medium":"high":t==="svg"?s<5*1048576?"low":s<15*1048576?"medium":"high":s<1*1048576?"low":s<5*1048576?"medium":"high"}var ot=class{constructor(t={}){this.cache=new Map;this.options={defaultTTL:t.defaultTTL??1800*1e3,maxEntries:t.maxEntries??100,cleanupInterval:t.cleanupInterval??300*1e3},this.startCleanup()}set(t,e,r){let n={data:e,timestamp:Date.now(),ttl:r??this.options.defaultTTL,hits:0};this.cache.set(t,n),this.evictOldest()}get(t){let e=this.cache.get(t);return e?Date.now()-e.timestamp>e.ttl?(this.cache.delete(t),null):(e.hits++,e.data):null}has(t){let e=this.cache.get(t);return e?Date.now()-e.timestamp>e.ttl?(this.cache.delete(t),!1):!0:!1}delete(t){return this.cache.delete(t)}clear(){this.cache.clear()}size(){return this.cache.size}getStats(){let t=Array.from(this.cache.values()),e=Date.now(),r=t.reduce((c,i)=>c+i.hits,0),n=t.reduce((c,i)=>c+(e-i.timestamp),0),o=t.length>0?n/t.length:0,a=t.length>0?r/t.length:0;return{entries:t.length,totalHits:r,averageAge:o,hitRate:a}}evictOldest(){if(this.cache.size<=this.options.maxEntries)return;let t="",e=Date.now();for(let[r,n]of this.cache)n.timestamp<e&&(e=n.timestamp,t=r);t&&this.cache.delete(t)}startCleanup(){this.cleanupTimer=setInterval(()=>{this.cleanup()},this.options.cleanupInterval)}cleanup(){let t=Date.now(),e=[];for(let[r,n]of this.cache)t-n.timestamp>n.ttl&&e.push(r);for(let r of e)this.cache.delete(r)}destroy(){this.cleanupTimer&&clearInterval(this.cleanupTimer),this.clear()}},rt=null;function ft(){return rt||(rt=new ot({defaultTTL:3600*1e3,maxEntries:50,cleanupInterval:600*1e3})),rt}function bt(s,t,e={}){let r=JSON.stringify(e),n=`${s}-${t}-${r}`,o=0;for(let a=0;a<n.length;a++){let c=n.charCodeAt(a);o=(o<<5)-o+c,o=o&o}return Math.abs(o).toString(36)}var Y=class{constructor(t={}){this.options={maxColours:t.maxColours??15,minAreaPct:t.minAreaPct??1,combineStrategy:t.combineStrategy??"merge",rasterFallback:t.rasterFallback??!0,pdfOptions:{minFrequency:3,tolerance:8,...t.pdfOptions},rasterOptions:{resampleSize:400,iterations:15,...t.rasterOptions}},this.converter=new N,this.rasterExtractor=new q({maxColours:this.options.maxColours,minPercentage:this.options.minAreaPct,...this.options.rasterOptions}),this.svgExtractor=new X({maxColours:this.options.maxColours,minPercentage:this.options.minAreaPct})}async extract(t,e,r){let n=Date.now(),o=dt(e),a=gt(t.byteLength,o.type),c=[],i=[];if(!o.isValid)throw new Error(`Unsupported file type: ${e}`);let l=ft(),u=bt(e,t.byteLength,this.options),h=l.get(u);if(h)return r?.updateProgress("complete",100,"Using cached result"),h;r?.updateProgress("extracting",10,"Starting color extraction...");try{let m=[],p=[],f=[];if(o.type==="pdf"&&(r?.updateProgress("extracting",25,"Skipping server PDF processing - client handles extraction..."),c.push("PDF processing handled client-side. Server extraction skipped to avoid canvas dependencies."),console.info("Skipping server-side PDF processing - relying on client-side extraction")),o.type==="svg")try{r?.updateProgress("extracting",30,"Parsing SVG colors..."),f=(await this.svgExtractor.extract(t,o.format)).colours.map(g=>({id:W(g.rgb,"svg"),rgb:g.rgb,lab:this.converter.rgbToLab(g.rgb),areaPct:g.percentage,source:"svg",metadata:{pixels:g.pixels,percentage:g.percentage}})),i.push("svg"),f.length===0&&c.push("No significant colors found in SVG")}catch(d){throw new Error(`SVG extraction failed: ${d.message}`)}if(o.type==="image")try{r?.updateProgress("extracting",40,"Analyzing raster image colors..."),p=(await this.rasterExtractor.extract(t,o.format)).colours.map(g=>({id:W(g.rgb,"raster"),rgb:g.rgb,lab:this.converter.rgbToLab(g.rgb),areaPct:g.percentage,source:"raster",metadata:{pixels:g.pixels,percentage:g.percentage}})),i.push("raster"),p.length===0&&c.push("No significant colors found in raster image")}catch(d){throw new Error(`Image extraction failed: ${d.message}`)}r?.updateProgress("processing",70,"Combining and filtering colors...");let b=[...m,...f,...p];b=this.converter.filterInsignificant(b,this.options.minAreaPct),b=this.converter.sortByImportance(b),b.length>this.options.maxColours&&(b=b.slice(0,this.options.maxColours),c.push(`Truncated to ${this.options.maxColours} most significant colors`)),b.length===0&&(c.push("No colors extracted, using fallback"),b=[{id:W({R:128,G:128,B:128},"fallback"),rgb:{R:128,G:128,B:128},lab:this.converter.rgbToLab({R:128,G:128,B:128}),areaPct:100,source:"raster"}]);let x={palette:b,metadata:{filename:e,fileSize:t.byteLength,fileType:o.type,extractionTime:Date.now()-n,complexity:a,sources:i,totalColours:{pdf:m.length||void 0,svg:f.length||void 0,raster:p.length||void 0,combined:b.length}},warnings:c.length>0?c:void 0};return r?.updateProgress("caching",90,"Caching extraction result..."),l.set(u,x,3600*1e3),r?.complete(),x}catch(m){throw new Error(`Palette extraction failed: ${m.message}`)}}};function P(s,t){let{L:e,a:r,b:n}=s,{L:o,a,b:c}=t,i=1,l=1,u=1,h=Math.sqrt(r*r+n*n),m=Math.sqrt(a*a+c*c),p=(h+m)/2,f=.5*(1-Math.sqrt(Math.pow(p,7)/(Math.pow(p,7)+Math.pow(25,7)))),b=(1+f)*r,x=(1+f)*a,d=Math.sqrt(b*b+n*n),g=Math.sqrt(x*x+c*c),R=Math.atan2(n,b)*180/Math.PI;R<0&&(R+=360);let w=Math.atan2(c,x)*180/Math.PI;w<0&&(w+=360);let C=o-e,v=g-d,L;if(d*g===0)L=0;else{let I=w-R;Math.abs(I)<=180?L=I:I>180?L=I-360:L=I+360}let M=2*Math.sqrt(d*g)*Math.sin(L*Math.PI/360),G=(e+o)/2,B=(d+g)/2,E;if(d*g===0)E=R+w;else{let I=Math.abs(R-w),O=R+w;I<=180?E=O/2:O<360?E=(O+360)/2:E=(O-360)/2}let y=1-.17*Math.cos((E-30)*Math.PI/180)+.24*Math.cos(2*E*Math.PI/180)+.32*Math.cos((3*E+6)*Math.PI/180)-.2*Math.cos((4*E-63)*Math.PI/180),A=30*Math.exp(-Math.pow((E-275)/25,2)),yt=2*Math.sqrt(Math.pow(B,7)/(Math.pow(B,7)+Math.pow(25,7))),Pt=1+.015*Math.pow(G-50,2)/Math.sqrt(20+Math.pow(G-50,2)),st=1+.045*B,it=1+.015*B*y,vt=-Math.sin(2*A*Math.PI/180)*yt;return Math.sqrt(Math.pow(C/(i*Pt),2)+Math.pow(v/(l*st),2)+Math.pow(M/(u*it),2)+vt*(v/(l*st))*(M/(u*it)))}function Rt(s){return s.map(t=>({...t,linearRGB:j({R:t.R,G:t.G,B:t.B})}))}function S(s){let t=0,e=0,r=0,n=0;for(let{color:o,weight:a}of s)t+=o.R*a,e+=o.G*a,r+=o.B*a,n+=a;return n===0?{R:0,G:0,B:0}:{R:t/n,G:e/n,B:r/n}}function z(s){let t=s.reduce((e,r)=>e+r,0);return t===0?s:s.map(e=>e/t)}function xt(s,t){return t===0?Math.abs(s):xt(t,s%t)}function K(s){return s.length===0?1:s.length===1?Math.abs(s[0]):s.reduce((t,e)=>xt(t,e),0)||1}function at(s){return s.reduce((t,e,r,n)=>e>n[t]?r:t,0)}function Nt(s,t){let e=K(s),r=s.map(l=>Math.max(1,Math.round(l/e))),n=t.map((l,u)=>({c:l,w:r[u]})).sort((l,u)=>l.c.localeCompare(u.c)),o=n.map(l=>l.c),a=n.map(l=>l.w),c=a.reduce((l,u)=>l+u,0),i=`parts:${o.map((l,u)=>`${l}:${a[u]}`).join("|")}`;return{codes:o,parts:a,total:c,key:i}}function zt(s){let e=s.map(({code:l,pct:u})=>({c:l,n:Math.round(u*2400)})).filter(l=>l.n>0),r=K(e.map(l=>l.n)),n=e.map(l=>({c:l.c,n:Math.max(1,Math.round(l.n/r))}));n.sort((l,u)=>l.c.localeCompare(u.c));let o=`pct:${n.map(l=>`${l.c}:${l.n}`).join("|")}`,a=n.reduce((l,u)=>l+u.n,0),c=n.map(l=>l.n/a);return{codes:n.map(l=>l.c),weights:c,key:o}}function Ht(s){let t=(e,r)=>Math.round(e/r);return`lab:${t(s.L,.75)}:${t(s.a,1)}:${t(s.b,1)}`}function Ot(s,t){let e=s.mode==="parts"&&s.parts?s.parts.codes.length:s.components.length,r=t.mode==="parts"&&t.parts?t.parts.codes.length:t.components.length;if(e!==r)return e<r;let n=s.mode==="parts"&&s.parts?s.parts.total:1/0,o=t.mode==="parts"&&t.parts?t.parts.total:1/0;return n!==o?n<o:s.deltaE<t.deltaE}function Z(s){let t=s.mode==="parts"&&s.parts?s.parts.codes.length:s.components.length,e=s.mode==="parts"&&s.parts?s.parts.total:9999;return t*1e3+e+s.deltaE}function Bt(s){let t=new Map;for(let n of s){let o=n.mode==="parts"&&n.parts?Nt(n.parts.parts,n.parts.codes).key:zt(n.components).key,a=t.get(o);(!a||Ot(n,a))&&t.set(o,n)}let e=new Map;for(let n of Array.from(t.values())){let o=Ht(n.lab),a=e.get(o)||[];a.push(n),e.set(o,a)}let r=[];for(let n of Array.from(e.values()))n.sort((o,a)=>Z(o)-Z(a)),r.push(n[0]);return r.sort((n,o)=>Z(n)-Z(o))}function Ct(s,t,e=.75){let r=[],n=[...s],o=(a,c)=>Math.hypot(a.lab.L-c.lab.L,a.lab.a-c.lab.a,a.lab.b-c.lab.b);for(;r.length<t&&n.length>0;){let a=0,c=1/0;for(let i=0;i<n.length;i++){let l=n[i],u=l.deltaE,h=r.length>0?Math.min(...r.map(p=>o(l,p))):1e3,m=e*u-(1-e)*h;m<c&&(c=m,a=i)}r.push(n.splice(a,1)[0])}return r}function qt(s,t,e,r={separation:45,closeness:12,penalty:2}){let n=P(s,t),o=P(s,e),a=P(t,e);return n>r.separation&&Math.min(o,a)>r.closeness?r.penalty:0}function Xt(s,t={dominant:.7,adjuster:.25,dominantBonus:-.3,adjusterBonus:-.2}){let e=[...s].sort((n,o)=>o-n),r=0;return e[0]>=t.dominant&&(r+=t.dominantBonus),e.length>1&&e[1]<=t.adjuster&&(r+=t.adjusterBonus),r}function Wt(s,t,e,r,n={topN:6,minWeight:.6,bonus:-.5}){let o=P(s,t),a=[...r].sort((i,l)=>i-l);return o<=a[n.topN-1]&&e>=n.minWeight?n.bonus:0}function k(s,t,e){let r=0;if(s.length>=2)for(let o=0;o<s.length;o++)for(let a=o+1;a<s.length;a++){let c=qt(s[o].lab,s[a].lab,t);r+=s.length===3?c*.5:c}let n=s.map(o=>o.weight);if(r+=Xt(n),s.length>0){let o=s.reduce((a,c)=>c.weight>a.weight?c:a);r+=Wt(o.lab,t,o.weight,e)}return r}function Yt(s,t,e,r){let{total:n,minPer:o,maxAttempts:a=3}=r,c=Object.keys(s).filter(M=>s[M]>0);if(c.length===0)return null;let i=c.map(M=>Math.max(o,Math.round(s[M]*n))),l=i.reduce((M,G)=>M+G,0),u=0;for(;l!==n&&u<a*10;){if(n-l>0){let G=i.map((E,y)=>s[c[y]]*n-E),B=at(G);i[B]++}else{let G=i.map((E,y)=>E-s[c[y]]*n),B=at(G);i[B]>o&&i[B]--}l=i.reduce((G,B)=>G+B,0),u++}if(l!==n)return null;let h=[...i],m=wt(c,i,t,e);for(let M=0;M<5;M++){let G=!1;for(let B=0;B<c.length;B++)for(let E=0;E<c.length;E++){if(B===E||i[B]<=o)continue;let y=[...i];y[B]--,y[E]++;let A=wt(c,y,t,e);A<m&&(h=[...y],m=A,G=!0)}if(!G)break;i=[...h]}let p=K(h),f=h.map(M=>M/p),b=f.reduce((M,G)=>M+G,0),x=z(f),d={},g={};c.forEach((M,G)=>{d[M]=f[G],g[M]=x[G]});let R=c.map((M,G)=>({color:t.find(E=>E.code===M).linearRGB,weight:x[G]})),w=S(R),C=$(w),v=T(w),L=D(v);return{parts:d,weights:g,total:b,deltaE:P(e,L),lab:L,rgb:C}}function wt(s,t,e,r){let n=z(t),o=s.map((l,u)=>({color:e.find(m=>m.code===l).linearRGB,weight:n[u]})),a=S(o),c=T(a),i=D(c);return P(r,i)}function Mt(s,t,e,r={totals:[9,12,15,18],minPer:1,maxDeltaEPenalty:.8}){let n=null;for(let o of r.totals){let a=Yt(s,t,e,{total:o,minPer:r.minPer});if(a&&((!n||a.deltaE<r.maxDeltaEPenalty||a.deltaE<n.deltaE)&&(n=a),a.deltaE<r.maxDeltaEPenalty))break}return n}var U=class{constructor(t,e){this.colours=t;this.constraints=e;this.twoWayCache=[];this.singleDistances=[];this.enhancedColours=Rt(t),this.precomputeTwoWayBlends()}getHueSector(t){let r=(Math.atan2(t.b,t.a)*180/Math.PI%360+360)%360;return Math.floor(r/60)}toDedupeRecipe(t){return{components:t.components,mode:this.constraints.mode,parts:t.parts&&t.total?{codes:Object.keys(t.parts),parts:Object.values(t.parts),total:t.total}:void 0,lab:t.lab,deltaE:t.deltaE,weights:t.weights}}fromDedupeRecipe(t){let e=t.parts?t.parts.codes.reduce((n,o,a)=>(n[o]=t.parts.parts[a],n),{}):void 0,r=this.calculateRGBFromWeights(t.weights);return{components:t.components,weights:t.weights,parts:e,total:t.parts?.total,lab:t.lab,rgb:r,deltaE:t.deltaE,baseDeltaE:t.deltaE,note:t.mode==="parts"?"Parts blend":"Percentage blend",reasoning:"Generated by enhanced solver"}}calculateRGBFromWeights(t){let e=Object.entries(t).map(([n,o])=>{let a=this.enhancedColours.find(c=>c.code===n);return a?{color:a.linearRGB,weight:o}:{color:{R:.5,G:.5,B:.5},weight:o}});if(e.length===0)return{R:128,G:128,B:128};let r=S(e);return $(r)}solve(t,e=5){let r=[];if(this.singleDistances=this.enhancedColours.map(l=>P(t,{L:l.L,a:l.a,b:l.b})),this.constraints.maxComponents>=1){let l=this.solveSingleComponents(t);r.push(...l)}if(this.constraints.maxComponents>=2){let l=this.solveTwoWayBlends(t);r.push(...l)}if(this.constraints.maxComponents>=3){let l=this.solveThreeWayBlendsWithHueDiversity(t);r.push(...l)}if(r.length<e*3&&this.constraints.maxComponents<3){let l=this.autoExpandSearch(t,e*2);r.push(...l)}let o=r.map(l=>this.convertToPartsIfNeeded(l,t)).map(l=>this.toDedupeRecipe(l)),a=Bt(o);return Ct(a,e*2,.75).slice(0,e).map(l=>this.fromDedupeRecipe(l))}autoExpandSearch(t,e){let r=[];if(this.constraints.maxComponents<3){let n=this.constraints.maxComponents;this.constraints.maxComponents=3;let o=this.solveThreeWayBlendsWithHueDiversity(t);r.push(...o.slice(0,Math.ceil(e/2))),this.constraints.maxComponents=n}if(r.length<e){let n=this.constraints.minPct,o=Math.max(.05,this.constraints.minPct-.03);this.constraints.minPct=o;for(let a of this.twoWayCache.slice(0,e*2))if(a.p>=o&&1-a.p>=o){a.deltaE=P(t,a.lab);let c=this.enhancedColours[a.i],i=this.enhancedColours[a.j],l=k([{lab:{L:c.L,a:c.a,b:c.b},weight:a.p},{lab:{L:i.L,a:i.a,b:i.b},weight:1-a.p}],t,this.singleDistances);a.adjustedDeltaE=a.deltaE+l;let u=a.p>=.6?c:a.p<=.4?i:null,h=u?`Relaxed ${u.name} with ${u===c?i.name:c.name} adjustment`:`Relaxed balanced mix of ${c.name} and ${i.name}`;if(r.push({components:[{code:c.code,pct:a.p},{code:i.code,pct:1-a.p}],weights:{[c.code]:a.p,[i.code]:1-a.p},lab:a.lab,rgb:$(S([{color:c.linearRGB,weight:a.p},{color:i.linearRGB,weight:1-a.p}])),deltaE:a.adjustedDeltaE,baseDeltaE:a.deltaE,note:"2-component expanded blend",reasoning:h}),r.length>=e)break}this.constraints.minPct=n}return r.slice(0,e)}precomputeTwoWayBlends(){let{minPct:t}=this.constraints,e=1-t,r=Math.max(.04,this.constraints.stepPct*2);for(let n=0;n<this.enhancedColours.length;n++)for(let o=n+1;o<this.enhancedColours.length;o++){let a=this.enhancedColours[n],c=this.enhancedColours[o];for(let i=t;i<=e;i+=r){let l=S([{color:a.linearRGB,weight:i},{color:c.linearRGB,weight:1-i}]),u=T(l),h=D(u);this.twoWayCache.push({i:n,j:o,p:i,lab:h,deltaE:0,adjustedDeltaE:0})}}}refineTopCandidates(t,e,r=20){let n=[],o=Math.min(.01,this.constraints.stepPct);for(let a of t.slice(0,r)){let c=this.enhancedColours[a.i],i=this.enhancedColours[a.j],l=.08,u=Math.max(this.constraints.minPct,a.p-l),h=Math.min(1-this.constraints.minPct,a.p+l),m=a;for(let p=u;p<=h;p+=o){let f=S([{color:c.linearRGB,weight:p},{color:i.linearRGB,weight:1-p}]),b=T(f),x=D(b),d=P(e,x),g=k([{lab:{L:c.L,a:c.a,b:c.b},weight:p},{lab:{L:i.L,a:i.a,b:i.b},weight:1-p}],e,this.singleDistances),R=d+g;R<m.adjustedDeltaE&&(m={i:a.i,j:a.j,p,lab:x,deltaE:d,adjustedDeltaE:R})}n.push(m)}return n.sort((a,c)=>a.adjustedDeltaE-c.adjustedDeltaE)}solveSingleComponents(t){let e=[];for(let r=0;r<this.enhancedColours.length;r++){let n=this.enhancedColours[r],o={L:n.L,a:n.a,b:n.b},a=P(t,o);e.push({components:[{code:n.code,pct:1}],weights:{[n.code]:1},lab:o,rgb:{R:n.R,G:n.G,B:n.B},deltaE:a,baseDeltaE:a,note:"Single component",reasoning:`Direct match with ${n.name}`})}return e.sort((r,n)=>r.deltaE-n.deltaE).slice(0,2)}solveTwoWayBlends(t){for(let n of this.twoWayCache){n.deltaE=P(t,n.lab);let o=this.enhancedColours[n.i],a=this.enhancedColours[n.j],c=k([{lab:{L:o.L,a:o.a,b:o.b},weight:n.p},{lab:{L:a.L,a:a.a,b:a.b},weight:1-n.p}],t,this.singleDistances);n.adjustedDeltaE=n.deltaE+c}let e=this.twoWayCache.slice().sort((n,o)=>n.adjustedDeltaE-o.adjustedDeltaE).slice(0,30);return this.refineTopCandidates(e,t,15).slice(0,10).map(n=>{let o=this.enhancedColours[n.i],a=this.enhancedColours[n.j],c=n.p>=.6?o:n.p<=.4?a:null,i=c?`Anchor ${c.name} with ${c===o?a.name:o.name} adjustment`:`Balanced mix of ${o.name} and ${a.name}`;return{components:[{code:o.code,pct:n.p},{code:a.code,pct:1-n.p}],weights:{[o.code]:n.p,[a.code]:1-n.p},lab:n.lab,rgb:$(S([{color:o.linearRGB,weight:n.p},{color:a.linearRGB,weight:1-n.p}])),deltaE:n.adjustedDeltaE,baseDeltaE:n.deltaE,note:"2-component blend",reasoning:i}})}solveThreeWayBlendsWithHueDiversity(t){let e=[],r=new Map;for(let o of this.twoWayCache){o.deltaE=P(t,o.lab);let a=this.enhancedColours[o.i],c=this.enhancedColours[o.j],i=k([{lab:{L:a.L,a:a.a,b:a.b},weight:o.p},{lab:{L:c.L,a:c.a,b:c.b},weight:1-o.p}],t,this.singleDistances);o.adjustedDeltaE=o.deltaE+i;let l=this.getHueSector(o.lab),u=r.get(l)||[];u.push(o),r.set(l,u)}let n=[];for(let o of Array.from(r.values()))o.sort((a,c)=>a.adjustedDeltaE-c.adjustedDeltaE),n.push(...o.slice(0,4));if(n.length<24){let o=Array.from(r.values()).flat();o.sort((c,i)=>c.adjustedDeltaE-i.adjustedDeltaE);let a=30-n.length;n.push(...o.slice(0,a))}return this.generateThreeWayFromSeeds(n,t)}generateThreeWayFromSeeds(t,e){let r=[];for(let n of t){let o=[n.i,n.j];for(let a=0;a<this.enhancedColours.length;a++){if(o.includes(a))continue;let c=this.enhancedColours[a];for(let i=this.constraints.minPct;i<=1-2*this.constraints.minPct;i+=this.constraints.stepPct*2){let l=1-i,u=Math.max(this.constraints.minPct,n.p*l),h=l-u;if(h<this.constraints.minPct)continue;let m=z([u,h,i]),[p,f,b]=m,x=S([{color:this.enhancedColours[n.i].linearRGB,weight:p},{color:this.enhancedColours[n.j].linearRGB,weight:f},{color:c.linearRGB,weight:b}]),d=T(x),g=D(d),R=P(e,g),w=k([{lab:{L:this.enhancedColours[n.i].L,a:this.enhancedColours[n.i].a,b:this.enhancedColours[n.i].b},weight:p},{lab:{L:this.enhancedColours[n.j].L,a:this.enhancedColours[n.j].a,b:this.enhancedColours[n.j].b},weight:f},{lab:{L:c.L,a:c.a,b:c.b},weight:b}],e,this.singleDistances),C=R+w;r.push({components:[{code:this.enhancedColours[n.i].code,pct:p},{code:this.enhancedColours[n.j].code,pct:f},{code:c.code,pct:b}],weights:{[this.enhancedColours[n.i].code]:p,[this.enhancedColours[n.j].code]:f,[c.code]:b},lab:g,rgb:$(x),deltaE:C,baseDeltaE:R,note:"3-component blend",reasoning:"Refined blend with three components"})}}}return r.sort((n,o)=>n.deltaE-o.deltaE).slice(0,5)}convertToPartsIfNeeded(t,e){if(this.constraints.mode!=="parts"||!this.constraints.parts?.enabled)return t;let r=Mt(t.weights,this.enhancedColours,e,{totals:this.constraints.parts.total?[this.constraints.parts.total]:[9,12,15],minPer:this.constraints.parts.minPer||1,maxDeltaEPenalty:.8});return r?{...t,parts:r.parts,total:r.total,weights:r.weights,lab:r.lab,rgb:r.rgb,deltaE:r.deltaE,note:t.note+` (${r.total} parts total)`,reasoning:t.reasoning+` - Snapped to ${r.total} parts with \u0394E ${(r.deltaE-t.baseDeltaE).toFixed(2)} penalty`}:t}};function Et(s,t){if(s.length===0)throw new Error("Cannot calculate blend color: no components provided");let e=s.reduce((u,h)=>u+h.pct,0);if(e===0)throw new Error("Cannot calculate blend color: total weight is zero");let r=s.map(u=>({code:u.code,pct:u.pct/e})),n=0,o=0,a=0;for(let u of r){let h=t.find(p=>p.code===u.code);if(!h){console.warn(`TPV color not found for code: ${u.code}, using fallback`);continue}let m={L:h.L,a:h.a,b:h.b};n+=m.L*u.pct,o+=m.a*u.pct,a+=m.b*u.pct}let c={L:n,a:o,b:a},i=ht(c);return{hex:Zt(i),rgb:i,lab:c}}function Zt(s){let t=e=>Math.round(Math.max(0,Math.min(255,e))).toString(16).padStart(2,"0");return`#${t(s.R)}${t(s.G)}${t(s.B)}`}var H=[{code:"RH01",name:"Standard Red",hex:"#B71E2D",R:183,G:30,B:45,L:39.4,a:58.5,b:29},{code:"RH02",name:"Bright Red",hex:"#E31D25",R:227,G:29,B:37,L:47.4,a:70.1,b:44},{code:"RH10",name:"Standard Green",hex:"#006B3F",R:0,G:107,B:63,L:40.5,a:-42.2,b:17.9},{code:"RH11",name:"Bright Green",hex:"#4BAA34",R:75,G:170,B:52,L:62.1,a:-47.7,b:47.2},{code:"RH12",name:"Dark Green",hex:"#006747",R:0,G:103,B:71,L:39.6,a:-38.3,b:13.1},{code:"RH20",name:"Standard Blue",hex:"#1B4F9C",R:27,G:79,B:156,L:36.4,a:14.2,b:-46.7},{code:"RH21",name:"Purple",hex:"#662D91",R:102,G:45,B:145,L:31.5,a:41.9,b:-40.9},{code:"RH22",name:"Light Blue",hex:"#0091D7",R:0,G:145,B:215,L:55.3,a:-19.1,b:-37.3},{code:"RH23",name:"Azure",hex:"#0076B6",R:0,G:118,B:182,L:47.7,a:-4.8,b:-34.8},{code:"RH26",name:"Turquoise",hex:"#00A499",R:0,G:164,B:153,L:58.8,a:-38.4,b:-3},{code:"RH30",name:"Standard Beige",hex:"#D4B585",R:212,G:181,B:133,L:75.2,a:3.8,b:24.8},{code:"RH31",name:"Cream",hex:"#F2E6C8",R:242,G:230,B:200,L:91.8,a:-.5,b:12.5},{code:"RH32",name:"Brown",hex:"#754C29",R:117,G:76,B:41,L:40,a:15.9,b:27.1},{code:"RH90",name:"Funky Pink",hex:"#e8457e",R:232,G:69,B:126,L:55,a:66.1,b:4.9},{code:"RH40",name:"Mustard Yellow",hex:"#C6972D",R:198,G:151,B:45,L:66,a:8.4,b:56.3},{code:"RH41",name:"Bright Yellow",hex:"#FFD100",R:255,G:209,B:0,L:86.9,a:-1,b:90.6},{code:"RH50",name:"Orange",hex:"#F47920",R:244,G:121,B:32,L:63.2,a:49.8,b:60.2},{code:"RH60",name:"Dark Grey",hex:"#4D4F53",R:77,G:79,B:83,L:34.1,a:-.4,b:-2.4},{code:"RH61",name:"Light Grey",hex:"#A7A8AA",R:167,G:168,B:170,L:69,a:-.5,b:-1},{code:"RH65",name:"Pale Grey",hex:"#DCDDDE",R:220,G:221,B:222,L:87.6,a:-.2,b:-.7},{code:"RH70",name:"Black",hex:"#101820",R:16,G:24,B:32,L:9.1,a:-.3,b:-6.3}];async function Ut(s,t){if(s.method!=="POST")return t.status(405).json({success:!1,error:"Method not allowed. Use POST."});try{let{svg_url:e,job_id:r,max_colors:n=8,max_components:o=2}=s.body;if(!e)return t.status(400).json({success:!1,error:"Missing required field: svg_url"});console.log("[BLEND-RECIPES] Starting color extraction for job:",r),console.log("[BLEND-RECIPES] SVG URL:",e),console.log("[BLEND-RECIPES] Max colors:",n,"Max components:",o);let a=Date.now();console.log("[BLEND-RECIPES] Fetching SVG from URL...");let c=await fetch(e);if(!c.ok)throw new Error(`Failed to fetch SVG: ${c.status} ${c.statusText}`);let i=await c.arrayBuffer();console.log(`[BLEND-RECIPES] SVG fetched (${i.byteLength} bytes)`),console.log("[BLEND-RECIPES] Extracting colors...");let u=await new Y({maxColours:n,minAreaPct:1,rasterOptions:{resampleSize:400,iterations:15}}).extract(i,"design.svg"),h=Date.now()-a;if(console.log(`[BLEND-RECIPES] Extracted ${u.palette.length} colors in ${h}ms`),u.palette.length===0)return t.status(200).json({success:!0,colors:[],recipes:[],message:"No significant colors found in SVG (all colors below 1% coverage)"});console.log("[BLEND-RECIPES] Initializing blend solver...");let m=new U(H,{maxComponents:o,stepPct:.04,minPct:.1,mode:"parts",parts:{enabled:!0,total:12,minPer:1},preferAnchor:!0});console.log("[BLEND-RECIPES] Generating blend recipes...");let p=[],f=Date.now();for(let g=0;g<u.palette.length;g++){let R=u.palette[g];console.log(`[BLEND-RECIPES]   Color ${g+1}/${u.palette.length}: RGB(${R.rgb.R}, ${R.rgb.G}, ${R.rgb.B}) - ${R.areaPct.toFixed(1)}%`);let w=m.solve(R.lab,3),C=w[0],v=C.components.map(B=>({code:B.code,pct:B.pct})),L=Et(v,H),M={id:`recipe_${g+1}_1`,parts:C.parts||{},total:C.total||0,deltaE:C.deltaE,quality:C.deltaE<1?"Excellent":C.deltaE<2?"Good":"Fair",resultRgb:C.rgb,components:C.components.map(B=>({code:B.code,name:H.find(E=>E.code===B.code)?.name||B.code,weight:B.pct,parts:C.parts?C.parts[B.code]:null}))},G=w.slice(1).map((B,E)=>({id:`recipe_${g+1}_${E+2}`,parts:B.parts||{},total:B.total||0,deltaE:B.deltaE,quality:B.deltaE<1?"Excellent":B.deltaE<2?"Good":"Fair",resultRgb:B.rgb,components:B.components.map(y=>({code:y.code,name:H.find(A=>A.code===y.code)?.name||y.code,weight:y.pct,parts:B.parts?B.parts[y.code]:null}))}));console.log(`[BLEND-RECIPES]     Chosen: \u0394E ${C.deltaE.toFixed(2)} (${M.quality}), Blend: ${L.hex}`),p.push({targetColor:{hex:Gt(R.rgb),rgb:R.rgb,lab:R.lab,areaPct:R.areaPct},chosenRecipe:M,blendColor:{hex:L.hex,rgb:L.rgb,lab:L.lab},alternativeRecipes:G})}let b=Date.now()-f,x=Date.now()-a;console.log(`[BLEND-RECIPES] Generated ${p.length} recipe sets in ${b}ms (total: ${x}ms)`);let d=u.palette.map(g=>({hex:Gt(g.rgb),rgb:g.rgb,lab:g.lab,areaPct:g.areaPct}));return t.status(200).json({success:!0,colors:d,recipes:p,metadata:{colorsExtracted:u.palette.length,extractionTime:h,solveTime:b,totalTime:x,maxComponents:o}})}catch(e){return console.error("[BLEND-RECIPES] Error:",e),console.error(e.stack),t.status(500).json({success:!1,error:e.message||"Internal server error",stack:process.env.NODE_ENV==="development"?e.stack:void 0})}}function Gt(s){let t=e=>Math.round(e).toString(16).padStart(2,"0");return`#${t(s.R)}${t(s.G)}${t(s.B)}`}var Ye={api:{bodyParser:{sizeLimit:"2mb"},responseLimit:"4mb",externalResolver:!1},maxDuration:60};export{Ye as config,Ut as default};
+// TPV Studio API - Blend Recipes Endpoint
+// Built from TypeScript sources with esbuild
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __commonJS = (cb, mod) => function __require() {
+  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+
+// node_modules/kmeans-js/kMeans.js
+var require_kMeans = __commonJS({
+  "node_modules/kmeans-js/kMeans.js"(exports, module) {
+    var exports;
+    var kMeans;
+    kMeans = (function() {
+      function kMeans2(options) {
+        var _ref, _ref1, _ref2, _ref3, _ref4;
+        if (options == null) {
+          options = {};
+        }
+        this.K = (_ref = options.K) != null ? _ref : 5;
+        this.maxIterations = (_ref1 = options.maxIterations) != null ? _ref1 : 100;
+        this.enableConvergenceTest = (_ref2 = options.enableConvergenceTest) != null ? _ref2 : true;
+        this.tolerance = (_ref3 = options.tolerance) != null ? _ref3 : 1e-9;
+        this.initialize = (_ref4 = options.initialize) != null ? _ref4 : kMeans2.initializeForgy;
+      }
+      kMeans2.prototype.cluster = function(X) {
+        var _ref;
+        this.X = X;
+        this.prevCentroids = [];
+        this.clusters = [];
+        this.currentIteration = 0;
+        _ref = [this.X.length, this.X[0].length], this.m = _ref[0], this.n = _ref[1];
+        if (this.m == null || this.n == null || this.m < this.K || this.n < 1) {
+          throw "You must pass more data";
+        }
+        return this.centroids = this.initialize(this.X, this.K, this.m, this.n);
+      };
+      kMeans2.prototype.step = function() {
+        return this.currentIteration++ < this.maxIterations;
+      };
+      kMeans2.prototype.autoCluster = function(X) {
+        var _results;
+        this.cluster(X);
+        _results = [];
+        while (this.step()) {
+          this.findClosestCentroids();
+          this.moveCentroids();
+          if (this.hasConverged()) {
+            break;
+          } else {
+            _results.push(void 0);
+          }
+        }
+        return _results;
+      };
+      kMeans2.initializeForgy = function(X, K, m, n) {
+        var k, _i, _results;
+        _results = [];
+        for (k = _i = 0; 0 <= K ? _i < K : _i > K; k = 0 <= K ? ++_i : --_i) {
+          _results.push(X[Math.floor(Math.random() * m)]);
+        }
+        return _results;
+      };
+      kMeans2.initializeInRange = function(X, K, m, n) {
+        var d, i, k, max, min, x, _i, _j, _k, _l, _len, _len1, _m, _results;
+        for (i = _i = 0; 0 <= n ? _i < n : _i > n; i = 0 <= n ? ++_i : --_i) {
+          min = Infinity;
+        }
+        for (i = _j = 0; 0 <= n ? _j < n : _j > n; i = 0 <= n ? ++_j : --_j) {
+          max = -Infinity;
+        }
+        for (_k = 0, _len = X.length; _k < _len; _k++) {
+          x = X[_k];
+          for (i = _l = 0, _len1 = x.length; _l < _len1; i = ++_l) {
+            d = x[i];
+            min[i] = Math.min(min[i], d);
+            max[i] = Math.max(max[i], d);
+          }
+        }
+        _results = [];
+        for (k = _m = 0; 0 <= K ? _m < K : _m > K; k = 0 <= K ? ++_m : --_m) {
+          _results.push((function() {
+            var _n, _results1;
+            _results1 = [];
+            for (d = _n = 0; 0 <= n ? _n < n : _n > n; d = 0 <= n ? ++_n : --_n) {
+              _results1.push(Math.random() * (max[d] - min[d]) + min[d]);
+            }
+            return _results1;
+          })());
+        }
+        return _results;
+      };
+      kMeans2.prototype.findClosestCentroids = function() {
+        var c, cMin, i, j, k, min, r, x, xMin, _i, _j, _k, _len, _len1, _ref, _ref1, _ref2, _results;
+        if (this.enableConvergenceTest) {
+          this.prevCentroids = (function() {
+            var _i2, _len2, _ref3, _results2;
+            _ref3 = this.centroids;
+            _results2 = [];
+            for (_i2 = 0, _len2 = _ref3.length; _i2 < _len2; _i2++) {
+              r = _ref3[_i2];
+              _results2.push(r.slice(0));
+            }
+            return _results2;
+          }).call(this);
+        }
+        this.clusters = (function() {
+          var _i2, _ref3, _results2;
+          _results2 = [];
+          for (i = _i2 = 0, _ref3 = this.K; 0 <= _ref3 ? _i2 < _ref3 : _i2 > _ref3; i = 0 <= _ref3 ? ++_i2 : --_i2) {
+            _results2.push([]);
+          }
+          return _results2;
+        }).call(this);
+        _ref = this.X;
+        _results = [];
+        for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+          x = _ref[i];
+          cMin = 0;
+          xMin = Infinity;
+          _ref1 = this.centroids;
+          for (j = _j = 0, _len1 = _ref1.length; _j < _len1; j = ++_j) {
+            c = _ref1[j];
+            min = 0;
+            for (k = _k = 0, _ref2 = x.length; 0 <= _ref2 ? _k < _ref2 : _k > _ref2; k = 0 <= _ref2 ? ++_k : --_k) {
+              min += (x[k] - c[k]) * (x[k] - c[k]);
+            }
+            if (min < xMin) {
+              cMin = j;
+              xMin = min;
+            }
+          }
+          _results.push(this.clusters[cMin].push(i));
+        }
+        return _results;
+      };
+      kMeans2.prototype.moveCentroids = function() {
+        var cl, d, i, j, sum, _i, _len, _ref, _results;
+        _ref = this.clusters;
+        _results = [];
+        for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
+          cl = _ref[i];
+          if (cl.length < 1) {
+            continue;
+          }
+          _results.push((function() {
+            var _j, _k, _len1, _ref1, _results1;
+            _results1 = [];
+            for (j = _j = 0, _ref1 = this.n; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; j = 0 <= _ref1 ? ++_j : --_j) {
+              sum = 0;
+              for (_k = 0, _len1 = cl.length; _k < _len1; _k++) {
+                d = cl[_k];
+                sum += this.X[d][j];
+              }
+              _results1.push(this.centroids[i][j] = sum / cl.length);
+            }
+            return _results1;
+          }).call(this));
+        }
+        return _results;
+      };
+      kMeans2.prototype.hasConverged = function() {
+        var absDelta, i, j, _i, _j, _ref, _ref1;
+        if (!this.enableConvergenceTest) {
+          return false;
+        }
+        for (i = _i = 0, _ref = this.n; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
+          for (j = _j = 0, _ref1 = this.m; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; j = 0 <= _ref1 ? ++_j : --_j) {
+            absDelta = Math.abs(this.prevCentroids[i][j] - this.centroids[i][j]);
+            if (this.tolerance > absDelta) {
+              return true;
+            }
+          }
+        }
+        return false;
+      };
+      return kMeans2;
+    })();
+    if ((typeof module !== "undefined" && module !== null ? module.exports : void 0) != null || typeof exports !== "undefined" && exports !== null) {
+      module.exports = exports = kMeans;
+    } else {
+      window.kMeans = kMeans;
+    }
+  }
+});
+
+// api/_utils/extraction/raster.ts
+var import_kmeans_js = __toESM(require_kMeans(), 1);
+import sharp from "sharp";
+
+// api/_utils/colour/convert.ts
+var D65_REFERENCE = { Xn: 0.95047, Yn: 1, Zn: 1.08883 };
+var RGB_TO_XYZ_MATRIX = [
+  [0.4124564, 0.3575761, 0.1804375],
+  [0.2126729, 0.7151522, 0.072175],
+  [0.0193339, 0.119192, 0.9503041]
+];
+var XYZ_TO_RGB_MATRIX = [
+  [3.2404542, -1.5371385, -0.4985314],
+  [-0.969266, 1.8760108, 0.041556],
+  [0.0556434, -0.2040259, 1.0572252]
+];
+function gammaExpand(value) {
+  return value <= 0.04045 ? value / 12.92 : Math.pow((value + 0.055) / 1.055, 2.4);
+}
+function gammaCompress(value) {
+  return value <= 31308e-7 ? value * 12.92 : 1.055 * Math.pow(value, 1 / 2.4) - 0.055;
+}
+function sRGBToLinearRGB(rgb) {
+  return {
+    R: gammaExpand(rgb.R / 255),
+    G: gammaExpand(rgb.G / 255),
+    B: gammaExpand(rgb.B / 255)
+  };
+}
+function linearRGBToSRGB(linear) {
+  return {
+    R: Math.round(gammaCompress(linear.R) * 255),
+    G: Math.round(gammaCompress(linear.G) * 255),
+    B: Math.round(gammaCompress(linear.B) * 255)
+  };
+}
+function linearRGBToXYZ(rgb) {
+  const [row0, row1, row2] = RGB_TO_XYZ_MATRIX;
+  return {
+    X: row0[0] * rgb.R + row0[1] * rgb.G + row0[2] * rgb.B,
+    Y: row1[0] * rgb.R + row1[1] * rgb.G + row1[2] * rgb.B,
+    Z: row2[0] * rgb.R + row2[1] * rgb.G + row2[2] * rgb.B
+  };
+}
+function xyzToLinearRGB(xyz) {
+  const [row0, row1, row2] = XYZ_TO_RGB_MATRIX;
+  return {
+    R: row0[0] * xyz.X + row0[1] * xyz.Y + row0[2] * xyz.Z,
+    G: row1[0] * xyz.X + row1[1] * xyz.Y + row1[2] * xyz.Z,
+    B: row2[0] * xyz.X + row2[1] * xyz.Y + row2[2] * xyz.Z
+  };
+}
+function f(t) {
+  const delta = 6 / 29;
+  return t > Math.pow(delta, 3) ? Math.pow(t, 1 / 3) : t / (3 * delta * delta) + 4 / 29;
+}
+function fInv(t) {
+  const delta = 6 / 29;
+  return t > delta ? Math.pow(t, 3) : 3 * delta * delta * (t - 4 / 29);
+}
+function xyzToLab(xyz) {
+  const fx = f(xyz.X / D65_REFERENCE.Xn);
+  const fy = f(xyz.Y / D65_REFERENCE.Yn);
+  const fz = f(xyz.Z / D65_REFERENCE.Zn);
+  return {
+    L: 116 * fy - 16,
+    a: 500 * (fx - fy),
+    b: 200 * (fy - fz)
+  };
+}
+function labToXYZ(lab) {
+  const fy = (lab.L + 16) / 116;
+  const fx = lab.a / 500 + fy;
+  const fz = fy - lab.b / 200;
+  return {
+    X: D65_REFERENCE.Xn * fInv(fx),
+    Y: D65_REFERENCE.Yn * fInv(fy),
+    Z: D65_REFERENCE.Zn * fInv(fz)
+  };
+}
+function sRGBToLab(rgb) {
+  const linear = sRGBToLinearRGB(rgb);
+  const xyz = linearRGBToXYZ(linear);
+  return xyzToLab(xyz);
+}
+function labToSRGB(lab) {
+  const xyz = labToXYZ(lab);
+  const linear = xyzToLinearRGB(xyz);
+  return linearRGBToSRGB(linear);
+}
+
+// api/_utils/extraction/raster.ts
+var RasterExtractor = class {
+  constructor(options = {}) {
+    this.options = {
+      maxColours: options.maxColours ?? 20,
+      minPercentage: options.minPercentage ?? 0.5,
+      resampleSize: options.resampleSize ?? 400,
+      iterations: options.iterations ?? 20
+    };
+  }
+  async extract(imageBuffer, format) {
+    const startTime = Date.now();
+    try {
+      const image = sharp(Buffer.from(imageBuffer));
+      const metadata = await image.metadata();
+      if (!metadata.width || !metadata.height) {
+        throw new Error("Invalid image dimensions");
+      }
+      const maxDim = Math.max(metadata.width, metadata.height);
+      const scaleFactor = maxDim > this.options.resampleSize ? this.options.resampleSize / maxDim : 1;
+      const resizedWidth = Math.round(metadata.width * scaleFactor);
+      const resizedHeight = Math.round(metadata.height * scaleFactor);
+      const { data, info } = await image.resize(resizedWidth, resizedHeight, {
+        kernel: sharp.kernel.lanczos3,
+        fit: "fill"
+      }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+      const pixels = [];
+      for (let i = 0; i < data.length; i += 3) {
+        pixels.push({
+          R: data[i],
+          G: data[i + 1],
+          B: data[i + 2]
+        });
+      }
+      const clusters = this.performKMeans(pixels, this.options.maxColours);
+      const totalPixels = pixels.length;
+      const colours = clusters.map((cluster, index) => {
+        const centroid = cluster.centroid;
+        const rgb = {
+          R: Math.round(Math.max(0, Math.min(255, centroid[0]))),
+          G: Math.round(Math.max(0, Math.min(255, centroid[1]))),
+          B: Math.round(Math.max(0, Math.min(255, centroid[2])))
+        };
+        const pixels2 = cluster.cluster.length;
+        const percentage = pixels2 / totalPixels * 100;
+        return {
+          rgb,
+          pixels: pixels2,
+          percentage
+        };
+      }).filter((c) => c.percentage >= this.options.minPercentage).sort((a, b) => b.percentage - a.percentage);
+      const duration = Date.now() - startTime;
+      console.info(`Final palette: ${colours.length} colors, top 5 areas: ${colours.slice(0, 5).map((c) => c.percentage.toFixed(1) + "%").join(", ")}`);
+      console.info(`Extraction completed in ${duration}ms`);
+      return {
+        colours,
+        metadata: {
+          width: metadata.width,
+          height: metadata.height,
+          totalPixels: metadata.width * metadata.height,
+          format
+        }
+      };
+    } catch (error) {
+      throw new Error(`Raster extraction failed: ${error.message}`);
+    }
+  }
+  async extractFromCanvas(canvas) {
+    try {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        throw new Error("Could not get canvas context");
+      }
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = [];
+      for (let i = 0; i < imageData.data.length; i += 4) {
+        pixels.push({
+          R: imageData.data[i],
+          G: imageData.data[i + 1],
+          B: imageData.data[i + 2]
+          // Skip alpha channel (i + 3)
+        });
+      }
+      const clusters = this.performKMeans(pixels, this.options.maxColours);
+      const totalPixels = pixels.length;
+      const colours = clusters.map((cluster) => {
+        const centroid = cluster.centroid;
+        const rgb = {
+          R: Math.round(Math.max(0, Math.min(255, centroid[0]))),
+          G: Math.round(Math.max(0, Math.min(255, centroid[1]))),
+          B: Math.round(Math.max(0, Math.min(255, centroid[2])))
+        };
+        const pixelCount = cluster.cluster.length;
+        const percentage = pixelCount / totalPixels * 100;
+        return {
+          rgb,
+          pixels: pixelCount,
+          percentage
+        };
+      }).filter((c) => c.percentage >= this.options.minPercentage).sort((a, b) => b.percentage - a.percentage);
+      return {
+        colours,
+        metadata: {
+          width: canvas.width,
+          height: canvas.height,
+          totalPixels,
+          format: "canvas"
+        }
+      };
+    } catch (error) {
+      throw new Error(`Canvas extraction failed: ${error.message}`);
+    }
+  }
+  performKMeans(pixels, k) {
+    console.info(`K-means input: ${pixels.length} pixels, requesting ${k} clusters`);
+    const labPixels = [];
+    let nanCount = 0;
+    for (const pixel of pixels) {
+      try {
+        const linearRGB = sRGBToLinearRGB(pixel);
+        const xyz = linearRGBToXYZ(linearRGB);
+        const lab = xyzToLab(xyz);
+        if (isNaN(lab.L) || isNaN(lab.a) || isNaN(lab.b)) {
+          nanCount++;
+          continue;
+        }
+        labPixels.push(lab);
+      } catch (error) {
+        nanCount++;
+        continue;
+      }
+    }
+    if (nanCount > 0) {
+      console.info(`NaN dropped: ${nanCount}`);
+    }
+    if (labPixels.length === 0) {
+      console.warn("No valid Lab pixels, using RGB fallback");
+      return this.simpleDominantColors(pixels, k);
+    }
+    const sampleSize = Math.min(labPixels.length, 5e3);
+    const sampledLab = labPixels.length > sampleSize ? this.sampleArray(labPixels, sampleSize) : labPixels;
+    console.info(`Using ${sampledLab.length} sampled pixels`);
+    const actualK = this.calculateOptimalK(sampledLab, k);
+    console.info(`Adjusted k from ${k} to ${actualK}`);
+    if (actualK <= 1) {
+      const avgColor = this.calculateAverageColor(pixels);
+      console.info("Single color case, using average:", avgColor);
+      return [{
+        centroid: [avgColor.R, avgColor.G, avgColor.B],
+        cluster: pixels.map((p) => [p.R, p.G, p.B])
+      }];
+    }
+    const MAX_RETRIES = 3;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        console.info(`K-means attempt ${attempt + 1}/${MAX_RETRIES} with k=${actualK}`);
+        const labData = sampledLab.map((lab) => [lab.L, lab.a, lab.b]);
+        const km = new import_kmeans_js.default({ K: actualK });
+        km.cluster(labData);
+        let iterations = 0;
+        const maxIterations = this.options.iterations || 20;
+        while (km.step() && iterations < maxIterations) {
+          km.findClosestCentroids();
+          km.moveCentroids();
+          if (km.hasConverged()) {
+            console.info(`K-means converged in ${iterations} iterations`);
+            break;
+          }
+          iterations++;
+        }
+        if (!km.centroids || km.centroids.length === 0) {
+          throw new Error(`K-means returned empty result on attempt ${attempt + 1}`);
+        }
+        console.info(`K-means attempt ${attempt + 1}: success with ${km.centroids.length} clusters in ${iterations} iterations`);
+        const result = km.centroids.map((centroid, idx) => ({
+          centroid,
+          cluster: km.clusters[idx] || []
+        }));
+        return this.convertLabClustersToRGB(result, pixels, labPixels);
+      } catch (error) {
+        console.warn(`K-means attempt ${attempt + 1} failed:`, error.message);
+        if (attempt === MAX_RETRIES - 1) {
+          console.warn("All k-means attempts failed, using fallback method");
+          return this.simpleDominantColors(pixels, actualK);
+        }
+      }
+    }
+    return this.simpleDominantColors(pixels, actualK);
+  }
+  /**
+   * Calculate optimal k based on image complexity using adaptive formula
+   */
+  calculateOptimalK(labPixels, requestedK) {
+    const quantizedSet = /* @__PURE__ */ new Set();
+    for (const lab of labPixels) {
+      const quantizedL = Math.round(lab.L / 4) * 4;
+      const quantizedA = Math.round(lab.a / 2) * 2;
+      const quantizedB = Math.round(lab.b / 2) * 2;
+      quantizedSet.add(`${quantizedL},${quantizedA},${quantizedB}`);
+    }
+    const uniqueColors = quantizedSet.size;
+    if (uniqueColors < 64) {
+      return Math.min(uniqueColors, 10, requestedK);
+    } else {
+      const adaptiveK = Math.round(Math.sqrt(uniqueColors / 2));
+      return Math.max(6, Math.min(adaptiveK, 18, requestedK));
+    }
+  }
+  /**
+   * Convert Lab clusters back to RGB and map to original pixels
+   */
+  convertLabClustersToRGB(labClusters, originalPixels, labPixels) {
+    const rgbClusters = [];
+    for (const cluster of labClusters) {
+      const [L, a, b] = cluster.centroid;
+      try {
+        const xyz = {
+          X: 95.047 * Math.pow((L + 16) / 116 + a / 500, 3) / 100,
+          Y: 100 * Math.pow((L + 16) / 116, 3) / 100,
+          Z: 108.883 * Math.pow((L + 16) / 116 - b / 200, 3) / 100
+        };
+        const linearR = xyz.X * 3.2406 + xyz.Y * -1.5372 + xyz.Z * -0.4986;
+        const linearG = xyz.X * -0.9689 + xyz.Y * 1.8758 + xyz.Z * 0.0415;
+        const linearB = xyz.X * 0.0557 + xyz.Y * -0.204 + xyz.Z * 1.057;
+        const toSRGB = (c) => {
+          c = Math.max(0, Math.min(1, c));
+          return c <= 31308e-7 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+        };
+        const rgb = {
+          R: Math.round(toSRGB(linearR) * 255),
+          G: Math.round(toSRGB(linearG) * 255),
+          B: Math.round(toSRGB(linearB) * 255)
+        };
+        const clusterPixels = [];
+        for (let i = 0; i < labPixels.length; i++) {
+          const labPixel = labPixels[i];
+          const distance = Math.sqrt(
+            Math.pow(labPixel.L - L, 2) + Math.pow(labPixel.a - a, 2) + Math.pow(labPixel.b - b, 2)
+          );
+          let minDist = Infinity;
+          let closestRGBIndex = 0;
+          for (let j = 0; j < originalPixels.length; j++) {
+            const rgbDist = Math.sqrt(
+              Math.pow(originalPixels[j].R - rgb.R, 2) + Math.pow(originalPixels[j].G - rgb.G, 2) + Math.pow(originalPixels[j].B - rgb.B, 2)
+            );
+            if (rgbDist < minDist) {
+              minDist = rgbDist;
+              closestRGBIndex = j;
+            }
+          }
+          clusterPixels.push([originalPixels[closestRGBIndex].R, originalPixels[closestRGBIndex].G, originalPixels[closestRGBIndex].B]);
+        }
+        rgbClusters.push({
+          centroid: [rgb.R, rgb.G, rgb.B],
+          cluster: clusterPixels.length > 0 ? clusterPixels : [[rgb.R, rgb.G, rgb.B]]
+        });
+      } catch (error) {
+        console.warn("Failed to convert Lab cluster to RGB:", error);
+        const avgColor = this.calculateAverageColor(originalPixels);
+        rgbClusters.push({
+          centroid: [avgColor.R, avgColor.G, avgColor.B],
+          cluster: originalPixels.map((p) => [p.R, p.G, p.B])
+        });
+      }
+    }
+    return rgbClusters;
+  }
+  sampleArray(array, sampleSize) {
+    if (array.length <= sampleSize) return array;
+    const step = array.length / sampleSize;
+    const sampled = [];
+    for (let i = 0; i < array.length; i += step) {
+      sampled.push(array[Math.floor(i)]);
+    }
+    return sampled.slice(0, sampleSize);
+  }
+  findClosestCluster(pixel, centroids) {
+    let minDistance = Infinity;
+    let closestCentroid = centroids[0];
+    for (const centroid of centroids) {
+      const distance = Math.sqrt(
+        Math.pow(pixel[0][0] - centroid[0], 2) + Math.pow(pixel[0][1] - centroid[1], 2) + Math.pow(pixel[0][2] - centroid[2], 2)
+      );
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestCentroid = centroid;
+      }
+    }
+    return closestCentroid;
+  }
+  simpleDominantColors(pixels, k) {
+    console.info("Using simple color quantization fallback");
+    const colorCounts = /* @__PURE__ */ new Map();
+    const totalPixels = pixels.length;
+    for (const pixel of pixels) {
+      const quantized = {
+        R: Math.floor(pixel.R / 6) * 6,
+        // Finer quantization
+        G: Math.floor(pixel.G / 6) * 6,
+        B: Math.floor(pixel.B / 6) * 6
+      };
+      const key = `${quantized.R},${quantized.G},${quantized.B}`;
+      const existing = colorCounts.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        let lab;
+        try {
+          const linearRGB = sRGBToLinearRGB(quantized);
+          const xyz = linearRGBToXYZ(linearRGB);
+          lab = xyzToLab(xyz);
+        } catch (error) {
+        }
+        colorCounts.set(key, { count: 1, rgb: quantized, lab });
+      }
+    }
+    let clusters = Array.from(colorCounts.entries()).filter(([_, data]) => data.lab !== void 0).map(([key, data]) => ({
+      key,
+      rgb: data.rgb,
+      lab: data.lab,
+      count: data.count,
+      percentage: data.count / totalPixels * 100
+    }));
+    console.info(`Pre-merge: ${clusters.length} quantized colors`);
+    clusters = this.mergeNearbyColors(clusters).filter((c) => c.lab !== void 0);
+    const finalClusters = clusters.sort((a, b) => b.count - a.count).slice(0, k);
+    console.info(`Post-merge: ${finalClusters.length} final colors`);
+    return finalClusters.map((cluster) => ({
+      centroid: [cluster.rgb.R, cluster.rgb.G, cluster.rgb.B],
+      cluster: pixels.filter((p) => {
+        const quantized = {
+          R: Math.floor(p.R / 6) * 6,
+          G: Math.floor(p.G / 6) * 6,
+          B: Math.floor(p.B / 6) * 6
+        };
+        return `${quantized.R},${quantized.G},${quantized.B}` === cluster.key;
+      }).map((p) => [p.R, p.G, p.B])
+    }));
+  }
+  /**
+   * Merge nearby colors with improved thresholds and hue boundary protection
+   */
+  mergeNearbyColors(clusters) {
+    const MERGE_DE = 1.5;
+    const MIN_CLUSTER_AREA = 0.75;
+    const MAX_HUE_DIFF = 8;
+    clusters.sort((a, b) => b.percentage - a.percentage);
+    const kept = [];
+    for (const candidate of clusters) {
+      let merged = false;
+      if (candidate.percentage >= MIN_CLUSTER_AREA) {
+        kept.push(candidate);
+        continue;
+      }
+      for (const keeper of kept) {
+        if (!candidate.lab || !keeper.lab) {
+          continue;
+        }
+        const deltaE = Math.sqrt(
+          Math.pow(candidate.lab.L - keeper.lab.L, 2) + Math.pow(candidate.lab.a - keeper.lab.a, 2) + Math.pow(candidate.lab.b - keeper.lab.b, 2)
+        );
+        const dA = Math.abs(candidate.lab.a - keeper.lab.a);
+        const dB = Math.abs(candidate.lab.b - keeper.lab.b);
+        if (deltaE <= MERGE_DE && dA <= MAX_HUE_DIFF && dB <= MAX_HUE_DIFF) {
+          const totalArea = keeper.percentage + candidate.percentage;
+          const totalCount = keeper.count + candidate.count;
+          keeper.rgb = {
+            R: Math.round((keeper.rgb.R * keeper.count + candidate.rgb.R * candidate.count) / totalCount),
+            G: Math.round((keeper.rgb.G * keeper.count + candidate.rgb.G * candidate.count) / totalCount),
+            B: Math.round((keeper.rgb.B * keeper.count + candidate.rgb.B * candidate.count) / totalCount)
+          };
+          keeper.lab = {
+            L: (keeper.lab.L * keeper.percentage + candidate.lab.L * candidate.percentage) / totalArea,
+            a: (keeper.lab.a * keeper.percentage + candidate.lab.a * candidate.percentage) / totalArea,
+            b: (keeper.lab.b * keeper.percentage + candidate.lab.b * candidate.percentage) / totalArea
+          };
+          keeper.count = totalCount;
+          keeper.percentage = totalArea;
+          merged = true;
+          break;
+        }
+      }
+      if (!merged) {
+        kept.push(candidate);
+      }
+    }
+    return kept;
+  }
+  calculateAverageColor(pixels) {
+    if (pixels.length === 0) {
+      return { R: 0, G: 0, B: 0 };
+    }
+    const sum = pixels.reduce(
+      (acc, pixel) => ({
+        R: acc.R + pixel.R,
+        G: acc.G + pixel.G,
+        B: acc.B + pixel.B
+      }),
+      { R: 0, G: 0, B: 0 }
+    );
+    return {
+      R: Math.round(sum.R / pixels.length),
+      G: Math.round(sum.G / pixels.length),
+      B: Math.round(sum.B / pixels.length)
+    };
+  }
+};
+
+// api/_utils/extraction/svg.ts
+var SVGExtractor = class {
+  constructor(options = {}) {
+    this.options = {
+      maxColours: options.maxColours ?? 20,
+      minPercentage: options.minPercentage ?? 0.5
+    };
+  }
+  /**
+   * Extract colors from SVG buffer
+   */
+  async extract(buffer, format) {
+    const startTime = Date.now();
+    try {
+      const svgText = new TextDecoder("utf-8").decode(buffer);
+      console.info(`[SVG] Parsing SVG (${buffer.byteLength} bytes)`);
+      const dimensions = this.parseSVGDimensions(svgText);
+      const totalPixels = dimensions.width && dimensions.height ? dimensions.width * dimensions.height : 1e6;
+      const colorCounts = this.extractColors(svgText);
+      const totalCount = Array.from(colorCounts.values()).reduce((sum, count) => sum + count, 0);
+      const colours = Array.from(colorCounts.entries()).map(([hexColor, count]) => {
+        const rgb = this.hexToRgb(hexColor);
+        const percentage = count / totalCount * 100;
+        return {
+          rgb,
+          percentage,
+          pixels: Math.round(percentage / 100 * totalPixels)
+        };
+      }).filter((color) => color.percentage >= this.options.minPercentage).sort((a, b) => b.percentage - a.percentage).slice(0, this.options.maxColours);
+      const elapsed = Date.now() - startTime;
+      console.info(`[SVG] Extracted ${colours.length} colors in ${elapsed}ms`);
+      return {
+        colours,
+        metadata: {
+          width: dimensions.width,
+          height: dimensions.height,
+          totalPixels,
+          format
+        }
+      };
+    } catch (error) {
+      throw new Error(`SVG extraction failed: ${error.message}`);
+    }
+  }
+  /**
+   * Parse SVG dimensions from viewBox or width/height attributes
+   */
+  parseSVGDimensions(svgText) {
+    const viewBoxMatch = svgText.match(/viewBox=["']([^"']+)["']/i);
+    if (viewBoxMatch) {
+      const [, , , width, height] = viewBoxMatch[1].split(/\s+/).map(parseFloat);
+      if (!isNaN(width) && !isNaN(height)) {
+        return { width, height };
+      }
+    }
+    const widthMatch = svgText.match(/width=["']([^"']+)["']/i);
+    const heightMatch = svgText.match(/height=["']([^"']+)["']/i);
+    if (widthMatch && heightMatch) {
+      const width = parseFloat(widthMatch[1]);
+      const height = parseFloat(heightMatch[1]);
+      if (!isNaN(width) && !isNaN(height)) {
+        return { width, height };
+      }
+    }
+    return { width: null, height: null };
+  }
+  /**
+   * Extract all colors from SVG elements
+   * Returns a map of hex colors to their occurrence counts
+   */
+  extractColors(svgText) {
+    const colorCounts = /* @__PURE__ */ new Map();
+    const fillMatches = svgText.matchAll(/fill=["']([^"']+)["']/gi);
+    for (const match of fillMatches) {
+      const color = this.normalizeColor(match[1]);
+      if (color) {
+        colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+      }
+    }
+    const strokeMatches = svgText.matchAll(/stroke=["']([^"']+)["']/gi);
+    for (const match of strokeMatches) {
+      const color = this.normalizeColor(match[1]);
+      if (color) {
+        colorCounts.set(color, (colorCounts.get(color) || 0) + 0.5);
+      }
+    }
+    const styleMatches = svgText.matchAll(/style=["']([^"']+)["']/gi);
+    for (const match of styleMatches) {
+      const styleContent = match[1];
+      const fillStyleMatch = styleContent.match(/fill:\s*([^;]+)/i);
+      if (fillStyleMatch) {
+        const color = this.normalizeColor(fillStyleMatch[1]);
+        if (color) {
+          colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+        }
+      }
+      const strokeStyleMatch = styleContent.match(/stroke:\s*([^;]+)/i);
+      if (strokeStyleMatch) {
+        const color = this.normalizeColor(strokeStyleMatch[1]);
+        if (color) {
+          colorCounts.set(color, (colorCounts.get(color) || 0) + 0.5);
+        }
+      }
+    }
+    const stopColorMatches = svgText.matchAll(/stop-color=["']([^"']+)["']/gi);
+    for (const match of stopColorMatches) {
+      const color = this.normalizeColor(match[1]);
+      if (color) {
+        colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+      }
+    }
+    const cssStyleMatches = svgText.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi);
+    for (const match of cssStyleMatches) {
+      const cssContent = match[1];
+      const cssFillMatches = cssContent.matchAll(/fill:\s*([^;}\s]+)/gi);
+      for (const fillMatch of cssFillMatches) {
+        const color = this.normalizeColor(fillMatch[1]);
+        if (color) {
+          colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+        }
+      }
+      const cssStrokeMatches = cssContent.matchAll(/stroke:\s*([^;}\s]+)/gi);
+      for (const strokeMatch of cssStrokeMatches) {
+        const color = this.normalizeColor(strokeMatch[1]);
+        if (color) {
+          colorCounts.set(color, (colorCounts.get(color) || 0) + 0.5);
+        }
+      }
+    }
+    return colorCounts;
+  }
+  /**
+   * Normalize color to hex format
+   * Supports: hex (#fff, #ffffff), rgb(r,g,b), named colors
+   */
+  normalizeColor(color) {
+    const trimmed = color.trim().toLowerCase();
+    if (trimmed === "none" || trimmed === "transparent" || trimmed === "currentcolor") {
+      return null;
+    }
+    if (trimmed.match(/^#[0-9a-f]{3,6}$/)) {
+      if (trimmed.length === 4) {
+        return `#${trimmed[1]}${trimmed[1]}${trimmed[2]}${trimmed[2]}${trimmed[3]}${trimmed[3]}`;
+      }
+      return trimmed;
+    }
+    const rgbMatch = trimmed.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    if (rgbMatch) {
+      const r = parseInt(rgbMatch[1], 10);
+      const g = parseInt(rgbMatch[2], 10);
+      const b = parseInt(rgbMatch[3], 10);
+      return this.rgbToHex({ R: r, G: g, B: b });
+    }
+    const namedColors = {
+      "white": "#ffffff",
+      "black": "#000000",
+      "red": "#ff0000",
+      "green": "#008000",
+      "blue": "#0000ff",
+      "yellow": "#ffff00",
+      "cyan": "#00ffff",
+      "magenta": "#ff00ff",
+      "gray": "#808080",
+      "grey": "#808080",
+      "orange": "#ffa500",
+      "purple": "#800080",
+      "brown": "#a52a2a",
+      "pink": "#ffc0cb"
+    };
+    if (namedColors[trimmed]) {
+      return namedColors[trimmed];
+    }
+    return null;
+  }
+  /**
+   * Convert hex color to RGB
+   */
+  hexToRgb(hex) {
+    const cleanHex = hex.replace("#", "");
+    const r = parseInt(cleanHex.substring(0, 2), 16);
+    const g = parseInt(cleanHex.substring(2, 4), 16);
+    const b = parseInt(cleanHex.substring(4, 6), 16);
+    return { R: r, G: g, B: b };
+  }
+  /**
+   * Convert RGB to hex
+   */
+  rgbToHex(rgb) {
+    const toHex = (n) => Math.round(Math.max(0, Math.min(255, n))).toString(16).padStart(2, "0");
+    return `#${toHex(rgb.R)}${toHex(rgb.G)}${toHex(rgb.B)}`;
+  }
+};
+
+// api/_utils/extraction/utils.ts
+var ColourSpaceConverter = class {
+  constructor(options = {}) {
+    this.options = {
+      whitePoint: options.whitePoint ?? "D65",
+      gamma: options.gamma ?? 2.4
+    };
+  }
+  rgbToLab(rgb) {
+    return sRGBToLab(rgb);
+  }
+  rgbToHex(rgb) {
+    const toHex = (n) => Math.round(Math.max(0, Math.min(255, n))).toString(16).padStart(2, "0");
+    return `#${toHex(rgb.R)}${toHex(rgb.G)}${toHex(rgb.B)}`;
+  }
+  hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) {
+      throw new Error(`Invalid hex color: ${hex}`);
+    }
+    return {
+      R: parseInt(result[1], 16),
+      G: parseInt(result[2], 16),
+      B: parseInt(result[3], 16)
+    };
+  }
+  /**
+   * Calculate perceptual color difference using CIEDE2000
+   */
+  calculateDeltaE(lab1, lab2) {
+    const dL = lab1.L - lab2.L;
+    const da = lab1.a - lab2.a;
+    const db = lab1.b - lab2.b;
+    return Math.sqrt(dL * dL + da * da + db * db);
+  }
+  /**
+   * Remove similar colors within tolerance
+   */
+  deduplicate(colours, tolerance = 5) {
+    const result = [];
+    for (const color of colours) {
+      const isSimilar = result.some(
+        (existing) => this.calculateDeltaE(existing.lab, color.lab) < tolerance
+      );
+      if (!isSimilar) {
+        result.push(color);
+      } else {
+        const similar = result.find(
+          (existing) => this.calculateDeltaE(existing.lab, color.lab) < tolerance
+        );
+        if (similar) {
+          similar.areaPct += color.areaPct;
+          if (similar.pageIds && color.pageIds) {
+            similar.pageIds = [.../* @__PURE__ */ new Set([...similar.pageIds, ...color.pageIds])];
+          }
+        }
+      }
+    }
+    return result;
+  }
+  /**
+   * Normalize area percentages to sum to 100%
+   */
+  normalizeAreas(colours) {
+    const totalArea = colours.reduce((sum, c) => sum + c.areaPct, 0);
+    if (totalArea === 0) {
+      return colours;
+    }
+    return colours.map((color) => ({
+      ...color,
+      areaPct: color.areaPct / totalArea * 100
+    }));
+  }
+  /**
+   * Filter out colors that are too small or too similar to white/black
+   */
+  filterInsignificant(colours, minAreaPct = 1, excludeNearWhite = true, excludeNearBlack = true) {
+    return colours.filter((color) => {
+      if (color.areaPct < minAreaPct) {
+        return false;
+      }
+      if (excludeNearWhite && color.lab.L > 95) {
+        return false;
+      }
+      if (excludeNearBlack && color.lab.L < 5) {
+        return false;
+      }
+      return true;
+    });
+  }
+  /**
+   * Sort colors by perceptual importance (area + distinctiveness)
+   */
+  sortByImportance(colours) {
+    return colours.sort((a, b) => {
+      if (Math.abs(a.areaPct - b.areaPct) > 1) {
+        return b.areaPct - a.areaPct;
+      }
+      const aSaturation = Math.sqrt(a.lab.a * a.lab.a + a.lab.b * a.lab.b);
+      const bSaturation = Math.sqrt(b.lab.a * b.lab.a + b.lab.b * b.lab.b);
+      return bSaturation - aSaturation;
+    });
+  }
+};
+function generateColourId(rgb, source) {
+  const hex = new ColourSpaceConverter().rgbToHex(rgb);
+  const hash = Array.from(hex).reduce((a, b) => {
+    a = (a << 5) - a + b.charCodeAt(0);
+    return a & a;
+  }, 0);
+  return `${source}_${Math.abs(hash).toString(36)}`;
+}
+function validateFileType(filename) {
+  const ext = filename.toLowerCase().split(".").pop();
+  if (!ext) {
+    return { isValid: false, type: null };
+  }
+  const rasterFormats = ["png", "jpg", "jpeg", "webp"];
+  const svgFormats = ["svg"];
+  const pdfFormats = ["pdf"];
+  if (pdfFormats.includes(ext)) {
+    return { isValid: true, type: "pdf", format: ext };
+  }
+  if (svgFormats.includes(ext)) {
+    return { isValid: true, type: "svg", format: ext };
+  }
+  if (rasterFormats.includes(ext)) {
+    return { isValid: true, type: "image", format: ext };
+  }
+  return { isValid: false, type: null };
+}
+function estimateExtractionComplexity(fileSize, fileType) {
+  const MB = 1024 * 1024;
+  if (fileType === "pdf") {
+    if (fileSize < 2 * MB) return "low";
+    if (fileSize < 10 * MB) return "medium";
+    return "high";
+  }
+  if (fileType === "svg") {
+    if (fileSize < 5 * MB) return "low";
+    if (fileSize < 15 * MB) return "medium";
+    return "high";
+  }
+  if (fileSize < 1 * MB) return "low";
+  if (fileSize < 5 * MB) return "medium";
+  return "high";
+}
+
+// api/_utils/extraction/cache.ts
+var MemoryCache = class {
+  constructor(options = {}) {
+    this.cache = /* @__PURE__ */ new Map();
+    this.options = {
+      defaultTTL: options.defaultTTL ?? 30 * 60 * 1e3,
+      // 30 minutes
+      maxEntries: options.maxEntries ?? 100,
+      cleanupInterval: options.cleanupInterval ?? 5 * 60 * 1e3
+      // 5 minutes
+    };
+    this.startCleanup();
+  }
+  set(key, data, ttl) {
+    const entry = {
+      data,
+      timestamp: Date.now(),
+      ttl: ttl ?? this.options.defaultTTL,
+      hits: 0
+    };
+    this.cache.set(key, entry);
+    this.evictOldest();
+  }
+  get(key) {
+    const entry = this.cache.get(key);
+    if (!entry) {
+      return null;
+    }
+    const now = Date.now();
+    const age = now - entry.timestamp;
+    if (age > entry.ttl) {
+      this.cache.delete(key);
+      return null;
+    }
+    entry.hits++;
+    return entry.data;
+  }
+  has(key) {
+    const entry = this.cache.get(key);
+    if (!entry) {
+      return false;
+    }
+    const now = Date.now();
+    const age = now - entry.timestamp;
+    if (age > entry.ttl) {
+      this.cache.delete(key);
+      return false;
+    }
+    return true;
+  }
+  delete(key) {
+    return this.cache.delete(key);
+  }
+  clear() {
+    this.cache.clear();
+  }
+  size() {
+    return this.cache.size;
+  }
+  getStats() {
+    const entries = Array.from(this.cache.values());
+    const now = Date.now();
+    const totalHits = entries.reduce((sum, entry) => sum + entry.hits, 0);
+    const totalAge = entries.reduce((sum, entry) => sum + (now - entry.timestamp), 0);
+    const averageAge = entries.length > 0 ? totalAge / entries.length : 0;
+    const hitRate = entries.length > 0 ? totalHits / entries.length : 0;
+    return {
+      entries: entries.length,
+      totalHits,
+      averageAge,
+      hitRate
+    };
+  }
+  evictOldest() {
+    if (this.cache.size <= this.options.maxEntries) {
+      return;
+    }
+    let oldestKey = "";
+    let oldestTime = Date.now();
+    for (const [key, entry] of this.cache) {
+      if (entry.timestamp < oldestTime) {
+        oldestTime = entry.timestamp;
+        oldestKey = key;
+      }
+    }
+    if (oldestKey) {
+      this.cache.delete(oldestKey);
+    }
+  }
+  startCleanup() {
+    this.cleanupTimer = setInterval(() => {
+      this.cleanup();
+    }, this.options.cleanupInterval);
+  }
+  cleanup() {
+    const now = Date.now();
+    const keysToDelete = [];
+    for (const [key, entry] of this.cache) {
+      const age = now - entry.timestamp;
+      if (age > entry.ttl) {
+        keysToDelete.push(key);
+      }
+    }
+    for (const key of keysToDelete) {
+      this.cache.delete(key);
+    }
+  }
+  destroy() {
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+    }
+    this.clear();
+  }
+};
+var extractionCache = null;
+function getExtractionCache() {
+  if (!extractionCache) {
+    extractionCache = new MemoryCache({
+      defaultTTL: 60 * 60 * 1e3,
+      // 1 hour for extraction results
+      maxEntries: 50,
+      cleanupInterval: 10 * 60 * 1e3
+      // 10 minutes
+    });
+  }
+  return extractionCache;
+}
+function generateCacheKey(filename, fileSize, options = {}) {
+  const optionsStr = JSON.stringify(options);
+  const combined = `${filename}-${fileSize}-${optionsStr}`;
+  let hash = 0;
+  for (let i = 0; i < combined.length; i++) {
+    const char = combined.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+// api/_utils/extraction/extractor.ts
+var PaletteExtractor = class {
+  constructor(options = {}) {
+    this.options = {
+      maxColours: options.maxColours ?? 15,
+      minAreaPct: options.minAreaPct ?? 1,
+      combineStrategy: options.combineStrategy ?? "merge",
+      rasterFallback: options.rasterFallback ?? true,
+      pdfOptions: {
+        minFrequency: 3,
+        tolerance: 8,
+        ...options.pdfOptions
+      },
+      rasterOptions: {
+        resampleSize: 400,
+        iterations: 15,
+        ...options.rasterOptions
+      }
+    };
+    this.converter = new ColourSpaceConverter();
+    this.rasterExtractor = new RasterExtractor({
+      maxColours: this.options.maxColours,
+      minPercentage: this.options.minAreaPct,
+      ...this.options.rasterOptions
+    });
+    this.svgExtractor = new SVGExtractor({
+      maxColours: this.options.maxColours,
+      minPercentage: this.options.minAreaPct
+    });
+  }
+  async extract(fileBuffer, filename, progressLoader) {
+    const startTime = Date.now();
+    const fileValidation = validateFileType(filename);
+    const complexity = estimateExtractionComplexity(fileBuffer.byteLength, fileValidation.type);
+    const warnings = [];
+    const sources = [];
+    if (!fileValidation.isValid) {
+      throw new Error(`Unsupported file type: ${filename}`);
+    }
+    const cache = getExtractionCache();
+    const cacheKey = generateCacheKey(filename, fileBuffer.byteLength, this.options);
+    const cached = cache.get(cacheKey);
+    if (cached) {
+      progressLoader?.updateProgress("complete", 100, "Using cached result");
+      return cached;
+    }
+    progressLoader?.updateProgress("extracting", 10, "Starting color extraction...");
+    try {
+      let pdfColours = [];
+      let rasterColours = [];
+      let svgColours = [];
+      if (fileValidation.type === "pdf") {
+        progressLoader?.updateProgress("extracting", 25, "Skipping server PDF processing - client handles extraction...");
+        warnings.push("PDF processing handled client-side. Server extraction skipped to avoid canvas dependencies.");
+        console.info("Skipping server-side PDF processing - relying on client-side extraction");
+      }
+      if (fileValidation.type === "svg") {
+        try {
+          progressLoader?.updateProgress("extracting", 30, "Parsing SVG colors...");
+          const svgResult = await this.svgExtractor.extract(
+            fileBuffer,
+            fileValidation.format
+          );
+          svgColours = svgResult.colours.map((color) => ({
+            id: generateColourId(color.rgb, "svg"),
+            rgb: color.rgb,
+            lab: this.converter.rgbToLab(color.rgb),
+            areaPct: color.percentage,
+            source: "svg",
+            metadata: {
+              pixels: color.pixels,
+              percentage: color.percentage
+            }
+          }));
+          sources.push("svg");
+          if (svgColours.length === 0) {
+            warnings.push("No significant colors found in SVG");
+          }
+        } catch (error) {
+          throw new Error(`SVG extraction failed: ${error.message}`);
+        }
+      }
+      if (fileValidation.type === "image") {
+        try {
+          progressLoader?.updateProgress("extracting", 40, "Analyzing raster image colors...");
+          const rasterResult = await this.rasterExtractor.extract(
+            fileBuffer,
+            fileValidation.format
+          );
+          rasterColours = rasterResult.colours.map((color) => ({
+            id: generateColourId(color.rgb, "raster"),
+            rgb: color.rgb,
+            lab: this.converter.rgbToLab(color.rgb),
+            areaPct: color.percentage,
+            source: "raster",
+            metadata: {
+              pixels: color.pixels,
+              percentage: color.percentage
+            }
+          }));
+          sources.push("raster");
+          if (rasterColours.length === 0) {
+            warnings.push("No significant colors found in raster image");
+          }
+        } catch (error) {
+          throw new Error(`Image extraction failed: ${error.message}`);
+        }
+      }
+      progressLoader?.updateProgress("processing", 70, "Combining and filtering colors...");
+      let palette = [...pdfColours, ...svgColours, ...rasterColours];
+      palette = this.converter.filterInsignificant(
+        palette,
+        this.options.minAreaPct
+      );
+      palette = this.converter.sortByImportance(palette);
+      if (palette.length > this.options.maxColours) {
+        palette = palette.slice(0, this.options.maxColours);
+        warnings.push(`Truncated to ${this.options.maxColours} most significant colors`);
+      }
+      if (palette.length === 0) {
+        warnings.push("No colors extracted, using fallback");
+        palette = [{
+          id: generateColourId({ R: 128, G: 128, B: 128 }, "fallback"),
+          rgb: { R: 128, G: 128, B: 128 },
+          lab: this.converter.rgbToLab({ R: 128, G: 128, B: 128 }),
+          areaPct: 100,
+          source: "raster"
+        }];
+      }
+      const result = {
+        palette,
+        metadata: {
+          filename,
+          fileSize: fileBuffer.byteLength,
+          fileType: fileValidation.type,
+          extractionTime: Date.now() - startTime,
+          complexity,
+          sources,
+          totalColours: {
+            pdf: pdfColours.length || void 0,
+            svg: svgColours.length || void 0,
+            raster: rasterColours.length || void 0,
+            combined: palette.length
+          }
+        },
+        warnings: warnings.length > 0 ? warnings : void 0
+      };
+      progressLoader?.updateProgress("caching", 90, "Caching extraction result...");
+      cache.set(cacheKey, result, 60 * 60 * 1e3);
+      progressLoader?.complete();
+      return result;
+    } catch (error) {
+      throw new Error(`Palette extraction failed: ${error.message}`);
+    }
+  }
+};
+
+// api/_utils/colour/deltaE.ts
+function deltaE2000(lab1, lab2) {
+  const { L: L1, a: a1, b: b1 } = lab1;
+  const { L: L2, a: a2, b: b2 } = lab2;
+  const kL = 1;
+  const kC = 1;
+  const kH = 1;
+  const C1 = Math.sqrt(a1 * a1 + b1 * b1);
+  const C2 = Math.sqrt(a2 * a2 + b2 * b2);
+  const Cbar = (C1 + C2) / 2;
+  const G = 0.5 * (1 - Math.sqrt(Math.pow(Cbar, 7) / (Math.pow(Cbar, 7) + Math.pow(25, 7))));
+  const a1Prime = (1 + G) * a1;
+  const a2Prime = (1 + G) * a2;
+  const C1Prime = Math.sqrt(a1Prime * a1Prime + b1 * b1);
+  const C2Prime = Math.sqrt(a2Prime * a2Prime + b2 * b2);
+  let h1Prime = Math.atan2(b1, a1Prime) * 180 / Math.PI;
+  if (h1Prime < 0) h1Prime += 360;
+  let h2Prime = Math.atan2(b2, a2Prime) * 180 / Math.PI;
+  if (h2Prime < 0) h2Prime += 360;
+  const deltaLPrime = L2 - L1;
+  const deltaCPrime = C2Prime - C1Prime;
+  let deltahPrime;
+  if (C1Prime * C2Prime === 0) {
+    deltahPrime = 0;
+  } else {
+    let diff = h2Prime - h1Prime;
+    if (Math.abs(diff) <= 180) {
+      deltahPrime = diff;
+    } else if (diff > 180) {
+      deltahPrime = diff - 360;
+    } else {
+      deltahPrime = diff + 360;
+    }
+  }
+  const deltaHPrime = 2 * Math.sqrt(C1Prime * C2Prime) * Math.sin(deltahPrime * Math.PI / 360);
+  const LPrimeBar = (L1 + L2) / 2;
+  const CPrimeBar = (C1Prime + C2Prime) / 2;
+  let hPrimeBar;
+  if (C1Prime * C2Prime === 0) {
+    hPrimeBar = h1Prime + h2Prime;
+  } else {
+    const diff = Math.abs(h1Prime - h2Prime);
+    const sum = h1Prime + h2Prime;
+    if (diff <= 180) {
+      hPrimeBar = sum / 2;
+    } else if (sum < 360) {
+      hPrimeBar = (sum + 360) / 2;
+    } else {
+      hPrimeBar = (sum - 360) / 2;
+    }
+  }
+  const T = 1 - 0.17 * Math.cos((hPrimeBar - 30) * Math.PI / 180) + 0.24 * Math.cos(2 * hPrimeBar * Math.PI / 180) + 0.32 * Math.cos((3 * hPrimeBar + 6) * Math.PI / 180) - 0.2 * Math.cos((4 * hPrimeBar - 63) * Math.PI / 180);
+  const deltaTheta = 30 * Math.exp(-Math.pow((hPrimeBar - 275) / 25, 2));
+  const RC = 2 * Math.sqrt(Math.pow(CPrimeBar, 7) / (Math.pow(CPrimeBar, 7) + Math.pow(25, 7)));
+  const SL = 1 + 0.015 * Math.pow(LPrimeBar - 50, 2) / Math.sqrt(20 + Math.pow(LPrimeBar - 50, 2));
+  const SC = 1 + 0.045 * CPrimeBar;
+  const SH = 1 + 0.015 * CPrimeBar * T;
+  const RT = -Math.sin(2 * deltaTheta * Math.PI / 180) * RC;
+  const deltaE = Math.sqrt(
+    Math.pow(deltaLPrime / (kL * SL), 2) + Math.pow(deltaCPrime / (kC * SC), 2) + Math.pow(deltaHPrime / (kH * SH), 2) + RT * (deltaCPrime / (kC * SC)) * (deltaHPrime / (kH * SH))
+  );
+  return deltaE;
+}
+
+// api/_utils/colour/smartUtils.ts
+function enhanceTPVColours(colours) {
+  return colours.map((colour) => ({
+    ...colour,
+    linearRGB: sRGBToLinearRGB({
+      R: colour.R,
+      G: colour.G,
+      B: colour.B
+    })
+  }));
+}
+function mixLinearRGB(components) {
+  let R = 0, G = 0, B = 0;
+  let totalWeight = 0;
+  for (const { color, weight } of components) {
+    R += color.R * weight;
+    G += color.G * weight;
+    B += color.B * weight;
+    totalWeight += weight;
+  }
+  if (totalWeight === 0) {
+    return { R: 0, G: 0, B: 0 };
+  }
+  return {
+    R: R / totalWeight,
+    G: G / totalWeight,
+    B: B / totalWeight
+  };
+}
+function normalizeWeights(weights) {
+  const sum = weights.reduce((a, b) => a + b, 0);
+  if (sum === 0) return weights;
+  return weights.map((w) => w / sum);
+}
+function gcd(a, b) {
+  return b === 0 ? Math.abs(a) : gcd(b, a % b);
+}
+function gcdArray(numbers) {
+  if (numbers.length === 0) return 1;
+  if (numbers.length === 1) return Math.abs(numbers[0]);
+  return numbers.reduce((result, num) => gcd(result, num), 0) || 1;
+}
+function argmax(arr) {
+  return arr.reduce(
+    (maxIdx, current, idx, array) => current > array[maxIdx] ? idx : maxIdx,
+    0
+  );
+}
+function canonicalParts(parts, codes) {
+  const g = gcdArray(parts);
+  const reducedParts = parts.map((x) => Math.max(1, Math.round(x / g)));
+  const zipped = codes.map((c, i) => ({ c, w: reducedParts[i] })).sort((a, b) => a.c.localeCompare(b.c));
+  const sortedCodes = zipped.map((z) => z.c);
+  const sortedParts = zipped.map((z) => z.w);
+  const total = sortedParts.reduce((a, b) => a + b, 0);
+  const key = `parts:${sortedCodes.map((c, i) => `${c}:${sortedParts[i]}`).join("|")}`;
+  return { codes: sortedCodes, parts: sortedParts, total, key };
+}
+function canonicalPerc(components) {
+  const DEN = 2400;
+  const zipped = components.map(({ code, pct }) => ({
+    c: code,
+    n: Math.round(pct * DEN)
+  })).filter((z) => z.n > 0);
+  const g = gcdArray(zipped.map((z) => z.n));
+  const reduced = zipped.map((z) => ({
+    c: z.c,
+    n: Math.max(1, Math.round(z.n / g))
+  }));
+  reduced.sort((a, b) => a.c.localeCompare(b.c));
+  const key = `pct:${reduced.map((z) => `${z.c}:${z.n}`).join("|")}`;
+  const totalN = reduced.reduce((a, b) => a + b.n, 0);
+  const weights = reduced.map((z) => z.n / totalN);
+  const codes = reduced.map((z) => z.c);
+  return { codes, weights, key };
+}
+function colourBucketKey(lab) {
+  const quantize = (x, step) => Math.round(x / step);
+  return `lab:${quantize(lab.L, 0.75)}:${quantize(lab.a, 1)}:${quantize(lab.b, 1)}`;
+}
+function better(a, b) {
+  const compA = a.mode === "parts" && a.parts ? a.parts.codes.length : a.components.length;
+  const compB = b.mode === "parts" && b.parts ? b.parts.codes.length : b.components.length;
+  if (compA !== compB) return compA < compB;
+  const totA = a.mode === "parts" && a.parts ? a.parts.total : Infinity;
+  const totB = b.mode === "parts" && b.parts ? b.parts.total : Infinity;
+  if (totA !== totB) return totA < totB;
+  return a.deltaE < b.deltaE;
+}
+function rank(r) {
+  const comp = r.mode === "parts" && r.parts ? r.parts.codes.length : r.components.length;
+  const tot = r.mode === "parts" && r.parts ? r.parts.total : 9999;
+  return comp * 1e3 + tot + r.deltaE;
+}
+function deduplicateRecipes(recipes) {
+  const byComp = /* @__PURE__ */ new Map();
+  for (const r of recipes) {
+    const compKey = r.mode === "parts" && r.parts ? canonicalParts(r.parts.parts, r.parts.codes).key : canonicalPerc(r.components).key;
+    const cur = byComp.get(compKey);
+    if (!cur || better(r, cur)) {
+      byComp.set(compKey, r);
+    }
+  }
+  const byColour = /* @__PURE__ */ new Map();
+  for (const r of Array.from(byComp.values())) {
+    const colorKey = colourBucketKey(r.lab);
+    const arr = byColour.get(colorKey) || [];
+    arr.push(r);
+    byColour.set(colorKey, arr);
+  }
+  const out = [];
+  for (const group of Array.from(byColour.values())) {
+    group.sort((a, b) => rank(a) - rank(b));
+    out.push(group[0]);
+  }
+  return out.sort((a, b) => rank(a) - rank(b));
+}
+function mmrSelect(candidates, k, lambda = 0.75) {
+  const selected = [];
+  const remaining = [...candidates];
+  const distance = (x, y) => {
+    return Math.hypot(
+      x.lab.L - y.lab.L,
+      x.lab.a - y.lab.a,
+      x.lab.b - y.lab.b
+    );
+  };
+  while (selected.length < k && remaining.length > 0) {
+    let bestIdx = 0;
+    let bestScore = Infinity;
+    for (let i = 0; i < remaining.length; i++) {
+      const candidate = remaining[i];
+      const relevance = candidate.deltaE;
+      const diversity = selected.length > 0 ? Math.min(...selected.map((s) => distance(candidate, s))) : 1e3;
+      const score = lambda * relevance - (1 - lambda) * diversity;
+      if (score < bestScore) {
+        bestScore = score;
+        bestIdx = i;
+      }
+    }
+    selected.push(remaining.splice(bestIdx, 1)[0]);
+  }
+  return selected;
+}
+
+// api/_utils/colour/penalties.ts
+function oppositionPenalty(colorA, colorB, target, thresholds = { separation: 45, closeness: 12, penalty: 2 }) {
+  const separationAB = deltaE2000(colorA, colorB);
+  const closenessA = deltaE2000(colorA, target);
+  const closenessB = deltaE2000(colorB, target);
+  if (separationAB > thresholds.separation && Math.min(closenessA, closenessB) > thresholds.closeness) {
+    return thresholds.penalty;
+  }
+  return 0;
+}
+function sparsityBonus(weights, thresholds = { dominant: 0.7, adjuster: 0.25, dominantBonus: -0.3, adjusterBonus: -0.2 }) {
+  const sortedWeights = [...weights].sort((a, b) => b - a);
+  let bonus = 0;
+  if (sortedWeights[0] >= thresholds.dominant) {
+    bonus += thresholds.dominantBonus;
+  }
+  if (sortedWeights.length > 1 && sortedWeights[1] <= thresholds.adjuster) {
+    bonus += thresholds.adjusterBonus;
+  }
+  return bonus;
+}
+function anchorBonus(mainComponentLab, target, mainWeight, allSingleDistances, thresholds = { topN: 6, minWeight: 0.6, bonus: -0.5 }) {
+  const mainDistance = deltaE2000(mainComponentLab, target);
+  const sortedDistances = [...allSingleDistances].sort((a, b) => a - b);
+  const isTopAnchor = mainDistance <= sortedDistances[thresholds.topN - 1];
+  if (isTopAnchor && mainWeight >= thresholds.minWeight) {
+    return thresholds.bonus;
+  }
+  return 0;
+}
+function evaluateBlendPenalties(components, target, allSingleDistances) {
+  let totalPenalty = 0;
+  if (components.length >= 2) {
+    for (let i = 0; i < components.length; i++) {
+      for (let j = i + 1; j < components.length; j++) {
+        const penalty = oppositionPenalty(
+          components[i].lab,
+          components[j].lab,
+          target
+        );
+        totalPenalty += components.length === 3 ? penalty * 0.5 : penalty;
+      }
+    }
+  }
+  const weights = components.map((c) => c.weight);
+  totalPenalty += sparsityBonus(weights);
+  if (components.length > 0) {
+    const mainComponent = components.reduce(
+      (prev, current) => current.weight > prev.weight ? current : prev
+    );
+    totalPenalty += anchorBonus(
+      mainComponent.lab,
+      target,
+      mainComponent.weight,
+      allSingleDistances
+    );
+  }
+  return totalPenalty;
+}
+
+// api/_utils/colour/smartParts.ts
+function snapToParts(continuousWeights, colours, targetLab, config2) {
+  const { total: T, minPer, maxAttempts = 3 } = config2;
+  const codes = Object.keys(continuousWeights).filter((code) => continuousWeights[code] > 0);
+  if (codes.length === 0) return null;
+  let parts = codes.map(
+    (code) => Math.max(minPer, Math.round(continuousWeights[code] * T))
+  );
+  let currentSum = parts.reduce((a, b) => a + b, 0);
+  let attempts = 0;
+  while (currentSum !== T && attempts < maxAttempts * 10) {
+    const diff = T - currentSum;
+    if (diff > 0) {
+      const deficits = parts.map(
+        (p, i) => continuousWeights[codes[i]] * T - p
+      );
+      const maxDeficitIdx = argmax(deficits);
+      parts[maxDeficitIdx]++;
+    } else {
+      const surpluses = parts.map(
+        (p, i) => p - continuousWeights[codes[i]] * T
+      );
+      const maxSurplusIdx = argmax(surpluses);
+      if (parts[maxSurplusIdx] > minPer) {
+        parts[maxSurplusIdx]--;
+      }
+    }
+    currentSum = parts.reduce((a, b) => a + b, 0);
+    attempts++;
+  }
+  if (currentSum !== T) {
+    return null;
+  }
+  let bestParts = [...parts];
+  let bestDeltaE = evaluatePartsAccuracy(codes, parts, colours, targetLab);
+  for (let iteration = 0; iteration < 5; iteration++) {
+    let improved = false;
+    for (let i = 0; i < codes.length; i++) {
+      for (let j = 0; j < codes.length; j++) {
+        if (i === j || parts[i] <= minPer) continue;
+        const testParts = [...parts];
+        testParts[i]--;
+        testParts[j]++;
+        const testDeltaE = evaluatePartsAccuracy(codes, testParts, colours, targetLab);
+        if (testDeltaE < bestDeltaE) {
+          bestParts = [...testParts];
+          bestDeltaE = testDeltaE;
+          improved = true;
+        }
+      }
+    }
+    if (!improved) break;
+    parts = [...bestParts];
+  }
+  const g = gcdArray(bestParts);
+  const reducedParts = bestParts.map((p) => p / g);
+  const reducedTotal = reducedParts.reduce((a, b) => a + b, 0);
+  const finalWeights = normalizeWeights(reducedParts);
+  const partsRecord = {};
+  const weightsRecord = {};
+  codes.forEach((code, i) => {
+    partsRecord[code] = reducedParts[i];
+    weightsRecord[code] = finalWeights[i];
+  });
+  const components = codes.map((code, i) => {
+    const colour = colours.find((c) => c.code === code);
+    return { color: colour.linearRGB, weight: finalWeights[i] };
+  });
+  const mixedLinear = mixLinearRGB(components);
+  const mixedSRGB = linearRGBToSRGB(mixedLinear);
+  const mixedXYZ = linearRGBToXYZ(mixedLinear);
+  const mixedLab = xyzToLab(mixedXYZ);
+  return {
+    parts: partsRecord,
+    weights: weightsRecord,
+    total: reducedTotal,
+    deltaE: deltaE2000(targetLab, mixedLab),
+    lab: mixedLab,
+    rgb: mixedSRGB
+  };
+}
+function evaluatePartsAccuracy(codes, parts, colours, targetLab) {
+  const weights = normalizeWeights(parts);
+  const components = codes.map((code, i) => {
+    const colour = colours.find((c) => c.code === code);
+    return { color: colour.linearRGB, weight: weights[i] };
+  });
+  const mixedLinear = mixLinearRGB(components);
+  const mixedXYZ = linearRGBToXYZ(mixedLinear);
+  const mixedLab = xyzToLab(mixedXYZ);
+  return deltaE2000(targetLab, mixedLab);
+}
+function findOptimalParts(continuousWeights, colours, targetLab, options = {
+  totals: [9, 12, 15, 18],
+  minPer: 1,
+  maxDeltaEPenalty: 0.8
+}) {
+  let bestResult = null;
+  for (const total of options.totals) {
+    const result = snapToParts(
+      continuousWeights,
+      colours,
+      targetLab,
+      { total, minPer: options.minPer }
+    );
+    if (!result) continue;
+    if (!bestResult || result.deltaE < options.maxDeltaEPenalty || result.deltaE < bestResult.deltaE) {
+      bestResult = result;
+    }
+    if (result.deltaE < options.maxDeltaEPenalty) {
+      break;
+    }
+  }
+  return bestResult;
+}
+
+// api/_utils/colour/smartSolver.ts
+var SmartBlendSolver = class {
+  constructor(colours, constraints) {
+    this.colours = colours;
+    this.constraints = constraints;
+    this.twoWayCache = [];
+    this.singleDistances = [];
+    this.enhancedColours = enhanceTPVColours(colours);
+    this.precomputeTwoWayBlends();
+  }
+  /**
+   * Get hue sector (0-5) for a Lab color in a*-b* plane
+   */
+  getHueSector(lab) {
+    const angle = Math.atan2(lab.b, lab.a) * 180 / Math.PI;
+    const normalizedAngle = (angle % 360 + 360) % 360;
+    return Math.floor(normalizedAngle / 60);
+  }
+  /**
+   * Convert SmartRecipe to DedupeRecipe format
+   */
+  toDedupeRecipe(recipe) {
+    return {
+      components: recipe.components,
+      mode: this.constraints.mode,
+      parts: recipe.parts && recipe.total ? {
+        codes: Object.keys(recipe.parts),
+        parts: Object.values(recipe.parts),
+        total: recipe.total
+      } : void 0,
+      lab: recipe.lab,
+      deltaE: recipe.deltaE,
+      weights: recipe.weights
+    };
+  }
+  /**
+   * Convert DedupeRecipe back to SmartRecipe format
+   */
+  fromDedupeRecipe(dedupeRecipe) {
+    const partsObj = dedupeRecipe.parts ? dedupeRecipe.parts.codes.reduce((obj, code, i) => {
+      obj[code] = dedupeRecipe.parts.parts[i];
+      return obj;
+    }, {}) : void 0;
+    const rgb = this.calculateRGBFromWeights(dedupeRecipe.weights);
+    return {
+      components: dedupeRecipe.components,
+      weights: dedupeRecipe.weights,
+      parts: partsObj,
+      total: dedupeRecipe.parts?.total,
+      lab: dedupeRecipe.lab,
+      rgb,
+      deltaE: dedupeRecipe.deltaE,
+      baseDeltaE: dedupeRecipe.deltaE,
+      // Approximation
+      note: dedupeRecipe.mode === "parts" ? "Parts blend" : "Percentage blend",
+      reasoning: "Generated by enhanced solver"
+    };
+  }
+  /**
+   * Calculate RGB from weights using the color mixing system
+   */
+  calculateRGBFromWeights(weights) {
+    const components = Object.entries(weights).map(([code, weight]) => {
+      const colour = this.enhancedColours.find((c) => c.code === code);
+      if (!colour) {
+        return { color: { R: 0.5, G: 0.5, B: 0.5 }, weight };
+      }
+      return { color: colour.linearRGB, weight };
+    });
+    if (components.length === 0) {
+      return { R: 128, G: 128, B: 128 };
+    }
+    const mixedLinear = mixLinearRGB(components);
+    return linearRGBToSRGB(mixedLinear);
+  }
+  /**
+   * Solve for best blends matching target color with enhanced deduplication
+   */
+  solve(targetLab, maxResults = 5) {
+    const results = [];
+    this.singleDistances = this.enhancedColours.map(
+      (colour) => deltaE2000(targetLab, { L: colour.L, a: colour.a, b: colour.b })
+    );
+    if (this.constraints.maxComponents >= 1) {
+      const singleResults = this.solveSingleComponents(targetLab);
+      results.push(...singleResults);
+    }
+    if (this.constraints.maxComponents >= 2) {
+      const twoWayResults = this.solveTwoWayBlends(targetLab);
+      results.push(...twoWayResults);
+    }
+    if (this.constraints.maxComponents >= 3) {
+      const threeWayResults = this.solveThreeWayBlendsWithHueDiversity(targetLab);
+      results.push(...threeWayResults);
+    }
+    if (results.length < maxResults * 3 && this.constraints.maxComponents < 3) {
+      const expandedResults = this.autoExpandSearch(targetLab, maxResults * 2);
+      results.push(...expandedResults);
+    }
+    const partsConvertedResults = results.map((recipe) => this.convertToPartsIfNeeded(recipe, targetLab));
+    const dedupeRecipes = partsConvertedResults.map((r) => this.toDedupeRecipe(r));
+    const uniqueRecipes = deduplicateRecipes(dedupeRecipes);
+    const diverseRecipes = mmrSelect(uniqueRecipes, maxResults * 2, 0.75);
+    const finalResults = diverseRecipes.slice(0, maxResults).map((dedupeRecipe) => {
+      return this.fromDedupeRecipe(dedupeRecipe);
+    });
+    return finalResults;
+  }
+  /**
+   * Auto-expand search constraints when results are limited (simplified approach)
+   */
+  autoExpandSearch(targetLab, neededCount) {
+    const expandedResults = [];
+    if (this.constraints.maxComponents < 3) {
+      const savedMaxComponents = this.constraints.maxComponents;
+      this.constraints.maxComponents = 3;
+      const threeWayResults = this.solveThreeWayBlendsWithHueDiversity(targetLab);
+      expandedResults.push(...threeWayResults.slice(0, Math.ceil(neededCount / 2)));
+      this.constraints.maxComponents = savedMaxComponents;
+    }
+    if (expandedResults.length < neededCount) {
+      const savedMinPct = this.constraints.minPct;
+      const relaxedMinPct = Math.max(0.05, this.constraints.minPct - 0.03);
+      this.constraints.minPct = relaxedMinPct;
+      for (const blend of this.twoWayCache.slice(0, neededCount * 2)) {
+        if (blend.p >= relaxedMinPct && 1 - blend.p >= relaxedMinPct) {
+          blend.deltaE = deltaE2000(targetLab, blend.lab);
+          const c1 = this.enhancedColours[blend.i];
+          const c2 = this.enhancedColours[blend.j];
+          const penalty = evaluateBlendPenalties(
+            [
+              { lab: { L: c1.L, a: c1.a, b: c1.b }, weight: blend.p },
+              { lab: { L: c2.L, a: c2.a, b: c2.b }, weight: 1 - blend.p }
+            ],
+            targetLab,
+            this.singleDistances
+          );
+          blend.adjustedDeltaE = blend.deltaE + penalty;
+          const dominant = blend.p >= 0.6 ? c1 : blend.p <= 0.4 ? c2 : null;
+          const reasoning = dominant ? `Relaxed ${dominant.name} with ${dominant === c1 ? c2.name : c1.name} adjustment` : `Relaxed balanced mix of ${c1.name} and ${c2.name}`;
+          expandedResults.push({
+            components: [
+              { code: c1.code, pct: blend.p },
+              { code: c2.code, pct: 1 - blend.p }
+            ],
+            weights: { [c1.code]: blend.p, [c2.code]: 1 - blend.p },
+            lab: blend.lab,
+            rgb: linearRGBToSRGB(mixLinearRGB([
+              { color: c1.linearRGB, weight: blend.p },
+              { color: c2.linearRGB, weight: 1 - blend.p }
+            ])),
+            deltaE: blend.adjustedDeltaE,
+            baseDeltaE: blend.deltaE,
+            note: "2-component expanded blend",
+            reasoning
+          });
+          if (expandedResults.length >= neededCount) break;
+        }
+      }
+      this.constraints.minPct = savedMinPct;
+    }
+    return expandedResults.slice(0, neededCount);
+  }
+  /**
+   * Precompute all 2-way blends with multi-step strategy
+   */
+  precomputeTwoWayBlends() {
+    const { minPct } = this.constraints;
+    const maxPct = 1 - minPct;
+    const coarseStep = Math.max(0.04, this.constraints.stepPct * 2);
+    for (let i = 0; i < this.enhancedColours.length; i++) {
+      for (let j = i + 1; j < this.enhancedColours.length; j++) {
+        const c1 = this.enhancedColours[i];
+        const c2 = this.enhancedColours[j];
+        for (let p = minPct; p <= maxPct; p += coarseStep) {
+          const mixedLinear = mixLinearRGB([
+            { color: c1.linearRGB, weight: p },
+            { color: c2.linearRGB, weight: 1 - p }
+          ]);
+          const mixedXYZ = linearRGBToXYZ(mixedLinear);
+          const lab = xyzToLab(mixedXYZ);
+          this.twoWayCache.push({
+            i,
+            j,
+            p,
+            lab,
+            deltaE: 0,
+            // Will be calculated per target
+            adjustedDeltaE: 0
+          });
+        }
+      }
+    }
+  }
+  /**
+   * Refine top candidates with fine step size
+   */
+  refineTopCandidates(candidates, targetLab, count = 20) {
+    const refined = [];
+    const fineStep = Math.min(0.01, this.constraints.stepPct);
+    for (const candidate of candidates.slice(0, count)) {
+      const c1 = this.enhancedColours[candidate.i];
+      const c2 = this.enhancedColours[candidate.j];
+      const searchRange = 0.08;
+      const minP = Math.max(this.constraints.minPct, candidate.p - searchRange);
+      const maxP = Math.min(1 - this.constraints.minPct, candidate.p + searchRange);
+      let bestRefined = candidate;
+      for (let p = minP; p <= maxP; p += fineStep) {
+        const mixedLinear = mixLinearRGB([
+          { color: c1.linearRGB, weight: p },
+          { color: c2.linearRGB, weight: 1 - p }
+        ]);
+        const mixedXYZ = linearRGBToXYZ(mixedLinear);
+        const lab = xyzToLab(mixedXYZ);
+        const deltaE = deltaE2000(targetLab, lab);
+        const penalty = evaluateBlendPenalties(
+          [
+            { lab: { L: c1.L, a: c1.a, b: c1.b }, weight: p },
+            { lab: { L: c2.L, a: c2.a, b: c2.b }, weight: 1 - p }
+          ],
+          targetLab,
+          this.singleDistances
+        );
+        const adjustedDeltaE = deltaE + penalty;
+        if (adjustedDeltaE < bestRefined.adjustedDeltaE) {
+          bestRefined = {
+            i: candidate.i,
+            j: candidate.j,
+            p,
+            lab,
+            deltaE,
+            adjustedDeltaE
+          };
+        }
+      }
+      refined.push(bestRefined);
+    }
+    return refined.sort((a, b) => a.adjustedDeltaE - b.adjustedDeltaE);
+  }
+  /**
+   * Find best single component matches
+   */
+  solveSingleComponents(targetLab) {
+    const results = [];
+    for (let i = 0; i < this.enhancedColours.length; i++) {
+      const colour = this.enhancedColours[i];
+      const colourLab = { L: colour.L, a: colour.a, b: colour.b };
+      const deltaE = deltaE2000(targetLab, colourLab);
+      results.push({
+        components: [{ code: colour.code, pct: 1 }],
+        weights: { [colour.code]: 1 },
+        lab: colourLab,
+        rgb: { R: colour.R, G: colour.G, B: colour.B },
+        deltaE,
+        baseDeltaE: deltaE,
+        note: "Single component",
+        reasoning: `Direct match with ${colour.name}`
+      });
+    }
+    return results.sort((a, b) => a.deltaE - b.deltaE).slice(0, 2);
+  }
+  /**
+   * Find best two-way blends with smart penalties and refinement
+   */
+  solveTwoWayBlends(targetLab) {
+    for (const blend of this.twoWayCache) {
+      blend.deltaE = deltaE2000(targetLab, blend.lab);
+      const c1 = this.enhancedColours[blend.i];
+      const c2 = this.enhancedColours[blend.j];
+      const penalty = evaluateBlendPenalties(
+        [
+          { lab: { L: c1.L, a: c1.a, b: c1.b }, weight: blend.p },
+          { lab: { L: c2.L, a: c2.a, b: c2.b }, weight: 1 - blend.p }
+        ],
+        targetLab,
+        this.singleDistances
+      );
+      blend.adjustedDeltaE = blend.deltaE + penalty;
+    }
+    const coarseCandidates = this.twoWayCache.slice().sort((a, b) => a.adjustedDeltaE - b.adjustedDeltaE).slice(0, 30);
+    const refined = this.refineTopCandidates(coarseCandidates, targetLab, 15);
+    return refined.slice(0, 10).map((blend) => {
+      const c1 = this.enhancedColours[blend.i];
+      const c2 = this.enhancedColours[blend.j];
+      const dominant = blend.p >= 0.6 ? c1 : blend.p <= 0.4 ? c2 : null;
+      const reasoning = dominant ? `Anchor ${dominant.name} with ${dominant === c1 ? c2.name : c1.name} adjustment` : `Balanced mix of ${c1.name} and ${c2.name}`;
+      return {
+        components: [
+          { code: c1.code, pct: blend.p },
+          { code: c2.code, pct: 1 - blend.p }
+        ],
+        weights: { [c1.code]: blend.p, [c2.code]: 1 - blend.p },
+        lab: blend.lab,
+        rgb: linearRGBToSRGB(mixLinearRGB([
+          { color: c1.linearRGB, weight: blend.p },
+          { color: c2.linearRGB, weight: 1 - blend.p }
+        ])),
+        deltaE: blend.adjustedDeltaE,
+        baseDeltaE: blend.deltaE,
+        note: "2-component blend",
+        reasoning
+      };
+    });
+  }
+  /**
+   * Find best three-way blends with hue-diverse seeding
+   */
+  solveThreeWayBlendsWithHueDiversity(targetLab) {
+    const results = [];
+    const sectorBlends = /* @__PURE__ */ new Map();
+    for (const blend of this.twoWayCache) {
+      blend.deltaE = deltaE2000(targetLab, blend.lab);
+      const c1 = this.enhancedColours[blend.i];
+      const c2 = this.enhancedColours[blend.j];
+      const penalty = evaluateBlendPenalties(
+        [
+          { lab: { L: c1.L, a: c1.a, b: c1.b }, weight: blend.p },
+          { lab: { L: c2.L, a: c2.a, b: c2.b }, weight: 1 - blend.p }
+        ],
+        targetLab,
+        this.singleDistances
+      );
+      blend.adjustedDeltaE = blend.deltaE + penalty;
+      const sector = this.getHueSector(blend.lab);
+      const sectorList = sectorBlends.get(sector) || [];
+      sectorList.push(blend);
+      sectorBlends.set(sector, sectorList);
+    }
+    const seedBlends = [];
+    for (const sectorList of Array.from(sectorBlends.values())) {
+      sectorList.sort((a, b) => a.adjustedDeltaE - b.adjustedDeltaE);
+      seedBlends.push(...sectorList.slice(0, 4));
+    }
+    if (seedBlends.length < 24) {
+      const allBlends = Array.from(sectorBlends.values()).flat();
+      allBlends.sort((a, b) => a.adjustedDeltaE - b.adjustedDeltaE);
+      const needed = 30 - seedBlends.length;
+      seedBlends.push(...allBlends.slice(0, needed));
+    }
+    return this.generateThreeWayFromSeeds(seedBlends, targetLab);
+  }
+  /**
+   * Generate three-way blends from seed two-way blends
+   */
+  generateThreeWayFromSeeds(seeds, targetLab) {
+    const results = [];
+    for (const seed of seeds) {
+      const usedIndices = [seed.i, seed.j];
+      for (let k = 0; k < this.enhancedColours.length; k++) {
+        if (usedIndices.includes(k)) continue;
+        const c3 = this.enhancedColours[k];
+        for (let p3 = this.constraints.minPct; p3 <= 1 - 2 * this.constraints.minPct; p3 += this.constraints.stepPct * 2) {
+          const remainingWeight = 1 - p3;
+          const p1 = Math.max(this.constraints.minPct, seed.p * remainingWeight);
+          const p2 = remainingWeight - p1;
+          if (p2 < this.constraints.minPct) continue;
+          const weights = normalizeWeights([p1, p2, p3]);
+          const [w1, w2, w3] = weights;
+          const mixedLinear = mixLinearRGB([
+            { color: this.enhancedColours[seed.i].linearRGB, weight: w1 },
+            { color: this.enhancedColours[seed.j].linearRGB, weight: w2 },
+            { color: c3.linearRGB, weight: w3 }
+          ]);
+          const mixedXYZ = linearRGBToXYZ(mixedLinear);
+          const lab = xyzToLab(mixedXYZ);
+          const baseDeltaE = deltaE2000(targetLab, lab);
+          const penalty = evaluateBlendPenalties(
+            [
+              { lab: { L: this.enhancedColours[seed.i].L, a: this.enhancedColours[seed.i].a, b: this.enhancedColours[seed.i].b }, weight: w1 },
+              { lab: { L: this.enhancedColours[seed.j].L, a: this.enhancedColours[seed.j].a, b: this.enhancedColours[seed.j].b }, weight: w2 },
+              { lab: { L: c3.L, a: c3.a, b: c3.b }, weight: w3 }
+            ],
+            targetLab,
+            this.singleDistances
+          );
+          const adjustedDeltaE = baseDeltaE + penalty;
+          results.push({
+            components: [
+              { code: this.enhancedColours[seed.i].code, pct: w1 },
+              { code: this.enhancedColours[seed.j].code, pct: w2 },
+              { code: c3.code, pct: w3 }
+            ],
+            weights: {
+              [this.enhancedColours[seed.i].code]: w1,
+              [this.enhancedColours[seed.j].code]: w2,
+              [c3.code]: w3
+            },
+            lab,
+            rgb: linearRGBToSRGB(mixedLinear),
+            deltaE: adjustedDeltaE,
+            baseDeltaE,
+            note: "3-component blend",
+            reasoning: "Refined blend with three components"
+          });
+        }
+      }
+    }
+    return results.sort((a, b) => a.deltaE - b.deltaE).slice(0, 5);
+  }
+  /**
+   * Convert recipe to parts format if requested
+   */
+  convertToPartsIfNeeded(recipe, targetLab) {
+    if (this.constraints.mode !== "parts" || !this.constraints.parts?.enabled) {
+      return recipe;
+    }
+    const partsResult = findOptimalParts(
+      recipe.weights,
+      this.enhancedColours,
+      targetLab,
+      {
+        totals: this.constraints.parts.total ? [this.constraints.parts.total] : [9, 12, 15],
+        minPer: this.constraints.parts.minPer || 1,
+        maxDeltaEPenalty: 0.8
+      }
+    );
+    if (partsResult) {
+      return {
+        ...recipe,
+        parts: partsResult.parts,
+        total: partsResult.total,
+        weights: partsResult.weights,
+        // Updated normalized weights
+        lab: partsResult.lab,
+        rgb: partsResult.rgb,
+        deltaE: partsResult.deltaE,
+        note: recipe.note + ` (${partsResult.total} parts total)`,
+        reasoning: recipe.reasoning + ` - Snapped to ${partsResult.total} parts with \u0394E ${(partsResult.deltaE - recipe.baseDeltaE).toFixed(2)} penalty`
+      };
+    }
+    return recipe;
+  }
+};
+
+// api/_utils/colour/blendColor.ts
+function calculateBlendColor(components, tpvColors) {
+  if (components.length === 0) {
+    throw new Error("Cannot calculate blend color: no components provided");
+  }
+  const totalWeight = components.reduce((sum, c) => sum + c.pct, 0);
+  if (totalWeight === 0) {
+    throw new Error("Cannot calculate blend color: total weight is zero");
+  }
+  const normalizedComponents = components.map((c) => ({
+    code: c.code,
+    pct: c.pct / totalWeight
+  }));
+  let weightedL = 0;
+  let weightedA = 0;
+  let weightedB = 0;
+  for (const component of normalizedComponents) {
+    const tpvColor = tpvColors.find((tc) => tc.code === component.code);
+    if (!tpvColor) {
+      console.warn(`TPV color not found for code: ${component.code}, using fallback`);
+      continue;
+    }
+    const lab = {
+      L: tpvColor.L,
+      a: tpvColor.a,
+      b: tpvColor.b
+    };
+    weightedL += lab.L * component.pct;
+    weightedA += lab.a * component.pct;
+    weightedB += lab.b * component.pct;
+  }
+  const blendLab = {
+    L: weightedL,
+    a: weightedA,
+    b: weightedB
+  };
+  const blendRgb = labToSRGB(blendLab);
+  const blendHex = rgbToHex(blendRgb);
+  return {
+    hex: blendHex,
+    rgb: blendRgb,
+    lab: blendLab
+  };
+}
+function rgbToHex(rgb) {
+  const toHex = (n) => {
+    const clamped = Math.round(Math.max(0, Math.min(255, n)));
+    return clamped.toString(16).padStart(2, "0");
+  };
+  return `#${toHex(rgb.R)}${toHex(rgb.G)}${toHex(rgb.B)}`;
+}
+
+// api/_utils/data/rosehill_tpv_21_colours.json
+var rosehill_tpv_21_colours_default = [
+  {
+    code: "RH01",
+    name: "Standard Red",
+    hex: "#B71E2D",
+    R: 183,
+    G: 30,
+    B: 45,
+    L: 39.4,
+    a: 58.5,
+    b: 29
+  },
+  {
+    code: "RH02",
+    name: "Bright Red",
+    hex: "#E31D25",
+    R: 227,
+    G: 29,
+    B: 37,
+    L: 47.4,
+    a: 70.1,
+    b: 44
+  },
+  {
+    code: "RH10",
+    name: "Standard Green",
+    hex: "#006B3F",
+    R: 0,
+    G: 107,
+    B: 63,
+    L: 40.5,
+    a: -42.2,
+    b: 17.9
+  },
+  {
+    code: "RH11",
+    name: "Bright Green",
+    hex: "#4BAA34",
+    R: 75,
+    G: 170,
+    B: 52,
+    L: 62.1,
+    a: -47.7,
+    b: 47.2
+  },
+  {
+    code: "RH12",
+    name: "Dark Green",
+    hex: "#006747",
+    R: 0,
+    G: 103,
+    B: 71,
+    L: 39.6,
+    a: -38.3,
+    b: 13.1
+  },
+  {
+    code: "RH20",
+    name: "Standard Blue",
+    hex: "#1B4F9C",
+    R: 27,
+    G: 79,
+    B: 156,
+    L: 36.4,
+    a: 14.2,
+    b: -46.7
+  },
+  {
+    code: "RH21",
+    name: "Purple",
+    hex: "#662D91",
+    R: 102,
+    G: 45,
+    B: 145,
+    L: 31.5,
+    a: 41.9,
+    b: -40.9
+  },
+  {
+    code: "RH22",
+    name: "Light Blue",
+    hex: "#0091D7",
+    R: 0,
+    G: 145,
+    B: 215,
+    L: 55.3,
+    a: -19.1,
+    b: -37.3
+  },
+  {
+    code: "RH23",
+    name: "Azure",
+    hex: "#0076B6",
+    R: 0,
+    G: 118,
+    B: 182,
+    L: 47.7,
+    a: -4.8,
+    b: -34.8
+  },
+  {
+    code: "RH26",
+    name: "Turquoise",
+    hex: "#00A499",
+    R: 0,
+    G: 164,
+    B: 153,
+    L: 58.8,
+    a: -38.4,
+    b: -3
+  },
+  {
+    code: "RH30",
+    name: "Standard Beige",
+    hex: "#D4B585",
+    R: 212,
+    G: 181,
+    B: 133,
+    L: 75.2,
+    a: 3.8,
+    b: 24.8
+  },
+  {
+    code: "RH31",
+    name: "Cream",
+    hex: "#F2E6C8",
+    R: 242,
+    G: 230,
+    B: 200,
+    L: 91.8,
+    a: -0.5,
+    b: 12.5
+  },
+  {
+    code: "RH32",
+    name: "Brown",
+    hex: "#754C29",
+    R: 117,
+    G: 76,
+    B: 41,
+    L: 40,
+    a: 15.9,
+    b: 27.1
+  },
+  {
+    code: "RH90",
+    name: "Funky Pink",
+    hex: "#e8457e",
+    R: 232,
+    G: 69,
+    B: 126,
+    L: 55,
+    a: 66.1,
+    b: 4.9
+  },
+  {
+    code: "RH40",
+    name: "Mustard Yellow",
+    hex: "#C6972D",
+    R: 198,
+    G: 151,
+    B: 45,
+    L: 66,
+    a: 8.4,
+    b: 56.3
+  },
+  {
+    code: "RH41",
+    name: "Bright Yellow",
+    hex: "#FFD100",
+    R: 255,
+    G: 209,
+    B: 0,
+    L: 86.9,
+    a: -1,
+    b: 90.6
+  },
+  {
+    code: "RH50",
+    name: "Orange",
+    hex: "#F47920",
+    R: 244,
+    G: 121,
+    B: 32,
+    L: 63.2,
+    a: 49.8,
+    b: 60.2
+  },
+  {
+    code: "RH60",
+    name: "Dark Grey",
+    hex: "#4D4F53",
+    R: 77,
+    G: 79,
+    B: 83,
+    L: 34.1,
+    a: -0.4,
+    b: -2.4
+  },
+  {
+    code: "RH61",
+    name: "Light Grey",
+    hex: "#A7A8AA",
+    R: 167,
+    G: 168,
+    B: 170,
+    L: 69,
+    a: -0.5,
+    b: -1
+  },
+  {
+    code: "RH65",
+    name: "Pale Grey",
+    hex: "#DCDDDE",
+    R: 220,
+    G: 221,
+    B: 222,
+    L: 87.6,
+    a: -0.2,
+    b: -0.7
+  },
+  {
+    code: "RH70",
+    name: "Black",
+    hex: "#101820",
+    R: 16,
+    G: 24,
+    B: 32,
+    L: 9.1,
+    a: -0.3,
+    b: -6.3
+  }
+];
+
+// api/blend-recipes.ts
+async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({
+      success: false,
+      error: "Method not allowed. Use POST."
+    });
+  }
+  try {
+    const { svg_url, job_id, max_colors = 8, max_components = 2 } = req.body;
+    if (!svg_url) {
+      return res.status(400).json({
+        success: false,
+        error: "Missing required field: svg_url"
+      });
+    }
+    console.log("[BLEND-RECIPES] Starting color extraction for job:", job_id);
+    console.log("[BLEND-RECIPES] SVG URL:", svg_url);
+    console.log("[BLEND-RECIPES] Max colors:", max_colors, "Max components:", max_components);
+    const startTime = Date.now();
+    console.log("[BLEND-RECIPES] Fetching SVG from URL...");
+    const svgResponse = await fetch(svg_url);
+    if (!svgResponse.ok) {
+      throw new Error(`Failed to fetch SVG: ${svgResponse.status} ${svgResponse.statusText}`);
+    }
+    const svgBuffer = await svgResponse.arrayBuffer();
+    console.log(`[BLEND-RECIPES] SVG fetched (${svgBuffer.byteLength} bytes)`);
+    console.log("[BLEND-RECIPES] Extracting colors...");
+    const extractor = new PaletteExtractor({
+      maxColours: max_colors,
+      minAreaPct: 1,
+      rasterOptions: {
+        resampleSize: 400,
+        iterations: 15
+      }
+    });
+    const extraction = await extractor.extract(svgBuffer, "design.svg");
+    const extractionTime = Date.now() - startTime;
+    console.log(`[BLEND-RECIPES] Extracted ${extraction.palette.length} colors in ${extractionTime}ms`);
+    if (extraction.palette.length === 0) {
+      return res.status(200).json({
+        success: true,
+        colors: [],
+        recipes: [],
+        message: "No significant colors found in SVG (all colors below 1% coverage)"
+      });
+    }
+    console.log("[BLEND-RECIPES] Initializing blend solver...");
+    const solver = new SmartBlendSolver(rosehill_tpv_21_colours_default, {
+      maxComponents: max_components,
+      stepPct: 0.04,
+      minPct: 0.1,
+      mode: "parts",
+      parts: {
+        enabled: true,
+        total: 12,
+        minPer: 1
+      },
+      preferAnchor: true
+    });
+    console.log("[BLEND-RECIPES] Generating blend recipes...");
+    const recipes = [];
+    const solveStartTime = Date.now();
+    for (let i = 0; i < extraction.palette.length; i++) {
+      const color = extraction.palette[i];
+      console.log(`[BLEND-RECIPES]   Color ${i + 1}/${extraction.palette.length}: RGB(${color.rgb.R}, ${color.rgb.G}, ${color.rgb.B}) - ${color.areaPct.toFixed(1)}%`);
+      const colorRecipes = solver.solve(color.lab, 3);
+      const bestRecipe = colorRecipes[0];
+      const blendComponents = bestRecipe.components.map((c) => ({
+        code: c.code,
+        pct: c.pct
+      }));
+      const blendColor = calculateBlendColor(blendComponents, rosehill_tpv_21_colours_default);
+      const chosenRecipe = {
+        id: `recipe_${i + 1}_1`,
+        // Recipe ID format: color_recipeIndex
+        parts: bestRecipe.parts || {},
+        total: bestRecipe.total || 0,
+        deltaE: bestRecipe.deltaE,
+        quality: bestRecipe.deltaE < 1 ? "Excellent" : bestRecipe.deltaE < 2 ? "Good" : "Fair",
+        resultRgb: bestRecipe.rgb,
+        components: bestRecipe.components.map((c) => ({
+          code: c.code,
+          name: rosehill_tpv_21_colours_default.find((col) => col.code === c.code)?.name || c.code,
+          weight: c.pct,
+          parts: bestRecipe.parts ? bestRecipe.parts[c.code] : null
+        }))
+      };
+      const alternativeRecipes = colorRecipes.slice(1).map((recipe, idx) => ({
+        id: `recipe_${i + 1}_${idx + 2}`,
+        parts: recipe.parts || {},
+        total: recipe.total || 0,
+        deltaE: recipe.deltaE,
+        quality: recipe.deltaE < 1 ? "Excellent" : recipe.deltaE < 2 ? "Good" : "Fair",
+        resultRgb: recipe.rgb,
+        components: recipe.components.map((c) => ({
+          code: c.code,
+          name: rosehill_tpv_21_colours_default.find((col) => col.code === c.code)?.name || c.code,
+          weight: c.pct,
+          parts: recipe.parts ? recipe.parts[c.code] : null
+        }))
+      }));
+      console.log(`[BLEND-RECIPES]     Chosen: \u0394E ${bestRecipe.deltaE.toFixed(2)} (${chosenRecipe.quality}), Blend: ${blendColor.hex}`);
+      recipes.push({
+        targetColor: {
+          hex: rgbToHex2(color.rgb),
+          rgb: color.rgb,
+          lab: color.lab,
+          areaPct: color.areaPct
+        },
+        chosenRecipe,
+        blendColor: {
+          hex: blendColor.hex,
+          rgb: blendColor.rgb,
+          lab: blendColor.lab
+        },
+        alternativeRecipes
+      });
+    }
+    const solveTime = Date.now() - solveStartTime;
+    const totalTime = Date.now() - startTime;
+    console.log(`[BLEND-RECIPES] Generated ${recipes.length} recipe sets in ${solveTime}ms (total: ${totalTime}ms)`);
+    const colors = extraction.palette.map((color) => ({
+      hex: rgbToHex2(color.rgb),
+      rgb: color.rgb,
+      lab: color.lab,
+      areaPct: color.areaPct
+    }));
+    return res.status(200).json({
+      success: true,
+      colors,
+      recipes,
+      metadata: {
+        colorsExtracted: extraction.palette.length,
+        extractionTime,
+        solveTime,
+        totalTime,
+        maxComponents: max_components
+      }
+    });
+  } catch (error) {
+    console.error("[BLEND-RECIPES] Error:", error);
+    console.error(error.stack);
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Internal server error",
+      stack: process.env.NODE_ENV === "development" ? error.stack : void 0
+    });
+  }
+}
+function rgbToHex2(rgb) {
+  const toHex = (n) => Math.round(n).toString(16).padStart(2, "0");
+  return `#${toHex(rgb.R)}${toHex(rgb.G)}${toHex(rgb.B)}`;
+}
+var config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "2mb"
+    },
+    responseLimit: "4mb",
+    externalResolver: false
+  },
+  maxDuration: 60
+  // 60 seconds for color extraction
+};
+export {
+  config,
+  handler as default
+};
