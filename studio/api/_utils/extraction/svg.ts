@@ -60,7 +60,7 @@ export class SVGExtractor {
       // Calculate percentages from area-weighted scores
       const totalWeight = Array.from(colorCounts.values()).reduce((sum, weight) => sum + weight, 0);
 
-      const colours: SVGColor[] = Array.from(colorCounts.entries())
+      let colours: SVGColor[] = Array.from(colorCounts.entries())
         .map(([hexColor, weight]) => {
           const rgb = this.hexToRgb(hexColor);
           const percentage = (weight / totalWeight) * 100;
@@ -73,6 +73,23 @@ export class SVGExtractor {
         .filter(color => color.percentage >= this.options.minPercentage)
         .sort((a, b) => b.percentage - a.percentage)
         .slice(0, this.options.maxColours);
+
+      // Check if we should add white as background
+      // If total coverage is < 80%, assume transparent background is white
+      const totalCoverage = colours.reduce((sum, c) => sum + c.percentage, 0);
+      if (totalCoverage < 80) {
+        const whiteCoverage = 100 - totalCoverage;
+        console.info(`[SVG] Detected ${whiteCoverage.toFixed(1)}% uncovered area, adding white background`);
+
+        colours.push({
+          rgb: { R: 255, G: 255, B: 255 },
+          percentage: whiteCoverage,
+          pixels: Math.round((whiteCoverage / 100) * totalPixels)
+        });
+
+        // Re-sort after adding white
+        colours.sort((a, b) => b.percentage - a.percentage);
+      }
 
       const elapsed = Date.now() - startTime;
       console.info(`[SVG] Extracted ${colours.length} colors in ${elapsed}ms`);
