@@ -322,7 +322,7 @@ export default function SVGPreview({
         }
 
         .svg-display-container.side-by-side {
-          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+          grid-template-columns: 1fr 1fr;
         }
 
         .svg-display-container.original,
