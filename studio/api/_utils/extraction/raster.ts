@@ -32,7 +32,7 @@ export class RasterExtractor {
   constructor(options: RasterExtractionOptions = {}) {
     this.options = {
       maxColours: options.maxColours ?? 20,
-      minPercentage: options.minPercentage ?? 0.5,
+      minPercentage: options.minPercentage ?? 0, // Include all colors, even small design elements
       resampleSize: options.resampleSize ?? 400,
       iterations: options.iterations ?? 20
     };
@@ -510,7 +510,7 @@ export class RasterExtractor {
    */
   private mergeNearbyColors(clusters: Array<{ key: string; rgb: RGB; lab?: Lab; count: number; percentage: number }>) {
     const MERGE_DE = 1.5; // Lower threshold for vivid artwork
-    const MIN_CLUSTER_AREA = 0.75; // 0.75% minimum area
+    const MIN_CLUSTER_AREA = 0; // Include all colors, even small accents
     const MAX_HUE_DIFF = 8; // Prevent merging across hue boundaries
     
     // Sort by area (largest first) for area-weighted merging
