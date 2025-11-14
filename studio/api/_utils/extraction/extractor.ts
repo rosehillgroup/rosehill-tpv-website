@@ -1,4 +1,4 @@
-import { PDFExtractor } from './pdf';
+// import { PDFExtractor } from './pdf'; // PDF extraction not used in serverless environment
 import { RasterExtractor } from './raster';
 import { 
   ColourSpaceConverter,
@@ -46,7 +46,7 @@ export interface ExtractionResult {
 export class PaletteExtractor {
   private options: Required<ExtractionOptions>;
   private converter: ColourSpaceConverter;
-  private pdfExtractor: PDFExtractor;
+  // private pdfExtractor: PDFExtractor; // PDF extraction not used
   private rasterExtractor: RasterExtractor;
 
   constructor(options: ExtractionOptions = {}) {
@@ -68,7 +68,7 @@ export class PaletteExtractor {
     };
 
     this.converter = new ColourSpaceConverter();
-    this.pdfExtractor = new PDFExtractor(this.options.pdfOptions);
+    // this.pdfExtractor = new PDFExtractor(this.options.pdfOptions); // PDF extraction not used
     this.rasterExtractor = new RasterExtractor({
       maxColours: this.options.maxColours,
       minPercentage: this.options.minAreaPct,

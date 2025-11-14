@@ -123,7 +123,7 @@ export class RasterExtractor {
     }
   }
 
-  async extractFromCanvas(canvas: HTMLCanvasElement): Promise<RasterExtractionResult> {
+  async extractFromCanvas(canvas: any): Promise<RasterExtractionResult> {
     try {
       const ctx = canvas.getContext('2d');
       if (!ctx) {
@@ -450,19 +450,21 @@ export class RasterExtractor {
       }
     }
     
-    // Convert to array with percentage calculations
-    let clusters = Array.from(colorCounts.entries()).map(([key, data]) => ({
-      key,
-      rgb: data.rgb,
-      lab: data.lab,
-      count: data.count,
-      percentage: (data.count / totalPixels) * 100
-    }));
-    
+    // Convert to array with percentage calculations (filter out entries without lab)
+    let clusters = Array.from(colorCounts.entries())
+      .filter(([_, data]) => data.lab !== undefined)
+      .map(([key, data]) => ({
+        key,
+        rgb: data.rgb,
+        lab: data.lab!,
+        count: data.count,
+        percentage: (data.count / totalPixels) * 100
+      }));
+
     console.info(`Pre-merge: ${clusters.length} quantized colors`);
-    
+
     // Smart merging with Lab-based distance and area weighting
-    clusters = this.mergeNearbyColors(clusters);
+    clusters = this.mergeNearbyColors(clusters).filter((c): c is typeof c & { lab: Lab } => c.lab !== undefined);
     
     // Sort by frequency and take top k
     const finalClusters = clusters
