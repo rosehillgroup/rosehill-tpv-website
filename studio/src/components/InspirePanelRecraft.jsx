@@ -83,7 +83,10 @@ export default function InspirePanelRecraft() {
       }
 
       setJobId(response.jobId);
-      setProgressMessage('Generating vector design...');
+      setProgressMessage('Request submitted, waiting for processing...');
+
+      let lastStatus = null;
+      let startTime = Date.now();
 
       // Poll for completion
       await apiClient.waitForRecraftCompletion(
@@ -91,11 +94,30 @@ export default function InspirePanelRecraft() {
         (progressStatus) => {
           setStatus(progressStatus);
 
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+
           // Update status message based on state
           if (progressStatus.status === 'queued') {
-            setProgressMessage('In queue...');
+            setProgressMessage(`Waiting in queue... (${elapsed}s)`);
           } else if (progressStatus.status === 'running') {
-            setProgressMessage('Generating vector design...');
+            if (lastStatus !== 'running') {
+              setProgressMessage('🎨 AI is creating your design...');
+              lastStatus = 'running';
+            } else {
+              // Rotating messages to keep it interesting
+              const runningMessages = [
+                `🎨 Creating vector shapes... (${elapsed}s)`,
+                `🖌️ Applying colors and patterns... (${elapsed}s)`,
+                `✨ Refining design details... (${elapsed}s)`,
+                `🎯 Finalizing artwork... (${elapsed}s)`
+              ];
+              const msgIndex = Math.floor(elapsed / 5) % runningMessages.length;
+              setProgressMessage(runningMessages[msgIndex]);
+            }
+          } else if (progressStatus.status === 'retrying') {
+            const attempt = progressStatus.recraft?.attempt_current || 0;
+            const maxAttempts = progressStatus.recraft?.attempt_max || 3;
+            setProgressMessage(`⚡ Retrying generation (attempt ${attempt}/${maxAttempts})...`);
           }
         }
       );
