@@ -1,17 +1,17 @@
-import { Lab, linearRGBToSRGB, linearRGBToXYZ, xyzToLab } from './convert';
-import { deltaE2000 } from './deltaE';
-import { TPVColour } from './blend';
-import { 
-  EnhancedTPVColour, 
-  enhanceTPVColours, 
-  mixLinearRGB, 
+import { Lab, linearRGBToSRGB, linearRGBToXYZ, xyzToLab } from './convert.js';
+import { deltaE2000 } from './deltaE.js';
+import { TPVColour } from './blend.js';
+import {
+  EnhancedTPVColour,
+  enhanceTPVColours,
+  mixLinearRGB,
   normalizeWeights,
   deduplicateRecipes,
   mmrSelect,
   DedupeRecipe
-} from './smartUtils';
-import { evaluateBlendPenalties } from './penalties';
-import { findOptimalParts, PartsResult } from './smartParts';
+} from './smartUtils.js';
+import { evaluateBlendPenalties } from './penalties.js';
+import { findOptimalParts, PartsResult } from './smartParts.js';
 
 export interface SmartSolverConstraints {
   maxComponents: 1 | 2 | 3;

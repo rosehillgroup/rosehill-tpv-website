@@ -1,4 +1,4 @@
-import { Lab } from './convert';
+import { Lab } from './convert.js';
 
 export function deltaE2000(lab1: Lab, lab2: Lab): number {
   const { L: L1, a: a1, b: b1 } = lab1;

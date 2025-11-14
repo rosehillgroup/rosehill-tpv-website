@@ -1,5 +1,5 @@
-import { RGB, Lab, sRGBToLinearRGB } from './convert';
-import { TPVColour } from './blend';
+import { RGB, Lab, sRGBToLinearRGB } from './convert.js';
+import { TPVColour } from './blend.js';
 
 // Enhanced TPV color with precomputed linear RGB
 export interface EnhancedTPVColour extends TPVColour {

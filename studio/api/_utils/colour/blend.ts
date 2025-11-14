@@ -1,4 +1,4 @@
-import { RGB, Lab, sRGBToLinearRGB, linearRGBToSRGB, linearRGBToXYZ, xyzToLab } from './convert';
+import { RGB, Lab, sRGBToLinearRGB, linearRGBToSRGB, linearRGBToXYZ, xyzToLab } from './convert.js';
 
 export interface BlendComponent {
   code: string;

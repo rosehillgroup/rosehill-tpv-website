@@ -1,5 +1,5 @@
-import { Lab } from './convert';
-import { deltaE2000 } from './deltaE';
+import { Lab } from './convert.js';
+import { deltaE2000 } from './deltaE.js';
 
 /**
  * Opposition penalty: discourage "tug-of-war" mixes where two very different

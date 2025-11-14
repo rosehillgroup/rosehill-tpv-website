@@ -3,8 +3,8 @@
  * Computes the visual appearance of a TPV blend by averaging component colors in LAB space
  */
 
-import type { RGB, Lab } from './types';
-import { sRGBToLab, labToSRGB } from './convert';
+import type { RGB, Lab } from './types.js';
+import { sRGBToLab, labToSRGB } from './convert.js';
 
 export interface BlendComponent {
   code: string;

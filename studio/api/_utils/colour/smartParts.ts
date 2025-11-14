@@ -1,6 +1,6 @@
-import { RGB, Lab, linearRGBToSRGB, linearRGBToXYZ, xyzToLab } from './convert';
-import { deltaE2000 } from './deltaE';
-import { EnhancedTPVColour, mixLinearRGB, normalizeWeights, gcdArray, argmax, clamp } from './smartUtils';
+import { RGB, Lab, linearRGBToSRGB, linearRGBToXYZ, xyzToLab } from './convert.js';
+import { deltaE2000 } from './deltaE.js';
+import { EnhancedTPVColour, mixLinearRGB, normalizeWeights, gcdArray, argmax, clamp } from './smartUtils.js';
 
 export interface PartsResult {
   parts: Record<string, number>;
