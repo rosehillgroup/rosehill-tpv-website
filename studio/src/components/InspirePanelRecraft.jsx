@@ -4,6 +4,9 @@
 import { useState } from 'react';
 import { apiClient } from '../lib/api/client.js';
 import BlendRecipesDisplay from './BlendRecipesDisplay.jsx';
+import SVGPreview from './SVGPreview.jsx';
+import { buildColorMapping } from '../utils/colorMapping.js';
+import { recolorSVG } from '../utils/svgRecolor.js';
 
 export default function InspirePanelRecraft() {
   // Form state
@@ -25,6 +28,8 @@ export default function InspirePanelRecraft() {
   // Blend recipes state
   const [blendRecipes, setBlendRecipes] = useState(null);
   const [generatingBlends, setGeneratingBlends] = useState(false);
+  const [blendSvgUrl, setBlendSvgUrl] = useState(null);
+  const [colorMapping, setColorMapping] = useState(null);
 
   // Handle form submission
   const handleGenerate = async () => {
@@ -101,6 +106,8 @@ export default function InspirePanelRecraft() {
     setAttemptInfo(null);
     setBlendRecipes(null);
     setGeneratingBlends(false);
+    setBlendSvgUrl(null);
+    setColorMapping(null);
   };
 
   // Download SVG
@@ -147,6 +154,22 @@ export default function InspirePanelRecraft() {
 
       if (data.success) {
         setBlendRecipes(data.recipes);
+
+        // Build color mapping
+        const mapping = buildColorMapping(data.recipes);
+        setColorMapping(mapping);
+
+        // Generate recolored SVG
+        try {
+          console.log('[TPV-STUDIO] Generating recolored SVG...');
+          const { dataUrl, stats } = await recolorSVG(result.svg_url, mapping);
+          setBlendSvgUrl(dataUrl);
+          console.log('[TPV-STUDIO] Recolored SVG generated:', stats);
+        } catch (svgError) {
+          console.error('[TPV-STUDIO] Failed to generate recolored SVG:', svgError);
+          // Non-fatal error - recipes are still valid
+          setError(`Recipes generated successfully, but SVG recoloring failed: ${svgError.message}`);
+        }
       } else {
         throw new Error(data.error || 'Unknown error generating recipes');
       }
@@ -273,11 +296,25 @@ export default function InspirePanelRecraft() {
         </div>
       )}
 
+      {/* SVG Preview Component */}
+      {blendRecipes && result?.svg_url && (
+        <SVGPreview
+          originalSvgUrl={result.svg_url}
+          blendSvgUrl={blendSvgUrl}
+          colorMapping={colorMapping}
+          recipes={blendRecipes}
+        />
+      )}
+
       {/* Blend Recipes Display */}
       {blendRecipes && (
         <BlendRecipesDisplay
           recipes={blendRecipes}
-          onClose={() => setBlendRecipes(null)}
+          onClose={() => {
+            setBlendRecipes(null);
+            setBlendSvgUrl(null);
+            setColorMapping(null);
+          }}
         />
       )}
 
