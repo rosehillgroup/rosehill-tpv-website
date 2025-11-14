@@ -126,6 +126,7 @@ export class SVGExtractor {
    */
   private extractColors(svgText: string): Map<string, number> {
     const colorCounts = new Map<string, number>();
+    const processedRects = new Set<string>(); // Track which rect colors we've already weighted
 
     // Parse SVG dimensions for area calculations
     const dimensions = this.parseSVGDimensions(svgText);
@@ -133,14 +134,29 @@ export class SVGExtractor {
     const svgHeight = dimensions.height || 1000;
     const svgArea = svgWidth * svgHeight;
 
+    console.info(`[SVG] SVG dimensions: ${svgWidth}x${svgHeight}, area: ${svgArea}`);
+
     // Extract rect elements with area-based weighting for backgrounds
-    const rectMatches = svgText.matchAll(/<rect[^>]*>/gi);
+    const rectMatches = Array.from(svgText.matchAll(/<rect[^>]*>/gi));
+    console.info(`[SVG] Found ${rectMatches.length} rect elements`);
+
     for (const match of rectMatches) {
       const rectTag = match[0];
 
-      // Extract fill color
-      const fillMatch = rectTag.match(/fill=["']([^"']+)["']/i);
-      const color = fillMatch ? this.normalizeColor(fillMatch[1]) : null;
+      // Extract fill color from attribute or style
+      let fillMatch = rectTag.match(/fill=["']([^"']+)["']/i);
+      let color = fillMatch ? this.normalizeColor(fillMatch[1]) : null;
+
+      // Try style attribute if no fill attribute
+      if (!color) {
+        const styleMatch = rectTag.match(/style=["']([^"']+)["']/i);
+        if (styleMatch) {
+          const fillStyleMatch = styleMatch[1].match(/fill:\s*([^;]+)/i);
+          if (fillStyleMatch) {
+            color = this.normalizeColor(fillStyleMatch[1]);
+          }
+        }
+      }
 
       if (color) {
         // Calculate rect area
@@ -156,25 +172,34 @@ export class SVGExtractor {
             const rectArea = width * height;
             const areaWeight = (rectArea / svgArea) * 100;
 
+            console.info(`[SVG] Rect ${color}: ${width}x${height} = ${rectArea} (${areaWeight.toFixed(1)}% of total)`);
+
             // Add area-weighted score (min 1.0 to ensure it counts)
             colorCounts.set(color, (colorCounts.get(color) || 0) + Math.max(1.0, areaWeight));
+            processedRects.add(color); // Mark as processed to avoid double-counting
             continue; // Skip adding this as regular fill below
           }
         }
 
         // Rect without dimensions, use default weight
+        console.info(`[SVG] Rect ${color}: no dimensions, using default weight`);
         colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+        processedRects.add(color);
       }
     }
 
     // Extract fill colors from non-rect elements
+    // (Don't double-count rect colors that were already area-weighted)
     const fillMatches = svgText.matchAll(/fill=["']([^"']+)["']/gi);
+    let nonRectFills = 0;
     for (const match of fillMatches) {
       const color = this.normalizeColor(match[1]);
-      if (color) {
+      if (color && !processedRects.has(color)) {
         colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+        nonRectFills++;
       }
     }
+    console.info(`[SVG] Found ${nonRectFills} non-rect fill colors`);
 
     // Extract stroke colors
     const strokeMatches = svgText.matchAll(/stroke=["']([^"']+)["']/gi);
@@ -243,6 +268,14 @@ export class SVGExtractor {
         }
       }
     }
+
+    // Log final color weights
+    console.info('[SVG] Final color weights:');
+    Array.from(colorCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([color, weight]) => {
+        console.info(`  ${color}: ${weight.toFixed(2)}`);
+      });
 
     return colorCounts;
   }
