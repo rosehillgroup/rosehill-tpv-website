@@ -166,17 +166,40 @@ export default function InspirePanelRecraft() {
     setEditedColors(new Map());
   };
 
-  // Download SVG
+  // Download TPV Blend SVG
   const handleDownloadSVG = () => {
-    if (result?.svg_url) {
-      window.open(result.svg_url, '_blank');
+    if (blendSvgUrl) {
+      const link = document.createElement('a');
+      link.href = blendSvgUrl;
+      link.download = `tpv-blend-${Date.now()}.svg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
-  // Download PNG
+  // Download TPV Blend PNG
   const handleDownloadPNG = () => {
-    if (result?.png_url) {
-      window.open(result.png_url, '_blank');
+    if (blendSvgUrl) {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || 1000;
+        canvas.height = img.naturalHeight || 1000;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob((blob) => {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `tpv-blend-${Date.now()}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        });
+      };
+      img.src = blendSvgUrl;
     }
   };
 
@@ -192,7 +215,10 @@ export default function InspirePanelRecraft() {
 
     setGeneratingBlends(true);
     setError(null);
-    setProgressMessage('Extracting colors from design...');
+    setProgressMessage('🎨 Extracting colours from design...');
+
+    // Small delay to ensure message renders
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     try {
       const response = await fetch('/api/blend-recipes', {
@@ -213,25 +239,29 @@ export default function InspirePanelRecraft() {
       }
 
       if (data.success) {
-        setProgressMessage('Matching TPV granule colors...');
+        setProgressMessage('🔍 Matching TPV granule colours...');
+        await new Promise(resolve => setTimeout(resolve, 300));
+
         setBlendRecipes(data.recipes);
 
-        // Build color mapping
+        // Build colour mapping
         const mapping = buildColorMapping(data.recipes);
         setColorMapping(mapping);
 
-        // Generate recolored SVG
+        // Generate recoloured SVG
         try {
-          setProgressMessage('Generating TPV blend preview...');
-          console.log('[TPV-STUDIO] Generating recolored SVG...');
+          setProgressMessage('✨ Generating TPV blend preview...');
+          await new Promise(resolve => setTimeout(resolve, 200));
+
+          console.log('[TPV-STUDIO] Generating recoloured SVG...');
           const { dataUrl, stats } = await recolorSVG(svg_url, mapping);
           setBlendSvgUrl(dataUrl);
           setProgressMessage('✓ TPV blend ready!');
-          console.log('[TPV-STUDIO] Recolored SVG generated:', stats);
+          console.log('[TPV-STUDIO] Recoloured SVG generated:', stats);
         } catch (svgError) {
-          console.error('[TPV-STUDIO] Failed to generate recolored SVG:', svgError);
+          console.error('[TPV-STUDIO] Failed to generate recoloured SVG:', svgError);
           // Non-fatal error - recipes are still valid
-          setError(`Recipes generated successfully, but SVG recoloring failed: ${svgError.message}`);
+          setError(`Recipes generated successfully, but SVG recolouring failed: ${svgError.message}`);
         }
       } else {
         throw new Error(data.error || 'Unknown error generating recipes');
@@ -445,13 +475,9 @@ export default function InspirePanelRecraft() {
         </div>
       )}
 
-      {/* Results Display */}
+      {/* Unified TPV Blend Display */}
       {result && !generating && (
         <div className="results-section">
-          <div className="results-header">
-            <h3>Your Design</h3>
-          </div>
-
           {/* Aspect Ratio Info */}
           {arMapping && (
             <div className={`ar-info ${arMapping.layout.mode}`}>
@@ -478,38 +504,40 @@ export default function InspirePanelRecraft() {
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="action-buttons">
-            <button onClick={handleDownloadSVG} className="download-button svg">
-              Download SVG
-            </button>
-            <button onClick={handleDownloadPNG} className="download-button png">
-              Download PNG Preview
-            </button>
-            <button onClick={handleNewGeneration} className="new-generation-button">
-              New Generation
-            </button>
-          </div>
-        </div>
-      )}
+          {/* TPV Blend Progress */}
+          {generatingBlends && (
+            <div className="progress-section">
+              <div className="progress-bar">
+                <div className="progress-bar-fill" />
+              </div>
+              <p className="progress-message">{progressMessage}</p>
+            </div>
+          )}
 
-      {/* TPV Blend Progress */}
-      {generatingBlends && (
-        <div className="progress-section">
-          <div className="progress-bar">
-            <div className="progress-bar-fill" />
-          </div>
-          <p className="progress-message">{progressMessage}</p>
-        </div>
-      )}
+          {/* TPV Blend Preview */}
+          {blendSvgUrl && blendRecipes && (
+            <SVGPreview
+              blendSvgUrl={blendSvgUrl}
+              recipes={blendRecipes}
+              onColorClick={handleColorClick}
+            />
+          )}
 
-      {/* SVG Preview Component */}
-      {blendSvgUrl && blendRecipes && (
-        <SVGPreview
-          blendSvgUrl={blendSvgUrl}
-          recipes={blendRecipes}
-          onColorClick={handleColorClick}
-        />
+          {/* Action Buttons - Show when blend is ready */}
+          {blendSvgUrl && (
+            <div className="action-buttons">
+              <button onClick={handleDownloadSVG} className="download-button svg">
+                Download TPV Blend SVG
+              </button>
+              <button onClick={handleDownloadPNG} className="download-button png">
+                Download TPV Blend PNG
+              </button>
+              <button onClick={handleNewGeneration} className="new-generation-button">
+                New Generation
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Generate Final Recipes Button */}
@@ -522,7 +550,7 @@ export default function InspirePanelRecraft() {
             Generate TPV Blend Recipes
           </button>
           <p className="finalize-hint">
-            Adjust colors above if needed, then generate the final blend recipes
+            Adjust colours above if needed, then generate the final blend recipes
           </p>
         </div>
       )}

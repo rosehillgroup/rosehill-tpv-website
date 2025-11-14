@@ -176,7 +176,7 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
           background: #fff;
           border-radius: 8px;
           border: 1px solid #ddd;
-          padding: 1.5rem;
+          padding: 2rem;
           margin-top: 1.5rem;
         }
 
@@ -220,11 +220,11 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
 
         .quality-legend {
           display: flex;
-          gap: 1.5rem;
-          padding: 0.75rem;
+          gap: 2rem;
+          padding: 1rem;
           background: #f0f7ff;
-          border-radius: 4px;
-          margin-bottom: 1.5rem;
+          border-radius: 6px;
+          margin-bottom: 2rem;
           flex-wrap: wrap;
         }
 
@@ -240,10 +240,10 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
         }
 
         .quality-badge {
-          padding: 0.25rem 0.75rem;
-          border-radius: 4px;
-          font-size: 0.85rem;
-          font-weight: 600;
+          padding: 0.35rem 0.85rem;
+          border-radius: 6px;
+          font-size: 0.9rem;
+          font-weight: 700;
         }
 
         .quality-badge.small {
@@ -275,13 +275,13 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
 
         .table-header {
           display: grid;
-          grid-template-columns: 80px 120px 90px 1fr 140px 40px;
+          grid-template-columns: 120px 140px 100px 1fr 160px 50px;
           background: #1a365d;
           color: white;
           font-weight: 600;
-          font-size: 0.9rem;
-          padding: 0.75rem 1rem;
-          gap: 1rem;
+          font-size: 0.95rem;
+          padding: 1rem 1.5rem;
+          gap: 1.5rem;
         }
 
         .table-row {
@@ -294,9 +294,9 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
 
         .recipe-row {
           display: grid;
-          grid-template-columns: 80px 120px 90px 1fr 140px 40px;
-          padding: 1rem;
-          gap: 1rem;
+          grid-template-columns: 120px 140px 100px 1fr 160px 50px;
+          padding: 1.25rem 1.5rem;
+          gap: 1.5rem;
           align-items: center;
           background: #fff;
           transition: background 0.2s;
@@ -310,20 +310,20 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
         .swatch-pair {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
         }
 
         .swatch-group {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 4px;
+          gap: 6px;
         }
 
         .color-swatch {
-          width: 36px;
-          height: 36px;
-          border-radius: 4px;
+          width: 42px;
+          height: 42px;
+          border-radius: 6px;
           border: 2px solid #ddd;
           flex-shrink: 0;
         }
@@ -337,51 +337,54 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
         }
 
         .swatch-label {
-          font-size: 0.7rem;
+          font-size: 0.75rem;
           color: #666;
-          font-weight: 500;
+          font-weight: 600;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: 0.8px;
         }
 
         .swatch-arrow {
-          font-size: 1.2rem;
+          font-size: 1.4rem;
           color: #ff6b35;
           font-weight: bold;
-          margin: 0 2px;
+          margin: 0 4px;
         }
 
         /* Columns */
         .col-hex .hex-value {
           font-family: 'Courier New', monospace;
-          font-size: 0.9rem;
+          font-size: 1rem;
           color: #333;
-          font-weight: 500;
+          font-weight: 600;
+          letter-spacing: 0.5px;
         }
 
         .col-coverage .coverage-value {
-          font-size: 0.95rem;
+          font-size: 1rem;
           color: #666;
+          font-weight: 500;
         }
 
         .col-blend .blend-formula-compact {
-          font-size: 0.9rem;
-          line-height: 1.6;
+          font-size: 0.95rem;
+          line-height: 1.8;
         }
 
         .comp-code {
           color: #1a365d;
-          font-weight: 600;
+          font-weight: 700;
         }
 
         .comp-name {
           color: #666;
-          font-size: 0.85rem;
+          font-size: 0.9rem;
         }
 
         .separator {
           color: #ff6b35;
           font-weight: bold;
+          margin: 0 4px;
         }
 
         .col-quality {
@@ -392,8 +395,9 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
         }
 
         .delta-e-small {
-          font-size: 0.8rem;
+          font-size: 0.85rem;
           color: #666;
+          font-weight: 500;
         }
 
         /* Expand Button */
@@ -478,10 +482,25 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
         @media (max-width: 1024px) {
           .table-header,
           .recipe-row {
-            grid-template-columns: 70px 100px 80px 1fr 120px 35px;
-            gap: 0.75rem;
-            font-size: 0.85rem;
+            grid-template-columns: 100px 120px 90px 1fr 140px 45px;
+            gap: 1rem;
+            font-size: 0.9rem;
+            padding: 1rem 1.25rem;
           }
+
+          .color-swatch {
+            width: 38px;
+            height: 38px;
+          }
+
+          .swatch-label {
+            font-size: 0.7rem;
+          }
+
+          .swatch-arrow {
+            font-size: 1.2rem;
+          }
+        }
 
           .color-swatch {
             width: 32px;
