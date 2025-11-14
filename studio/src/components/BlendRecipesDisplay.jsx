@@ -1,7 +1,11 @@
 // TPV Studio - Blend Recipes Display Component
-// Shows extracted colors and TPV blend recipes
+// Shows extracted colors and TPV blend recipes in compact format
+
+import { useState } from 'react';
 
 export default function BlendRecipesDisplay({ recipes, onClose }) {
+  const [expandedColors, setExpandedColors] = useState(new Set());
+
   if (!recipes || recipes.length === 0) {
     return (
       <div className="blend-recipes-empty">
@@ -10,6 +14,16 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
       </div>
     );
   }
+
+  const toggleColorExpanded = (idx) => {
+    const newExpanded = new Set(expandedColors);
+    if (newExpanded.has(idx)) {
+      newExpanded.delete(idx);
+    } else {
+      newExpanded.add(idx);
+    }
+    setExpandedColors(newExpanded);
+  };
 
   return (
     <div className="blend-recipes-display">
@@ -33,66 +47,121 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
         </span>
       </div>
 
-      <div className="recipes-list">
-        {recipes.map((recipe, idx) => (
-          <div key={idx} className="recipe-card">
-            {/* Color Header */}
-            <div className="color-header">
-              <div className="color-info">
-                <div
-                  className="color-swatch"
-                  style={{ backgroundColor: recipe.targetColor.hex }}
-                  title={recipe.targetColor.hex}
-                />
-                <div className="color-details">
-                  <span className="color-hex">{recipe.targetColor.hex}</span>
-                  <span className="color-coverage">{recipe.targetColor.areaPct.toFixed(1)}% of design</span>
-                </div>
-              </div>
-            </div>
+      {/* Compact Recipe Table */}
+      <div className="recipes-table">
+        <div className="table-header">
+          <div className="col-swatch">Color</div>
+          <div className="col-hex">Hex</div>
+          <div className="col-coverage">Coverage</div>
+          <div className="col-blend">Blend Formula</div>
+          <div className="col-quality">Match</div>
+        </div>
 
-            {/* Blend Recipes */}
-            <div className="blends-container">
-              {recipe.blends.map((blend, blendIdx) => (
-                <div key={blendIdx} className="blend-item">
-                  <div className="blend-header">
-                    <div className="blend-info">
-                      <span className={`quality-badge ${blend.quality.toLowerCase()}`}>
-                        {blend.quality}
-                      </span>
-                      <span className="delta-e">ΔE {blend.deltaE.toFixed(2)}</span>
-                    </div>
+        {recipes.map((recipe, idx) => {
+          const chosen = recipe.chosenRecipe;
+          const isExpanded = expandedColors.has(idx);
+          const hasAlternatives = recipe.alternativeRecipes && recipe.alternativeRecipes.length > 0;
+
+          return (
+            <div key={idx} className="table-row">
+              {/* Main Recipe Row */}
+              <div className="recipe-row">
+                {/* Original Color Swatch */}
+                <div className="col-swatch">
+                  <div className="swatch-pair">
+                    <div
+                      className="color-swatch original"
+                      style={{ backgroundColor: recipe.targetColor.hex }}
+                      title={`Original: ${recipe.targetColor.hex}`}
+                    />
+                    <div
+                      className="color-swatch blend"
+                      style={{ backgroundColor: recipe.blendColor.hex }}
+                      title={`Blend: ${recipe.blendColor.hex}`}
+                    />
                   </div>
+                </div>
 
-                  {/* Recipe Formula */}
-                  <div className="blend-formula">
-                    {blend.components.map((comp, compIdx) => (
-                      <span key={compIdx} className="component">
+                {/* Hex */}
+                <div className="col-hex">
+                  <span className="hex-value">{recipe.targetColor.hex}</span>
+                </div>
+
+                {/* Coverage */}
+                <div className="col-coverage">
+                  <span className="coverage-value">{recipe.targetColor.areaPct.toFixed(1)}%</span>
+                </div>
+
+                {/* Blend Formula */}
+                <div className="col-blend">
+                  <div className="blend-formula-compact">
+                    {chosen.components.map((comp, compIdx) => (
+                      <span key={compIdx}>
                         {comp.parts && <strong>{comp.parts} {comp.parts === 1 ? 'part' : 'parts'}</strong>}
-                        {!comp.parts && <strong>{(comp.weight * 100).toFixed(1)}%</strong>}
+                        {!comp.parts && <strong>{(comp.weight * 100).toFixed(0)}%</strong>}
                         {' '}
-                        <span className="component-code">{comp.code}</span>
+                        <span className="comp-code">{comp.code}</span>
                         {' '}
-                        <span className="component-name">({comp.name})</span>
-                        {compIdx < blend.components.length - 1 && <span className="plus"> + </span>}
+                        <span className="comp-name">({comp.name})</span>
+                        {compIdx < chosen.components.length - 1 && <span className="separator"> + </span>}
                       </span>
                     ))}
                   </div>
-
-                  {/* Result Preview */}
-                  <div className="result-preview">
-                    <div
-                      className="result-swatch"
-                      style={{ backgroundColor: `rgb(${blend.resultRgb.R}, ${blend.resultRgb.G}, ${blend.resultRgb.B})` }}
-                      title={`Result: RGB(${Math.round(blend.resultRgb.R)}, ${Math.round(blend.resultRgb.G)}, ${Math.round(blend.resultRgb.B)})`}
-                    />
-                    <span className="result-label">Result</span>
-                  </div>
                 </div>
-              ))}
+
+                {/* Quality Badge */}
+                <div className="col-quality">
+                  <span className={`quality-badge ${chosen.quality.toLowerCase()}`}>
+                    {chosen.quality}
+                  </span>
+                  <span className="delta-e-small">ΔE {chosen.deltaE.toFixed(2)}</span>
+                </div>
+
+                {/* Expand Button */}
+                {hasAlternatives && (
+                  <button
+                    className="expand-button"
+                    onClick={() => toggleColorExpanded(idx)}
+                    title={isExpanded ? 'Hide alternatives' : 'Show alternatives'}
+                  >
+                    {isExpanded ? '−' : '+'}
+                  </button>
+                )}
+              </div>
+
+              {/* Alternative Recipes (Expandable) */}
+              {isExpanded && hasAlternatives && (
+                <div className="alternatives-section">
+                  <div className="alternatives-header">Alternative Recipes:</div>
+                  {recipe.alternativeRecipes.map((alt, altIdx) => (
+                    <div key={altIdx} className="alternative-row">
+                      <div className="alt-label">Option {altIdx + 2}:</div>
+                      <div className="alt-formula">
+                        {alt.components.map((comp, compIdx) => (
+                          <span key={compIdx}>
+                            {comp.parts && <strong>{comp.parts} {comp.parts === 1 ? 'part' : 'parts'}</strong>}
+                            {!comp.parts && <strong>{(comp.weight * 100).toFixed(0)}%</strong>}
+                            {' '}
+                            <span className="comp-code">{comp.code}</span>
+                            {' '}
+                            <span className="comp-name">({comp.name})</span>
+                            {compIdx < alt.components.length - 1 && <span className="separator"> + </span>}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="alt-quality">
+                        <span className={`quality-badge small ${alt.quality.toLowerCase()}`}>
+                          {alt.quality}
+                        </span>
+                        <span className="delta-e-small">ΔE {alt.deltaE.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <style jsx>{`
@@ -163,86 +232,16 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
           color: #666;
         }
 
-        .recipes-list {
-          display: grid;
-          gap: 1.5rem;
-        }
-
-        .recipe-card {
-          border: 1px solid #e0e0e0;
-          border-radius: 6px;
-          overflow: hidden;
-        }
-
-        .color-header {
-          background: #f9f9f9;
-          padding: 1rem;
-          border-bottom: 1px solid #e0e0e0;
-        }
-
-        .color-info {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-        }
-
-        .color-swatch {
-          width: 48px;
-          height: 48px;
-          border-radius: 4px;
-          border: 2px solid #ddd;
-          flex-shrink: 0;
-        }
-
-        .color-details {
-          display: flex;
-          flex-direction: column;
-          gap: 0.25rem;
-        }
-
-        .color-hex {
-          font-weight: 600;
-          font-size: 1.1rem;
-          color: #333;
-          font-family: 'Courier New', monospace;
-        }
-
-        .color-coverage {
-          font-size: 0.85rem;
-          color: #666;
-        }
-
-        .blends-container {
-          padding: 1rem;
-          display: grid;
-          gap: 1rem;
-        }
-
-        .blend-item {
-          padding: 0.75rem;
-          background: #fafafa;
-          border-radius: 4px;
-          border: 1px solid #e8e8e8;
-        }
-
-        .blend-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 0.75rem;
-        }
-
-        .blend-info {
-          display: flex;
-          align-items: center;
-          gap: 0.75rem;
-        }
-
         .quality-badge {
           padding: 0.25rem 0.75rem;
           border-radius: 4px;
           font-size: 0.85rem;
           font-weight: 600;
+        }
+
+        .quality-badge.small {
+          padding: 0.2rem 0.5rem;
+          font-size: 0.75rem;
         }
 
         .quality-badge.excellent {
@@ -260,55 +259,175 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
           color: #c62828;
         }
 
-        .delta-e {
+        /* Compact Table Layout */
+        .recipes-table {
+          border: 1px solid #e0e0e0;
+          border-radius: 6px;
+          overflow: hidden;
+        }
+
+        .table-header {
+          display: grid;
+          grid-template-columns: 80px 120px 90px 1fr 140px 40px;
+          background: #1a365d;
+          color: white;
+          font-weight: 600;
           font-size: 0.9rem;
-          color: #666;
+          padding: 0.75rem 1rem;
+          gap: 1rem;
+        }
+
+        .table-row {
+          border-bottom: 1px solid #e0e0e0;
+        }
+
+        .table-row:last-child {
+          border-bottom: none;
+        }
+
+        .recipe-row {
+          display: grid;
+          grid-template-columns: 80px 120px 90px 1fr 140px 40px;
+          padding: 1rem;
+          gap: 1rem;
+          align-items: center;
+          background: #fff;
+          transition: background 0.2s;
+        }
+
+        .recipe-row:hover {
+          background: #f9f9f9;
+        }
+
+        /* Swatch Pair (Original + Blend) */
+        .swatch-pair {
+          display: flex;
+          gap: 4px;
+        }
+
+        .color-swatch {
+          width: 36px;
+          height: 36px;
+          border-radius: 4px;
+          border: 2px solid #ddd;
+          flex-shrink: 0;
+        }
+
+        .color-swatch.original {
+          border-color: #999;
+        }
+
+        .color-swatch.blend {
+          border-color: #ff6b35;
+        }
+
+        /* Columns */
+        .col-hex .hex-value {
+          font-family: 'Courier New', monospace;
+          font-size: 0.9rem;
+          color: #333;
           font-weight: 500;
         }
 
-        .blend-formula {
-          margin-bottom: 0.75rem;
-          padding: 0.75rem;
-          background: white;
-          border-radius: 4px;
-          line-height: 1.8;
+        .col-coverage .coverage-value {
+          font-size: 0.95rem;
+          color: #666;
         }
 
-        .component {
-          display: inline-block;
+        .col-blend .blend-formula-compact {
+          font-size: 0.9rem;
+          line-height: 1.6;
         }
 
-        .component-code {
+        .comp-code {
           color: #1a365d;
           font-weight: 600;
         }
 
-        .component-name {
+        .comp-name {
           color: #666;
-          font-size: 0.9rem;
+          font-size: 0.85rem;
         }
 
-        .plus {
+        .separator {
           color: #ff6b35;
           font-weight: bold;
         }
 
-        .result-preview {
+        .col-quality {
           display: flex;
-          align-items: center;
-          gap: 0.5rem;
+          flex-direction: column;
+          gap: 0.25rem;
+          align-items: flex-start;
         }
 
-        .result-swatch {
-          width: 32px;
-          height: 32px;
+        .delta-e-small {
+          font-size: 0.8rem;
+          color: #666;
+        }
+
+        /* Expand Button */
+        .expand-button {
+          width: 28px;
+          height: 28px;
+          border: 1px solid #ddd;
+          background: white;
           border-radius: 4px;
-          border: 2px solid #ddd;
+          cursor: pointer;
+          font-size: 1.2rem;
+          line-height: 1;
+          color: #666;
+          transition: all 0.2s;
         }
 
-        .result-label {
+        .expand-button:hover {
+          background: #f0f0f0;
+          border-color: #999;
+          color: #333;
+        }
+
+        /* Alternative Recipes Section */
+        .alternatives-section {
+          padding: 1rem 1rem 1rem 2rem;
+          background: #f9f9f9;
+          border-top: 1px solid #e8e8e8;
+        }
+
+        .alternatives-header {
+          font-weight: 600;
+          color: #666;
+          margin-bottom: 0.75rem;
+          font-size: 0.9rem;
+        }
+
+        .alternative-row {
+          display: grid;
+          grid-template-columns: 80px 1fr 140px;
+          gap: 1rem;
+          padding: 0.5rem;
+          margin-bottom: 0.5rem;
+          background: white;
+          border-radius: 4px;
+          border: 1px solid #e0e0e0;
+          align-items: center;
+        }
+
+        .alt-label {
           font-size: 0.85rem;
           color: #666;
+          font-weight: 500;
+        }
+
+        .alt-formula {
+          font-size: 0.85rem;
+          line-height: 1.5;
+        }
+
+        .alt-quality {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+          align-items: flex-start;
         }
 
         .close-button {
@@ -326,26 +445,84 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
           background: #d0d0d0;
         }
 
+        @media (max-width: 1024px) {
+          .table-header,
+          .recipe-row {
+            grid-template-columns: 70px 100px 80px 1fr 120px 35px;
+            gap: 0.75rem;
+            font-size: 0.85rem;
+          }
+
+          .color-swatch {
+            width: 32px;
+            height: 32px;
+          }
+        }
+
         @media (max-width: 768px) {
           .blend-recipes-display {
             padding: 1rem;
           }
 
-          .quality-legend {
-            flex-direction: column;
+          .table-header {
+            display: none;
+          }
+
+          .recipe-row {
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            padding: 0.75rem;
+          }
+
+          .col-swatch,
+          .col-hex,
+          .col-coverage,
+          .col-blend,
+          .col-quality {
+            display: flex;
+            align-items: center;
             gap: 0.5rem;
           }
 
-          .blend-formula {
-            font-size: 0.9rem;
+          .col-swatch::before {
+            content: 'Color:';
+            font-weight: 600;
+            font-size: 0.85rem;
           }
 
-          .color-header {
-            padding: 0.75rem;
+          .col-hex::before {
+            content: 'Hex:';
+            font-weight: 600;
+            font-size: 0.85rem;
           }
 
-          .blends-container {
-            padding: 0.75rem;
+          .col-coverage::before {
+            content: 'Coverage:';
+            font-weight: 600;
+            font-size: 0.85rem;
+          }
+
+          .col-blend::before {
+            content: 'Formula:';
+            font-weight: 600;
+            font-size: 0.85rem;
+            align-self: flex-start;
+          }
+
+          .col-quality::before {
+            content: 'Match:';
+            font-weight: 600;
+            font-size: 0.85rem;
+          }
+
+          .alternative-row {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+          }
+
+          .quality-legend {
+            flex-direction: column;
+            gap: 0.5rem;
           }
         }
       `}</style>
