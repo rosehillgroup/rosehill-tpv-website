@@ -481,6 +481,34 @@ export default function InspirePanelRecraft() {
         <ColorEditorPanel
           color={selectedColor}
           currentRecipe={selectedColor.recipe}
+          initialRecipes={(() => {
+            // Find the full recipe data from blendRecipes
+            if (!blendRecipes) return null;
+
+            const matchingRecipe = blendRecipes.find(
+              r => r.targetColor?.hex?.toLowerCase() === selectedColor.hex?.toLowerCase()
+            );
+
+            if (!matchingRecipe) {
+              console.warn('[TPV-STUDIO] No matching recipe found for color:', selectedColor.hex);
+              return null;
+            }
+
+            // Combine chosenRecipe and alternativeRecipes into format ColorEditorPanel expects
+            const allRecipes = [
+              matchingRecipe.chosenRecipe,
+              ...(matchingRecipe.alternativeRecipes || [])
+            ].map((recipe, idx) => ({
+              id: recipe.id || `recipe_${idx + 1}`,
+              deltaE: recipe.deltaE,
+              quality: recipe.quality,
+              components: recipe.components,
+              blendColor: recipe.blendColor || matchingRecipe.blendColor
+            }));
+
+            console.log('[TPV-STUDIO] Passing initial recipes:', allRecipes.length);
+            return allRecipes;
+          })()}
           onRecipeChange={handleRecipeChange}
           onColorChange={handleColorChange}
           onClose={() => {

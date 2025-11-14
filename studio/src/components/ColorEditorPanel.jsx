@@ -8,18 +8,22 @@ import { apiClient } from '../lib/api/client.js';
 export default function ColorEditorPanel({
   color,           // {hex, rgb, lab, areaPct, originalHex}
   currentRecipe,   // Current recipe for this color
+  initialRecipes,  // Initial recipes from parent (hybrid approach)
   onRecipeChange,  // (newRecipe) => void
   onColorChange,   // (newHex) => void
   onClose
 }) {
   const [selectedHex, setSelectedHex] = useState(color?.hex || '#000000');
-  const [recipes, setRecipes] = useState([]);
+  const [recipes, setRecipes] = useState(initialRecipes || []);
   const [selectedRecipeIndex, setSelectedRecipeIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   // Debounced color matching
   const [matchTimeout, setMatchTimeout] = useState(null);
+
+  // Track abort controller for request cancellation
+  const [abortController, setAbortController] = useState(null);
 
   // Update selected hex when color prop changes
   useEffect(() => {
@@ -28,14 +32,39 @@ export default function ColorEditorPanel({
     }
   }, [color?.hex]);
 
-  // Fetch recipes for a color
+  // Fetch recipes for a color with timeout and cancellation
   const fetchRecipes = useCallback(async (hex) => {
+    // Cancel any pending request
+    if (abortController) {
+      abortController.abort();
+    }
+
+    // Create new abort controller for this request
+    const controller = new AbortController();
+    setAbortController(controller);
+
     setLoading(true);
     setError(null);
 
     try {
       console.log('[ColorEditor] Matching color:', hex);
-      const response = await apiClient.matchColor(hex, 2);
+
+      // Create timeout promise (10 seconds)
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timed out after 10 seconds')), 10000)
+      );
+
+      // Race between API call and timeout
+      const response = await Promise.race([
+        apiClient.matchColor(hex, 2, { signal: controller.signal }),
+        timeoutPromise
+      ]);
+
+      // Check if request was aborted
+      if (controller.signal.aborted) {
+        console.log('[ColorEditor] Request was cancelled');
+        return;
+      }
 
       if (response.success && response.recipes) {
         setRecipes(response.recipes);
@@ -49,19 +78,53 @@ export default function ColorEditorPanel({
         throw new Error('No recipes found');
       }
     } catch (err) {
-      console.error('[ColorEditor] Error fetching recipes:', err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [onRecipeChange]);
+      // Don't show error if request was aborted
+      if (err.name === 'AbortError' || controller.signal.aborted) {
+        console.log('[ColorEditor] Request cancelled');
+        return;
+      }
 
-  // Fetch recipes immediately when panel opens
+      console.error('[ColorEditor] Error fetching recipes:', err);
+      setError(err.message || 'Failed to fetch recipes');
+    } finally {
+      // Only clear loading if this is still the active request
+      if (!controller.signal.aborted) {
+        setLoading(false);
+      }
+    }
+  }, [abortController, onRecipeChange]);
+
+  // Hybrid approach: Use initial recipes if provided, otherwise fetch
   useEffect(() => {
-    if (color?.hex) {
+    // If we have initial recipes, use them (instant display)
+    if (initialRecipes && initialRecipes.length > 0) {
+      console.log('[ColorEditor] Using initial recipes:', initialRecipes.length);
+      setRecipes(initialRecipes);
+      setSelectedRecipeIndex(0);
+
+      // Notify parent of initial recipe
+      if (onRecipeChange && initialRecipes[0]) {
+        onRecipeChange(initialRecipes[0]);
+      }
+    } else if (color?.hex) {
+      // No initial recipes provided, fetch fresh ones
+      console.log('[ColorEditor] No initial recipes, fetching for:', color.hex);
       fetchRecipes(color.hex);
     }
-  }, [color?.hex, fetchRecipes]);
+  }, [color?.hex, initialRecipes, fetchRecipes, onRecipeChange]);
+
+  // Cleanup: Cancel any pending requests when component unmounts
+  useEffect(() => {
+    return () => {
+      if (abortController) {
+        console.log('[ColorEditor] Unmounting, cancelling pending requests');
+        abortController.abort();
+      }
+      if (matchTimeout) {
+        clearTimeout(matchTimeout);
+      }
+    };
+  }, [abortController, matchTimeout]);
 
   // Handle color change with debouncing
   const handleColorChange = (colorResult) => {
@@ -180,6 +243,12 @@ export default function ColorEditorPanel({
           {error && (
             <div className="error-state">
               <strong>Error:</strong> {error}
+              <button
+                onClick={() => fetchRecipes(selectedHex)}
+                className="retry-button"
+              >
+                Retry
+              </button>
             </div>
           )}
 
@@ -444,6 +513,25 @@ export default function ColorEditorPanel({
           color: #c33;
           background: #fee;
           border: 1px solid #fcc;
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          align-items: center;
+        }
+
+        .retry-button {
+          padding: 0.5rem 1.5rem;
+          background: #ff6b35;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+
+        .retry-button:hover {
+          background: #e55a25;
         }
 
         .empty-state {
