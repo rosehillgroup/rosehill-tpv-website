@@ -295,10 +295,11 @@ export default function InspirePanelRecraft() {
     updated.set(selectedColor.originalHex, { newHex });
     setEditedColors(updated);
 
-    // Update selected color
+    // Update selected color with new hex and blendHex for highlighting
     setSelectedColor({
       ...selectedColor,
-      hex: newHex
+      hex: newHex,
+      blendHex: newHex
     });
 
     // Regenerate blend SVG with updated color
@@ -307,7 +308,7 @@ export default function InspirePanelRecraft() {
 
   // Regenerate blend SVG with edited colors
   const regenerateBlendSVG = async (updatedEdits = null, immediateHex = null) => {
-    if (!result?.svg_url || !colorMapping) return;
+    if (!result?.svg_url || !colorMapping || !blendRecipes) return;
 
     try {
       // Build updated color mapping with edits
@@ -324,10 +325,27 @@ export default function InspirePanelRecraft() {
         }
       });
 
+      // Update blendRecipes to reflect the new colors in the legend
+      const updatedRecipes = blendRecipes.map(recipe => {
+        const edit = edits.get(recipe.targetColor.hex);
+        if (edit?.newHex) {
+          // Update the blend color shown in the legend
+          return {
+            ...recipe,
+            blendColor: {
+              ...recipe.blendColor,
+              hex: edit.newHex
+            }
+          };
+        }
+        return recipe;
+      });
+
       // Recolor SVG with updated mapping
       const { dataUrl, stats } = await recolorSVG(result.svg_url, updatedMapping);
       setBlendSvgUrl(dataUrl);
       setColorMapping(updatedMapping);
+      setBlendRecipes(updatedRecipes); // Update recipes to show new colors in legend
       console.log('[TPV-STUDIO] Blend SVG regenerated with edits:', stats);
     } catch (err) {
       console.error('[TPV-STUDIO] Failed to regenerate blend SVG:', err);
