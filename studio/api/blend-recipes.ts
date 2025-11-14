@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { PaletteExtractor } from './_utils/extraction/extractor';
 import { SmartBlendSolver } from './_utils/colour/smartSolver';
+import { calculateBlendColor, type BlendComponent, type TPVColor } from './_utils/colour/blendColor';
 import tpvColours from './_utils/data/rosehill_tpv_21_colours.json';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -89,8 +90,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Solve for top 3 blend recipes
       const colorRecipes = solver.solve(color.lab, 3);
 
-      // Format recipes for response
-      const formattedBlends = colorRecipes.map(recipe => ({
+      // Select the best recipe (lowest ΔE)
+      const bestRecipe = colorRecipes[0];
+
+      // Calculate the visual blend color for the chosen recipe
+      const blendComponents: BlendComponent[] = bestRecipe.components.map(c => ({
+        code: c.code,
+        pct: c.pct
+      }));
+
+      const blendColor = calculateBlendColor(blendComponents, tpvColours as TPVColor[]);
+
+      // Format chosen recipe
+      const chosenRecipe = {
+        id: `recipe_${i + 1}_1`, // Recipe ID format: color_recipeIndex
+        parts: bestRecipe.parts || {},
+        total: bestRecipe.total || 0,
+        deltaE: bestRecipe.deltaE,
+        quality: bestRecipe.deltaE < 1.0 ? 'Excellent' : bestRecipe.deltaE < 2.0 ? 'Good' : 'Fair',
+        resultRgb: bestRecipe.rgb,
+        components: bestRecipe.components.map(c => ({
+          code: c.code,
+          name: tpvColours.find(col => col.code === c.code)?.name || c.code,
+          weight: c.pct,
+          parts: bestRecipe.parts ? bestRecipe.parts[c.code] : null
+        }))
+      };
+
+      // Format alternative recipes (2nd and 3rd best)
+      const alternativeRecipes = colorRecipes.slice(1).map((recipe, idx) => ({
+        id: `recipe_${i + 1}_${idx + 2}`,
         parts: recipe.parts || {},
         total: recipe.total || 0,
         deltaE: recipe.deltaE,
@@ -104,7 +133,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }))
       }));
 
-      console.log(`[BLEND-RECIPES]     Best ΔE: ${colorRecipes[0].deltaE.toFixed(2)} (${formattedBlends[0].quality})`);
+      console.log(`[BLEND-RECIPES]     Chosen: ΔE ${bestRecipe.deltaE.toFixed(2)} (${chosenRecipe.quality}), Blend: ${blendColor.hex}`);
 
       recipes.push({
         targetColor: {
@@ -113,7 +142,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           lab: color.lab,
           areaPct: color.areaPct
         },
-        blends: formattedBlends
+        chosenRecipe,
+        blendColor: {
+          hex: blendColor.hex,
+          rgb: blendColor.rgb,
+          lab: blendColor.lab
+        },
+        alternativeRecipes
       });
     }
 
