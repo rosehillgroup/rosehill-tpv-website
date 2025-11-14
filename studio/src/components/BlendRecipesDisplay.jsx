@@ -47,98 +47,97 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
         </span>
       </div>
 
-      {/* Compact Recipe Table */}
-      <div className="recipes-table">
-        <div className="table-header">
-          <div className="col-swatch">Colour</div>
-          <div className="col-hex">Hex</div>
-          <div className="col-coverage">Coverage</div>
-          <div className="col-blend">Blend Formula</div>
-          <div className="col-quality">Match</div>
-        </div>
-
+      {/* Recipe Cards */}
+      <div className="recipes-grid">
         {recipes.map((recipe, idx) => {
           const chosen = recipe.chosenRecipe;
           const isExpanded = expandedColors.has(idx);
           const hasAlternatives = recipe.alternativeRecipes && recipe.alternativeRecipes.length > 0;
 
           return (
-            <div key={idx} className="table-row">
-              {/* Main Recipe Row */}
-              <div className="recipe-row">
-                {/* Color Swatches */}
-                <div className="col-swatch">
-                  <div className="swatch-pair">
-                    <div className="swatch-group">
-                      <div
-                        className="color-swatch original"
-                        style={{ backgroundColor: recipe.targetColor.hex }}
-                        title={`Image colour: ${recipe.targetColor.hex}`}
-                      />
-                      <span className="swatch-label">Image</span>
-                    </div>
-                    <span className="swatch-arrow">→</span>
-                    <div className="swatch-group">
-                      <div
-                        className="color-swatch blend"
-                        style={{ backgroundColor: recipe.blendColor.hex }}
-                        title={`TPV blend: ${recipe.blendColor.hex}`}
-                      />
-                      <span className="swatch-label">TPV</span>
-                    </div>
+            <div key={idx} className="recipe-card">
+              {/* Top Section: Swatches and Metadata */}
+              <div className="card-top">
+                <div className="swatch-pair-large">
+                  <div className="swatch-group">
+                    <div
+                      className="color-swatch-large original"
+                      style={{ backgroundColor: recipe.targetColor.hex }}
+                      title={`Image colour: ${recipe.targetColor.hex}`}
+                    />
+                    <span className="swatch-label">Image</span>
+                  </div>
+                  <span className="swatch-arrow-large">→</span>
+                  <div className="swatch-group">
+                    <div
+                      className="color-swatch-large blend"
+                      style={{ backgroundColor: recipe.blendColor.hex }}
+                      title={`TPV blend: ${recipe.blendColor.hex}`}
+                    />
+                    <span className="swatch-label">TPV</span>
                   </div>
                 </div>
 
-                {/* Hex */}
-                <div className="col-hex">
-                  <span className="hex-value">{recipe.targetColor.hex}</span>
-                </div>
-
-                {/* Coverage */}
-                <div className="col-coverage">
-                  <span className="coverage-value">{recipe.targetColor.areaPct.toFixed(1)}%</span>
-                </div>
-
-                {/* Blend Formula */}
-                <div className="col-blend">
-                  <div className="blend-formula-compact">
-                    {chosen.components.map((comp, compIdx) => (
-                      <span key={compIdx} className="formula-component">
-                        <strong className="parts">{comp.parts || (comp.weight * 100).toFixed(0) + '%'}</strong>
-                        <span className="comp-code">{comp.code}</span>
-                        {compIdx < chosen.components.length - 1 && <span className="separator">+</span>}
-                      </span>
-                    ))}
+                <div className="card-meta">
+                  <div className="meta-row">
+                    <span className="meta-label">Hex:</span>
+                    <span className="hex-value">{recipe.targetColor.hex}</span>
+                  </div>
+                  <div className="meta-row">
+                    <span className="meta-label">Coverage:</span>
+                    <span className="coverage-value">{recipe.targetColor.areaPct.toFixed(1)}%</span>
+                  </div>
+                  <div className="meta-row quality-row">
+                    <span className={`quality-badge ${chosen.quality.toLowerCase()}`}>
+                      {chosen.quality}
+                    </span>
+                    <span className="delta-e">ΔE {chosen.deltaE.toFixed(2)}</span>
                   </div>
                 </div>
-
-                {/* Quality Badge */}
-                <div className="col-quality">
-                  <span className={`quality-badge ${chosen.quality.toLowerCase()}`}>
-                    {chosen.quality}
-                  </span>
-                  <span className="delta-e-small">ΔE {chosen.deltaE.toFixed(2)}</span>
-                </div>
-
-                {/* Expand Button */}
-                {hasAlternatives && (
-                  <button
-                    className="expand-button"
-                    onClick={() => toggleColorExpanded(idx)}
-                    title={isExpanded ? 'Hide alternatives' : 'Show alternatives'}
-                  >
-                    {isExpanded ? '−' : '+'}
-                  </button>
-                )}
               </div>
+
+              {/* Middle Section: Blend Formula */}
+              <div className="card-formula">
+                <div className="formula-label">TPV Blend Formula</div>
+                <div className="formula-content">
+                  {chosen.components.map((comp, compIdx) => (
+                    <span key={compIdx} className="formula-component">
+                      <strong className="parts">{comp.parts || (comp.weight * 100).toFixed(0) + '%'}</strong>
+                      <span className="comp-code">{comp.code}</span>
+                      <span className="comp-name">({comp.name})</span>
+                      {compIdx < chosen.components.length - 1 && <span className="separator">+</span>}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bottom Section: Expand Button for Alternatives */}
+              {hasAlternatives && (
+                <div className="card-footer">
+                  <button
+                    className="alternatives-toggle"
+                    onClick={() => toggleColorExpanded(idx)}
+                  >
+                    {isExpanded ? '− Hide Alternatives' : '+ Show Alternatives'}
+                  </button>
+                </div>
+              )}
 
               {/* Alternative Recipes (Expandable) */}
               {isExpanded && hasAlternatives && (
                 <div className="alternatives-section">
-                  <div className="alternatives-header">Alternative Recipes:</div>
+                  <div className="alternatives-header">Alternative Formulas</div>
                   {recipe.alternativeRecipes.map((alt, altIdx) => (
-                    <div key={altIdx} className="alternative-row">
-                      <div className="alt-label">Option {altIdx + 2}:</div>
+                    <div key={altIdx} className="alternative-card">
+                      <div className="alt-header">
+                        <span className="alt-label">Option {altIdx + 2}</span>
+                        <div className="alt-quality-inline">
+                          <span className={`quality-badge small ${alt.quality.toLowerCase()}`}>
+                            {alt.quality}
+                          </span>
+                          <span className="delta-e-small">ΔE {alt.deltaE.toFixed(2)}</span>
+                        </div>
+                      </div>
                       <div className="alt-swatches">
                         <div className="swatch-pair-small">
                           <div
@@ -159,15 +158,10 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
                           <span key={compIdx} className="formula-component">
                             <strong className="parts">{comp.parts || (comp.weight * 100).toFixed(0) + '%'}</strong>
                             <span className="comp-code">{comp.code}</span>
+                            <span className="comp-name">({comp.name})</span>
                             {compIdx < alt.components.length - 1 && <span className="separator">+</span>}
                           </span>
                         ))}
-                      </div>
-                      <div className="alt-quality">
-                        <span className={`quality-badge small ${alt.quality.toLowerCase()}`}>
-                          {alt.quality}
-                        </span>
-                        <span className="delta-e-small">ΔE {alt.deltaE.toFixed(2)}</span>
                       </div>
                     </div>
                   ))}
@@ -273,74 +267,62 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
           color: #c62828;
         }
 
-        /* Compact Table Layout */
-        .recipes-table {
-          border: 1px solid #e0e0e0;
-          border-radius: 6px;
-          overflow-x: auto;
-          overflow-y: visible;
-        }
-
-        .table-header {
+        /* Card Grid Layout */
+        .recipes-grid {
           display: grid;
-          grid-template-columns: 120px 110px 90px 1fr 140px 60px;
-          background: #1a365d;
-          color: white;
-          font-weight: 600;
-          font-size: 0.95rem;
-          padding: 1rem 1.5rem;
+          grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
           gap: 1.5rem;
         }
 
-        .table-row {
-          border-bottom: 1px solid #e0e0e0;
+        .recipe-card {
+          background: white;
+          border: 2px solid #e0e0e0;
+          border-radius: 12px;
+          overflow: hidden;
+          transition: all 0.3s;
         }
 
-        .table-row:last-child {
-          border-bottom: none;
+        .recipe-card:hover {
+          border-color: #ff6b35;
+          box-shadow: 0 4px 12px rgba(255, 107, 53, 0.15);
         }
 
-        .recipe-row {
-          display: grid;
-          grid-template-columns: 120px 110px 90px 1fr 140px 60px;
-          padding: 1.25rem 1.5rem;
+        /* Card Top Section */
+        .card-top {
+          display: flex;
           gap: 1.5rem;
-          align-items: center;
-          background: #fff;
-          transition: background 0.2s;
-        }
-
-        .recipe-row:hover {
+          padding: 1.5rem;
           background: #f9f9f9;
+          border-bottom: 2px solid #e8e8e8;
         }
 
-        /* Swatch Pair (Image + TPV Blend) */
-        .swatch-pair {
+        .swatch-pair-large {
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 12px;
         }
 
         .swatch-group {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 6px;
+          gap: 8px;
         }
 
-        .color-swatch {
-          width: 42px;
-          height: 42px;
-          border-radius: 6px;
-          border: 2px solid #ddd;
+        .color-swatch-large {
+          width: 60px;
+          height: 60px;
+          border-radius: 8px;
+          border: 3px solid #ddd;
           flex-shrink: 0;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .color-swatch.original {
+        .color-swatch-large.original {
           border-color: #999;
         }
 
-        .color-swatch.blend {
+        .color-swatch-large.blend {
           border-color: #ff6b35;
         }
 
@@ -352,67 +334,180 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
           letter-spacing: 0.8px;
         }
 
-        .swatch-arrow {
-          font-size: 1.4rem;
+        .swatch-arrow-large {
+          font-size: 2rem;
           color: #ff6b35;
           font-weight: bold;
           margin: 0 4px;
         }
 
-        /* Columns */
-        .col-hex .hex-value {
-          font-family: 'Courier New', monospace;
-          font-size: 1rem;
-          color: #333;
+        .card-meta {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          justify-content: center;
+        }
+
+        .meta-row {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+        }
+
+        .meta-label {
+          font-size: 0.85rem;
           font-weight: 600;
+          color: #666;
+          min-width: 80px;
+        }
+
+        .hex-value {
+          font-family: 'Courier New', monospace;
+          font-size: 1.1rem;
+          color: #333;
+          font-weight: 700;
           letter-spacing: 0.5px;
         }
 
-        .col-coverage .coverage-value {
-          font-size: 1rem;
+        .coverage-value {
+          font-size: 1.1rem;
+          color: #1a365d;
+          font-weight: 700;
+        }
+
+        .quality-row {
+          gap: 1rem;
+        }
+
+        .delta-e {
+          font-size: 0.9rem;
           color: #666;
           font-weight: 500;
         }
 
-        .col-blend .blend-formula-compact {
-          font-size: 0.95rem;
-          line-height: 1.5;
+        /* Card Formula Section */
+        .card-formula {
+          padding: 1.5rem;
+          background: white;
+        }
+
+        .formula-label {
+          font-size: 0.85rem;
+          font-weight: 700;
+          color: #1a365d;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          margin-bottom: 1rem;
+        }
+
+        .formula-content {
           display: flex;
           flex-wrap: wrap;
-          gap: 0.5rem;
+          gap: 0.75rem;
           align-items: center;
+          line-height: 1.8;
         }
 
         .formula-component {
           display: inline-flex;
           align-items: center;
-          gap: 0.35rem;
-          white-space: nowrap;
+          gap: 0.4rem;
         }
 
         .parts {
           color: #333;
-          font-size: 0.9rem;
+          font-size: 1rem;
         }
 
         .comp-code {
           color: #1a365d;
           font-weight: 700;
-          font-size: 0.95rem;
+          font-size: 1.05rem;
+        }
+
+        .comp-name {
+          color: #666;
+          font-size: 0.9rem;
         }
 
         .separator {
           color: #ff6b35;
           font-weight: bold;
-          font-size: 0.85rem;
-          margin: 0 0.25rem;
+          font-size: 1rem;
+          margin: 0 0.35rem;
         }
 
-        .col-quality {
+        /* Card Footer (Alternatives Button) */
+        .card-footer {
+          padding: 0 1.5rem 1.5rem 1.5rem;
+        }
+
+        .alternatives-toggle {
+          width: 100%;
+          padding: 0.75rem;
+          background: white;
+          border: 2px solid #ff6b35;
+          border-radius: 6px;
+          color: #ff6b35;
+          font-weight: 700;
+          font-size: 0.95rem;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .alternatives-toggle:hover {
+          background: #ff6b35;
+          color: white;
+        }
+
+        /* Alternative Recipes Section */
+        .alternatives-section {
+          padding: 1.5rem;
+          background: #f0f7ff;
+          border-top: 2px solid #e0e0e0;
+        }
+
+        .alternatives-header {
+          font-weight: 700;
+          color: #1a365d;
+          margin-bottom: 1rem;
+          font-size: 1rem;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .alternative-card {
+          background: white;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          padding: 1rem;
+          margin-bottom: 0.75rem;
+        }
+
+        .alternative-card:last-child {
+          margin-bottom: 0;
+        }
+
+        .alt-header {
           display: flex;
-          flex-direction: column;
-          gap: 0.25rem;
-          align-items: flex-start;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.75rem;
+          padding-bottom: 0.75rem;
+          border-bottom: 1px solid #e8e8e8;
+        }
+
+        .alt-label {
+          font-size: 0.9rem;
+          color: #1a365d;
+          font-weight: 700;
+        }
+
+        .alt-quality-inline {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
         }
 
         .delta-e-small {
@@ -421,76 +516,19 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
           font-weight: 500;
         }
 
-        /* Expand Button */
-        .expand-button {
-          width: 32px;
-          height: 32px;
-          border: 2px solid #ff6b35;
-          background: white;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 1.3rem;
-          line-height: 1;
-          color: #ff6b35;
-          font-weight: bold;
-          transition: all 0.2s;
-          justify-self: center;
-          align-self: center;
-        }
-
-        .expand-button:hover {
-          background: #ff6b35;
-          border-color: #ff6b35;
-          color: white;
-        }
-
-        /* Alternative Recipes Section */
-        .alternatives-section {
-          padding: 1rem 1rem 1rem 2rem;
-          background: #f9f9f9;
-          border-top: 1px solid #e8e8e8;
-        }
-
-        .alternatives-header {
-          font-weight: 600;
-          color: #666;
-          margin-bottom: 0.75rem;
-          font-size: 0.9rem;
-        }
-
-        .alternative-row {
-          display: grid;
-          grid-template-columns: 80px 90px 1fr 140px;
-          gap: 1rem;
-          padding: 0.5rem;
-          margin-bottom: 0.5rem;
-          background: white;
-          border-radius: 4px;
-          border: 1px solid #e0e0e0;
-          align-items: center;
-        }
-
-        .alt-label {
-          font-size: 0.85rem;
-          color: #666;
-          font-weight: 500;
-        }
-
         .alt-swatches {
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          margin-bottom: 0.75rem;
         }
 
         .swatch-pair-small {
           display: flex;
           align-items: center;
-          gap: 4px;
+          gap: 6px;
         }
 
         .color-swatch-small {
-          width: 28px;
-          height: 28px;
+          width: 32px;
+          height: 32px;
           border-radius: 4px;
           border: 2px solid #ddd;
           flex-shrink: 0;
@@ -505,26 +543,19 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
         }
 
         .swatch-arrow-small {
-          font-size: 1rem;
+          font-size: 1.2rem;
           color: #ff6b35;
           font-weight: bold;
-          margin: 0 2px;
+          margin: 0 4px;
         }
 
         .alt-formula {
-          font-size: 0.85rem;
-          line-height: 1.5;
+          font-size: 0.9rem;
+          line-height: 1.6;
           display: flex;
           flex-wrap: wrap;
-          gap: 0.4rem;
+          gap: 0.5rem;
           align-items: center;
-        }
-
-        .alt-quality {
-          display: flex;
-          flex-direction: column;
-          gap: 0.25rem;
-          align-items: flex-start;
         }
 
         .close-button {
@@ -542,94 +573,52 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
           background: #d0d0d0;
         }
 
-        @media (max-width: 1024px) {
-          .table-header,
-          .recipe-row {
-            grid-template-columns: 100px 100px 80px 1fr 120px 50px;
-            gap: 1rem;
-            font-size: 0.9rem;
-            padding: 1rem 1.25rem;
-          }
-
-          .color-swatch {
-            width: 38px;
-            height: 38px;
-          }
-
-          .swatch-label {
-            font-size: 0.7rem;
-          }
-
-          .swatch-arrow {
-            font-size: 1.2rem;
-          }
-        }
-
-          .color-swatch {
-            width: 32px;
-            height: 32px;
-          }
-        }
-
         @media (max-width: 768px) {
           .blend-recipes-display {
             padding: 1rem;
           }
 
-          .table-header {
-            display: none;
-          }
-
-          .recipe-row {
+          .recipes-grid {
             grid-template-columns: 1fr;
-            gap: 0.75rem;
-            padding: 0.75rem;
           }
 
-          .col-swatch,
-          .col-hex,
-          .col-coverage,
-          .col-blend,
-          .col-quality {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+          .card-top {
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
           }
 
-          .col-swatch::before {
-            content: 'Color:';
-            font-weight: 600;
-            font-size: 0.85rem;
+          .swatch-pair-large {
+            justify-content: center;
           }
 
-          .col-hex::before {
-            content: 'Hex:';
-            font-weight: 600;
-            font-size: 0.85rem;
+          .color-swatch-large {
+            width: 50px;
+            height: 50px;
           }
 
-          .col-coverage::before {
-            content: 'Coverage:';
-            font-weight: 600;
-            font-size: 0.85rem;
+          .swatch-arrow-large {
+            font-size: 1.5rem;
           }
 
-          .col-blend::before {
-            content: 'Formula:';
-            font-weight: 600;
-            font-size: 0.85rem;
-            align-self: flex-start;
+          .card-meta {
+            width: 100%;
           }
 
-          .col-quality::before {
-            content: 'Match:';
-            font-weight: 600;
-            font-size: 0.85rem;
+          .meta-label {
+            min-width: 70px;
           }
 
-          .alternative-row {
-            grid-template-columns: 1fr;
-            gap: 0.5rem;
+          .card-formula {
+            padding: 1rem;
+          }
+
+          .formula-label {
+            font-size: 0.75rem;
+          }
+
+          .card-footer {
+            padding: 0 1rem 1rem 1rem;
           }
 
           .quality-legend {
