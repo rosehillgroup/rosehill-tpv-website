@@ -103,14 +103,10 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
                 <div className="col-blend">
                   <div className="blend-formula-compact">
                     {chosen.components.map((comp, compIdx) => (
-                      <span key={compIdx}>
-                        {comp.parts && <strong>{comp.parts} {comp.parts === 1 ? 'part' : 'parts'}</strong>}
-                        {!comp.parts && <strong>{(comp.weight * 100).toFixed(0)}%</strong>}
-                        {' '}
+                      <span key={compIdx} className="formula-component">
+                        <strong className="parts">{comp.parts || (comp.weight * 100).toFixed(0) + '%'}</strong>
                         <span className="comp-code">{comp.code}</span>
-                        {' '}
-                        <span className="comp-name">({comp.name})</span>
-                        {compIdx < chosen.components.length - 1 && <span className="separator"> + </span>}
+                        {compIdx < chosen.components.length - 1 && <span className="separator">+</span>}
                       </span>
                     ))}
                   </div>
@@ -145,14 +141,10 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
                       <div className="alt-label">Option {altIdx + 2}:</div>
                       <div className="alt-formula">
                         {alt.components.map((comp, compIdx) => (
-                          <span key={compIdx}>
-                            {comp.parts && <strong>{comp.parts} {comp.parts === 1 ? 'part' : 'parts'}</strong>}
-                            {!comp.parts && <strong>{(comp.weight * 100).toFixed(0)}%</strong>}
-                            {' '}
+                          <span key={compIdx} className="formula-component">
+                            <strong className="parts">{comp.parts || (comp.weight * 100).toFixed(0) + '%'}</strong>
                             <span className="comp-code">{comp.code}</span>
-                            {' '}
-                            <span className="comp-name">({comp.name})</span>
-                            {compIdx < alt.components.length - 1 && <span className="separator"> + </span>}
+                            {compIdx < alt.components.length - 1 && <span className="separator">+</span>}
                           </span>
                         ))}
                       </div>
@@ -368,23 +360,36 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
 
         .col-blend .blend-formula-compact {
           font-size: 0.95rem;
-          line-height: 1.8;
+          line-height: 1.5;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          align-items: center;
+        }
+
+        .formula-component {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.35rem;
+          white-space: nowrap;
+        }
+
+        .parts {
+          color: #333;
+          font-size: 0.9rem;
         }
 
         .comp-code {
           color: #1a365d;
           font-weight: 700;
-        }
-
-        .comp-name {
-          color: #666;
-          font-size: 0.9rem;
+          font-size: 0.95rem;
         }
 
         .separator {
           color: #ff6b35;
           font-weight: bold;
-          margin: 0 4px;
+          font-size: 0.85rem;
+          margin: 0 0.25rem;
         }
 
         .col-quality {
@@ -455,6 +460,10 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
         .alt-formula {
           font-size: 0.85rem;
           line-height: 1.5;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.4rem;
+          align-items: center;
         }
 
         .alt-quality {

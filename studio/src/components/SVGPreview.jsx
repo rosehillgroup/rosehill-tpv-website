@@ -22,19 +22,31 @@ export default function SVGPreview({
 
     const createHighlightMask = async () => {
       try {
+        console.log('[SVGPreview] Creating highlight for color:', selectedColor);
+
         // Load the SVG image
         const img = new Image();
-        img.src = blendSvgUrl;
+        img.crossOrigin = 'anonymous'; // Handle CORS for data URLs
 
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
+        // Wait for image to load
+        const loadPromise = new Promise((resolve, reject) => {
+          img.onload = () => {
+            console.log('[SVGPreview] Image loaded:', img.width, 'x', img.height);
+            resolve();
+          };
+          img.onerror = (e) => {
+            console.error('[SVGPreview] Image load error:', e);
+            reject(e);
+          };
         });
+
+        img.src = blendSvgUrl;
+        await loadPromise;
 
         // Create canvas to analyze colors
         const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth || img.width;
-        canvas.height = img.naturalHeight || img.height;
+        canvas.width = img.naturalWidth || img.width || 1000;
+        canvas.height = img.naturalHeight || img.height || 1000;
         const ctx = canvas.getContext('2d');
 
         // Draw SVG
@@ -47,9 +59,11 @@ export default function SVGPreview({
         // Parse selected color (hex to RGB)
         const targetHex = selectedColor.blendHex || selectedColor.hex;
         const targetRgb = hexToRgb(targetHex);
+        console.log('[SVGPreview] Target color:', targetHex, targetRgb);
 
         // Create mask (white where color matches, transparent elsewhere)
         const maskData = ctx.createImageData(canvas.width, canvas.height);
+        let matchCount = 0;
 
         for (let i = 0; i < data.length; i += 4) {
           const r = data[i];
@@ -59,15 +73,24 @@ export default function SVGPreview({
 
           // Check if pixel matches target color (with small tolerance)
           if (a > 0 && colorMatches(r, g, b, targetRgb)) {
-            // White pixel for mask
+            // Orange glow pixel for mask
             maskData.data[i] = 255;
-            maskData.data[i + 1] = 255;
-            maskData.data[i + 2] = 255;
-            maskData.data[i + 3] = 180; // Semi-transparent
+            maskData.data[i + 1] = 107;
+            maskData.data[i + 2] = 53;
+            maskData.data[i + 3] = 200; // Semi-transparent orange
+            matchCount++;
           } else {
             // Transparent
             maskData.data[i + 3] = 0;
           }
+        }
+
+        console.log('[SVGPreview] Matched pixels:', matchCount);
+
+        if (matchCount === 0) {
+          console.warn('[SVGPreview] No pixels matched the target color');
+          setHighlightMask(null);
+          return;
         }
 
         // Draw mask to canvas
@@ -75,7 +98,9 @@ export default function SVGPreview({
         ctx.putImageData(maskData, 0, 0);
 
         // Convert to data URL
-        setHighlightMask(canvas.toDataURL());
+        const maskUrl = canvas.toDataURL();
+        console.log('[SVGPreview] Highlight mask created');
+        setHighlightMask(maskUrl);
       } catch (error) {
         console.error('[SVGPreview] Failed to create highlight mask:', error);
         setHighlightMask(null);
@@ -129,12 +154,8 @@ export default function SVGPreview({
               {highlightMask && (
                 <img
                   src={highlightMask}
-                  alt="Color highlight"
+                  alt="Colour highlight"
                   className="svg-highlight-mask"
-                  style={{
-                    mixBlendMode: 'multiply',
-                    filter: 'drop-shadow(0 0 8px rgba(255, 107, 53, 0.8))'
-                  }}
                 />
               )}
             </div>
