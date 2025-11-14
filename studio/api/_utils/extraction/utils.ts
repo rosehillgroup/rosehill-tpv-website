@@ -1,5 +1,5 @@
-import { sRGBToLab } from '../colour/convert';
-import type { RGB, Lab } from '../colour/types';
+import { sRGBToLab } from '../colour/convert.js';
+import type { RGB, Lab } from '../colour/types.js';
 
 export interface PaletteColour {
   id: string;

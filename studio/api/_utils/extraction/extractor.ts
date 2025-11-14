@@ -1,6 +1,6 @@
 // import { PDFExtractor } from './pdf'; // PDF extraction not used in serverless environment
-import { RasterExtractor } from './raster';
-import { SVGExtractor } from './svg';
+import { RasterExtractor } from './raster.js';
+import { SVGExtractor } from './svg.js';
 import {
   ColourSpaceConverter,
   generateColourId,
@@ -8,8 +8,8 @@ import {
   validateFileType,
   estimateExtractionComplexity,
   type PaletteColour
-} from './utils';
-import { getExtractionCache, generateCacheKey, ProgressiveLoader } from './cache';
+} from './utils.js';
+import { getExtractionCache, generateCacheKey, ProgressiveLoader } from './cache.js';
 
 export interface ExtractionOptions {
   maxColours?: number;
