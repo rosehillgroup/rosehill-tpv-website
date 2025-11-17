@@ -163,7 +163,7 @@ export default function InspirePanelRecraft() {
           throw new Error(uploadResult.error || 'Failed to upload file');
         }
 
-        setProgressMessage('Starting vectorization...');
+        setProgressMessage('Starting vectorisation...');
         setUploadProgress(null);
 
         // Call recraft-vectorize API
@@ -174,10 +174,10 @@ export default function InspirePanelRecraft() {
         });
 
         if (!response.success) {
-          throw new Error(response.error || 'Failed to start vectorization');
+          throw new Error(response.error || 'Failed to start vectorisation');
         }
 
-        setProgressMessage('🎨 AI is vectorizing your image...');
+        setProgressMessage('🎨 AI is vectorising your image...');
       }
       // MODE: Text Prompt (existing Recraft generation)
       else {
@@ -234,9 +234,9 @@ export default function InspirePanelRecraft() {
               // Rotating messages to keep it interesting
               const runningMessages = [
                 `🎨 Creating vector shapes... (${elapsed}s)`,
-                `🖌️ Applying colors and patterns... (${elapsed}s)`,
+                `🖌️ Applying colours and patterns... (${elapsed}s)`,
                 `✨ Refining design details... (${elapsed}s)`,
-                `🎯 Finalizing artwork... (${elapsed}s)`
+                `🎯 Finalising artwork... (${elapsed}s)`
               ];
               const msgIndex = Math.floor(elapsed / 5) % runningMessages.length;
               setProgressMessage(runningMessages[msgIndex]);
@@ -350,7 +350,7 @@ export default function InspirePanelRecraft() {
     const job_id = jobIdParam || jobId;
 
     if (!svg_url) {
-      setError('No SVG available to analyze');
+      setError('No SVG available to analyse');
       return;
     }
 
@@ -700,7 +700,7 @@ export default function InspirePanelRecraft() {
           disabled={generating}
         >
           <span className="mode-title">Upload Image</span>
-          <span className="mode-description">Vectorize PNG/JPG</span>
+          <span className="mode-description">Vectorise PNG/JPG</span>
         </button>
         <button
           className={`input-mode-tab ${inputMode === 'svg' ? 'active' : ''}`}
@@ -838,7 +838,7 @@ export default function InspirePanelRecraft() {
             : (inputMode === 'prompt'
                 ? 'Generate Vector Design'
                 : inputMode === 'image'
-                  ? 'Vectorize & Process'
+                  ? 'Vectorise & Process'
                   : 'Process SVG'
               )
           }
@@ -1156,87 +1156,115 @@ export default function InspirePanelRecraft() {
         }
 
         .form-group {
-          margin-bottom: 1rem;
+          margin-bottom: var(--space-4);
         }
 
         .form-group label {
           display: block;
-          margin-bottom: 0.5rem;
-          font-weight: 600;
-          color: #333;
+          margin-bottom: var(--space-2);
+          font-weight: var(--font-semibold);
+          color: var(--color-text-primary);
+          font-size: var(--text-sm);
         }
 
         .prompt-input {
           width: 100%;
-          padding: 0.75rem;
-          border: 1px solid #ddd;
-          border-radius: 4px;
+          padding: var(--space-3);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-md);
           font-family: inherit;
-          font-size: 1rem;
+          font-size: var(--text-base);
+          background: var(--color-bg-card);
+          color: var(--color-text-primary);
+          transition: border-color var(--transition-base);
+        }
+
+        .prompt-input:focus {
+          outline: none;
+          border-color: var(--color-primary);
+          box-shadow: var(--shadow-glow);
         }
 
         .form-row {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 1rem;
+          gap: var(--space-3);
         }
 
         input[type="number"] {
           width: 100%;
-          padding: 0.5rem;
-          border: 1px solid #ddd;
-          border-radius: 4px;
+          padding: var(--space-2);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-md);
+          background: var(--color-bg-card);
+          color: var(--color-text-primary);
+          font-size: var(--text-base);
+          transition: border-color var(--transition-base);
+        }
+
+        input[type="number"]:focus {
+          outline: none;
+          border-color: var(--color-primary);
+          box-shadow: var(--shadow-glow);
         }
 
         .error-message {
-          padding: 0.75rem;
-          background: #fee;
-          border: 1px solid #fcc;
-          border-radius: 4px;
-          color: #c33;
-          margin-bottom: 1rem;
+          padding: var(--space-3);
+          background: var(--color-error-light);
+          border: 1px solid var(--color-error);
+          border-radius: var(--radius-md);
+          color: var(--color-error);
+          margin-bottom: var(--space-4);
+          font-size: var(--text-sm);
         }
 
         .generate-button {
           width: 100%;
-          padding: 1rem;
-          background: #ff6b35;
+          padding: var(--space-4);
+          background: var(--color-accent);
           color: white;
           border: none;
-          border-radius: 4px;
-          font-size: 1.1rem;
-          font-weight: 600;
+          border-radius: var(--radius-md);
+          font-size: var(--text-lg);
+          font-weight: var(--font-semibold);
           cursor: pointer;
-          transition: background 0.2s;
+          transition: all var(--transition-base);
+          box-shadow: var(--shadow-sm);
         }
 
         .generate-button:hover:not(:disabled) {
-          background: #e55a2b;
+          background: var(--color-accent-hover);
+          transform: translateY(-1px);
+          box-shadow: var(--shadow-md);
         }
 
         .generate-button:disabled {
-          background: #ccc;
+          background: var(--color-bg-subtle);
+          color: var(--color-text-tertiary);
           cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
         }
 
         .progress-section {
-          padding: 1.5rem;
-          background: #f0f7ff;
-          border-radius: 8px;
-          margin-bottom: 1.5rem;
+          padding: var(--space-4);
+          background: var(--color-info-light);
+          border-radius: var(--radius-lg);
+          margin-bottom: var(--space-4);
+          border: 1px solid var(--color-info);
         }
 
         .progress-bar {
           height: 4px;
-          background: #ddd;
-          border-radius: 2px;
+          background: var(--color-border);
+          border-radius: var(--radius-full);
           overflow: hidden;
-          margin-bottom: 1rem;
+          margin-bottom: var(--space-3);
         }
 
         .progress-bar-fill {
           height: 100%;
-          background: #ff6b35;
+          background: var(--color-accent);
           animation: progress 2s ease-in-out infinite;
         }
 
@@ -1247,64 +1275,69 @@ export default function InspirePanelRecraft() {
 
         .progress-message {
           text-align: center;
-          color: #666;
-          font-weight: 500;
+          color: var(--color-text-secondary);
+          font-weight: var(--font-medium);
+          font-size: var(--text-base);
         }
 
         .results-section {
-          background: #fff;
-          padding: 1.5rem;
-          border-radius: 8px;
-          border: 1px solid #ddd;
+          background: var(--color-bg-card);
+          padding: var(--space-4);
+          border-radius: var(--radius-lg);
+          border: 1px solid var(--color-border);
+          box-shadow: var(--shadow-sm);
         }
 
         .results-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 1rem;
+          margin-bottom: var(--space-3);
         }
 
         .results-header h3 {
           margin: 0;
-          color: #1a365d;
+          color: var(--color-primary);
+          font-size: var(--text-xl);
+          font-weight: var(--font-bold);
         }
 
         /* Aspect Ratio Info */
         .ar-info {
-          padding: 0.75rem 1rem;
-          border-radius: 6px;
-          margin-bottom: 1rem;
-          font-size: 0.9rem;
+          padding: var(--space-3) var(--space-4);
+          border-radius: var(--radius-md);
+          margin-bottom: var(--space-3);
+          font-size: var(--text-sm);
         }
 
         .ar-info.full {
-          background: #e8f5e9;
-          border: 1px solid #c8e6c9;
+          background: var(--color-success-light);
+          border: 1px solid var(--color-success);
         }
 
         .ar-info.framing {
-          background: #fff3e0;
-          border: 1px solid #ffe0b2;
+          background: var(--color-warning-light);
+          border: 1px solid var(--color-warning);
         }
 
         .ar-info.tiling {
-          background: #e3f2fd;
-          border: 1px solid #bbdefb;
+          background: var(--color-info-light);
+          border: 1px solid var(--color-info);
         }
 
         .ar-info-header {
-          color: #333;
-          margin-bottom: 0.5rem;
+          color: var(--color-text-primary);
+          margin-bottom: var(--space-2);
+          font-weight: var(--font-semibold);
         }
 
         .ar-info-details {
           display: flex;
           flex-wrap: wrap;
-          gap: 0.5rem;
+          gap: var(--space-2);
           align-items: center;
-          color: #666;
-          font-size: 0.85rem;
+          color: var(--color-text-secondary);
+          font-size: var(--text-sm);
         }
 
         .ar-info-details span {
@@ -1312,18 +1345,18 @@ export default function InspirePanelRecraft() {
         }
 
         .layout-note {
-          color: #ff6b35;
-          font-weight: 500;
+          color: var(--color-accent);
+          font-weight: var(--font-medium);
         }
 
         /* Mode Toggle Tabs */
         .mode-tabs {
           display: flex;
-          gap: 0.75rem;
-          margin-bottom: 1.5rem;
-          background: #f9f9f9;
-          padding: 0.5rem;
-          border-radius: 8px;
+          gap: var(--space-2);
+          margin-bottom: var(--space-4);
+          background: var(--color-bg-subtle);
+          padding: var(--space-1);
+          border-radius: var(--radius-lg);
         }
 
         .mode-tab {
@@ -1331,25 +1364,25 @@ export default function InspirePanelRecraft() {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 0.25rem;
-          padding: 1rem;
-          background: white;
-          border: 2px solid #ddd;
-          border-radius: 6px;
+          gap: var(--space-1);
+          padding: var(--space-3);
+          background: var(--color-bg-card);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-md);
           cursor: pointer;
-          transition: all 0.2s;
+          transition: all var(--transition-base);
         }
 
         .mode-tab:hover:not(:disabled) {
-          border-color: #ff6b35;
+          border-color: var(--color-accent);
           transform: translateY(-2px);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          box-shadow: var(--shadow-md);
         }
 
         .mode-tab.active {
-          background: #fff5f0;
-          border-color: #ff6b35;
-          box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.2);
+          background: var(--color-accent-light);
+          border-color: var(--color-accent);
+          box-shadow: var(--shadow-glow-accent);
         }
 
         .mode-tab:disabled {
@@ -1358,26 +1391,28 @@ export default function InspirePanelRecraft() {
         }
 
         .mode-title {
-          font-size: 1rem;
-          font-weight: 600;
-          color: #1a365d;
+          font-size: var(--text-base);
+          font-weight: var(--font-semibold);
+          color: var(--color-primary);
         }
 
         .mode-description {
-          font-size: 0.85rem;
-          color: #666;
+          font-size: var(--text-sm);
+          color: var(--color-text-secondary);
+          text-align: center;
         }
 
         .mode-tab.active .mode-title {
-          color: #ff6b35;
+          color: var(--color-accent);
+          font-weight: var(--font-bold);
         }
 
         .svg-preview {
-          margin: 1rem 0;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          background: #f9f9f9;
-          padding: 1rem;
+          margin: var(--space-3) 0;
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-md);
+          background: var(--color-bg-subtle);
+          padding: var(--space-3);
         }
 
         .design-preview {
@@ -1388,95 +1423,112 @@ export default function InspirePanelRecraft() {
 
         .action-buttons {
           display: flex;
-          gap: 0.5rem;
-          margin-top: 1rem;
+          gap: var(--space-2);
+          margin-top: var(--space-4);
         }
 
         .download-button,
         .blend-button,
         .new-generation-button {
           flex: 1;
-          padding: 0.75rem;
+          padding: var(--space-3);
           border: none;
-          border-radius: 4px;
-          font-weight: 600;
+          border-radius: var(--radius-md);
+          font-weight: var(--font-semibold);
+          font-size: var(--text-base);
           cursor: pointer;
-          transition: all 0.2s;
+          transition: all var(--transition-base);
+          box-shadow: var(--shadow-sm);
         }
 
         .download-button.svg {
-          background: #1a365d;
+          background: var(--color-primary);
           color: white;
         }
 
         .download-button.svg:hover {
-          background: #0f2240;
+          background: var(--color-primary-hover);
+          transform: translateY(-1px);
+          box-shadow: var(--shadow-md);
         }
 
         .download-button.png {
-          background: #4caf50;
+          background: var(--color-success);
           color: white;
         }
 
         .download-button.png:hover {
-          background: #45a049;
+          background: var(--color-success-hover);
+          transform: translateY(-1px);
+          box-shadow: var(--shadow-md);
         }
 
         .blend-button {
-          background: #ff6b35;
+          background: var(--color-accent);
           color: white;
         }
 
         .blend-button:hover:not(:disabled) {
-          background: #e55a2b;
+          background: var(--color-accent-hover);
+          transform: translateY(-1px);
+          box-shadow: var(--shadow-md);
         }
 
         .blend-button:disabled {
-          background: #ccc;
+          background: var(--color-bg-subtle);
+          color: var(--color-text-tertiary);
           cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
         }
 
         .new-generation-button {
-          background: #e0e0e0;
-          color: #333;
+          background: var(--color-bg-subtle);
+          color: var(--color-text-primary);
+          border: 1px solid var(--color-border);
         }
 
         .new-generation-button:hover {
-          background: #d0d0d0;
+          background: var(--color-border);
+          transform: translateY(-1px);
+          box-shadow: var(--shadow-md);
         }
 
         /* Finalize Section */
         .finalize-section {
-          background: #fff9f7;
-          border: 2px solid #ff6b35;
-          border-radius: 8px;
-          padding: 1.5rem;
-          margin-top: 1.5rem;
+          background: var(--color-accent-light);
+          border: 2px solid var(--color-accent);
+          border-radius: var(--radius-lg);
+          padding: var(--space-4);
+          margin-top: var(--space-4);
           text-align: center;
         }
 
         .finalize-button {
           width: 100%;
           max-width: 400px;
-          padding: 1rem 2rem;
-          background: #ff6b35;
+          padding: var(--space-4);
+          background: var(--color-accent);
           color: white;
           border: none;
-          border-radius: 4px;
-          font-size: 1.1rem;
-          font-weight: 600;
+          border-radius: var(--radius-md);
+          font-size: var(--text-lg);
+          font-weight: var(--font-semibold);
           cursor: pointer;
-          transition: background 0.2s;
+          transition: all var(--transition-base);
+          box-shadow: var(--shadow-sm);
         }
 
         .finalize-button:hover {
-          background: #e55a2b;
+          background: var(--color-accent-hover);
+          transform: translateY(-1px);
+          box-shadow: var(--shadow-md);
         }
 
         .finalize-hint {
-          margin: 0.75rem 0 0 0;
-          color: #666;
-          font-size: 0.9rem;
+          margin: var(--space-3) 0 0 0;
+          color: var(--color-text-secondary);
+          font-size: var(--text-sm);
         }
       `}</style>
     </div>
