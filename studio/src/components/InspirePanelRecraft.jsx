@@ -156,7 +156,7 @@ export default function InspirePanelRecraft() {
     setStatus(null);
     setResult(null);
     setJobId(null);
-    setProgressMessage('Initializing...');
+    setProgressMessage('Initialising...');
     setAttemptInfo(null);
 
     try {
@@ -244,7 +244,7 @@ export default function InspirePanelRecraft() {
         if (needsLayoutWarning(mapping)) {
           setProgressMessage(`Generating ${mapping.canonical.name} design panel...`);
         } else {
-          setProgressMessage('Initializing...');
+          setProgressMessage('Initialising...');
         }
 
         // Create job with canonical dimensions

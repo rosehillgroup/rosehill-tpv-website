@@ -135,7 +135,7 @@ export default function ColorEditorPanel({
               disableAlpha={true}
             />
             <button onClick={handleReset} className="reset-button">
-              Reset to Original
+              Reset to Original Colour
             </button>
           </div>
         )}
