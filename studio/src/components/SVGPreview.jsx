@@ -11,6 +11,7 @@ export default function SVGPreview({
   selectedColor // Current color being edited (to highlight)
 }) {
   const [highlightMask, setHighlightMask] = useState(null);
+  const imageRef = useRef(null);
   const canvasRef = useRef(null);
 
   // Create highlight mask when a color is selected
@@ -152,6 +153,115 @@ export default function SVGPreview({
     );
   };
 
+  // Get color at specific pixel position
+  const getColorAtPosition = async (x, y) => {
+    try {
+      if (!imageRef.current || !blendSvgUrl) return null;
+
+      // Load the SVG image
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+
+      const loadPromise = new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+
+      img.src = blendSvgUrl;
+      await loadPromise;
+
+      // Create canvas to read pixel color
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth || img.width || 1000;
+      canvas.height = img.naturalHeight || img.height || 1000;
+      const ctx = canvas.getContext('2d');
+
+      // Draw SVG
+      ctx.drawImage(img, 0, 0);
+
+      // Scale click coordinates to canvas dimensions
+      const rect = imageRef.current.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const canvasX = Math.floor(x * scaleX);
+      const canvasY = Math.floor(y * scaleY);
+
+      // Get pixel data at click position
+      const imageData = ctx.getImageData(canvasX, canvasY, 1, 1);
+      const data = imageData.data;
+
+      return {
+        r: data[0],
+        g: data[1],
+        b: data[2],
+        a: data[3]
+      };
+    } catch (error) {
+      console.error('[SVGPreview] Failed to get color at position:', error);
+      return null;
+    }
+  };
+
+  // Handle click on SVG image
+  const handleSVGClick = async (e) => {
+    if (!onColorClick || !recipes || recipes.length === 0) return;
+
+    // Get click position relative to image
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    console.log('[SVGPreview] Clicked at:', x, y);
+
+    // Get color at click position
+    const clickedColor = await getColorAtPosition(x, y);
+    if (!clickedColor || clickedColor.a === 0) {
+      console.log('[SVGPreview] Clicked on transparent area');
+      return;
+    }
+
+    console.log('[SVGPreview] Clicked color:', clickedColor);
+
+    // Find matching recipe
+    let matchedRecipe = null;
+    let bestMatch = Infinity;
+
+    for (const recipe of recipes) {
+      const targetHex = recipe.blendColor?.hex || recipe.targetColor.hex;
+      const targetRgb = hexToRgb(targetHex);
+
+      if (colorMatches(clickedColor.r, clickedColor.g, clickedColor.b, targetRgb)) {
+        // Calculate exact distance for best match
+        const distance = Math.sqrt(
+          Math.pow(clickedColor.r - targetRgb.r, 2) +
+          Math.pow(clickedColor.g - targetRgb.g, 2) +
+          Math.pow(clickedColor.b - targetRgb.b, 2)
+        );
+
+        if (distance < bestMatch) {
+          bestMatch = distance;
+          matchedRecipe = recipe;
+        }
+      }
+    }
+
+    if (matchedRecipe) {
+      console.log('[SVGPreview] Matched recipe:', matchedRecipe.targetColor.hex);
+
+      // Call onColorClick with the same data format as ColorLegend
+      onColorClick({
+        hex: matchedRecipe.targetColor.hex,
+        originalHex: matchedRecipe.targetColor.hex,
+        blendHex: matchedRecipe.blendColor.hex,
+        areaPct: matchedRecipe.targetColor.areaPct,
+        recipe: matchedRecipe.chosenRecipe,
+        targetColor: matchedRecipe.targetColor
+      });
+    } else {
+      console.log('[SVGPreview] No matching recipe found for clicked color');
+    }
+  };
+
   if (!blendSvgUrl) {
     return null;
   }
@@ -171,8 +281,13 @@ export default function SVGPreview({
       <div className="svg-display-container">
         <div className="svg-panel">
           <div className="svg-wrapper">
-            <div className="svg-image-container">
-              <img src={blendSvgUrl} alt="TPV blend design" className="svg-image" />
+            <div className="svg-image-container" onClick={handleSVGClick}>
+              <img
+                ref={imageRef}
+                src={blendSvgUrl}
+                alt="TPV blend design"
+                className="svg-image"
+              />
               {highlightMask && (
                 <img
                   src={highlightMask}
@@ -241,6 +356,8 @@ export default function SVGPreview({
         .svg-image-container {
           position: relative;
           display: inline-block;
+          cursor: ${onColorClick ? 'pointer' : 'default'};
+          user-select: none;
         }
 
         .svg-image {
@@ -248,6 +365,7 @@ export default function SVGPreview({
           height: auto;
           display: block;
           border-radius: 4px;
+          pointer-events: ${onColorClick ? 'auto' : 'none'};
         }
 
         .svg-highlight-mask {
