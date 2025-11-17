@@ -1,11 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createRequire } from 'module';
 import { PaletteExtractor } from './_utils/extraction/extractor.js';
 import { SmartBlendSolver } from './_utils/colour/smartSolver.js';
 import { calculateBlendColor, type BlendComponent, type TPVColor } from './_utils/colour/blendColor.js';
+import tpvColoursData from './_utils/data/rosehill_tpv_21_colours.json' assert { type: 'json' };
 
 // Build version for cache busting
-const BUILD_VERSION = 'v3.0.0-tpv-normalization-20251117-1200';
+const BUILD_VERSION = 'v3.0.0-tpv-normalization-20251117-1215';
+const tpvColours = tpvColoursData;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log('[BLEND-RECIPES-V3] API Handler invoked - TPV color normalization enabled');
@@ -33,10 +34,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log('[BLEND-RECIPES] Max colors:', max_colors, 'Max components:', max_components);
 
     const startTime = Date.now();
-
-    // Load TPV palette inside handler to avoid module-level import.meta issues
-    const require = createRequire(import.meta.url);
-    const tpvColours = require('./_utils/data/rosehill_tpv_21_colours.json');
 
     // Fetch SVG from URL
     console.log('[BLEND-RECIPES] Fetching SVG from URL...');
