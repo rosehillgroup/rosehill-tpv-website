@@ -5,6 +5,8 @@ import { calculateBlendColor, type BlendComponent, type TPVColor } from './_util
 import tpvColours from './_utils/data/rosehill_tpv_21_colours.json';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  console.log('[BLEND-RECIPES-V3] API Handler invoked - TPV color normalization enabled');
+
   if (req.method !== 'POST') {
     return res.status(405).json({
       success: false,

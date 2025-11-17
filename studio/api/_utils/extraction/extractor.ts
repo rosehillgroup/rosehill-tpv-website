@@ -77,10 +77,13 @@ export class PaletteExtractor {
       minPercentage: this.options.minAreaPct,
       ...this.options.rasterOptions
     });
+
+    console.info('[EXTRACTOR] Initializing SVGExtractor with maxColours:', this.options.maxColours);
     this.svgExtractor = new SVGExtractor({
       maxColours: this.options.maxColours,
       minPercentage: this.options.minAreaPct
     });
+    console.info('[EXTRACTOR] SVGExtractor initialized successfully');
   }
 
   async extract(
