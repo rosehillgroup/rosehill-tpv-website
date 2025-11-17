@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 import kmeans from 'kmeans-js';
-import type { RGB } from '../colour/types';
-import { sRGBToLinearRGB, linearRGBToXYZ, xyzToLab, type Lab } from '../colour/convert';
+import type { RGB } from '../colour/types.js';
+import { sRGBToLinearRGB, linearRGBToXYZ, xyzToLab, type Lab } from '../colour/convert.js';
 
 export interface RasterColour {
   rgb: RGB;

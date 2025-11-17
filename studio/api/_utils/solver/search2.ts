@@ -1,6 +1,6 @@
-import { TPVColour, simulateBlend } from '../colour/blend';
-import { Lab } from '../colour/convert';
-import { deltaE2000 } from '../colour/deltaE';
+import { TPVColour, simulateBlend } from '../colour/blend.js';
+import { Lab } from '../colour/convert.js';
+import { deltaE2000 } from '../colour/deltaE.js';
 
 export interface SearchConstraints {
   stepPct: number;

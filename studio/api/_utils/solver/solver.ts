@@ -1,9 +1,9 @@
-import { TPVColour, simulateBlend } from '../colour/blend';
-import { Lab, sRGBToLab } from '../colour/convert';
-import { deltaE2000 } from '../colour/deltaE';
-import { TwoWaySearchCache, BlendResult } from './search2';
-import { search3Way, localRefine3Way } from './search3';
-import { percentagesToParts, PartsConfig } from '../colour/parts';
+import { TPVColour, simulateBlend } from '../colour/blend.js';
+import { Lab, sRGBToLab } from '../colour/convert.js';
+import { deltaE2000 } from '../colour/deltaE.js';
+import { TwoWaySearchCache, BlendResult } from './search2.js';
+import { search3Way, localRefine3Way } from './search3.js';
+import { percentagesToParts, PartsConfig } from '../colour/parts.js';
 
 export interface SolverConstraints {
   maxComponents: number;

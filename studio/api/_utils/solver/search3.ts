@@ -1,7 +1,7 @@
-import { TPVColour, simulateBlend } from '../colour/blend';
-import { Lab } from '../colour/convert';
-import { deltaE2000 } from '../colour/deltaE';
-import { TwoWaySearchCache, SearchConstraints, BlendResult } from './search2';
+import { TPVColour, simulateBlend } from '../colour/blend.js';
+import { Lab } from '../colour/convert.js';
+import { deltaE2000 } from '../colour/deltaE.js';
+import { TwoWaySearchCache, SearchConstraints, BlendResult } from './search2.js';
 
 export function search3Way(
   target: Lab,
