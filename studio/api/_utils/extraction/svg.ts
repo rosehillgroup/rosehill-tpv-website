@@ -1,11 +1,16 @@
 /**
- * SVG Color Extractor
+ * SVG Color Extractor v3 - TPV Color Normalization
  * Parses SVG XML to extract fill and stroke colors directly from elements
+ * Normalizes colors to TPV palette and collapses similar colors
  */
 
 import type { RGB, Lab } from '../colour/types';
 import { deltaE2000 } from '../colour/deltaE.js';
 import tpvPalette from '../data/rosehill_tpv_21_colours.json';
+
+// Module load confirmation
+console.info('[SVG-EXTRACTOR-V3] Module loaded with TPV color normalization');
+console.info(`[SVG-EXTRACTOR-V3] Loaded ${tpvPalette.length} TPV colors from palette`);
 
 export interface SVGColor {
   rgb: RGB;
@@ -47,20 +52,33 @@ export class SVGExtractor {
   private lightestTPVColor: TPVColor;
 
   constructor(options: SVGExtractorOptions = {}) {
-    this.options = {
-      maxColours: options.maxColours ?? 12, // Updated default to 12
-      minPercentage: options.minPercentage ?? 0 // Include all colors, even tiny accents
-    };
+    try {
+      console.info('[SVG-EXTRACTOR-V3] Initializing SVGExtractor constructor...');
 
-    // Load TPV palette
-    this.tpvColors = tpvPalette as TPVColor[];
+      this.options = {
+        maxColours: options.maxColours ?? 12, // Updated default to 12
+        minPercentage: options.minPercentage ?? 0 // Include all colors, even tiny accents
+      };
 
-    // Find lightest color (Cream RH31, L=91.8)
-    this.lightestTPVColor = this.tpvColors.reduce((lightest, color) =>
-      color.L > lightest.L ? color : lightest
-    , this.tpvColors[0]);
+      // Load TPV palette
+      if (!tpvPalette || !Array.isArray(tpvPalette) || tpvPalette.length === 0) {
+        throw new Error('TPV palette data is invalid or empty');
+      }
 
-    console.info(`[SVG] Loaded ${this.tpvColors.length} TPV colors. Lightest: ${this.lightestTPVColor.name} (${this.lightestTPVColor.hex}, L=${this.lightestTPVColor.L})`);
+      this.tpvColors = tpvPalette as TPVColor[];
+      console.info(`[SVG-EXTRACTOR-V3] Successfully loaded ${this.tpvColors.length} TPV colors`);
+
+      // Find lightest color (Cream RH31, L=91.8)
+      this.lightestTPVColor = this.tpvColors.reduce((lightest, color) =>
+        color.L > lightest.L ? color : lightest
+      , this.tpvColors[0]);
+
+      console.info(`[SVG-EXTRACTOR-V3] Lightest color: ${this.lightestTPVColor.name} (${this.lightestTPVColor.hex}, L=${this.lightestTPVColor.L})`);
+      console.info('[SVG-EXTRACTOR-V3] Constructor initialization complete');
+    } catch (error) {
+      console.error('[SVG-EXTRACTOR-V3] CONSTRUCTOR ERROR:', error);
+      throw error;
+    }
   }
 
   /**
