@@ -8,9 +8,6 @@ import type { RGB, Lab } from '../colour/types.js';
 import { deltaE2000 } from '../colour/deltaE.js';
 import { createRequire } from 'module';
 
-const require = createRequire(import.meta.url);
-const tpvPalette = require('../data/rosehill_tpv_21_colours.json');
-
 export interface SVGColor {
   rgb: RGB;
   percentage: number;
@@ -56,7 +53,9 @@ export class SVGExtractor {
       minPercentage: options.minPercentage ?? 0 // Include all colors, even tiny accents
     };
 
-    // Load TPV palette
+    // Load TPV palette inside constructor to avoid module-level import.meta issues
+    const require = createRequire(import.meta.url);
+    const tpvPalette = require('../data/rosehill_tpv_21_colours.json');
     this.tpvColors = tpvPalette as TPVColor[];
 
     // Find lightest color (Cream RH31, L=91.8)
