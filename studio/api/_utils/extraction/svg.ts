@@ -85,13 +85,13 @@ export class SVGExtractor {
       // DON'T truncate yet - need to check coverage first!
 
       // Check if we should add white as background
-      // If total coverage is < 80%, assume transparent background is white
+      // If total coverage is < 95%, assume transparent background is white
       const totalCoverage = colours.reduce((sum, c) => sum + c.percentage, 0);
-      console.info(`[SVG] Total coverage: ${totalCoverage.toFixed(1)}%`);
+      console.warn(`[SVG-DEBUG] Total coverage: ${totalCoverage.toFixed(1)}%`);
 
-      if (totalCoverage < 80) {
+      if (totalCoverage < 95) {
         const whiteCoverage = 100 - totalCoverage;
-        console.info(`[SVG] Detected ${whiteCoverage.toFixed(1)}% uncovered area, adding white background`);
+        console.warn(`[SVG-DEBUG] Adding white background with ${whiteCoverage.toFixed(1)}% coverage`);
 
         colours.push({
           rgb: { R: 255, G: 255, B: 255 },
@@ -102,7 +102,7 @@ export class SVGExtractor {
         // Re-sort after adding white
         colours.sort((a, b) => b.percentage - a.percentage);
       } else {
-        console.info(`[SVG] No white background needed (coverage >= 80%)`);
+        console.warn(`[SVG-DEBUG] No white background needed (coverage >= 95%)`);
       }
 
       // NOW truncate to maxColours (after potentially adding white)
@@ -110,6 +110,10 @@ export class SVGExtractor {
 
       const elapsed = Date.now() - startTime;
       console.info(`[SVG] Extracted ${colours.length} colors in ${elapsed}ms`);
+
+      // Add debug info as fake "warning" so we can see it in the response
+      const debugInfo = `DEBUG: Found ${colorCounts.size} unique colors, total weight ${totalWeight.toFixed(1)}, coverage ${totalCoverage.toFixed(1)}%, final ${colours.length} colors`;
+      console.warn(debugInfo);
 
       return {
         colours,
