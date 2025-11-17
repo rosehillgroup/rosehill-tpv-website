@@ -24,6 +24,7 @@ export default function InspirePanelRecraft() {
   // File upload state
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Aspect ratio mapping
   const [arMapping, setArMapping] = useState(null);
@@ -84,6 +85,57 @@ export default function InspirePanelRecraft() {
 
     setSelectedFile(file);
     setError(null);
+  };
+
+  // Handle drag and drop events
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set dragging to false if we're leaving the drop zone entirely
+    if (e.currentTarget === e.target) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+
+      // Validate file type based on input mode
+      const allowedTypes = inputMode === 'image'
+        ? ['image/png', 'image/jpeg']
+        : ['image/svg+xml'];
+
+      const validation = validateFile(file, {
+        maxSizeMB: 10,
+        allowedTypes
+      });
+
+      if (!validation.valid) {
+        setError(validation.error);
+        setSelectedFile(null);
+        return;
+      }
+
+      setSelectedFile(file);
+      setError(null);
+    }
   };
 
   // Handle form submission - supports all three input modes
@@ -687,6 +739,10 @@ export default function InspirePanelRecraft() {
           }}
           disabled={generating}
         >
+          <svg className="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 3l1.545 4.635L18.18 9.18l-4.635 1.545L12 15.36l-1.545-4.635L5.82 9.18l4.635-1.545L12 3z" />
+            <path d="M5 21l1.5-4.5L2 15l4.5-1.5L8 9l1.5 4.5L14 15l-4.5 1.5L8 21z" opacity="0.5" />
+          </svg>
           <span className="mode-title">Text Prompt</span>
           <span className="mode-description">Describe your design</span>
         </button>
@@ -699,6 +755,11 @@ export default function InspirePanelRecraft() {
           }}
           disabled={generating}
         >
+          <svg className="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <path d="M21 15l-5-5L5 21" />
+          </svg>
           <span className="mode-title">Upload Image</span>
           <span className="mode-description">Vectorise PNG/JPG</span>
         </button>
@@ -711,6 +772,9 @@ export default function InspirePanelRecraft() {
           }}
           disabled={generating}
         >
+          <svg className="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+          </svg>
           <span className="mode-title">Upload SVG</span>
           <span className="mode-description">Process existing vector</span>
         </button>
@@ -741,17 +805,44 @@ export default function InspirePanelRecraft() {
         {inputMode === 'image' && (
           <div className="form-group">
             <label htmlFor="image-upload">Upload Image (PNG/JPG)</label>
-            <input
-              id="image-upload"
-              type="file"
-              accept="image/png,image/jpeg"
-              onChange={handleFileSelect}
-              disabled={generating}
-              className="file-input"
-            />
-            {selectedFile && (
-              <p className="file-selected">Selected: {selectedFile.name}</p>
-            )}
+            <div
+              className={`drop-zone ${isDragging ? 'dragging' : ''} ${selectedFile ? 'has-file' : ''}`}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
+              <input
+                id="image-upload"
+                type="file"
+                accept="image/png,image/jpeg"
+                onChange={handleFileSelect}
+                disabled={generating}
+                className="file-input-hidden"
+              />
+              <label htmlFor="image-upload" className="drop-zone-content">
+                {selectedFile ? (
+                  <>
+                    <svg className="upload-icon success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <span className="file-name">{selectedFile.name}</span>
+                    <span className="drop-hint">Click to change file</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <span className="drop-text">Drag & drop your image here</span>
+                    <span className="drop-hint">or click to browse</span>
+                  </>
+                )}
+              </label>
+            </div>
             <p className="helper-text">
               Upload a raster image (PNG or JPG). The AI will convert it to vector format (SVG) suitable for TPV surfacing.
             </p>
@@ -762,19 +853,46 @@ export default function InspirePanelRecraft() {
         {inputMode === 'svg' && (
           <div className="form-group">
             <label htmlFor="svg-upload">Upload SVG File</label>
-            <input
-              id="svg-upload"
-              type="file"
-              accept="image/svg+xml"
-              onChange={handleFileSelect}
-              disabled={generating}
-              className="file-input"
-            />
-            {selectedFile && (
-              <p className="file-selected">Selected: {selectedFile.name}</p>
-            )}
+            <div
+              className={`drop-zone ${isDragging ? 'dragging' : ''} ${selectedFile ? 'has-file' : ''}`}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
+              <input
+                id="svg-upload"
+                type="file"
+                accept="image/svg+xml"
+                onChange={handleFileSelect}
+                disabled={generating}
+                className="file-input-hidden"
+              />
+              <label htmlFor="svg-upload" className="drop-zone-content">
+                {selectedFile ? (
+                  <>
+                    <svg className="upload-icon success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <span className="file-name">{selectedFile.name}</span>
+                    <span className="drop-hint">Click to change file</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <span className="drop-text">Drag & drop your SVG here</span>
+                    <span className="drop-hint">or click to browse</span>
+                  </>
+                )}
+              </label>
+            </div>
             <p className="helper-text">
-              Upload an existing SVG vector file. It will be processed immediately for TPV color matching - no AI generation needed.
+              Upload an existing SVG vector file. It will be processed immediately for TPV colour matching - no AI generation needed.
             </p>
           </div>
         )}
@@ -1060,8 +1178,8 @@ export default function InspirePanelRecraft() {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: var(--space-1);
-          padding: var(--space-3);
+          gap: var(--space-2);
+          padding: var(--space-4);
           background: var(--color-bg-card);
           border: 1px solid var(--color-border);
           border-radius: var(--radius-md);
@@ -1076,7 +1194,7 @@ export default function InspirePanelRecraft() {
         }
 
         .input-mode-tab.active {
-          background: var(--color-bg-subtle);
+          background: linear-gradient(135deg, var(--color-bg-subtle) 0%, var(--color-bg-card) 100%);
           border-color: var(--color-primary);
           box-shadow: var(--shadow-glow);
         }
@@ -1086,16 +1204,34 @@ export default function InspirePanelRecraft() {
           cursor: not-allowed;
         }
 
+        .mode-icon {
+          width: 32px;
+          height: 32px;
+          color: var(--color-text-secondary);
+          transition: all var(--transition-base);
+        }
+
+        .input-mode-tab:hover:not(:disabled) .mode-icon {
+          color: var(--color-primary);
+          transform: scale(1.1);
+        }
+
+        .input-mode-tab.active .mode-icon {
+          color: var(--color-primary);
+        }
+
         .input-mode-tab .mode-title {
           font-size: var(--text-base);
           font-weight: var(--font-semibold);
-          color: var(--color-primary);
+          color: var(--color-text-primary);
+          margin-top: var(--space-1);
         }
 
         .input-mode-tab .mode-description {
           font-size: var(--text-sm);
           color: var(--color-text-secondary);
           text-align: center;
+          line-height: var(--leading-snug);
         }
 
         .input-mode-tab.active .mode-title {
@@ -1112,27 +1248,96 @@ export default function InspirePanelRecraft() {
           line-height: var(--leading-snug);
         }
 
-        /* File input styling - Premium look */
-        .file-input {
+        /* Drag & Drop File Upload */
+        .file-input-hidden {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border: 0;
+        }
+
+        .drop-zone {
+          position: relative;
           width: 100%;
-          padding: var(--space-3);
+          min-height: 180px;
           border: 2px dashed var(--color-border);
-          border-radius: var(--radius-md);
-          cursor: pointer;
-          background: var(--color-bg-card);
+          border-radius: var(--radius-lg);
+          background: var(--color-bg-subtle);
           transition: all var(--transition-base);
         }
 
-        .file-input:hover {
+        .drop-zone.dragging {
           border-color: var(--color-primary);
-          background: var(--color-bg-subtle);
+          background: var(--color-primary-light);
+          background: linear-gradient(135deg, rgba(30, 74, 122, 0.05) 0%, rgba(30, 74, 122, 0.1) 100%);
+          box-shadow: var(--shadow-glow);
         }
 
-        .file-selected {
-          margin-top: var(--space-2);
-          font-size: var(--text-sm);
+        .drop-zone.has-file {
+          border-color: var(--color-success);
+          background: var(--color-success-light);
+        }
+
+        .drop-zone-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: var(--space-2);
+          padding: var(--space-6);
+          cursor: pointer;
+          min-height: 180px;
+        }
+
+        .upload-icon {
+          width: 48px;
+          height: 48px;
+          color: var(--color-text-secondary);
+          transition: all var(--transition-base);
+        }
+
+        .upload-icon.success {
+          color: var(--color-success);
+        }
+
+        .drop-zone:hover .upload-icon {
           color: var(--color-primary);
-          font-weight: var(--font-medium);
+          transform: scale(1.1);
+        }
+
+        .drop-zone.has-file:hover .upload-icon.success {
+          color: var(--color-success);
+        }
+
+        .drop-text {
+          font-size: var(--text-base);
+          font-weight: var(--font-semibold);
+          color: var(--color-text-primary);
+        }
+
+        .file-name {
+          font-size: var(--text-base);
+          font-weight: var(--font-semibold);
+          color: var(--color-success);
+          max-width: 100%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .drop-hint {
+          font-size: var(--text-sm);
+          color: var(--color-text-tertiary);
+        }
+
+        .drop-zone.dragging .drop-text,
+        .drop-zone.dragging .drop-hint {
+          color: var(--color-primary);
         }
 
         .upload-progress {
