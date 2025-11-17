@@ -139,34 +139,41 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
               {isExpanded && hasAlternatives && (
                 <div className="alternatives-section">
                   <div className="alternatives-header">Alternative Formulas</div>
-                  {recipe.alternativeRecipes.map((alt, altIdx) => (
-                    <div key={altIdx} className="alternative-card">
-                      <div className="alt-header">
-                        <span className="alt-label">Option {altIdx + 2}</span>
-                        <div className="alt-quality-inline">
-                          <span className={`quality-badge small ${alt.quality.toLowerCase()}`}>
-                            {alt.quality}
-                          </span>
-                          <span className="delta-e-small">ΔE {alt.deltaE.toFixed(2)}</span>
+                  {recipe.alternativeRecipes.map((alt, altIdx) => {
+                    // Defensive check for missing data
+                    if (!alt || !alt.components || !alt.blendColor) {
+                      console.warn('[BlendRecipesDisplay] Skipping malformed alternative:', alt);
+                      return null;
+                    }
+
+                    return (
+                      <div key={altIdx} className="alternative-card">
+                        <div className="alt-header">
+                          <span className="alt-label">Option {altIdx + 2}</span>
+                          <div className="alt-quality-inline">
+                            <span className={`quality-badge small ${alt.quality?.toLowerCase() || 'fair'}`}>
+                              {alt.quality || 'Fair'}
+                            </span>
+                            <span className="delta-e-small">ΔE {alt.deltaE?.toFixed(2) || 'N/A'}</span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="alt-swatches">
-                        <div className="swatch-pair-small">
-                          <div
-                            className="color-swatch-small original"
-                            style={{ backgroundColor: recipe.targetColor.hex }}
-                            title={`Image colour: ${recipe.targetColor.hex}`}
-                          />
-                          <span className="swatch-arrow-small">→</span>
-                          <div
-                            className="color-swatch-small blend"
-                            style={{ backgroundColor: alt.blendColor.hex }}
-                            title={`TPV blend: ${alt.blendColor.hex}`}
-                          />
+                        <div className="alt-swatches">
+                          <div className="swatch-pair-small">
+                            <div
+                              className="color-swatch-small original"
+                              style={{ backgroundColor: recipe.targetColor.hex }}
+                              title={`Image colour: ${recipe.targetColor.hex}`}
+                            />
+                            <span className="swatch-arrow-small">→</span>
+                            <div
+                              className="color-swatch-small blend"
+                              style={{ backgroundColor: alt.blendColor.hex }}
+                              title={`TPV blend: ${alt.blendColor.hex}`}
+                            />
+                          </div>
                         </div>
-                      </div>
-                      <div className="alt-formula">
-                        {alt.components.map((comp, compIdx) => (
+                        <div className="alt-formula">
+                          {alt.components.map((comp, compIdx) => (
                           <span key={compIdx} className="formula-component">
                             <strong className="parts">{comp.parts || (comp.weight * 100).toFixed(0) + '%'}</strong>
                             <span className="comp-code">{comp.code}</span>
@@ -174,9 +181,10 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
                             {compIdx < alt.components.length - 1 && <span className="separator">+</span>}
                           </span>
                         ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
