@@ -457,13 +457,8 @@ export class SVGExtractor {
     }
 
     // Log final color weights
-    console.info('[SVG] Final color weights:');
-    Array.from(colorCounts.entries())
-      .sort((a, b) => b[1] - a[1])
-      .forEach(([color, weight]) => {
-        console.info(`  ${color}: ${weight.toFixed(2)}`);
-      });
-
+    console.info(`[SVG] Extracted ${colorCounts.size} colors, returning map...`);
+    // Removed verbose color weight logging to reduce overhead
     return colorCounts;
   }
 
@@ -849,8 +844,9 @@ export class SVGExtractor {
    * Much more efficient than normalizing the entire SVG text
    */
   private normalizeColorMap(colorCounts: Map<string, number>): Map<string, number> {
-    console.info('[SVG] Normalizing color map to TPV palette...');
+    console.info(`[SVG] Normalizing ${colorCounts.size} colors to TPV palette...`);
     const normalized = new Map<string, number>();
+    let snappedCount = 0;
 
     for (const [hexColor, weight] of colorCounts.entries()) {
       // Snap this color to TPV palette if needed
@@ -860,16 +856,13 @@ export class SVGExtractor {
       const existing = normalized.get(snappedColor) || 0;
       normalized.set(snappedColor, existing + weight);
 
-      // Log if we snapped
+      // Count snaps (reduced logging to avoid timeout)
       if (snappedColor !== hexColor.toLowerCase()) {
-        const rgb = this.hexToRgb(hexColor);
-        const lab = this.rgbToLab(rgb);
-        const chroma = this.getChroma(lab);
-        console.info(`[SVG] Snapped ${hexColor} (L=${lab.L.toFixed(1)}, C=${chroma.toFixed(1)}) → ${snappedColor}`);
+        snappedCount++;
       }
     }
 
-    console.info(`[SVG] Normalized ${colorCounts.size} → ${normalized.size} colors`);
+    console.info(`[SVG] Normalized ${colorCounts.size} → ${normalized.size} colors (snapped ${snappedCount} colors)`);
     return normalized;
   }
 
@@ -1012,7 +1005,7 @@ export class SVGExtractor {
 
     // Low chroma (neutral colors) → snap to cream
     if (chroma < 15) {
-      console.info(`[SVG] Snapping low-chroma color ${hexColor} (L=${lab.L.toFixed(1)}, C=${chroma.toFixed(1)}) → ${this.lightestTPVColor.hex} (Cream)`);
+      // Snapping to cream (removed logging to reduce overhead)
       return this.lightestTPVColor.hex.toLowerCase();
     }
 
@@ -1034,7 +1027,7 @@ export class SVGExtractor {
       }
     }
 
-    console.info(`[SVG] Snapping high-chroma color ${hexColor} (L=${lab.L.toFixed(1)}, C=${chroma.toFixed(1)}) → ${nearestColor.hex} (${nearestColor.name}, ΔE=${minDeltaE.toFixed(2)})`);
+    // Snapping to nearest color (removed logging to reduce overhead)
     return nearestColor.hex.toLowerCase();
   }
 }
