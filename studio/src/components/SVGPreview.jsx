@@ -332,8 +332,9 @@ export default function SVGPreview({
         /* SVG Display */
         .svg-display-container {
           display: flex;
+          flex-direction: column;
           gap: 1.5rem;
-          align-items: flex-start;
+          align-items: stretch;
         }
 
         .svg-panel {
@@ -397,7 +398,7 @@ export default function SVGPreview({
         }
 
         .legend-sidebar {
-          flex-shrink: 0;
+          width: 100%;
         }
 
         @media (max-width: 768px) {
@@ -405,17 +406,9 @@ export default function SVGPreview({
             padding: 1rem;
           }
 
-          .svg-display-container {
-            flex-direction: column;
-          }
-
           .svg-wrapper {
             padding: 1rem;
             min-height: 250px;
-          }
-
-          .legend-sidebar {
-            width: 100%;
           }
         }
       `}</style>

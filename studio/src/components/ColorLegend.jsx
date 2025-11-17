@@ -61,7 +61,7 @@ export default function ColorLegend({
           border-radius: 8px;
           padding: 1rem;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-          max-width: 280px;
+          width: 100%;
         }
 
         .legend-header {
@@ -86,9 +86,9 @@ export default function ColorLegend({
         }
 
         .legend-colors {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+          gap: 0.75rem;
         }
 
         .color-item {
@@ -110,7 +110,7 @@ export default function ColorLegend({
           border-color: #ff6b35;
           background: #fff9f7;
           box-shadow: 0 2px 4px rgba(255, 107, 53, 0.15);
-          transform: translateX(2px);
+          transform: translateY(-2px);
         }
 
         .color-item.selected {
@@ -118,7 +118,7 @@ export default function ColorLegend({
           border-width: 2px;
           background: #fff9f7;
           box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.2);
-          transform: translateX(2px);
+          transform: translateY(-2px);
         }
 
         .color-swatch {
@@ -147,14 +147,9 @@ export default function ColorLegend({
           font-size: 0.8rem;
         }
 
-        @media (max-width: 768px) {
-          .color-legend {
-            max-width: 100%;
-          }
-
+        @media (max-width: 600px) {
           .legend-colors {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
           }
 
           .color-item {
