@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { ChromePicker } from 'react-color';
-import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
+import tpvColours from '../../api/_utils/data/rosehill_tpv_21_colours.json';
 
 export default function ColorEditorPanel({
   color,           // {hex, rgb, lab, areaPct, originalHex}
