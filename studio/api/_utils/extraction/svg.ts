@@ -6,7 +6,15 @@
 
 import type { RGB, Lab } from '../colour/types';
 import { deltaE2000 } from '../colour/deltaE.js';
-import tpvPalette from '../data/rosehill_tpv_21_colours.json';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+// Load TPV palette using readFileSync for better Vercel compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const tpvPalettePath = join(__dirname, '../data/rosehill_tpv_21_colours.json');
+const tpvPalette = JSON.parse(readFileSync(tpvPalettePath, 'utf-8'));
 
 // Module load confirmation
 console.info('[SVG-EXTRACTOR-V3] Module loaded with TPV color normalization');
