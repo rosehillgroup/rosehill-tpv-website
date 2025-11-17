@@ -8,7 +8,7 @@ const require = createRequire(import.meta.url);
 const tpvColours = require('./_utils/data/rosehill_tpv_21_colours.json');
 
 // Build version for cache busting
-const BUILD_VERSION = 'v3.3.0-aggressive-collapse-20251117-1310';
+const BUILD_VERSION = 'v3.4.0-fix-gradient-weight-20251117-1400';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log('[BLEND-RECIPES-V3] API Handler invoked - TPV color normalization enabled');

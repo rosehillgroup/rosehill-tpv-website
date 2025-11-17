@@ -418,11 +418,11 @@ export class SVGExtractor {
 
     console.info(`[SVG] Found ${gradientUsage.size} gradients used in elements`);
 
-    // Weight gradient colors by usage count
+    // Add gradient colors with same weight as regular fills
     let totalGradientColors = 0;
     for (const [gradientId, colors] of gradientColors.entries()) {
       const usageCount = gradientUsage.get(gradientId) || 1; // Default to 1 if not used
-      const weight = usageCount * 100; // Weight by usage frequency
+      const weight = usageCount; // Treat same as fill colors (no over-weighting)
 
       for (const color of colors) {
         colorCounts.set(color, (colorCounts.get(color) || 0) + weight);
