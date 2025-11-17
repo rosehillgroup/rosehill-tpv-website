@@ -47,6 +47,7 @@ export class SVGExtractor {
       const svgText = new TextDecoder('utf-8').decode(buffer);
 
       console.info(`[SVG] Parsing SVG (${buffer.byteLength} bytes)`);
+      console.info(`[SVG] Using SVG extractor v2 with gradient support`);
 
       // Parse SVG dimensions
       const dimensions = this.parseSVGDimensions(svgText);
