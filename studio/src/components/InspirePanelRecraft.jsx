@@ -95,6 +95,34 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       setShowSolidSummary(restoredState.showSolidSummary);
 
       console.log('[INSPIRE] Loaded design:', loadedDesign.name);
+
+      // Regenerate SVGs from saved state (blob URLs don't survive page reload)
+      // This needs to happen after state is set, so we use a timeout
+      setTimeout(async () => {
+        if (restoredState.result?.svg_url) {
+          console.log('[INSPIRE] Regenerating SVGs from loaded design');
+
+          // Regenerate blend SVG if we have blend recipes
+          if (restoredState.blendRecipes && restoredState.colorMapping) {
+            await regenerateBlendSVGFromState(
+              restoredState.result.svg_url,
+              restoredState.colorMapping,
+              restoredState.blendRecipes,
+              restoredState.blendEditedColors
+            );
+          }
+
+          // Regenerate solid SVG if we have solid recipes
+          if (restoredState.solidRecipes && restoredState.solidColorMapping) {
+            await regenerateSolidSVGFromState(
+              restoredState.result.svg_url,
+              restoredState.solidColorMapping,
+              restoredState.solidRecipes,
+              restoredState.solidEditedColors
+            );
+          }
+        }
+      }, 100);
     }
   }, [loadedDesign]);
 
@@ -742,6 +770,76 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       console.log('[TPV-STUDIO] Solid SVG regenerated with edits:', stats);
     } catch (err) {
       console.error('[TPV-STUDIO] Failed to regenerate solid SVG:', err);
+    }
+  };
+
+  // Helper function to regenerate blend SVG from loaded design state
+  const regenerateBlendSVGFromState = async (svgUrl, colorMapping, recipes, editedColors) => {
+    try {
+      console.log('[INSPIRE] Regenerating blend SVG from state');
+
+      // Build updated color mapping with any saved edits
+      const updatedMapping = new Map(colorMapping);
+      if (editedColors && editedColors.size > 0) {
+        editedColors.forEach((edit, originalHex) => {
+          const normalizedHex = originalHex.toLowerCase();
+          if (updatedMapping.has(normalizedHex)) {
+            updatedMapping.set(normalizedHex, {
+              ...updatedMapping.get(normalizedHex),
+              blendHex: edit.newHex
+            });
+          }
+        });
+      }
+
+      // Fetch and recolor SVG
+      const svgResponse = await fetch(svgUrl);
+      const svgString = await svgResponse.text();
+      const recoloredSvg = recolorSVG(svgString, updatedMapping, 'blend');
+
+      // Create blob URL
+      const blob = new Blob([recoloredSvg], { type: 'image/svg+xml' });
+      const blobUrl = URL.createObjectURL(blob);
+
+      setBlendSvgUrl(blobUrl);
+      console.log('[INSPIRE] Blend SVG regenerated');
+    } catch (err) {
+      console.error('[INSPIRE] Failed to regenerate blend SVG:', err);
+    }
+  };
+
+  // Helper function to regenerate solid SVG from loaded design state
+  const regenerateSolidSVGFromState = async (svgUrl, colorMapping, recipes, editedColors) => {
+    try {
+      console.log('[INSPIRE] Regenerating solid SVG from state');
+
+      // Build updated color mapping with any saved edits
+      const updatedMapping = new Map(colorMapping);
+      if (editedColors && editedColors.size > 0) {
+        editedColors.forEach((edit, originalHex) => {
+          const normalizedHex = originalHex.toLowerCase();
+          if (updatedMapping.has(normalizedHex)) {
+            updatedMapping.set(normalizedHex, {
+              ...updatedMapping.get(normalizedHex),
+              blendHex: edit.newHex
+            });
+          }
+        });
+      }
+
+      // Fetch and recolor SVG
+      const svgResponse = await fetch(svgUrl);
+      const svgString = await svgResponse.text();
+      const recoloredSvg = recolorSVG(svgString, updatedMapping, 'solid');
+
+      // Create blob URL
+      const blob = new Blob([recoloredSvg], { type: 'image/svg+xml' });
+      const blobUrl = URL.createObjectURL(blob);
+
+      setSolidSvgUrl(blobUrl);
+      console.log('[INSPIRE] Solid SVG regenerated');
+    } catch (err) {
+      console.error('[INSPIRE] Failed to regenerate solid SVG:', err);
     }
   };
 

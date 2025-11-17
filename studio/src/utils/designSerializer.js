@@ -124,9 +124,10 @@ export function deserializeDesign(savedData) {
     solidEditedColors: deserializeMap(savedData.solid_color_edits),
     blendEditedColors: deserializeMap(savedData.blend_color_edits),
 
-    // Final SVGs
-    blendSvgUrl: savedData.final_blend_svg_url,
-    solidSvgUrl: savedData.final_solid_svg_url,
+    // Final SVGs - Don't restore blob URLs, they need to be regenerated
+    // The component will regenerate these from the original SVG + recipes + edits
+    blendSvgUrl: null,
+    solidSvgUrl: null,
 
     // View mode
     viewMode: savedData.preferred_view_mode || 'solid',
