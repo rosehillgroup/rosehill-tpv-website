@@ -1,11 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { PaletteExtractor } from './_utils/extraction/extractor';
-import { SmartBlendSolver } from './_utils/colour/smartSolver';
-import { calculateBlendColor, type BlendComponent, type TPVColor } from './_utils/colour/blendColor';
-import tpvColours from './_utils/data/rosehill_tpv_21_colours.json';
+import { createRequire } from 'module';
+import { PaletteExtractor } from './_utils/extraction/extractor.js';
+import { SmartBlendSolver } from './_utils/colour/smartSolver.js';
+import { calculateBlendColor, type BlendComponent, type TPVColor } from './_utils/colour/blendColor.js';
+
+const require = createRequire(import.meta.url);
+const tpvColours = require('./_utils/data/rosehill_tpv_21_colours.json');
 
 // Build version for cache busting
-const BUILD_VERSION = 'v3.0.0-tpv-normalization-20251117-1130';
+const BUILD_VERSION = 'v3.0.0-tpv-normalization-20251117-1135';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log('[BLEND-RECIPES-V3] API Handler invoked - TPV color normalization enabled');

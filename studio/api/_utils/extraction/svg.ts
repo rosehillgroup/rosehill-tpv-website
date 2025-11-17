@@ -4,12 +4,12 @@
  * Normalizes colors to TPV palette and collapses similar colors
  */
 
-import type { RGB, Lab } from '../colour/types';
+import type { RGB, Lab } from '../colour/types.js';
 import { deltaE2000 } from '../colour/deltaE.js';
-import tpvPaletteData from '../data/rosehill_tpv_21_colours.json';
+import { createRequire } from 'module';
 
-// Load TPV palette
-const tpvPalette = tpvPaletteData;
+const require = createRequire(import.meta.url);
+const tpvPalette = require('../data/rosehill_tpv_21_colours.json');
 
 export interface SVGColor {
   rgb: RGB;
