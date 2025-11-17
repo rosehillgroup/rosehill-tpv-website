@@ -2,7 +2,7 @@
 // POST /api/process-uploaded-svg
 // Accepts pre-uploaded SVG files and processes them directly (fast path)
 
-import { getSupabaseServiceClient } from './_utils/supabase.js';
+import { getSupabaseServiceClient, getAuthenticatedClient } from './_utils/supabase.js';
 import { randomUUID } from 'crypto';
 
 /**
@@ -33,6 +33,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Get authenticated user (if available)
+    const { user } = await getAuthenticatedClient(req);
+
     const {
       svg_url,
       width_mm,
@@ -111,6 +114,7 @@ export default async function handler(req, res) {
       mode_type: 'uploaded_svg',
       status: 'completed', // Fast path - SVG is ready immediately
       prompt: `Uploaded SVG file: ${svg_url.split('/').pop()}`,
+      user_id: user?.id || null, // Track which user created this job
       surface: {
         width_mm,
         height_mm: length_mm

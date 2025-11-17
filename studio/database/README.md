@@ -43,6 +43,8 @@ psql "postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:54
 | ID | File | Description | Date |
 |----|------|-------------|------|
 | 001 | `001_add_recraft_fields.sql` | Add Recraft vector AI fields to studio_jobs | 2025-01-13 |
+| 002 | `002_add_dimension_fields.sql` | Hotfix for dimension fields | 2025-01-13 |
+| 003 | `003_add_user_design_tables.sql` | Add projects and saved_designs tables, user_id to jobs | 2025-01-17 |
 
 ## Rollback Instructions
 

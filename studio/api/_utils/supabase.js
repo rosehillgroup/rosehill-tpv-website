@@ -42,3 +42,49 @@ export function getSupabaseAnonClient() {
     }
   });
 }
+
+/**
+ * Get authenticated Supabase client from request headers
+ * Extracts JWT token from Authorization header and creates user-scoped client
+ * Use for operations that should respect RLS based on authenticated user
+ *
+ * @param {Request} req - Express/Vercel request object
+ * @returns {Object} - { client: SupabaseClient, user: User | null }
+ */
+export async function getAuthenticatedClient(req) {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const anonKey = process.env.SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !anonKey) {
+    throw new Error('Missing Supabase environment variables');
+  }
+
+  // Create client
+  const client = createClient(supabaseUrl, anonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+
+  // Extract JWT token from Authorization header
+  const authHeader = req.headers['authorization'] || req.headers['Authorization'];
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return { client, user: null };
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+
+  // Set the session with the token
+  const { data: { user }, error } = await client.auth.getUser(token);
+
+  if (error || !user) {
+    return { client, user: null };
+  }
+
+  // Set the token in the client for subsequent requests
+  client.auth.setSession({ access_token: token, refresh_token: '' });
+
+  return { client, user };
+}

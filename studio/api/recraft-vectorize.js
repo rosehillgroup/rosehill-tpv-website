@@ -2,7 +2,7 @@
 // POST /api/recraft-vectorize
 // Converts uploaded PNG/JPG to SVG using Recraft AI
 
-import { getSupabaseServiceClient } from './_utils/supabase.js';
+import { getSupabaseServiceClient, getAuthenticatedClient } from './_utils/supabase.js';
 import { vectorizeImage } from './_utils/recraft/vectorize-client.js';
 import { randomUUID } from 'crypto';
 
@@ -35,6 +35,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Get authenticated user (if available)
+    const { user } = await getAuthenticatedClient(req);
+
     const {
       image_url,
       width_mm,
@@ -90,6 +93,7 @@ export default async function handler(req, res) {
       mode_type: 'recraft_vectorize',
       status: 'pending',
       prompt: `Vectorized from uploaded image: ${image_url.split('/').pop()}`,
+      user_id: user?.id || null, // Track which user created this job
       surface: {
         width_mm,
         height_mm: length_mm
