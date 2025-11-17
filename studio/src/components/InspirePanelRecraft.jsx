@@ -11,6 +11,7 @@ import { buildColorMapping } from '../utils/colorMapping.js';
 import { recolorSVG } from '../utils/svgRecolor.js';
 import { mapDimensionsToRecraft, getLayoutDescription, needsLayoutWarning } from '../utils/aspectRatioMapping.js';
 import { uploadFile, validateFile } from '../lib/supabase/uploadFile.js';
+import tpvColours from '../../api/_utils/data/rosehill_tpv_21_colours.json';
 
 export default function InspirePanelRecraft() {
   // Input mode state - three options: prompt, image, svg
@@ -630,18 +631,56 @@ export default function InspirePanelRecraft() {
       const updatedRecipes = solidRecipes.map(recipe => {
         const edit = edits.get(recipe.originalColor.hex.toLowerCase());
         if (edit?.newHex) {
-          // Update both target and blend colors to reflect the edit
-          return {
-            ...recipe,
-            targetColor: {
-              ...recipe.targetColor,
-              hex: edit.newHex
-            },
-            blendColor: {
-              ...recipe.blendColor,
-              hex: edit.newHex
-            }
-          };
+          // Find the matching TPV colour for the new hex
+          const matchingTpvColour = tpvColours.find(
+            tpv => tpv.hex.toLowerCase() === edit.newHex.toLowerCase()
+          );
+
+          if (matchingTpvColour) {
+            // Update with complete TPV colour information
+            return {
+              ...recipe,
+              targetColor: {
+                ...recipe.targetColor,
+                hex: edit.newHex
+              },
+              blendColor: {
+                hex: edit.newHex,
+                rgb: matchingTpvColour.rgb,
+                lab: matchingTpvColour.lab
+              },
+              chosenRecipe: {
+                components: [{
+                  code: matchingTpvColour.code,
+                  name: matchingTpvColour.name,
+                  hex: matchingTpvColour.hex,
+                  rgb: matchingTpvColour.rgb,
+                  lab: matchingTpvColour.lab,
+                  ratio: 1.0
+                }],
+                blendColor: {
+                  hex: matchingTpvColour.hex,
+                  rgb: matchingTpvColour.rgb,
+                  lab: matchingTpvColour.lab
+                },
+                deltaE: 0,
+                quality: 'Perfect'
+              }
+            };
+          } else {
+            // Fallback: just update hex (shouldn't happen in solid mode)
+            return {
+              ...recipe,
+              targetColor: {
+                ...recipe.targetColor,
+                hex: edit.newHex
+              },
+              blendColor: {
+                ...recipe.blendColor,
+                hex: edit.newHex
+              }
+            };
+          }
         }
         return recipe;
       });
