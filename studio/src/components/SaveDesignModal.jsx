@@ -92,6 +92,9 @@ export default function SaveDesignModal({
       // Serialize design state
       const designData = serializeDesign(currentState);
 
+      console.log('[SAVE-MODAL] Serialized design data:', designData);
+      console.log('[SAVE-MODAL] SVG URL from serialized data:', designData.original_svg_url);
+
       // Prepare save payload
       const payload = {
         name: name.trim(),
@@ -101,6 +104,8 @@ export default function SaveDesignModal({
         is_public: isPublic,
         design_data: designData
       };
+
+      console.log('[SAVE-MODAL] Full save payload:', payload);
 
       // Add ID for updates
       if (existingDesignId) {

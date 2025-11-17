@@ -29,6 +29,11 @@ export function serializeDesign(state) {
     jobId
   } = state;
 
+  console.log('[SERIALIZE] Serializing design with result:', result);
+  console.log('[SERIALIZE] result.svg_url:', result?.svg_url);
+  console.log('[SERIALIZE] result.png_url:', result?.png_url);
+  console.log('[SERIALIZE] result.thumbnail_url:', result?.thumbnail_url);
+
   // Convert Maps to plain objects for JSON storage
   const serializeMap = (map) => {
     if (!map) return null;
@@ -104,7 +109,7 @@ export function deserializeDesign(savedData) {
     result: {
       svg_url: savedData.original_svg_url,
       png_url: savedData.original_png_url,
-      thumb_url: savedData.thumbnail_url
+      thumbnail_url: savedData.thumbnail_url
     },
 
     // Color recipes

@@ -69,7 +69,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   // Load design when loadedDesign prop changes
   useEffect(() => {
     if (loadedDesign) {
+      console.log('[INSPIRE] Loading design data:', loadedDesign);
       const restoredState = deserializeDesign(loadedDesign);
+      console.log('[INSPIRE] Restored state:', restoredState);
 
       // Restore all state
       setInputMode(restoredState.inputMode);

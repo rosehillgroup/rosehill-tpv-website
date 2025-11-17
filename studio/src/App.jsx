@@ -142,8 +142,12 @@ function App() {
   }, []);
 
   const handleLoadDesign = (design) => {
+    console.log('[APP] Loading design:', design);
+    console.log('[APP] Design original_svg_url:', design.original_svg_url);
+    console.log('[APP] Design ID:', design.id);
     setLoadedDesign(design);
     setCurrentDesignName(design.name);
+    console.log('[INSPIRE] Loaded design:', design.name);
   };
 
   const handleDesignSaved = (designName) => {
