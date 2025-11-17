@@ -100,28 +100,28 @@ export class SVGExtractor {
         ? dimensions.width * dimensions.height
         : 1000000; // Default if no dimensions found
 
-      // ===== PHASE 1: Normalize SVG colors to TPV palette =====
-      // Snap "too light" colors to nearest TPV colors
-      let normalizedSvg: string;
-      try {
-        normalizedSvg = this.normalizeSvgColors(svgText);
-        warnings.push('PHASE 1: Normalized SVG colors to TPV palette');
-      } catch (error) {
-        console.error(`[SVG] Error in normalizeSvgColors:`, error);
-        warnings.push(`WARNING: Color normalization failed - ${error.message}`);
-        normalizedSvg = svgText; // Fallback to original
-      }
-
-      // ===== PHASE 2: Extract colors from normalized SVG =====
+      // ===== PHASE 1: Extract colors from ORIGINAL SVG =====
+      // Extract first, then normalize the color map (not the entire SVG text)
       let colorCounts: Map<string, number>;
       try {
-        colorCounts = this.extractColors(normalizedSvg);
-        console.info(`[SVG] Extracted ${colorCounts.size} unique colors from normalized SVG`);
-        warnings.push(`PHASE 2: Extracted ${colorCounts.size} unique colors`);
+        colorCounts = this.extractColors(svgText);
+        console.info(`[SVG] Extracted ${colorCounts.size} unique colors from original SVG`);
+        warnings.push(`PHASE 1: Extracted ${colorCounts.size} unique colors`);
       } catch (error) {
         console.error(`[SVG] Error in extractColors:`, error);
         warnings.push(`ERROR: Color extraction failed - ${error.message}`);
         colorCounts = new Map();
+      }
+
+      // ===== PHASE 2: Normalize color map to TPV palette =====
+      // Snap "too light" colors to nearest TPV colors
+      try {
+        colorCounts = this.normalizeColorMap(colorCounts);
+        console.info(`[SVG] Normalized color map to TPV palette (${colorCounts.size} colors)`);
+        warnings.push(`PHASE 2: Normalized ${colorCounts.size} colors to TPV palette`);
+      } catch (error) {
+        console.error(`[SVG] Error in normalizeColorMap:`, error);
+        warnings.push(`WARNING: Color normalization failed - ${error.message}`);
       }
 
       // ===== PHASE 3: Global color collapse =====
@@ -845,8 +845,38 @@ export class SVGExtractor {
   }
 
   /**
+   * Normalize color map by snapping "too light" colors to nearest TPV colors
+   * Much more efficient than normalizing the entire SVG text
+   */
+  private normalizeColorMap(colorCounts: Map<string, number>): Map<string, number> {
+    console.info('[SVG] Normalizing color map to TPV palette...');
+    const normalized = new Map<string, number>();
+
+    for (const [hexColor, weight] of colorCounts.entries()) {
+      // Snap this color to TPV palette if needed
+      const snappedColor = this.snapToNearestTPVColor(hexColor);
+
+      // Accumulate weights for snapped colors
+      const existing = normalized.get(snappedColor) || 0;
+      normalized.set(snappedColor, existing + weight);
+
+      // Log if we snapped
+      if (snappedColor !== hexColor.toLowerCase()) {
+        const rgb = this.hexToRgb(hexColor);
+        const lab = this.rgbToLab(rgb);
+        const chroma = this.getChroma(lab);
+        console.info(`[SVG] Snapped ${hexColor} (L=${lab.L.toFixed(1)}, C=${chroma.toFixed(1)}) → ${snappedColor}`);
+      }
+    }
+
+    console.info(`[SVG] Normalized ${colorCounts.size} → ${normalized.size} colors`);
+    return normalized;
+  }
+
+  /**
    * Normalize SVG colors by snapping "too light" colors to nearest TPV colors
    * This ensures all colors in the SVG can actually be produced by TPV granules
+   * NOTE: This method is no longer used - we normalize the color map instead
    */
   private normalizeSvgColors(svgString: string): string {
     console.info('[SVG] Normalizing colors to TPV palette...');
