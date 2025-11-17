@@ -328,11 +328,15 @@ export default function InspirePanelRecraft() {
 
       // Update blendRecipes to reflect the new colors in the legend
       const updatedRecipes = blendRecipes.map(recipe => {
-        const edit = edits.get(recipe.targetColor.hex.toLowerCase());
+        const edit = edits.get(recipe.originalColor.hex.toLowerCase());
         if (edit?.newHex) {
-          // Update the blend color shown in the legend
+          // Update both target and blend colors to reflect the edit
           return {
             ...recipe,
+            targetColor: {
+              ...recipe.targetColor,
+              hex: edit.newHex
+            },
             blendColor: {
               ...recipe.blendColor,
               hex: edit.newHex
