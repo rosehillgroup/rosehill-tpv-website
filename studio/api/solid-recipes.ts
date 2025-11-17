@@ -8,7 +8,7 @@ const require = createRequire(import.meta.url);
 const tpvColours = require('./_utils/data/rosehill_tpv_21_colours.json');
 
 // Build version for cache busting
-const BUILD_VERSION = 'v3.9.0-solid-colors-20251117-1615';
+const BUILD_VERSION = 'v3.10.0-exact-tpv-hex-dedup-20251117-1700';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log('[SOLID-RECIPES] API Handler invoked - Solid TPV colors only');
@@ -101,13 +101,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const colorRecipes = solver.solve(color.lab, 1);
       const bestRecipe = colorRecipes[0];
 
-      // Calculate the blend color (will be 100% of single TPV color)
-      const blendComponents: BlendComponent[] = bestRecipe.components.map(c => ({
-        code: c.code,
-        pct: c.pct
-      }));
+      // Get the exact TPV color from palette (100% pure color)
+      const tpvColorCode = bestRecipe.components[0].code;
+      const exactTpvColor = tpvColours.find(col => col.code === tpvColorCode);
 
-      const blendColor = calculateBlendColor(blendComponents, tpvColours as TPVColor[]);
+      if (!exactTpvColor) {
+        console.error(`[SOLID-RECIPES] TPV color not found: ${tpvColorCode}`);
+        continue;
+      }
+
+      // Use exact TPV hex from palette (not calculated)
+      const tpvHex = exactTpvColor.hex;
+      const tpvRgb = exactTpvColor.rgb;
+      const tpvLab = exactTpvColor.lab;
 
       // Format recipe (should have exactly 1 component at 100%)
       const chosenRecipe = {
@@ -117,17 +123,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         deltaE: bestRecipe.deltaE,
         quality: bestRecipe.deltaE < 1.0 ? 'Excellent' : bestRecipe.deltaE < 3.0 ? 'Good' : 'Fair',
         resultRgb: bestRecipe.rgb,
-        components: bestRecipe.components.map(c => ({
-          code: c.code,
-          name: tpvColours.find(col => col.code === c.code)?.name || c.code,
-          weight: c.pct,
-          parts: bestRecipe.parts ? bestRecipe.parts[c.code] : 12
-        }))
+        components: [{
+          code: tpvColorCode,
+          name: exactTpvColor.name,
+          weight: 1.0,
+          parts: 12
+        }]
       };
 
-      console.log(`[SOLID-RECIPES]     Matched to: ${chosenRecipe.components[0].code} (${chosenRecipe.components[0].name}), ΔE ${bestRecipe.deltaE.toFixed(2)}`);
+      console.log(`[SOLID-RECIPES]     Matched to: ${tpvColorCode} (${exactTpvColor.name}), ΔE ${bestRecipe.deltaE.toFixed(2)}`);
 
-      // Pre-normalize: Use blendColor as targetColor
+      // Pre-normalize: Use exact TPV color as targetColor
       recipes.push({
         originalColor: {
           hex: rgbToHex(color.rgb),
@@ -136,28 +142,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           areaPct: color.areaPct
         },
         targetColor: {
-          hex: blendColor.hex,
-          rgb: blendColor.rgb,
-          lab: blendColor.lab,
+          hex: tpvHex,
+          rgb: tpvRgb,
+          lab: tpvLab,
           areaPct: color.areaPct
         },
         chosenRecipe,
         blendColor: {
-          hex: blendColor.hex,
-          rgb: blendColor.rgb,
-          lab: blendColor.lab
+          hex: tpvHex,
+          rgb: tpvRgb,
+          lab: tpvLab
         },
         alternativeRecipes: [] // No alternatives for solid colors
       });
     }
 
     const solveTime = Date.now() - solveStartTime;
+
+    // Deduplicate recipes - merge colors that map to the same TPV color
+    const tpvColorMap = new Map();
+    recipes.forEach(recipe => {
+      const tpvHex = recipe.targetColor.hex.toLowerCase();
+      if (tpvColorMap.has(tpvHex)) {
+        // Merge coverage percentages
+        const existing = tpvColorMap.get(tpvHex);
+        existing.targetColor.areaPct += recipe.targetColor.areaPct;
+        existing.blendColor.areaPct = existing.targetColor.areaPct;
+        console.log(`[SOLID-RECIPES] Merged duplicate ${tpvHex}, new coverage: ${existing.targetColor.areaPct.toFixed(1)}%`);
+      } else {
+        tpvColorMap.set(tpvHex, recipe);
+      }
+    });
+
+    const deduplicatedRecipes = Array.from(tpvColorMap.values());
     const totalTime = Date.now() - startTime;
 
-    console.log(`[SOLID-RECIPES] Matched ${recipes.length} colors to solid TPV in ${solveTime}ms (total: ${totalTime}ms)`);
+    console.log(`[SOLID-RECIPES] Matched ${recipes.length} colors to ${deduplicatedRecipes.length} unique TPV colors in ${solveTime}ms (total: ${totalTime}ms)`);
 
     // Format colors for response
-    const colors = recipes.map(recipe => ({
+    const colors = deduplicatedRecipes.map(recipe => ({
       hex: recipe.targetColor.hex,
       rgb: recipe.targetColor.rgb,
       lab: recipe.targetColor.lab,
@@ -167,9 +190,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       success: true,
       colors,
-      recipes,
+      recipes: deduplicatedRecipes,
       metadata: {
         colorsExtracted: extraction.palette.length,
+        uniqueTPVColors: deduplicatedRecipes.length,
         extractionTime,
         solveTime,
         totalTime,
