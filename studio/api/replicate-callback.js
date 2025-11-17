@@ -215,6 +215,12 @@ async function handleSuccess(res, supabase, job, output, prediction_id) {
     return handleRecraftSuccess(res, supabase, job, output);
   }
 
+  // === RECRAFT VECTORIZE MODE HANDLER (Image → SVG) ===
+  if (job.mode_type === 'recraft_vectorize') {
+    console.log(`[WEBHOOK] Job ${job.id} succeeded (Recraft vectorize mode)`);
+    return handleRecraftSuccess(res, supabase, job, output);
+  }
+
   // === MOOD BOARD / FLUX DEV / SIMPLE MODE HANDLER (Single-Pass) ===
   if (mode === 'simple' || mode === 'flux_dev' || mode === 'mood_board') {
     console.log(`[WEBHOOK] Job ${job.id} succeeded (${mode} mode)`);

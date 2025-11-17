@@ -42,6 +42,70 @@ class APIClient {
   }
 
   /**
+   * Vectorize raster image using Recraft AI
+   * @param {object} request - Vectorization request
+   * @param {string} request.image_url - URL to uploaded raster image (PNG/JPG)
+   * @param {number} request.width_mm - Surface width in mm
+   * @param {number} request.length_mm - Surface length in mm
+   * @param {number} request.seed - Optional seed
+   * @returns {Promise} { success, jobId, status, estimatedDuration }
+   */
+  async vectorizeImage(request) {
+    const payload = {
+      image_url: request.image_url,
+      width_mm: request.width_mm || 5000,
+      length_mm: request.length_mm || 5000,
+      seed: request.seed || null
+    };
+
+    const response = await fetch('/api/recraft-vectorize', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Vectorization failed');
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Process uploaded SVG file directly (no AI generation)
+   * @param {object} request - Processing request
+   * @param {string} request.svg_url - URL to uploaded SVG file
+   * @param {number} request.width_mm - Surface width in mm
+   * @param {number} request.length_mm - Surface length in mm
+   * @returns {Promise} { success, jobId, status, svgUrl }
+   */
+  async processUploadedSVG(request) {
+    const payload = {
+      svg_url: request.svg_url,
+      width_mm: request.width_mm || 5000,
+      length_mm: request.length_mm || 5000
+    };
+
+    const response = await fetch('/api/process-uploaded-svg', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'SVG processing failed');
+    }
+
+    return response.json();
+  }
+
+  /**
    * Get Recraft job status with enhanced retry/compliance info
    * @param {string} jobId - Job ID
    * @returns {Promise} Status object with recraft-specific fields

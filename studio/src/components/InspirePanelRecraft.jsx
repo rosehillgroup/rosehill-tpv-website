@@ -10,12 +10,20 @@ import ColorEditorPanel from './ColorEditorPanel.jsx';
 import { buildColorMapping } from '../utils/colorMapping.js';
 import { recolorSVG } from '../utils/svgRecolor.js';
 import { mapDimensionsToRecraft, getLayoutDescription, needsLayoutWarning } from '../utils/aspectRatioMapping.js';
+import { uploadFile, validateFile } from '../lib/supabase/uploadFile.js';
 
 export default function InspirePanelRecraft() {
+  // Input mode state - three options: prompt, image, svg
+  const [inputMode, setInputMode] = useState('prompt'); // 'prompt', 'image', 'svg'
+
   // Form state
   const [prompt, setPrompt] = useState('');
   const [lengthMM, setLengthMM] = useState(5000);
   const [widthMM, setWidthMM] = useState(5000);
+
+  // File upload state
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(null);
 
   // Aspect ratio mapping
   const [arMapping, setArMapping] = useState(null);
@@ -39,7 +47,7 @@ export default function InspirePanelRecraft() {
   const [showFinalRecipes, setShowFinalRecipes] = useState(false);
 
   // Solid color mode state
-  const [viewMode, setViewMode] = useState('blend'); // 'blend' or 'solid'
+  const [viewMode, setViewMode] = useState('solid'); // 'blend' or 'solid' - default to solid
   const [solidRecipes, setSolidRecipes] = useState(null);
   const [solidSvgUrl, setSolidSvgUrl] = useState(null);
   const [solidColorMapping, setSolidColorMapping] = useState(null);
@@ -50,10 +58,44 @@ export default function InspirePanelRecraft() {
   const [selectedColor, setSelectedColor] = useState(null);
   const [editedColors, setEditedColors] = useState(new Map()); // originalHex -> {newHex, recipe}
 
-  // Handle form submission
+  // Handle file selection
+  const handleFileSelect = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setSelectedFile(null);
+      return;
+    }
+
+    // Validate file type based on input mode
+    const allowedTypes = inputMode === 'image'
+      ? ['image/png', 'image/jpeg']
+      : ['image/svg+xml'];
+
+    const validation = validateFile(file, {
+      maxSizeMB: 10,
+      allowedTypes
+    });
+
+    if (!validation.valid) {
+      setError(validation.error);
+      setSelectedFile(null);
+      return;
+    }
+
+    setSelectedFile(file);
+    setError(null);
+  };
+
+  // Handle form submission - supports all three input modes
   const handleGenerate = async () => {
-    if (!prompt.trim()) {
+    // Validate inputs based on mode
+    if (inputMode === 'prompt' && !prompt.trim()) {
       setError('Please enter a design description');
+      return;
+    }
+
+    if ((inputMode === 'image' || inputMode === 'svg') && !selectedFile) {
+      setError('Please select a file to upload');
       return;
     }
 
@@ -66,29 +108,105 @@ export default function InspirePanelRecraft() {
     setAttemptInfo(null);
 
     try {
-      // Map dimensions to canonical Recraft aspect ratio
-      const mapping = mapDimensionsToRecraft(lengthMM, widthMM);
-      setArMapping(mapping);
+      let response;
 
-      console.log('[TPV-STUDIO] AR Mapping:', mapping);
-      console.log('[TPV-STUDIO] Layout:', getLayoutDescription(mapping));
+      // MODE: Upload SVG (fast path - no AI generation)
+      if (inputMode === 'svg') {
+        setProgressMessage('Uploading SVG file...');
+        setUploadProgress('Uploading...');
 
-      // Update progress message with layout info
-      if (needsLayoutWarning(mapping)) {
-        setProgressMessage(`Generating ${mapping.canonical.name} design panel...`);
-      } else {
-        setProgressMessage('Initializing...');
+        // Upload to Supabase
+        const uploadResult = await uploadFile(selectedFile);
+        if (!uploadResult.success) {
+          throw new Error(uploadResult.error || 'Failed to upload file');
+        }
+
+        setProgressMessage('Processing SVG...');
+        setUploadProgress(null);
+
+        // Call process-uploaded-svg API
+        response = await apiClient.processUploadedSVG({
+          svg_url: uploadResult.url,
+          width_mm: widthMM,
+          length_mm: lengthMM
+        });
+
+        if (!response.success) {
+          throw new Error(response.error || 'Failed to process SVG');
+        }
+
+        // SVG uploads complete immediately
+        setJobId(response.jobId);
+        setProgressMessage('✓ SVG uploaded successfully!');
+        setGenerating(false);
+
+        // Fetch job status to get SVG URL
+        const finalStatus = await apiClient.getRecraftStatus(response.jobId);
+        setStatus(finalStatus);
+        setResult(finalStatus.result);
+
+        // Auto-generate TPV blend recipes
+        if (finalStatus.result?.svg_url) {
+          await handleGenerateBlends(finalStatus.result.svg_url, response.jobId);
+        }
+        return;
       }
 
-      // Create job with canonical dimensions
-      const response = await apiClient.generateRecraft({
-        prompt: prompt.trim(),
-        lengthMM: mapping.recraft.height,  // Note: Recraft uses height as length
-        widthMM: mapping.recraft.width
-      });
+      // MODE: Upload Image (vectorize then process)
+      if (inputMode === 'image') {
+        setProgressMessage('Uploading image...');
+        setUploadProgress('Uploading...');
 
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to start generation');
+        // Upload to Supabase
+        const uploadResult = await uploadFile(selectedFile);
+        if (!uploadResult.success) {
+          throw new Error(uploadResult.error || 'Failed to upload file');
+        }
+
+        setProgressMessage('Starting vectorization...');
+        setUploadProgress(null);
+
+        // Call recraft-vectorize API
+        response = await apiClient.vectorizeImage({
+          image_url: uploadResult.url,
+          width_mm: widthMM,
+          length_mm: lengthMM
+        });
+
+        if (!response.success) {
+          throw new Error(response.error || 'Failed to start vectorization');
+        }
+
+        setProgressMessage('🎨 AI is vectorizing your image...');
+      }
+      // MODE: Text Prompt (existing Recraft generation)
+      else {
+        // Map dimensions to canonical Recraft aspect ratio
+        const mapping = mapDimensionsToRecraft(lengthMM, widthMM);
+        setArMapping(mapping);
+
+        console.log('[TPV-STUDIO] AR Mapping:', mapping);
+        console.log('[TPV-STUDIO] Layout:', getLayoutDescription(mapping));
+
+        // Update progress message with layout info
+        if (needsLayoutWarning(mapping)) {
+          setProgressMessage(`Generating ${mapping.canonical.name} design panel...`);
+        } else {
+          setProgressMessage('Initializing...');
+        }
+
+        // Create job with canonical dimensions
+        response = await apiClient.generateRecraft({
+          prompt: prompt.trim(),
+          lengthMM: mapping.recraft.height,  // Note: Recraft uses height as length
+          widthMM: mapping.recraft.width
+        });
+
+        if (!response.success) {
+          throw new Error(response.error || 'Failed to start generation');
+        }
+
+        setProgressMessage('🎨 AI is creating your design...');
       }
 
       setJobId(response.jobId);
@@ -156,6 +274,7 @@ export default function InspirePanelRecraft() {
   // Handle new generation (reset state)
   const handleNewGeneration = () => {
     setPrompt('');
+    setSelectedFile(null);
     setGenerating(false);
     setJobId(null);
     setStatus(null);
@@ -172,6 +291,12 @@ export default function InspirePanelRecraft() {
     setColorEditorOpen(false);
     setSelectedColor(null);
     setEditedColors(new Map());
+    // Reset solid mode state
+    setViewMode('solid'); // Reset to default (solid mode)
+    setSolidRecipes(null);
+    setSolidSvgUrl(null);
+    setSolidColorMapping(null);
+    setShowSolidSummary(false);
   };
 
   // Download TPV Blend SVG
@@ -551,20 +676,108 @@ export default function InspirePanelRecraft() {
         <p className="subtitle">AI-powered vector designs for playground surfacing</p>
       </div>
 
+      {/* Input Mode Tabs */}
+      <div className="input-mode-tabs">
+        <button
+          className={`input-mode-tab ${inputMode === 'prompt' ? 'active' : ''}`}
+          onClick={() => {
+            setInputMode('prompt');
+            setSelectedFile(null);
+            setError(null);
+          }}
+          disabled={generating}
+        >
+          <span className="mode-title">Text Prompt</span>
+          <span className="mode-description">Describe your design</span>
+        </button>
+        <button
+          className={`input-mode-tab ${inputMode === 'image' ? 'active' : ''}`}
+          onClick={() => {
+            setInputMode('image');
+            setPrompt('');
+            setError(null);
+          }}
+          disabled={generating}
+        >
+          <span className="mode-title">Upload Image</span>
+          <span className="mode-description">Vectorize PNG/JPG</span>
+        </button>
+        <button
+          className={`input-mode-tab ${inputMode === 'svg' ? 'active' : ''}`}
+          onClick={() => {
+            setInputMode('svg');
+            setPrompt('');
+            setError(null);
+          }}
+          disabled={generating}
+        >
+          <span className="mode-title">Upload SVG</span>
+          <span className="mode-description">Process existing vector</span>
+        </button>
+      </div>
+
       {/* Input Form */}
       <div className="form-section">
-        <div className="form-group">
-          <label htmlFor="prompt">Design Description</label>
-          <textarea
-            id="prompt"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="e.g., calm ocean theme with big fish silhouettes and waves"
-            rows={4}
-            disabled={generating}
-            className="prompt-input"
-          />
-        </div>
+        {/* Text Prompt Mode */}
+        {inputMode === 'prompt' && (
+          <div className="form-group">
+            <label htmlFor="prompt">Design Description</label>
+            <textarea
+              id="prompt"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="e.g., calm ocean theme with big fish silhouettes and waves"
+              rows={4}
+              disabled={generating}
+              className="prompt-input"
+            />
+            <p className="helper-text">
+              Describe the design you want to generate. The AI will create a vector illustration based on your description.
+            </p>
+          </div>
+        )}
+
+        {/* Image Upload Mode */}
+        {inputMode === 'image' && (
+          <div className="form-group">
+            <label htmlFor="image-upload">Upload Image (PNG/JPG)</label>
+            <input
+              id="image-upload"
+              type="file"
+              accept="image/png,image/jpeg"
+              onChange={handleFileSelect}
+              disabled={generating}
+              className="file-input"
+            />
+            {selectedFile && (
+              <p className="file-selected">Selected: {selectedFile.name}</p>
+            )}
+            <p className="helper-text">
+              Upload a raster image (PNG or JPG). The AI will convert it to vector format (SVG) suitable for TPV surfacing.
+            </p>
+          </div>
+        )}
+
+        {/* SVG Upload Mode */}
+        {inputMode === 'svg' && (
+          <div className="form-group">
+            <label htmlFor="svg-upload">Upload SVG File</label>
+            <input
+              id="svg-upload"
+              type="file"
+              accept="image/svg+xml"
+              onChange={handleFileSelect}
+              disabled={generating}
+              className="file-input"
+            />
+            {selectedFile && (
+              <p className="file-selected">Selected: {selectedFile.name}</p>
+            )}
+            <p className="helper-text">
+              Upload an existing SVG vector file. It will be processed immediately for TPV color matching - no AI generation needed.
+            </p>
+          </div>
+        )}
 
         <div className="form-row">
           <div className="form-group">
@@ -603,13 +816,32 @@ export default function InspirePanelRecraft() {
           </div>
         )}
 
+        {/* Upload Progress */}
+        {uploadProgress && (
+          <div className="upload-progress">
+            <p>{uploadProgress}</p>
+          </div>
+        )}
+
         {/* Generate Button */}
         <button
           onClick={handleGenerate}
-          disabled={generating || !prompt.trim()}
+          disabled={
+            generating ||
+            (inputMode === 'prompt' && !prompt.trim()) ||
+            ((inputMode === 'image' || inputMode === 'svg') && !selectedFile)
+          }
           className="generate-button"
         >
-          {generating ? 'Generating...' : 'Generate Vector Design'}
+          {generating
+            ? (inputMode === 'svg' ? 'Processing...' : 'Generating...')
+            : (inputMode === 'prompt'
+                ? 'Generate Vector Design'
+                : inputMode === 'image'
+                  ? 'Vectorize & Process'
+                  : 'Process SVG'
+              )
+          }
         </button>
       </div>
 
@@ -666,13 +898,6 @@ export default function InspirePanelRecraft() {
           {blendSvgUrl && blendRecipes && (
             <div className="mode-tabs">
               <button
-                className={`mode-tab ${viewMode === 'blend' ? 'active' : ''}`}
-                onClick={() => setViewMode('blend')}
-              >
-                <span className="mode-title">Blend Mode</span>
-                <span className="mode-description">Mixed TPV granules</span>
-              </button>
-              <button
                 className={`mode-tab ${viewMode === 'solid' ? 'active' : ''}`}
                 onClick={() => setViewMode('solid')}
                 disabled={!solidSvgUrl}
@@ -681,6 +906,13 @@ export default function InspirePanelRecraft() {
                 <span className="mode-description">
                   {solidSvgUrl ? 'Single TPV colors only' : 'Generating...'}
                 </span>
+              </button>
+              <button
+                className={`mode-tab ${viewMode === 'blend' ? 'active' : ''}`}
+                onClick={() => setViewMode('blend')}
+              >
+                <span className="mode-title">Blend Mode</span>
+                <span className="mode-description">Advanced: Mixed granules</span>
               </button>
             </div>
           )}
@@ -808,6 +1040,102 @@ export default function InspirePanelRecraft() {
         .subtitle {
           color: #666;
           font-size: 0.9rem;
+        }
+
+        /* Input Mode Tabs */
+        .input-mode-tabs {
+          display: flex;
+          gap: 0.75rem;
+          margin-bottom: 1.5rem;
+          background: #f9f9f9;
+          padding: 0.5rem;
+          border-radius: 8px;
+        }
+
+        .input-mode-tab {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.25rem;
+          padding: 1rem;
+          background: white;
+          border: 2px solid #ddd;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .input-mode-tab:hover:not(:disabled) {
+          border-color: #1a365d;
+          transform: translateY(-2px);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-mode-tab.active {
+          background: #f0f7ff;
+          border-color: #1a365d;
+          box-shadow: 0 0 0 2px rgba(26, 54, 93, 0.2);
+        }
+
+        .input-mode-tab:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .input-mode-tab .mode-title {
+          font-size: 1rem;
+          font-weight: 600;
+          color: #1a365d;
+        }
+
+        .input-mode-tab .mode-description {
+          font-size: 0.85rem;
+          color: #666;
+        }
+
+        .input-mode-tab.active .mode-title {
+          color: #1a365d;
+        }
+
+        /* Helper text */
+        .helper-text {
+          margin-top: 0.5rem;
+          font-size: 0.85rem;
+          color: #666;
+          font-style: italic;
+        }
+
+        /* File input styling */
+        .file-input {
+          width: 100%;
+          padding: 0.75rem;
+          border: 2px dashed #ddd;
+          border-radius: 4px;
+          cursor: pointer;
+          background: white;
+        }
+
+        .file-input:hover {
+          border-color: #1a365d;
+          background: #f9f9f9;
+        }
+
+        .file-selected {
+          margin-top: 0.5rem;
+          font-size: 0.9rem;
+          color: #1a365d;
+          font-weight: 500;
+        }
+
+        .upload-progress {
+          padding: 0.75rem;
+          background: #f0f7ff;
+          border: 1px solid #cce5ff;
+          border-radius: 4px;
+          color: #1a365d;
+          margin-bottom: 1rem;
+          text-align: center;
         }
 
         .form-section {
