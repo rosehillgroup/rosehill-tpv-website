@@ -286,13 +286,21 @@ export class SVGExtractor {
 
     // Extract colors from gradient stop-color attributes
     const stopColorMatches = svgText.matchAll(/stop-color=["']([^"']+)["']/gi);
+    let gradientStopCount = 0;
+    let gradientStopParsed = 0;
     for (const match of stopColorMatches) {
-      const color = this.normalizeColor(match[1]);
+      gradientStopCount++;
+      const rawColor = match[1];
+      const color = this.normalizeColor(rawColor);
       if (color) {
-        // Gradient colors are important visual components
-        colorCounts.set(color, (colorCounts.get(color) || 0) + 1);
+        gradientStopParsed++;
+        // Gradient colors are important visual components - weight them higher
+        colorCounts.set(color, (colorCounts.get(color) || 0) + 10);
+      } else {
+        console.warn(`[SVG] Failed to parse stop-color: "${rawColor}"`);
       }
     }
+    console.info(`[SVG] Found ${gradientStopCount} gradient stops, parsed ${gradientStopParsed} colors`);
 
     // If no colors found, try to extract from CSS in <style> tags
     const cssStyleMatches = svgText.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi);
@@ -350,13 +358,15 @@ export class SVGExtractor {
       return trimmed;
     }
 
-    // RGB format: rgb(255, 255, 255)
+    // RGB format: rgb(255, 255, 255) or rgb(255,255,255)
     const rgbMatch = trimmed.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
     if (rgbMatch) {
       const r = parseInt(rgbMatch[1], 10);
       const g = parseInt(rgbMatch[2], 10);
       const b = parseInt(rgbMatch[3], 10);
-      return this.rgbToHex({ R: r, G: g, B: b });
+      const hex = this.rgbToHex({ R: r, G: g, B: b });
+      // console.info(`[SVG] Parsed rgb(${r},${g},${b}) -> ${hex}`);
+      return hex;
     }
 
     // Named colors (basic set)
