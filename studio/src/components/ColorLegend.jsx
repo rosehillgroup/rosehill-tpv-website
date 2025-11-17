@@ -32,7 +32,7 @@ export default function ColorLegend({
               if (onColorClick) {
                 onColorClick({
                   hex: recipe.targetColor.hex,
-                  originalHex: recipe.targetColor.hex,
+                  originalHex: recipe.originalColor.hex, // Use cluster centroid for mapping key
                   blendHex: recipe.blendColor.hex,
                   areaPct: recipe.targetColor.areaPct,
                   recipe: recipe.chosenRecipe,

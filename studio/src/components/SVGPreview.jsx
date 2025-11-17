@@ -57,8 +57,8 @@ export default function SVGPreview({
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
 
-        // Parse selected color (hex to RGB) - use originalHex for better matching
-        const targetHex = selectedColor.originalHex || selectedColor.hex;
+        // Parse selected color (hex to RGB) - use current hex (could be edited)
+        const targetHex = selectedColor.hex; // Use current displayed color for highlighting
         const targetRgb = hexToRgb(targetHex);
         console.log('[SVGPreview] Target color:', targetHex, targetRgb);
 
@@ -252,7 +252,7 @@ export default function SVGPreview({
       // Call onColorClick with the same data format as ColorLegend
       onColorClick({
         hex: matchedRecipe.targetColor.hex,
-        originalHex: matchedRecipe.targetColor.hex,
+        originalHex: matchedRecipe.originalColor.hex, // Use cluster centroid for mapping key
         blendHex: matchedRecipe.blendColor.hex,
         areaPct: matchedRecipe.targetColor.areaPct,
         recipe: matchedRecipe.chosenRecipe,
