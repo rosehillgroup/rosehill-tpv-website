@@ -74,7 +74,7 @@ export async function listProjects() {
 export async function updateProject(projectId, updates) {
   const headers = await getAuthHeaders();
 
-  const response = await fetch(`/api/projects/${projectId}`, {
+  const response = await fetch(`/api/projects/by-id?id=${projectId}`, {
     method: 'PUT',
     headers,
     body: JSON.stringify(updates)
@@ -96,7 +96,7 @@ export async function updateProject(projectId, updates) {
 export async function deleteProject(projectId) {
   const headers = await getAuthHeaders();
 
-  const response = await fetch(`/api/projects/${projectId}`, {
+  const response = await fetch(`/api/projects/by-id?id=${projectId}`, {
     method: 'DELETE',
     headers
   });

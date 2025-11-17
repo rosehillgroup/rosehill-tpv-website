@@ -88,7 +88,7 @@ export async function listDesigns({ project_id, limit = 50, offset = 0, search }
 export async function loadDesign(designId) {
   const headers = await getAuthHeaders();
 
-  const response = await fetch(`/api/designs/${designId}`, {
+  const response = await fetch(`/api/designs/by-id?id=${designId}`, {
     method: 'GET',
     headers
   });
@@ -110,7 +110,7 @@ export async function loadDesign(designId) {
 export async function updateDesign(designId, updates) {
   const headers = await getAuthHeaders();
 
-  const response = await fetch(`/api/designs/${designId}`, {
+  const response = await fetch(`/api/designs/by-id?id=${designId}`, {
     method: 'PUT',
     headers,
     body: JSON.stringify(updates)
@@ -132,7 +132,7 @@ export async function updateDesign(designId, updates) {
 export async function deleteDesign(designId) {
   const headers = await getAuthHeaders();
 
-  const response = await fetch(`/api/designs/${designId}`, {
+  const response = await fetch(`/api/designs/by-id?id=${designId}`, {
     method: 'DELETE',
     headers
   });
