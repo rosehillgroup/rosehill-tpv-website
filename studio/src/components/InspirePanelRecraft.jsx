@@ -792,16 +792,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         });
       }
 
-      // Fetch and recolor SVG
-      const svgResponse = await fetch(svgUrl);
-      const svgString = await svgResponse.text();
-      const recoloredSvg = recolorSVG(svgString, updatedMapping, 'blend');
+      // Recolor SVG (recolorSVG fetches the URL itself)
+      const { dataUrl } = await recolorSVG(svgUrl, updatedMapping);
 
-      // Create blob URL
-      const blob = new Blob([recoloredSvg], { type: 'image/svg+xml' });
-      const blobUrl = URL.createObjectURL(blob);
-
-      setBlendSvgUrl(blobUrl);
+      setBlendSvgUrl(dataUrl);
       console.log('[INSPIRE] Blend SVG regenerated');
     } catch (err) {
       console.error('[INSPIRE] Failed to regenerate blend SVG:', err);
@@ -827,16 +821,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         });
       }
 
-      // Fetch and recolor SVG
-      const svgResponse = await fetch(svgUrl);
-      const svgString = await svgResponse.text();
-      const recoloredSvg = recolorSVG(svgString, updatedMapping, 'solid');
+      // Recolor SVG (recolorSVG fetches the URL itself)
+      const { dataUrl } = await recolorSVG(svgUrl, updatedMapping);
 
-      // Create blob URL
-      const blob = new Blob([recoloredSvg], { type: 'image/svg+xml' });
-      const blobUrl = URL.createObjectURL(blob);
-
-      setSolidSvgUrl(blobUrl);
+      setSolidSvgUrl(dataUrl);
       console.log('[INSPIRE] Solid SVG regenerated');
     } catch (err) {
       console.error('[INSPIRE] Failed to regenerate solid SVG:', err);
