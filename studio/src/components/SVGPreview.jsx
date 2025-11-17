@@ -57,8 +57,8 @@ export default function SVGPreview({
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
         const data = imageData.data;
 
-        // Parse selected color (hex to RGB)
-        const targetHex = selectedColor.blendHex || selectedColor.hex;
+        // Parse selected color (hex to RGB) - use originalHex for better matching
+        const targetHex = selectedColor.originalHex || selectedColor.hex;
         const targetRgb = hexToRgb(targetHex);
         console.log('[SVGPreview] Target color:', targetHex, targetRgb);
 
@@ -145,7 +145,7 @@ export default function SVGPreview({
 
   // Helper: Check if colors match (with tolerance)
   const colorMatches = (r, g, b, target) => {
-    const tolerance = 15; // Allow small variations
+    const tolerance = 50; // Large tolerance for gradient/collapsed colors
     return (
       Math.abs(r - target.r) <= tolerance &&
       Math.abs(g - target.g) <= tolerance &&
@@ -227,7 +227,8 @@ export default function SVGPreview({
     let bestMatch = Infinity;
 
     for (const recipe of recipes) {
-      const targetHex = recipe.blendColor?.hex || recipe.targetColor.hex;
+      // Use targetColor (collapsed SVG color) for better matching
+      const targetHex = recipe.targetColor.hex;
       const targetRgb = hexToRgb(targetHex);
 
       if (colorMatches(clickedColor.r, clickedColor.g, clickedColor.b, targetRgb)) {
