@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { ChromePicker } from 'react-color';
+import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 
 export default function ColorEditorPanel({
   color,           // {hex, rgb, lab, areaPct, originalHex}
@@ -36,6 +37,15 @@ export default function ColorEditorPanel({
       if (onColorChange) {
         onColorChange(color.originalHex);
       }
+    }
+  };
+
+  // Handle TPV color selection
+  const handleTpvColorClick = (tpvColor) => {
+    const newHex = tpvColor.hex;
+    setSelectedHex(newHex);
+    if (onColorChange) {
+      onColorChange(newHex);
     }
   };
 
@@ -87,9 +97,36 @@ export default function ColorEditorPanel({
           </div>
         </div>
 
-        {/* Colour Picker */}
+        {/* TPV Colour Palette */}
+        <div className="tpv-palette-section">
+          <h4>Standard TPV Colours</h4>
+          <p className="palette-description">
+            Select a pure TPV colour (no blending required)
+          </p>
+          <div className="tpv-color-grid">
+            {tpvColours.map((tpvColor) => (
+              <div
+                key={tpvColor.code}
+                className={`tpv-color-item ${selectedHex.toLowerCase() === tpvColor.hex.toLowerCase() ? 'selected' : ''}`}
+                onClick={() => handleTpvColorClick(tpvColor)}
+                title={`${tpvColor.code} - ${tpvColor.name}`}
+              >
+                <div
+                  className="tpv-color-swatch"
+                  style={{ backgroundColor: tpvColor.hex }}
+                />
+                <span className="tpv-color-code">{tpvColor.code}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Custom Colour Picker */}
         <div className="picker-section">
-          <h4>Choose Colour</h4>
+          <h4>Custom Colour</h4>
+          <p className="picker-description">
+            Choose any colour (may require blending)
+          </p>
           <ChromePicker
             color={selectedHex}
             onChange={handleColorChange}
@@ -231,16 +268,92 @@ export default function ColorEditorPanel({
           color: #333;
         }
 
+        /* TPV Palette Section */
+        .tpv-palette-section {
+          margin-bottom: 2rem;
+          padding: 1rem;
+          background: #f9f9f9;
+          border-radius: 6px;
+        }
+
+        .tpv-palette-section h4 {
+          margin: 0 0 0.5rem 0;
+          color: #1a365d;
+          font-size: 1rem;
+          font-weight: 600;
+        }
+
+        .palette-description {
+          margin: 0 0 1rem 0;
+          font-size: 0.85rem;
+          color: #666;
+        }
+
+        .tpv-color-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 0.75rem;
+        }
+
+        .tpv-color-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.4rem;
+          padding: 0.5rem;
+          border: 2px solid transparent;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.2s;
+          background: white;
+        }
+
+        .tpv-color-item:hover {
+          border-color: #ff6b35;
+          transform: translateY(-2px);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .tpv-color-item.selected {
+          border-color: #ff6b35;
+          background: #fff5f0;
+          box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.2);
+        }
+
+        .tpv-color-swatch {
+          width: 100%;
+          height: 50px;
+          border-radius: 4px;
+          border: 1px solid rgba(0, 0, 0, 0.1);
+          box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .tpv-color-code {
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: #1a365d;
+          font-family: 'Courier New', monospace;
+        }
+
         /* Picker Section */
         .picker-section {
           margin-bottom: 1rem;
+          padding: 1rem;
+          background: #f9f9f9;
+          border-radius: 6px;
         }
 
         .picker-section h4 {
-          margin: 0 0 1rem 0;
-          color: #333;
+          margin: 0 0 0.5rem 0;
+          color: #1a365d;
           font-size: 1rem;
           font-weight: 600;
+        }
+
+        .picker-description {
+          margin: 0 0 1rem 0;
+          font-size: 0.85rem;
+          color: #666;
         }
 
         .picker-section :global(.chrome-picker) {
@@ -269,6 +382,19 @@ export default function ColorEditorPanel({
         @media (max-width: 768px) {
           .color-editor-panel {
             width: 100%;
+          }
+
+          .tpv-color-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+          }
+
+          .tpv-color-swatch {
+            height: 40px;
+          }
+
+          .tpv-color-code {
+            font-size: 0.7rem;
           }
         }
       `}</style>
