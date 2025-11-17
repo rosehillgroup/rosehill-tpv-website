@@ -148,6 +148,9 @@ export default function ColorEditorPanel({
               In solid mode, you can only select from the standard TPV colours above.
               Custom colours require blending - switch to Blend Mode for full colour customisation.
             </p>
+            <button onClick={handleReset} className="reset-button">
+              Reset to Original Colour
+            </button>
           </div>
         )}
       </div>

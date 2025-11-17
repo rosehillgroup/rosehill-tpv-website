@@ -190,18 +190,13 @@
 
 /* ===== Layout Components ===== */
 
-/* Header - Minimal sticky header */
+/* Header - Simple header (not sticky for maximum editing space) */
 .tpv-studio__header {
   background: var(--color-bg-card);
   color: var(--color-text-primary);
   padding: var(--space-3) var(--space-4);
   box-shadow: var(--shadow-sm);
   border-bottom: 1px solid var(--color-border);
-  position: sticky;
-  top: 0;
-  z-index: var(--z-sticky);
-  backdrop-filter: blur(8px);
-  background-color: rgba(255, 255, 255, 0.95);
 }
 
 .tpv-studio__header h1 {
