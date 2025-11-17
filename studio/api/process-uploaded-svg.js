@@ -123,6 +123,11 @@ export default async function handler(req, res) {
       compliant: true, // Assume user's SVG is valid (will be validated in color extraction)
       all_attempt_urls: [svg_url],
       inspector_final_reasons: [],
+      outputs: {
+        svg_url: svg_url, // Frontend expects result.svg_url
+        png_url: null, // No PNG for uploaded SVGs
+        thumbnail_url: null
+      },
       metadata: {
         source_svg_url: svg_url,
         upload_type: 'direct_svg',
