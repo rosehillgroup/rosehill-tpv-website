@@ -707,64 +707,23 @@ export class SVGExtractor {
 
     console.info(`[SVG] Enforcing ${maxColors}-color palette cap (currently ${colours.length} colors)...`);
 
-    // Convert to mutable array with LAB values for distance calculations
-    let workingColors = colours.map(color => ({
-      ...color,
-      lab: this.rgbToLab(color.rgb)
-    }));
+    // Since we already did global collapse with ΔE ≤ 5, the colors are perceptually distinct
+    // Just take the top N colors by coverage (fast, O(n log n))
+    const topColors = colours
+      .sort((a, b) => b.percentage - a.percentage)
+      .slice(0, maxColors);
 
-    // Iteratively merge closest pairs until we're at or below maxColors
-    while (workingColors.length > maxColors) {
-      let minDeltaE = Infinity;
-      let mergeIndexA = -1;
-      let mergeIndexB = -1;
+    const droppedCoverage = colours
+      .slice(maxColors)
+      .reduce((sum, c) => sum + c.percentage, 0);
 
-      // Find the two closest colors
-      for (let i = 0; i < workingColors.length; i++) {
-        for (let j = i + 1; j < workingColors.length; j++) {
-          const dE = this.calculateDeltaE(workingColors[i].lab, workingColors[j].lab);
+    console.info(
+      `[SVG] Kept top ${topColors.length} colors by coverage ` +
+      `(${topColors.reduce((sum, c) => sum + c.percentage, 0).toFixed(1)}% total), ` +
+      `dropped ${colours.length - maxColors} colors (${droppedCoverage.toFixed(1)}% coverage)`
+    );
 
-          if (dE < minDeltaE) {
-            minDeltaE = dE;
-            mergeIndexA = i;
-            mergeIndexB = j;
-          }
-        }
-      }
-
-      // Merge the two closest colors
-      if (mergeIndexA >= 0 && mergeIndexB >= 0) {
-        const colorA = workingColors[mergeIndexA];
-        const colorB = workingColors[mergeIndexB];
-
-        // Keep the color with higher coverage, combine percentages
-        const merged = colorA.percentage >= colorB.percentage ? colorA : colorB;
-        merged.percentage = colorA.percentage + colorB.percentage;
-        merged.pixels = colorA.pixels + colorB.pixels;
-
-        console.info(
-          `[SVG]   Merging ${this.rgbToHex(colorA.rgb)} (${colorA.percentage.toFixed(1)}%) ` +
-          `with ${this.rgbToHex(colorB.rgb)} (${colorB.percentage.toFixed(1)}%) ` +
-          `(ΔE=${minDeltaE.toFixed(2)}) → ${this.rgbToHex(merged.rgb)} (${merged.percentage.toFixed(1)}%)`
-        );
-
-        // Remove both colors and add merged color
-        workingColors = workingColors.filter((_, idx) => idx !== mergeIndexA && idx !== mergeIndexB);
-        workingColors.push(merged);
-
-        // Re-sort by percentage
-        workingColors.sort((a, b) => b.percentage - a.percentage);
-      } else {
-        // Shouldn't happen, but break to avoid infinite loop
-        console.error('[SVG] Failed to find colors to merge');
-        break;
-      }
-    }
-
-    console.info(`[SVG] Palette reduced to ${workingColors.length} colors`);
-
-    // Remove LAB values before returning
-    return workingColors.map(({ lab, ...color }) => color);
+    return topColors;
   }
 
   /**
