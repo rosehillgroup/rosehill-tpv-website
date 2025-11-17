@@ -13,8 +13,9 @@ export function buildColorMapping(recipes) {
   const colorMap = new Map();
 
   for (const recipe of recipes) {
-    const originalHex = recipe.targetColor.hex.toLowerCase();
-    const blendHex = recipe.blendColor.hex.toLowerCase();
+    // Map originalColor (cluster centroid) to targetColor (pre-normalized blend)
+    const originalHex = recipe.originalColor.hex.toLowerCase();
+    const blendHex = recipe.targetColor.hex.toLowerCase();
     const recipeId = recipe.chosenRecipe.id;
     const deltaE = recipe.chosenRecipe.deltaE;
     const coverage = recipe.targetColor.areaPct;

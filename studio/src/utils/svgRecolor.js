@@ -143,10 +143,22 @@ function replaceColor(color, colorMapping, notMappedSet) {
   if (!normalized) return color;
 
   const mappingKey = `#${normalized}`;
-  const mapping = colorMapping.get(mappingKey);
 
-  if (mapping) {
-    return mapping.blendHex;
+  // Try exact match first (fast path)
+  const exactMapping = colorMapping.get(mappingKey);
+  if (exactMapping) {
+    return exactMapping.blendHex;
+  }
+
+  // Try tolerance-based match (for collapsed color clusters)
+  const colorRgb = hexToRgbObj(normalized);
+  if (colorRgb) {
+    for (const [key, mapping] of colorMapping.entries()) {
+      const keyRgb = hexToRgbObj(key.replace('#', ''));
+      if (keyRgb && colorMatches(colorRgb, keyRgb)) {
+        return mapping.blendHex;
+      }
+    }
   }
 
   // Color not in mapping
@@ -155,6 +167,35 @@ function replaceColor(color, colorMapping, notMappedSet) {
   }
 
   return color;
+}
+
+/**
+ * Convert hex to RGB object
+ * @param {string} hex - Hex color (no #)
+ * @returns {Object|null} {r, g, b} or null
+ */
+function hexToRgbObj(hex) {
+  if (hex.length !== 6) return null;
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return null;
+  return { r, g, b };
+}
+
+/**
+ * Check if two RGB colors match within tolerance
+ * @param {Object} rgb1 - {r, g, b}
+ * @param {Object} rgb2 - {r, g, b}
+ * @returns {boolean}
+ */
+function colorMatches(rgb1, rgb2) {
+  const tolerance = 50; // Same as SVGPreview
+  return (
+    Math.abs(rgb1.r - rgb2.r) <= tolerance &&
+    Math.abs(rgb1.g - rgb2.g) <= tolerance &&
+    Math.abs(rgb1.b - rgb2.b) <= tolerance
+  );
 }
 
 /**
