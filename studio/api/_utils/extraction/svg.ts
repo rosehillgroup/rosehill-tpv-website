@@ -58,9 +58,15 @@ export class SVGExtractor {
         : 1000000; // Default if no dimensions found
 
       // Extract all colors from SVG elements (area-weighted)
-      const colorCounts = this.extractColors(svgText);
-
-      console.info(`[SVG] Found ${colorCounts.size} unique colors`);
+      let colorCounts: Map<string, number>;
+      try {
+        colorCounts = this.extractColors(svgText);
+        console.info(`[SVG] Found ${colorCounts.size} unique colors`);
+      } catch (error) {
+        console.error(`[SVG] Error in extractColors:`, error);
+        warnings.push(`ERROR: Color extraction failed - ${error.message}`);
+        colorCounts = new Map();
+      }
 
       // Calculate percentages from area-weighted scores
       const totalWeight = Array.from(colorCounts.values()).reduce((sum, weight) => sum + weight, 0);
@@ -318,8 +324,16 @@ export class SVGExtractor {
 
       if (colors.size > 0) {
         // Consolidate similar colors within this gradient
-        const consolidated = this.consolidateSimilarColors(Array.from(colors), 12);
-        gradientColors.set(gradientId, new Set(consolidated));
+        try {
+          console.info(`[SVG] Consolidating ${colors.size} colors in gradient ${gradientId}`);
+          const consolidated = this.consolidateSimilarColors(Array.from(colors), 12);
+          console.info(`[SVG] Consolidated to ${consolidated.length} colors`);
+          gradientColors.set(gradientId, new Set(consolidated));
+        } catch (error) {
+          console.error(`[SVG] Error consolidating gradient ${gradientId}:`, error);
+          // Fallback to original colors if consolidation fails
+          gradientColors.set(gradientId, colors);
+        }
       }
     }
 
@@ -468,34 +482,40 @@ export class SVGExtractor {
   private consolidateSimilarColors(colors: string[], tolerance: number): string[] {
     if (colors.length <= 1) return colors;
 
-    // Convert hex to Lab for perceptual comparison
-    const colorData = colors.map(hex => ({
-      hex,
-      rgb: this.hexToRgb(hex),
-      lab: this.rgbToLab(this.hexToRgb(hex))
-    }));
+    try {
+      // Convert hex to Lab for perceptual comparison
+      const colorData = colors.map(hex => {
+        const rgb = this.hexToRgb(hex);
+        const lab = this.rgbToLab(rgb);
+        return { hex, rgb, lab };
+      });
 
-    const merged: typeof colorData = [];
+      const merged: typeof colorData = [];
 
-    for (const color of colorData) {
-      // Check if this color is similar to any already merged color
-      let foundSimilar = false;
+      for (const color of colorData) {
+        // Check if this color is similar to any already merged color
+        let foundSimilar = false;
 
-      for (const existing of merged) {
-        const deltaE = this.calculateDeltaE(color.lab, existing.lab);
-        if (deltaE < tolerance) {
-          // Similar color found - skip this one (keep the first)
-          foundSimilar = true;
-          break;
+        for (const existing of merged) {
+          const deltaE = this.calculateDeltaE(color.lab, existing.lab);
+          if (deltaE < tolerance) {
+            // Similar color found - skip this one (keep the first)
+            foundSimilar = true;
+            break;
+          }
+        }
+
+        if (!foundSimilar) {
+          merged.push(color);
         }
       }
 
-      if (!foundSimilar) {
-        merged.push(color);
-      }
+      return merged.map(c => c.hex);
+    } catch (error) {
+      console.error('[SVG] Error in consolidateSimilarColors:', error);
+      // Return original colors if consolidation fails
+      return colors;
     }
-
-    return merged.map(c => c.hex);
   }
 
   /**
