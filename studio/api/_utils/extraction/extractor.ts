@@ -16,6 +16,7 @@ export interface ExtractionOptions {
   minAreaPct?: number;
   combineStrategy?: 'prefer-pdf' | 'prefer-raster' | 'merge';
   rasterFallback?: boolean;
+  tpvPalette?: any[]; // Pass TPV palette to avoid nested JSON imports
   pdfOptions?: {
     minFrequency?: number;
     tolerance?: number;
@@ -81,7 +82,8 @@ export class PaletteExtractor {
     console.info('[EXTRACTOR] Initializing SVGExtractor with maxColours:', this.options.maxColours);
     this.svgExtractor = new SVGExtractor({
       maxColours: this.options.maxColours,
-      minPercentage: this.options.minAreaPct
+      minPercentage: this.options.minAreaPct,
+      tpvPalette: options.tpvPalette // Pass TPV palette to avoid nested JSON imports
     });
     console.info('[EXTRACTOR] SVGExtractor initialized successfully');
   }

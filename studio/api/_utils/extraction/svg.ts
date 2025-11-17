@@ -6,7 +6,6 @@
 
 import type { RGB, Lab } from '../colour/types.js';
 import { deltaE2000 } from '../colour/deltaE.js';
-import tpvPaletteData from '../data/rosehill_tpv_21_colours.json' assert { type: 'json' };
 
 export interface SVGColor {
   rgb: RGB;
@@ -28,6 +27,7 @@ export interface SVGExtractionResult {
 export interface SVGExtractorOptions {
   maxColours?: number;
   minPercentage?: number;
+  tpvPalette?: TPVColor[]; // Pass TPV palette from parent to avoid nested JSON imports
 }
 
 interface TPVColor {
@@ -53,15 +53,31 @@ export class SVGExtractor {
       minPercentage: options.minPercentage ?? 0 // Include all colors, even tiny accents
     };
 
-    // Load TPV palette using import assertion
-    this.tpvColors = tpvPaletteData as TPVColor[];
+    // Use provided TPV palette or empty array (will be set by extractor.ts)
+    this.tpvColors = options.tpvPalette || [];
 
-    // Find lightest color (Cream RH31, L=91.8)
-    this.lightestTPVColor = this.tpvColors.reduce((lightest, color) =>
-      color.L > lightest.L ? color : lightest
-    , this.tpvColors[0]);
+    // Find lightest color (Cream RH31, L=91.8) if palette provided
+    if (this.tpvColors.length > 0) {
+      this.lightestTPVColor = this.tpvColors.reduce((lightest, color) =>
+        color.L > lightest.L ? color : lightest
+      , this.tpvColors[0]);
 
-    console.info(`[SVG-EXTRACTOR-V3] Initialized with ${this.tpvColors.length} TPV colors. Lightest: ${this.lightestTPVColor.name} (${this.lightestTPVColor.hex})`);
+      console.info(`[SVG-EXTRACTOR-V3] Initialized with ${this.tpvColors.length} TPV colors. Lightest: ${this.lightestTPVColor.name} (${this.lightestTPVColor.hex})`);
+    } else {
+      // Fallback cream color if no palette provided
+      this.lightestTPVColor = {
+        code: 'RH31',
+        name: 'Cream',
+        hex: '#f2e6c8',
+        R: 242,
+        G: 230,
+        B: 200,
+        L: 91.8,
+        a: -1.4,
+        b: 17.6
+      };
+      console.warn('[SVG-EXTRACTOR-V3] No TPV palette provided, using fallback cream color');
+    }
   }
 
   /**
