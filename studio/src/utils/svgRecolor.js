@@ -75,6 +75,7 @@ function recolorSVGElement(svgElement, colorMapping) {
     totalElements: 0,
     fillsReplaced: 0,
     strokesReplaced: 0,
+    stopColorsReplaced: 0,
     stylesProcessed: 0,
     colorsNotMapped: new Set()
   };
@@ -104,6 +105,16 @@ function recolorSVGElement(svgElement, colorMapping) {
       }
     }
 
+    // Process stop-color attribute (for gradients)
+    const stopColor = element.getAttribute('stop-color');
+    if (stopColor && stopColor !== 'none') {
+      const newStopColor = replaceColor(stopColor, colorMapping, stats.colorsNotMapped);
+      if (newStopColor !== stopColor) {
+        element.setAttribute('stop-color', newStopColor);
+        stats.stopColorsReplaced++;
+      }
+    }
+
     // Process style attribute
     const style = element.getAttribute('style');
     if (style) {
@@ -123,6 +134,30 @@ function recolorSVGElement(svgElement, colorMapping) {
     if (newCSS !== originalCSS) {
       styleEl.textContent = newCSS;
       stats.stylesProcessed++;
+    }
+  }
+
+  // Process gradient stop elements specifically (ensures coverage)
+  const gradientStops = svgElement.querySelectorAll('stop');
+  for (const stop of gradientStops) {
+    // Check stop-color attribute
+    const stopColor = stop.getAttribute('stop-color');
+    if (stopColor && stopColor !== 'none') {
+      const newStopColor = replaceColor(stopColor, colorMapping, stats.colorsNotMapped);
+      if (newStopColor !== stopColor) {
+        stop.setAttribute('stop-color', newStopColor);
+        stats.stopColorsReplaced++;
+      }
+    }
+
+    // Check style attribute for stop-color
+    const stopStyle = stop.getAttribute('style');
+    if (stopStyle && stopStyle.includes('stop-color')) {
+      const newStyle = recolorStyleAttribute(stopStyle, colorMapping, stats);
+      if (newStyle !== stopStyle) {
+        stop.setAttribute('style', newStyle);
+        stats.stylesProcessed++;
+      }
     }
   }
 
@@ -221,6 +256,12 @@ function recolorStyleAttribute(style, colorMapping, stats) {
     return `stroke: ${newColor}`;
   });
 
+  // Match stop-color: color
+  newStyle = newStyle.replace(/stop-color:\s*([^;]+)/gi, (match, color) => {
+    const newColor = replaceColor(color.trim(), colorMapping, stats.colorsNotMapped);
+    return `stop-color: ${newColor}`;
+  });
+
   return newStyle;
 }
 
@@ -245,6 +286,12 @@ function recolorCSS(css, colorMapping, stats) {
   newCSS = newCSS.replace(/stroke:\s*([^;}\s]+)/gi, (match, color) => {
     const newColor = replaceColor(color.trim(), colorMapping, stats.colorsNotMapped);
     return `stroke: ${newColor}`;
+  });
+
+  // Match stop-color: color
+  newCSS = newCSS.replace(/stop-color:\s*([^;}\s]+)/gi, (match, color) => {
+    const newColor = replaceColor(color.trim(), colorMapping, stats.colorsNotMapped);
+    return `stop-color: ${newColor}`;
   });
 
   return newCSS;
