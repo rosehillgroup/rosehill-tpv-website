@@ -463,8 +463,17 @@ export class SVGExtractor {
   }
 
   /**
+   * Check if a color is white or near-white (L > 95 in LAB)
+   */
+  private isNearWhite(rgb: RGB): boolean {
+    const lab = this.rgbToLab(rgb);
+    return lab.L > 95; // Very light colors (includes white, off-white)
+  }
+
+  /**
    * Normalize color to hex format
    * Supports: hex (#fff, #ffffff), rgb(r,g,b), named colors
+   * Converts white/near-white to cream (RH31) for TPV compatibility
    */
   private normalizeColor(color: string): string | null {
     const trimmed = color.trim().toLowerCase();
@@ -477,10 +486,19 @@ export class SVGExtractor {
     // Already hex format
     if (trimmed.match(/^#[0-9a-f]{3,6}$/)) {
       // Expand shorthand hex (#fff -> #ffffff)
+      let hex = trimmed;
       if (trimmed.length === 4) {
-        return `#${trimmed[1]}${trimmed[1]}${trimmed[2]}${trimmed[2]}${trimmed[3]}${trimmed[3]}`;
+        hex = `#${trimmed[1]}${trimmed[1]}${trimmed[2]}${trimmed[2]}${trimmed[3]}${trimmed[3]}`;
       }
-      return trimmed;
+
+      // Convert white/near-white to cream
+      const rgb = this.hexToRgb(hex);
+      if (this.isNearWhite(rgb)) {
+        console.info(`[SVG] Converting near-white ${hex} to cream ${this.lightestTPVColor.hex}`);
+        return this.lightestTPVColor.hex;
+      }
+
+      return hex;
     }
 
     // RGB format: rgb(255, 255, 255) or rgb(255,255,255)
@@ -489,14 +507,22 @@ export class SVGExtractor {
       const r = parseInt(rgbMatch[1], 10);
       const g = parseInt(rgbMatch[2], 10);
       const b = parseInt(rgbMatch[3], 10);
-      const hex = this.rgbToHex({ R: r, G: g, B: b });
-      // console.info(`[SVG] Parsed rgb(${r},${g},${b}) -> ${hex}`);
+      const rgb = { R: r, G: g, B: b };
+
+      // Convert white/near-white to cream
+      if (this.isNearWhite(rgb)) {
+        console.info(`[SVG] Converting near-white rgb(${r},${g},${b}) to cream ${this.lightestTPVColor.hex}`);
+        return this.lightestTPVColor.hex;
+      }
+
+      const hex = this.rgbToHex(rgb);
       return hex;
     }
 
     // Named colors (basic set)
+    // Note: 'white' maps to cream (RH31) for TPV palette compatibility
     const namedColors: Record<string, string> = {
-      'white': '#ffffff',
+      'white': this.lightestTPVColor.hex, // Use cream instead of pure white
       'black': '#000000',
       'red': '#ff0000',
       'green': '#008000',
