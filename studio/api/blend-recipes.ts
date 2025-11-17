@@ -13,7 +13,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { svg_url, job_id, max_colors = 8, max_components = 2 } = req.body;
+    const { svg_url, job_id, max_colors = 15, max_components = 2 } = req.body;
 
     if (!svg_url) {
       return res.status(400).json({
@@ -42,7 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log('[BLEND-RECIPES] Extracting colors...');
     const extractor = new PaletteExtractor({
       maxColours: max_colors,
-      minAreaPct: 1.0,
+      minAreaPct: 0, // Include all colors, even small design elements
       rasterOptions: {
         resampleSize: 400,
         iterations: 15

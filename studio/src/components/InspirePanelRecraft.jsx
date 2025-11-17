@@ -227,7 +227,7 @@ export default function InspirePanelRecraft() {
         body: JSON.stringify({
           svg_url,
           job_id,
-          max_colors: 8,
+          max_colors: 15,
           max_components: 2
         })
       });
