@@ -1021,35 +1021,38 @@ export default function InspirePanelRecraft() {
 
       <style jsx>{`
         .inspire-panel-recraft {
-          max-width: 800px;
+          max-width: var(--max-width-xl);
           margin: 0 auto;
-          padding: 2rem;
+          padding: var(--space-4);
         }
 
         .panel-header {
           text-align: center;
-          margin-bottom: 2rem;
+          margin-bottom: var(--space-6);
         }
 
         .panel-header h2 {
-          font-size: 2rem;
-          margin: 0 0 0.5rem 0;
-          color: #1a365d;
+          font-size: var(--text-3xl);
+          margin: 0 0 var(--space-2) 0;
+          color: var(--color-primary);
+          font-weight: var(--font-bold);
+          letter-spacing: var(--tracking-tight);
         }
 
         .subtitle {
-          color: #666;
-          font-size: 0.9rem;
+          color: var(--color-text-secondary);
+          font-size: var(--text-base);
+          line-height: var(--leading-relaxed);
         }
 
-        /* Input Mode Tabs */
+        /* Input Mode Tabs - Enhanced cards */
         .input-mode-tabs {
           display: flex;
-          gap: 0.75rem;
-          margin-bottom: 1.5rem;
-          background: #f9f9f9;
-          padding: 0.5rem;
-          border-radius: 8px;
+          gap: var(--space-2);
+          margin-bottom: var(--space-4);
+          background: var(--color-bg-subtle);
+          padding: var(--space-1);
+          border-radius: var(--radius-lg);
         }
 
         .input-mode-tab {
@@ -1057,25 +1060,25 @@ export default function InspirePanelRecraft() {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 0.25rem;
-          padding: 1rem;
-          background: white;
-          border: 2px solid #ddd;
-          border-radius: 6px;
+          gap: var(--space-1);
+          padding: var(--space-3);
+          background: var(--color-bg-card);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-md);
           cursor: pointer;
-          transition: all 0.2s;
+          transition: all var(--transition-base);
         }
 
         .input-mode-tab:hover:not(:disabled) {
-          border-color: #1a365d;
+          border-color: var(--color-primary);
           transform: translateY(-2px);
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          box-shadow: var(--shadow-md);
         }
 
         .input-mode-tab.active {
-          background: #f0f7ff;
-          border-color: #1a365d;
-          box-shadow: 0 0 0 2px rgba(26, 54, 93, 0.2);
+          background: var(--color-bg-subtle);
+          border-color: var(--color-primary);
+          box-shadow: var(--shadow-glow);
         }
 
         .input-mode-tab:disabled {
@@ -1084,65 +1087,72 @@ export default function InspirePanelRecraft() {
         }
 
         .input-mode-tab .mode-title {
-          font-size: 1rem;
-          font-weight: 600;
-          color: #1a365d;
+          font-size: var(--text-base);
+          font-weight: var(--font-semibold);
+          color: var(--color-primary);
         }
 
         .input-mode-tab .mode-description {
-          font-size: 0.85rem;
-          color: #666;
+          font-size: var(--text-sm);
+          color: var(--color-text-secondary);
+          text-align: center;
         }
 
         .input-mode-tab.active .mode-title {
-          color: #1a365d;
+          color: var(--color-primary);
+          font-weight: var(--font-bold);
         }
 
         /* Helper text */
         .helper-text {
-          margin-top: 0.5rem;
-          font-size: 0.85rem;
-          color: #666;
-          font-style: italic;
+          margin-top: var(--space-1);
+          font-size: var(--text-sm);
+          color: var(--color-text-tertiary);
+          font-style: normal;
+          line-height: var(--leading-snug);
         }
 
-        /* File input styling */
+        /* File input styling - Premium look */
         .file-input {
           width: 100%;
-          padding: 0.75rem;
-          border: 2px dashed #ddd;
-          border-radius: 4px;
+          padding: var(--space-3);
+          border: 2px dashed var(--color-border);
+          border-radius: var(--radius-md);
           cursor: pointer;
-          background: white;
+          background: var(--color-bg-card);
+          transition: all var(--transition-base);
         }
 
         .file-input:hover {
-          border-color: #1a365d;
-          background: #f9f9f9;
+          border-color: var(--color-primary);
+          background: var(--color-bg-subtle);
         }
 
         .file-selected {
-          margin-top: 0.5rem;
-          font-size: 0.9rem;
-          color: #1a365d;
-          font-weight: 500;
+          margin-top: var(--space-2);
+          font-size: var(--text-sm);
+          color: var(--color-primary);
+          font-weight: var(--font-medium);
         }
 
         .upload-progress {
-          padding: 0.75rem;
-          background: #f0f7ff;
-          border: 1px solid #cce5ff;
-          border-radius: 4px;
-          color: #1a365d;
-          margin-bottom: 1rem;
+          padding: var(--space-2);
+          background: var(--color-info-light);
+          border: 1px solid var(--color-info);
+          border-radius: var(--radius-md);
+          color: var(--color-info);
+          margin-bottom: var(--space-2);
           text-align: center;
+          font-size: var(--text-sm);
         }
 
         .form-section {
-          background: #f9f9f9;
-          padding: 1.5rem;
-          border-radius: 8px;
-          margin-bottom: 1.5rem;
+          background: var(--color-bg-card);
+          padding: var(--space-4);
+          border-radius: var(--radius-lg);
+          margin-bottom: var(--space-4);
+          border: 1px solid var(--color-border);
+          box-shadow: var(--shadow-xs);
         }
 
         .form-group {
