@@ -1,5 +1,2 @@
 # Force fresh build
 .vercel
-
-# Exclude TypeScript source files (use bundled .js instead)
-api/blend-recipes.ts
