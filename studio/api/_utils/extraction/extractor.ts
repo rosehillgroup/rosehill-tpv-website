@@ -201,7 +201,10 @@ export class PaletteExtractor {
         false, // excludeNearWhite: allow light backgrounds (L > 95)
         false  // excludeNearBlack: allow dark backgrounds (L < 5)
       );
-      
+
+      // Deduplicate similar colors with aggressive tolerance
+      palette = this.converter.deduplicate(palette, 10);
+
       palette = this.converter.sortByImportance(palette);
       
       if (palette.length > this.options.maxColours) {

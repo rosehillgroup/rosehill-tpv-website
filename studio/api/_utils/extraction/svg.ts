@@ -317,7 +317,9 @@ export class SVGExtractor {
       }
 
       if (colors.size > 0) {
-        gradientColors.set(gradientId, colors);
+        // Consolidate similar colors within this gradient
+        const consolidated = this.consolidateSimilarColors(Array.from(colors), 12);
+        gradientColors.set(gradientId, new Set(consolidated));
       }
     }
 
@@ -457,5 +459,90 @@ export class SVGExtractor {
   private rgbToHex(rgb: RGB): string {
     const toHex = (n: number) => Math.round(Math.max(0, Math.min(255, n))).toString(16).padStart(2, '0');
     return `#${toHex(rgb.R)}${toHex(rgb.G)}${toHex(rgb.B)}`;
+  }
+
+  /**
+   * Consolidate similar colors using deltaE distance
+   * Merges colors that are perceptually similar (within tolerance)
+   */
+  private consolidateSimilarColors(colors: string[], tolerance: number): string[] {
+    if (colors.length <= 1) return colors;
+
+    // Convert hex to Lab for perceptual comparison
+    const colorData = colors.map(hex => ({
+      hex,
+      rgb: this.hexToRgb(hex),
+      lab: this.rgbToLab(this.hexToRgb(hex))
+    }));
+
+    const merged: typeof colorData = [];
+
+    for (const color of colorData) {
+      // Check if this color is similar to any already merged color
+      let foundSimilar = false;
+
+      for (const existing of merged) {
+        const deltaE = this.calculateDeltaE(color.lab, existing.lab);
+        if (deltaE < tolerance) {
+          // Similar color found - skip this one (keep the first)
+          foundSimilar = true;
+          break;
+        }
+      }
+
+      if (!foundSimilar) {
+        merged.push(color);
+      }
+    }
+
+    return merged.map(c => c.hex);
+  }
+
+  /**
+   * Convert RGB to Lab color space
+   */
+  private rgbToLab(rgb: RGB): { L: number; a: number; b: number } {
+    // Simple sRGB to Lab conversion
+    // Normalize RGB to 0-1
+    let r = rgb.R / 255;
+    let g = rgb.G / 255;
+    let b = rgb.B / 255;
+
+    // Apply gamma correction
+    r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
+    g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
+    b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+
+    // Convert to XYZ
+    let x = r * 0.4124 + g * 0.3576 + b * 0.1805;
+    let y = r * 0.2126 + g * 0.7152 + b * 0.0722;
+    let z = r * 0.0193 + g * 0.1192 + b * 0.9505;
+
+    // Normalize for D65 white point
+    x = x / 0.95047;
+    y = y / 1.00000;
+    z = z / 1.08883;
+
+    // Convert to Lab
+    x = x > 0.008856 ? Math.pow(x, 1/3) : (7.787 * x) + (16/116);
+    y = y > 0.008856 ? Math.pow(y, 1/3) : (7.787 * y) + (16/116);
+    z = z > 0.008856 ? Math.pow(z, 1/3) : (7.787 * z) + (16/116);
+
+    const L = (116 * y) - 16;
+    const a = 500 * (x - y);
+    const bVal = 200 * (y - z);
+
+    return { L, a, b: bVal };
+  }
+
+  /**
+   * Calculate deltaE (perceptual color difference)
+   * Simplified deltaE76 formula
+   */
+  private calculateDeltaE(lab1: { L: number; a: number; b: number }, lab2: { L: number; a: number; b: number }): number {
+    const dL = lab1.L - lab2.L;
+    const da = lab1.a - lab2.a;
+    const db = lab1.b - lab2.b;
+    return Math.sqrt(dL * dL + da * da + db * db);
   }
 }

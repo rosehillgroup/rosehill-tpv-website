@@ -68,32 +68,64 @@ export class ColourSpaceConverter {
   }
 
   /**
-   * Remove similar colors within tolerance
+   * Remove similar colors within tolerance using weighted averaging
    */
-  deduplicate(colours: PaletteColour[], tolerance: number = 5): PaletteColour[] {
+  deduplicate(colours: PaletteColour[], tolerance: number = 10): PaletteColour[] {
     const result: PaletteColour[] = [];
-    
+
     for (const color of colours) {
-      const isSimilar = result.some(existing => 
+      const similar = result.find(existing =>
         this.calculateDeltaE(existing.lab, color.lab) < tolerance
       );
-      
-      if (!isSimilar) {
-        result.push(color);
+
+      if (!similar) {
+        // New distinct color - add to result
+        result.push({ ...color });
       } else {
-        // Merge with similar existing color (combine area percentages)
-        const similar = result.find(existing => 
-          this.calculateDeltaE(existing.lab, color.lab) < tolerance
-        );
-        if (similar) {
-          similar.areaPct += color.areaPct;
-          if (similar.pageIds && color.pageIds) {
-            similar.pageIds = [...new Set([...similar.pageIds, ...color.pageIds])];
+        // Merge with similar color using weighted averaging
+        const totalArea = similar.areaPct + color.areaPct;
+        const weight1 = similar.areaPct / totalArea;
+        const weight2 = color.areaPct / totalArea;
+
+        // Calculate weighted average in Lab space
+        const avgLab: Lab = {
+          L: similar.lab.L * weight1 + color.lab.L * weight2,
+          a: similar.lab.a * weight1 + color.lab.a * weight2,
+          b: similar.lab.b * weight1 + color.lab.b * weight2
+        };
+
+        // Calculate weighted average in RGB space
+        const avgRgb: RGB = {
+          R: Math.round(similar.rgb.R * weight1 + color.rgb.R * weight2),
+          G: Math.round(similar.rgb.G * weight1 + color.rgb.G * weight2),
+          B: Math.round(similar.rgb.B * weight1 + color.rgb.B * weight2)
+        };
+
+        // Update the similar color with weighted averages
+        similar.lab = avgLab;
+        similar.rgb = avgRgb;
+        similar.areaPct = totalArea;
+
+        // Update ID to reflect the merged color
+        similar.id = generateColourId(avgRgb, similar.source);
+
+        // Merge page IDs if they exist
+        if (similar.pageIds && color.pageIds) {
+          similar.pageIds = [...new Set([...similar.pageIds, ...color.pageIds])];
+        }
+
+        // Merge metadata - sum pixels, average percentage
+        if (similar.metadata && color.metadata) {
+          if (similar.metadata.pixels !== undefined && color.metadata.pixels !== undefined) {
+            similar.metadata.pixels += color.metadata.pixels;
+          }
+          if (similar.metadata.percentage !== undefined && color.metadata.percentage !== undefined) {
+            similar.metadata.percentage = (similar.metadata.percentage * weight1 + color.metadata.percentage * weight2);
           }
         }
       }
     }
-    
+
     return result;
   }
 
