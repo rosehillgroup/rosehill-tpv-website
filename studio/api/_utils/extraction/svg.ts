@@ -125,10 +125,10 @@ export class SVGExtractor {
       }
 
       // ===== PHASE 3: Global color collapse =====
-      // Merge similar colors across entire SVG (ΔE ≤ 5)
+      // Merge similar colors across entire SVG (ΔE ≤ 15 for aggressive gradient collapse)
       try {
-        colorCounts = this.collapseGlobalColors(colorCounts, 5);
-        warnings.push(`PHASE 3: Collapsed to ${colorCounts.size} color clusters (ΔE ≤ 5)`);
+        colorCounts = this.collapseGlobalColors(colorCounts, 15);
+        warnings.push(`PHASE 3: Collapsed to ${colorCounts.size} color clusters (ΔE ≤ 15)`);
       } catch (error) {
         console.error(`[SVG] Error in collapseGlobalColors:`, error);
         warnings.push(`WARNING: Color collapse failed - ${error.message}`);
