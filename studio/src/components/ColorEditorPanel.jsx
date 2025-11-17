@@ -7,6 +7,7 @@ import tpvColours from '../../api/_utils/data/rosehill_tpv_21_colours.json';
 
 export default function ColorEditorPanel({
   color,           // {hex, rgb, lab, areaPct, originalHex}
+  mode = 'blend',  // 'blend' or 'solid' - restricts editing in solid mode
   onColorChange,   // (newHex) => void
   onClose
 }) {
@@ -121,21 +122,34 @@ export default function ColorEditorPanel({
           </div>
         </div>
 
-        {/* Custom Colour Picker */}
-        <div className="picker-section">
-          <h4>Custom Colour</h4>
-          <p className="picker-description">
-            Choose any colour (may require blending)
-          </p>
-          <ChromePicker
-            color={selectedHex}
-            onChange={handleColorChange}
-            disableAlpha={true}
-          />
-          <button onClick={handleReset} className="reset-button">
-            Reset to Original
-          </button>
-        </div>
+        {/* Custom Colour Picker - Only in Blend Mode */}
+        {mode === 'blend' && (
+          <div className="picker-section">
+            <h4>Custom Colour</h4>
+            <p className="picker-description">
+              Choose any colour (may require blending)
+            </p>
+            <ChromePicker
+              color={selectedHex}
+              onChange={handleColorChange}
+              disableAlpha={true}
+            />
+            <button onClick={handleReset} className="reset-button">
+              Reset to Original
+            </button>
+          </div>
+        )}
+
+        {/* Solid Mode Info */}
+        {mode === 'solid' && (
+          <div className="solid-mode-info">
+            <h4>Solid Mode Editing</h4>
+            <p className="info-description">
+              In solid mode, you can only select from the standard TPV colours above.
+              Custom colours require blending - switch to Blend Mode for full colour customisation.
+            </p>
+          </div>
+        )}
       </div>
 
       <style jsx>{`
@@ -376,6 +390,29 @@ export default function ColorEditorPanel({
 
         .reset-button:hover {
           background: #d0d0d0;
+        }
+
+        /* Solid Mode Info */
+        .solid-mode-info {
+          margin-bottom: 1rem;
+          padding: 1rem;
+          background: #fff5f0;
+          border: 2px solid #ff6b35;
+          border-radius: 6px;
+        }
+
+        .solid-mode-info h4 {
+          margin: 0 0 0.5rem 0;
+          color: #1a365d;
+          font-size: 1rem;
+          font-weight: 600;
+        }
+
+        .info-description {
+          margin: 0;
+          font-size: 0.85rem;
+          color: #666;
+          line-height: 1.5;
         }
 
         /* Mobile Responsive */

@@ -98,16 +98,28 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
 
               {/* Middle Section: Blend Formula */}
               <div className="card-formula">
-                <div className="formula-label">TPV Blend Formula</div>
+                <div className="formula-label">
+                  {chosen.components.length === 1 ? 'Pure TPV Colour' : 'TPV Blend Formula'}
+                </div>
                 <div className="formula-content">
-                  {chosen.components.map((comp, compIdx) => (
-                    <span key={compIdx} className="formula-component">
-                      <strong className="parts">{comp.parts || (comp.weight * 100).toFixed(0) + '%'}</strong>
-                      <span className="comp-code">{comp.code}</span>
-                      <span className="comp-name">({comp.name})</span>
-                      {compIdx < chosen.components.length - 1 && <span className="separator">+</span>}
+                  {chosen.components.length === 1 ? (
+                    // Single-color recipe (Solid mode)
+                    <span className="formula-component solid">
+                      <strong className="parts">100%</strong>
+                      <span className="comp-code">{chosen.components[0].code}</span>
+                      <span className="comp-name">({chosen.components[0].name})</span>
                     </span>
-                  ))}
+                  ) : (
+                    // Multi-component blend (Blend mode)
+                    chosen.components.map((comp, compIdx) => (
+                      <span key={compIdx} className="formula-component">
+                        <strong className="parts">{comp.parts || (comp.weight * 100).toFixed(0) + '%'}</strong>
+                        <span className="comp-code">{comp.code}</span>
+                        <span className="comp-name">({comp.name})</span>
+                        {compIdx < chosen.components.length - 1 && <span className="separator">+</span>}
+                      </span>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -436,6 +448,13 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
           font-weight: bold;
           font-size: 1rem;
           margin: 0 0.35rem;
+        }
+
+        .formula-component.solid {
+          background: #fff5f0;
+          padding: 0.5rem 0.75rem;
+          border-radius: 4px;
+          border: 1px solid #ff6b35;
         }
 
         /* Card Footer (Alternatives Button) */

@@ -37,6 +37,12 @@ export default function InspirePanelRecraft() {
   const [colorMapping, setColorMapping] = useState(null);
   const [showFinalRecipes, setShowFinalRecipes] = useState(false);
 
+  // Solid color mode state
+  const [viewMode, setViewMode] = useState('blend'); // 'blend' or 'solid'
+  const [solidRecipes, setSolidRecipes] = useState(null);
+  const [solidSvgUrl, setSolidSvgUrl] = useState(null);
+  const [solidColorMapping, setSolidColorMapping] = useState(null);
+
   // Color editor state
   const [colorEditorOpen, setColorEditorOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState(null);
@@ -258,6 +264,9 @@ export default function InspirePanelRecraft() {
           setBlendSvgUrl(dataUrl);
           setProgressMessage('✓ TPV blend ready!');
           console.log('[TPV-STUDIO] Recoloured SVG generated:', stats);
+
+          // Auto-generate solid color version in background
+          handleGenerateSolid(svg_url, job_id);
         } catch (svgError) {
           console.error('[TPV-STUDIO] Failed to generate recoloured SVG:', svgError);
           // Non-fatal error - recipes are still valid
@@ -272,6 +281,54 @@ export default function InspirePanelRecraft() {
       setProgressMessage('');
     } finally {
       setGeneratingBlends(false);
+    }
+  };
+
+  // Generate solid TPV color version (auto-called after blend recipes)
+  const handleGenerateSolid = async (svgUrl = null, jobIdParam = null) => {
+    const svg_url = svgUrl || result?.svg_url;
+    const job_id = jobIdParam || jobId;
+
+    if (!svg_url) return;
+
+    try {
+      console.log('[TPV-STUDIO] Generating solid color version...');
+
+      const response = await fetch('/api/solid-recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          svg_url,
+          job_id,
+          max_colors: 15
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to generate solid recipes');
+      }
+
+      if (data.success) {
+        setSolidRecipes(data.recipes);
+
+        // Build colour mapping for solid colors
+        const mapping = buildColorMapping(data.recipes);
+        setSolidColorMapping(mapping);
+
+        // Generate recoloured SVG with solid colors
+        try {
+          const { dataUrl, stats } = await recolorSVG(svg_url, mapping);
+          setSolidSvgUrl(dataUrl);
+          console.log('[TPV-STUDIO] Solid color SVG generated:', stats);
+        } catch (svgError) {
+          console.error('[TPV-STUDIO] Failed to generate solid SVG:', svgError);
+        }
+      }
+    } catch (err) {
+      console.error('[TPV-STUDIO] Solid generation failed:', err);
+      // Non-fatal - blend mode still works
     }
   };
 
@@ -537,11 +594,44 @@ export default function InspirePanelRecraft() {
             </div>
           )}
 
-          {/* TPV Blend Preview */}
+          {/* Mode Toggle Tabs */}
           {blendSvgUrl && blendRecipes && (
+            <div className="mode-tabs">
+              <button
+                className={`mode-tab ${viewMode === 'blend' ? 'active' : ''}`}
+                onClick={() => setViewMode('blend')}
+              >
+                <span className="mode-title">Blend Mode</span>
+                <span className="mode-description">Mixed TPV granules</span>
+              </button>
+              <button
+                className={`mode-tab ${viewMode === 'solid' ? 'active' : ''}`}
+                onClick={() => setViewMode('solid')}
+                disabled={!solidSvgUrl}
+              >
+                <span className="mode-title">Solid Mode</span>
+                <span className="mode-description">
+                  {solidSvgUrl ? 'Single TPV colors only' : 'Generating...'}
+                </span>
+              </button>
+            </div>
+          )}
+
+          {/* TPV Blend Preview - Blend Mode */}
+          {viewMode === 'blend' && blendSvgUrl && blendRecipes && (
             <SVGPreview
               blendSvgUrl={blendSvgUrl}
               recipes={blendRecipes}
+              onColorClick={handleColorClick}
+              selectedColor={selectedColor}
+            />
+          )}
+
+          {/* TPV Blend Preview - Solid Mode */}
+          {viewMode === 'solid' && solidSvgUrl && solidRecipes && (
+            <SVGPreview
+              blendSvgUrl={solidSvgUrl}
+              recipes={solidRecipes}
               onColorClick={handleColorClick}
               selectedColor={selectedColor}
             />
@@ -593,6 +683,7 @@ export default function InspirePanelRecraft() {
       {colorEditorOpen && selectedColor && (
         <ColorEditorPanel
           color={selectedColor}
+          mode={viewMode}
           onColorChange={handleColorChange}
           onClose={() => {
             setColorEditorOpen(false);
@@ -790,6 +881,62 @@ export default function InspirePanelRecraft() {
         .layout-note {
           color: #ff6b35;
           font-weight: 500;
+        }
+
+        /* Mode Toggle Tabs */
+        .mode-tabs {
+          display: flex;
+          gap: 0.75rem;
+          margin-bottom: 1.5rem;
+          background: #f9f9f9;
+          padding: 0.5rem;
+          border-radius: 8px;
+        }
+
+        .mode-tab {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.25rem;
+          padding: 1rem;
+          background: white;
+          border: 2px solid #ddd;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .mode-tab:hover:not(:disabled) {
+          border-color: #ff6b35;
+          transform: translateY(-2px);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .mode-tab.active {
+          background: #fff5f0;
+          border-color: #ff6b35;
+          box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.2);
+        }
+
+        .mode-tab:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .mode-title {
+          font-size: 1rem;
+          font-weight: 600;
+          color: #1a365d;
+        }
+
+        .mode-description {
+          font-size: 0.85rem;
+          color: #666;
+        }
+
+        .mode-tab.active .mode-title {
+          color: #ff6b35;
         }
 
         .svg-preview {
