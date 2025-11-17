@@ -19,6 +19,7 @@ export interface SVGExtractionResult {
     totalPixels: number;
     format: string;
   };
+  warnings?: string[];
 }
 
 export interface SVGExtractorOptions {
@@ -41,6 +42,7 @@ export class SVGExtractor {
    */
   async extract(buffer: ArrayBuffer, format: string): Promise<SVGExtractionResult> {
     const startTime = Date.now();
+    const warnings: string[] = [];
 
     try {
       // Convert buffer to string
@@ -88,10 +90,12 @@ export class SVGExtractor {
       // If total coverage is < 95%, assume transparent background is white
       const totalCoverage = colours.reduce((sum, c) => sum + c.percentage, 0);
       console.warn(`[SVG-DEBUG] Total coverage: ${totalCoverage.toFixed(1)}%`);
+      warnings.push(`DEBUG: Before white - ${colours.length} colors, ${totalCoverage.toFixed(1)}% coverage`);
 
       if (totalCoverage < 95) {
         const whiteCoverage = 100 - totalCoverage;
         console.warn(`[SVG-DEBUG] Adding white background with ${whiteCoverage.toFixed(1)}% coverage`);
+        warnings.push(`DEBUG: Adding white with ${whiteCoverage.toFixed(1)}% coverage`);
 
         colours.push({
           rgb: { R: 255, G: 255, B: 255 },
@@ -101,19 +105,22 @@ export class SVGExtractor {
 
         // Re-sort after adding white
         colours.sort((a, b) => b.percentage - a.percentage);
+        warnings.push(`DEBUG: After adding white - ${colours.length} colors`);
       } else {
         console.warn(`[SVG-DEBUG] No white background needed (coverage >= 95%)`);
+        warnings.push(`DEBUG: No white added (coverage >= 95%)`);
       }
 
       // NOW truncate to maxColours (after potentially adding white)
+      const beforeTruncate = colours.length;
       colours = colours.slice(0, this.options.maxColours);
+      warnings.push(`DEBUG: After truncate to ${this.options.maxColours} - ${colours.length} colors (was ${beforeTruncate})`);
 
       const elapsed = Date.now() - startTime;
       console.info(`[SVG] Extracted ${colours.length} colors in ${elapsed}ms`);
 
-      // Add debug info as fake "warning" so we can see it in the response
-      const debugInfo = `DEBUG: Found ${colorCounts.size} unique colors, total weight ${totalWeight.toFixed(1)}, coverage ${totalCoverage.toFixed(1)}%, final ${colours.length} colors`;
-      console.warn(debugInfo);
+      // Add final debug summary
+      warnings.push(`DEBUG: Final palette has ${colours.length} colors. White #ffffff present: ${colours.some(c => c.rgb.R === 255 && c.rgb.G === 255 && c.rgb.B === 255) ? 'YES' : 'NO'}`);
 
       return {
         colours,
@@ -122,7 +129,8 @@ export class SVGExtractor {
           height: dimensions.height,
           totalPixels,
           format
-        }
+        },
+        warnings
       };
     } catch (error) {
       throw new Error(`SVG extraction failed: ${error.message}`);

@@ -174,7 +174,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         extractionTime,
         solveTime,
         totalTime,
-        maxComponents: max_components
+        maxComponents: max_components,
+        warnings: extraction.warnings // Include extraction warnings for debugging
       }
     });
 

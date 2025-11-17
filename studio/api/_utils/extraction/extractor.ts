@@ -145,6 +145,11 @@ export class PaletteExtractor {
 
           sources.push('svg');
 
+          // Add SVG extractor warnings to main warnings array
+          if (svgResult.warnings) {
+            warnings.push(...svgResult.warnings);
+          }
+
           if (svgColours.length === 0) {
             warnings.push('No significant colors found in SVG');
           }
