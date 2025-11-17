@@ -1,19 +1,21 @@
 // TPV Studio - Recraft Vector AI Panel
 // Simplified UI for Recraft vector generation with compliance tracking
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { apiClient } from '../lib/api/client.js';
 import BlendRecipesDisplay from './BlendRecipesDisplay.jsx';
 import SolidColorSummary from './SolidColorSummary.jsx';
 import SVGPreview from './SVGPreview.jsx';
 import ColorEditorPanel from './ColorEditorPanel.jsx';
+import SaveDesignModal from './SaveDesignModal.jsx';
 import { buildColorMapping } from '../utils/colorMapping.js';
 import { recolorSVG } from '../utils/svgRecolor.js';
 import { mapDimensionsToRecraft, getLayoutDescription, needsLayoutWarning } from '../utils/aspectRatioMapping.js';
 import { uploadFile, validateFile } from '../lib/supabase/uploadFile.js';
+import { deserializeDesign } from '../utils/designSerializer.js';
 import tpvColours from '../../api/_utils/data/rosehill_tpv_21_colours.json';
 
-export default function InspirePanelRecraft() {
+export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   // Input mode state - three options: prompt, image, svg
   const [inputMode, setInputMode] = useState('prompt'); // 'prompt', 'image', 'svg'
 
@@ -60,6 +62,39 @@ export default function InspirePanelRecraft() {
   const [selectedColor, setSelectedColor] = useState(null);
   const [solidEditedColors, setSolidEditedColors] = useState(new Map()); // originalHex -> {newHex}
   const [blendEditedColors, setBlendEditedColors] = useState(new Map()); // originalHex -> {newHex}
+
+  // Save design state
+  const [showSaveModal, setShowSaveModal] = useState(false);
+
+  // Load design when loadedDesign prop changes
+  useEffect(() => {
+    if (loadedDesign) {
+      const restoredState = deserializeDesign(loadedDesign);
+
+      // Restore all state
+      setInputMode(restoredState.inputMode);
+      setPrompt(restoredState.prompt);
+      setSelectedFile(restoredState.selectedFile);
+      setLengthMM(restoredState.lengthMM);
+      setWidthMM(restoredState.widthMM);
+      setResult(restoredState.result);
+      setBlendRecipes(restoredState.blendRecipes);
+      setSolidRecipes(restoredState.solidRecipes);
+      setColorMapping(restoredState.colorMapping);
+      setSolidColorMapping(restoredState.solidColorMapping);
+      setSolidEditedColors(restoredState.solidEditedColors);
+      setBlendEditedColors(restoredState.blendEditedColors);
+      setBlendSvgUrl(restoredState.blendSvgUrl);
+      setSolidSvgUrl(restoredState.solidSvgUrl);
+      setViewMode(restoredState.viewMode);
+      setArMapping(restoredState.arMapping);
+      setJobId(restoredState.jobId);
+      setShowFinalRecipes(restoredState.showFinalRecipes);
+      setShowSolidSummary(restoredState.showSolidSummary);
+
+      console.log('[INSPIRE] Loaded design:', loadedDesign.name);
+    }
+  }, [loadedDesign]);
 
   // Handle file selection
   const handleFileSelect = (event) => {
@@ -1111,6 +1146,9 @@ export default function InspirePanelRecraft() {
           {/* Action Buttons - Show when design is ready */}
           {blendSvgUrl && (
             <div className="action-buttons">
+              <button onClick={() => setShowSaveModal(true)} className="save-button">
+                💾 Save Design
+              </button>
               <button onClick={handleDownloadSVG} className="download-button svg">
                 {viewMode === 'solid' ? 'Download Solid TPV SVG' : 'Download TPV Blend SVG'}
               </button>
@@ -1184,6 +1222,39 @@ export default function InspirePanelRecraft() {
           onClose={() => {
             setColorEditorOpen(false);
             setSelectedColor(null);
+          }}
+        />
+      )}
+
+      {/* Save Design Modal */}
+      {showSaveModal && (
+        <SaveDesignModal
+          currentState={{
+            inputMode,
+            prompt,
+            selectedFile,
+            lengthMM,
+            widthMM,
+            result,
+            viewMode,
+            blendRecipes,
+            solidRecipes,
+            colorMapping,
+            solidColorMapping,
+            solidEditedColors,
+            blendEditedColors,
+            blendSvgUrl,
+            solidSvgUrl,
+            arMapping,
+            jobId
+          }}
+          onClose={() => setShowSaveModal(false)}
+          onSaved={(savedDesign, designName) => {
+            setShowSaveModal(false);
+            if (onDesignSaved) {
+              onDesignSaved(designName);
+            }
+            console.log('[INSPIRE] Design saved:', savedDesign);
           }}
         />
       )}
@@ -1685,7 +1756,8 @@ export default function InspirePanelRecraft() {
 
         .download-button,
         .blend-button,
-        .new-generation-button {
+        .new-generation-button,
+        .save-button {
           flex: 1;
           padding: var(--space-3);
           border: none;
@@ -1746,6 +1818,17 @@ export default function InspirePanelRecraft() {
 
         .new-generation-button:hover {
           background: var(--color-border);
+          transform: translateY(-1px);
+          box-shadow: var(--shadow-md);
+        }
+
+        .save-button {
+          background: #10b981;
+          color: white;
+        }
+
+        .save-button:hover {
+          background: #059669;
           transform: translateY(-1px);
           box-shadow: var(--shadow-md);
         }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from './lib/api/auth.js';
 import InspirePanelRecraft from './components/InspirePanelRecraft.jsx';
+import Header from './components/Header.jsx';
+import DesignGallery from './components/DesignGallery.jsx';
 
 function SignInForm() {
   const [email, setEmail] = useState('');
@@ -120,6 +122,9 @@ function SignInForm() {
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showGallery, setShowGallery] = useState(false);
+  const [loadedDesign, setLoadedDesign] = useState(null);
+  const [currentDesignName, setCurrentDesignName] = useState(null);
 
   useEffect(() => {
     // Check auth status on mount
@@ -135,6 +140,15 @@ function App() {
 
     return () => subscription?.unsubscribe();
   }, []);
+
+  const handleLoadDesign = (design) => {
+    setLoadedDesign(design);
+    setCurrentDesignName(design.name);
+  };
+
+  const handleDesignSaved = (designName) => {
+    setCurrentDesignName(designName);
+  };
 
   if (loading) {
     return (
@@ -156,14 +170,24 @@ function App() {
 
   return (
     <div className="tpv-studio">
-      <header className="tpv-studio__header">
-        <h1>TPV Studio - Vector AI</h1>
-        <p>AI-powered vector designs for playground surfaces</p>
-      </header>
+      <Header
+        onShowDesigns={() => setShowGallery(true)}
+        currentDesignName={currentDesignName}
+      />
 
       <main className="tpv-studio__container">
-        <InspirePanelRecraft />
+        <InspirePanelRecraft
+          loadedDesign={loadedDesign}
+          onDesignSaved={handleDesignSaved}
+        />
       </main>
+
+      {showGallery && (
+        <DesignGallery
+          onClose={() => setShowGallery(false)}
+          onLoadDesign={handleLoadDesign}
+        />
+      )}
     </div>
   );
 }
