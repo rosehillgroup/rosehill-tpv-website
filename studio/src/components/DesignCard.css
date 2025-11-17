@@ -77,7 +77,7 @@
 /* Card Info */
 
 .card-info {
-  padding: 16px;
+  padding: 18px;
 }
 
 .design-name {
@@ -111,8 +111,8 @@
 
 .project-badge {
   display: inline-block;
-  padding: 6px 12px;
-  border-radius: 12px;
+  padding: 8px 14px;
+  border-radius: 14px;
   font-size: 11px;
   font-weight: 500;
   color: white;
