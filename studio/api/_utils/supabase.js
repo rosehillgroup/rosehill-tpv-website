@@ -59,32 +59,42 @@ export async function getAuthenticatedClient(req) {
     throw new Error('Missing Supabase environment variables');
   }
 
-  // Create client
-  const client = createClient(supabaseUrl, anonKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  });
-
   // Extract JWT token from Authorization header
   const authHeader = req.headers['authorization'] || req.headers['Authorization'];
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // No token, return client without auth
+    const client = createClient(supabaseUrl, anonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
     return { client, user: null };
   }
 
   const token = authHeader.replace('Bearer ', '');
 
-  // Set the session with the token
+  // Create client with JWT token in global headers
+  // This ensures the token is sent with all requests for RLS
+  const client = createClient(supabaseUrl, anonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    },
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  });
+
+  // Get user info from token
   const { data: { user }, error } = await client.auth.getUser(token);
 
   if (error || !user) {
     return { client, user: null };
   }
-
-  // Set the token in the client for subsequent requests
-  client.auth.setSession({ access_token: token, refresh_token: '' });
 
   return { client, user };
 }
