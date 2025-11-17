@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { apiClient } from '../lib/api/client.js';
 import BlendRecipesDisplay from './BlendRecipesDisplay.jsx';
+import SolidColorSummary from './SolidColorSummary.jsx';
 import SVGPreview from './SVGPreview.jsx';
 import ColorEditorPanel from './ColorEditorPanel.jsx';
 import { buildColorMapping } from '../utils/colorMapping.js';
@@ -42,6 +43,7 @@ export default function InspirePanelRecraft() {
   const [solidRecipes, setSolidRecipes] = useState(null);
   const [solidSvgUrl, setSolidSvgUrl] = useState(null);
   const [solidColorMapping, setSolidColorMapping] = useState(null);
+  const [showSolidSummary, setShowSolidSummary] = useState(false);
 
   // Color editor state
   const [colorEditorOpen, setColorEditorOpen] = useState(false);
@@ -174,19 +176,27 @@ export default function InspirePanelRecraft() {
 
   // Download TPV Blend SVG
   const handleDownloadSVG = () => {
-    if (blendSvgUrl) {
+    // Download the appropriate SVG based on current view mode
+    const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
+    const fileName = viewMode === 'solid' ? 'tpv-solid' : 'tpv-blend';
+
+    if (svgUrl) {
       const link = document.createElement('a');
-      link.href = blendSvgUrl;
-      link.download = `tpv-blend-${Date.now()}.svg`;
+      link.href = svgUrl;
+      link.download = `${fileName}-${Date.now()}.svg`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
   };
 
-  // Download TPV Blend PNG
+  // Download TPV PNG
   const handleDownloadPNG = () => {
-    if (blendSvgUrl) {
+    // Download the appropriate PNG based on current view mode
+    const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
+    const fileName = viewMode === 'solid' ? 'tpv-solid' : 'tpv-blend';
+
+    if (svgUrl) {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
@@ -198,14 +208,14 @@ export default function InspirePanelRecraft() {
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `tpv-blend-${Date.now()}.png`;
+          link.download = `${fileName}-${Date.now()}.png`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
           URL.revokeObjectURL(url);
         });
       };
-      img.src = blendSvgUrl;
+      img.src = svgUrl;
     }
   };
 
@@ -337,8 +347,9 @@ export default function InspirePanelRecraft() {
     console.log('[TPV-STUDIO] Color clicked:', colorData);
     setSelectedColor(colorData);
     setColorEditorOpen(true);
-    // Close recipes display when editing - user must regenerate after edits
+    // Close recipe displays when editing - user must regenerate after edits
     setShowFinalRecipes(false);
+    setShowSolidSummary(false);
   };
 
   // Handle color change from ColorEditorPanel
@@ -694,14 +705,14 @@ export default function InspirePanelRecraft() {
             />
           )}
 
-          {/* Action Buttons - Show when blend is ready */}
+          {/* Action Buttons - Show when design is ready */}
           {blendSvgUrl && (
             <div className="action-buttons">
               <button onClick={handleDownloadSVG} className="download-button svg">
-                Download TPV Blend SVG
+                {viewMode === 'solid' ? 'Download Solid TPV SVG' : 'Download TPV Blend SVG'}
               </button>
               <button onClick={handleDownloadPNG} className="download-button png">
-                Download TPV Blend PNG
+                {viewMode === 'solid' ? 'Download Solid TPV PNG' : 'Download TPV Blend PNG'}
               </button>
               <button onClick={handleNewGeneration} className="new-generation-button">
                 New Generation
@@ -711,8 +722,8 @@ export default function InspirePanelRecraft() {
         </div>
       )}
 
-      {/* Generate Final Recipes Button */}
-      {blendSvgUrl && blendRecipes && !showFinalRecipes && !generatingBlends && (
+      {/* Generate Final Recipes Button - Blend Mode */}
+      {viewMode === 'blend' && blendSvgUrl && blendRecipes && !showFinalRecipes && !generatingBlends && (
         <div className="finalize-section">
           <button
             onClick={handleFinalizeRecipes}
@@ -726,12 +737,37 @@ export default function InspirePanelRecraft() {
         </div>
       )}
 
+      {/* View Colours Button - Solid Mode */}
+      {viewMode === 'solid' && solidSvgUrl && solidRecipes && !showSolidSummary && (
+        <div className="finalize-section">
+          <button
+            onClick={() => setShowSolidSummary(true)}
+            className="finalize-button"
+          >
+            View TPV Colours Used
+          </button>
+          <p className="finalize-hint">
+            See which pure TPV colours are used in this design
+          </p>
+        </div>
+      )}
+
       {/* Blend Recipes Display */}
       {showFinalRecipes && blendRecipes && (
         <BlendRecipesDisplay
           recipes={blendRecipes}
           onClose={() => {
             setShowFinalRecipes(false);
+          }}
+        />
+      )}
+
+      {/* Solid Color Summary */}
+      {showSolidSummary && solidRecipes && (
+        <SolidColorSummary
+          recipes={solidRecipes}
+          onClose={() => {
+            setShowSolidSummary(false);
           }}
         />
       )}
