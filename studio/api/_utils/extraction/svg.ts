@@ -326,7 +326,7 @@ export class SVGExtractor {
         // Consolidate similar colors within this gradient
         try {
           console.info(`[SVG] Consolidating ${colors.size} colors in gradient ${gradientId}`);
-          const consolidated = this.consolidateSimilarColors(Array.from(colors), 12);
+          const consolidated = this.consolidateSimilarColors(Array.from(colors), 8);
           console.info(`[SVG] Consolidated to ${consolidated.length} colors`);
           gradientColors.set(gradientId, new Set(consolidated));
         } catch (error) {

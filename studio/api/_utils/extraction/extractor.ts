@@ -202,8 +202,8 @@ export class PaletteExtractor {
         false  // excludeNearBlack: allow dark backgrounds (L < 5)
       );
 
-      // Deduplicate similar colors with aggressive tolerance
-      palette = this.converter.deduplicate(palette, 10);
+      // Deduplicate similar colors (moderate tolerance to preserve distinct shades)
+      palette = this.converter.deduplicate(palette, 6);
 
       palette = this.converter.sortByImportance(palette);
       
