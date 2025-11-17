@@ -15,6 +15,13 @@ export default function SVGPreview({
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
 
+  // Zoom and pan state
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const containerRef = useRef(null);
+
   // Create highlight mask when a color is selected
   useEffect(() => {
     if (!selectedColor || !blendSvgUrl) {
@@ -203,8 +210,59 @@ export default function SVGPreview({
     }
   };
 
+  // Zoom and pan handlers
+  const handleZoomIn = () => {
+    setZoom(prevZoom => Math.min(prevZoom * 1.5, 5));
+  };
+
+  const handleZoomOut = () => {
+    setZoom(prevZoom => Math.max(prevZoom / 1.5, 0.5));
+  };
+
+  const handleZoomReset = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const delta = e.deltaY * -0.001;
+    setZoom(prevZoom => Math.min(Math.max(prevZoom + delta, 0.5), 5));
+  };
+
+  const handleMouseDown = (e) => {
+    if (e.button !== 0) return; // Only left mouse button
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    setPan({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragStart, pan]);
+
   // Handle click on SVG image
   const handleSVGClick = async (e) => {
+    // Don't trigger color selection if we were dragging
+    if (isDragging) return;
     if (!onColorClick || !recipes || recipes.length === 0) return;
 
     // Get click position relative to image
@@ -282,8 +340,47 @@ export default function SVGPreview({
       {/* SVG Display with Color Legend */}
       <div className="svg-display-container">
         <div className="svg-panel">
-          <div className="svg-wrapper">
-            <div className="svg-image-container" onClick={handleSVGClick}>
+          {/* Zoom Controls */}
+          <div className="zoom-controls">
+            <button onClick={handleZoomIn} className="zoom-btn" title="Zoom In">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="11" y1="8" x2="11" y2="14" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+            </button>
+            <button onClick={handleZoomOut} className="zoom-btn" title="Zoom Out">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+            </button>
+            <button onClick={handleZoomReset} className="zoom-btn" title="Reset View">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M1 4v6h6"/>
+                <path d="M23 20v-6h-6"/>
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+              </svg>
+            </button>
+            <span className="zoom-level">{Math.round(zoom * 100)}%</span>
+          </div>
+
+          <div
+            ref={containerRef}
+            className="svg-wrapper"
+            onWheel={handleWheel}
+          >
+            <div
+              className="svg-image-container"
+              onClick={handleSVGClick}
+              onMouseDown={handleMouseDown}
+              style={{
+                transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                cursor: isDragging ? 'grabbing' : (zoom > 1 ? 'grab' : (onColorClick ? 'pointer' : 'default'))
+              }}
+            >
               <img
                 ref={imageRef}
                 src={blendSvgUrl}
@@ -341,11 +438,67 @@ export default function SVGPreview({
         }
 
         .svg-panel {
+          position: relative;
           flex: 1;
           border: 1px solid #e0e0e0;
           border-radius: 6px;
           overflow: hidden;
           background: #fafafa;
+        }
+
+        /* Zoom Controls */
+        .zoom-controls {
+          position: absolute;
+          top: 1rem;
+          right: 1rem;
+          display: flex;
+          gap: 0.5rem;
+          background: white;
+          border-radius: 8px;
+          padding: 0.5rem;
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+          z-index: 10;
+          align-items: center;
+        }
+
+        .zoom-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          padding: 0;
+          background: white;
+          border: 1px solid #e0e0e0;
+          border-radius: 6px;
+          cursor: pointer;
+          color: #1a365d;
+          transition: all 0.2s ease;
+        }
+
+        .zoom-btn:hover {
+          background: #f8fafc;
+          border-color: #1e4a7a;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .zoom-btn:active {
+          transform: translateY(0);
+        }
+
+        .zoom-btn svg {
+          width: 20px;
+          height: 20px;
+        }
+
+        .zoom-level {
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #1a365d;
+          min-width: 50px;
+          text-align: center;
+          padding: 0 0.5rem;
         }
 
         .svg-wrapper {
@@ -355,13 +508,16 @@ export default function SVGPreview({
           display: flex;
           align-items: center;
           justify-content: center;
+          overflow: hidden;
+          position: relative;
         }
 
         .svg-image-container {
           position: relative;
           display: inline-block;
-          cursor: ${onColorClick ? 'pointer' : 'default'};
           user-select: none;
+          transition: transform 0.1s ease-out;
+          transform-origin: center center;
         }
 
         .svg-image {
