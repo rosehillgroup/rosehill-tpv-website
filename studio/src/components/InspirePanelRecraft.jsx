@@ -48,7 +48,8 @@ export default function InspirePanelRecraft() {
   // Color editor state
   const [colorEditorOpen, setColorEditorOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState(null);
-  const [editedColors, setEditedColors] = useState(new Map()); // originalHex -> {newHex, recipe}
+  const [blendEdits, setBlendEdits] = useState(new Map()); // originalHex -> {newHex, recipe} for blend mode
+  const [solidEdits, setSolidEdits] = useState(new Map()); // originalHex -> {newHex, recipe} for solid mode
 
   // Handle form submission
   const handleGenerate = async () => {
@@ -168,10 +169,15 @@ export default function InspirePanelRecraft() {
     setBlendSvgUrl(null);
     setColorMapping(null);
     setShowFinalRecipes(false);
+    setShowSolidSummary(false);
+    setSolidRecipes(null);
+    setSolidSvgUrl(null);
+    setSolidColorMapping(null);
     setArMapping(null);
     setColorEditorOpen(false);
     setSelectedColor(null);
-    setEditedColors(new Map());
+    setBlendEdits(new Map());
+    setSolidEdits(new Map());
   };
 
   // Download TPV Blend SVG
@@ -358,22 +364,32 @@ export default function InspirePanelRecraft() {
 
     console.log('[TPV-STUDIO] Color changed:', selectedColor.hex, '->', newHex, 'in mode:', viewMode);
 
-    // Update edited colors map (normalize to lowercase for consistency)
-    const updated = new Map(editedColors);
-    updated.set(selectedColor.originalHex.toLowerCase(), { newHex: newHex.toLowerCase() });
-    setEditedColors(updated);
-
-    // Update selected color with new hex and blendHex for highlighting
-    setSelectedColor({
-      ...selectedColor,
-      hex: newHex,
-      blendHex: newHex
-    });
-
-    // Regenerate the appropriate SVG based on current mode
+    // Update the appropriate edit map based on current view mode
     if (viewMode === 'solid') {
+      const updated = new Map(solidEdits);
+      updated.set(selectedColor.originalHex.toLowerCase(), { newHex: newHex.toLowerCase() });
+      setSolidEdits(updated);
+
+      // Update selected color with new hex and blendHex for highlighting
+      setSelectedColor({
+        ...selectedColor,
+        hex: newHex,
+        blendHex: newHex
+      });
+
       await regenerateSolidSVG(updated, newHex);
     } else {
+      const updated = new Map(blendEdits);
+      updated.set(selectedColor.originalHex.toLowerCase(), { newHex: newHex.toLowerCase() });
+      setBlendEdits(updated);
+
+      // Update selected color with new hex and blendHex for highlighting
+      setSelectedColor({
+        ...selectedColor,
+        hex: newHex,
+        blendHex: newHex
+      });
+
       await regenerateBlendSVG(updated, newHex);
     }
   };
@@ -385,7 +401,7 @@ export default function InspirePanelRecraft() {
     try {
       // Build updated color mapping with edits
       const updatedMapping = new Map(colorMapping);
-      const edits = updatedEdits || editedColors;
+      const edits = updatedEdits || blendEdits;
 
       edits.forEach((edit, originalHex) => {
         if (edit.newHex) {
@@ -436,7 +452,7 @@ export default function InspirePanelRecraft() {
     try {
       // Build updated color mapping with edits
       const updatedMapping = new Map(solidColorMapping);
-      const edits = updatedEdits || editedColors;
+      const edits = updatedEdits || solidEdits;
 
       edits.forEach((edit, originalHex) => {
         if (edit.newHex) {
@@ -482,7 +498,7 @@ export default function InspirePanelRecraft() {
 
   // Finalize and generate TPV blend recipes for edited colors
   const handleFinalizeRecipes = async () => {
-    if (!editedColors || editedColors.size === 0) {
+    if (!blendEdits || blendEdits.size === 0) {
       // No edits, just show existing recipes
       setShowFinalRecipes(true);
       return;
@@ -496,7 +512,7 @@ export default function InspirePanelRecraft() {
       // Match each edited color to find best TPV recipe
       const updatedRecipes = await Promise.all(
         blendRecipes.map(async (recipe) => {
-          const edit = editedColors.get(recipe.targetColor.hex);
+          const edit = blendEdits.get(recipe.targetColor.hex);
 
           if (edit?.newHex) {
             // Color was edited, fetch new recipe
