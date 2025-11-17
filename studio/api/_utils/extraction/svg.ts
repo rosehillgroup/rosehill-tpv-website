@@ -297,23 +297,56 @@ export class SVGExtractor {
       }
     }
 
-    // Extract colors from gradient stop-color attributes
-    const stopColorMatches = svgText.matchAll(/stop-color=["']([^"']+)["']/gi);
-    let gradientStopCount = 0;
-    let gradientStopParsed = 0;
-    for (const match of stopColorMatches) {
-      gradientStopCount++;
-      const rawColor = match[1];
-      const color = this.normalizeColor(rawColor);
-      if (color) {
-        gradientStopParsed++;
-        // Gradient colors are important visual components - weight them higher
-        colorCounts.set(color, (colorCounts.get(color) || 0) + 10);
-      } else {
-        console.warn(`[SVG] Failed to parse stop-color: "${rawColor}"`);
+    // Extract colors from gradients with usage-based weighting
+    // Map gradient IDs to their colors
+    const gradientColors = new Map<string, Set<string>>();
+    const gradientMatches = svgText.matchAll(/<linearGradient[^>]+id=["']([^"']+)["'][^>]*>([\s\S]*?)<\/linearGradient>/gi);
+
+    for (const match of gradientMatches) {
+      const gradientId = match[1];
+      const gradientContent = match[2];
+      const colors = new Set<string>();
+
+      // Extract stop colors from this gradient
+      const stopMatches = gradientContent.matchAll(/stop-color=["']([^"']+)["']/gi);
+      for (const stopMatch of stopMatches) {
+        const color = this.normalizeColor(stopMatch[1]);
+        if (color) {
+          colors.add(color);
+        }
+      }
+
+      if (colors.size > 0) {
+        gradientColors.set(gradientId, colors);
       }
     }
-    console.info(`[SVG] Found ${gradientStopCount} gradient stops, parsed ${gradientStopParsed} colors`);
+
+    console.info(`[SVG] Found ${gradientColors.size} gradients with colors`);
+
+    // Find elements that use gradients and weight by usage count (proxy for area)
+    const gradientUsage = new Map<string, number>();
+    const urlMatches = svgText.matchAll(/fill=["']url\(#([^)]+)\)["']/gi);
+
+    for (const match of urlMatches) {
+      const gradientId = match[1];
+      gradientUsage.set(gradientId, (gradientUsage.get(gradientId) || 0) + 1);
+    }
+
+    console.info(`[SVG] Found ${gradientUsage.size} gradients used in elements`);
+
+    // Weight gradient colors by usage count
+    let totalGradientColors = 0;
+    for (const [gradientId, colors] of gradientColors.entries()) {
+      const usageCount = gradientUsage.get(gradientId) || 1; // Default to 1 if not used
+      const weight = usageCount * 100; // Weight by usage frequency
+
+      for (const color of colors) {
+        colorCounts.set(color, (colorCounts.get(color) || 0) + weight);
+        totalGradientColors++;
+      }
+    }
+
+    console.info(`[SVG] Weighted ${totalGradientColors} gradient colors by usage`);
 
     // If no colors found, try to extract from CSS in <style> tags
     const cssStyleMatches = svgText.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi);
