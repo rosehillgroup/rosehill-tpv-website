@@ -92,7 +92,7 @@ export class PaletteExtractor {
     const fileValidation = validateFileType(filename);
     const complexity = estimateExtractionComplexity(fileBuffer.byteLength, fileValidation.type!);
     const warnings: string[] = [];
-    const sources: ('pdf' | 'raster')[] = [];
+    const sources: ('pdf' | 'raster' | 'svg')[] = [];
 
     if (!fileValidation.isValid) {
       throw new Error(`Unsupported file type: ${filename}`);

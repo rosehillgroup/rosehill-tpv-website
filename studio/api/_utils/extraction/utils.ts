@@ -70,7 +70,7 @@ export class ColourSpaceConverter {
   /**
    * Remove similar colors within tolerance using weighted averaging
    */
-  deduplicate(colours: PaletteColour[], tolerance: number = 6): PaletteColour[] {
+  deduplicate(colours: PaletteColour[], tolerance: number = 5): PaletteColour[] {
     const result: PaletteColour[] = [];
 
     for (const color of colours) {

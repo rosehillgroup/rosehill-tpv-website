@@ -4,6 +4,8 @@
  */
 
 import type { RGB, Lab } from '../colour/types';
+import { deltaE2000 } from '../colour/deltaE.js';
+import tpvPalette from '../data/rosehill_tpv_21_colours.json';
 
 export interface SVGColor {
   rgb: RGB;
@@ -27,14 +29,38 @@ export interface SVGExtractorOptions {
   minPercentage?: number;
 }
 
+interface TPVColor {
+  code: string;
+  name: string;
+  hex: string;
+  R: number;
+  G: number;
+  B: number;
+  L: number;
+  a: number;
+  b: number;
+}
+
 export class SVGExtractor {
   private options: Required<SVGExtractorOptions>;
+  private tpvColors: TPVColor[];
+  private lightestTPVColor: TPVColor;
 
   constructor(options: SVGExtractorOptions = {}) {
     this.options = {
-      maxColours: options.maxColours ?? 20,
+      maxColours: options.maxColours ?? 12, // Updated default to 12
       minPercentage: options.minPercentage ?? 0 // Include all colors, even tiny accents
     };
+
+    // Load TPV palette
+    this.tpvColors = tpvPalette as TPVColor[];
+
+    // Find lightest color (Cream RH31, L=91.8)
+    this.lightestTPVColor = this.tpvColors.reduce((lightest, color) =>
+      color.L > lightest.L ? color : lightest
+    , this.tpvColors[0]);
+
+    console.info(`[SVG] Loaded ${this.tpvColors.length} TPV colors. Lightest: ${this.lightestTPVColor.name} (${this.lightestTPVColor.hex}, L=${this.lightestTPVColor.L})`);
   }
 
   /**
@@ -49,7 +75,7 @@ export class SVGExtractor {
       const svgText = new TextDecoder('utf-8').decode(buffer);
 
       console.info(`[SVG] Parsing SVG (${buffer.byteLength} bytes)`);
-      console.info(`[SVG] Using SVG extractor v2 with gradient support`);
+      console.info(`[SVG] Using SVG extractor v3 with TPV color normalization and smart collapsing`);
 
       // Parse SVG dimensions
       const dimensions = this.parseSVGDimensions(svgText);
@@ -57,23 +83,44 @@ export class SVGExtractor {
         ? dimensions.width * dimensions.height
         : 1000000; // Default if no dimensions found
 
-      // Extract all colors from SVG elements (area-weighted)
+      // ===== PHASE 1: Normalize SVG colors to TPV palette =====
+      // Snap "too light" colors to nearest TPV colors
+      let normalizedSvg: string;
+      try {
+        normalizedSvg = this.normalizeSvgColors(svgText);
+        warnings.push('PHASE 1: Normalized SVG colors to TPV palette');
+      } catch (error) {
+        console.error(`[SVG] Error in normalizeSvgColors:`, error);
+        warnings.push(`WARNING: Color normalization failed - ${error.message}`);
+        normalizedSvg = svgText; // Fallback to original
+      }
+
+      // ===== PHASE 2: Extract colors from normalized SVG =====
       let colorCounts: Map<string, number>;
       try {
-        colorCounts = this.extractColors(svgText);
-        console.info(`[SVG] Found ${colorCounts.size} unique colors`);
+        colorCounts = this.extractColors(normalizedSvg);
+        console.info(`[SVG] Extracted ${colorCounts.size} unique colors from normalized SVG`);
+        warnings.push(`PHASE 2: Extracted ${colorCounts.size} unique colors`);
       } catch (error) {
         console.error(`[SVG] Error in extractColors:`, error);
         warnings.push(`ERROR: Color extraction failed - ${error.message}`);
         colorCounts = new Map();
       }
 
-      // Calculate percentages from area-weighted scores
-      const totalWeight = Array.from(colorCounts.values()).reduce((sum, weight) => sum + weight, 0);
+      // ===== PHASE 3: Global color collapse =====
+      // Merge similar colors across entire SVG (ΔE ≤ 5)
+      try {
+        colorCounts = this.collapseGlobalColors(colorCounts, 5);
+        warnings.push(`PHASE 3: Collapsed to ${colorCounts.size} color clusters (ΔE ≤ 5)`);
+      } catch (error) {
+        console.error(`[SVG] Error in collapseGlobalColors:`, error);
+        warnings.push(`WARNING: Color collapse failed - ${error.message}`);
+      }
 
+      // ===== PHASE 4: Calculate percentages =====
+      const totalWeight = Array.from(colorCounts.values()).reduce((sum, weight) => sum + weight, 0);
       console.info(`[SVG] Total weight: ${totalWeight}`);
 
-      // Handle case where no colors were found
       let colours: SVGColor[] = [];
 
       if (totalWeight > 0) {
@@ -90,43 +137,47 @@ export class SVGExtractor {
           .filter(color => color.percentage >= this.options.minPercentage)
           .sort((a, b) => b.percentage - a.percentage);
       }
-      // DON'T truncate yet - need to check coverage first!
 
-      // Check if we should add white as background
-      // If total coverage is < 95%, assume transparent background is white
-      const totalCoverage = colours.reduce((sum, c) => sum + c.percentage, 0);
-      console.warn(`[SVG-DEBUG] Total coverage: ${totalCoverage.toFixed(1)}%`);
-      warnings.push(`DEBUG: Before white - ${colours.length} colors, ${totalCoverage.toFixed(1)}% coverage`);
+      warnings.push(`PHASE 4: Calculated coverage for ${colours.length} colors`);
 
-      if (totalCoverage < 95) {
-        const whiteCoverage = 100 - totalCoverage;
-        console.warn(`[SVG-DEBUG] Adding white background with ${whiteCoverage.toFixed(1)}% coverage`);
-        warnings.push(`DEBUG: Adding white with ${whiteCoverage.toFixed(1)}% coverage`);
-
-        colours.push({
-          rgb: { R: 255, G: 255, B: 255 },
-          percentage: whiteCoverage,
-          pixels: Math.round((whiteCoverage / 100) * totalPixels)
-        });
-
-        // Re-sort after adding white
-        colours.sort((a, b) => b.percentage - a.percentage);
-        warnings.push(`DEBUG: After adding white - ${colours.length} colors`);
-      } else {
-        console.warn(`[SVG-DEBUG] No white background needed (coverage >= 95%)`);
-        warnings.push(`DEBUG: No white added (coverage >= 95%)`);
+      // ===== PHASE 5: Smart background detection =====
+      // Add cream background if needed (BEFORE truncation)
+      try {
+        colours = this.detectAndAddBackground(colours, totalPixels);
+        warnings.push(`PHASE 5: Smart background detection complete`);
+      } catch (error) {
+        console.error(`[SVG] Error in detectAndAddBackground:`, error);
+        warnings.push(`WARNING: Background detection failed - ${error.message}`);
       }
 
-      // NOW truncate to maxColours (after potentially adding white)
-      const beforeTruncate = colours.length;
-      colours = colours.slice(0, this.options.maxColours);
-      warnings.push(`DEBUG: After truncate to ${this.options.maxColours} - ${colours.length} colors (was ${beforeTruncate})`);
+      // ===== PHASE 6: Enforce 12-color palette cap =====
+      const beforeCap = colours.length;
+      try {
+        colours = this.enforcePaletteCap(colours, this.options.maxColours);
+        if (beforeCap > colours.length) {
+          warnings.push(`PHASE 6: Reduced palette from ${beforeCap} to ${colours.length} colors`);
+        } else {
+          warnings.push(`PHASE 6: Palette already within ${this.options.maxColours}-color limit`);
+        }
+      } catch (error) {
+        console.error(`[SVG] Error in enforcePaletteCap:`, error);
+        warnings.push(`WARNING: Palette cap enforcement failed - ${error.message}`);
+        // Fallback to simple truncation
+        colours = colours.slice(0, this.options.maxColours);
+      }
 
       const elapsed = Date.now() - startTime;
-      console.info(`[SVG] Extracted ${colours.length} colors in ${elapsed}ms`);
+      console.info(`[SVG] Extracted and normalized ${colours.length} colors in ${elapsed}ms`);
 
-      // Add final debug summary
-      warnings.push(`DEBUG: Final palette has ${colours.length} colors. White #ffffff present: ${colours.some(c => c.rgb.R === 255 && c.rgb.G === 255 && c.rgb.B === 255) ? 'YES' : 'NO'}`);
+      // Add final summary
+      const creamPresent = colours.some(c => {
+        const hex = this.rgbToHex(c.rgb).toLowerCase();
+        return hex === this.lightestTPVColor.hex.toLowerCase();
+      });
+      warnings.push(
+        `FINAL: ${colours.length} colors in palette. ` +
+        `Cream (${this.lightestTPVColor.hex}) present: ${creamPresent ? 'YES' : 'NO'}`
+      );
 
       return {
         colours,
@@ -564,5 +615,379 @@ export class SVGExtractor {
     const da = lab1.a - lab2.a;
     const db = lab1.b - lab2.b;
     return Math.sqrt(dL * dL + da * da + db * db);
+  }
+
+  /**
+   * Calculate chroma (saturation) from Lab values
+   */
+  private getChroma(lab: { L: number; a: number; b: number }): number {
+    return Math.sqrt(lab.a * lab.a + lab.b * lab.b);
+  }
+
+  /**
+   * Smart background detection and addition
+   * Looks for dominant low-chroma colors that might be backgrounds
+   * Adds cream (not white) if coverage gaps exist
+   */
+  private detectAndAddBackground(colours: SVGColor[], totalPixels: number): SVGColor[] {
+    const totalCoverage = colours.reduce((sum, c) => sum + c.percentage, 0);
+
+    console.info(`[SVG] Checking for background (total coverage: ${totalCoverage.toFixed(1)}%)`);
+
+    // Look for existing background: dominant color (>40%) with low chroma (<10)
+    for (const color of colours) {
+      if (color.percentage > 40) {
+        const lab = this.rgbToLab(color.rgb);
+        const chroma = this.getChroma(lab);
+
+        if (chroma < 10) {
+          console.info(
+            `[SVG] Detected background: ${this.rgbToHex(color.rgb)} ` +
+            `(${color.percentage.toFixed(1)}%, L=${lab.L.toFixed(1)}, C=${chroma.toFixed(1)})`
+          );
+          // Background already exists, no need to add one
+          return colours;
+        }
+      }
+    }
+
+    // No background detected - check if we need to add one
+    if (totalCoverage < 95) {
+      const missingCoverage = 100 - totalCoverage;
+
+      console.warn(
+        `[SVG] No background found and coverage < 95%. ` +
+        `Adding cream background with ${missingCoverage.toFixed(1)}% coverage`
+      );
+
+      // Add cream (RH31: #F2E6C8) as background, not white
+      const creamRgb: RGB = {
+        R: this.lightestTPVColor.R,
+        G: this.lightestTPVColor.G,
+        B: this.lightestTPVColor.B
+      };
+
+      colours.push({
+        rgb: creamRgb,
+        percentage: missingCoverage,
+        pixels: Math.round((missingCoverage / 100) * totalPixels)
+      });
+
+      // Re-sort by percentage
+      colours.sort((a, b) => b.percentage - a.percentage);
+
+      console.info(`[SVG] Added cream background: ${this.lightestTPVColor.hex} (${missingCoverage.toFixed(1)}%)`);
+    } else {
+      console.info(`[SVG] Coverage >= 95%, no background needed`);
+    }
+
+    return colours;
+  }
+
+  /**
+   * Enforce palette cap by iteratively merging closest colors if over limit
+   * Preserves high-coverage colors
+   */
+  private enforcePaletteCap(colours: SVGColor[], maxColors: number): SVGColor[] {
+    if (colours.length <= maxColors) {
+      return colours;
+    }
+
+    console.info(`[SVG] Enforcing ${maxColors}-color palette cap (currently ${colours.length} colors)...`);
+
+    // Convert to mutable array with LAB values for distance calculations
+    let workingColors = colours.map(color => ({
+      ...color,
+      lab: this.rgbToLab(color.rgb)
+    }));
+
+    // Iteratively merge closest pairs until we're at or below maxColors
+    while (workingColors.length > maxColors) {
+      let minDeltaE = Infinity;
+      let mergeIndexA = -1;
+      let mergeIndexB = -1;
+
+      // Find the two closest colors
+      for (let i = 0; i < workingColors.length; i++) {
+        for (let j = i + 1; j < workingColors.length; j++) {
+          const dE = this.calculateDeltaE(workingColors[i].lab, workingColors[j].lab);
+
+          if (dE < minDeltaE) {
+            minDeltaE = dE;
+            mergeIndexA = i;
+            mergeIndexB = j;
+          }
+        }
+      }
+
+      // Merge the two closest colors
+      if (mergeIndexA >= 0 && mergeIndexB >= 0) {
+        const colorA = workingColors[mergeIndexA];
+        const colorB = workingColors[mergeIndexB];
+
+        // Keep the color with higher coverage, combine percentages
+        const merged = colorA.percentage >= colorB.percentage ? colorA : colorB;
+        merged.percentage = colorA.percentage + colorB.percentage;
+        merged.pixels = colorA.pixels + colorB.pixels;
+
+        console.info(
+          `[SVG]   Merging ${this.rgbToHex(colorA.rgb)} (${colorA.percentage.toFixed(1)}%) ` +
+          `with ${this.rgbToHex(colorB.rgb)} (${colorB.percentage.toFixed(1)}%) ` +
+          `(ΔE=${minDeltaE.toFixed(2)}) → ${this.rgbToHex(merged.rgb)} (${merged.percentage.toFixed(1)}%)`
+        );
+
+        // Remove both colors and add merged color
+        workingColors = workingColors.filter((_, idx) => idx !== mergeIndexA && idx !== mergeIndexB);
+        workingColors.push(merged);
+
+        // Re-sort by percentage
+        workingColors.sort((a, b) => b.percentage - a.percentage);
+      } else {
+        // Shouldn't happen, but break to avoid infinite loop
+        console.error('[SVG] Failed to find colors to merge');
+        break;
+      }
+    }
+
+    console.info(`[SVG] Palette reduced to ${workingColors.length} colors`);
+
+    // Remove LAB values before returning
+    return workingColors.map(({ lab, ...color }) => color);
+  }
+
+  /**
+   * Collapse globally similar colors across entire SVG
+   * Merges colors within ΔE threshold to eliminate micro-gradients
+   */
+  private collapseGlobalColors(colorCounts: Map<string, number>, threshold: number = 5): Map<string, number> {
+    console.info(`[SVG] Collapsing similar colors (ΔE ≤ ${threshold})...`);
+
+    // Convert to array for processing
+    const colorArray = Array.from(colorCounts.entries()).map(([hex, weight]) => {
+      const rgb = this.hexToRgb(hex);
+      const lab = this.rgbToLab(rgb);
+      return { hex, weight, lab };
+    });
+
+    // Sort by weight (importance) - process high-coverage colors first
+    colorArray.sort((a, b) => b.weight - a.weight);
+
+    console.info(`[SVG] Before collapse: ${colorArray.length} colors`);
+
+    // Build clusters - each cluster has a canonical color (first/highest weight)
+    const clusters: Array<{
+      canonicalHex: string;
+      canonicalLab: { L: number; a: number; b: number };
+      totalWeight: number;
+      members: typeof colorArray;
+    }> = [];
+
+    for (const color of colorArray) {
+      // Find if this color belongs to an existing cluster
+      let foundCluster = false;
+
+      for (const cluster of clusters) {
+        const dE = this.calculateDeltaE(color.lab, cluster.canonicalLab);
+
+        if (dE <= threshold) {
+          // Add to this cluster
+          cluster.members.push(color);
+          cluster.totalWeight += color.weight;
+          foundCluster = true;
+          break;
+        }
+      }
+
+      if (!foundCluster) {
+        // Create new cluster with this color as canonical
+        clusters.push({
+          canonicalHex: color.hex,
+          canonicalLab: color.lab,
+          totalWeight: color.weight,
+          members: [color]
+        });
+      }
+    }
+
+    console.info(`[SVG] After collapse: ${clusters.length} color clusters`);
+
+    // Build collapsed map
+    const collapsed = new Map<string, number>();
+
+    for (const cluster of clusters) {
+      collapsed.set(cluster.canonicalHex, cluster.totalWeight);
+
+      // Log if cluster has multiple members
+      if (cluster.members.length > 1) {
+        const memberHexes = cluster.members.map(m => m.hex).join(', ');
+        console.info(`[SVG]   Cluster ${cluster.canonicalHex}: merged ${cluster.members.length} colors (${memberHexes})`);
+      }
+    }
+
+    return collapsed;
+  }
+
+  /**
+   * Normalize SVG colors by snapping "too light" colors to nearest TPV colors
+   * This ensures all colors in the SVG can actually be produced by TPV granules
+   */
+  private normalizeSvgColors(svgString: string): string {
+    console.info('[SVG] Normalizing colors to TPV palette...');
+    let normalized = svgString;
+    const replacements = new Map<string, string>(); // Track what we're replacing
+
+    // Helper to normalize and snap a color
+    const normalizeAndSnap = (colorStr: string): string => {
+      const normalizedColor = this.normalizeColor(colorStr);
+      if (!normalizedColor) return colorStr; // Skip non-colors
+
+      // Check if we've already processed this color
+      if (replacements.has(normalizedColor)) {
+        return replacements.get(normalizedColor)!;
+      }
+
+      // Snap to nearest TPV color
+      const snappedColor = this.snapToNearestTPVColor(normalizedColor);
+      replacements.set(normalizedColor, snappedColor);
+      return snappedColor;
+    };
+
+    // Replace colors in fill attributes
+    normalized = normalized.replace(
+      /fill=["']([^"']+)["']/gi,
+      (match, color) => {
+        const snapped = normalizeAndSnap(color);
+        return `fill="${snapped}"`;
+      }
+    );
+
+    // Replace colors in stroke attributes
+    normalized = normalized.replace(
+      /stroke=["']([^"']+)["']/gi,
+      (match, color) => {
+        const snapped = normalizeAndSnap(color);
+        return `stroke="${snapped}"`;
+      }
+    );
+
+    // Replace colors in stop-color attributes (gradients)
+    normalized = normalized.replace(
+      /stop-color=["']([^"']+)["']/gi,
+      (match, color) => {
+        const snapped = normalizeAndSnap(color);
+        return `stop-color="${snapped}"`;
+      }
+    );
+
+    // Replace colors in style attributes (more complex)
+    normalized = normalized.replace(
+      /style=["']([^"']+)["']/gi,
+      (match, styleContent) => {
+        let updatedStyle = styleContent;
+
+        // Replace fill in style
+        updatedStyle = updatedStyle.replace(
+          /fill:\s*([^;]+)/gi,
+          (fillMatch, color) => {
+            const snapped = normalizeAndSnap(color.trim());
+            return `fill: ${snapped}`;
+          }
+        );
+
+        // Replace stroke in style
+        updatedStyle = updatedStyle.replace(
+          /stroke:\s*([^;]+)/gi,
+          (strokeMatch, color) => {
+            const snapped = normalizeAndSnap(color.trim());
+            return `stroke: ${snapped}`;
+          }
+        );
+
+        return `style="${updatedStyle}"`;
+      }
+    );
+
+    // Replace colors in <style> tags (CSS)
+    normalized = normalized.replace(
+      /<style[^>]*>([\s\S]*?)<\/style>/gi,
+      (match, cssContent) => {
+        let updatedCss = cssContent;
+
+        // Replace fill colors in CSS
+        updatedCss = updatedCss.replace(
+          /fill:\s*([^;}\s]+)/gi,
+          (cssMatch, color) => {
+            const snapped = normalizeAndSnap(color.trim());
+            return `fill: ${snapped}`;
+          }
+        );
+
+        // Replace stroke colors in CSS
+        updatedCss = updatedCss.replace(
+          /stroke:\s*([^;}\s]+)/gi,
+          (cssMatch, color) => {
+            const snapped = normalizeAndSnap(color.trim());
+            return `stroke: ${snapped}`;
+          }
+        );
+
+        return `<style>${updatedCss}</style>`;
+      }
+    );
+
+    // Log replacements
+    const replacementCount = replacements.size;
+    console.info(`[SVG] Normalized ${replacementCount} unique colors:`);
+    for (const [original, snapped] of replacements.entries()) {
+      if (original !== snapped) {
+        console.info(`  ${original} → ${snapped}`);
+      }
+    }
+
+    return normalized;
+  }
+
+  /**
+   * Snap "unrealistic" colors (too light) to nearest TPV color
+   * Colors lighter than cream (L > 91.8) can't be produced by TPV granules
+   */
+  private snapToNearestTPVColor(hexColor: string): string {
+    const rgb = this.hexToRgb(hexColor);
+    const lab = this.rgbToLab(rgb);
+
+    // If color is not lighter than cream, keep it as-is
+    if (lab.L <= this.lightestTPVColor.L) {
+      return hexColor;
+    }
+
+    // Color is too light - need to snap to nearest TPV color
+    const chroma = this.getChroma(lab);
+
+    // Low chroma (neutral colors) → snap to cream
+    if (chroma < 15) {
+      console.info(`[SVG] Snapping low-chroma color ${hexColor} (L=${lab.L.toFixed(1)}, C=${chroma.toFixed(1)}) → ${this.lightestTPVColor.hex} (Cream)`);
+      return this.lightestTPVColor.hex.toLowerCase();
+    }
+
+    // High chroma (tinted colors) → find nearest TPV color by ΔE
+    let nearestColor = this.lightestTPVColor;
+    let minDeltaE = deltaE2000(lab, {
+      L: this.lightestTPVColor.L,
+      a: this.lightestTPVColor.a,
+      b: this.lightestTPVColor.b
+    });
+
+    for (const tpvColor of this.tpvColors) {
+      const tpvLab = { L: tpvColor.L, a: tpvColor.a, b: tpvColor.b };
+      const dE = deltaE2000(lab, tpvLab);
+
+      if (dE < minDeltaE) {
+        minDeltaE = dE;
+        nearestColor = tpvColor;
+      }
+    }
+
+    console.info(`[SVG] Snapping high-chroma color ${hexColor} (L=${lab.L.toFixed(1)}, C=${chroma.toFixed(1)}) → ${nearestColor.hex} (${nearestColor.name}, ΔE=${minDeltaE.toFixed(2)})`);
+    return nearestColor.hex.toLowerCase();
   }
 }
