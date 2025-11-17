@@ -290,9 +290,9 @@ export default function InspirePanelRecraft() {
 
     console.log('[TPV-STUDIO] Color changed:', selectedColor.hex, '->', newHex);
 
-    // Update edited colors map
+    // Update edited colors map (normalize to lowercase for consistency)
     const updated = new Map(editedColors);
-    updated.set(selectedColor.originalHex, { newHex });
+    updated.set(selectedColor.originalHex.toLowerCase(), { newHex: newHex.toLowerCase() });
     setEditedColors(updated);
 
     // Update selected color with new hex and blendHex for highlighting
@@ -318,8 +318,9 @@ export default function InspirePanelRecraft() {
       edits.forEach((edit, originalHex) => {
         if (edit.newHex) {
           // Update the blend hex to the new color chosen by user
-          updatedMapping.set(originalHex, {
-            ...updatedMapping.get(originalHex),
+          const normalizedHex = originalHex.toLowerCase();
+          updatedMapping.set(normalizedHex, {
+            ...updatedMapping.get(normalizedHex),
             blendHex: edit.newHex
           });
         }
@@ -327,7 +328,7 @@ export default function InspirePanelRecraft() {
 
       // Update blendRecipes to reflect the new colors in the legend
       const updatedRecipes = blendRecipes.map(recipe => {
-        const edit = edits.get(recipe.targetColor.hex);
+        const edit = edits.get(recipe.targetColor.hex.toLowerCase());
         if (edit?.newHex) {
           // Update the blend color shown in the legend
           return {
