@@ -4,9 +4,8 @@ import { SmartBlendSolver } from './_utils/colour/smartSolver';
 import { calculateBlendColor, type BlendComponent, type TPVColor } from './_utils/colour/blendColor';
 import tpvColours from './_utils/data/rosehill_tpv_21_colours.json';
 
-// Force Vercel cache invalidation - DO NOT REMOVE
-const BUILD_VERSION = 'v3.0.0-tpv-normalization-20251117-1105';
-console.log(`[BLEND-RECIPES] Build version: ${BUILD_VERSION}`);
+// Build version for cache busting
+const BUILD_VERSION = 'v3.0.0-tpv-normalization-20251117-1130';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log('[BLEND-RECIPES-V3] API Handler invoked - TPV color normalization enabled');

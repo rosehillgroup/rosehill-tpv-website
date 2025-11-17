@@ -6,19 +6,10 @@
 
 import type { RGB, Lab } from '../colour/types';
 import { deltaE2000 } from '../colour/deltaE.js';
-import { readFileSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import tpvPaletteData from '../data/rosehill_tpv_21_colours.json';
 
-// Load TPV palette using readFileSync for better Vercel compatibility
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const tpvPalettePath = join(__dirname, '../data/rosehill_tpv_21_colours.json');
-const tpvPalette = JSON.parse(readFileSync(tpvPalettePath, 'utf-8'));
-
-// Module load confirmation
-console.info('[SVG-EXTRACTOR-V3] Module loaded with TPV color normalization');
-console.info(`[SVG-EXTRACTOR-V3] Loaded ${tpvPalette.length} TPV colors from palette`);
+// Load TPV palette
+const tpvPalette = tpvPaletteData;
 
 export interface SVGColor {
   rgb: RGB;
@@ -60,33 +51,20 @@ export class SVGExtractor {
   private lightestTPVColor: TPVColor;
 
   constructor(options: SVGExtractorOptions = {}) {
-    try {
-      console.info('[SVG-EXTRACTOR-V3] Initializing SVGExtractor constructor...');
+    this.options = {
+      maxColours: options.maxColours ?? 12, // Updated default to 12
+      minPercentage: options.minPercentage ?? 0 // Include all colors, even tiny accents
+    };
 
-      this.options = {
-        maxColours: options.maxColours ?? 12, // Updated default to 12
-        minPercentage: options.minPercentage ?? 0 // Include all colors, even tiny accents
-      };
+    // Load TPV palette
+    this.tpvColors = tpvPalette as TPVColor[];
 
-      // Load TPV palette
-      if (!tpvPalette || !Array.isArray(tpvPalette) || tpvPalette.length === 0) {
-        throw new Error('TPV palette data is invalid or empty');
-      }
+    // Find lightest color (Cream RH31, L=91.8)
+    this.lightestTPVColor = this.tpvColors.reduce((lightest, color) =>
+      color.L > lightest.L ? color : lightest
+    , this.tpvColors[0]);
 
-      this.tpvColors = tpvPalette as TPVColor[];
-      console.info(`[SVG-EXTRACTOR-V3] Successfully loaded ${this.tpvColors.length} TPV colors`);
-
-      // Find lightest color (Cream RH31, L=91.8)
-      this.lightestTPVColor = this.tpvColors.reduce((lightest, color) =>
-        color.L > lightest.L ? color : lightest
-      , this.tpvColors[0]);
-
-      console.info(`[SVG-EXTRACTOR-V3] Lightest color: ${this.lightestTPVColor.name} (${this.lightestTPVColor.hex}, L=${this.lightestTPVColor.L})`);
-      console.info('[SVG-EXTRACTOR-V3] Constructor initialization complete');
-    } catch (error) {
-      console.error('[SVG-EXTRACTOR-V3] CONSTRUCTOR ERROR:', error);
-      throw error;
-    }
+    console.info(`[SVG-EXTRACTOR-V3] Initialized with ${this.tpvColors.length} TPV colors. Lightest: ${this.lightestTPVColor.name} (${this.lightestTPVColor.hex})`);
   }
 
   /**
