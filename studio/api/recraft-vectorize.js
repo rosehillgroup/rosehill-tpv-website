@@ -151,10 +151,11 @@ export default async function handler(req, res) {
 
       console.log(`[RECRAFT-VECTORIZE] Prediction created: ${prediction.predictionId}`);
 
-      // Store prediction ID
+      // Store prediction ID (at top level for webhook lookup)
       await supabase
         .from('studio_jobs')
         .update({
+          prediction_id: prediction.predictionId, // Top-level for webhook
           metadata: {
             ...jobData.metadata,
             prediction_id: prediction.predictionId,
