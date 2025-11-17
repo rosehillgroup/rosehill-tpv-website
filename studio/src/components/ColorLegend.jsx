@@ -1,14 +1,36 @@
 // TPV Studio - Colour Legend Component
 // Displays clickable colour swatches for the TPV blend SVG
 
+import tpvColours from '../../api/_utils/data/rosehill_tpv_21_colours.json';
+
 export default function ColorLegend({
   recipes,
+  mode = 'blend', // 'blend' or 'solid' - affects label display
   onColorClick, // (colorData) => void - callback when user clicks a color
   selectedColor // Currently selected/editing color
 }) {
   if (!recipes || recipes.length === 0) {
     return null;
   }
+
+  // Find TPV color by hex value
+  const findTpvColorByHex = (hex) => {
+    const normalizedHex = hex.toLowerCase();
+    return tpvColours.find(color => color.hex.toLowerCase() === normalizedHex);
+  };
+
+  // Get display label for a color based on mode
+  const getColorLabel = (recipe) => {
+    if (mode === 'solid') {
+      // In solid mode, show TPV color code and name if available
+      const tpvColor = findTpvColorByHex(recipe.blendColor.hex);
+      if (tpvColor) {
+        return `${tpvColor.code} - ${tpvColor.name}`;
+      }
+    }
+    // Default to hex value
+    return recipe.blendColor.hex;
+  };
 
   // Check if a recipe is currently selected
   const isSelected = (recipe) => {
@@ -47,7 +69,7 @@ export default function ColorLegend({
               style={{ backgroundColor: recipe.blendColor.hex }}
             />
             <div className="color-info">
-              <span className="hex-value">{recipe.blendColor.hex}</span>
+              <span className={mode === 'solid' ? 'tpv-label' : 'hex-value'}>{getColorLabel(recipe)}</span>
               <span className="coverage">{recipe.targetColor.areaPct.toFixed(1)}%</span>
             </div>
           </div>
@@ -140,6 +162,12 @@ export default function ColorLegend({
           font-family: 'Courier New', monospace;
           font-weight: 600;
           color: #333;
+        }
+
+        .tpv-label {
+          font-weight: 600;
+          color: #1a365d;
+          font-size: 0.9rem;
         }
 
         .coverage {

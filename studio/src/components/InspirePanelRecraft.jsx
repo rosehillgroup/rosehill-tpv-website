@@ -345,7 +345,7 @@ export default function InspirePanelRecraft() {
   const handleColorChange = async (newHex) => {
     if (!selectedColor) return;
 
-    console.log('[TPV-STUDIO] Color changed:', selectedColor.hex, '->', newHex);
+    console.log('[TPV-STUDIO] Color changed:', selectedColor.hex, '->', newHex, 'in mode:', viewMode);
 
     // Update edited colors map (normalize to lowercase for consistency)
     const updated = new Map(editedColors);
@@ -359,8 +359,12 @@ export default function InspirePanelRecraft() {
       blendHex: newHex
     });
 
-    // Regenerate blend SVG with updated color
-    await regenerateBlendSVG(updated, newHex);
+    // Regenerate the appropriate SVG based on current mode
+    if (viewMode === 'solid') {
+      await regenerateSolidSVG(updated, newHex);
+    } else {
+      await regenerateBlendSVG(updated, newHex);
+    }
   };
 
   // Regenerate blend SVG with edited colors
@@ -411,6 +415,57 @@ export default function InspirePanelRecraft() {
       console.log('[TPV-STUDIO] Blend SVG regenerated with edits:', stats);
     } catch (err) {
       console.error('[TPV-STUDIO] Failed to regenerate blend SVG:', err);
+    }
+  };
+
+  // Regenerate solid SVG with edited colors
+  const regenerateSolidSVG = async (updatedEdits = null, immediateHex = null) => {
+    if (!result?.svg_url || !solidColorMapping || !solidRecipes) return;
+
+    try {
+      // Build updated color mapping with edits
+      const updatedMapping = new Map(solidColorMapping);
+      const edits = updatedEdits || editedColors;
+
+      edits.forEach((edit, originalHex) => {
+        if (edit.newHex) {
+          // Update the blend hex to the new color chosen by user
+          const normalizedHex = originalHex.toLowerCase();
+          updatedMapping.set(normalizedHex, {
+            ...updatedMapping.get(normalizedHex),
+            blendHex: edit.newHex
+          });
+        }
+      });
+
+      // Update solidRecipes to reflect the new colors in the legend
+      const updatedRecipes = solidRecipes.map(recipe => {
+        const edit = edits.get(recipe.originalColor.hex.toLowerCase());
+        if (edit?.newHex) {
+          // Update both target and blend colors to reflect the edit
+          return {
+            ...recipe,
+            targetColor: {
+              ...recipe.targetColor,
+              hex: edit.newHex
+            },
+            blendColor: {
+              ...recipe.blendColor,
+              hex: edit.newHex
+            }
+          };
+        }
+        return recipe;
+      });
+
+      // Recolor SVG with updated mapping
+      const { dataUrl, stats } = await recolorSVG(result.svg_url, updatedMapping);
+      setSolidSvgUrl(dataUrl);
+      setSolidColorMapping(updatedMapping);
+      setSolidRecipes(updatedRecipes); // Update recipes to show new colors in legend
+      console.log('[TPV-STUDIO] Solid SVG regenerated with edits:', stats);
+    } catch (err) {
+      console.error('[TPV-STUDIO] Failed to regenerate solid SVG:', err);
     }
   };
 
@@ -622,6 +677,7 @@ export default function InspirePanelRecraft() {
             <SVGPreview
               blendSvgUrl={blendSvgUrl}
               recipes={blendRecipes}
+              mode="blend"
               onColorClick={handleColorClick}
               selectedColor={selectedColor}
             />
@@ -632,6 +688,7 @@ export default function InspirePanelRecraft() {
             <SVGPreview
               blendSvgUrl={solidSvgUrl}
               recipes={solidRecipes}
+              mode="solid"
               onColorClick={handleColorClick}
               selectedColor={selectedColor}
             />

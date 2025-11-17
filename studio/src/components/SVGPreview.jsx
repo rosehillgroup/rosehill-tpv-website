@@ -7,6 +7,7 @@ import ColorLegend from './ColorLegend';
 export default function SVGPreview({
   blendSvgUrl,
   recipes,
+  mode = 'blend', // 'blend' or 'solid' - affects color legend display
   onColorClick, // (colorData) => void - callback when user clicks a color
   selectedColor // Current color being edited (to highlight)
 }) {
@@ -304,6 +305,7 @@ export default function SVGPreview({
           <div className="legend-sidebar">
             <ColorLegend
               recipes={recipes}
+              mode={mode}
               onColorClick={onColorClick}
               selectedColor={selectedColor}
             />
