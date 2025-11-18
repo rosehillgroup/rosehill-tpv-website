@@ -55,7 +55,7 @@ export default function LandingPage() {
   useEffect(() => {
     const interval = setInterval(() => {
       setPromptIndex((prev) => (prev + 1) % EXAMPLE_PROMPTS.length);
-    }, 4000); // Change every 4 seconds
+    }, 5000); // Change every 5 seconds (matches animation duration)
     return () => clearInterval(interval);
   }, []);
 
@@ -704,10 +704,11 @@ export default function LandingPage() {
         }
 
         .typing-text {
-          animation: typing 3.5s steps(35, end) forwards;
+          display: inline-block;
+          animation: typing 5s steps(35, end) forwards;
           overflow: hidden;
           white-space: nowrap;
-          border-right: 2px solid transparent;
+          max-width: 100%;
         }
 
         .cursor {
@@ -716,11 +717,14 @@ export default function LandingPage() {
           background: var(--primary);
           margin-left: 2px;
           animation: blink 1s infinite;
+          flex-shrink: 0;
         }
 
         @keyframes typing {
           0% { width: 0; }
-          100% { width: 100%; }
+          35% { width: 100%; }
+          65% { width: 100%; }
+          100% { width: 0; }
         }
 
         @keyframes blink {
