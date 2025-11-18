@@ -464,6 +464,63 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     }
   };
 
+  // Download PDF Export
+  const [generatingPDF, setGeneratingPDF] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
+    const recipes = viewMode === 'solid' ? solidRecipes : blendRecipes;
+    const fileName = viewMode === 'solid' ? 'tpv-solid' : 'tpv-blend';
+
+    if (!svgUrl || !recipes) {
+      setError('Cannot generate PDF: missing SVG or recipes');
+      return;
+    }
+
+    setGeneratingPDF(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/export-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          svgUrl,
+          designName: prompt || 'TPV Design',
+          projectName: 'TPV Studio',
+          dimensions: {
+            widthMM,
+            lengthMM
+          },
+          recipes,
+          mode: viewMode,
+          designId: jobId || ''
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'PDF generation failed');
+      }
+
+      // Download the PDF
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${fileName}-${Date.now()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('PDF download error:', err);
+      setError(`PDF generation failed: ${err.message}`);
+    } finally {
+      setGeneratingPDF(false);
+    }
+  };
+
   // Generate TPV blend recipes from the SVG (auto-called after SVG generation)
   const handleGenerateBlends = async (svgUrl = null, jobIdParam = null) => {
     const svg_url = svgUrl || result?.svg_url;
@@ -1243,6 +1300,18 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
               <button onClick={handleDownloadPNG} className="download-button png">
                 {viewMode === 'solid' ? 'Download Solid TPV PNG' : 'Download TPV Blend PNG'}
               </button>
+              <button
+                onClick={handleDownloadPDF}
+                className="download-button pdf"
+                disabled={generatingPDF || !(viewMode === 'solid' ? solidRecipes : blendRecipes)}
+              >
+                {generatingPDF
+                  ? 'Generating PDF...'
+                  : viewMode === 'solid'
+                    ? 'Export Solid PDF'
+                    : 'Export Blend PDF'
+                }
+              </button>
               <button onClick={handleNewGeneration} className="new-generation-button">
                 New Generation
               </button>
@@ -1877,6 +1946,23 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           background: var(--color-success-hover);
           transform: translateY(-1px);
           box-shadow: var(--shadow-md);
+        }
+
+        .download-button.pdf {
+          background: var(--color-info);
+          color: white;
+        }
+
+        .download-button.pdf:hover:not(:disabled) {
+          background: #2563eb;
+          transform: translateY(-1px);
+          box-shadow: var(--shadow-md);
+        }
+
+        .download-button.pdf:disabled {
+          background: var(--color-text-tertiary);
+          cursor: not-allowed;
+          transform: none;
         }
 
         .blend-button {
