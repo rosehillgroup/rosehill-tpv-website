@@ -27,6 +27,7 @@
 }
 
 .tpv-studio .studio-title {
+  font-family: var(--font-heading);
   margin: 0;
   font-size: 20px;
   font-weight: 700;
@@ -78,8 +79,8 @@
 
 .tpv-studio .btn-my-designs:hover {
   background: #2563eb;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
 }
 
 .tpv-studio .btn-admin {
@@ -100,8 +101,8 @@
 
 .tpv-studio .btn-admin:hover {
   background: #6d28d9;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.3);
 }
 
 .tpv-studio .user-menu {

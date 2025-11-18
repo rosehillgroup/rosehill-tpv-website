@@ -1438,6 +1438,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         }
 
         .panel-header h2 {
+          font-family: var(--font-heading);
           font-size: var(--text-3xl);
           margin: 0 0 var(--space-2) 0;
           color: var(--color-primary);
@@ -1509,6 +1510,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         }
 
         .input-mode-tab .mode-title {
+          font-family: var(--font-heading);
           font-size: var(--text-base);
           font-weight: var(--font-semibold);
           color: var(--color-text-primary);
@@ -1727,8 +1729,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
         .generate-button:hover:not(:disabled) {
           background: var(--color-accent-hover);
-          transform: translateY(-1px);
-          box-shadow: var(--shadow-md);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(255, 107, 53, 0.3);
         }
 
         .generate-button:disabled {
@@ -1789,6 +1791,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         }
 
         .results-header h3 {
+          font-family: var(--font-heading);
           margin: 0;
           color: var(--color-primary);
           font-size: var(--text-xl);
@@ -1884,6 +1887,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         }
 
         .mode-title {
+          font-family: var(--font-heading);
           font-size: var(--text-base);
           font-weight: var(--font-semibold);
           color: var(--color-primary);
@@ -1981,8 +1985,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
         .blend-button:hover:not(:disabled) {
           background: var(--color-accent-hover);
-          transform: translateY(-1px);
-          box-shadow: var(--shadow-md);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(255, 107, 53, 0.3);
         }
 
         .blend-button:disabled {

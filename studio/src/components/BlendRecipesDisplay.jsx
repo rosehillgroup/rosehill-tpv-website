@@ -229,9 +229,11 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
         }
 
         .recipes-header h3 {
+          font-family: 'Space Grotesk', sans-serif;
           margin: 0;
-          color: #1a365d;
+          color: #1e4a7a;
           font-size: 1.5rem;
+          font-weight: 600;
         }
 
         .close-button-icon {
@@ -315,7 +317,8 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
 
         .recipe-card:hover {
           border-color: #ff6b35;
-          box-shadow: 0 4px 12px rgba(255, 107, 53, 0.15);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(255, 107, 53, 0.15);
         }
 
         /* Card Top Section */

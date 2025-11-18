@@ -93,6 +93,7 @@
 }
 
 .tpv-studio .design-name {
+  font-family: var(--font-heading);
   font-size: 16px;
   font-weight: 600;
   color: #1a202c;

@@ -180,9 +180,11 @@ export default function ColorEditorPanel({
         }
 
         .editor-header h3 {
+          font-family: 'Space Grotesk', sans-serif;
           margin: 0;
-          color: #1a365d;
+          color: #1e4a7a;
           font-size: 1.5rem;
+          font-weight: 600;
         }
 
         .close-button {
