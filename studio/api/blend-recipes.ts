@@ -130,7 +130,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // Format alternative recipes (2nd and 3rd best)
       const alternativeRecipes = colorRecipes.slice(1).map((recipe, idx) => {
         const altBlendHex = rgbToHex(recipe.rgb);
-        const altBlendLab = rgbToLab(recipe.rgb);
         return {
           id: `recipe_${i + 1}_${idx + 2}`,
           parts: recipe.parts || {},
@@ -140,8 +139,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           resultRgb: recipe.rgb,
           blendColor: {
             hex: altBlendHex,
-            rgb: recipe.rgb,
-            lab: altBlendLab
+            rgb: recipe.rgb
           },
           components: recipe.components.map(c => ({
             code: c.code,
