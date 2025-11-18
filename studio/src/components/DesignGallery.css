@@ -11,6 +11,8 @@
 
 .design-gallery-modal .modal-body {
   padding: 0;
+  overflow-y: auto;
+  flex: 1;
 }
 
 .gallery-filters {

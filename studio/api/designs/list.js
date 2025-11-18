@@ -34,6 +34,7 @@ export default async function handler(req, res) {
         input_mode,
         thumbnail_url,
         original_png_url,
+        original_svg_url,
         preferred_view_mode,
         created_at,
         updated_at,
