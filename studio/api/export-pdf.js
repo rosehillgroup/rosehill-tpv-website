@@ -6,8 +6,6 @@
  * colour breakdown, and installation material requirements.
  */
 
-const { generateExportPDF } = require('./_utils/pdf/generator');
-
 export const config = {
   api: {
     bodyParser: {
@@ -27,6 +25,9 @@ export default async function handler(req, res) {
   console.log('[EXPORT-PDF] Request received');
 
   try {
+    // Dynamic import to avoid CommonJS/ESM issues
+    const { generateExportPDF } = await import('./_utils/pdf/generator.js');
+
     const {
       svgString,
       svgUrl,

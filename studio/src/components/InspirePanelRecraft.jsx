@@ -499,8 +499,16 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'PDF generation failed');
+        // Try to parse as JSON, but handle text error responses too
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'PDF generation failed');
+        } else {
+          const errorText = await response.text();
+          console.error('PDF API error response:', errorText);
+          throw new Error(`Server error: ${response.status}`);
+        }
       }
 
       // Download the PDF

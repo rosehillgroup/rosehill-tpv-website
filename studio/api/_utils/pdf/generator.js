@@ -3,9 +3,11 @@
  * Creates professional PDF documents with design preview, colour tables, and installation data
  */
 
-const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { createRequire } from 'module';
 
-// TPV colour palette for reference
+// Load JSON data
+const require = createRequire(import.meta.url);
 const TPV_COLOURS = require('../data/rosehill_tpv_21_colours.json');
 
 // Page dimensions (A4 in points: 595.28 x 841.89)
@@ -268,7 +270,7 @@ async function generateExportPDF(data) {
   ];
 
   for (const note of notes) {
-    page2.drawText(note, {
+    page3.drawText(note, {
       x: MARGIN,
       y,
       size: 9,
@@ -791,6 +793,6 @@ function getHexForCode(code) {
   return colour?.hex || '#000000';
 }
 
-module.exports = {
+export {
   generateExportPDF
 };
