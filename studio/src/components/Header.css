@@ -82,6 +82,28 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
+.tpv-studio .btn-admin {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #7c3aed;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tpv-studio .btn-admin:hover {
+  background: #6d28d9;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
 .tpv-studio .user-menu {
   position: relative;
 }
@@ -182,11 +204,13 @@
     display: none;
   }
 
-  .tpv-studio .btn-my-designs span {
+  .tpv-studio .btn-my-designs span,
+  .tpv-studio .btn-admin span {
     display: none;
   }
 
-  .tpv-studio .btn-my-designs {
+  .tpv-studio .btn-my-designs,
+  .tpv-studio .btn-admin {
     padding: 8px 12px;
   }
 }

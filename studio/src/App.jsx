@@ -3,6 +3,7 @@ import { auth } from './lib/api/auth.js';
 import InspirePanelRecraft from './components/InspirePanelRecraft.jsx';
 import Header from './components/Header.jsx';
 import DesignGallery from './components/DesignGallery.jsx';
+import AdminDashboard from './components/admin/AdminDashboard.jsx';
 
 function SignInForm() {
   const [email, setEmail] = useState('');
@@ -123,19 +124,44 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showGallery, setShowGallery] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loadedDesign, setLoadedDesign] = useState(null);
   const [currentDesignName, setCurrentDesignName] = useState(null);
+
+  // Check if user has admin role
+  const checkAdminStatus = async () => {
+    try {
+      const response = await fetch('/api/admin/users', {
+        headers: {
+          'Authorization': `Bearer ${(await auth.getSession())?.access_token}`
+        }
+      });
+      // If we can access admin endpoint, user is admin
+      setIsAdmin(response.ok);
+    } catch (error) {
+      setIsAdmin(false);
+    }
+  };
 
   useEffect(() => {
     // Check auth status on mount
     auth.getSession().then(session => {
       setUser(session?.user || null);
       setLoading(false);
+      if (session?.user) {
+        checkAdminStatus();
+      }
     });
 
     // Listen for auth changes
     const { data: subscription } = auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
+      if (session?.user) {
+        checkAdminStatus();
+      } else {
+        setIsAdmin(false);
+      }
     });
 
     return () => subscription?.unsubscribe();
@@ -172,10 +198,19 @@ function App() {
     return <SignInForm />;
   }
 
+  // If showing admin panel, render it fullscreen
+  if (showAdmin) {
+    return (
+      <AdminDashboard onClose={() => setShowAdmin(false)} />
+    );
+  }
+
   return (
     <div className="tpv-studio">
       <Header
         onShowDesigns={() => setShowGallery(true)}
+        onShowAdmin={() => setShowAdmin(true)}
+        isAdmin={isAdmin}
         currentDesignName={currentDesignName}
       />
 
