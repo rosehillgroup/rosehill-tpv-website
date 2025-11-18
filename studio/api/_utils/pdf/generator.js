@@ -238,7 +238,7 @@ async function generateExportPDF(data) {
   // Surface area info
   y -= 25;
   const areaM2 = (dimensions.widthMM / 1000) * (dimensions.lengthMM / 1000);
-  page3.drawText(`Total Surface Area: ${areaM2.toFixed(2)} m²`, {
+  page3.drawText(`Total Surface Area: ${areaM2.toFixed(2)} m2`, {
     x: MARGIN,
     y,
     size: 12,
@@ -403,7 +403,7 @@ function drawDimensionsPanel(page, fontBold, fontRegular, dimensions, y) {
   });
 
   y -= 18;
-  page.drawText(`Width: ${widthM}m (${widthMM}mm)    Length: ${lengthM}m (${lengthMM}mm)    Area: ${areaM2}m²`, {
+  page.drawText(`Width: ${widthM}m (${widthMM}mm)    Length: ${lengthM}m (${lengthMM}mm)    Area: ${areaM2}m2`, {
     x: MARGIN,
     y,
     size: 10,
@@ -422,8 +422,8 @@ async function drawColourTable(pdfDoc, page, fontBold, fontRegular, recipes, mod
 
   // Table headers
   const headers = mode === 'blend'
-    ? ['Colour', 'Blend Name', 'ΔE', 'Recipe', 'Coverage', 'Area (m²)']
-    : ['Colour', 'TPV Code', 'Name', 'Hex', 'Coverage', 'Area (m²)'];
+    ? ['Colour', 'Blend Name', 'dE', 'Recipe', 'Coverage', 'Area (m2)']
+    : ['Colour', 'TPV Code', 'Name', 'Hex', 'Coverage', 'Area (m2)'];
 
   const colWidths = mode === 'blend'
     ? [40, 90, 35, 170, 60, 60]
