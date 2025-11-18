@@ -26,6 +26,7 @@ export default function SaveDesignModal({
   const [newProjectColor, setNewProjectColor] = useState('#1a365d');
 
   const [saving, setSaving] = useState(false);
+  const [savingAsNew, setSavingAsNew] = useState(false);
   const [creatingProject, setCreatingProject] = useState(false);
   const [error, setError] = useState(null);
 
@@ -73,7 +74,7 @@ export default function SaveDesignModal({
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (saveAsNew = false) => {
     if (!name.trim()) {
       setError('Design name is required');
       return;
@@ -86,7 +87,11 @@ export default function SaveDesignModal({
       return;
     }
 
-    setSaving(true);
+    if (saveAsNew) {
+      setSavingAsNew(true);
+    } else {
+      setSaving(true);
+    }
     setError(null);
 
     try {
@@ -108,8 +113,8 @@ export default function SaveDesignModal({
 
       console.log('[SAVE-MODAL] Full save payload:', payload);
 
-      // Add ID for updates
-      if (existingDesignId) {
+      // Add ID for updates (unless saving as new)
+      if (existingDesignId && !saveAsNew) {
         payload.id = existingDesignId;
       }
 
@@ -125,6 +130,7 @@ export default function SaveDesignModal({
       setError(err.message);
     } finally {
       setSaving(false);
+      setSavingAsNew(false);
     }
   };
 
@@ -267,10 +273,19 @@ export default function SaveDesignModal({
         </div>
 
         <div className="modal-footer">
-          <button onClick={onClose} className="btn-secondary" disabled={saving}>
+          <button onClick={onClose} className="btn-secondary" disabled={saving || savingAsNew}>
             Cancel
           </button>
-          <button onClick={handleSave} className="btn-primary" disabled={saving}>
+          {existingDesignId && (
+            <button
+              onClick={() => handleSave(true)}
+              className="btn-secondary"
+              disabled={saving || savingAsNew}
+            >
+              {savingAsNew ? 'Saving...' : 'Save as New'}
+            </button>
+          )}
+          <button onClick={() => handleSave(false)} className="btn-primary" disabled={saving || savingAsNew}>
             {saving ? 'Saving...' : (existingDesignId ? 'Update' : 'Save Design')}
           </button>
         </div>

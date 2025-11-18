@@ -70,6 +70,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   const [designName, setDesignName] = useState('');
   const [isNameLoading, setIsNameLoading] = useState(false);
 
+  // Track loaded design ID for updates
+  const [currentDesignId, setCurrentDesignId] = useState(null);
+
   // Load design when loadedDesign prop changes
   useEffect(() => {
     if (loadedDesign) {
@@ -103,6 +106,11 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       // Set design name from saved design
       if (loadedDesign.name) {
         setDesignName(loadedDesign.name);
+      }
+
+      // Track design ID for updates
+      if (loadedDesign.id) {
+        setCurrentDesignId(loadedDesign.id);
       }
 
       // Regenerate SVGs from saved state (blob URLs don't survive page reload)
@@ -441,6 +449,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     // Reset design name
     setDesignName('');
     setIsNameLoading(false);
+    // Clear design ID (this is a new design, not an update)
+    setCurrentDesignId(null);
   };
 
   // Download TPV Blend SVG
@@ -1525,6 +1535,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
             arMapping,
             jobId
           }}
+          existingDesignId={currentDesignId}
           initialName={designName}
           onClose={() => setShowSaveModal(false)}
           onSaved={(savedDesign, savedName) => {
