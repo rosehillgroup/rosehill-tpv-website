@@ -1261,7 +1261,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
               >
                 <span className="mode-title">Solid Mode</span>
                 <span className="mode-description">
-                  {solidSvgUrl ? 'Single TPV colors only' : 'Generating...'}
+                  {solidSvgUrl ? 'Single TPV colours only' : 'Generating...'}
                 </span>
               </button>
               <button
@@ -1319,9 +1319,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
                     ? 'Export Solid PDF'
                     : 'Export Blend PDF'
                 }
-              </button>
-              <button onClick={handleNewGeneration} className="new-generation-button">
-                New Generation
               </button>
             </div>
           )}
