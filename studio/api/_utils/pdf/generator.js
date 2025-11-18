@@ -426,7 +426,7 @@ async function drawColourTable(pdfDoc, page, fontBold, fontRegular, recipes, mod
     : ['Colour', 'TPV Code', 'Name', 'Hex', 'Coverage', 'Area (m2)'];
 
   const colWidths = mode === 'blend'
-    ? [40, 90, 35, 170, 60, 60]
+    ? [40, 120, 35, 140, 60, 60]
     : [40, 60, 100, 70, 60, 60];
 
   // Draw header row
@@ -497,7 +497,7 @@ async function drawColourTable(pdfDoc, page, fontBold, fontRegular, recipes, mod
 
     if (mode === 'blend') {
       // Blend name
-      page.drawText(name.substring(0, 15), {
+      page.drawText(name.substring(0, 20), {
         x: x + 5,
         y: y - 3,
         size: 8,
@@ -517,7 +517,7 @@ async function drawColourTable(pdfDoc, page, fontBold, fontRegular, recipes, mod
       x += colWidths[2];
 
       // Recipe
-      page.drawText(recipeText.substring(0, 35), {
+      page.drawText(recipeText.substring(0, 28), {
         x: x + 5,
         y: y - 3,
         size: 7,
@@ -777,11 +777,15 @@ function formatRecipe(chosenRecipe) {
 
   const components = chosenRecipe.components;
   if (components.length === 1) {
-    return `100% ${components[0].code}`;
+    return components[0].code;
   }
 
+  // Use parts if available, otherwise fall back to weight
   return components
-    .map(c => `${Math.round(c.weight * 100)}% ${c.code}`)
+    .map(c => {
+      const parts = c.parts || Math.round(c.weight * 12);
+      return `${parts}p ${c.code}`;
+    })
     .join(' + ');
 }
 
