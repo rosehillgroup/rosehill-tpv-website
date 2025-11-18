@@ -481,11 +481,15 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     setError(null);
 
     try {
+      // Fetch SVG content from blob URL (blob URLs don't work server-side)
+      const svgResponse = await fetch(svgUrl);
+      const svgString = await svgResponse.text();
+
       const response = await fetch('/api/export-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          svgUrl,
+          svgString,
           designName: prompt || 'TPV Design',
           projectName: 'TPV Studio',
           dimensions: {
