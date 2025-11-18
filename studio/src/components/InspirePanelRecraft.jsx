@@ -622,32 +622,22 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
   // Reset all color edits back to original
   const handleResetAllColors = async () => {
-    if (viewMode === 'solid') {
-      setSolidEditedColors(new Map());
-      // Regenerate SVG with original colors
-      if (result?.svg_url && solidColorMapping && solidRecipes) {
-        await regenerateSolidSVGFromState(
-          result.svg_url,
-          solidColorMapping,
-          solidRecipes,
-          new Map()
-        );
-      }
-    } else {
-      setBlendEditedColors(new Map());
-      // Regenerate SVG with original colors
-      if (result?.svg_url && colorMapping && blendRecipes) {
-        await regenerateBlendSVGFromState(
-          result.svg_url,
-          colorMapping,
-          blendRecipes,
-          new Map()
-        );
-      }
-    }
     // Close color editor if open
     setColorEditorOpen(false);
     setSelectedColor(null);
+
+    // Clear edit tracking
+    if (viewMode === 'solid') {
+      setSolidEditedColors(new Map());
+    } else {
+      setBlendEditedColors(new Map());
+    }
+
+    // Re-generate recipes from original SVG to get fresh colors
+    if (result?.svg_url) {
+      // This will rebuild everything from scratch
+      await handleGenerateBlends(result.svg_url, jobId);
+    }
   };
 
   // Generate solid TPV color version (auto-called after blend recipes)
