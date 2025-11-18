@@ -4,121 +4,7 @@ import InspirePanelRecraft from './components/InspirePanelRecraft.jsx';
 import Header from './components/Header.jsx';
 import DesignGallery from './components/DesignGallery.jsx';
 import AdminDashboard from './components/admin/AdminDashboard.jsx';
-
-function SignInForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      await auth.signIn(email, password);
-    } catch (err) {
-      setError(err.message || 'Sign in failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="tpv-studio">
-      <div className="tpv-studio__header">
-        <h1>TPV Studio</h1>
-        <p>AI-powered vector designs for playground surfaces</p>
-      </div>
-      <div className="tpv-studio__container">
-        <div className="tpv-studio__card" style={{ maxWidth: '400px', margin: '2rem auto' }}>
-          <h2 style={{ marginBottom: '1rem' }}>Sign In</h2>
-          <p style={{ marginBottom: '1.5rem', color: '#718096' }}>
-            Please sign in with your @rosehill.group account
-          </p>
-
-          {error && (
-            <div style={{
-              padding: '0.75rem',
-              marginBottom: '1rem',
-              backgroundColor: '#FEE',
-              color: '#C00',
-              borderRadius: '4px',
-              fontSize: '0.875rem'
-            }}>
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                Email
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@rosehill.group"
-                required
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '4px',
-                  fontSize: '1rem'
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '4px',
-                  fontSize: '1rem'
-                }}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: '100%',
-                padding: '0.75rem',
-                backgroundColor: '#ff6b35',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '1rem',
-                fontWeight: '600',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.6 : 1
-              }}
-            >
-              {loading ? 'Signing in...' : 'Sign In'}
-            </button>
-          </form>
-
-          <p style={{ marginTop: '1.5rem', fontSize: '0.875rem', color: '#718096', textAlign: 'center' }}>
-            Don't have an account? Contact your administrator.
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
+import LandingPage from './components/LandingPage.jsx';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -193,9 +79,9 @@ function App() {
     );
   }
 
-  // Sign-in screen
+  // Landing page for unauthenticated users
   if (!user) {
-    return <SignInForm />;
+    return <LandingPage />;
   }
 
   // If showing admin panel, render it fullscreen
