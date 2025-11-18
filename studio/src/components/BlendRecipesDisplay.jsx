@@ -141,8 +141,19 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
                   <div className="alternatives-header">Alternative Formulas</div>
                   {recipe.alternativeRecipes.map((alt, altIdx) => {
                     // Defensive check for missing data
-                    if (!alt || !alt.components || !alt.blendColor) {
+                    if (!alt || !alt.components) {
                       console.warn('[BlendRecipesDisplay] Skipping malformed alternative:', alt);
+                      return null;
+                    }
+
+                    // Compute blendColor from resultRgb if missing (for older saved designs)
+                    const altBlendColor = alt.blendColor || (alt.resultRgb ? {
+                      hex: `#${alt.resultRgb.map(c => Math.round(c).toString(16).padStart(2, '0')).join('')}`,
+                      rgb: alt.resultRgb
+                    } : null);
+
+                    if (!altBlendColor) {
+                      console.warn('[BlendRecipesDisplay] Cannot compute blendColor for alternative:', alt);
                       return null;
                     }
 
@@ -167,8 +178,8 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
                             <span className="swatch-arrow-small">→</span>
                             <div
                               className="color-swatch-small blend"
-                              style={{ backgroundColor: alt.blendColor.hex }}
-                              title={`TPV blend: ${alt.blendColor.hex}`}
+                              style={{ backgroundColor: altBlendColor.hex }}
+                              title={`TPV blend: ${altBlendColor.hex}`}
                             />
                           </div>
                         </div>
