@@ -356,7 +356,7 @@ export default function LandingPage() {
             </svg>
           </button>
           <p className="cta-note">
-            Need an account? Contact <a href="mailto:info@rosehillgroup.com">info@rosehillgroup.com</a>
+            Need an account? Contact <a href="mailto:info@rosehill.group">info@rosehill.group</a>
           </p>
         </div>
       </section>
