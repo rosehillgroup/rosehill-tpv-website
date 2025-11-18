@@ -1,6 +1,6 @@
 /* Design Card Styles */
 
-.design-card {
+.tpv-studio .design-card {
   background: white;
   border-radius: 12px;
   overflow: hidden;
@@ -10,19 +10,19 @@
   cursor: pointer;
 }
 
-.design-card:hover {
+.tpv-studio .design-card:hover {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   transform: translateY(-2px);
 }
 
-.design-card.deleting {
+.tpv-studio .design-card.deleting {
   opacity: 0.6;
   pointer-events: none;
 }
 
 /* Thumbnail */
 
-.card-thumbnail {
+.tpv-studio .card-thumbnail {
   position: relative;
   width: 100%;
   padding-top: 100%; /* 1:1 aspect ratio */
@@ -30,7 +30,7 @@
   overflow: hidden;
 }
 
-.card-thumbnail img {
+.tpv-studio .card-thumbnail img {
   position: absolute;
   top: 0;
   left: 0;
@@ -39,7 +39,7 @@
   object-fit: cover;
 }
 
-.no-thumbnail {
+.tpv-studio .no-thumbnail {
   position: absolute;
   top: 0;
   left: 0;
@@ -51,7 +51,7 @@
   color: #d1d5db;
 }
 
-.thumbnail-overlay {
+.tpv-studio .thumbnail-overlay {
   position: absolute;
   top: 0;
   left: 0;
@@ -65,11 +65,11 @@
   transition: opacity 0.2s;
 }
 
-.card-thumbnail:hover .thumbnail-overlay {
+.tpv-studio .card-thumbnail:hover .thumbnail-overlay {
   opacity: 1;
 }
 
-.btn-load {
+.tpv-studio .btn-load {
   background: white;
   color: #1a202c;
   border: none;
@@ -81,18 +81,18 @@
   transition: all 0.2s;
 }
 
-.btn-load:hover {
+.tpv-studio .btn-load:hover {
   background: #f9fafb;
   transform: scale(1.05);
 }
 
 /* Card Info */
 
-.card-info {
+.tpv-studio .card-info {
   padding: 18px;
 }
 
-.design-name {
+.tpv-studio .design-name {
   font-size: 16px;
   font-weight: 600;
   color: #1a202c;
@@ -102,7 +102,7 @@
   text-overflow: ellipsis;
 }
 
-.design-description {
+.tpv-studio .design-description {
   font-size: 13px;
   color: #6b7280;
   margin: 0 0 12px 0;
@@ -113,7 +113,7 @@
   line-height: 1.4;
 }
 
-.card-meta {
+.tpv-studio .card-meta {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -121,7 +121,7 @@
   margin-bottom: 8px;
 }
 
-.project-badge {
+.tpv-studio .project-badge {
   display: inline-block;
   padding: 8px 14px;
   border-radius: 14px;
@@ -134,18 +134,18 @@
   max-width: 120px;
 }
 
-.design-date {
+.tpv-studio .design-date {
   font-size: 12px;
   color: #9ca3af;
 }
 
-.design-tags {
+.tpv-studio .design-tags {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
 }
 
-.tag {
+.tpv-studio .tag {
   display: inline-block;
   padding: 3px 8px;
   background: #f3f4f6;
@@ -155,14 +155,14 @@
   font-weight: 500;
 }
 
-.tag.more {
+.tpv-studio .tag.more {
   background: #e5e7eb;
   color: #374151;
 }
 
 /* Card Actions */
 
-.card-actions {
+.tpv-studio .card-actions {
   position: absolute;
   top: 12px;
   right: 12px;
@@ -171,7 +171,7 @@
   z-index: 10;
 }
 
-.action-btn {
+.tpv-studio .action-btn {
   width: 32px;
   height: 32px;
   border-radius: 6px;
@@ -185,27 +185,27 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.load-btn {
+.tpv-studio .load-btn {
   color: #3b82f6;
 }
 
-.load-btn:hover {
+.tpv-studio .load-btn:hover {
   background: #3b82f6;
   color: white;
 }
 
-.delete-btn {
+.tpv-studio .delete-btn {
   color: #ef4444;
 }
 
-.delete-btn:hover {
+.tpv-studio .delete-btn:hover {
   background: #ef4444;
   color: white;
 }
 
 /* Deleting Overlay */
 
-.deleting-overlay {
+.tpv-studio .deleting-overlay {
   position: absolute;
   top: 0;
   left: 0;
@@ -217,7 +217,7 @@
   justify-content: center;
 }
 
-.spinner {
+.tpv-studio .spinner {
   width: 32px;
   height: 32px;
   border: 3px solid #e5e7eb;
@@ -235,15 +235,15 @@
 /* Responsive */
 
 @media (max-width: 640px) {
-  .card-info {
+  .tpv-studio .card-info {
     padding: 12px;
   }
 
-  .design-name {
+  .tpv-studio .design-name {
     font-size: 14px;
   }
 
-  .design-description {
+  .tpv-studio .design-description {
     font-size: 12px;
   }
 }
