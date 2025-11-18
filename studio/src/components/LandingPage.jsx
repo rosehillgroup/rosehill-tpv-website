@@ -43,6 +43,14 @@ const EXAMPLE_PROMPTS = [
   "rainbow with clouds"
 ];
 
+// Pre-generate granule positions to avoid re-rendering on state change
+const GRANULE_DATA = [...Array(60)].map((i) => ({
+  delay: `${Math.random() * 3}s`,
+  x: `${Math.random() * 100}%`,
+  y: `${Math.random() * 100}%`,
+  size: `${8 + Math.random() * 12}px`
+}));
+
 export default function LandingPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -96,16 +104,16 @@ export default function LandingPage() {
       <section className="hero">
         <div className="hero-background">
           <div className="granule-field">
-            {[...Array(60)].map((_, i) => (
+            {GRANULE_DATA.map((granule, i) => (
               <div
                 key={i}
                 className="granule"
                 style={{
-                  '--delay': `${Math.random() * 3}s`,
-                  '--x': `${Math.random() * 100}%`,
-                  '--y': `${Math.random() * 100}%`,
+                  '--delay': granule.delay,
+                  '--x': granule.x,
+                  '--y': granule.y,
                   '--color': TPV_COLORS[i % TPV_COLORS.length].hex,
-                  '--size': `${8 + Math.random() * 12}px`
+                  '--size': granule.size
                 }}
               />
             ))}
@@ -146,7 +154,6 @@ export default function LandingPage() {
               <div className="mockup-content">
                 <div className="mockup-input">
                   <span key={promptIndex} className="typing-text">{EXAMPLE_PROMPTS[promptIndex]}</span>
-                  <span className="cursor"></span>
                 </div>
                 <div className="mockup-preview">
                   <div className="preview-shape shape-1"></div>
@@ -705,31 +712,21 @@ export default function LandingPage() {
 
         .typing-text {
           display: inline-block;
-          animation: typing 5s steps(35, end) forwards;
           overflow: hidden;
           white-space: nowrap;
-          max-width: 100%;
-        }
-
-        .cursor {
-          width: 2px;
-          height: 1em;
-          background: var(--primary);
-          margin-left: 2px;
-          animation: blink 1s infinite;
-          flex-shrink: 0;
+          border-right: 2px solid var(--primary);
+          animation: typing 5s steps(40, end) forwards, blink 0.7s step-end infinite;
         }
 
         @keyframes typing {
-          0% { width: 0; }
-          35% { width: 100%; }
-          65% { width: 100%; }
-          100% { width: 0; }
+          0% { max-width: 0; }
+          35% { max-width: 500px; }
+          65% { max-width: 500px; }
+          100% { max-width: 0; }
         }
 
         @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
+          50% { border-color: transparent; }
         }
 
         .mockup-preview {
