@@ -344,7 +344,19 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
           // Update status message based on state
           if (progressStatus.status === 'queued') {
-            setProgressMessage(`Waiting in queue... (${elapsed}s)`);
+            // Rotating messages to keep it interesting while waiting
+            const queueMessages = [
+              `🎨 Preparing your canvas... (${elapsed}s)`,
+              `✨ Warming up the AI brushes... (${elapsed}s)`,
+              `🎯 Queueing your masterpiece... (${elapsed}s)`,
+              `🖌️ Mixing digital paints... (${elapsed}s)`,
+              `💭 AI is contemplating your vision... (${elapsed}s)`,
+              `🌈 Selecting the perfect colours... (${elapsed}s)`,
+              `📐 Calculating vector paths... (${elapsed}s)`,
+              `⚡ Almost ready to create... (${elapsed}s)`
+            ];
+            const msgIndex = Math.floor(elapsed / 4) % queueMessages.length;
+            setProgressMessage(queueMessages[msgIndex]);
           } else if (progressStatus.status === 'running') {
             if (lastStatus !== 'running') {
               setProgressMessage('🎨 AI is creating your design...');
