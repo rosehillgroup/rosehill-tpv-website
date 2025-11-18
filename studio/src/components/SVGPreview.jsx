@@ -11,7 +11,10 @@ export default function SVGPreview({
   onColorClick, // (colorData) => void - callback when user clicks a color
   selectedColor, // Current color being edited (to highlight)
   editedColors, // Map of edited colors (originalHex -> {newHex})
-  onResetAll // () => void - callback to reset all color edits
+  onResetAll, // () => void - callback to reset all color edits
+  designName = '', // AI-generated or user-edited design name
+  onNameChange, // (newName) => void - callback when name is edited
+  isNameLoading = false // Whether name is being generated
 }) {
   const [highlightMask, setHighlightMask] = useState(null);
   const imageRef = useRef(null);
@@ -331,7 +334,22 @@ export default function SVGPreview({
   return (
     <div className="svg-preview">
       <div className="preview-header">
-        <h3>TPV Blend Design</h3>
+        <div className="design-name-container">
+          {onNameChange ? (
+            <input
+              type="text"
+              className="design-name-input"
+              value={designName}
+              onChange={(e) => onNameChange(e.target.value)}
+              placeholder={isNameLoading ? 'Generating name...' : 'Enter project name'}
+            />
+          ) : (
+            <h3>{designName || 'TPV Blend Design'}</h3>
+          )}
+          {isNameLoading && (
+            <span className="name-loading">Generating...</span>
+          )}
+        </div>
         {selectedColor && (
           <span className="editing-hint">
             Editing: {selectedColor.hex || selectedColor.blendHex}
@@ -425,12 +443,58 @@ export default function SVGPreview({
 
         .preview-header {
           margin-bottom: 1.5rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+        }
+
+        .design-name-container {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          flex: 1;
         }
 
         .preview-header h3 {
           margin: 0;
           color: #1a365d;
           font-size: 1.5rem;
+        }
+
+        .design-name-input {
+          font-family: var(--font-heading), 'Space Grotesk', sans-serif;
+          font-size: 1.5rem;
+          font-weight: 600;
+          color: #1a365d;
+          border: none;
+          border-bottom: 2px solid transparent;
+          background: transparent;
+          padding: 0.25rem 0;
+          width: 100%;
+          max-width: 400px;
+          transition: border-color 0.2s;
+        }
+
+        .design-name-input:hover {
+          border-bottom-color: #e5e7eb;
+        }
+
+        .design-name-input:focus {
+          outline: none;
+          border-bottom-color: #ff6b35;
+        }
+
+        .design-name-input::placeholder {
+          color: #9ca3af;
+          font-weight: normal;
+        }
+
+        .name-loading {
+          font-size: 0.75rem;
+          color: #9ca3af;
+          font-style: italic;
         }
 
         /* SVG Display */

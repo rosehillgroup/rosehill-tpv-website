@@ -66,6 +66,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   // Save design state
   const [showSaveModal, setShowSaveModal] = useState(false);
 
+  // Design name state
+  const [designName, setDesignName] = useState('');
+  const [isNameLoading, setIsNameLoading] = useState(false);
+
   // Load design when loadedDesign prop changes
   useEffect(() => {
     if (loadedDesign) {
@@ -95,6 +99,11 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       setShowSolidSummary(restoredState.showSolidSummary);
 
       console.log('[INSPIRE] Loaded design:', loadedDesign.name);
+
+      // Set design name from saved design
+      if (loadedDesign.name) {
+        setDesignName(loadedDesign.name);
+      }
 
       // Regenerate SVGs from saved state (blob URLs don't survive page reload)
       // This needs to happen after state is set, so we use a timeout
@@ -429,6 +438,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     setSolidSvgUrl(null);
     setSolidColorMapping(null);
     setShowSolidSummary(false);
+    // Reset design name
+    setDesignName('');
+    setIsNameLoading(false);
   };
 
   // Download TPV Blend SVG
@@ -640,6 +652,60 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     }
   };
 
+  // Generate AI-suggested design name
+  const handleGenerateDesignName = async (recipes) => {
+    // Don't overwrite if user already set a name or we're loading a saved design
+    if (designName) return;
+
+    // Only generate name for prompt-based designs
+    if (!prompt || inputMode !== 'prompt') {
+      // Fallback for uploads
+      if (selectedFile) {
+        setDesignName(`TPV Design – ${selectedFile.name.replace(/\.[^/.]+$/, '')}`);
+      }
+      return;
+    }
+
+    setIsNameLoading(true);
+
+    try {
+      // Extract color names from recipes
+      const colorNames = recipes
+        ?.slice(0, 6)
+        .map(recipe => {
+          const component = recipe.chosenRecipe?.components?.[0];
+          return component?.name || null;
+        })
+        .filter(Boolean) || [];
+
+      const response = await apiClient.generateDesignName({
+        prompt,
+        colors: colorNames,
+        dimensions: { widthMM, lengthMM }
+      });
+
+      if (response.success && response.names?.length > 0) {
+        setDesignName(response.names[0]);
+      } else {
+        // Fallback name
+        setDesignName(buildFallbackName(prompt));
+      }
+    } catch (err) {
+      console.error('[TPV-STUDIO] Name generation failed:', err);
+      setDesignName(buildFallbackName(prompt));
+    } finally {
+      setIsNameLoading(false);
+    }
+  };
+
+  // Build fallback name from prompt
+  const buildFallbackName = (prompt) => {
+    if (!prompt) return 'TPV Playground Design';
+    // Grab first part of prompt, clean it up
+    const short = prompt.split(/[,.]/)[0].trim().slice(0, 40);
+    return `TPV Design – ${short}`;
+  };
+
   // Generate solid TPV color version (auto-called after blend recipes)
   const handleGenerateSolid = async (svgUrl = null, jobIdParam = null) => {
     const svg_url = svgUrl || result?.svg_url;
@@ -678,6 +744,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           const { dataUrl, stats } = await recolorSVG(svg_url, mapping);
           setSolidSvgUrl(dataUrl);
           console.log('[TPV-STUDIO] Solid color SVG generated:', stats);
+
+          // Generate design name now that all processing is complete
+          handleGenerateDesignName(data.recipes);
         } catch (svgError) {
           console.error('[TPV-STUDIO] Failed to generate solid SVG:', svgError);
         }
@@ -1320,6 +1389,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
               selectedColor={selectedColor}
               editedColors={blendEditedColors}
               onResetAll={handleResetAllColors}
+              designName={designName}
+              onNameChange={setDesignName}
+              isNameLoading={isNameLoading}
             />
           )}
 
@@ -1333,6 +1405,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
               selectedColor={selectedColor}
               editedColors={solidEditedColors}
               onResetAll={handleResetAllColors}
+              designName={designName}
+              onNameChange={setDesignName}
+              isNameLoading={isNameLoading}
             />
           )}
 
@@ -1450,11 +1525,16 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
             arMapping,
             jobId
           }}
+          initialName={designName}
           onClose={() => setShowSaveModal(false)}
-          onSaved={(savedDesign, designName) => {
+          onSaved={(savedDesign, savedName) => {
             setShowSaveModal(false);
+            // Update design name to match what was saved
+            if (savedName) {
+              setDesignName(savedName);
+            }
             if (onDesignSaved) {
-              onDesignSaved(designName);
+              onDesignSaved(savedName);
             }
             console.log('[INSPIRE] Design saved:', savedDesign);
           }}

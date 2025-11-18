@@ -200,6 +200,37 @@ class APIClient {
     return response.json();
   }
 
+  /**
+   * Generate AI-suggested design names from design context
+   * @param {object} request - Name generation request
+   * @param {string} request.prompt - Original design description
+   * @param {string[]} request.colors - TPV color names used in design
+   * @param {object} request.dimensions - { widthMM, lengthMM }
+   * @returns {Promise} { success, names: string[] }
+   */
+  async generateDesignName(request) {
+    const payload = {
+      prompt: request.prompt,
+      colors: request.colors || [],
+      dimensions: request.dimensions || {}
+    };
+
+    const response = await fetch('/api/generate-design-name', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Name generation failed');
+    }
+
+    return response.json();
+  }
+
   // ============================================================================
   // LEGACY METHODS (Deprecated - kept for backwards compatibility)
   // ============================================================================

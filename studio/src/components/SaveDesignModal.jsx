@@ -10,10 +10,11 @@ import './SaveDesignModal.css';
 export default function SaveDesignModal({
   currentState,
   existingDesignId = null,
+  initialName = '',
   onClose,
   onSaved
 }) {
-  const [name, setName] = useState('');
+  const [name, setName] = useState(initialName);
   const [description, setDescription] = useState('');
   const [projectId, setProjectId] = useState('');
   const [tags, setTags] = useState('');
