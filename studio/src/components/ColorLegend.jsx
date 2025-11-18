@@ -7,11 +7,22 @@ export default function ColorLegend({
   recipes,
   mode = 'blend', // 'blend' or 'solid' - affects label display
   onColorClick, // (colorData) => void - callback when user clicks a color
-  selectedColor // Currently selected/editing color
+  selectedColor, // Currently selected/editing color
+  editedColors, // Map of edited colors (originalHex -> {newHex})
+  onResetAll // () => void - callback to reset all color edits
 }) {
   if (!recipes || recipes.length === 0) {
     return null;
   }
+
+  // Check if a color has been edited from original
+  const isEdited = (recipe) => {
+    if (!editedColors || editedColors.size === 0) return false;
+    return editedColors.has(recipe.originalColor.hex.toLowerCase());
+  };
+
+  // Check if any colors have been edited
+  const hasAnyEdits = editedColors && editedColors.size > 0;
 
   // Find TPV color by hex value
   const findTpvColorByHex = (hex) => {
@@ -42,8 +53,15 @@ export default function ColorLegend({
   return (
     <div className="color-legend">
       <div className="legend-header">
-        <span className="legend-title">Colours</span>
-        {onColorClick && <span className="edit-hint">(click to edit)</span>}
+        <div className="legend-header-left">
+          <span className="legend-title">Colours</span>
+          {onColorClick && <span className="edit-hint">(click to edit)</span>}
+        </div>
+        {hasAnyEdits && onResetAll && (
+          <button onClick={onResetAll} className="reset-all-btn" title="Reset all colours to original">
+            Reset All
+          </button>
+        )}
       </div>
       <div className="legend-colors">
         {recipes.map((recipe, idx) => (
@@ -64,10 +82,19 @@ export default function ColorLegend({
             }}
             title={onColorClick ? 'Click to edit this colour' : ''}
           >
-            <div
-              className="color-swatch"
-              style={{ backgroundColor: recipe.blendColor.hex }}
-            />
+            <div className="color-swatch-wrapper">
+              <div
+                className="color-swatch"
+                style={{ backgroundColor: recipe.blendColor.hex }}
+              />
+              {isEdited(recipe) && (
+                <span className="edit-indicator" title="Colour has been modified">
+                  <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12">
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                  </svg>
+                </span>
+              )}
+            </div>
             <div className="color-info">
               <span className={mode === 'solid' ? 'tpv-label' : 'hex-value'}>{getColorLabel(recipe)}</span>
               <span className="coverage">{recipe.targetColor.areaPct.toFixed(1)}%</span>
@@ -89,10 +116,17 @@ export default function ColorLegend({
         .legend-header {
           display: flex;
           align-items: center;
+          justify-content: space-between;
           gap: 0.5rem;
           margin-bottom: 0.75rem;
           padding-bottom: 0.5rem;
           border-bottom: 1px solid #e0e0e0;
+        }
+
+        .legend-header-left {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
         }
 
         .legend-title {
@@ -105,6 +139,23 @@ export default function ColorLegend({
           font-size: 0.75rem;
           color: #ff6b35;
           font-weight: normal;
+        }
+
+        .reset-all-btn {
+          padding: 0.25rem 0.5rem;
+          font-size: 0.7rem;
+          font-weight: 600;
+          color: #ff6b35;
+          background: #fff5f0;
+          border: 1px solid #ff6b35;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .reset-all-btn:hover {
+          background: #ff6b35;
+          color: white;
         }
 
         .legend-colors {
@@ -143,12 +194,36 @@ export default function ColorLegend({
           transform: translateY(-2px);
         }
 
+        .color-swatch-wrapper {
+          position: relative;
+          flex-shrink: 0;
+        }
+
         .color-swatch {
           width: 40px;
           height: 40px;
           border-radius: 4px;
           border: 2px solid #ddd;
-          flex-shrink: 0;
+        }
+
+        .edit-indicator {
+          position: absolute;
+          top: -4px;
+          right: -4px;
+          width: 16px;
+          height: 16px;
+          background: #ff6b35;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .edit-indicator svg {
+          width: 10px;
+          height: 10px;
         }
 
         .color-info {
@@ -176,6 +251,10 @@ export default function ColorLegend({
         }
 
         @media (max-width: 600px) {
+          .legend-header {
+            flex-wrap: wrap;
+          }
+
           .legend-colors {
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
           }
@@ -188,6 +267,11 @@ export default function ColorLegend({
 
           .color-info {
             align-items: center;
+          }
+
+          .reset-all-btn {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.4rem;
           }
         }
       `}</style>

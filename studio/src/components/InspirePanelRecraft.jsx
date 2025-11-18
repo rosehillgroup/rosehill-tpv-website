@@ -620,6 +620,36 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     }
   };
 
+  // Reset all color edits back to original
+  const handleResetAllColors = async () => {
+    if (viewMode === 'solid') {
+      setSolidEditedColors(new Map());
+      // Regenerate SVG with original colors
+      if (result?.svg_url && solidColorMapping && solidRecipes) {
+        await regenerateSolidSVGFromState(
+          result.svg_url,
+          solidColorMapping,
+          solidRecipes,
+          new Map()
+        );
+      }
+    } else {
+      setBlendEditedColors(new Map());
+      // Regenerate SVG with original colors
+      if (result?.svg_url && colorMapping && blendRecipes) {
+        await regenerateBlendSVGFromState(
+          result.svg_url,
+          colorMapping,
+          blendRecipes,
+          new Map()
+        );
+      }
+    }
+    // Close color editor if open
+    setColorEditorOpen(false);
+    setSelectedColor(null);
+  };
+
   // Generate solid TPV color version (auto-called after blend recipes)
   const handleGenerateSolid = async (svgUrl = null, jobIdParam = null) => {
     const svg_url = svgUrl || result?.svg_url;
@@ -1298,6 +1328,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
               mode="blend"
               onColorClick={handleColorClick}
               selectedColor={selectedColor}
+              editedColors={blendEditedColors}
+              onResetAll={handleResetAllColors}
             />
           )}
 
@@ -1309,6 +1341,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
               mode="solid"
               onColorClick={handleColorClick}
               selectedColor={selectedColor}
+              editedColors={solidEditedColors}
+              onResetAll={handleResetAllColors}
             />
           )}
 

@@ -9,7 +9,9 @@ export default function SVGPreview({
   recipes,
   mode = 'blend', // 'blend' or 'solid' - affects color legend display
   onColorClick, // (colorData) => void - callback when user clicks a color
-  selectedColor // Current color being edited (to highlight)
+  selectedColor, // Current color being edited (to highlight)
+  editedColors, // Map of edited colors (originalHex -> {newHex})
+  onResetAll // () => void - callback to reset all color edits
 }) {
   const [highlightMask, setHighlightMask] = useState(null);
   const imageRef = useRef(null);
@@ -405,6 +407,8 @@ export default function SVGPreview({
               mode={mode}
               onColorClick={onColorClick}
               selectedColor={selectedColor}
+              editedColors={editedColors}
+              onResetAll={onResetAll}
             />
           </div>
         )}
