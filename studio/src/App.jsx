@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from './lib/api/auth.js';
+import ErrorBoundary from './components/ErrorBoundary.jsx';
 import InspirePanelRecraft from './components/InspirePanelRecraft.jsx';
 import Header from './components/Header.jsx';
 import DesignGallery from './components/DesignGallery.jsx';
@@ -92,28 +93,30 @@ function App() {
   }
 
   return (
-    <div className="tpv-studio">
-      <Header
-        onShowDesigns={() => setShowGallery(true)}
-        onShowAdmin={() => setShowAdmin(true)}
-        isAdmin={isAdmin}
-        currentDesignName={currentDesignName}
-      />
-
-      <main className="tpv-studio__container">
-        <InspirePanelRecraft
-          loadedDesign={loadedDesign}
-          onDesignSaved={handleDesignSaved}
+    <ErrorBoundary>
+      <div className="tpv-studio">
+        <Header
+          onShowDesigns={() => setShowGallery(true)}
+          onShowAdmin={() => setShowAdmin(true)}
+          isAdmin={isAdmin}
+          currentDesignName={currentDesignName}
         />
-      </main>
 
-      {showGallery && (
-        <DesignGallery
-          onClose={() => setShowGallery(false)}
-          onLoadDesign={handleLoadDesign}
-        />
-      )}
-    </div>
+        <main className="tpv-studio__container">
+          <InspirePanelRecraft
+            loadedDesign={loadedDesign}
+            onDesignSaved={handleDesignSaved}
+          />
+        </main>
+
+        {showGallery && (
+          <DesignGallery
+            onClose={() => setShowGallery(false)}
+            onLoadDesign={handleLoadDesign}
+          />
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
 

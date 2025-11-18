@@ -73,6 +73,18 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   // Track loaded design ID for updates
   const [currentDesignId, setCurrentDesignId] = useState(null);
 
+  // Cleanup blob URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (blendSvgUrl && blendSvgUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(blendSvgUrl);
+      }
+      if (solidSvgUrl && solidSvgUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(solidSvgUrl);
+      }
+    };
+  }, []);
+
   // Load design when loadedDesign prop changes
   useEffect(() => {
     if (loadedDesign) {
@@ -119,24 +131,29 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         if (restoredState.result?.svg_url) {
           console.log('[INSPIRE] Regenerating SVGs from loaded design');
 
-          // Regenerate blend SVG if we have blend recipes
-          if (restoredState.blendRecipes && restoredState.colorMapping) {
-            await regenerateBlendSVGFromState(
-              restoredState.result.svg_url,
-              restoredState.colorMapping,
-              restoredState.blendRecipes,
-              restoredState.blendEditedColors
-            );
-          }
+          try {
+            // Regenerate blend SVG if we have blend recipes
+            if (restoredState.blendRecipes && restoredState.colorMapping) {
+              await regenerateBlendSVGFromState(
+                restoredState.result.svg_url,
+                restoredState.colorMapping,
+                restoredState.blendRecipes,
+                restoredState.blendEditedColors
+              );
+            }
 
-          // Regenerate solid SVG if we have solid recipes
-          if (restoredState.solidRecipes && restoredState.solidColorMapping) {
-            await regenerateSolidSVGFromState(
-              restoredState.result.svg_url,
-              restoredState.solidColorMapping,
-              restoredState.solidRecipes,
-              restoredState.solidEditedColors
-            );
+            // Regenerate solid SVG if we have solid recipes
+            if (restoredState.solidRecipes && restoredState.solidColorMapping) {
+              await regenerateSolidSVGFromState(
+                restoredState.result.svg_url,
+                restoredState.solidColorMapping,
+                restoredState.solidRecipes,
+                restoredState.solidEditedColors
+              );
+            }
+          } catch (err) {
+            console.error('[INSPIRE] Failed to regenerate SVGs:', err);
+            setError('Failed to restore design preview. Please try reloading.');
           }
         }
       }, 100);
@@ -519,12 +536,17 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       const svgResponse = await fetch(svgUrl);
       const svgString = await svgResponse.text();
 
+      // Add timeout for PDF generation (30 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
       const response = await fetch('/api/export-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           svgString,
-          designName: prompt || 'TPV Design',
+          designName: designName || prompt || 'TPV Design',
           projectName: 'TPV Studio',
           dimensions: {
             widthMM,
@@ -535,6 +557,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           designId: jobId || ''
         })
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         // Try to parse as JSON, but handle text error responses too
@@ -561,7 +585,11 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('PDF download error:', err);
-      setError(`PDF generation failed: ${err.message}`);
+      if (err.name === 'AbortError') {
+        setError('PDF generation timed out. Please try again.');
+      } else {
+        setError(`PDF generation failed: ${err.message}`);
+      }
     } finally {
       setGeneratingPDF(false);
     }

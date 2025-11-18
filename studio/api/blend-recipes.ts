@@ -31,8 +31,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
+    // Validate SVG URL to prevent SSRF attacks
+    const allowedOrigins = [
+      'data:',
+      'https://replicate.delivery/',
+      'https://pbxt.replicate.delivery/',
+      process.env.SUPABASE_URL ? new URL(process.env.SUPABASE_URL).origin : null
+    ].filter(Boolean);
+
+    const isAllowedUrl = allowedOrigins.some(origin => svg_url.startsWith(origin));
+    if (!isAllowedUrl) {
+      console.error('[BLEND-RECIPES] Blocked URL:', svg_url.substring(0, 100));
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid SVG URL: must be from allowed origin'
+      });
+    }
+
     console.log('[BLEND-RECIPES] Starting color extraction for job:', job_id);
-    console.log('[BLEND-RECIPES] SVG URL:', svg_url);
+    console.log('[BLEND-RECIPES] SVG URL:', svg_url.substring(0, 100) + '...');
     console.log('[BLEND-RECIPES] Max colors:', max_colors, 'Max components:', max_components);
 
     const startTime = Date.now();

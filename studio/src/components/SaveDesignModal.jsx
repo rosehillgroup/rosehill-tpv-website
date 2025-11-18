@@ -161,6 +161,7 @@ export default function SaveDesignModal({
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Playground Design A"
               autoFocus
+              disabled={saving || savingAsNew}
             />
           </div>
 
@@ -173,6 +174,7 @@ export default function SaveDesignModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Optional notes about this design..."
               rows={3}
+              disabled={saving || savingAsNew}
             />
           </div>
 
@@ -185,6 +187,7 @@ export default function SaveDesignModal({
                   id="design-project"
                   value={projectId}
                   onChange={(e) => setProjectId(e.target.value)}
+                  disabled={saving || savingAsNew}
                 >
                   <option value="">No Project</option>
                   {projects.map(project => (
@@ -197,6 +200,7 @@ export default function SaveDesignModal({
                   type="button"
                   onClick={() => setShowNewProject(true)}
                   className="btn-secondary btn-small"
+                  disabled={saving || savingAsNew}
                 >
                   + New Project
                 </button>
@@ -255,6 +259,7 @@ export default function SaveDesignModal({
               value={tags}
               onChange={(e) => setTags(e.target.value)}
               placeholder="e.g., playground, vibrant, geometric (comma-separated)"
+              disabled={saving || savingAsNew}
             />
             <small className="help-text">Separate tags with commas</small>
           </div>
@@ -266,6 +271,7 @@ export default function SaveDesignModal({
                 type="checkbox"
                 checked={isPublic}
                 onChange={(e) => setIsPublic(e.target.checked)}
+                disabled={saving || savingAsNew}
               />
               <span>Make this design public (shareable link)</span>
             </label>
