@@ -128,20 +128,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       };
 
       // Format alternative recipes (2nd and 3rd best)
-      const alternativeRecipes = colorRecipes.slice(1).map((recipe, idx) => ({
-        id: `recipe_${i + 1}_${idx + 2}`,
-        parts: recipe.parts || {},
-        total: recipe.total || 0,
-        deltaE: recipe.deltaE,
-        quality: recipe.deltaE < 1.0 ? 'Excellent' : recipe.deltaE < 2.0 ? 'Good' : 'Fair',
-        resultRgb: recipe.rgb,
-        components: recipe.components.map(c => ({
-          code: c.code,
-          name: tpvColours.find(col => col.code === c.code)?.name || c.code,
-          weight: c.pct,
-          parts: recipe.parts ? recipe.parts[c.code] : null
-        }))
-      }));
+      const alternativeRecipes = colorRecipes.slice(1).map((recipe, idx) => {
+        const altBlendHex = rgbToHex(recipe.rgb);
+        const altBlendLab = rgbToLab(recipe.rgb);
+        return {
+          id: `recipe_${i + 1}_${idx + 2}`,
+          parts: recipe.parts || {},
+          total: recipe.total || 0,
+          deltaE: recipe.deltaE,
+          quality: recipe.deltaE < 1.0 ? 'Excellent' : recipe.deltaE < 2.0 ? 'Good' : 'Fair',
+          resultRgb: recipe.rgb,
+          blendColor: {
+            hex: altBlendHex,
+            rgb: recipe.rgb,
+            lab: altBlendLab
+          },
+          components: recipe.components.map(c => ({
+            code: c.code,
+            name: tpvColours.find(col => col.code === c.code)?.name || c.code,
+            weight: c.pct,
+            parts: recipe.parts ? recipe.parts[c.code] : null
+          }))
+        };
+      });
 
       console.log(`[BLEND-RECIPES]     Chosen: ΔE ${bestRecipe.deltaE.toFixed(2)} (${chosenRecipe.quality}), Blend: ${blendColor.hex}`);
 
