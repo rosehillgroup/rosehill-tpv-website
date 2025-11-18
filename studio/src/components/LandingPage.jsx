@@ -31,12 +31,33 @@ const TPV_COLORS = [
   { code: 'RH70', name: 'Black', hex: '#1A1A1A' }
 ];
 
+// Example prompts to cycle through in hero animation
+const EXAMPLE_PROMPTS = [
+  "ocean theme with dolphins and waves",
+  "jungle adventure with parrots",
+  "solar system with planets",
+  "garden with butterflies and flowers",
+  "racing track with cars",
+  "underwater coral reef scene",
+  "dinosaur footprints trail",
+  "rainbow with clouds"
+];
+
 export default function LandingPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showSignIn, setShowSignIn] = useState(false);
+  const [promptIndex, setPromptIndex] = useState(0);
+
+  // Cycle through example prompts
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPromptIndex((prev) => (prev + 1) % EXAMPLE_PROMPTS.length);
+    }, 4000); // Change every 4 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -124,7 +145,7 @@ export default function LandingPage() {
               </div>
               <div className="mockup-content">
                 <div className="mockup-input">
-                  <span className="typing-text">ocean theme with dolphins...</span>
+                  <span key={promptIndex} className="typing-text">{EXAMPLE_PROMPTS[promptIndex]}</span>
                   <span className="cursor"></span>
                 </div>
                 <div className="mockup-preview">
@@ -683,9 +704,10 @@ export default function LandingPage() {
         }
 
         .typing-text {
-          animation: typing 3s steps(30) infinite;
+          animation: typing 3.5s steps(35, end) forwards;
           overflow: hidden;
           white-space: nowrap;
+          border-right: 2px solid transparent;
         }
 
         .cursor {
@@ -697,8 +719,8 @@ export default function LandingPage() {
         }
 
         @keyframes typing {
-          0%, 100% { width: 0; }
-          30%, 70% { width: 100%; }
+          0% { width: 0; }
+          100% { width: 100%; }
         }
 
         @keyframes blink {
