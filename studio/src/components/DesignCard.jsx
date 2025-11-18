@@ -46,7 +46,8 @@ export default function DesignCard({
     });
   };
 
-  const thumbnailUrl = design.thumbnail_url || design.original_png_url || '/placeholder.svg';
+  // Use thumbnail, PNG, or SVG as fallback for preview
+  const thumbnailUrl = design.thumbnail_url || design.original_png_url || design.original_svg_url;
 
   return (
     <div
@@ -56,7 +57,17 @@ export default function DesignCard({
     >
       {/* Thumbnail */}
       <div className="card-thumbnail" onClick={() => onLoad(design.id)}>
-        <img src={thumbnailUrl} alt={design.name} />
+        {thumbnailUrl ? (
+          <img src={thumbnailUrl} alt={design.name} />
+        ) : (
+          <div className="no-thumbnail">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>
+          </div>
+        )}
         {showActions && (
           <div className="thumbnail-overlay">
             <button className="btn-load">Open Design</button>
