@@ -194,34 +194,106 @@
 
 @media (max-width: 768px) {
   .tpv-studio .studio-header {
-    padding: 10px 16px;
+    padding: 8px 12px;
+  }
+
+  .tpv-studio .header-content {
+    gap: 8px;
+  }
+
+  .tpv-studio .header-left {
+    gap: 8px;
   }
 
   .tpv-studio .studio-title {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .tpv-studio .current-design-indicator {
     display: none;
   }
 
-  .tpv-studio .btn-my-designs span,
-  .tpv-studio .btn-admin span {
-    display: none;
+  .tpv-studio .header-right {
+    gap: 8px;
   }
 
+  /* Buttons - hide text, show only icons with proper touch targets */
   .tpv-studio .btn-my-designs,
   .tpv-studio .btn-admin {
-    padding: 8px 12px;
+    padding: 0;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    border-radius: 8px;
+  }
+
+  .tpv-studio .btn-my-designs svg,
+  .tpv-studio .btn-admin svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Hide button text on mobile, use aria-label for accessibility */
+  .tpv-studio .btn-my-designs {
+    font-size: 0;
+    gap: 0;
+  }
+
+  .tpv-studio .btn-admin {
+    font-size: 0;
+    gap: 0;
+  }
+
+  /* User menu button - ensure 44px touch target */
+  .tpv-studio .user-menu-button {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .tpv-studio .user-menu-button svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Menu items - larger touch targets */
+  .tpv-studio .menu-item {
+    min-height: 44px;
+    padding: 12px 16px;
+  }
+
+  .tpv-studio .user-menu-dropdown {
+    min-width: 140px;
   }
 }
 
 @media (max-width: 480px) {
+  .tpv-studio .studio-header {
+    padding: 6px 8px;
+  }
+
   .tpv-studio .header-content {
-    gap: 12px;
+    gap: 6px;
   }
 
   .tpv-studio .studio-title {
-    font-size: 16px;
+    font-size: 14px;
+  }
+
+  .tpv-studio .header-right {
+    gap: 4px;
+  }
+
+  /* Slightly smaller buttons on very small screens but still 44px min */
+  .tpv-studio .btn-my-designs,
+  .tpv-studio .btn-admin,
+  .tpv-studio .user-menu-button {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
   }
 }

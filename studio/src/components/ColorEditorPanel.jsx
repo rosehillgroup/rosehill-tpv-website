@@ -420,23 +420,138 @@ export default function ColorEditorPanel({
           line-height: 1.5;
         }
 
-        /* Mobile Responsive */
+        /* Mobile Responsive - Fullscreen Modal */
         @media (max-width: 768px) {
           .color-editor-panel {
             width: 100%;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 0;
           }
 
+          .editor-header {
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+          }
+
+          .editor-header h3 {
+            font-size: 1.25rem;
+          }
+
+          /* Larger close button for touch */
+          .close-button {
+            width: 44px;
+            height: 44px;
+            font-size: 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+
+          .editor-content {
+            padding: 1rem;
+          }
+
+          /* Color swatches - larger for touch */
+          .swatch {
+            width: 50px;
+            height: 50px;
+          }
+
+          .color-info-section {
+            padding: 0.75rem;
+            margin-bottom: 1.5rem;
+          }
+
+          /* TPV color grid - better touch targets */
           .tpv-color-grid {
             grid-template-columns: repeat(4, 1fr);
             gap: 0.5rem;
           }
 
+          .tpv-color-item {
+            padding: 0.4rem;
+            min-height: 44px;
+          }
+
           .tpv-color-swatch {
-            height: 40px;
+            height: 36px;
           }
 
           .tpv-color-code {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
+          }
+
+          .tpv-palette-section {
+            padding: 0.75rem;
+            margin-bottom: 1.5rem;
+          }
+
+          .tpv-palette-section h4 {
+            font-size: 0.9rem;
+          }
+
+          .palette-description {
+            font-size: 0.8rem;
+          }
+
+          /* Picker section */
+          .picker-section {
+            padding: 0.75rem;
+          }
+
+          .picker-section h4 {
+            font-size: 0.9rem;
+          }
+
+          .picker-description {
+            font-size: 0.8rem;
+          }
+
+          /* Larger reset button for touch */
+          .reset-button {
+            min-height: 44px;
+            font-size: 0.9rem;
+          }
+
+          .solid-mode-info {
+            padding: 0.75rem;
+          }
+
+          .solid-mode-info h4 {
+            font-size: 0.9rem;
+          }
+
+          .info-description {
+            font-size: 0.8rem;
+          }
+        }
+
+        /* Extra small screens */
+        @media (max-width: 400px) {
+          .tpv-color-grid {
+            grid-template-columns: repeat(3, 1fr);
+          }
+
+          .tpv-color-swatch {
+            height: 44px;
+          }
+
+          .swatch {
+            width: 44px;
+            height: 44px;
+          }
+
+          .swatch-pair {
+            gap: 0.5rem;
+          }
+
+          .arrow {
+            font-size: 1.2rem;
           }
         }
       `}</style>

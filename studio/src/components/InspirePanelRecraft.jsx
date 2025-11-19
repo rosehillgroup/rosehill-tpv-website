@@ -2236,6 +2236,194 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           color: var(--color-text-secondary);
           font-size: var(--text-sm);
         }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .inspire-panel-recraft {
+            padding: var(--space-2);
+          }
+
+          .panel-header {
+            margin-bottom: var(--space-4);
+          }
+
+          .panel-header h2 {
+            font-size: var(--text-xl);
+          }
+
+          .subtitle {
+            font-size: var(--text-sm);
+          }
+
+          /* Stack input mode tabs vertically on mobile */
+          .input-mode-tabs {
+            flex-direction: column;
+            gap: var(--space-1);
+          }
+
+          .input-mode-tab {
+            flex-direction: row;
+            justify-content: flex-start;
+            padding: var(--space-3);
+            min-height: 44px;
+          }
+
+          .mode-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+          }
+
+          .input-mode-tab .mode-title {
+            font-size: var(--text-sm);
+            margin-top: 0;
+          }
+
+          .input-mode-tab .mode-description {
+            display: none;
+          }
+
+          /* Form sections */
+          .form-section {
+            padding: var(--space-3);
+          }
+
+          .form-group label {
+            font-size: var(--text-xs);
+          }
+
+          /* Stack form rows on mobile */
+          .form-row {
+            grid-template-columns: 1fr;
+            gap: var(--space-2);
+          }
+
+          /* Drop zone adjustments */
+          .drop-zone {
+            min-height: 140px;
+          }
+
+          .drop-zone-content {
+            padding: var(--space-4);
+            min-height: 140px;
+          }
+
+          .upload-icon {
+            width: 36px;
+            height: 36px;
+          }
+
+          .drop-text {
+            font-size: var(--text-sm);
+          }
+
+          /* Generate button */
+          .generate-button {
+            padding: var(--space-3);
+            font-size: var(--text-base);
+            min-height: 44px;
+          }
+
+          /* Results section */
+          .results-section {
+            padding: var(--space-3);
+          }
+
+          .results-header h3 {
+            font-size: var(--text-lg);
+          }
+
+          /* Mode tabs */
+          .mode-tabs {
+            flex-direction: column;
+            gap: var(--space-1);
+          }
+
+          .mode-tab {
+            flex-direction: row;
+            justify-content: flex-start;
+            padding: var(--space-3);
+            min-height: 44px;
+          }
+
+          .mode-title {
+            font-size: var(--text-sm);
+          }
+
+          .mode-description {
+            display: none;
+          }
+
+          /* Action buttons - 2x2 grid on mobile */
+          .action-buttons {
+            flex-wrap: wrap;
+            gap: var(--space-2);
+          }
+
+          .download-button,
+          .blend-button,
+          .new-generation-button,
+          .save-button {
+            flex: 1 1 calc(50% - var(--space-1));
+            min-width: calc(50% - var(--space-1));
+            padding: var(--space-2);
+            font-size: var(--text-sm);
+            min-height: 44px;
+          }
+
+          /* AR info */
+          .ar-info {
+            padding: var(--space-2) var(--space-3);
+          }
+
+          .ar-info-details {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--space-1);
+          }
+
+          /* Finalize section */
+          .finalize-section {
+            padding: var(--space-3);
+          }
+
+          .finalize-button {
+            padding: var(--space-3);
+            font-size: var(--text-base);
+          }
+        }
+
+        /* Extra small screens */
+        @media (max-width: 480px) {
+          .inspire-panel-recraft {
+            padding: var(--space-1);
+          }
+
+          .panel-header h2 {
+            font-size: var(--text-lg);
+          }
+
+          /* Stack all action buttons vertically */
+          .action-buttons {
+            flex-direction: column;
+          }
+
+          .download-button,
+          .blend-button,
+          .new-generation-button,
+          .save-button {
+            flex: 1 1 100%;
+            min-width: 100%;
+          }
+
+          .input-mode-tab {
+            padding: var(--space-2);
+          }
+
+          .mode-tab {
+            padding: var(--space-2);
+          }
+        }
       `}</style>
     </div>
   );

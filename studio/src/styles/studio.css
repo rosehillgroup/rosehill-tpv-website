@@ -819,6 +819,12 @@
 }
 
 @media (max-width: 768px) {
+  /* Typography scaling for mobile */
+  .tpv-studio h1 { font-size: var(--text-2xl); }
+  .tpv-studio h2 { font-size: var(--text-xl); }
+  .tpv-studio h3 { font-size: var(--text-lg); }
+  .tpv-studio h4 { font-size: var(--text-base); }
+
   .tpv-studio__color-grid {
     grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
   }
@@ -831,5 +837,63 @@
     /* On mobile, show tooltips above */
     max-width: 200px;
     white-space: normal;
+  }
+
+  /* Minimum touch targets - 44px */
+  .tpv-studio__button {
+    min-height: 44px;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .tpv-studio__button--sm {
+    min-height: 36px;
+  }
+
+  .tpv-studio__button--lg {
+    min-height: 48px;
+  }
+
+  /* Form elements - larger touch targets */
+  .tpv-studio__input,
+  .tpv-studio__textarea,
+  .tpv-studio__select {
+    min-height: 44px;
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+
+  /* Color swatches - minimum 44x44 */
+  .tpv-studio__color-swatch {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .tpv-studio {
+    font-size: var(--text-sm);
+  }
+
+  .tpv-studio__container {
+    padding: var(--space-1);
+  }
+
+  .tpv-studio__header {
+    padding: var(--space-2);
+  }
+
+  .tpv-studio__header h1 {
+    font-size: var(--text-base);
+  }
+
+  .tpv-studio__card {
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
+  }
+
+  /* Stack buttons that might overflow */
+  .tpv-studio__button--lg {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
   }
 }

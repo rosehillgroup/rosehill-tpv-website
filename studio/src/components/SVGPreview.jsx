@@ -678,12 +678,107 @@ export default function SVGPreview({
 
         @media (max-width: 768px) {
           .svg-preview {
-            padding: 1rem;
+            padding: 0.75rem;
+            margin-top: 1rem;
+          }
+
+          .preview-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+          }
+
+          .preview-header h3 {
+            font-size: 1.25rem;
+          }
+
+          .design-name-input {
+            font-size: 1.25rem;
+            max-width: 100%;
+          }
+
+          .editing-hint {
+            margin-left: 0;
+            font-size: 0.8rem;
           }
 
           .svg-wrapper {
-            padding: 1rem;
-            min-height: 250px;
+            padding: 0.5rem;
+            min-height: 200px;
+          }
+
+          /* Zoom controls - bottom position on mobile */
+          .zoom-controls {
+            top: auto;
+            bottom: 0.5rem;
+            right: 0.5rem;
+            padding: 0.25rem;
+            gap: 0.25rem;
+          }
+
+          .zoom-btn {
+            width: 44px;
+            height: 44px;
+          }
+
+          .zoom-btn svg {
+            width: 22px;
+            height: 22px;
+          }
+
+          .zoom-level {
+            font-size: 0.75rem;
+            min-width: 40px;
+            padding: 0 0.25rem;
+          }
+
+          /* In-situ button - top left, smaller on mobile */
+          .in-situ-btn {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+            top: 0.5rem;
+            left: 0.5rem;
+          }
+
+          .in-situ-btn span {
+            display: none; /* Hide text, show only icon on mobile */
+          }
+
+          .in-situ-btn svg {
+            width: 20px;
+            height: 20px;
+          }
+        }
+
+        /* Extra small screens */
+        @media (max-width: 480px) {
+          .svg-preview {
+            padding: 0.5rem;
+          }
+
+          .preview-header h3 {
+            font-size: 1.1rem;
+          }
+
+          .design-name-input {
+            font-size: 1.1rem;
+          }
+
+          .svg-wrapper {
+            padding: 0.25rem;
+            min-height: 180px;
+          }
+
+          .zoom-controls {
+            flex-wrap: wrap;
+            max-width: 120px;
+            justify-content: center;
+          }
+
+          .zoom-level {
+            width: 100%;
+            text-align: center;
           }
         }
       `}</style>
