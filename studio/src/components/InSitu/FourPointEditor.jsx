@@ -54,6 +54,10 @@ export default function FourPointEditor({
   const containerRef = useRef(null);
   const debounceRef = useRef(null);
 
+  // Undo history
+  const [history, setHistory] = useState([]);
+  const maxHistoryLength = 20;
+
   // Load images on mount
   useEffect(() => {
     loadImages();
@@ -280,6 +284,31 @@ export default function FourPointEditor({
     }, DEBOUNCE_DELAY);
   }, [onChange, lighting]);
 
+  // Save current state to history
+  const saveToHistory = useCallback(() => {
+    setHistory(prev => {
+      const newHistory = [...prev, { quad: [...quad], shape: shape ? [...shape] : null, opacity, lighting: { ...lighting } }];
+      if (newHistory.length > maxHistoryLength) {
+        return newHistory.slice(-maxHistoryLength);
+      }
+      return newHistory;
+    });
+  }, [quad, shape, opacity, lighting]);
+
+  // Undo last change
+  const handleUndo = () => {
+    if (history.length === 0) return;
+
+    const prevState = history[history.length - 1];
+    setHistory(prev => prev.slice(0, -1));
+
+    setQuad(prevState.quad);
+    setShape(prevState.shape);
+    setOpacity(prevState.opacity);
+    setLighting(prevState.lighting);
+    notifyChange(prevState.quad, prevState.opacity, prevState.shape, prevState.lighting);
+  };
+
   // Convert canvas coordinates to image coordinates
   const canvasToImage = (canvasX, canvasY) => {
     return {
@@ -322,6 +351,36 @@ export default function FourPointEditor({
     return inside;
   };
 
+  // Double-click handler to delete shape points
+  const handleDoubleClick = (e) => {
+    if (editMode !== 'shape' || !shape || shape.length <= 3) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const canvasX = e.clientX - rect.left;
+    const canvasY = e.clientY - rect.top;
+    const { x: imgX, y: imgY } = canvasToImage(canvasX, canvasY);
+
+    const handleIndex = findHandle(imgX, imgY, shape);
+    if (handleIndex >= 0) {
+      saveToHistory();
+      const newShape = shape.filter((_, i) => i !== handleIndex);
+      setShape(newShape);
+      setSelectedShapeIndex(null);
+
+      // Auto-scale quad
+      const scaledQuad = autoScaleQuadToFitShape(quad, newShape);
+      if (scaledQuad !== quad) {
+        setQuad(scaledQuad);
+        notifyChange(scaledQuad, opacity, newShape);
+      } else {
+        notifyChange(quad, opacity, newShape);
+      }
+    }
+  };
+
   // Pointer event handlers
   const handlePointerDown = (e) => {
     const canvas = canvasRef.current;
@@ -335,10 +394,12 @@ export default function FourPointEditor({
     if (editMode === 'corners') {
       const handleIndex = findHandle(imgX, imgY, quad);
       if (handleIndex >= 0) {
+        saveToHistory();
         setDraggingIndex(handleIndex);
         canvas.setPointerCapture(e.pointerId);
       } else if (isPointInPolygon(imgX, imgY, quad)) {
         // Clicked inside quad but not on a handle - drag entire quad
+        saveToHistory();
         setDraggingQuad(true);
         setDragStart({ x: imgX, y: imgY });
         canvas.setPointerCapture(e.pointerId);
@@ -350,10 +411,13 @@ export default function FourPointEditor({
 
       if (handleIndex >= 0) {
         // Clicked on existing vertex
+        saveToHistory();
         setDraggingIndex(handleIndex);
         setSelectedShapeIndex(handleIndex);
         canvas.setPointerCapture(e.pointerId);
       } else {
+        // Adding new point
+        saveToHistory();
         // Add new vertex
         // Find which edge to insert on (closest edge)
         let bestEdge = 0;
@@ -665,7 +729,7 @@ export default function FourPointEditor({
         <p className="instructions">
           {editMode === 'corners'
             ? 'Drag the corner handles to position the TPV design on your photo.'
-            : 'Click to add vertices, drag to move them. Press Delete to remove selected vertex.'}
+            : 'Click to add vertices, drag to move them. Double-click to delete a vertex.'}
         </p>
       </div>
 
@@ -676,6 +740,7 @@ export default function FourPointEditor({
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
+          onDoubleClick={handleDoubleClick}
           style={{
             width: `${(photoImg?.naturalWidth || 800) * displayScale}px`,
             height: `${(photoImg?.naturalHeight || 600) * displayScale}px`,
@@ -698,6 +763,14 @@ export default function FourPointEditor({
             onClick={handleModeToggle}
           >
             Refine Shape
+          </button>
+          <button
+            className="toggle-btn undo-btn"
+            onClick={handleUndo}
+            disabled={history.length === 0}
+            title="Undo last change"
+          >
+            Undo
           </button>
         </div>
 
@@ -838,6 +911,15 @@ export default function FourPointEditor({
           background: #ff6b35;
           color: white;
           border-color: #ff6b35;
+        }
+
+        .toggle-btn:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+
+        .toggle-btn:disabled:hover {
+          background: white;
         }
 
         .opacity-control {
