@@ -321,7 +321,13 @@ export default function FourPointEditor({
         newShape.splice(bestEdge, 0, newPoint);
         setShape(newShape);
         setSelectedShapeIndex(bestEdge);
-        notifyChange(quad, opacity, newShape);
+
+        // Auto-scale quad if shape extends beyond bounds
+        const scaledQuad = autoScaleQuadToFitShape(quad, newShape);
+        if (scaledQuad !== quad) {
+          setQuad(scaledQuad);
+        }
+        notifyChange(scaledQuad, opacity, newShape);
       }
     }
   };
@@ -352,7 +358,13 @@ export default function FourPointEditor({
       const newShape = [...shapePoints];
       newShape[draggingIndex] = { x: clampedX, y: clampedY };
       setShape(newShape);
-      notifyChange(quad, opacity, newShape);
+
+      // Auto-scale quad if shape extends beyond bounds
+      const scaledQuad = autoScaleQuadToFitShape(quad, newShape);
+      if (scaledQuad !== quad) {
+        setQuad(scaledQuad);
+      }
+      notifyChange(scaledQuad, opacity, newShape);
     }
   };
 
@@ -364,6 +376,60 @@ export default function FourPointEditor({
       }
       setDraggingIndex(null);
     }
+  };
+
+  // Helper: auto-scale quad to encompass shape when shape extends beyond quad
+  const autoScaleQuadToFitShape = (currentQuad, currentShape) => {
+    if (!currentShape || currentShape.length < 3 || !currentQuad) {
+      return currentQuad;
+    }
+
+    // Calculate quad bounding box and center
+    const quadMinX = Math.min(...currentQuad.map(p => p.x));
+    const quadMaxX = Math.max(...currentQuad.map(p => p.x));
+    const quadMinY = Math.min(...currentQuad.map(p => p.y));
+    const quadMaxY = Math.max(...currentQuad.map(p => p.y));
+
+    const quadCenterX = (quadMinX + quadMaxX) / 2;
+    const quadCenterY = (quadMinY + quadMaxY) / 2;
+
+    // Calculate shape bounding box
+    const shapeMinX = Math.min(...currentShape.map(p => p.x));
+    const shapeMaxX = Math.max(...currentShape.map(p => p.x));
+    const shapeMinY = Math.min(...currentShape.map(p => p.y));
+    const shapeMaxY = Math.max(...currentShape.map(p => p.y));
+
+    // Calculate required scale factors
+    const quadWidth = quadMaxX - quadMinX;
+    const quadHeight = quadMaxY - quadMinY;
+
+    if (quadWidth <= 0 || quadHeight <= 0) return currentQuad;
+
+    // Check if shape extends beyond quad bounds
+    const needsScaleX = shapeMinX < quadMinX || shapeMaxX > quadMaxX;
+    const needsScaleY = shapeMinY < quadMinY || shapeMaxY > quadMaxY;
+
+    if (!needsScaleX && !needsScaleY) {
+      return currentQuad;
+    }
+
+    // Calculate scale needed for each axis
+    const shapeWidth = shapeMaxX - shapeMinX;
+    const shapeHeight = shapeMaxY - shapeMinY;
+
+    const scaleX = shapeWidth > quadWidth ? shapeWidth / quadWidth : 1;
+    const scaleY = shapeHeight > quadHeight ? shapeHeight / quadHeight : 1;
+
+    // Use uniform scale to maintain aspect ratio
+    const scale = Math.max(scaleX, scaleY) * 1.05; // Add 5% padding
+
+    // Scale quad from its center
+    const newQuad = currentQuad.map(point => ({
+      x: quadCenterX + (point.x - quadCenterX) * scale,
+      y: quadCenterY + (point.y - quadCenterY) * scale
+    }));
+
+    return newQuad;
   };
 
   // Helper: distance from point to line segment
