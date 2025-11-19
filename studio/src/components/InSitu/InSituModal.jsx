@@ -4,7 +4,12 @@
 import { useState, useEffect, useRef } from 'react';
 import InSituUploader from './InSituUploader.jsx';
 import FourPointEditor from './FourPointEditor.jsx';
-import { downloadCanvasAsPng } from '../../lib/inSitu/perspectiveWarp.js';
+import {
+  downloadCanvasAsPng,
+  loadImage,
+  rasterizeSvg,
+  warpDesignOntoPhoto
+} from '../../lib/inSitu/perspectiveWarp.js';
 import { supabase } from '../../lib/supabase/client.js';
 
 // Workflow steps
@@ -54,9 +59,36 @@ export default function InSituModal({
     setOpacity(newOpacity);
   };
 
-  const handleDownload = () => {
-    // Get the canvas from the editor
-    const canvas = document.querySelector('.four-point-editor canvas');
+  // Generate a clean canvas without handles for export
+  const generateCleanCanvas = async () => {
+    if (!photo || !quad) return null;
+
+    // Load images
+    const [photoImg, designImg] = await Promise.all([
+      loadImage(photo.url),
+      rasterizeSvg(designUrl, 1536)
+    ]);
+
+    // Create canvas at photo's natural dimensions
+    const canvas = document.createElement('canvas');
+    canvas.width = photoImg.naturalWidth;
+    canvas.height = photoImg.naturalHeight;
+    const ctx = canvas.getContext('2d');
+
+    // Draw warped design without handles
+    warpDesignOntoPhoto({
+      photoCtx: ctx,
+      photoImg,
+      designImg,
+      quad,
+      opacity
+    });
+
+    return canvas;
+  };
+
+  const handleDownload = async () => {
+    const canvas = await generateCleanCanvas();
     if (canvas) {
       downloadCanvasAsPng(canvas, 'tpv-in-situ-preview.png');
     }
@@ -68,10 +100,10 @@ export default function InSituModal({
     setSaving(true);
 
     try {
-      // Get the canvas and convert to blob
-      const canvas = document.querySelector('.four-point-editor canvas');
+      // Generate clean canvas without handles
+      const canvas = await generateCleanCanvas();
       if (!canvas) {
-        throw new Error('Canvas not found');
+        throw new Error('Failed to generate preview');
       }
 
       const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
