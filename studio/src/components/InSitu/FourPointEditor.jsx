@@ -435,18 +435,12 @@ export default function FourPointEditor({
         notifyChange(newQuad, opacity, shape);
       }
     } else {
-      // Shape mode
+      // Shape mode - just update shape during drag, scale on release
       const shapePoints = shape || quad;
       const newShape = [...shapePoints];
       newShape[draggingIndex] = { x: clampedX, y: clampedY };
       setShape(newShape);
-
-      // Auto-scale quad if shape extends beyond bounds
-      const scaledQuad = autoScaleQuadToFitShape(quad, newShape);
-      if (scaledQuad !== quad) {
-        setQuad(scaledQuad);
-      }
-      notifyChange(scaledQuad, opacity, newShape);
+      notifyChange(quad, opacity, newShape);
     }
   };
 
@@ -456,6 +450,16 @@ export default function FourPointEditor({
       if (canvas) {
         canvas.releasePointerCapture(e.pointerId);
       }
+
+      // Auto-scale quad if shape mode and shape extends beyond bounds
+      if (editMode === 'shape' && shape && draggingIndex !== null) {
+        const scaledQuad = autoScaleQuadToFitShape(quad, shape);
+        if (scaledQuad !== quad) {
+          setQuad(scaledQuad);
+          notifyChange(scaledQuad, opacity, shape);
+        }
+      }
+
       setDraggingIndex(null);
       setDraggingQuad(false);
       setDragStart(null);
