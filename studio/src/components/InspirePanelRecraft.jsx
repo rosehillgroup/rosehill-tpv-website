@@ -8,6 +8,7 @@ import SolidColorSummary from './SolidColorSummary.jsx';
 import SVGPreview from './SVGPreview.jsx';
 import ColorEditorPanel from './ColorEditorPanel.jsx';
 import SaveDesignModal from './SaveDesignModal.jsx';
+import InSituModal from './InSitu/InSituModal.jsx';
 import { buildColorMapping } from '../utils/colorMapping.js';
 import { recolorSVG } from '../utils/svgRecolor.js';
 import { mapDimensionsToRecraft, getLayoutDescription, needsLayoutWarning } from '../utils/aspectRatioMapping.js';
@@ -72,6 +73,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
   // Track loaded design ID for updates
   const [currentDesignId, setCurrentDesignId] = useState(null);
+
+  // In-situ preview state
+  const [showInSituModal, setShowInSituModal] = useState(false);
+  const [inSituData, setInSituData] = useState(null);
 
   // Cleanup blob URLs on unmount to prevent memory leaks
   useEffect(() => {
@@ -1430,6 +1435,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
               designName={designName}
               onNameChange={setDesignName}
               isNameLoading={isNameLoading}
+              onInSituClick={() => setShowInSituModal(true)}
             />
           )}
 
@@ -1446,6 +1452,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
               designName={designName}
               onNameChange={setDesignName}
               isNameLoading={isNameLoading}
+              onInSituClick={() => setShowInSituModal(true)}
             />
           )}
 
@@ -1561,7 +1568,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
             blendSvgUrl,
             solidSvgUrl,
             arMapping,
-            jobId
+            jobId,
+            inSituData
           }}
           existingDesignId={currentDesignId}
           initialName={designName}
@@ -1576,6 +1584,23 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
               onDesignSaved(savedName);
             }
             console.log('[INSPIRE] Design saved:', savedDesign);
+          }}
+        />
+      )}
+
+      {/* In-Situ Preview Modal */}
+      {showInSituModal && (
+        <InSituModal
+          designUrl={viewMode === 'solid' ? solidSvgUrl : blendSvgUrl}
+          designDimensions={{
+            width: widthMM,
+            length: lengthMM
+          }}
+          onClose={() => setShowInSituModal(false)}
+          onSaved={(inSituResult) => {
+            console.log('[INSPIRE] In-situ preview saved:', inSituResult);
+            setInSituData(inSituResult);
+            setShowInSituModal(false);
           }}
         />
       )}

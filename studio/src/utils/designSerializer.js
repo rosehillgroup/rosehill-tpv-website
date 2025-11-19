@@ -26,7 +26,8 @@ export function serializeDesign(state) {
     blendSvgUrl,
     solidSvgUrl,
     arMapping,
-    jobId
+    jobId,
+    inSituData
   } = state;
 
   console.log('[SERIALIZE] Serializing design with result:', result);
@@ -76,7 +77,17 @@ export function serializeDesign(state) {
     aspect_ratio_mapping: arMapping || null,
 
     // Link to job
-    job_id: jobId || null
+    job_id: jobId || null,
+
+    // In-situ preview data
+    in_situ: inSituData ? {
+      room_photo_url: inSituData.room_photo_url || null,
+      mask_url: inSituData.mask_url || null,
+      floor_dimensions_m: inSituData.floor_dimensions_m || null,
+      preview_url: inSituData.preview_url || null,
+      blend_opacity: inSituData.blend_opacity || 20,
+      perspective_corners: inSituData.perspective_corners || null
+    } : null
   };
 }
 
@@ -137,6 +148,9 @@ export function deserializeDesign(savedData) {
 
     // Job ID
     jobId: savedData.job_id,
+
+    // In-situ preview data
+    inSituData: savedData.in_situ || null,
 
     // Restore UI state
     generating: false,

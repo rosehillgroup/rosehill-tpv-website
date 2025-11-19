@@ -14,7 +14,8 @@ export default function SVGPreview({
   onResetAll, // () => void - callback to reset all color edits
   designName = '', // AI-generated or user-edited design name
   onNameChange, // (newName) => void - callback when name is edited
-  isNameLoading = false // Whether name is being generated
+  isNameLoading = false, // Whether name is being generated
+  onInSituClick // () => void - callback to open in-situ preview
 }) {
   const [highlightMask, setHighlightMask] = useState(null);
   const imageRef = useRef(null);
@@ -387,6 +388,18 @@ export default function SVGPreview({
             <span className="zoom-level">{Math.round(zoom * 100)}%</span>
           </div>
 
+          {/* In-Situ Preview Button */}
+          {onInSituClick && (
+            <button onClick={onInSituClick} className="in-situ-btn" title="Preview In-Situ">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <path d="m21 15-5-5L5 21"/>
+              </svg>
+              <span>Preview In-Situ</span>
+            </button>
+          )}
+
           <div
             ref={containerRef}
             className="svg-wrapper"
@@ -567,6 +580,41 @@ export default function SVGPreview({
           min-width: 50px;
           text-align: center;
           padding: 0 0.5rem;
+        }
+
+        .in-situ-btn {
+          position: absolute;
+          top: 1rem;
+          left: 1rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          background: #ff6b35;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 0.875rem;
+          font-weight: 500;
+          cursor: pointer;
+          box-shadow: 0 2px 12px rgba(255, 107, 53, 0.3);
+          z-index: 10;
+          transition: all 0.2s ease;
+        }
+
+        .in-situ-btn:hover {
+          background: #e55a2b;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 16px rgba(255, 107, 53, 0.4);
+        }
+
+        .in-situ-btn:active {
+          transform: translateY(0);
+        }
+
+        .in-situ-btn svg {
+          width: 18px;
+          height: 18px;
         }
 
         .svg-wrapper {
