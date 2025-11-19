@@ -250,28 +250,96 @@ export default function ColorLegend({
           font-size: 0.8rem;
         }
 
-        @media (max-width: 600px) {
-          .legend-header {
-            flex-wrap: wrap;
-          }
-
-          .legend-colors {
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-          }
-
-          .color-item {
-            flex-direction: column;
-            text-align: center;
+        /* Mobile - compact horizontal grid of swatches */
+        @media (max-width: 768px) {
+          .color-legend {
             padding: 0.75rem;
           }
 
-          .color-info {
-            align-items: center;
+          .legend-header {
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.5rem;
+          }
+
+          .legend-title {
+            font-size: 0.85rem;
+          }
+
+          .edit-hint {
+            font-size: 0.7rem;
           }
 
           .reset-all-btn {
             font-size: 0.65rem;
             padding: 0.2rem 0.4rem;
+            min-height: 28px;
+          }
+
+          /* Horizontal scrolling grid of swatches */
+          .legend-colors {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: flex-start;
+          }
+
+          .color-item {
+            flex-direction: column;
+            padding: 0.25rem;
+            border-radius: 6px;
+            width: auto;
+            min-width: 44px;
+          }
+
+          /* Hide text info on mobile - just show swatches */
+          .color-info {
+            display: none;
+          }
+
+          .color-swatch {
+            width: 44px;
+            height: 44px;
+            border-radius: 6px;
+          }
+
+          .color-item.selected {
+            transform: none;
+            box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.4);
+          }
+
+          .color-item.clickable:hover {
+            transform: none;
+          }
+
+          .edit-indicator {
+            top: -2px;
+            right: -2px;
+            width: 14px;
+            height: 14px;
+          }
+
+          .edit-indicator svg {
+            width: 8px;
+            height: 8px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .color-legend {
+            padding: 0.5rem;
+          }
+
+          .legend-colors {
+            gap: 0.35rem;
+          }
+
+          .color-swatch {
+            width: 40px;
+            height: 40px;
+          }
+
+          .color-item {
+            min-width: 40px;
           }
         }
       `}</style>

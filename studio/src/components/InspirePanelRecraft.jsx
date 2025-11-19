@@ -2324,9 +2324,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
             min-height: 44px;
           }
 
-          /* Results section */
+          /* Results section - minimal padding for max image width */
           .results-section {
-            padding: var(--space-3);
+            padding: var(--space-2);
+            border-radius: var(--radius-md);
           }
 
           .results-header h3 {
@@ -2401,6 +2402,13 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
           .panel-header h2 {
             font-size: var(--text-lg);
+          }
+
+          /* Results section - even less padding */
+          .results-section {
+            padding: var(--space-1);
+            margin: 0 calc(-1 * var(--space-1));
+            border-radius: 0;
           }
 
           /* Stack all action buttons vertically */
