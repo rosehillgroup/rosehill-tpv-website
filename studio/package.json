@@ -16,6 +16,7 @@
     "culori": "^4.0.1",
     "d3-delaunay": "^6.0.4",
     "imagetracerjs": "^1.2.6",
+    "jszip": "^3.10.1",
     "kmeans-js": "^0.1.2",
     "paper": "^0.12.17",
     "pdf-lib": "^1.17.1",

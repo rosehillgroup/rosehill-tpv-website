@@ -14,6 +14,7 @@ import { recolorSVG } from '../utils/svgRecolor.js';
 import { mapDimensionsToRecraft, getLayoutDescription, needsLayoutWarning } from '../utils/aspectRatioMapping.js';
 import { uploadFile, validateFile } from '../lib/supabase/uploadFile.js';
 import { deserializeDesign } from '../utils/designSerializer.js';
+import { downloadSvgTiles } from '../lib/svgTileSlicer.js';
 import tpvColours from '../../api/_utils/data/rosehill_tpv_21_colours.json';
 
 export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
@@ -597,6 +598,27 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       }
     } finally {
       setGeneratingPDF(false);
+    }
+  };
+
+  // Download SVG tiles as ZIP (1m×1m slices)
+  const handleDownloadTiles = async () => {
+    const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
+
+    if (!svgUrl) {
+      setError('No SVG available to slice');
+      return;
+    }
+
+    try {
+      await downloadSvgTiles(
+        svgUrl,
+        { width: widthMM, length: lengthMM },
+        designName || 'tpv-design'
+      );
+    } catch (err) {
+      console.error('Tile download error:', err);
+      setError(`Failed to download tiles: ${err.message}`);
     }
   };
 
@@ -1480,6 +1502,13 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
                     : 'Export Blend PDF'
                 }
               </button>
+              <button
+                onClick={handleDownloadTiles}
+                className="download-button tiles"
+                title={`Download ${Math.ceil(widthMM / 1000) * Math.ceil(lengthMM / 1000)} tiles (1m×1m each)`}
+              >
+                Download Tiles ZIP
+              </button>
             </div>
           )}
         </div>
@@ -2156,6 +2185,17 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           background: var(--color-text-tertiary);
           cursor: not-allowed;
           transform: none;
+        }
+
+        .download-button.tiles {
+          background: #8b5cf6;
+          color: white;
+        }
+
+        .download-button.tiles:hover {
+          background: #7c3aed;
+          transform: translateY(-1px);
+          box-shadow: var(--shadow-md);
         }
 
         .blend-button {
