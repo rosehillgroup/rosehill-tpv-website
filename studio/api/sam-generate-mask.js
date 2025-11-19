@@ -7,7 +7,8 @@ import sharp from 'sharp';
 import { getAuthenticatedClient } from './_utils/supabase.js';
 
 // Maximum dimension for SAM-2 input (for performance)
-const MAX_IMAGE_DIMENSION = 1024;
+// Reduced to 512 to avoid Vercel timeout on cold starts
+const MAX_IMAGE_DIMENSION = 512;
 
 /**
  * Initialize Replicate client
