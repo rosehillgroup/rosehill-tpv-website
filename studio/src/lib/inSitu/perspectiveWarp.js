@@ -156,11 +156,10 @@ export async function rasterizeSvg(svgUrl, maxSize = 1536) {
  */
 export function warpDesignOntoPhoto({ photoCtx, photoImg, designImg, quad, opacity }) {
   const canvas = photoCtx.canvas;
-  const dpr = window.devicePixelRatio || 1;
 
-  // Clear and draw photo as base
+  // Clear and draw photo as base (canvas should be set to photo's natural dimensions)
   photoCtx.clearRect(0, 0, canvas.width, canvas.height);
-  photoCtx.drawImage(photoImg, 0, 0, canvas.width / dpr, canvas.height / dpr);
+  photoCtx.drawImage(photoImg, 0, 0, canvas.width, canvas.height);
 
   // Get design dimensions
   const W = designImg.width;
