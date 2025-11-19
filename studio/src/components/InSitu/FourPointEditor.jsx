@@ -34,6 +34,8 @@ export default function FourPointEditor({
   // Editing mode: 'corners' for perspective, 'shape' for polygon clipping
   const [editMode, setEditMode] = useState('corners');
   const [draggingIndex, setDraggingIndex] = useState(null);
+  const [draggingQuad, setDraggingQuad] = useState(false);
+  const [dragStart, setDragStart] = useState(null);
   const [selectedShapeIndex, setSelectedShapeIndex] = useState(null);
 
   // Refs
@@ -51,7 +53,7 @@ export default function FourPointEditor({
     if (photoImg && designImg && quad) {
       drawPreview();
     }
-  }, [photoImg, designImg, quad, shape, opacity, editMode, draggingIndex, selectedShapeIndex]);
+  }, [photoImg, designImg, quad, shape, opacity, editMode, draggingIndex, draggingQuad, selectedShapeIndex]);
 
   // Keyboard handler for deleting shape vertices
   useEffect(() => {
@@ -270,6 +272,22 @@ export default function FourPointEditor({
     return -1;
   };
 
+  // Check if point is inside a polygon (for quad dragging)
+  const isPointInPolygon = (x, y, polygon) => {
+    if (!polygon || polygon.length < 3) return false;
+
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const xi = polygon[i].x, yi = polygon[i].y;
+      const xj = polygon[j].x, yj = polygon[j].y;
+
+      if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) {
+        inside = !inside;
+      }
+    }
+    return inside;
+  };
+
   // Pointer event handlers
   const handlePointerDown = (e) => {
     const canvas = canvasRef.current;
@@ -284,6 +302,11 @@ export default function FourPointEditor({
       const handleIndex = findHandle(imgX, imgY, quad);
       if (handleIndex >= 0) {
         setDraggingIndex(handleIndex);
+        canvas.setPointerCapture(e.pointerId);
+      } else if (isPointInPolygon(imgX, imgY, quad)) {
+        // Clicked inside quad but not on a handle - drag entire quad
+        setDraggingQuad(true);
+        setDragStart({ x: imgX, y: imgY });
         canvas.setPointerCapture(e.pointerId);
       }
     } else {
@@ -333,7 +356,7 @@ export default function FourPointEditor({
   };
 
   const handlePointerMove = (e) => {
-    if (draggingIndex === null) return;
+    if (draggingIndex === null && !draggingQuad) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -348,10 +371,25 @@ export default function FourPointEditor({
     const clampedY = Math.max(0, Math.min(photoImg.naturalHeight, imgY));
 
     if (editMode === 'corners') {
-      const newQuad = [...quad];
-      newQuad[draggingIndex] = { x: clampedX, y: clampedY };
-      setQuad(newQuad);
-      notifyChange(newQuad, opacity, shape);
+      if (draggingQuad && dragStart) {
+        // Moving entire quad
+        const dx = clampedX - dragStart.x;
+        const dy = clampedY - dragStart.y;
+
+        const newQuad = quad.map(point => ({
+          x: Math.max(0, Math.min(photoImg.naturalWidth, point.x + dx)),
+          y: Math.max(0, Math.min(photoImg.naturalHeight, point.y + dy))
+        }));
+
+        setQuad(newQuad);
+        setDragStart({ x: clampedX, y: clampedY });
+        notifyChange(newQuad, opacity, shape);
+      } else if (draggingIndex !== null) {
+        const newQuad = [...quad];
+        newQuad[draggingIndex] = { x: clampedX, y: clampedY };
+        setQuad(newQuad);
+        notifyChange(newQuad, opacity, shape);
+      }
     } else {
       // Shape mode
       const shapePoints = shape || quad;
@@ -369,12 +407,14 @@ export default function FourPointEditor({
   };
 
   const handlePointerUp = (e) => {
-    if (draggingIndex !== null) {
+    if (draggingIndex !== null || draggingQuad) {
       const canvas = canvasRef.current;
       if (canvas) {
         canvas.releasePointerCapture(e.pointerId);
       }
       setDraggingIndex(null);
+      setDraggingQuad(false);
+      setDragStart(null);
     }
   };
 
@@ -392,44 +432,51 @@ export default function FourPointEditor({
 
     const quadCenterX = (quadMinX + quadMaxX) / 2;
     const quadCenterY = (quadMinY + quadMaxY) / 2;
-
-    // Calculate shape bounding box
-    const shapeMinX = Math.min(...currentShape.map(p => p.x));
-    const shapeMaxX = Math.max(...currentShape.map(p => p.x));
-    const shapeMinY = Math.min(...currentShape.map(p => p.y));
-    const shapeMaxY = Math.max(...currentShape.map(p => p.y));
-
-    // Calculate required scale factors
     const quadWidth = quadMaxX - quadMinX;
     const quadHeight = quadMaxY - quadMinY;
 
     if (quadWidth <= 0 || quadHeight <= 0) return currentQuad;
 
-    // Check if shape extends beyond quad bounds
-    const needsScaleX = shapeMinX < quadMinX || shapeMaxX > quadMaxX;
-    const needsScaleY = shapeMinY < quadMinY || shapeMaxY > quadMaxY;
+    // Calculate shape bounding box and center
+    const shapeMinX = Math.min(...currentShape.map(p => p.x));
+    const shapeMaxX = Math.max(...currentShape.map(p => p.x));
+    const shapeMinY = Math.min(...currentShape.map(p => p.y));
+    const shapeMaxY = Math.max(...currentShape.map(p => p.y));
 
-    if (!needsScaleX && !needsScaleY) {
-      return currentQuad;
-    }
-
-    // Calculate scale needed for each axis
+    const shapeCenterX = (shapeMinX + shapeMaxX) / 2;
+    const shapeCenterY = (shapeMinY + shapeMaxY) / 2;
     const shapeWidth = shapeMaxX - shapeMinX;
     const shapeHeight = shapeMaxY - shapeMinY;
 
-    const scaleX = shapeWidth > quadWidth ? shapeWidth / quadWidth : 1;
-    const scaleY = shapeHeight > quadHeight ? shapeHeight / quadHeight : 1;
+    // Calculate scale needed to fit shape (with padding)
+    const scaleX = (shapeWidth * 1.05) / quadWidth;
+    const scaleY = (shapeHeight * 1.05) / quadHeight;
+    const scale = Math.max(scaleX, scaleY, 1); // Never shrink
 
-    // Use uniform scale to maintain aspect ratio
-    const scale = Math.max(scaleX, scaleY) * 1.05; // Add 5% padding
+    if (scale <= 1) {
+      return currentQuad;
+    }
 
-    // Scale quad from its center
-    const newQuad = currentQuad.map(point => ({
+    // Scale quad from its center, then translate to center on shape
+    const scaledQuad = currentQuad.map(point => ({
       x: quadCenterX + (point.x - quadCenterX) * scale,
       y: quadCenterY + (point.y - quadCenterY) * scale
     }));
 
-    return newQuad;
+    // Calculate the new center after scaling
+    const newQuadCenterX = quadCenterX;
+    const newQuadCenterY = quadCenterY;
+
+    // Translate to center on shape
+    const translateX = shapeCenterX - newQuadCenterX;
+    const translateY = shapeCenterY - newQuadCenterY;
+
+    const finalQuad = scaledQuad.map(point => ({
+      x: point.x + translateX,
+      y: point.y + translateY
+    }));
+
+    return finalQuad;
   };
 
   // Helper: distance from point to line segment
@@ -518,7 +565,7 @@ export default function FourPointEditor({
           style={{
             width: `${(photoImg?.naturalWidth || 800) * displayScale}px`,
             height: `${(photoImg?.naturalHeight || 600) * displayScale}px`,
-            cursor: draggingIndex !== null ? 'grabbing' : (editMode === 'shape' ? 'crosshair' : 'grab'),
+            cursor: (draggingIndex !== null || draggingQuad) ? 'grabbing' : (editMode === 'shape' ? 'crosshair' : 'move'),
             touchAction: 'none'
           }}
         />
