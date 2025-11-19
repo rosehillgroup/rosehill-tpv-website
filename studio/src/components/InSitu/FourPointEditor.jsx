@@ -489,12 +489,20 @@ export default function FourPointEditor({
 
     const shapeCenterX = (shapeMinX + shapeMaxX) / 2;
     const shapeCenterY = (shapeMinY + shapeMaxY) / 2;
-    const shapeWidth = shapeMaxX - shapeMinX;
-    const shapeHeight = shapeMaxY - shapeMinY;
+
+    // Check how much the shape extends beyond the quad in each direction
+    const overflowLeft = Math.max(0, quadMinX - shapeMinX);
+    const overflowRight = Math.max(0, shapeMaxX - quadMaxX);
+    const overflowTop = Math.max(0, quadMinY - shapeMinY);
+    const overflowBottom = Math.max(0, shapeMaxY - quadMaxY);
+
+    // Calculate required expansion
+    const requiredWidth = quadWidth + overflowLeft + overflowRight;
+    const requiredHeight = quadHeight + overflowTop + overflowBottom;
 
     // Calculate scale needed to fit shape (with padding)
-    const scaleX = (shapeWidth * 1.05) / quadWidth;
-    const scaleY = (shapeHeight * 1.05) / quadHeight;
+    const scaleX = (requiredWidth * 1.05) / quadWidth;
+    const scaleY = (requiredHeight * 1.05) / quadHeight;
     const scale = Math.max(scaleX, scaleY, 1); // Never shrink
 
     if (scale <= 1) {
@@ -507,13 +515,9 @@ export default function FourPointEditor({
       y: quadCenterY + (point.y - quadCenterY) * scale
     }));
 
-    // Calculate the new center after scaling
-    const newQuadCenterX = quadCenterX;
-    const newQuadCenterY = quadCenterY;
-
     // Translate to center on shape
-    const translateX = shapeCenterX - newQuadCenterX;
-    const translateY = shapeCenterY - newQuadCenterY;
+    const translateX = shapeCenterX - quadCenterX;
+    const translateY = shapeCenterY - quadCenterY;
 
     const finalQuad = scaledQuad.map(point => ({
       x: point.x + translateX,
