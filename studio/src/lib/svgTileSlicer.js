@@ -55,6 +55,32 @@ export async function sliceSvgIntoTiles(svgContent, dimensions, designName = 'de
     throw new Error('Invalid SVG content');
   }
 
+  // Get the SVG's actual viewBox to understand its coordinate system
+  const viewBoxAttr = svgElement.getAttribute('viewBox');
+  let svgWidth, svgHeight;
+
+  if (viewBoxAttr) {
+    const parts = viewBoxAttr.split(/\s+/).map(Number);
+    svgWidth = parts[2];
+    svgHeight = parts[3];
+  } else {
+    // Fallback to width/height attributes
+    svgWidth = parseFloat(svgElement.getAttribute('width')) || 1024;
+    svgHeight = parseFloat(svgElement.getAttribute('height')) || 1024;
+  }
+
+  console.log(`[SLICER] SVG internal dimensions: ${svgWidth} × ${svgHeight}`);
+
+  // Calculate scale factors to map design mm to SVG coordinates
+  const scaleX = svgWidth / dimensions.width;
+  const scaleY = svgHeight / dimensions.length;
+
+  // Tile size in SVG coordinate units
+  const tileSvgWidth = tileSize * scaleX;
+  const tileSvgHeight = tileSize * scaleY;
+
+  console.log(`[SLICER] Tile size in SVG units: ${tileSvgWidth} × ${tileSvgHeight}`);
+
   // Get inner content (everything inside the <svg> tag)
   const innerContent = svgElement.innerHTML;
 
@@ -74,13 +100,12 @@ export async function sliceSvgIntoTiles(svgContent, dimensions, designName = 'de
       const tileName = getTileName(col, row);
       rowNames.push(tileName);
 
-      // Calculate viewBox for this tile
-      const x = col * tileSize;
-      const y = row * tileSize;
+      // Calculate viewBox for this tile in SVG coordinate units
+      const x = col * tileSvgWidth;
+      const y = row * tileSvgHeight;
 
-      // For edge tiles, we might have partial tiles
-      // But we still use full 1000mm viewBox - content outside will be clipped
-      const viewBox = `${x} ${y} ${tileSize} ${tileSize}`;
+      // ViewBox uses SVG coordinates, output dimensions are in mm
+      const viewBox = `${x} ${y} ${tileSvgWidth} ${tileSvgHeight}`;
 
       // Create tile SVG
       const tileSvg = `<?xml version="1.0" encoding="UTF-8"?>
