@@ -279,5 +279,5 @@ export const config = {
     },
     responseLimit: '4mb'
   },
-  maxDuration: 30 // 30 seconds timeout for SAM-2
+  maxDuration: 60 // 60 seconds timeout for SAM-2 (cold starts can be slow)
 };
