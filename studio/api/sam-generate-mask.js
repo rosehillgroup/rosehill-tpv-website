@@ -217,12 +217,17 @@ export default async function handler(req, res) {
     const samTime = Date.now() - startTime;
     console.log(`[SAM-MASK] SAM-2 completed in ${samTime}ms`);
 
-    // SAM-2 returns an array of masks (or single mask if multimask_output=false)
-    // Each mask is a URL to a PNG image
+    // SAM-2 returns combined_mask and individual_masks
     let maskUrl;
 
-    if (Array.isArray(output)) {
-      // Take the first/best mask
+    if (output && output.combined_mask) {
+      // Use the combined mask (all segments merged)
+      maskUrl = output.combined_mask;
+    } else if (output && output.individual_masks && output.individual_masks.length > 0) {
+      // Fall back to first individual mask
+      maskUrl = output.individual_masks[0];
+    } else if (Array.isArray(output)) {
+      // Legacy format - array of masks
       maskUrl = output[0];
     } else if (typeof output === 'string') {
       maskUrl = output;
