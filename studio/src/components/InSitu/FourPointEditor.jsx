@@ -502,18 +502,19 @@ export default function FourPointEditor({
     const overflowTop = Math.max(0, quadMinY - shapeMinY);
     const overflowBottom = Math.max(0, shapeMaxY - quadMaxY);
 
-    // Calculate required expansion
-    const requiredWidth = quadWidth + overflowLeft + overflowRight;
-    const requiredHeight = quadHeight + overflowTop + overflowBottom;
-
-    // Calculate scale needed to fit shape (with padding)
-    const scaleX = (requiredWidth * 1.05) / quadWidth;
-    const scaleY = (requiredHeight * 1.05) / quadHeight;
-    const scale = Math.max(scaleX, scaleY, 1); // Never shrink
-
-    if (scale <= 1) {
+    // If no overflow, no scaling needed
+    if (overflowLeft === 0 && overflowRight === 0 && overflowTop === 0 && overflowBottom === 0) {
       return currentQuad;
     }
+
+    // Calculate required expansion (with 5% padding)
+    const requiredWidth = quadWidth + (overflowLeft + overflowRight) * 1.05;
+    const requiredHeight = quadHeight + (overflowTop + overflowBottom) * 1.05;
+
+    // Calculate scale needed to fit shape
+    const scaleX = requiredWidth / quadWidth;
+    const scaleY = requiredHeight / quadHeight;
+    const scale = Math.max(scaleX, scaleY);
 
     // Scale quad from its center, then translate to center on shape
     const scaledQuad = currentQuad.map(point => ({
