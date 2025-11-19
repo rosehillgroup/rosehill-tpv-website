@@ -379,12 +379,14 @@ export default function FourPointEditor({
         setShape(newShape);
         setSelectedShapeIndex(bestEdge);
 
-        // Auto-scale quad if shape extends beyond bounds
+        // Auto-scale quad immediately when adding a point
         const scaledQuad = autoScaleQuadToFitShape(quad, newShape);
         if (scaledQuad !== quad) {
           setQuad(scaledQuad);
+          notifyChange(scaledQuad, opacity, newShape);
+        } else {
+          notifyChange(quad, opacity, newShape);
         }
-        notifyChange(scaledQuad, opacity, newShape);
       }
     }
   };
