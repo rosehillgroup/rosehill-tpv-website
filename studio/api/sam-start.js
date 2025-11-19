@@ -193,7 +193,8 @@ export default async function handler(req, res) {
 
     // Initialize Replicate client
     const replicate = getReplicateClient();
-    const modelId = 'meta/sam-2:fe97b453a6455861e3bac769b441ca1f1086110da7466dbb65cf1eecfd60dc83';
+    // SAM-2 version hash (from meta/sam-2:...)
+    const versionId = 'fe97b453a6455861e3bac769b441ca1f1086110da7466dbb65cf1eecfd60dc83';
 
     // Build SAM-2 input
     const input = {
@@ -225,7 +226,7 @@ export default async function handler(req, res) {
     // Create prediction with webhook
     console.log('[SAM-START] Calling Replicate...');
     const prediction = await replicate.predictions.create({
-      model: modelId,
+      version: versionId,
       input,
       webhook: webhookUrl,
       webhook_events_filter: ['completed']
