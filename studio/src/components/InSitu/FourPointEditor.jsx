@@ -8,6 +8,10 @@ import {
   warpDesignOntoPhoto,
   calculateDefaultQuad
 } from '../../lib/inSitu/perspectiveWarp.js';
+import {
+  sampleFloorLighting,
+  deriveLightingFactors
+} from '../../lib/inSitu/lightingUtils.js';
 
 // Debounce delay for onChange callback
 const DEBOUNCE_DELAY = 100;
@@ -19,6 +23,7 @@ export default function FourPointEditor({
   initialQuad,
   initialShape,
   initialOpacity = 0.8,
+  initialLighting,
   onChange
 }) {
   // State
@@ -27,6 +32,12 @@ export default function FourPointEditor({
   const [quad, setQuad] = useState(initialQuad || null);
   const [shape, setShape] = useState(initialShape || null);
   const [opacity, setOpacity] = useState(Math.max(0.3, Math.min(1, initialOpacity)));
+  const [lighting, setLighting] = useState(initialLighting || {
+    enabled: false,
+    strength: 0.6,
+    baseBrightness: 1.0,
+    baseContrast: 1.0
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [displayScale, setDisplayScale] = useState(1);
@@ -53,7 +64,29 @@ export default function FourPointEditor({
     if (photoImg && designImg && quad) {
       drawPreview();
     }
-  }, [photoImg, designImg, quad, shape, opacity, editMode, draggingIndex, draggingQuad, selectedShapeIndex]);
+  }, [photoImg, designImg, quad, shape, opacity, lighting, editMode, draggingIndex, draggingQuad, selectedShapeIndex]);
+
+  // Sample floor lighting when quad changes
+  useEffect(() => {
+    if (!photoImg || !quad || quad.length !== 4) return;
+
+    // Create a temporary canvas with the photo to sample from
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = photoImg.naturalWidth;
+    tempCanvas.height = photoImg.naturalHeight;
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.drawImage(photoImg, 0, 0);
+
+    // Sample lighting from the quad region
+    const profile = sampleFloorLighting(tempCtx, quad);
+    const { brightness, contrast } = deriveLightingFactors(profile);
+
+    setLighting(prev => ({
+      ...prev,
+      baseBrightness: brightness,
+      baseContrast: contrast
+    }));
+  }, [photoImg, JSON.stringify(quad)]);
 
   // Keyboard handler for deleting shape vertices
   useEffect(() => {
@@ -124,14 +157,15 @@ export default function FourPointEditor({
 
     const ctx = canvas.getContext('2d');
 
-    // Draw warped design on photo with optional shape clipping
+    // Draw warped design on photo with optional shape clipping and lighting
     warpDesignOntoPhoto({
       photoCtx: ctx,
       photoImg,
       designImg,
       quad,
       opacity,
-      shape: shape
+      shape: shape,
+      lighting
     });
 
     // Draw handles and lines
@@ -234,17 +268,17 @@ export default function FourPointEditor({
   };
 
   // Notify parent of changes (debounced)
-  const notifyChange = useCallback((newQuad, newOpacity, newShape) => {
+  const notifyChange = useCallback((newQuad, newOpacity, newShape, newLighting) => {
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
 
     debounceRef.current = setTimeout(() => {
       if (onChange) {
-        onChange({ quad: newQuad, opacity: newOpacity, shape: newShape });
+        onChange({ quad: newQuad, opacity: newOpacity, shape: newShape, lighting: newLighting || lighting });
       }
     }, DEBOUNCE_DELAY);
-  }, [onChange]);
+  }, [onChange, lighting]);
 
   // Convert canvas coordinates to image coordinates
   const canvasToImage = (canvasX, canvasY) => {
@@ -537,6 +571,20 @@ export default function FourPointEditor({
     notifyChange(quad, newOpacity, shape);
   };
 
+  // Lighting toggle handler
+  const handleLightingToggle = (e) => {
+    const newLighting = { ...lighting, enabled: e.target.checked };
+    setLighting(newLighting);
+    notifyChange(quad, opacity, shape, newLighting);
+  };
+
+  // Lighting strength handler
+  const handleLightingStrength = (e) => {
+    const newLighting = { ...lighting, strength: parseFloat(e.target.value) / 100 };
+    setLighting(newLighting);
+    notifyChange(quad, opacity, shape, newLighting);
+  };
+
   if (loading) {
     return (
       <div className="four-point-editor loading">
@@ -609,6 +657,32 @@ export default function FourPointEditor({
             value={Math.round(opacity * 100)}
             onChange={handleOpacityChange}
           />
+        </div>
+
+        <div className="lighting-control">
+          <label className="checkbox-label">
+            <input
+              type="checkbox"
+              checked={lighting.enabled}
+              onChange={handleLightingToggle}
+            />
+            Match floor lighting
+          </label>
+          {lighting.enabled && (
+            <div className="lighting-slider">
+              <label>
+                Strength
+                <span className="value">{Math.round(lighting.strength * 100)}%</span>
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={Math.round(lighting.strength * 100)}
+                onChange={handleLightingStrength}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -744,6 +818,64 @@ export default function FourPointEditor({
           height: 16px;
           border-radius: 50%;
           background: #ff6b35;
+          cursor: pointer;
+        }
+
+        .lighting-control {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+        }
+
+        .checkbox-label {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #374151;
+          cursor: pointer;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+          width: 16px;
+          height: 16px;
+          cursor: pointer;
+        }
+
+        .lighting-slider {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+          padding-left: 1.5rem;
+        }
+
+        .lighting-slider label {
+          display: flex;
+          justify-content: space-between;
+          font-size: 0.8rem;
+          color: #6b7280;
+        }
+
+        .lighting-slider .value {
+          font-weight: 400;
+        }
+
+        .lighting-slider input[type="range"] {
+          width: 100%;
+          height: 6px;
+          border-radius: 3px;
+          background: #e5e7eb;
+          outline: none;
+          -webkit-appearance: none;
+        }
+
+        .lighting-slider input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #22c55e;
           cursor: pointer;
         }
       `}</style>

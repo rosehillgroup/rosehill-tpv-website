@@ -29,10 +29,16 @@ export default function InSituModal({
   // Photo data
   const [photo, setPhoto] = useState(null);
 
-  // Quad, shape, and opacity from FourPointEditor
+  // Quad, shape, opacity, and lighting from FourPointEditor
   const [quad, setQuad] = useState(null);
   const [shape, setShape] = useState(null);
   const [opacity, setOpacity] = useState(0.8);
+  const [lighting, setLighting] = useState({
+    enabled: false,
+    strength: 0.6,
+    baseBrightness: 1.0,
+    baseContrast: 1.0
+  });
 
   // Saving state
   const [saving, setSaving] = useState(false);
@@ -55,10 +61,13 @@ export default function InSituModal({
     setCurrentStep(STEPS.POSITION);
   };
 
-  const handleEditorChange = ({ quad: newQuad, opacity: newOpacity, shape: newShape }) => {
+  const handleEditorChange = ({ quad: newQuad, opacity: newOpacity, shape: newShape, lighting: newLighting }) => {
     setQuad(newQuad);
     setOpacity(newOpacity);
     setShape(newShape);
+    if (newLighting) {
+      setLighting(newLighting);
+    }
   };
 
   // Generate a clean canvas without handles for export
@@ -84,7 +93,8 @@ export default function InSituModal({
       designImg,
       quad,
       opacity,
-      shape
+      shape,
+      lighting
     });
 
     return canvas;
@@ -138,6 +148,7 @@ export default function InSituModal({
           quad,
           shape,
           opacity,
+          lighting,
           preview_url: publicUrl
         });
       }

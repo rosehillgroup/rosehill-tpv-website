@@ -154,8 +154,13 @@ export async function rasterizeSvg(svgUrl, maxSize = 1536) {
  * @param {[QuadPoint, QuadPoint, QuadPoint, QuadPoint]} opts.quad - Destination corners [TL, TR, BR, BL]
  * @param {number} opts.opacity - Overlay opacity (0-1)
  * @param {QuadPoint[]} [opts.shape] - Optional polygon for clipping (in photo coords)
+ * @param {Object} [opts.lighting] - Optional lighting adjustment
+ * @param {boolean} [opts.lighting.enabled] - Whether to apply lighting adjustment
+ * @param {number} [opts.lighting.strength] - Adjustment strength (0-1)
+ * @param {number} [opts.lighting.baseBrightness] - Base brightness factor
+ * @param {number} [opts.lighting.baseContrast] - Base contrast factor
  */
-export function warpDesignOntoPhoto({ photoCtx, photoImg, designImg, quad, opacity, shape }) {
+export function warpDesignOntoPhoto({ photoCtx, photoImg, designImg, quad, opacity, shape, lighting }) {
   const canvas = photoCtx.canvas;
 
   // Clear and draw photo as base (canvas should be set to photo's natural dimensions)
@@ -195,6 +200,14 @@ export function warpDesignOntoPhoto({ photoCtx, photoImg, designImg, quad, opaci
 
   photoCtx.save();
   photoCtx.globalAlpha = opacity;
+
+  // Apply lighting adjustment if enabled
+  if (lighting && lighting.enabled) {
+    const s = lighting.strength || 0.6;
+    const brightness = 1 + (lighting.baseBrightness - 1) * s;
+    const contrast = 1 + (lighting.baseContrast - 1) * s;
+    photoCtx.filter = `brightness(${brightness}) contrast(${contrast})`;
+  }
 
   // Apply polygon clipping if shape is provided
   const clipPoints = shape && shape.length >= 3 ? shape : quad;
