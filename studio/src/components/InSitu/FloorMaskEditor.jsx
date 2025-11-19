@@ -5,6 +5,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { loadMaskAsImageData, createMaskOverlay, featherMask } from '../../lib/inSitu/maskUtils.js';
 import { auth } from '../../lib/api/auth.js';
 
+// Polling interval for job status
+const POLL_INTERVAL = 2000; // 2 seconds
+
 export default function FloorMaskEditor({
   photoUrl,
   photoDimensions,
@@ -18,15 +21,26 @@ export default function FloorMaskEditor({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [initializing, setInitializing] = useState(true);
+  const [statusMessage, setStatusMessage] = useState('');
 
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
   const debounceRef = useRef(null);
+  const pollIntervalRef = useRef(null);
   const lastClickTimeRef = useRef(0);
   const clickCountRef = useRef(0);
 
   // Scale factor for display
   const [displayScale, setDisplayScale] = useState(1);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, []);
 
   // Load image and run auto-detection on mount
   useEffect(() => {
@@ -75,12 +89,19 @@ export default function FloorMaskEditor({
   const generateMask = async (posPoints, negPoints, autoDetect = false) => {
     setLoading(true);
     setError(null);
+    setStatusMessage(autoDetect ? 'Detecting floor...' : 'Analyzing floor area...');
+
+    // Clear any existing polling
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+    }
 
     try {
       const session = await auth.getSession();
       const token = session?.access_token;
 
-      const response = await fetch('/api/sam-generate-mask', {
+      // Step 1: Start the job
+      const startResponse = await fetch('/api/sam-start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -94,33 +115,77 @@ export default function FloorMaskEditor({
         })
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Mask generation failed');
+      if (!startResponse.ok) {
+        const error = await startResponse.json();
+        throw new Error(error.error || 'Failed to start mask generation');
       }
 
-      const result = await response.json();
+      const { jobId } = await startResponse.json();
+      console.log('[FLOOR-MASK] Job started:', jobId);
 
-      setMaskUrl(result.mask_url);
+      // Step 2: Poll for completion
+      const pollStatus = async () => {
+        try {
+          const statusResponse = await fetch(`/api/sam-status?jobId=${jobId}`);
+          const status = await statusResponse.json();
 
-      // Load and process mask
-      const { imageData } = await loadMaskAsImageData(result.mask_url);
+          console.log('[FLOOR-MASK] Job status:', status.status);
 
-      // Apply feathering for smooth edges
-      const feathered = featherMask(imageData, 3);
+          if (status.status === 'completed' && status.mask_url) {
+            // Stop polling
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
+            }
 
-      setMaskData(feathered);
+            setMaskUrl(status.mask_url);
 
-      console.log('[FLOOR-MASK] Mask generated:', {
-        dimensions: result.mask_dimensions,
-        time: result.metadata?.total_time_ms + 'ms'
-      });
+            // Load and process mask
+            const { imageData } = await loadMaskAsImageData(status.mask_url);
+
+            // Apply feathering for smooth edges
+            const feathered = featherMask(imageData, 3);
+
+            setMaskData(feathered);
+            setLoading(false);
+            setStatusMessage('');
+
+            console.log('[FLOOR-MASK] Mask generated:', {
+              dimensions: status.mask_dimensions
+            });
+
+          } else if (status.status === 'failed') {
+            // Stop polling
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
+            }
+
+            setLoading(false);
+            setStatusMessage('');
+            setError(status.error || 'Mask generation failed');
+
+          } else {
+            // Still processing - update message
+            setStatusMessage('Processing... this may take 20-60 seconds');
+          }
+        } catch (pollError) {
+          console.error('[FLOOR-MASK] Polling error:', pollError);
+          // Don't stop polling on network errors - retry
+        }
+      };
+
+      // Start polling
+      pollIntervalRef.current = setInterval(pollStatus, POLL_INTERVAL);
+
+      // Also poll immediately
+      await pollStatus();
 
     } catch (err) {
       console.error('[FLOOR-MASK] Mask generation failed:', err);
       setError(err.message);
-    } finally {
       setLoading(false);
+      setStatusMessage('');
     }
   };
 
@@ -315,7 +380,7 @@ export default function FloorMaskEditor({
             {loading && (
               <div className="loading-indicator">
                 <div className="spinner-small" />
-                <span>Refining floor selection...</span>
+                <span>{statusMessage || 'Processing...'}</span>
               </div>
             )}
           </>
