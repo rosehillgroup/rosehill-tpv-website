@@ -61,9 +61,12 @@ export default function FourPointEditor({
       setPhotoImg(photo);
       setDesignImg(design);
 
-      // Calculate display scale to fit container
+      // Calculate display scale to fit container (both width and height)
       const containerWidth = containerRef.current?.clientWidth || 800;
-      const scale = Math.min(1, containerWidth / photo.naturalWidth);
+      const containerHeight = 500; // Max height for preview area
+      const scaleW = containerWidth / photo.naturalWidth;
+      const scaleH = containerHeight / photo.naturalHeight;
+      const scale = Math.min(1, scaleW, scaleH);
       setDisplayScale(scale);
 
       // Initialize quad if not provided
@@ -370,8 +373,6 @@ export default function FourPointEditor({
 
         .canvas-container canvas {
           display: block;
-          max-width: 100%;
-          max-height: 100%;
         }
 
         .controls {
