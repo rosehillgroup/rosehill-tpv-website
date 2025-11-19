@@ -1,17 +1,16 @@
 // TPV Studio - In-Situ Preview Modal
-// Main modal workflow for projecting designs onto site photos
+// 2-step workflow: upload photo, position design with 4 corner points
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import InSituUploader from './InSituUploader.jsx';
-import FloorMaskEditor from './FloorMaskEditor.jsx';
-import InSituPreviewRenderer from './InSituPreviewRenderer.jsx';
+import FourPointEditor from './FourPointEditor.jsx';
+import { downloadCanvasAsPng } from '../../lib/inSitu/perspectiveWarp.js';
 import { supabase } from '../../lib/supabase/client.js';
 
 // Workflow steps
 const STEPS = {
   UPLOAD: 'upload',
-  MASK: 'mask',
-  PREVIEW: 'preview'
+  POSITION: 'position'
 };
 
 export default function InSituModal({
@@ -25,16 +24,18 @@ export default function InSituModal({
   // Photo data
   const [photo, setPhoto] = useState(null);
 
-  // Mask data
-  const [maskData, setMaskData] = useState(null);
-  const [maskUrl, setMaskUrl] = useState(null);
+  // Quad and opacity from FourPointEditor
+  const [quad, setQuad] = useState(null);
+  const [opacity, setOpacity] = useState(0.8);
 
-  // Preview data
-  const [previewData, setPreviewData] = useState(null);
+  // Saving state
+  const [saving, setSaving] = useState(false);
+
+  // Ref to get canvas from FourPointEditor
+  const editorRef = useRef(null);
 
   // Pre-cache resources on mount
   useEffect(() => {
-    // Warm up by pre-loading the design
     if (designUrl) {
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -45,32 +46,41 @@ export default function InSituModal({
   const handlePhotoUploaded = (photoData) => {
     console.log('[IN-SITU] Photo uploaded:', photoData);
     setPhoto(photoData);
-    setCurrentStep(STEPS.MASK);
+    setCurrentStep(STEPS.POSITION);
   };
 
-  const handleMaskConfirmed = (maskResult) => {
-    console.log('[IN-SITU] Mask confirmed:', maskResult);
-    setMaskData(maskResult.maskData);
-    setMaskUrl(maskResult.maskUrl);
-    setCurrentStep(STEPS.PREVIEW);
+  const handleEditorChange = ({ quad: newQuad, opacity: newOpacity }) => {
+    setQuad(newQuad);
+    setOpacity(newOpacity);
   };
 
-  const handleBackToMask = () => {
-    setCurrentStep(STEPS.MASK);
+  const handleDownload = () => {
+    // Get the canvas from the editor
+    const canvas = document.querySelector('.four-point-editor canvas');
+    if (canvas) {
+      downloadCanvasAsPng(canvas, 'tpv-in-situ-preview.png');
+    }
   };
 
-  const handleSave = async (previewResult) => {
-    console.log('[IN-SITU] Saving preview:', previewResult);
+  const handleSave = async () => {
+    if (!quad || !photo) return;
+
+    setSaving(true);
 
     try {
-      // Upload preview image to Supabase
-      const response = await fetch(previewResult.previewUrl);
-      const blob = await response.blob();
+      // Get the canvas and convert to blob
+      const canvas = document.querySelector('.four-point-editor canvas');
+      if (!canvas) {
+        throw new Error('Canvas not found');
+      }
 
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+
+      // Upload preview to Supabase
       const filename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.png`;
       const filePath = `in-situ-previews/${filename}`;
 
-      const { data, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('tpv-studio-uploads')
         .upload(filePath, blob, {
           contentType: 'image/png',
@@ -86,20 +96,13 @@ export default function InSituModal({
         .from('tpv-studio-uploads')
         .getPublicUrl(filePath);
 
-      setPreviewData({
-        ...previewResult,
-        savedPreviewUrl: publicUrl
-      });
-
-      // Call onSaved callback with all in-situ data
+      // Call onSaved callback with in-situ data
       if (onSaved) {
         onSaved({
-          room_photo_url: photo.url,
-          mask_url: maskUrl,
-          floor_dimensions_m: previewResult.floorDimensions,
-          preview_url: publicUrl,
-          blend_opacity: previewResult.blendOpacity,
-          perspective_corners: previewResult.perspectiveCorners
+          photo_url: photo.url,
+          quad,
+          opacity,
+          preview_url: publicUrl
         });
       }
 
@@ -108,8 +111,9 @@ export default function InSituModal({
 
     } catch (err) {
       console.error('[IN-SITU] Save failed:', err);
-      // Show error to user
       alert('Failed to save preview: ' + err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -117,10 +121,8 @@ export default function InSituModal({
     switch (currentStep) {
       case STEPS.UPLOAD:
         return 'Upload Site Photo';
-      case STEPS.MASK:
-        return 'Select Floor Area';
-      case STEPS.PREVIEW:
-        return 'Preview & Export';
+      case STEPS.POSITION:
+        return 'Position Your Design';
       default:
         return 'In-Situ Preview';
     }
@@ -136,14 +138,11 @@ export default function InSituModal({
           <div className="header-left">
             <h2>{getStepTitle()}</h2>
             <div className="step-indicator">
-              <span className={currentStep === STEPS.UPLOAD ? 'active' : currentStep !== STEPS.UPLOAD ? 'completed' : ''}>
+              <span className={currentStep === STEPS.UPLOAD ? 'active' : 'completed'}>
                 1. Upload
               </span>
-              <span className={currentStep === STEPS.MASK ? 'active' : currentStep === STEPS.PREVIEW ? 'completed' : ''}>
-                2. Select Floor
-              </span>
-              <span className={currentStep === STEPS.PREVIEW ? 'active' : ''}>
-                3. Preview
+              <span className={currentStep === STEPS.POSITION ? 'active' : ''}>
+                2. Position
               </span>
             </div>
           </div>
@@ -161,26 +160,48 @@ export default function InSituModal({
             </div>
           )}
 
-          {currentStep === STEPS.MASK && photo && (
-            <FloorMaskEditor
+          {currentStep === STEPS.POSITION && photo && (
+            <FourPointEditor
+              ref={editorRef}
               photoUrl={photo.url}
-              photoDimensions={{ width: photo.width, height: photo.height }}
-              onMaskConfirmed={handleMaskConfirmed}
-              onCancel={() => setCurrentStep(STEPS.UPLOAD)}
-            />
-          )}
-
-          {currentStep === STEPS.PREVIEW && maskData && (
-            <InSituPreviewRenderer
-              photoUrl={photo.url}
-              designUrl={designUrl}
-              maskData={maskData}
-              designDimensions={designDimensions}
-              onSave={handleSave}
-              onBack={handleBackToMask}
+              svgUrl={designUrl}
+              designSizeMm={{
+                width_mm: designDimensions.width,
+                length_mm: designDimensions.length
+              }}
+              initialOpacity={0.8}
+              onChange={handleEditorChange}
             />
           )}
         </div>
+
+        {currentStep === STEPS.POSITION && (
+          <div className="modal-footer">
+            <button
+              onClick={() => setCurrentStep(STEPS.UPLOAD)}
+              className="btn-secondary"
+            >
+              Back
+            </button>
+
+            <div className="footer-actions">
+              <button
+                onClick={handleDownload}
+                disabled={!quad}
+                className="btn-secondary"
+              >
+                Download PNG
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={!quad || saving}
+                className="btn-primary"
+              >
+                {saving ? 'Saving...' : 'Save to Project'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <style>{`
@@ -282,6 +303,61 @@ export default function InSituModal({
           line-height: 1.6;
         }
 
+        .modal-footer {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1rem 1.5rem;
+          border-top: 1px solid #e5e7eb;
+          background: #f9fafb;
+          border-radius: 0 0 12px 12px;
+        }
+
+        .footer-actions {
+          display: flex;
+          gap: 0.5rem;
+        }
+
+        .btn-primary,
+        .btn-secondary {
+          padding: 0.5rem 1rem;
+          border-radius: 4px;
+          font-size: 0.875rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+          border: none;
+        }
+
+        .btn-primary {
+          background: #ff6b35;
+          color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+          background: #e55a2b;
+        }
+
+        .btn-primary:disabled {
+          background: #d1d5db;
+          cursor: not-allowed;
+        }
+
+        .btn-secondary {
+          background: white;
+          color: #374151;
+          border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+          background: #f9fafb;
+        }
+
+        .btn-secondary:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
         /* Responsive adjustments */
         @media (max-width: 768px) {
           .in-situ-modal {
@@ -296,6 +372,10 @@ export default function InSituModal({
 
           .step-indicator {
             display: none;
+          }
+
+          .modal-footer {
+            border-radius: 0;
           }
         }
       `}</style>
