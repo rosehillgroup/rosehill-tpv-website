@@ -1,13 +1,98 @@
 // TPV Studio - Perspective Warp Utility
 // Client-side perspective transform for in-situ preview
 
-import Perspective from 'perspective-transform';
-
 /**
  * @typedef {Object} QuadPoint
  * @property {number} x
  * @property {number} y
  */
+
+/**
+ * Compute perspective transform matrix from source to destination quad
+ * Returns a function that transforms source coordinates to destination
+ * @param {number[]} srcPoints - [x0,y0, x1,y1, x2,y2, x3,y3] source corners
+ * @param {number[]} dstPoints - [x0,y0, x1,y1, x2,y2, x3,y3] destination corners
+ * @returns {function(number, number): [number, number]} transform function
+ */
+function computePerspectiveTransform(srcPoints, dstPoints) {
+  // Compute 3x3 homography matrix using DLT (Direct Linear Transform)
+  // H maps source points to destination points: dst = H * src
+
+  const [x0, y0, x1, y1, x2, y2, x3, y3] = srcPoints;
+  const [u0, v0, u1, v1, u2, v2, u3, v3] = dstPoints;
+
+  // Build the 8x8 matrix A and 8x1 vector b for Ah = b
+  const A = [
+    [x0, y0, 1, 0, 0, 0, -u0*x0, -u0*y0],
+    [0, 0, 0, x0, y0, 1, -v0*x0, -v0*y0],
+    [x1, y1, 1, 0, 0, 0, -u1*x1, -u1*y1],
+    [0, 0, 0, x1, y1, 1, -v1*x1, -v1*y1],
+    [x2, y2, 1, 0, 0, 0, -u2*x2, -u2*y2],
+    [0, 0, 0, x2, y2, 1, -v2*x2, -v2*y2],
+    [x3, y3, 1, 0, 0, 0, -u3*x3, -u3*y3],
+    [0, 0, 0, x3, y3, 1, -v3*x3, -v3*y3]
+  ];
+
+  const b = [u0, v0, u1, v1, u2, v2, u3, v3];
+
+  // Solve using Gaussian elimination with partial pivoting
+  const h = solveLinearSystem(A, b);
+
+  // h = [h0, h1, h2, h3, h4, h5, h6, h7]
+  // H = [[h0, h1, h2], [h3, h4, h5], [h6, h7, 1]]
+
+  return function transform(x, y) {
+    const w = h[6] * x + h[7] * y + 1;
+    const px = (h[0] * x + h[1] * y + h[2]) / w;
+    const py = (h[3] * x + h[4] * y + h[5]) / w;
+    return [px, py];
+  };
+}
+
+/**
+ * Solve linear system Ax = b using Gaussian elimination
+ * @param {number[][]} A - coefficient matrix
+ * @param {number[]} b - right-hand side vector
+ * @returns {number[]} solution vector
+ */
+function solveLinearSystem(A, b) {
+  const n = A.length;
+
+  // Create augmented matrix
+  const aug = A.map((row, i) => [...row, b[i]]);
+
+  // Forward elimination with partial pivoting
+  for (let col = 0; col < n; col++) {
+    // Find pivot
+    let maxRow = col;
+    for (let row = col + 1; row < n; row++) {
+      if (Math.abs(aug[row][col]) > Math.abs(aug[maxRow][col])) {
+        maxRow = row;
+      }
+    }
+    [aug[col], aug[maxRow]] = [aug[maxRow], aug[col]];
+
+    // Eliminate column
+    for (let row = col + 1; row < n; row++) {
+      const factor = aug[row][col] / aug[col][col];
+      for (let j = col; j <= n; j++) {
+        aug[row][j] -= factor * aug[col][j];
+      }
+    }
+  }
+
+  // Back substitution
+  const x = new Array(n);
+  for (let i = n - 1; i >= 0; i--) {
+    x[i] = aug[i][n];
+    for (let j = i + 1; j < n; j++) {
+      x[i] -= aug[i][j] * x[j];
+    }
+    x[i] /= aug[i][i];
+  }
+
+  return x;
+}
 
 /**
  * Load an image from URL
@@ -93,7 +178,7 @@ export function warpDesignOntoPhoto({ photoCtx, photoImg, designImg, quad, opaci
   ];
 
   // Compute perspective transform
-  const perspT = Perspective(srcPoints, dstPoints);
+  const perspT = computePerspectiveTransform(srcPoints, dstPoints);
 
   // Draw warped design using triangle mesh
   // Divide into grid and draw each cell as two triangles
@@ -120,10 +205,10 @@ export function warpDesignOntoPhoto({ photoCtx, photoImg, designImg, quad, opaci
       const y1 = (j + 1) * cellH;
 
       // Transform corners
-      const tl = perspT.transform(x0, y0);
-      const tr = perspT.transform(x1, y0);
-      const br = perspT.transform(x1, y1);
-      const bl = perspT.transform(x0, y1);
+      const tl = perspT(x0, y0);
+      const tr = perspT(x1, y0);
+      const br = perspT(x1, y1);
+      const bl = perspT(x0, y1);
 
       // Draw two triangles for this cell
       // Triangle 1: TL, TR, BL
