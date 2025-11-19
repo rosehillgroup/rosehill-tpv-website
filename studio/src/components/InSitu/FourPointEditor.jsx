@@ -468,7 +468,7 @@ export default function FourPointEditor({
     }
   };
 
-  // Helper: auto-scale quad to encompass shape when shape extends beyond quad
+  // Helper: scale quad to match shape's bounding box (uniform scaling)
   const autoScaleQuadToFitShape = (currentQuad, currentShape) => {
     if (!currentShape || currentShape.length < 3 || !currentQuad) {
       return currentQuad;
@@ -495,28 +495,21 @@ export default function FourPointEditor({
 
     const shapeCenterX = (shapeMinX + shapeMaxX) / 2;
     const shapeCenterY = (shapeMinY + shapeMaxY) / 2;
+    const shapeWidth = shapeMaxX - shapeMinX;
+    const shapeHeight = shapeMaxY - shapeMinY;
 
-    // Check how much the shape extends beyond the quad in each direction
-    const overflowLeft = Math.max(0, quadMinX - shapeMinX);
-    const overflowRight = Math.max(0, shapeMaxX - quadMaxX);
-    const overflowTop = Math.max(0, quadMinY - shapeMinY);
-    const overflowBottom = Math.max(0, shapeMaxY - quadMaxY);
+    // Calculate uniform scale to fit shape's bounding box
+    // Use the larger ratio to ensure design fills entire mask
+    const scaleX = shapeWidth / quadWidth;
+    const scaleY = shapeHeight / quadHeight;
+    const scale = Math.max(scaleX, scaleY);
 
-    // If no overflow, no scaling needed
-    if (overflowLeft === 0 && overflowRight === 0 && overflowTop === 0 && overflowBottom === 0) {
+    // If scale is essentially 1, no change needed
+    if (Math.abs(scale - 1) < 0.001) {
       return currentQuad;
     }
 
-    // Calculate required expansion (with 5% padding)
-    const requiredWidth = quadWidth + (overflowLeft + overflowRight) * 1.05;
-    const requiredHeight = quadHeight + (overflowTop + overflowBottom) * 1.05;
-
-    // Calculate scale needed to fit shape
-    const scaleX = requiredWidth / quadWidth;
-    const scaleY = requiredHeight / quadHeight;
-    const scale = Math.max(scaleX, scaleY);
-
-    // Scale quad from its center, then translate to center on shape
+    // Scale quad from its center
     const scaledQuad = currentQuad.map(point => ({
       x: quadCenterX + (point.x - quadCenterX) * scale,
       y: quadCenterY + (point.y - quadCenterY) * scale
