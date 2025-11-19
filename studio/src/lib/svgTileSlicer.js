@@ -107,10 +107,17 @@ export async function sliceSvgIntoTiles(svgContent, dimensions, designName = 'de
       // ViewBox uses SVG coordinates, output dimensions are in mm
       const viewBox = `${x} ${y} ${tileSvgWidth} ${tileSvgHeight}`;
 
-      // Create tile SVG
+      // Create tile SVG with clipPath to cleanly crop content
       const tileSvg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="${xmlns}" viewBox="${viewBox}" width="${tileSize}mm" height="${tileSize}mm">
+  <defs>
+    <clipPath id="tile-clip">
+      <rect x="${x}" y="${y}" width="${tileSvgWidth}" height="${tileSvgHeight}"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#tile-clip)">
 ${innerContent}
+  </g>
 </svg>`;
 
       // Add to ZIP
