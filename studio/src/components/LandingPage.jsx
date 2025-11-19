@@ -302,6 +302,31 @@ export default function LandingPage() {
             <h3>PDF Specifications</h3>
             <p>Export professional specification sheets with design preview, dimensions, and all recipes.</p>
           </div>
+
+          <div className="feature-card">
+            <div className="feature-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <path d="M21 15l-5-5L5 21"/>
+              </svg>
+            </div>
+            <h3>In-Situ Preview</h3>
+            <p>Upload a site photo and see your design in context. Adjust perspective and lighting to visualise the finished installation.</p>
+          </div>
+
+          <div className="feature-card">
+            <div className="feature-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+              </svg>
+            </div>
+            <h3>Installation Tiles</h3>
+            <p>Download your design as 1m×1m tiles in a ZIP file. Named like a chessboard (A1, B2...) for easy on-site layout.</p>
+          </div>
         </div>
       </section>
 
