@@ -381,9 +381,19 @@ export default function FourPointEditor({
           y: Math.max(0, Math.min(photoImg.naturalHeight, point.y + dy))
         }));
 
+        // Also move shape if it exists
+        let newShape = shape;
+        if (shape) {
+          newShape = shape.map(point => ({
+            x: Math.max(0, Math.min(photoImg.naturalWidth, point.x + dx)),
+            y: Math.max(0, Math.min(photoImg.naturalHeight, point.y + dy))
+          }));
+          setShape(newShape);
+        }
+
         setQuad(newQuad);
         setDragStart({ x: clampedX, y: clampedY });
-        notifyChange(newQuad, opacity, shape);
+        notifyChange(newQuad, opacity, newShape);
       } else if (draggingIndex !== null) {
         const newQuad = [...quad];
         newQuad[draggingIndex] = { x: clampedX, y: clampedY };
