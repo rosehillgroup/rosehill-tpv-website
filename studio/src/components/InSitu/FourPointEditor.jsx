@@ -112,6 +112,9 @@ export default function FourPointEditor({
   const drawHandles = (ctx) => {
     if (!quad) return;
 
+    // Reset transform to identity (warpDesignOntoPhoto uses setTransform)
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
     // Draw connecting lines
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
     ctx.lineWidth = 2;
@@ -127,8 +130,8 @@ export default function FourPointEditor({
 
     ctx.setLineDash([]);
 
-    // Draw corner handles
-    const handleRadius = 10;
+    // Draw corner handles - scale radius based on image size for visibility
+    const handleRadius = Math.max(8, Math.min(15, photoImg.naturalWidth / 80));
     const labels = ['TL', 'TR', 'BR', 'BL'];
 
     quad.forEach((point, index) => {
@@ -175,12 +178,14 @@ export default function FourPointEditor({
   const findHandle = (imageX, imageY) => {
     if (!quad) return -1;
 
-    const threshold = 20 / displayScale; // Adjust for scale
+    // Threshold in image coordinates - 20 CSS pixels converted to image pixels
+    const threshold = 25 / displayScale;
 
     for (let i = 0; i < quad.length; i++) {
       const dx = quad[i].x - imageX;
       const dy = quad[i].y - imageY;
-      if (Math.sqrt(dx * dx + dy * dy) < threshold) {
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < threshold) {
         return i;
       }
     }
