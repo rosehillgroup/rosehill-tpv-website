@@ -165,11 +165,23 @@ export default function FourPointEditor({
     }, DEBOUNCE_DELAY);
   }, [onChange]);
 
-  // Convert canvas coordinates to image coordinates
-  const canvasToImage = (canvasX, canvasY) => {
+  // Convert screen coordinates to image coordinates
+  const screenToImage = (screenX, screenY) => {
+    const canvas = canvasRef.current;
+    if (!canvas || !photoImg) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+    // Get position relative to canvas display area
+    const relX = screenX - rect.left;
+    const relY = screenY - rect.top;
+
+    // Convert to image coordinates using actual display size
+    const scaleX = photoImg.naturalWidth / rect.width;
+    const scaleY = photoImg.naturalHeight / rect.height;
+
     return {
-      x: canvasX / displayScale,
-      y: canvasY / displayScale
+      x: relX * scaleX,
+      y: relY * scaleY
     };
   };
 
@@ -177,7 +189,8 @@ export default function FourPointEditor({
   const findHandle = (imageX, imageY) => {
     if (!quad) return -1;
 
-    const threshold = 20 / displayScale; // Adjust for scale
+    // Threshold in image pixels (larger = easier to grab)
+    const threshold = 30;
 
     for (let i = 0; i < quad.length; i++) {
       const dx = quad[i].x - imageX;
@@ -192,15 +205,13 @@ export default function FourPointEditor({
 
   // Pointer event handlers
   const handlePointerDown = (e) => {
+    e.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const canvasX = e.clientX - rect.left;
-    const canvasY = e.clientY - rect.top;
-    const { x: imgX, y: imgY } = canvasToImage(canvasX, canvasY);
-
+    const { x: imgX, y: imgY } = screenToImage(e.clientX, e.clientY);
     const handleIndex = findHandle(imgX, imgY);
+
     if (handleIndex >= 0) {
       setDraggingIndex(handleIndex);
       canvas.setPointerCapture(e.pointerId);
@@ -208,15 +219,10 @@ export default function FourPointEditor({
   };
 
   const handlePointerMove = (e) => {
-    if (draggingIndex === null || !quad) return;
+    if (draggingIndex === null || !quad || !photoImg) return;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const canvasX = e.clientX - rect.left;
-    const canvasY = e.clientY - rect.top;
-    const { x: imgX, y: imgY } = canvasToImage(canvasX, canvasY);
+    e.preventDefault();
+    const { x: imgX, y: imgY } = screenToImage(e.clientX, e.clientY);
 
     // Clamp to image bounds
     const clampedX = Math.max(0, Math.min(photoImg.naturalWidth, imgX));
@@ -231,6 +237,7 @@ export default function FourPointEditor({
 
   const handlePointerUp = (e) => {
     if (draggingIndex !== null) {
+      e.preventDefault();
       const canvas = canvasRef.current;
       if (canvas) {
         canvas.releasePointerCapture(e.pointerId);
