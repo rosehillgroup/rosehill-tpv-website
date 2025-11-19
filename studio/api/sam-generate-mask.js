@@ -173,8 +173,7 @@ export default async function handler(req, res) {
     const replicate = getReplicateClient();
 
     // SAM-2 model on Replicate
-    // Using meta/sam-2-image for image segmentation
-    const modelId = 'meta/sam-2-image';
+    const modelId = 'meta/sam-2:fe97b453a6455861e3bac769b441ca1f1086110da7466dbb65cf1eecfd60dc83';
 
     // Build SAM-2 input
     const input = {
