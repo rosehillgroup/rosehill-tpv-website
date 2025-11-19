@@ -153,8 +153,9 @@ export async function rasterizeSvg(svgUrl, maxSize = 1536) {
  * @param {HTMLImageElement} opts.designImg - Design image to warp
  * @param {[QuadPoint, QuadPoint, QuadPoint, QuadPoint]} opts.quad - Destination corners [TL, TR, BR, BL]
  * @param {number} opts.opacity - Overlay opacity (0-1)
+ * @param {QuadPoint[]} [opts.shape] - Optional polygon for clipping (in photo coords)
  */
-export function warpDesignOntoPhoto({ photoCtx, photoImg, designImg, quad, opacity }) {
+export function warpDesignOntoPhoto({ photoCtx, photoImg, designImg, quad, opacity, shape }) {
   const canvas = photoCtx.canvas;
 
   // Clear and draw photo as base (canvas should be set to photo's natural dimensions)
@@ -194,6 +195,16 @@ export function warpDesignOntoPhoto({ photoCtx, photoImg, designImg, quad, opaci
 
   photoCtx.save();
   photoCtx.globalAlpha = opacity;
+
+  // Apply polygon clipping if shape is provided
+  const clipPoints = shape && shape.length >= 3 ? shape : quad;
+  photoCtx.beginPath();
+  photoCtx.moveTo(clipPoints[0].x, clipPoints[0].y);
+  for (let i = 1; i < clipPoints.length; i++) {
+    photoCtx.lineTo(clipPoints[i].x, clipPoints[i].y);
+  }
+  photoCtx.closePath();
+  photoCtx.clip();
 
   // Draw each grid cell as two triangles
   for (let i = 0; i < gridSize; i++) {
