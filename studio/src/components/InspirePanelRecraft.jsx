@@ -1,7 +1,7 @@
 // TPV Studio - Recraft Vector AI Panel
 // Simplified UI for Recraft vector generation with compliance tracking
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { apiClient } from '../lib/api/client.js';
 import BlendRecipesDisplay from './BlendRecipesDisplay.jsx';
 import SolidColorSummary from './SolidColorSummary.jsx';
@@ -84,6 +84,39 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   const [showDimensionModal, setShowDimensionModal] = useState(false);
   const [svgAspectRatio, setSvgAspectRatio] = useState(null);
   const [pendingDownloadAction, setPendingDownloadAction] = useState(null); // 'pdf' or 'tiles'
+
+  // Ref for SVG preview section (for auto-scroll)
+  const svgPreviewRef = useRef(null);
+
+  // Auto-scroll to SVG preview when it becomes available
+  useEffect(() => {
+    if ((solidSvgUrl || blendSvgUrl) && svgPreviewRef.current) {
+      // Delay scroll slightly to ensure content is rendered
+      setTimeout(() => {
+        svgPreviewRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }, 300);
+    }
+  }, [solidSvgUrl, blendSvgUrl]);
+
+  // Reset dimensions when switching to image/SVG upload modes
+  useEffect(() => {
+    if (inputMode === 'image' || inputMode === 'svg') {
+      // Clear dimensions for upload modes - they'll be set via modal when needed
+      setWidthMM(null);
+      setLengthMM(null);
+      console.log('[DIMENSION] Reset dimensions for upload mode:', inputMode);
+    } else if (inputMode === 'prompt') {
+      // Restore default dimensions for prompt mode if they're null
+      if (widthMM === null || lengthMM === null) {
+        setWidthMM(5000);
+        setLengthMM(5000);
+        console.log('[DIMENSION] Restored default dimensions for prompt mode');
+      }
+    }
+  }, [inputMode]);
 
   // Cleanup blob URLs on unmount to prevent memory leaks
   useEffect(() => {
@@ -541,9 +574,40 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     } else if (pendingDownloadAction === 'tiles') {
       // Trigger tiles download with new dimensions
       setTimeout(() => executeTilesDownload(width, height), 100);
+    } else if (pendingDownloadAction === 'insitu') {
+      // Open in-situ modal with new dimensions
+      setTimeout(() => setShowInSituModal(true), 100);
     }
 
     setPendingDownloadAction(null);
+  };
+
+  // Handle in-situ preview click - check dimensions first
+  const handleInSituClick = async () => {
+    const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
+
+    // Check if dimensions are set (prompt mode always has them, image/SVG uploads might not)
+    if ((inputMode === 'image' || inputMode === 'svg') && (!widthMM || !lengthMM)) {
+      console.log('[DIMENSION] No dimensions set for image/SVG upload, showing modal...');
+
+      // Detect aspect ratio from SVG
+      const aspectRatio = await detectSVGAspectRatio(svgUrl);
+      if (aspectRatio) {
+        setSvgAspectRatio(aspectRatio);
+        setPendingDownloadAction('insitu');
+        setShowDimensionModal(true);
+        return;
+      } else {
+        // Fallback: assume square if detection fails
+        setSvgAspectRatio(1);
+        setPendingDownloadAction('insitu');
+        setShowDimensionModal(true);
+        return;
+      }
+    }
+
+    // Open in-situ modal with current dimensions
+    setShowInSituModal(true);
   };
 
   // Download TPV PNG
@@ -1557,36 +1621,40 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
           {/* TPV Blend Preview - Blend Mode */}
           {viewMode === 'blend' && blendSvgUrl && blendRecipes && (
-            <SVGPreview
-              blendSvgUrl={blendSvgUrl}
-              recipes={blendRecipes}
-              mode="blend"
-              onColorClick={handleColorClick}
-              selectedColor={selectedColor}
-              editedColors={blendEditedColors}
-              onResetAll={handleResetAllColors}
-              designName={designName}
-              onNameChange={setDesignName}
-              isNameLoading={isNameLoading}
-              onInSituClick={() => setShowInSituModal(true)}
-            />
+            <div ref={svgPreviewRef}>
+              <SVGPreview
+                blendSvgUrl={blendSvgUrl}
+                recipes={blendRecipes}
+                mode="blend"
+                onColorClick={handleColorClick}
+                selectedColor={selectedColor}
+                editedColors={blendEditedColors}
+                onResetAll={handleResetAllColors}
+                designName={designName}
+                onNameChange={setDesignName}
+                isNameLoading={isNameLoading}
+                onInSituClick={handleInSituClick}
+              />
+            </div>
           )}
 
           {/* TPV Blend Preview - Solid Mode */}
           {viewMode === 'solid' && solidSvgUrl && solidRecipes && (
-            <SVGPreview
-              blendSvgUrl={solidSvgUrl}
-              recipes={solidRecipes}
-              mode="solid"
-              onColorClick={handleColorClick}
-              selectedColor={selectedColor}
-              editedColors={solidEditedColors}
-              onResetAll={handleResetAllColors}
-              designName={designName}
-              onNameChange={setDesignName}
-              isNameLoading={isNameLoading}
-              onInSituClick={() => setShowInSituModal(true)}
-            />
+            <div ref={svgPreviewRef}>
+              <SVGPreview
+                blendSvgUrl={solidSvgUrl}
+                recipes={solidRecipes}
+                mode="solid"
+                onColorClick={handleColorClick}
+                selectedColor={selectedColor}
+                editedColors={solidEditedColors}
+                onResetAll={handleResetAllColors}
+                designName={designName}
+                onNameChange={setDesignName}
+                isNameLoading={isNameLoading}
+                onInSituClick={handleInSituClick}
+              />
+            </div>
           )}
 
           {/* Action Buttons - Show when design is ready */}
@@ -1616,7 +1684,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
               <button
                 onClick={handleDownloadTiles}
                 className="download-button tiles"
-                title={`Download ${Math.ceil(widthMM / 1000) * Math.ceil(lengthMM / 1000)} tiles (1m×1m each)`}
+                title={widthMM && lengthMM
+                  ? `Download ${Math.ceil(widthMM / 1000) * Math.ceil(lengthMM / 1000)} tiles (1m×1m each)`
+                  : 'Download design sliced into 1m×1m tiles'}
               >
                 Download Tiles ZIP
               </button>
