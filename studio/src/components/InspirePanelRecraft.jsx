@@ -7,6 +7,7 @@ import BlendRecipesDisplay from './BlendRecipesDisplay.jsx';
 import SolidColorSummary from './SolidColorSummary.jsx';
 import SVGPreview from './SVGPreview.jsx';
 import ColorEditorPanel from './ColorEditorPanel.jsx';
+import MiniMixerWidget from './MiniMixerWidget.jsx';
 import SaveDesignModal from './SaveDesignModal.jsx';
 import InSituModal from './InSitu/InSituModal.jsx';
 import DimensionModal from './DimensionModal.jsx';
@@ -65,6 +66,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   const [selectedColor, setSelectedColor] = useState(null);
   const [solidEditedColors, setSolidEditedColors] = useState(new Map()); // originalHex -> {newHex}
   const [blendEditedColors, setBlendEditedColors] = useState(new Map()); // originalHex -> {newHex}
+
+  // Mixer state (for blend mode only)
+  const [mixerOpen, setMixerOpen] = useState(false);
+  const [mixerColor, setMixerColor] = useState(null); // Color being edited in mixer
 
   // Save design state
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -498,6 +503,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     setSelectedColor(null);
     setSolidEditedColors(new Map());
     setBlendEditedColors(new Map());
+    setMixerOpen(false);
+    setMixerColor(null);
     // Reset solid mode state
     setViewMode('solid'); // Reset to default (solid mode)
     setSolidRecipes(null);
@@ -871,9 +878,11 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
   // Reset all color edits back to original
   const handleResetAllColors = async () => {
-    // Close color editor if open
+    // Close color editor and mixer if open
     setColorEditorOpen(false);
     setSelectedColor(null);
+    setMixerOpen(false);
+    setMixerColor(null);
 
     // Clear edit tracking
     if (viewMode === 'solid') {
@@ -996,15 +1005,23 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
   // Handle color click from SVGPreview
   const handleColorClick = (colorData) => {
-    console.log('[TPV-STUDIO] Color clicked:', colorData);
-    setSelectedColor(colorData);
-    setColorEditorOpen(true);
-    // Close recipe displays when editing - user must regenerate after edits
-    setShowFinalRecipes(false);
-    setShowSolidSummary(false);
+    console.log('[TPV-STUDIO] Color clicked:', colorData, 'in mode:', viewMode);
+
+    // In blend mode, use the mixer widget instead of color editor
+    if (viewMode === 'blend') {
+      setMixerColor(colorData);
+      setMixerOpen(true);
+      // Close recipe displays when editing - user must regenerate after edits
+      setShowFinalRecipes(false);
+    } else {
+      // In solid mode, use the standard color editor
+      setSelectedColor(colorData);
+      setColorEditorOpen(true);
+      setShowSolidSummary(false);
+    }
   };
 
-  // Handle color change from ColorEditorPanel
+  // Handle color change from ColorEditorPanel (solid mode only)
   const handleColorChange = async (newHex) => {
     if (!selectedColor) return;
 
@@ -1038,6 +1055,32 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
       await regenerateBlendSVG(updated, newHex);
     }
+  };
+
+  // Handle mixer blend change (blend mode only)
+  const handleMixerBlendChange = async ({ blendHex, parts, recipe }) => {
+    if (!mixerColor) return;
+
+    console.log('[TPV-STUDIO] Mixer blend changed:', mixerColor.originalHex, '->', blendHex, 'recipe:', recipe);
+
+    // Update blend edited colors with new blend hex and recipe
+    const updated = new Map(blendEditedColors);
+    updated.set(mixerColor.originalHex.toLowerCase(), {
+      newHex: blendHex.toLowerCase(),
+      recipe, // Store mixer recipe for later use
+      parts // Store parts Map for potential re-editing
+    });
+    setBlendEditedColors(updated);
+
+    // Update mixer color with new blend for highlighting
+    setMixerColor({
+      ...mixerColor,
+      hex: blendHex,
+      blendHex: blendHex
+    });
+
+    // Regenerate SVG with new blend color
+    await regenerateBlendSVG(updated, blendHex);
   };
 
   // Regenerate blend SVG with edited colors
@@ -1745,7 +1788,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         />
       )}
 
-      {/* Color Editor Panel */}
+      {/* Color Editor Panel (Solid Mode) */}
       {colorEditorOpen && selectedColor && (
         <ColorEditorPanel
           color={selectedColor}
@@ -1756,6 +1799,31 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
             setSelectedColor(null);
           }}
         />
+      )}
+
+      {/* Mixer Widget (Blend Mode) */}
+      {mixerOpen && mixerColor && (
+        <div className="mixer-widget-container">
+          <div className="mixer-widget-header">
+            <button
+              className="mixer-close-btn"
+              onClick={() => {
+                setMixerOpen(false);
+                setMixerColor(null);
+              }}
+            >
+              Close Mixer
+            </button>
+          </div>
+          <MiniMixerWidget
+            initialRecipe={
+              blendEditedColors.get(mixerColor.originalHex.toLowerCase())?.recipe ||
+              (mixerColor.chosenRecipe || null)
+            }
+            onBlendChange={handleMixerBlendChange}
+            originalColor={mixerColor.originalHex}
+          />
+        </div>
       )}
 
       {/* Save Design Modal */}
@@ -2468,6 +2536,40 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           margin: var(--space-3) 0 0 0;
           color: var(--color-text-secondary);
           font-size: var(--text-sm);
+        }
+
+        /* Mixer Widget Container Styles */
+        .mixer-widget-container {
+          margin-top: var(--space-4);
+          background: white;
+          border-radius: 12px;
+          padding: var(--space-4);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .mixer-widget-header {
+          display: flex;
+          justify-content: flex-end;
+          margin-bottom: var(--space-3);
+          padding-bottom: var(--space-3);
+          border-bottom: 2px solid var(--color-border);
+        }
+
+        .mixer-close-btn {
+          padding: var(--space-2) var(--space-4);
+          background: var(--color-primary);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: var(--text-sm);
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .mixer-close-btn:hover {
+          background: var(--color-primary-dark);
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
         /* Mobile Responsive Styles */
