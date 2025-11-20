@@ -9,6 +9,7 @@ import SVGPreview from './SVGPreview.jsx';
 import ColorEditorPanel from './ColorEditorPanel.jsx';
 import SaveDesignModal from './SaveDesignModal.jsx';
 import InSituModal from './InSitu/InSituModal.jsx';
+import DimensionModal from './DimensionModal.jsx';
 import { buildColorMapping } from '../utils/colorMapping.js';
 import { recolorSVG } from '../utils/svgRecolor.js';
 import { mapDimensionsToRecraft, getLayoutDescription, needsLayoutWarning } from '../utils/aspectRatioMapping.js';
@@ -78,6 +79,11 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   // In-situ preview state
   const [showInSituModal, setShowInSituModal] = useState(false);
   const [inSituData, setInSituData] = useState(null);
+
+  // Dimension modal state
+  const [showDimensionModal, setShowDimensionModal] = useState(false);
+  const [svgAspectRatio, setSvgAspectRatio] = useState(null);
+  const [pendingDownloadAction, setPendingDownloadAction] = useState(null); // 'pdf' or 'tiles'
 
   // Cleanup blob URLs on unmount to prevent memory leaks
   useEffect(() => {
@@ -283,11 +289,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         setProgressMessage('Processing SVG...');
         setUploadProgress(null);
 
-        // Call process-uploaded-svg API
+        // Call process-uploaded-svg API (dimensions not needed for SVG uploads)
         response = await apiClient.processUploadedSVG({
-          svg_url: uploadResult.url,
-          width_mm: widthMM,
-          length_mm: lengthMM
+          svg_url: uploadResult.url
         });
 
         if (!response.success) {
@@ -325,11 +329,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         setProgressMessage('Starting vectorisation...');
         setUploadProgress(null);
 
-        // Call recraft-vectorize API
+        // Call recraft-vectorize API (dimensions not needed for image vectorization)
         response = await apiClient.vectorizeImage({
-          image_url: uploadResult.url,
-          width_mm: widthMM,
-          length_mm: lengthMM
+          image_url: uploadResult.url
         });
 
         if (!response.success) {
@@ -492,6 +494,58 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     }
   };
 
+  // Helper: Detect SVG aspect ratio
+  const detectSVGAspectRatio = async (svgUrl) => {
+    try {
+      const response = await fetch(svgUrl);
+      const svgText = await response.text();
+      const parser = new DOMParser();
+      const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+      const svgElement = svgDoc.querySelector('svg');
+
+      if (!svgElement) return null;
+
+      let width, height;
+
+      // Try viewBox first
+      const viewBox = svgElement.getAttribute('viewBox');
+      if (viewBox) {
+        const parts = viewBox.split(/\s+/).map(Number);
+        width = parts[2];
+        height = parts[3];
+      } else {
+        // Fallback to width/height attributes
+        width = parseFloat(svgElement.getAttribute('width')) || 1024;
+        height = parseFloat(svgElement.getAttribute('height')) || 1024;
+      }
+
+      const aspectRatio = width / height;
+      console.log(`[DIMENSION] Detected aspect ratio: ${aspectRatio.toFixed(2)} (${width}×${height})`);
+      return aspectRatio;
+    } catch (err) {
+      console.error('[DIMENSION] Failed to detect aspect ratio:', err);
+      return null;
+    }
+  };
+
+  // Helper: Update dimensions and execute pending download action
+  const handleDimensionConfirm = (width, height) => {
+    console.log(`[DIMENSION] User confirmed dimensions: ${width}mm × ${height}mm`);
+    setWidthMM(width);
+    setLengthMM(height);
+
+    // Execute the pending download action
+    if (pendingDownloadAction === 'pdf') {
+      // Trigger PDF download with new dimensions
+      setTimeout(() => executePDFDownload(width, height), 100);
+    } else if (pendingDownloadAction === 'tiles') {
+      // Trigger tiles download with new dimensions
+      setTimeout(() => executeTilesDownload(width, height), 100);
+    }
+
+    setPendingDownloadAction(null);
+  };
+
   // Download TPV PNG
   const handleDownloadPNG = () => {
     // Download the appropriate PNG based on current view mode
@@ -526,6 +580,33 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
   const handleDownloadPDF = async () => {
     const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
+
+    // Check if dimensions are set (prompt mode always has them, image/SVG uploads might not)
+    if ((inputMode === 'image' || inputMode === 'svg') && (!widthMM || !lengthMM)) {
+      console.log('[DIMENSION] No dimensions set for image/SVG upload, showing modal...');
+
+      // Detect aspect ratio from SVG
+      const aspectRatio = await detectSVGAspectRatio(svgUrl);
+      if (aspectRatio) {
+        setSvgAspectRatio(aspectRatio);
+        setPendingDownloadAction('pdf');
+        setShowDimensionModal(true);
+        return;
+      } else {
+        // Fallback: assume square if detection fails
+        setSvgAspectRatio(1);
+        setPendingDownloadAction('pdf');
+        setShowDimensionModal(true);
+        return;
+      }
+    }
+
+    // Execute PDF download with current dimensions
+    await executePDFDownload(widthMM, lengthMM);
+  };
+
+  const executePDFDownload = async (widthValue, lengthValue) => {
+    const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
     const recipes = viewMode === 'solid' ? solidRecipes : blendRecipes;
     const fileName = viewMode === 'solid' ? 'tpv-solid' : 'tpv-blend';
 
@@ -555,8 +636,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           designName: designName || prompt || 'TPV Design',
           projectName: 'TPV Studio',
           dimensions: {
-            widthMM,
-            lengthMM
+            widthMM: widthValue,
+            lengthMM: lengthValue
           },
           recipes,
           mode: viewMode,
@@ -610,10 +691,37 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       return;
     }
 
+    // Check if dimensions are set (prompt mode always has them, image/SVG uploads might not)
+    if ((inputMode === 'image' || inputMode === 'svg') && (!widthMM || !lengthMM)) {
+      console.log('[DIMENSION] No dimensions set for image/SVG upload, showing modal...');
+
+      // Detect aspect ratio from SVG
+      const aspectRatio = await detectSVGAspectRatio(svgUrl);
+      if (aspectRatio) {
+        setSvgAspectRatio(aspectRatio);
+        setPendingDownloadAction('tiles');
+        setShowDimensionModal(true);
+        return;
+      } else {
+        // Fallback: assume square if detection fails
+        setSvgAspectRatio(1);
+        setPendingDownloadAction('tiles');
+        setShowDimensionModal(true);
+        return;
+      }
+    }
+
+    // Execute tiles download with current dimensions
+    await executeTilesDownload(widthMM, lengthMM);
+  };
+
+  const executeTilesDownload = async (widthValue, lengthValue) => {
+    const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
+
     try {
       await downloadSvgTiles(
         svgUrl,
-        { width: widthMM, length: lengthMM },
+        { width: widthValue, length: lengthValue },
         designName || 'tpv-design'
       );
     } catch (err) {
@@ -1306,35 +1414,38 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           </div>
         )}
 
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="length">Length (mm)</label>
-            <input
-              id="length"
-              type="number"
-              value={lengthMM}
-              onChange={(e) => setLengthMM(parseInt(e.target.value, 10))}
-              min={1000}
-              max={20000}
-              step={100}
-              disabled={generating}
-            />
-          </div>
+        {/* Dimension inputs - only show for prompt mode */}
+        {inputMode === 'prompt' && (
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="length">Length (mm)</label>
+              <input
+                id="length"
+                type="number"
+                value={lengthMM}
+                onChange={(e) => setLengthMM(parseInt(e.target.value, 10))}
+                min={1000}
+                max={20000}
+                step={100}
+                disabled={generating}
+              />
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="width">Width (mm)</label>
-            <input
-              id="width"
-              type="number"
-              value={widthMM}
-              onChange={(e) => setWidthMM(parseInt(e.target.value, 10))}
-              min={1000}
-              max={20000}
-              step={100}
-              disabled={generating}
-            />
+            <div className="form-group">
+              <label htmlFor="width">Width (mm)</label>
+              <input
+                id="width"
+                type="number"
+                value={widthMM}
+                onChange={(e) => setWidthMM(parseInt(e.target.value, 10))}
+                min={1000}
+                max={20000}
+                step={100}
+                disabled={generating}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Error Display */}
         {error && (
@@ -1633,6 +1744,18 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           }}
         />
       )}
+
+      {/* Dimension Modal - for image/SVG uploads when exporting PDF/tiles */}
+      <DimensionModal
+        isOpen={showDimensionModal}
+        onClose={() => {
+          setShowDimensionModal(false);
+          setPendingDownloadAction(null);
+        }}
+        onConfirm={handleDimensionConfirm}
+        aspectRatio={svgAspectRatio}
+        defaultLongestSide={5000}
+      />
 
       <style jsx>{`
         .inspire-panel-recraft {

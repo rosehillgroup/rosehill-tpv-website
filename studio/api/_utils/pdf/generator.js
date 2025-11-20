@@ -411,7 +411,17 @@ function drawDimensionsPanel(page, fontBold, fontRegular, dimensions, y) {
     color: COLORS.textLight,
   });
 
-  return y;
+  // Add note about dimension source
+  y -= 16;
+  page.drawText('Note: Dimensions represent intended installation size. Material calculations based on these values.', {
+    x: MARGIN,
+    y,
+    size: 8,
+    font: fontRegular,
+    color: rgb(0.5, 0.5, 0.5),
+  });
+
+  return y - 5; // Add a bit more spacing after the note
 }
 
 /**

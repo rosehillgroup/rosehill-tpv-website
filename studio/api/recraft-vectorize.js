@@ -61,23 +61,24 @@ export default async function handler(req, res) {
       });
     }
 
-    if (!width_mm || typeof width_mm !== 'number' || width_mm <= 0) {
+    // Dimensions are optional - they're only used for tracking/metadata, not vectorization
+    if (width_mm !== undefined && (typeof width_mm !== 'number' || width_mm <= 0)) {
       return res.status(400).json({
         success: false,
-        error: 'Missing or invalid "width_mm" field (must be positive number)'
+        error: 'Invalid "width_mm" field (must be positive number if provided)'
       });
     }
 
-    if (!length_mm || typeof length_mm !== 'number' || length_mm <= 0) {
+    if (length_mm !== undefined && (typeof length_mm !== 'number' || length_mm <= 0)) {
       return res.status(400).json({
         success: false,
-        error: 'Missing or invalid "length_mm" field (must be positive number)'
+        error: 'Invalid "length_mm" field (must be positive number if provided)'
       });
     }
 
     console.log('[RECRAFT-VECTORIZE] New request:', {
       imageUrl: image_url,
-      dimensions: `${width_mm}mm x ${length_mm}mm`,
+      dimensions: width_mm && length_mm ? `${width_mm}mm x ${length_mm}mm` : 'Not specified',
       seed
     });
 
