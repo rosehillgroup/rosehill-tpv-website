@@ -46,6 +46,8 @@ export class SVGExtractor {
   private options: Required<SVGExtractorOptions>;
   private tpvColors: TPVColor[];
   private lightestTPVColor: TPVColor;
+  private whiteDetected: boolean = false;
+  private whiteWeightTotal: number = 0;
 
   constructor(options: SVGExtractorOptions = {}) {
     this.options = {
@@ -93,6 +95,10 @@ export class SVGExtractor {
 
       console.info(`[SVG] Parsing SVG (${buffer.byteLength} bytes)`);
       console.info(`[SVG] Using SVG extractor v3 with TPV color normalization and smart collapsing`);
+
+      // Reset white detection tracking for this extraction
+      this.whiteDetected = false;
+      this.whiteWeightTotal = 0;
 
       // Parse SVG dimensions
       const dimensions = this.parseSVGDimensions(svgText);
@@ -167,6 +173,21 @@ export class SVGExtractor {
         warnings.push(`WARNING: Background detection failed - ${error.message}`);
       }
 
+      // Save cream color data before Phase 6 (palette capping) for preservation
+      let savedCreamColor: SVGColor | null = null;
+      if (this.whiteDetected) {
+        const creamHex = this.lightestTPVColor.hex.toLowerCase();
+        savedCreamColor = colours.find(c =>
+          this.rgbToHex(c.rgb).toLowerCase() === creamHex
+        ) || null;
+
+        if (savedCreamColor) {
+          console.info(`[SVG] Cream found before capping: ${savedCreamColor.percentage.toFixed(2)}%`);
+        } else {
+          console.warn(`[SVG] White detected but cream not in palette before capping`);
+        }
+      }
+
       // ===== PHASE 6: Enforce 12-color palette cap =====
       const beforeCap = colours.length;
       try {
@@ -181,6 +202,35 @@ export class SVGExtractor {
         warnings.push(`WARNING: Palette cap enforcement failed - ${error.message}`);
         // Fallback to simple truncation
         colours = colours.slice(0, this.options.maxColours);
+      }
+
+      // Restore cream if white was detected but cream was dropped during capping
+      if (this.whiteDetected) {
+        const creamHex = this.lightestTPVColor.hex.toLowerCase();
+        const creamPresent = colours.some(c =>
+          this.rgbToHex(c.rgb).toLowerCase() === creamHex
+        );
+
+        if (!creamPresent) {
+          // Cream was dropped or merged - restore it
+          const creamPercentage = totalWeight > 0 ? (this.whiteWeightTotal / totalWeight) * 100 : 1.0;
+          const creamToRestore = savedCreamColor || {
+            rgb: {
+              R: this.lightestTPVColor.R,
+              G: this.lightestTPVColor.G,
+              B: this.lightestTPVColor.B
+            },
+            percentage: creamPercentage,
+            pixels: Math.round((creamPercentage / 100) * totalPixels)
+          };
+
+          console.warn(
+            `[SVG] Cream was dropped during capping but white was detected. ` +
+            `Re-adding cream with ${creamToRestore.percentage.toFixed(2)}% coverage`
+          );
+          colours.push(creamToRestore);
+          warnings.push(`PHASE 6+: Restored cream (${creamToRestore.percentage.toFixed(2)}%) - white areas detected`);
+        }
       }
 
       const elapsed = Date.now() - startTime;
@@ -834,8 +884,18 @@ export class SVGExtractor {
     let snappedCount = 0;
 
     for (const [hexColor, weight] of colorCounts.entries()) {
+      // Check if this color is white/near-white before snapping
+      const rgb = this.hexToRgb(hexColor);
+      const isWhite = this.isNearWhite(rgb);
+
       // Snap this color to TPV palette if needed
       const snappedColor = this.snapToNearestTPVColor(hexColor);
+
+      // Track white detection for cream preservation
+      if (isWhite && snappedColor.toLowerCase() === this.lightestTPVColor.hex.toLowerCase()) {
+        this.whiteDetected = true;
+        this.whiteWeightTotal += weight;
+      }
 
       // Accumulate weights for snapped colors
       const existing = normalized.get(snappedColor) || 0;
@@ -847,6 +907,9 @@ export class SVGExtractor {
       }
     }
 
+    if (this.whiteDetected) {
+      console.info(`[SVG] White areas detected (total weight: ${this.whiteWeightTotal})`);
+    }
     console.info(`[SVG] Normalized ${colorCounts.size} → ${normalized.size} colors (snapped ${snappedCount} colors)`);
     return normalized;
   }
