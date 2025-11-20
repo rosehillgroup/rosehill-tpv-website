@@ -49,7 +49,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
   // Blend recipes state
   const [blendRecipes, setBlendRecipes] = useState(null);
-  const [generatingBlends, setGeneratingBlends] = useState(false);
   const [blendSvgUrl, setBlendSvgUrl] = useState(null);
   const [colorMapping, setColorMapping] = useState(null);
   const [showFinalRecipes, setShowFinalRecipes] = useState(false);
@@ -1108,8 +1107,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       const updatedRecipes = blendRecipes.map(recipe => {
         const edit = edits.get(recipe.originalColor.hex.toLowerCase());
         if (edit?.newHex) {
-          // Update both target and blend colors to reflect the edit
-          return {
+          // Update target, blend colors, and recipe components if mixer was used
+          const updatedRecipe = {
             ...recipe,
             targetColor: {
               ...recipe.targetColor,
@@ -1120,6 +1119,18 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
               hex: edit.newHex
             }
           };
+
+          // If there's a mixer recipe, update the chosenRecipe with user's custom blend
+          if (edit.recipe && edit.recipe.components) {
+            updatedRecipe.chosenRecipe = {
+              ...recipe.chosenRecipe,
+              components: edit.recipe.components,
+              deltaE: 0, // Perfect match since user chose this exact blend
+              quality: 'Excellent'
+            };
+          }
+
+          return updatedRecipe;
         }
         return recipe;
       });
@@ -1282,69 +1293,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     }
   };
 
-  // Finalize and generate TPV blend recipes for edited colors
-  const handleFinalizeRecipes = async () => {
-    if (!blendEditedColors || blendEditedColors.size === 0) {
-      // No edits, just show existing recipes
-      setShowFinalRecipes(true);
-      return;
-    }
-
-    setGeneratingBlends(true);
-    setProgressMessage('Generating final TPV blend recipes...');
-    setError(null);
-
-    try {
-      // Match each edited color to find best TPV recipe
-      const updatedRecipes = await Promise.all(
-        blendRecipes.map(async (recipe) => {
-          // Look up edit using originalColor.hex (the cluster centroid key)
-          const edit = blendEditedColors.get(recipe.originalColor.hex.toLowerCase());
-
-          if (edit?.newHex) {
-            // Color was edited, fetch new recipe
-            const response = await fetch('/api/match-color', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                hex: edit.newHex,
-                max_components: 2
-              })
-            });
-
-            const data = await response.json();
-
-            if (data.success && data.recipes && data.recipes.length > 0) {
-              // Use the best matching recipe (first one)
-              const bestRecipe = data.recipes[0];
-              return {
-                originalColor: recipe.originalColor, // Preserve original cluster centroid
-                targetColor: {
-                  ...recipe.targetColor,
-                  hex: edit.newHex // Update to show edited color
-                },
-                chosenRecipe: bestRecipe,
-                blendColor: bestRecipe.blendColor,
-                alternativeRecipes: data.recipes.slice(1, 3) || [] // Include 2 alternatives
-              };
-            }
-          }
-
-          // No edit or matching failed, return original recipe
-          return recipe;
-        })
-      );
-
-      setBlendRecipes(updatedRecipes);
-      setShowFinalRecipes(true);
-      setProgressMessage('✓ Recipes ready!');
-    } catch (err) {
-      console.error('[TPV-STUDIO] Failed to finalize recipes:', err);
-      setError(err.message);
-    } finally {
-      setGeneratingBlends(false);
-    }
-  };
 
   return (
     <div className="inspire-panel-recraft">
@@ -1630,16 +1578,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
             </div>
           )}
 
-          {/* TPV Blend Progress */}
-          {generatingBlends && (
-            <div className="progress-section">
-              <div className="progress-bar">
-                <div className="progress-bar-fill" />
-              </div>
-              <p className="progress-message">{progressMessage}</p>
-            </div>
-          )}
-
           {/* Mode Toggle Tabs */}
           {blendSvgUrl && blendRecipes && (
             <div className="mode-tabs">
@@ -1764,17 +1702,17 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         </div>
       )}
 
-      {/* Generate Final Recipes Button - Blend Mode */}
-      {viewMode === 'blend' && blendSvgUrl && blendRecipes && !showFinalRecipes && !generatingBlends && (
+      {/* View Recipe Details Button - Blend Mode */}
+      {viewMode === 'blend' && blendSvgUrl && blendRecipes && !showFinalRecipes && (
         <div className="finalize-section">
           <button
-            onClick={handleFinalizeRecipes}
+            onClick={() => setShowFinalRecipes(true)}
             className="finalize-button"
           >
-            Generate TPV Blend Recipes
+            View Recipe Details
           </button>
           <p className="finalize-hint">
-            Adjust colours above if needed, then generate the final blend recipes
+            Click to see detailed blend formulas and quality metrics
           </p>
         </div>
       )}
@@ -2347,7 +2285,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         }
 
         .mode-tab.active {
-          background: var(--color-accent-light);
+          background: var(--color-accent);
           border-color: var(--color-accent);
           box-shadow: var(--shadow-glow-accent);
         }
@@ -2371,8 +2309,12 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         }
 
         .mode-tab.active .mode-title {
-          color: var(--color-accent);
+          color: white;
           font-weight: var(--font-bold);
+        }
+
+        .mode-tab.active .mode-description {
+          color: rgba(255, 255, 255, 0.9);
         }
 
         .svg-preview {
