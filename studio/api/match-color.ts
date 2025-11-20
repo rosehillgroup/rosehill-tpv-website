@@ -56,13 +56,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const solver = new SmartBlendSolver(tpvColours, {
       maxComponents: max_components,
       stepPct: 0.04,
-      minPct: 0.10,
+      minPct: 0.08,
       mode: 'parts',
       parts: {
         enabled: true,
         total: 12,
         minPer: 1,
-        maxPer: 4
+        maxPer: 6
       },
       preferAnchor: true
     });
