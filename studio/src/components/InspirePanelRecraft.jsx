@@ -95,7 +95,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
   // Auto-scroll to SVG preview when it becomes available
   useEffect(() => {
-    if ((solidSvgUrl || blendSvgUrl) && svgPreviewRef.current) {
+    // Don't auto-scroll if user is actively editing colors (prevents infinite scroll loop)
+    if ((solidSvgUrl || blendSvgUrl) && svgPreviewRef.current && !mixerOpen && !colorEditorOpen) {
       // Delay scroll slightly to ensure content is rendered
       setTimeout(() => {
         svgPreviewRef.current?.scrollIntoView({
@@ -104,7 +105,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         });
       }, 300);
     }
-  }, [solidSvgUrl, blendSvgUrl]);
+  }, [solidSvgUrl, blendSvgUrl, mixerOpen, colorEditorOpen]);
 
   // Reset dimensions when switching to image/SVG upload modes
   useEffect(() => {
@@ -1818,7 +1819,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           <MiniMixerWidget
             initialRecipe={
               blendEditedColors.get(mixerColor.originalHex.toLowerCase())?.recipe ||
-              (mixerColor.chosenRecipe || null)
+              (mixerColor.recipe || null)
             }
             onBlendChange={handleMixerBlendChange}
             originalColor={mixerColor.originalHex}
