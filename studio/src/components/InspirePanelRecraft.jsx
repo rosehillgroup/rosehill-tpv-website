@@ -1,7 +1,7 @@
 // TPV Studio - Recraft Vector AI Panel
 // Simplified UI for Recraft vector generation with compliance tracking
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient } from '../lib/api/client.js';
 import BlendRecipesDisplay from './BlendRecipesDisplay.jsx';
 import SolidColorSummary from './SolidColorSummary.jsx';
@@ -1058,7 +1058,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   };
 
   // Handle mixer blend change (blend mode only)
-  const handleMixerBlendChange = async ({ blendHex, parts, recipe }) => {
+  const handleMixerBlendChange = useCallback(async ({ blendHex, parts, recipe }) => {
     if (!mixerColor) return;
 
     console.log('[TPV-STUDIO] Mixer blend changed:', mixerColor.originalHex, '->', blendHex, 'recipe:', recipe);
@@ -1081,7 +1081,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
     // Regenerate SVG with new blend color
     await regenerateBlendSVG(updated, blendHex);
-  };
+  }, [mixerColor, blendEditedColors, result, colorMapping, blendRecipes]);
 
   // Regenerate blend SVG with edited colors
   const regenerateBlendSVG = async (updatedEdits = null, immediateHex = null) => {

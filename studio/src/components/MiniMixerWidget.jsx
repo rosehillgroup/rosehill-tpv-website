@@ -33,7 +33,8 @@ export default function MiniMixerWidget({
 
   // Notify parent of blend changes
   useEffect(() => {
-    if (onBlendChange) {
+    // Only fire callback if we have parts - prevents firing on mount with empty state
+    if (onBlendChange && parts.size > 0) {
       const recipe = partsToRecipe(parts);
       onBlendChange({
         blendHex: blendedColor,
@@ -41,7 +42,7 @@ export default function MiniMixerWidget({
         recipe
       });
     }
-  }, [parts, blendedColor, onBlendChange]);
+  }, [parts, blendedColor]); // Removed onBlendChange from deps to prevent infinite loop
 
   // Add part handler
   const addPart = useCallback((colorIndex) => {
