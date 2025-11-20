@@ -182,7 +182,6 @@ function replaceColor(color, colorMapping, notMappedSet) {
   // Try exact match first (fast path)
   const exactMapping = colorMapping.get(mappingKey);
   if (exactMapping) {
-    console.log(`[SVG-RECOLOR] Exact match: ${mappingKey} -> ${exactMapping.blendHex}`);
     return exactMapping.blendHex;
   }
 
@@ -199,7 +198,7 @@ function replaceColor(color, colorMapping, notMappedSet) {
   }
 
   // Color not in mapping
-  console.log(`[SVG-RECOLOR] No match found for: ${mappingKey} RGB(${colorRgb?.r}, ${colorRgb?.g}, ${colorRgb?.b})`);
+  console.warn(`[SVG-RECOLOR] No match found for: ${mappingKey} RGB(${colorRgb?.r}, ${colorRgb?.g}, ${colorRgb?.b})`);
   if (notMappedSet) {
     notMappedSet.add(color);
   }

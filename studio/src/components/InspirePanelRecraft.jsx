@@ -810,6 +810,12 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       return;
     }
 
+    // Clear old blend state to prevent showing old SVG with new recipes
+    setBlendSvgUrl(null);
+    setBlendRecipes(null);
+    setColorMapping(null);
+    console.log('[TPV-STUDIO] Cleared old blend state, starting new blend generation');
+
     setError(null);
     setProgressMessage('🎨 Extracting colours from design...');
 
