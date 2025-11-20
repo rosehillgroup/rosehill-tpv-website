@@ -1052,7 +1052,7 @@ export class SVGExtractor {
     const chroma = this.getChroma(lab);
 
     // Low chroma (neutral colors) → snap to cream
-    if (chroma < 15) {
+    if (chroma < 25) {
       // Snapping to cream (removed logging to reduce overhead)
       return this.lightestTPVColor.hex.toLowerCase();
     }
