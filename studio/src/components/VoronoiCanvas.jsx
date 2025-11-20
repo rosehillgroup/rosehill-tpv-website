@@ -74,17 +74,10 @@ export default function VoronoiCanvas({
     for (let i = 0; i < voronoiData.cellCount; i++) {
       const colorIndex = cellAssignments[i];
 
-      // Get base color
+      // Get base color (solid, no variation)
       const color = colorIndex === -1
         ? '#FAFAFA'
         : PALETTE[colorIndex].hex;
-
-      // Add subtle color variation for more natural appearance
-      const finalColor = addColorVariation(
-        color,
-        voronoiData.points[i],
-        colorIndex !== -1
-      );
 
       // Draw cell
       const polygon = voronoiData.voronoi.cellPolygon(i);
@@ -97,29 +90,8 @@ export default function VoronoiCanvas({
       }
       ctx.closePath();
 
-      ctx.fillStyle = finalColor;
+      ctx.fillStyle = color;
       ctx.fill();
-    }
-
-    // Pass 2: Add subtle strokes for definition (colored cells only)
-    for (let i = 0; i < voronoiData.cellCount; i++) {
-      const colorIndex = cellAssignments[i];
-      if (colorIndex === -1) continue; // Skip white cells
-
-      const polygon = voronoiData.voronoi.cellPolygon(i);
-      if (!polygon || polygon.length < 3) continue;
-
-      ctx.beginPath();
-      ctx.moveTo(polygon[0][0], polygon[0][1]);
-      for (let j = 1; j < polygon.length; j++) {
-        ctx.lineTo(polygon[j][0], polygon[j][1]);
-      }
-      ctx.closePath();
-
-      // Very subtle stroke
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
-      ctx.lineWidth = 0.5;
-      ctx.stroke();
     }
 
   }, [voronoiData, parts, seed, width, height]);
@@ -194,27 +166,3 @@ function assignColorsToGranules(cellCount, parts, totalParts, seed) {
   return assignments;
 }
 
-/**
- * Add subtle color variation for more natural appearance
- * Uses position-based seeded RNG for consistency
- */
-function addColorVariation(hexColor, point, shouldVary) {
-  if (!shouldVary) return hexColor;
-
-  // Create position-based seed for consistent variation
-  const positionSeed = Math.floor(point[0] + point[1] * 1000);
-  const rng = mulberry32(positionSeed);
-
-  // Parse hex color
-  const r = parseInt(hexColor.slice(1, 3), 16);
-  const g = parseInt(hexColor.slice(3, 5), 16);
-  const b = parseInt(hexColor.slice(5, 7), 16);
-
-  // Add subtle random variation (±5%)
-  const variation = 13; // 5% of 255
-  const newR = Math.max(0, Math.min(255, r + (rng() - 0.5) * variation));
-  const newG = Math.max(0, Math.min(255, g + (rng() - 0.5) * variation));
-  const newB = Math.max(0, Math.min(255, b + (rng() - 0.5) * variation));
-
-  return `rgb(${Math.round(newR)}, ${Math.round(newG)}, ${Math.round(newB)})`;
-}
