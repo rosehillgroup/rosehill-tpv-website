@@ -159,7 +159,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const solveTime = Date.now() - solveStartTime;
 
-    // Deduplicate recipes - merge colors that map to the same TPV color
+    // Build complete color mapping BEFORE deduplication (preserves all original colors)
+    const colorMapping: Record<string, any> = {};
+    recipes.forEach(recipe => {
+      const originalHex = recipe.originalColor.hex.toLowerCase();
+      const targetHex = recipe.targetColor.hex.toLowerCase();
+      colorMapping[originalHex] = {
+        blendHex: targetHex,
+        recipeId: recipe.chosenRecipe.id,
+        deltaE: recipe.chosenRecipe.deltaE,
+        coverage: recipe.targetColor.areaPct,
+        quality: recipe.chosenRecipe.quality,
+        components: recipe.chosenRecipe.components
+      };
+    });
+
+    console.log(`[SOLID-RECIPES] Built complete colorMapping with ${Object.keys(colorMapping).length} entries`);
+
+    // Deduplicate recipes for display (merge colors that map to the same TPV color)
     const tpvColorMap = new Map();
     recipes.forEach(recipe => {
       const tpvHex = recipe.targetColor.hex.toLowerCase();
@@ -191,6 +208,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       success: true,
       colors,
       recipes: deduplicatedRecipes,
+      colorMapping, // Include complete mapping for SVG recoloring
       metadata: {
         colorsExtracted: extraction.palette.length,
         uniqueTPVColors: deduplicatedRecipes.length,

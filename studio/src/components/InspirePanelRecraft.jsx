@@ -995,8 +995,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       if (data.success) {
         setSolidRecipes(data.recipes);
 
-        // Build colour mapping for solid colors
-        const mapping = buildColorMapping(data.recipes);
+        // Use pre-built color mapping from API (preserves all original colors)
+        // Convert object to Map for recolorSVG
+        const mapping = new Map(Object.entries(data.colorMapping || {}));
+        console.log('[TPV-STUDIO] Using API colorMapping with', mapping.size, 'entries');
         setSolidColorMapping(mapping);
 
         // Generate recoloured SVG with solid colors
@@ -1004,6 +1006,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           const { dataUrl, stats } = await recolorSVG(svg_url, mapping);
           setSolidSvgUrl(dataUrl);
           console.log('[TPV-STUDIO] Solid color SVG generated:', stats);
+          if (stats.colorsNotMapped && stats.colorsNotMapped.size > 0) {
+            console.warn('[TPV-STUDIO] Unmapped colors in solid mode:', Array.from(stats.colorsNotMapped));
+          }
 
           // Generate design name now that all processing is complete
           handleGenerateDesignName(data.recipes);
