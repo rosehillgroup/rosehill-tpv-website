@@ -182,6 +182,7 @@ function replaceColor(color, colorMapping, notMappedSet) {
   // Try exact match first (fast path)
   const exactMapping = colorMapping.get(mappingKey);
   if (exactMapping) {
+    console.log(`[SVG-RECOLOR] Exact match: ${mappingKey} -> ${exactMapping.blendHex}`);
     return exactMapping.blendHex;
   }
 
@@ -191,12 +192,14 @@ function replaceColor(color, colorMapping, notMappedSet) {
     for (const [key, mapping] of colorMapping.entries()) {
       const keyRgb = hexToRgbObj(key.replace('#', ''));
       if (keyRgb && colorMatches(colorRgb, keyRgb)) {
+        console.log(`[SVG-RECOLOR] Tolerance match: ${mappingKey} matched to ${key} -> ${mapping.blendHex}`);
         return mapping.blendHex;
       }
     }
   }
 
   // Color not in mapping
+  console.log(`[SVG-RECOLOR] No match found for: ${mappingKey} RGB(${colorRgb?.r}, ${colorRgb?.g}, ${colorRgb?.b})`);
   if (notMappedSet) {
     notMappedSet.add(color);
   }

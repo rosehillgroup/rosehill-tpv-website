@@ -842,6 +842,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
         // Build colour mapping
         const mapping = buildColorMapping(data.recipes);
+        console.log('[TPV-STUDIO] Color mapping built with', mapping.size, 'entries:');
+        Array.from(mapping.entries()).forEach(([orig, target]) => {
+          console.log(`  ${orig} -> ${target.blendHex}`);
+        });
         setColorMapping(mapping);
 
         // Generate recoloured SVG
@@ -849,11 +853,19 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           setProgressMessage('✨ Generating TPV blend preview...');
           await new Promise(resolve => setTimeout(resolve, 200));
 
-          console.log('[TPV-STUDIO] Generating recoloured SVG...');
+          console.log('[TPV-STUDIO] Generating recoloured SVG from:', svg_url);
+          console.log('[TPV-STUDIO] Using mapping with', mapping.size, 'colors');
           const { dataUrl, stats } = await recolorSVG(svg_url, mapping);
           setBlendSvgUrl(dataUrl);
           setProgressMessage('✓ TPV blend ready!');
-          console.log('[TPV-STUDIO] Recoloured SVG generated:', stats);
+          console.log('[TPV-STUDIO] Recolour stats:', {
+            totalColors: stats.totalColors,
+            colorsReplaced: stats.colorsReplaced,
+            colorsNotMapped: Array.from(stats.colorsNotMapped)
+          });
+          if (stats.colorsNotMapped.size > 0) {
+            console.warn('[TPV-STUDIO] Some colors were not mapped:', Array.from(stats.colorsNotMapped));
+          }
 
           // Auto-generate solid color version in background
           handleGenerateSolid(svg_url, job_id);
