@@ -53,8 +53,9 @@ export default function DimensionModal({
   if (!isOpen) return null;
 
   return (
-    <div className="dimension-modal-overlay" onClick={onClose}>
-      <div className="dimension-modal" onClick={(e) => e.stopPropagation()}>
+    <>
+      <div className="dimension-modal-overlay" onClick={onClose}>
+        <div className="dimension-modal" onClick={(e) => e.stopPropagation()}>
         <div className="dimension-modal-header">
           <h2>Set Installation Size</h2>
           <button className="dimension-modal-close" onClick={onClose} aria-label="Close">×</button>
@@ -134,11 +135,11 @@ export default function DimensionModal({
             Confirm Size
           </button>
         </div>
+        </div>
       </div>
-    </div>
 
-    <style>{`
-      .dimension-modal-overlay {
+      <style>{`
+        .dimension-modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
@@ -423,6 +424,7 @@ export default function DimensionModal({
           width: 100%;
         }
       }
-    `}</style>
+      `}</style>
+    </>
   );
 }
