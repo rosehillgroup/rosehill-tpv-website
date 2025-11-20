@@ -1113,7 +1113,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
     // Regenerate SVG with new blend color
     await regenerateBlendSVG(updated, blendHex);
-  }, [mixerColor, blendEditedColors, result, colorMapping, blendRecipes]);
+  }, [mixerColor, blendEditedColors, result, colorMapping]);
 
   // Regenerate blend SVG with edited colors
   const regenerateBlendSVG = async (updatedEdits = null, immediateHex = null) => {
