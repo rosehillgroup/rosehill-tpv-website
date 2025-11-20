@@ -494,7 +494,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     setProgressMessage('');
     setAttemptInfo(null);
     setBlendRecipes(null);
-    setGeneratingBlends(false);
     setBlendSvgUrl(null);
     setColorMapping(null);
     setShowFinalRecipes(false);
@@ -811,7 +810,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       return;
     }
 
-    setGeneratingBlends(true);
     setError(null);
     setProgressMessage('🎨 Extracting colours from design...');
 
@@ -871,8 +869,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       console.error('Blend generation failed:', err);
       setError(err.message);
       setProgressMessage('');
-    } finally {
-      setGeneratingBlends(false);
     }
   };
 
