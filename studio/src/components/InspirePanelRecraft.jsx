@@ -1049,7 +1049,20 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     // Update mode-specific edited colors map (normalize to lowercase for consistency)
     if (viewMode === 'solid') {
       const updated = new Map(solidEditedColors);
-      updated.set(selectedColor.originalHex.toLowerCase(), { newHex: newHex.toLowerCase() });
+
+      // Find the recipe to get ALL merged original colors
+      const recipe = solidRecipes.find(r =>
+        r.targetColor.hex.toLowerCase() === selectedColor.hex.toLowerCase()
+      );
+
+      // Update ALL merged colors together (not just the one clicked)
+      const colorsToUpdate = recipe?.mergedOriginalColors || [selectedColor.originalHex.toLowerCase()];
+      console.log('[TPV-STUDIO] Updating', colorsToUpdate.length, 'merged colors:', colorsToUpdate);
+
+      colorsToUpdate.forEach(origHex => {
+        updated.set(origHex, { newHex: newHex.toLowerCase() });
+      });
+
       setSolidEditedColors(updated);
 
       // Update selected color with new hex and blendHex for highlighting

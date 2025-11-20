@@ -185,8 +185,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const existing = tpvColorMap.get(tpvHex);
         existing.targetColor.areaPct += recipe.targetColor.areaPct;
         existing.blendColor.areaPct = existing.targetColor.areaPct;
+
+        // Track all merged original colors for editing
+        if (!existing.mergedOriginalColors) {
+          existing.mergedOriginalColors = [existing.originalColor.hex.toLowerCase()];
+        }
+        existing.mergedOriginalColors.push(recipe.originalColor.hex.toLowerCase());
+
         console.log(`[SOLID-RECIPES] Merged duplicate ${tpvHex}, new coverage: ${existing.targetColor.areaPct.toFixed(1)}%`);
       } else {
+        // Initialize with first color
+        recipe.mergedOriginalColors = [recipe.originalColor.hex.toLowerCase()];
         tpvColorMap.set(tpvHex, recipe);
       }
     });
