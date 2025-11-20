@@ -49,7 +49,29 @@ export function sparsityBonus(
 }
 
 /**
- * Anchor preference: boost scores when the main component is one of the 
+ * Balance bonus: encourage more balanced blends to avoid extreme ratios
+ * Rewards blends where components have similar weights (e.g., 4:4:4 better than 10:1:1)
+ */
+export function balanceBonus(
+  weights: number[],
+  thresholds = { variance: 0.03, bonus: -0.4 }
+): number {
+  if (weights.length < 2) return 0;
+
+  // Calculate variance of weights (measure of imbalance)
+  const mean = weights.reduce((sum, w) => sum + w, 0) / weights.length;
+  const variance = weights.reduce((sum, w) => sum + Math.pow(w - mean, 2), 0) / weights.length;
+
+  // Low variance = balanced blend = bonus
+  if (variance < thresholds.variance) {
+    return thresholds.bonus;
+  }
+
+  return 0;
+}
+
+/**
+ * Anchor preference: boost scores when the main component is one of the
  * closest single colors to the target
  */
 export function anchorBonus(
@@ -98,10 +120,17 @@ export function evaluateBlendPenalties(
     }
   }
   
-  // Sparsity bonus
+  // Sparsity bonus (favors anchor + tweaks for 1-2 components)
   const weights = components.map(c => c.weight);
-  totalPenalty += sparsityBonus(weights);
-  
+  if (components.length <= 2) {
+    totalPenalty += sparsityBonus(weights);
+  }
+
+  // Balance bonus (favors even distribution for 3 components)
+  if (components.length >= 3) {
+    totalPenalty += balanceBonus(weights);
+  }
+
   // Anchor bonus for main component
   if (components.length > 0) {
     const mainComponent = components.reduce((prev, current) => 

@@ -14,6 +14,7 @@ export interface PartsResult {
 export interface PartsConfig {
   total: number;
   minPer: number;
+  maxPer?: number;
   maxAttempts?: number;
 }
 
@@ -26,15 +27,16 @@ export function snapToParts(
   targetLab: Lab,
   config: PartsConfig
 ): PartsResult | null {
-  const { total: T, minPer, maxAttempts = 3 } = config;
-  
+  const { total: T, minPer, maxPer, maxAttempts = 3 } = config;
+
   const codes = Object.keys(continuousWeights).filter(code => continuousWeights[code] > 0);
   if (codes.length === 0) return null;
-  
+
   // Initial parts calculation
-  let parts = codes.map(code => 
-    Math.max(minPer, Math.round(continuousWeights[code] * T))
-  );
+  let parts = codes.map(code => {
+    const calculated = Math.max(minPer, Math.round(continuousWeights[code] * T));
+    return maxPer ? Math.min(maxPer, calculated) : calculated;
+  });
   
   // Ensure sum equals target total
   let currentSum = parts.reduce((a, b) => a + b, 0);
@@ -44,12 +46,17 @@ export function snapToParts(
     const diff = T - currentSum;
     
     if (diff > 0) {
-      // Need to add parts - find component with largest deficit
-      const deficits = parts.map((p, i) => 
-        (continuousWeights[codes[i]] * T) - p
-      );
+      // Need to add parts - find component with largest deficit that hasn't hit maxPer
+      const deficits = parts.map((p, i) => {
+        if (maxPer && p >= maxPer) return -Infinity; // Can't add more
+        return (continuousWeights[codes[i]] * T) - p;
+      });
       const maxDeficitIdx = argmax(deficits);
-      parts[maxDeficitIdx]++;
+      if (deficits[maxDeficitIdx] > -Infinity) {
+        parts[maxDeficitIdx]++;
+      } else {
+        break; // Can't balance - all components at maxPer
+      }
     } else {
       // Need to remove parts - find component with largest surplus
       const surpluses = parts.map((p, i) => 
@@ -79,14 +86,15 @@ export function snapToParts(
     for (let i = 0; i < codes.length; i++) {
       for (let j = 0; j < codes.length; j++) {
         if (i === j || parts[i] <= minPer) continue;
-        
+        if (maxPer && parts[j] >= maxPer) continue; // Can't add to j
+
         // Try moving 1 part from i to j
         const testParts = [...parts];
         testParts[i]--;
         testParts[j]++;
-        
+
         const testDeltaE = evaluatePartsAccuracy(codes, testParts, colours, targetLab);
-        
+
         if (testDeltaE < bestDeltaE) {
           bestParts = [...testParts];
           bestDeltaE = testDeltaE;

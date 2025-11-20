@@ -22,7 +22,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { svg_url, job_id, max_colors = 15, max_components = 2 } = req.body;
+    const { svg_url, job_id, max_colors = 15, max_components = 3 } = req.body;
 
     if (!svg_url) {
       return res.status(400).json({
@@ -100,7 +100,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       parts: {
         enabled: true,
         total: 12,
-        minPer: 1
+        minPer: 1,
+        maxPer: 4
       },
       preferAnchor: true
     });

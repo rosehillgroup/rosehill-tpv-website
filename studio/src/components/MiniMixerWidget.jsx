@@ -44,11 +44,24 @@ export default function MiniMixerWidget({
     }
   }, [parts, blendedColor]); // Removed onBlendChange from deps to prevent infinite loop
 
-  // Add part handler
+  // Add part handler with validation (max 4 parts per color, 12 total)
   const addPart = useCallback((colorIndex) => {
     setParts(prev => {
+      const currentCount = prev.get(colorIndex) || 0;
+      const totalParts = Array.from(prev.values()).reduce((a, b) => a + b, 0);
+
+      // Check max 4 parts per color
+      if (currentCount >= 4) {
+        return prev; // Can't add more than 4 of same color
+      }
+
+      // Check max 12 total parts
+      if (totalParts >= 12) {
+        return prev; // Can't exceed 12 total parts
+      }
+
       const newParts = new Map(prev);
-      newParts.set(colorIndex, (newParts.get(colorIndex) || 0) + 1);
+      newParts.set(colorIndex, currentCount + 1);
       return newParts;
     });
   }, []);
@@ -159,6 +172,8 @@ export default function MiniMixerWidget({
                     <button
                       className="mixer-parts-btn"
                       onClick={() => addPart(index)}
+                      disabled={partCount >= 4 || totalParts >= 12}
+                      title={partCount >= 4 ? 'Max 4 parts per color' : totalParts >= 12 ? 'Max 12 total parts' : ''}
                     >
                       +
                     </button>
@@ -170,11 +185,15 @@ export default function MiniMixerWidget({
         </div>
 
         {/* Instructions */}
-        {totalParts === 0 && (
+        {totalParts === 0 ? (
           <div className="mixer-instructions">
             Click colors above to add parts to your blend. The preview updates in real-time.
           </div>
-        )}
+        ) : totalParts >= 12 ? (
+          <div className="mixer-instructions" style={{ background: '#fef3c7', borderColor: '#fbbf24' }}>
+            Maximum of 12 parts reached. Remove parts to adjust your blend.
+          </div>
+        ) : null}
       </div>
 
       <style>{`

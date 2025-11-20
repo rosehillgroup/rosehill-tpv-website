@@ -16,7 +16,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { hex, max_components = 2 } = req.body;
+    const { hex, max_components = 3 } = req.body;
 
     if (!hex) {
       return res.status(400).json({
@@ -61,7 +61,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       parts: {
         enabled: true,
         total: 12,
-        minPer: 1
+        minPer: 1,
+        maxPer: 4
       },
       preferAnchor: true
     });
