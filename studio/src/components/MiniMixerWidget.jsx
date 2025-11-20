@@ -121,6 +121,28 @@ export default function MiniMixerWidget({
           />
         </div>
 
+        {/* Mix Proportion Bar */}
+        <div className="mix-proportion-bar">
+          {totalParts === 0 ? (
+            <div className="proportion-bar-empty" />
+          ) : (
+            Array.from(parts.entries()).map(([colorIndex, count]) => {
+              const percentage = (count / totalParts) * 100;
+              return (
+                <div
+                  key={colorIndex}
+                  className="proportion-segment"
+                  style={{
+                    backgroundColor: PALETTE[colorIndex].hex,
+                    flexBasis: `${percentage}%`
+                  }}
+                  title={`${PALETTE[colorIndex].name}: ${Math.round(percentage)}%`}
+                />
+              );
+            })
+          )}
+        </div>
+
         {/* Blend Color Preview */}
         <div className="blend-preview">
           <div className="blend-preview-label">Blended Result:</div>
@@ -253,6 +275,31 @@ export default function MiniMixerWidget({
           margin-bottom: 20px;
           display: flex;
           justify-content: center;
+        }
+
+        .mix-proportion-bar {
+          height: 24px;
+          border-radius: 12px;
+          overflow: hidden;
+          display: flex;
+          box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+          margin: 16px 0;
+          background: #e5e7eb;
+        }
+
+        .proportion-segment {
+          transition: all 0.2s ease;
+        }
+
+        .proportion-segment:hover {
+          filter: brightness(1.1);
+          cursor: pointer;
+        }
+
+        .proportion-bar-empty {
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%);
         }
 
         .blend-preview {
