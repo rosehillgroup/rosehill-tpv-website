@@ -94,6 +94,22 @@ export default function VoronoiCanvas({
       ctx.fill();
     }
 
+    // Pass 2: Draw granule borders
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.05)';
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i < voronoiData.cellCount; i++) {
+      const polygon = voronoiData.voronoi.cellPolygon(i);
+      if (!polygon || polygon.length < 3) continue;
+
+      ctx.beginPath();
+      ctx.moveTo(polygon[0][0], polygon[0][1]);
+      for (let j = 1; j < polygon.length; j++) {
+        ctx.lineTo(polygon[j][0], polygon[j][1]);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    }
+
   }, [voronoiData, parts, seed, width, height]);
 
   return (

@@ -33,9 +33,9 @@ export default function MiniMixerWidget({
 
   // Notify parent of blend changes
   useEffect(() => {
-    // Only fire callback if we have parts - prevents firing on mount with empty state
-    if (onBlendChange && parts.size > 0) {
-      const recipe = partsToRecipe(parts);
+    // Fire callback even when parts is empty (for Clear All to work)
+    if (onBlendChange) {
+      const recipe = parts.size > 0 ? partsToRecipe(parts) : null;
       onBlendChange({
         blendHex: blendedColor,
         parts,
@@ -93,13 +93,18 @@ export default function MiniMixerWidget({
         {/* Header with original color reference */}
         {originalColor && (
           <div className="mixer-header">
-            <div className="mixer-title">Customize Blend Recipe</div>
+            <div className="mixer-title">Customise Blend Recipe</div>
             <div className="original-color-ref">
               <span className="label">Original:</span>
               <div
                 className="color-swatch"
-                style={{ backgroundColor: originalColor }}
-                title={originalColor}
+                style={{ backgroundColor: originalColor, cursor: 'pointer' }}
+                title={`${originalColor} - Click to reset to original recipe`}
+                onClick={() => {
+                  if (initialRecipe) {
+                    setParts(recipeToParts(initialRecipe));
+                  }
+                }}
               />
             </div>
           </div>
@@ -234,6 +239,14 @@ export default function MiniMixerWidget({
           border-radius: 6px;
           border: 2px solid #d1d5db;
           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+
+        .original-color-ref .color-swatch:hover {
+          transform: scale(1.1);
+          border-color: #3b82f6;
+          box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
         }
 
         .mixer-canvas-section {
