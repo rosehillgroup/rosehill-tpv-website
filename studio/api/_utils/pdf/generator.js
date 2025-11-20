@@ -16,6 +16,9 @@ const PAGE_HEIGHT = 841.89;
 const MARGIN = 40;
 const CONTENT_WIDTH = PAGE_WIDTH - (MARGIN * 2);
 
+// Material calculation constants
+const SAFETY_FACTOR = 1.1; // 10% safety margin for wastage and trimming
+
 // Colour definitions
 const COLORS = {
   primary: rgb(0.118, 0.306, 0.478),      // #1e4e7a - Rosehill navy
@@ -26,6 +29,74 @@ const COLORS = {
   white: rgb(1, 1, 1),
   black: rgb(0, 0, 0),
 };
+
+/**
+ * Validate component weights sum to 1.0 (100%)
+ */
+function validateComponentWeights(recipes) {
+  for (const recipe of recipes) {
+    const components = recipe.chosenRecipe?.components || [];
+    if (components.length > 0) {
+      const totalWeight = components.reduce((sum, c) => sum + (c.weight || 0), 0);
+      if (Math.abs(totalWeight - 1.0) > 0.01) {
+        console.warn(`[PDF-VALIDATION] Recipe component weights don't sum to 1.0: ${totalWeight.toFixed(3)} for color ${recipe.blendColor?.hex || recipe.targetColor?.hex}`);
+      }
+    }
+  }
+}
+
+/**
+ * Validate coverage percentages sum to approximately 100%
+ */
+function validateCoveragePercentages(recipes) {
+  const totalCoverage = recipes.reduce((sum, r) => sum + (r.targetColor?.areaPct || 0), 0);
+  if (Math.abs(totalCoverage - 100) > 1) {
+    console.warn(`[PDF-VALIDATION] Coverage percentages don't sum to 100%: ${totalCoverage.toFixed(1)}%`);
+  }
+}
+
+/**
+ * Verify calculation consistency (blend mode only)
+ */
+function verifyCalculations(recipes, areaM2, mode) {
+  if (mode !== 'blend') return;
+
+  const DENSITY_KG_PER_M2 = 8;
+
+  // Calculate total from individual colors
+  const individualTotal = recipes.reduce((sum, r) => {
+    const areaPct = r.targetColor?.areaPct || 0;
+    const areaNeeded = (areaPct / 100) * areaM2;
+    return sum + (areaNeeded * DENSITY_KG_PER_M2 * SAFETY_FACTOR);
+  }, 0);
+
+  // Calculate total from aggregated components
+  const tpvTotals = {};
+  for (const recipe of recipes) {
+    const areaPct = recipe.targetColor?.areaPct || 0;
+    const areaNeeded = (areaPct / 100) * areaM2;
+    const components = recipe.chosenRecipe?.components || [];
+
+    for (const comp of components) {
+      const code = comp.code;
+      const weight = comp.weight || 0;
+      const kgNeeded = areaNeeded * DENSITY_KG_PER_M2 * weight * SAFETY_FACTOR;
+
+      if (!tpvTotals[code]) {
+        tpvTotals[code] = 0;
+      }
+      tpvTotals[code] += kgNeeded;
+    }
+  }
+
+  const aggregatedTotal = Object.values(tpvTotals).reduce((sum, kg) => sum + kg, 0);
+
+  if (Math.abs(individualTotal - aggregatedTotal) > 0.1) {
+    console.error(`[PDF-VALIDATION] Calculation mismatch! Individual: ${individualTotal.toFixed(2)}kg, Aggregated: ${aggregatedTotal.toFixed(2)}kg`);
+  } else {
+    console.log(`[PDF-VALIDATION] Calculation verification passed: ${individualTotal.toFixed(2)}kg`);
+  }
+}
 
 /**
  * Generate a complete PDF export
@@ -56,6 +127,14 @@ async function generateExportPDF(data) {
     mode = 'solid',
     designId = '',
   } = data;
+
+  // Calculate area for validation
+  const areaM2 = (dimensions.widthMM / 1000) * (dimensions.lengthMM / 1000);
+
+  // Run validation checks
+  validateComponentWeights(recipes);
+  validateCoveragePercentages(recipes);
+  verifyCalculations(recipes, areaM2, mode);
 
   // Create PDF document
   const pdfDoc = await PDFDocument.create();
@@ -262,9 +341,10 @@ async function generateExportPDF(data) {
 
   y -= 20;
   const notes = [
-    '• Material quantities are estimates based on coverage percentages',
+    '• Material quantities include 10% safety margin for wastage and trimming',
+    '• Quantities calculated for 20mm depth installation (adjust for 15mm or 25mm)',
+    '• Quantities are estimates based on coverage percentages',
     '• Actual quantities may vary based on installation conditions',
-    '• Allow 5-10% additional material for wastage and trimming',
     '• Consult Rosehill technical team for binder requirements',
     '• Ensure sub-base is properly prepared before installation',
   ];
@@ -462,9 +542,11 @@ async function drawColourTable(pdfDoc, page, fontBold, fontRegular, recipes, mod
 
   // Draw rows
   y -= 20;
+  let rowsDrawn = 0;
   for (const recipe of recipes) {
     if (y < 80) break; // Don't overflow page
 
+    rowsDrawn++;
     x = MARGIN;
 
     // Get colour info
@@ -589,6 +671,19 @@ async function drawColourTable(pdfDoc, page, fontBold, fontRegular, recipes, mod
     y -= 22;
   }
 
+  // Add overflow warning if not all recipes fit
+  if (rowsDrawn < recipes.length) {
+    y -= 10;
+    page.drawText(`Note: ${recipes.length - rowsDrawn} additional colour${recipes.length - rowsDrawn > 1 ? 's' : ''} not shown due to space. See material totals below.`, {
+      x: MARGIN,
+      y,
+      size: 8,
+      font: fontRegular,
+      color: COLORS.accent,
+    });
+    y -= 20;
+  }
+
   return y;
 }
 
@@ -611,7 +706,7 @@ function drawMaterialTotals(page, fontBold, fontRegular, recipes, mode, areaM2, 
       for (const comp of components) {
         const code = comp.code;
         const weight = comp.weight || 0;
-        const kgNeeded = areaNeeded * DENSITY_KG_PER_M2 * weight;
+        const kgNeeded = areaNeeded * DENSITY_KG_PER_M2 * weight * SAFETY_FACTOR;
 
         if (!tpvTotals[code]) {
           tpvTotals[code] = {
@@ -691,7 +786,7 @@ function drawMaterialTotals(page, fontBold, fontRegular, recipes, mode, areaM2, 
     for (const recipe of recipes) {
       const areaPct = recipe.targetColor?.areaPct || 0;
       const areaNeeded = (areaPct / 100) * areaM2;
-      const kgNeeded = areaNeeded * DENSITY_KG_PER_M2;
+      const kgNeeded = areaNeeded * DENSITY_KG_PER_M2 * SAFETY_FACTOR;
 
       const tpvInfo = recipe.chosenRecipe?.components?.[0] || {};
       const code = tpvInfo.code || 'RH00';
