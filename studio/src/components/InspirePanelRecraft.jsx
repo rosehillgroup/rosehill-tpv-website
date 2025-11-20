@@ -2543,8 +2543,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         }
 
         .mixer-close-btn:hover {
-          background: var(--color-primary-dark);
+          background: #2563eb;
           box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+          transform: translateY(-1px);
         }
 
         /* Mobile Responsive Styles */
