@@ -96,9 +96,9 @@ export default function MiniMixerWidget({
         <div className="mixer-canvas-section">
           <VoronoiCanvas
             parts={parts}
-            width={400}
-            height={300}
-            cellCount={10000}
+            width={700}
+            height={350}
+            cellCount={5000}
             seed={12345}
           />
         </div>

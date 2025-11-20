@@ -1701,6 +1701,31 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
             </div>
           )}
 
+          {/* Mixer Widget (Blend Mode) */}
+          {mixerOpen && mixerColor && (
+            <div className="mixer-widget-container">
+              <div className="mixer-widget-header">
+                <button
+                  className="mixer-close-btn"
+                  onClick={() => {
+                    setMixerOpen(false);
+                    setMixerColor(null);
+                  }}
+                >
+                  Close Mixer
+                </button>
+              </div>
+              <MiniMixerWidget
+                initialRecipe={
+                  blendEditedColors.get(mixerColor.originalHex.toLowerCase())?.recipe ||
+                  (mixerColor.recipe || null)
+                }
+                onBlendChange={handleMixerBlendChange}
+                originalColor={mixerColor.originalHex}
+              />
+            </div>
+          )}
+
           {/* Action Buttons - Show when design is ready */}
           {blendSvgUrl && (
             <div className="action-buttons">
@@ -1800,31 +1825,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
             setSelectedColor(null);
           }}
         />
-      )}
-
-      {/* Mixer Widget (Blend Mode) */}
-      {mixerOpen && mixerColor && (
-        <div className="mixer-widget-container">
-          <div className="mixer-widget-header">
-            <button
-              className="mixer-close-btn"
-              onClick={() => {
-                setMixerOpen(false);
-                setMixerColor(null);
-              }}
-            >
-              Close Mixer
-            </button>
-          </div>
-          <MiniMixerWidget
-            initialRecipe={
-              blendEditedColors.get(mixerColor.originalHex.toLowerCase())?.recipe ||
-              (mixerColor.recipe || null)
-            }
-            onBlendChange={handleMixerBlendChange}
-            originalColor={mixerColor.originalHex}
-          />
-        </div>
       )}
 
       {/* Save Design Modal */}
