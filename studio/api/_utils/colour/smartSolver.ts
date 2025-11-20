@@ -374,8 +374,16 @@ export class SmartBlendSolver {
     for (let i = 0; i < this.enhancedColours.length; i++) {
       const colour = this.enhancedColours[i];
       const colourLab = { L: colour.L, a: colour.a, b: colour.b };
-      const deltaE = deltaE2000(targetLab, colourLab);
-      
+      let deltaE = deltaE2000(targetLab, colourLab);
+
+      // Prefer Cream (RH31) over Pale Grey (RH65) for light neutral colors
+      if (colour.code === 'RH31' && targetLab.L > 82) {
+        const chroma = Math.sqrt(targetLab.a * targetLab.a + targetLab.b * targetLab.b);
+        if (chroma < 15) {
+          deltaE -= 3.0;  // Apply bonus to make Cream more attractive
+        }
+      }
+
       results.push({
         components: [{ code: colour.code, pct: 1 }],
         weights: { [colour.code]: 1 },
