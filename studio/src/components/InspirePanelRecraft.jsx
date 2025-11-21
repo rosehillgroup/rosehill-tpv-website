@@ -73,6 +73,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   const [eyedropperActive, setEyedropperActive] = useState(false);
   const [eyedropperRegion, setEyedropperRegion] = useState(null); // {regionId, sourceColor}
   const [originalTaggedSvg, setOriginalTaggedSvg] = useState(null); // SVG with region IDs
+  const [regionRecolorQueue, setRegionRecolorQueue] = useState([]); // Queue of {regionId, newHex} operations
+  const [isProcessingQueue, setIsProcessingQueue] = useState(false); // Track if currently processing queue
 
   // Mixer state (for blend mode only)
   const [mixerOpen, setMixerOpen] = useState(false);
@@ -154,6 +156,13 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [eyedropperActive]);
+
+  // Process region recolor queue when items are added
+  useEffect(() => {
+    if (regionRecolorQueue.length > 0 && !isProcessingQueue) {
+      processNextInQueue();
+    }
+  }, [regionRecolorQueue, isProcessingQueue]);
 
   // Load design when loadedDesign prop changes
   useEffect(() => {
@@ -1117,17 +1126,47 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
   // Apply color change to a specific region (per-element editing)
   const applyRegionRecolor = (regionId, newHex) => {
-    console.log('[TPV-STUDIO] Applying region recolor:', regionId, '->', newHex);
+    console.log('[TPV-STUDIO] Queuing region recolor:', regionId, '->', newHex);
 
-    const newOverrides = new Map(regionOverrides);
-    newOverrides.set(regionId, newHex.toLowerCase());
-    setRegionOverrides(newOverrides);
+    // Add operation to queue instead of immediately processing
+    setRegionRecolorQueue(prev => [...prev, {
+      regionId,
+      newHex: newHex.toLowerCase(),
+      viewMode // Store current view mode with the operation
+    }]);
+  };
 
-    // Trigger SVG regeneration with region overrides
-    if (viewMode === 'blend') {
-      regenerateBlendSVG();
-    } else {
-      regenerateSolidSVG();
+  // Process next region recolor operation in queue
+  const processNextInQueue = async () => {
+    if (isProcessingQueue || regionRecolorQueue.length === 0) {
+      return;
+    }
+
+    setIsProcessingQueue(true);
+    const operation = regionRecolorQueue[0];
+
+    console.log('[TPV-STUDIO] Processing queued region recolor:', operation.regionId, '->', operation.newHex);
+
+    try {
+      // Apply region override to state
+      const newOverrides = new Map(regionOverrides);
+      newOverrides.set(operation.regionId, operation.newHex);
+      setRegionOverrides(newOverrides);
+
+      // Wait for regeneration to complete based on the mode when operation was queued
+      if (operation.viewMode === 'blend') {
+        await regenerateBlendSVG();
+      } else {
+        await regenerateSolidSVG();
+      }
+
+      console.log('[TPV-STUDIO] Completed region recolor for:', operation.regionId);
+    } catch (err) {
+      console.error('[TPV-STUDIO] Failed to process region recolor:', err);
+    } finally {
+      // Remove completed operation from queue
+      setRegionRecolorQueue(prev => prev.slice(1));
+      setIsProcessingQueue(false);
     }
   };
 
