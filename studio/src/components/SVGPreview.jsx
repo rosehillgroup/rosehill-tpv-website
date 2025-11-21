@@ -39,6 +39,7 @@ export default function SVGPreview({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const containerRef = useRef(null);
+  const dragMovedRef = useRef(false); // Track if mouse actually moved during drag
 
   // Fetch SVG content for inline display (needed for region click detection)
   useEffect(() => {
@@ -277,10 +278,19 @@ export default function SVGPreview({
     if (e.button !== 0) return; // Only left mouse button
     setIsDragging(true);
     setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    dragMovedRef.current = false; // Reset drag moved flag
   };
 
   const handleMouseMove = (e) => {
     if (!isDragging) return;
+
+    // Track if mouse moved more than threshold (5px) to distinguish drag from click
+    const deltaX = Math.abs(e.clientX - (dragStart.x + pan.x));
+    const deltaY = Math.abs(e.clientY - (dragStart.y + pan.y));
+    if (deltaX > 5 || deltaY > 5) {
+      dragMovedRef.current = true;
+    }
+
     setPan({
       x: e.clientX - dragStart.x,
       y: e.clientY - dragStart.y
@@ -317,8 +327,11 @@ export default function SVGPreview({
 
   // Handle click on SVG image
   const handleSVGClick = async (e) => {
-    // Don't trigger color selection if we were dragging
-    if (isDragging) return;
+    // Don't trigger color selection if we were dragging (panning)
+    if (dragMovedRef.current) {
+      console.log('[SVGPreview] Click ignored - was dragging');
+      return;
+    }
 
     console.log('[SVGPreview] Click detected - onRegionClick:', !!onRegionClick, 'inlineSvgContent:', !!inlineSvgContent, 'target:', e.target.tagName);
 
