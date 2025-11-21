@@ -159,7 +159,7 @@ export default function InSituModal({
       // Call onSaved callback with in-situ data
       if (onSaved) {
         onSaved({
-          photo_url: photo.url,
+          photo_url: photo.supabaseUrl || photo.url,  // Use Supabase URL for persistence
           quad,
           shape,
           opacity,
@@ -222,26 +222,19 @@ export default function InSituModal({
             </div>
           )}
 
-          {currentStep === STEPS.POSITION && photo && (() => {
-            console.log('[IN-SITU-MODAL] Rendering FourPointEditor with:', {
-              photoUrl: photo.url?.substring(0, 50),
-              svgUrl: designUrl?.substring(0, 50),
-              designDimensions
-            });
-            return (
-              <FourPointEditor
-                ref={editorRef}
-                photoUrl={photo.url}
-                svgUrl={designUrl}
-                designSizeMm={{
-                  width_mm: designDimensions.width,
-                  length_mm: designDimensions.length
-                }}
-                initialOpacity={0.8}
-                onChange={handleEditorChange}
-              />
-            );
-          })()}
+          {currentStep === STEPS.POSITION && photo && (
+            <FourPointEditor
+              ref={editorRef}
+              photoUrl={photo.url}
+              svgUrl={designUrl}
+              designSizeMm={{
+                width_mm: designDimensions.width,
+                length_mm: designDimensions.length
+              }}
+              initialOpacity={0.8}
+              onChange={handleEditorChange}
+            />
+          )}
         </div>
 
         {currentStep === STEPS.POSITION && (

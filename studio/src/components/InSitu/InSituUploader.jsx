@@ -76,7 +76,7 @@ export default function InSituUploader({ onPhotoUploaded, disabled = false }) {
       img.onload = () => {
         console.log('[IN-SITU-UPLOADER] Local image loaded, dimensions:', img.naturalWidth, 'x', img.naturalHeight);
         resolve({ width: img.naturalWidth, height: img.naturalHeight });
-        URL.revokeObjectURL(previewUrl); // Clean up after getting dimensions
+        // Don't revoke - keep blob URL alive for FourPointEditor to use
       };
       img.onerror = (err) => {
         console.error('[IN-SITU-UPLOADER] Failed to load local image:', err);
@@ -110,11 +110,13 @@ export default function InSituUploader({ onPhotoUploaded, disabled = false }) {
 
       console.log('[IN-SITU-UPLOADER] Photo uploaded:', publicUrl);
       console.log('[IN-SITU-UPLOADER] Using dimensions from local file:', dimensions);
+      console.log('[IN-SITU-UPLOADER] Passing local blob URL for fast preview');
       console.log('[IN-SITU-UPLOADER] Calling onPhotoUploaded callback...');
 
-      // Use dimensions we got from local file before uploading
+      // Pass local blob URL for instant preview, Supabase URL for final save
       onPhotoUploaded({
-        url: publicUrl,
+        url: previewUrl,  // Use local blob URL for fast loading
+        supabaseUrl: publicUrl,  // Keep Supabase URL for final save
         width: dimensions.width,
         height: dimensions.height,
         filename: file.name
