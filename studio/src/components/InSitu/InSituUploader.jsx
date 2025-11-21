@@ -69,6 +69,22 @@ export default function InSituUploader({ onPhotoUploaded, disabled = false }) {
     const previewUrl = URL.createObjectURL(file);
     setPreview(previewUrl);
 
+    // Get dimensions from local file BEFORE uploading
+    console.log('[IN-SITU-UPLOADER] Loading local file to get dimensions...');
+    const dimensions = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        console.log('[IN-SITU-UPLOADER] Local image loaded, dimensions:', img.naturalWidth, 'x', img.naturalHeight);
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+        URL.revokeObjectURL(previewUrl); // Clean up after getting dimensions
+      };
+      img.onerror = (err) => {
+        console.error('[IN-SITU-UPLOADER] Failed to load local image:', err);
+        reject(new Error('Failed to read image dimensions'));
+      };
+      img.src = previewUrl;
+    });
+
     // Upload to Supabase
     setUploading(true);
 
@@ -93,45 +109,16 @@ export default function InSituUploader({ onPhotoUploaded, disabled = false }) {
         .getPublicUrl(filePath);
 
       console.log('[IN-SITU-UPLOADER] Photo uploaded:', publicUrl);
+      console.log('[IN-SITU-UPLOADER] Using dimensions from local file:', dimensions);
+      console.log('[IN-SITU-UPLOADER] Calling onPhotoUploaded callback...');
 
-      // Load image to get dimensions
-      // NOTE: Not setting crossOrigin here because we only need dimensions,
-      // not canvas access. The actual canvas drawing happens in FourPointEditor
-      // which will load the image with proper CORS handling.
-      console.log('[IN-SITU-UPLOADER] Loading image to get dimensions...');
-      console.log('[IN-SITU-UPLOADER] Testing if URL is accessible:', publicUrl);
-
-      // Add timeout in case image load hangs
-      const timeoutId = setTimeout(() => {
-        console.error('[IN-SITU-UPLOADER] Image load timeout after 10 seconds');
-        console.error('[IN-SITU-UPLOADER] This likely means the Supabase bucket does not have public read access');
-        console.error('[IN-SITU-UPLOADER] Check bucket settings at: https://supabase.com/dashboard/project/_/storage/buckets');
-        setError('Image load timeout - check Supabase bucket permissions');
-      }, 10000);
-
-      const img = new Image();
-
-      img.onload = () => {
-        clearTimeout(timeoutId);
-        console.log('[IN-SITU-UPLOADER] Image loaded successfully, dimensions:', img.naturalWidth, 'x', img.naturalHeight);
-        console.log('[IN-SITU-UPLOADER] Calling onPhotoUploaded callback...');
-        onPhotoUploaded({
-          url: publicUrl,
-          width: img.naturalWidth,
-          height: img.naturalHeight,
-          filename: file.name
-        });
-      };
-      img.onerror = (err) => {
-        clearTimeout(timeoutId);
-        console.error('[IN-SITU-UPLOADER] Failed to load uploaded image:', err);
-        console.error('[IN-SITU-UPLOADER] Public URL was:', publicUrl);
-        console.error('[IN-SITU-UPLOADER] This likely means the image is not publicly accessible');
-        throw new Error('Failed to load uploaded image - check Supabase bucket is public');
-      };
-
-      console.log('[IN-SITU-UPLOADER] Setting img.src to:', publicUrl);
-      img.src = publicUrl;
+      // Use dimensions we got from local file before uploading
+      onPhotoUploaded({
+        url: publicUrl,
+        width: dimensions.width,
+        height: dimensions.height,
+        filename: file.name
+      });
 
     } catch (err) {
       console.error('[IN-SITU-UPLOADER] Upload failed:', err);
