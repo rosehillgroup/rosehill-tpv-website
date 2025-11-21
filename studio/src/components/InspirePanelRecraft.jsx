@@ -1148,17 +1148,20 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     console.log('[TPV-STUDIO] Processing queued region recolor:', operation.regionId, '->', operation.newHex);
 
     try {
-      // Apply region override to state
+      // Build new overrides map with this operation applied
       const newOverrides = new Map(regionOverrides);
       newOverrides.set(operation.regionId, operation.newHex);
-      setRegionOverrides(newOverrides);
 
-      // Wait for regeneration to complete based on the mode when operation was queued
+      // Pass overrides directly to regeneration function (don't wait for state update)
+      // This ensures immediate processing without React batching delays
       if (operation.viewMode === 'blend') {
-        await regenerateBlendSVG();
+        await regenerateBlendSVG(null, null, newOverrides);
       } else {
-        await regenerateSolidSVG();
+        await regenerateSolidSVG(null, null, newOverrides);
       }
+
+      // Update state after successful regeneration
+      setRegionOverrides(newOverrides);
 
       console.log('[TPV-STUDIO] Completed region recolor for:', operation.regionId);
     } catch (err) {
@@ -1253,7 +1256,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   }, [mixerColor, blendEditedColors, result, colorMapping]);
 
   // Regenerate blend SVG with edited colors
-  const regenerateBlendSVG = async (updatedEdits = null, immediateHex = null) => {
+  const regenerateBlendSVG = async (updatedEdits = null, immediateHex = null, overrides = null) => {
     if (!result?.svg_url || !colorMapping || !blendRecipes) return;
 
     try {
@@ -1313,7 +1316,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       );
 
       // Stage 2: Apply region-level overrides (per-element edits)
-      const finalSvg = applyRegionOverrides(globalRecolored, regionOverrides);
+      // Use provided overrides if available, otherwise use state
+      const appliedOverrides = overrides !== null ? overrides : regionOverrides;
+      const finalSvg = applyRegionOverrides(globalRecolored, appliedOverrides);
 
       // Convert to data URL for display
       const blob = new Blob([finalSvg], { type: 'image/svg+xml' });
@@ -1323,8 +1328,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       setColorMapping(updatedMapping);
       setBlendRecipes(updatedRecipes); // Update recipes to show new colors in legend
       console.log('[TPV-STUDIO] Blend SVG regenerated with edits:', stats);
-      if (regionOverrides.size > 0) {
-        console.log('[TPV-STUDIO] Applied', regionOverrides.size, 'region overrides');
+      if (appliedOverrides.size > 0) {
+        console.log('[TPV-STUDIO] Applied', appliedOverrides.size, 'region overrides');
       }
     } catch (err) {
       console.error('[TPV-STUDIO] Failed to regenerate blend SVG:', err);
@@ -1332,7 +1337,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   };
 
   // Regenerate solid SVG with edited colors
-  const regenerateSolidSVG = async (updatedEdits = null, immediateHex = null) => {
+  const regenerateSolidSVG = async (updatedEdits = null, immediateHex = null, overrides = null) => {
     if (!result?.svg_url || !solidColorMapping || !solidRecipes) return;
 
     try {
@@ -1418,7 +1423,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       );
 
       // Stage 2: Apply region-level overrides (per-element edits)
-      const finalSvg = applyRegionOverrides(globalRecolored, regionOverrides);
+      // Use provided overrides if available, otherwise use state
+      const appliedOverrides = overrides !== null ? overrides : regionOverrides;
+      const finalSvg = applyRegionOverrides(globalRecolored, appliedOverrides);
 
       // Convert to data URL for display
       const blob = new Blob([finalSvg], { type: 'image/svg+xml' });
@@ -1428,8 +1435,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       setSolidColorMapping(updatedMapping);
       setSolidRecipes(updatedRecipes); // Update recipes to show new colors in legend
       console.log('[TPV-STUDIO] Solid SVG regenerated with edits:', stats);
-      if (regionOverrides.size > 0) {
-        console.log('[TPV-STUDIO] Applied', regionOverrides.size, 'region overrides');
+      if (appliedOverrides.size > 0) {
+        console.log('[TPV-STUDIO] Applied', appliedOverrides.size, 'region overrides');
       }
     } catch (err) {
       console.error('[TPV-STUDIO] Failed to regenerate solid SVG:', err);
