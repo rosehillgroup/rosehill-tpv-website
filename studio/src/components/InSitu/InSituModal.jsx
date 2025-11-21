@@ -49,15 +49,22 @@ export default function InSituModal({
   // Pre-cache resources on mount
   useEffect(() => {
     if (designUrl) {
+      console.log('[IN-SITU-MODAL] Design URL received:', designUrl?.substring(0, 50));
       const img = new Image();
-      img.crossOrigin = 'anonymous';
+      // Only set crossOrigin for external URLs, not blob URLs
+      if (!designUrl.startsWith('blob:') && !designUrl.startsWith('data:')) {
+        img.crossOrigin = 'anonymous';
+      }
       img.src = designUrl;
+    } else {
+      console.warn('[IN-SITU-MODAL] No design URL provided');
     }
   }, [designUrl]);
 
   const handlePhotoUploaded = (photoData) => {
-    console.log('[IN-SITU] Photo uploaded:', photoData);
+    console.log('[IN-SITU-MODAL] Photo uploaded:', photoData);
     setPhoto(photoData);
+    console.log('[IN-SITU-MODAL] Advancing to POSITION step, designUrl:', designUrl?.substring(0, 50));
     setCurrentStep(STEPS.POSITION);
   };
 
@@ -215,19 +222,26 @@ export default function InSituModal({
             </div>
           )}
 
-          {currentStep === STEPS.POSITION && photo && (
-            <FourPointEditor
-              ref={editorRef}
-              photoUrl={photo.url}
-              svgUrl={designUrl}
-              designSizeMm={{
-                width_mm: designDimensions.width,
-                length_mm: designDimensions.length
-              }}
-              initialOpacity={0.8}
-              onChange={handleEditorChange}
-            />
-          )}
+          {currentStep === STEPS.POSITION && photo && (() => {
+            console.log('[IN-SITU-MODAL] Rendering FourPointEditor with:', {
+              photoUrl: photo.url?.substring(0, 50),
+              svgUrl: designUrl?.substring(0, 50),
+              designDimensions
+            });
+            return (
+              <FourPointEditor
+                ref={editorRef}
+                photoUrl={photo.url}
+                svgUrl={designUrl}
+                designSizeMm={{
+                  width_mm: designDimensions.width,
+                  length_mm: designDimensions.length
+                }}
+                initialOpacity={0.8}
+                onChange={handleEditorChange}
+              />
+            );
+          })()}
         </div>
 
         {currentStep === STEPS.POSITION && (
