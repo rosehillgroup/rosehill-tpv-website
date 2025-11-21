@@ -99,9 +99,20 @@ export default function InSituUploader({ onPhotoUploaded, disabled = false }) {
       // not canvas access. The actual canvas drawing happens in FourPointEditor
       // which will load the image with proper CORS handling.
       console.log('[IN-SITU-UPLOADER] Loading image to get dimensions...');
+      console.log('[IN-SITU-UPLOADER] Testing if URL is accessible:', publicUrl);
+
+      // Add timeout in case image load hangs
+      const timeoutId = setTimeout(() => {
+        console.error('[IN-SITU-UPLOADER] Image load timeout after 10 seconds');
+        console.error('[IN-SITU-UPLOADER] This likely means the Supabase bucket does not have public read access');
+        console.error('[IN-SITU-UPLOADER] Check bucket settings at: https://supabase.com/dashboard/project/_/storage/buckets');
+        setError('Image load timeout - check Supabase bucket permissions');
+      }, 10000);
+
       const img = new Image();
 
       img.onload = () => {
+        clearTimeout(timeoutId);
         console.log('[IN-SITU-UPLOADER] Image loaded successfully, dimensions:', img.naturalWidth, 'x', img.naturalHeight);
         console.log('[IN-SITU-UPLOADER] Calling onPhotoUploaded callback...');
         onPhotoUploaded({
@@ -112,10 +123,14 @@ export default function InSituUploader({ onPhotoUploaded, disabled = false }) {
         });
       };
       img.onerror = (err) => {
+        clearTimeout(timeoutId);
         console.error('[IN-SITU-UPLOADER] Failed to load uploaded image:', err);
         console.error('[IN-SITU-UPLOADER] Public URL was:', publicUrl);
-        throw new Error('Failed to load uploaded image');
+        console.error('[IN-SITU-UPLOADER] This likely means the image is not publicly accessible');
+        throw new Error('Failed to load uploaded image - check Supabase bucket is public');
       };
+
+      console.log('[IN-SITU-UPLOADER] Setting img.src to:', publicUrl);
       img.src = publicUrl;
 
     } catch (err) {
