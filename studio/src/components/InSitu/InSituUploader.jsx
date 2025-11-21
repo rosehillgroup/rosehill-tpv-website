@@ -95,9 +95,12 @@ export default function InSituUploader({ onPhotoUploaded, disabled = false }) {
       console.log('[IN-SITU-UPLOADER] Photo uploaded:', publicUrl);
 
       // Load image to get dimensions
+      // NOTE: Not setting crossOrigin here because we only need dimensions,
+      // not canvas access. The actual canvas drawing happens in FourPointEditor
+      // which will load the image with proper CORS handling.
       console.log('[IN-SITU-UPLOADER] Loading image to get dimensions...');
       const img = new Image();
-      img.crossOrigin = 'anonymous'; // Supabase URLs need CORS
+
       img.onload = () => {
         console.log('[IN-SITU-UPLOADER] Image loaded successfully, dimensions:', img.naturalWidth, 'x', img.naturalHeight);
         console.log('[IN-SITU-UPLOADER] Calling onPhotoUploaded callback...');
