@@ -201,6 +201,18 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         if (restoredState.result?.svg_url) {
           console.log('[INSPIRE] Regenerating SVGs from loaded design');
 
+          // First, fetch and tag the original SVG for region-based editing
+          let taggedSvg = null;
+          try {
+            const svgResponse = await fetch(restoredState.result.svg_url);
+            const svgText = await svgResponse.text();
+            taggedSvg = tagSvgRegions(svgText);
+            setOriginalTaggedSvg(taggedSvg);
+            console.log('[INSPIRE] Tagged SVG with region IDs for loaded design');
+          } catch (tagError) {
+            console.error('[INSPIRE] Failed to tag SVG regions:', tagError);
+          }
+
           try {
             // Regenerate blend SVG if we have blend recipes
             if (restoredState.blendRecipes && restoredState.colorMapping) {
@@ -208,7 +220,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
                 restoredState.result.svg_url,
                 restoredState.colorMapping,
                 restoredState.blendRecipes,
-                restoredState.blendEditedColors
+                restoredState.blendEditedColors,
+                taggedSvg
               );
             }
 
@@ -218,7 +231,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
                 restoredState.result.svg_url,
                 restoredState.solidColorMapping,
                 restoredState.solidRecipes,
-                restoredState.solidEditedColors
+                restoredState.solidEditedColors,
+                taggedSvg
               );
             }
           } catch (err) {
@@ -1384,7 +1398,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   };
 
   // Helper function to regenerate blend SVG from loaded design state
-  const regenerateBlendSVGFromState = async (svgUrl, colorMapping, recipes, editedColors) => {
+  const regenerateBlendSVGFromState = async (svgUrl, colorMapping, recipes, editedColors, taggedSvg = null) => {
     try {
       console.log('[INSPIRE] Regenerating blend SVG from state');
 
@@ -1402,8 +1416,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         });
       }
 
-      // Recolor SVG (recolorSVG fetches the URL itself)
-      const { dataUrl } = await recolorSVG(svgUrl, updatedMapping);
+      // Recolor SVG with region tags preserved
+      const { dataUrl } = await recolorSVG(svgUrl, updatedMapping, taggedSvg);
 
       setBlendSvgUrl(dataUrl);
       console.log('[INSPIRE] Blend SVG regenerated');
@@ -1413,7 +1427,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   };
 
   // Helper function to regenerate solid SVG from loaded design state
-  const regenerateSolidSVGFromState = async (svgUrl, colorMapping, recipes, editedColors) => {
+  const regenerateSolidSVGFromState = async (svgUrl, colorMapping, recipes, editedColors, taggedSvg = null) => {
     try {
       console.log('[INSPIRE] Regenerating solid SVG from state');
 
@@ -1431,8 +1445,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         });
       }
 
-      // Recolor SVG (recolorSVG fetches the URL itself)
-      const { dataUrl } = await recolorSVG(svgUrl, updatedMapping);
+      // Recolor SVG with region tags preserved
+      const { dataUrl } = await recolorSVG(svgUrl, updatedMapping, taggedSvg);
 
       setSolidSvgUrl(dataUrl);
       console.log('[INSPIRE] Solid SVG regenerated');
