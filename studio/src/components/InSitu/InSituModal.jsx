@@ -74,30 +74,38 @@ export default function InSituModal({
   const generateCleanCanvas = async () => {
     if (!photo || !quad) return null;
 
-    // Load images
-    const [photoImg, designImg] = await Promise.all([
-      loadImage(photo.url),
-      rasterizeSvg(designUrl, 1536)
-    ]);
+    try {
+      // Load images
+      console.log('[InSitu] Loading design from URL:', designUrl);
+      const [photoImg, designImg] = await Promise.all([
+        loadImage(photo.url),
+        rasterizeSvg(designUrl, 1536)
+      ]);
+      console.log('[InSitu] Successfully loaded design image');
 
-    // Create canvas at photo's natural dimensions
-    const canvas = document.createElement('canvas');
-    canvas.width = photoImg.naturalWidth;
-    canvas.height = photoImg.naturalHeight;
-    const ctx = canvas.getContext('2d');
+      // Create canvas at photo's natural dimensions
+      const canvas = document.createElement('canvas');
+      canvas.width = photoImg.naturalWidth;
+      canvas.height = photoImg.naturalHeight;
+      const ctx = canvas.getContext('2d');
 
-    // Draw warped design without handles
-    warpDesignOntoPhoto({
-      photoCtx: ctx,
-      photoImg,
-      designImg,
-      quad,
-      opacity,
-      shape,
-      lighting
-    });
+      // Draw warped design without handles
+      warpDesignOntoPhoto({
+        photoCtx: ctx,
+        photoImg,
+        designImg,
+        quad,
+        opacity,
+        shape,
+        lighting
+      });
 
-    return canvas;
+      return canvas;
+    } catch (error) {
+      console.error('[InSitu] Failed to generate canvas:', error);
+      alert(`Failed to load design: ${error.message}`);
+      return null;
+    }
   };
 
   const handleDownload = async () => {

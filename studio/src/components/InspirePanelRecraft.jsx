@@ -1387,9 +1387,16 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       const appliedOverrides = overrides !== null ? overrides : regionOverrides;
       const finalSvg = applyRegionOverrides(globalRecolored, appliedOverrides);
 
+      // Clean up old blob URL before creating new one
+      if (blendSvgUrl && blendSvgUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(blendSvgUrl);
+        console.log('[TPV-STUDIO] Revoked old blend blob URL');
+      }
+
       // Convert to data URL for display
       const blob = new Blob([finalSvg], { type: 'image/svg+xml' });
       const dataUrl = URL.createObjectURL(blob);
+      console.log('[TPV-STUDIO] Created new blend blob URL, SVG length:', finalSvg.length);
 
       setBlendSvgUrl(dataUrl);
       setColorMapping(updatedMapping);
@@ -1494,9 +1501,16 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       const appliedOverrides = overrides !== null ? overrides : regionOverrides;
       const finalSvg = applyRegionOverrides(globalRecolored, appliedOverrides);
 
+      // Clean up old blob URL before creating new one
+      if (solidSvgUrl && solidSvgUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(solidSvgUrl);
+        console.log('[TPV-STUDIO] Revoked old solid blob URL');
+      }
+
       // Convert to data URL for display
       const blob = new Blob([finalSvg], { type: 'image/svg+xml' });
       const dataUrl = URL.createObjectURL(blob);
+      console.log('[TPV-STUDIO] Created new solid blob URL, SVG length:', finalSvg.length);
 
       setSolidSvgUrl(dataUrl);
       setSolidColorMapping(updatedMapping);
