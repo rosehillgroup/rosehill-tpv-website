@@ -9,16 +9,22 @@ export default function SVGPreview({
   recipes,
   mode = 'blend', // 'blend' or 'solid' - affects color legend display
   onColorClick, // (colorData) => void - callback when user clicks a color
+  onRegionClick, // (regionData) => void - callback when region clicked (eyedropper mode)
+  onEyedropperCancel, // () => void - callback to cancel eyedropper mode
   selectedColor, // Current color being edited (to highlight)
   editedColors, // Map of edited colors (originalHex -> {newHex})
   onResetAll, // () => void - callback to reset all color edits
   designName = '', // AI-generated or user-edited design name
   onNameChange, // (newName) => void - callback when name is edited
   isNameLoading = false, // Whether name is being generated
-  onInSituClick // () => void - callback to open in-situ preview
+  onInSituClick, // () => void - callback to open in-situ preview
+  eyedropperActive = false, // Whether eyedropper mode is active
+  eyedropperRegion = null // Currently selected region for eyedropper
 }) {
   const [highlightMask, setHighlightMask] = useState(null);
+  const [inlineSvgContent, setInlineSvgContent] = useState(null);
   const imageRef = useRef(null);
+  const svgContainerRef = useRef(null);
   const canvasRef = useRef(null);
 
   // Zoom and pan state
@@ -27,6 +33,29 @@ export default function SVGPreview({
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const containerRef = useRef(null);
+
+  // Fetch SVG content for inline display (needed for region click detection)
+  useEffect(() => {
+    if (!blendSvgUrl) {
+      setInlineSvgContent(null);
+      return;
+    }
+
+    const fetchSvgContent = async () => {
+      try {
+        // Fetch SVG from blob URL or data URL
+        const response = await fetch(blendSvgUrl);
+        const svgText = await response.text();
+        setInlineSvgContent(svgText);
+        console.log('[SVGPreview] Fetched inline SVG content');
+      } catch (error) {
+        console.error('[SVGPreview] Failed to fetch SVG content:', error);
+        setInlineSvgContent(null);
+      }
+    };
+
+    fetchSvgContent();
+  }, [blendSvgUrl]);
 
   // Create highlight mask when a color is selected
   useEffect(() => {
@@ -265,10 +294,44 @@ export default function SVGPreview({
     }
   }, [isDragging, dragStart, pan]);
 
+  // Find region element from click target
+  const findRegionElement = (element) => {
+    // Walk up DOM tree to find element with data-region-id
+    let el = element;
+    while (el && el !== svgContainerRef.current) {
+      if (el.hasAttribute && el.hasAttribute('data-region-id')) {
+        return el;
+      }
+      el = el.parentElement;
+    }
+    return null;
+  };
+
   // Handle click on SVG image
   const handleSVGClick = async (e) => {
     // Don't trigger color selection if we were dragging
     if (isDragging) return;
+
+    // Try region-based click detection first (for inline SVG with region IDs)
+    if (onRegionClick && inlineSvgContent) {
+      const regionEl = findRegionElement(e.target);
+      if (regionEl) {
+        const regionId = regionEl.getAttribute('data-region-id');
+        const fill = regionEl.getAttribute('fill') ||
+                     regionEl.getAttribute('style')?.match(/fill:\s*([^;]+)/)?.[1];
+
+        console.log('[SVGPreview] Region clicked:', regionId, 'fill:', fill);
+
+        onRegionClick({
+          regionId,
+          sourceColor: fill,
+          element: regionEl
+        });
+        return;
+      }
+    }
+
+    // Fallback to pixel-based color detection (for palette clicks or if no region found)
     if (!onColorClick || !recipes || recipes.length === 0) return;
 
     // Get click position relative to image
@@ -411,15 +474,25 @@ export default function SVGPreview({
               onMouseDown={handleMouseDown}
               style={{
                 transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-                cursor: isDragging ? 'grabbing' : (zoom > 1 ? 'grab' : (onColorClick ? 'pointer' : 'default'))
+                cursor: isDragging ? 'grabbing' : (zoom > 1 ? 'grab' : (eyedropperActive ? 'crosshair' : (onColorClick ? 'pointer' : 'default')))
               }}
             >
-              <img
-                ref={imageRef}
-                src={blendSvgUrl}
-                alt="TPV blend design"
-                className="svg-image"
-              />
+              {inlineSvgContent ? (
+                // Inline SVG for region click detection
+                <div
+                  ref={svgContainerRef}
+                  className="svg-inline-container"
+                  dangerouslySetInnerHTML={{ __html: inlineSvgContent }}
+                />
+              ) : (
+                // Fallback to image display
+                <img
+                  ref={imageRef}
+                  src={blendSvgUrl}
+                  alt="TPV blend design"
+                  className="svg-image"
+                />
+              )}
               {highlightMask && (
                 <img
                   src={highlightMask}
@@ -429,6 +502,32 @@ export default function SVGPreview({
               )}
             </div>
           </div>
+
+          {/* Eyedropper instructions overlay */}
+          {eyedropperActive && eyedropperRegion && (
+            <div className="eyedropper-overlay">
+              <div className="eyedropper-content">
+                <div className="eyedropper-color-indicator">
+                  <div
+                    className="eyedropper-color-swatch"
+                    style={{ backgroundColor: eyedropperRegion.sourceColor }}
+                  />
+                  <span>Click another area to copy its color</span>
+                </div>
+                <button
+                  className="eyedropper-cancel"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onEyedropperCancel) {
+                      onEyedropperCancel();
+                    }
+                  }}
+                >
+                  Cancel (Esc)
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {recipes && recipes.length > 0 && (
@@ -644,6 +743,18 @@ export default function SVGPreview({
           pointer-events: ${onColorClick ? 'auto' : 'none'};
         }
 
+        .svg-inline-container {
+          max-width: 100%;
+          display: block;
+          border-radius: 4px;
+        }
+
+        .svg-inline-container svg {
+          max-width: 100%;
+          height: auto;
+          display: block;
+        }
+
         .svg-highlight-mask {
           position: absolute;
           top: 0;
@@ -654,6 +765,60 @@ export default function SVGPreview({
           border-radius: 4px;
           filter: drop-shadow(0 0 3px rgba(255, 0, 255, 0.8)) drop-shadow(0 0 1px rgba(0, 0, 0, 0.6));
           animation: pulse 2s ease-in-out infinite;
+        }
+
+        .eyedropper-overlay {
+          position: absolute;
+          top: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 100;
+        }
+
+        .eyedropper-content {
+          background: white;
+          border-radius: 12px;
+          padding: 16px 20px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          border: 2px solid #3b82f6;
+        }
+
+        .eyedropper-color-indicator {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          font-size: 0.95rem;
+          font-weight: 500;
+          color: #111827;
+        }
+
+        .eyedropper-color-swatch {
+          width: 32px;
+          height: 32px;
+          border-radius: 6px;
+          border: 2px solid #d1d5db;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .eyedropper-cancel {
+          padding: 8px 16px;
+          background: #ef4444;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 0.9rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s;
+          white-space: nowrap;
+        }
+
+        .eyedropper-cancel:hover {
+          background: #dc2626;
+          box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
         }
 
         @keyframes pulse {

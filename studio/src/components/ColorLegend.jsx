@@ -77,7 +77,7 @@ export default function ColorLegend({
                   areaPct: recipe.targetColor.areaPct,
                   recipe: recipe.chosenRecipe,
                   targetColor: recipe.targetColor
-                });
+                }, 'palette');
               }
             }}
             title={onColorClick ? 'Click to edit this colour' : ''}

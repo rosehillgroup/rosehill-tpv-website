@@ -13,6 +13,8 @@ import InSituModal from './InSitu/InSituModal.jsx';
 import DimensionModal from './DimensionModal.jsx';
 import { buildColorMapping } from '../utils/colorMapping.js';
 import { recolorSVG } from '../utils/svgRecolor.js';
+import { tagSvgRegions } from '../utils/svgRegionTagger.js';
+import { applyRegionOverrides } from '../utils/svgRegionOverrides.js';
 import { mapDimensionsToRecraft, getLayoutDescription, needsLayoutWarning } from '../utils/aspectRatioMapping.js';
 import { uploadFile, validateFile } from '../lib/supabase/uploadFile.js';
 import { deserializeDesign } from '../utils/designSerializer.js';
@@ -65,6 +67,12 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   const [selectedColor, setSelectedColor] = useState(null);
   const [solidEditedColors, setSolidEditedColors] = useState(new Map()); // originalHex -> {newHex}
   const [blendEditedColors, setBlendEditedColors] = useState(new Map()); // originalHex -> {newHex}
+
+  // Region-based eyedropper state (for per-element editing)
+  const [regionOverrides, setRegionOverrides] = useState(new Map()); // regionId -> hex
+  const [eyedropperActive, setEyedropperActive] = useState(false);
+  const [eyedropperRegion, setEyedropperRegion] = useState(null); // {regionId, sourceColor}
+  const [originalTaggedSvg, setOriginalTaggedSvg] = useState(null); // SVG with region IDs
 
   // Mixer state (for blend mode only)
   const [mixerOpen, setMixerOpen] = useState(false);
@@ -134,6 +142,18 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       }
     };
   }, []);
+
+  // ESC key handler to cancel eyedropper mode
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && eyedropperActive) {
+        setEyedropperActive(false);
+        setEyedropperRegion(null);
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [eyedropperActive]);
 
   // Load design when loadedDesign prop changes
   useEffect(() => {
@@ -854,6 +874,18 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         });
         setColorMapping(mapping);
 
+        // Fetch and tag original SVG with region IDs (for per-element editing)
+        try {
+          const svgResponse = await fetch(svg_url);
+          const svgText = await svgResponse.text();
+          const taggedSvg = tagSvgRegions(svgText);
+          setOriginalTaggedSvg(taggedSvg);
+          console.log('[TPV-STUDIO] Tagged SVG with region IDs for per-element editing');
+        } catch (tagError) {
+          console.error('[TPV-STUDIO] Failed to tag SVG regions:', tagError);
+          // Non-fatal - continue without region tagging
+        }
+
         // Generate recoloured SVG
         try {
           setProgressMessage('✨ Generating TPV blend preview...');
@@ -1022,22 +1054,72 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     }
   };
 
-  // Handle color click from SVGPreview
-  const handleColorClick = (colorData) => {
-    console.log('[TPV-STUDIO] Color clicked:', colorData, 'in mode:', viewMode);
+  // Handle color click from SVGPreview or palette
+  const handleColorClick = (colorData, clickSource = 'palette') => {
+    console.log('[TPV-STUDIO] Color clicked:', colorData, 'source:', clickSource, 'in mode:', viewMode);
 
-    // In blend mode, use the mixer widget instead of color editor
-    if (viewMode === 'blend') {
-      setMixerColor(colorData);
-      setMixerOpen(true);
-      // Close recipe displays when editing - user must regenerate after edits
-      setShowFinalRecipes(false);
-    } else {
-      // In solid mode, use the standard color editor
-      setSelectedColor(colorData);
-      setColorEditorOpen(true);
-      setShowSolidSummary(false);
+    // If eyedropper is active and a palette color is clicked, apply it to the selected region
+    if (eyedropperActive && eyedropperRegion && clickSource === 'palette') {
+      applyRegionRecolor(eyedropperRegion.regionId, colorData.hex);
+      setEyedropperActive(false);
+      setEyedropperRegion(null);
+      return;
     }
+
+    // Palette clicks open the global color editor (unchanged behavior)
+    if (clickSource === 'palette') {
+      // In blend mode, use the mixer widget instead of color editor
+      if (viewMode === 'blend') {
+        setMixerColor(colorData);
+        setMixerOpen(true);
+        // Close recipe displays when editing - user must regenerate after edits
+        setShowFinalRecipes(false);
+      } else {
+        // In solid mode, use the standard color editor
+        setSelectedColor(colorData);
+        setColorEditorOpen(true);
+        setShowSolidSummary(false);
+      }
+    }
+  };
+
+  // Handle region click from SVGPreview (for eyedropper mode)
+  const handleRegionClick = (regionData) => {
+    console.log('[TPV-STUDIO] Region clicked:', regionData);
+
+    if (!eyedropperActive) {
+      // First click - activate eyedropper for this region
+      setEyedropperActive(true);
+      setEyedropperRegion(regionData);
+    } else {
+      // Second click - apply source region's color to target region
+      applyRegionRecolor(eyedropperRegion.regionId, regionData.sourceColor);
+      setEyedropperActive(false);
+      setEyedropperRegion(null);
+    }
+  };
+
+  // Apply color change to a specific region (per-element editing)
+  const applyRegionRecolor = (regionId, newHex) => {
+    console.log('[TPV-STUDIO] Applying region recolor:', regionId, '->', newHex);
+
+    const newOverrides = new Map(regionOverrides);
+    newOverrides.set(regionId, newHex.toLowerCase());
+    setRegionOverrides(newOverrides);
+
+    // Trigger SVG regeneration with region overrides
+    if (viewMode === 'blend') {
+      regenerateBlendSVG();
+    } else {
+      regenerateSolidSVG();
+    }
+  };
+
+  // Cancel eyedropper mode
+  const handleEyedropperCancel = () => {
+    console.log('[TPV-STUDIO] Eyedropper cancelled');
+    setEyedropperActive(false);
+    setEyedropperRegion(null);
   };
 
   // Handle color change from ColorEditorPanel (solid mode only)
@@ -1167,12 +1249,24 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         return recipe;
       });
 
-      // Recolor SVG with updated mapping
-      const { dataUrl, stats } = await recolorSVG(result.svg_url, updatedMapping);
+      // Two-stage SVG regeneration:
+      // Stage 1: Apply global color mapping (recipes + edits)
+      const { svgText: globalRecolored, stats } = await recolorSVG(result.svg_url, updatedMapping);
+
+      // Stage 2: Apply region-level overrides (per-element edits)
+      const finalSvg = applyRegionOverrides(globalRecolored, regionOverrides);
+
+      // Convert to data URL for display
+      const blob = new Blob([finalSvg], { type: 'image/svg+xml' });
+      const dataUrl = URL.createObjectURL(blob);
+
       setBlendSvgUrl(dataUrl);
       setColorMapping(updatedMapping);
       setBlendRecipes(updatedRecipes); // Update recipes to show new colors in legend
       console.log('[TPV-STUDIO] Blend SVG regenerated with edits:', stats);
+      if (regionOverrides.size > 0) {
+        console.log('[TPV-STUDIO] Applied', regionOverrides.size, 'region overrides');
+      }
     } catch (err) {
       console.error('[TPV-STUDIO] Failed to regenerate blend SVG:', err);
     }
@@ -1256,12 +1350,24 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         return recipe;
       });
 
-      // Recolor SVG with updated mapping
-      const { dataUrl, stats } = await recolorSVG(result.svg_url, updatedMapping);
+      // Two-stage SVG regeneration:
+      // Stage 1: Apply global color mapping (recipes + edits)
+      const { svgText: globalRecolored, stats } = await recolorSVG(result.svg_url, updatedMapping);
+
+      // Stage 2: Apply region-level overrides (per-element edits)
+      const finalSvg = applyRegionOverrides(globalRecolored, regionOverrides);
+
+      // Convert to data URL for display
+      const blob = new Blob([finalSvg], { type: 'image/svg+xml' });
+      const dataUrl = URL.createObjectURL(blob);
+
       setSolidSvgUrl(dataUrl);
       setSolidColorMapping(updatedMapping);
       setSolidRecipes(updatedRecipes); // Update recipes to show new colors in legend
       console.log('[TPV-STUDIO] Solid SVG regenerated with edits:', stats);
+      if (regionOverrides.size > 0) {
+        console.log('[TPV-STUDIO] Applied', regionOverrides.size, 'region overrides');
+      }
     } catch (err) {
       console.error('[TPV-STUDIO] Failed to regenerate solid SVG:', err);
     }
@@ -1641,6 +1747,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
                 recipes={blendRecipes}
                 mode="blend"
                 onColorClick={handleColorClick}
+                onRegionClick={handleRegionClick}
+                onEyedropperCancel={handleEyedropperCancel}
                 selectedColor={selectedColor}
                 editedColors={blendEditedColors}
                 onResetAll={handleResetAllColors}
@@ -1648,6 +1756,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
                 onNameChange={setDesignName}
                 isNameLoading={isNameLoading}
                 onInSituClick={handleInSituClick}
+                eyedropperActive={eyedropperActive}
+                eyedropperRegion={eyedropperRegion}
               />
             </div>
           )}
@@ -1660,6 +1770,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
                 recipes={solidRecipes}
                 mode="solid"
                 onColorClick={handleColorClick}
+                onRegionClick={handleRegionClick}
+                onEyedropperCancel={handleEyedropperCancel}
                 selectedColor={selectedColor}
                 editedColors={solidEditedColors}
                 onResetAll={handleResetAllColors}
@@ -1667,6 +1779,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
                 onNameChange={setDesignName}
                 isNameLoading={isNameLoading}
                 onInSituClick={handleInSituClick}
+                eyedropperActive={eyedropperActive}
+                eyedropperRegion={eyedropperRegion}
               />
             </div>
           )}
