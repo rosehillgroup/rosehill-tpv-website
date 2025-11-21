@@ -370,18 +370,72 @@ export class SmartBlendSolver {
    */
   private solveSingleComponents(targetLab: Lab): SmartRecipe[] {
     const results: SmartRecipe[] = [];
-    
-    for (let i = 0; i < this.enhancedColours.length; i++) {
-      const colour = this.enhancedColours[i];
-      const colourLab = { L: colour.L, a: colour.a, b: colour.b };
-      let deltaE = deltaE2000(targetLab, colourLab);
 
-      // Prefer Cream (RH31) over Pale Grey (RH65) for light neutral colors
-      if (colour.code === 'RH31' && targetLab.L > 82) {
-        const chroma = Math.sqrt(targetLab.a * targetLab.a + targetLab.b * targetLab.b);
-        if (chroma < 15) {
-          deltaE -= 3.0;  // Apply bonus to make Cream more attractive
+    // ===== PHASE 1: Calculate target properties =====
+    const targetChroma = Math.sqrt(targetLab.a * targetLab.a + targetLab.b * targetLab.b);
+    const targetHue = Math.atan2(targetLab.b, targetLab.a) * 180 / Math.PI;
+    const normalizedTargetHue = ((targetHue % 360) + 360) % 360;
+    const isColored = targetChroma > 15; // Target has detectable color vs neutral
+
+    // ===== PHASE 2: Filter by hue family (for colored targets) =====
+    let candidateColors = this.enhancedColours;
+
+    if (isColored) {
+      // Filter to same hue family (±40° tolerance)
+      const hueFiltered = this.enhancedColours.filter(colour => {
+        const colourChroma = Math.sqrt(colour.a * colour.a + colour.b * colour.b);
+
+        // Always include high-chroma colors (vibrant playground colors)
+        if (colourChroma > 40) {
+          const colourHue = Math.atan2(colour.b, colour.a) * 180 / Math.PI;
+          const normalizedColourHue = ((colourHue % 360) + 360) % 360;
+          const hueDiff = Math.abs(normalizedTargetHue - normalizedColourHue);
+          const shortestHueDiff = Math.min(hueDiff, 360 - hueDiff);
+
+          return shortestHueDiff <= 40; // Same hue family
         }
+
+        // Include low-chroma neutrals only as fallback
+        return colourChroma < 15;
+      });
+
+      // If filter too restrictive, fall back to all colors
+      if (hueFiltered.length >= 3) {
+        candidateColors = hueFiltered;
+      }
+    }
+
+    // ===== PHASE 3: Calculate adjusted deltaE with penalties =====
+    for (let i = 0; i < candidateColors.length; i++) {
+      const colour = candidateColors[i];
+      const colourLab = { L: colour.L, a: colour.a, b: colour.b };
+      const colourChroma = Math.sqrt(colour.a * colour.a + colour.b * colour.b);
+
+      const baseDeltaE = deltaE2000(targetLab, colourLab);
+      let deltaE = baseDeltaE;
+
+      // CHROMA PENALTIES/BONUSES for playground vibrancy
+      if (isColored) {
+        // Penalize neutrals when target is colored
+        if (colourChroma < 15) {
+          deltaE += 8.0; // Strong penalty for neutral matching colored target
+        }
+
+        // Bonus for vibrant playground colors
+        if (colourChroma > 40) {
+          deltaE -= 3.0; // Prefer bold colors
+        }
+      }
+
+      // LIGHTNESS MATCHING BONUS
+      const lightnessDiff = Math.abs(targetLab.L - colour.L);
+      if (lightnessDiff < 15) {
+        deltaE -= 1.0; // Prefer similar lightness
+      }
+
+      // Keep existing Cream preference for light neutrals
+      if (colour.code === 'RH31' && targetLab.L > 82 && targetChroma < 15) {
+        deltaE -= 3.0;
       }
 
       results.push({
@@ -390,12 +444,12 @@ export class SmartBlendSolver {
         lab: colourLab,
         rgb: { R: colour.R, G: colour.G, B: colour.B },
         deltaE,
-        baseDeltaE: deltaE,
+        baseDeltaE,
         note: 'Single component',
-        reasoning: `Direct match with ${colour.name}`
+        reasoning: `Match with ${colour.name} (chroma: ${colourChroma.toFixed(1)})`
       });
     }
-    
+
     return results.sort((a, b) => a.deltaE - b.deltaE).slice(0, 2);
   }
   
