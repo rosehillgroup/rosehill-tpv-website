@@ -375,7 +375,7 @@ export class SmartBlendSolver {
     const targetChroma = Math.sqrt(targetLab.a * targetLab.a + targetLab.b * targetLab.b);
     const targetHue = Math.atan2(targetLab.b, targetLab.a) * 180 / Math.PI;
     const normalizedTargetHue = ((targetHue % 360) + 360) % 360;
-    const isColored = targetChroma > 15; // Target has detectable color vs neutral
+    const isColored = targetChroma > 18; // Target has detectable color vs neutral
 
     // ===== PHASE 2: Filter by hue family (for colored targets) =====
     let candidateColors = this.enhancedColours;
@@ -386,7 +386,7 @@ export class SmartBlendSolver {
         const colourChroma = Math.sqrt(colour.a * colour.a + colour.b * colour.b);
 
         // Include ALL colored options (pastel through vibrant)
-        if (colourChroma > 15) {
+        if (colourChroma > 18) {
           const colourHue = Math.atan2(colour.b, colour.a) * 180 / Math.PI;
           const normalizedColourHue = ((colourHue % 360) + 360) % 360;
           const hueDiff = Math.abs(normalizedTargetHue - normalizedColourHue);
@@ -396,7 +396,7 @@ export class SmartBlendSolver {
         }
 
         // Include low-chroma neutrals only as fallback
-        return colourChroma < 15;
+        return colourChroma < 18;
       });
 
       // If filter too restrictive, fall back to all colors
@@ -417,13 +417,24 @@ export class SmartBlendSolver {
       // CHROMA PENALTIES/BONUSES for playground vibrancy
       if (isColored) {
         // Penalize neutrals when target is colored
-        if (colourChroma < 15) {
+        if (colourChroma < 18) {
           deltaE += 12.0; // Strong penalty for neutral matching colored target
         }
 
-        // Bonus for vibrant playground colors
-        if (colourChroma > 25) {
-          deltaE -= 3.0; // Prefer bold colors
+        // Tiered bonus system for playground vibrancy
+        if (colourChroma > 60) {
+          deltaE -= 6.0; // S-tier: Ultra vibrant (RH02, RH41, RH50, RH11, RH90, RH01)
+        } else if (colourChroma > 45) {
+          deltaE -= 4.0; // A-tier: Very vibrant (RH20, RH21, RH40)
+        } else if (colourChroma > 35) {
+          deltaE -= 2.0; // B-tier: Moderately vibrant (RH10, RH12, RH22, RH26)
+        } else if (colourChroma > 25) {
+          deltaE -= 0.5; // C-tier: Weak/pastel (RH32, RH30)
+        }
+
+        // Penalize pastels when target is highly saturated (discourage brown/beige for vibrant surfaces)
+        if (targetChroma > 50 && colourChroma > 18 && colourChroma < 35) {
+          deltaE += 4.0; // Discourage pastels for vibrant playground targets
         }
       }
 
@@ -433,8 +444,8 @@ export class SmartBlendSolver {
         deltaE -= 1.0; // Prefer similar lightness
       }
 
-      // Keep existing Cream preference for light neutrals
-      if (colour.code === 'RH31' && targetLab.L > 82 && targetChroma < 20) {
+      // Cream preference for very light neutrals (more selective)
+      if (colour.code === 'RH31' && targetLab.L > 85 && targetChroma < 18) {
         deltaE -= 8.0;
       }
 
