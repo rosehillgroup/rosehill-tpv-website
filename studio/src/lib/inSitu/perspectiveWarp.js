@@ -102,9 +102,24 @@ function solveLinearSystem(A, b) {
 export function loadImage(url) {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Failed to load image: ${url}`));
+
+    // Only set crossOrigin for external URLs, not blob or data URLs
+    // Blob URLs don't support CORS and will fail if crossOrigin is set
+    if (!url.startsWith('blob:') && !url.startsWith('data:')) {
+      img.crossOrigin = 'anonymous';
+      console.log('[LOAD-IMAGE] Loading external URL with CORS:', url.substring(0, 50));
+    } else {
+      console.log('[LOAD-IMAGE] Loading local URL (blob/data):', url.substring(0, 50));
+    }
+
+    img.onload = () => {
+      console.log('[LOAD-IMAGE] Successfully loaded image:', url.substring(0, 50));
+      resolve(img);
+    };
+    img.onerror = () => {
+      console.error('[LOAD-IMAGE] Failed to load image:', url);
+      reject(new Error(`Failed to load image: ${url}`));
+    };
     img.src = url;
   });
 }
@@ -116,15 +131,19 @@ export function loadImage(url) {
  * @returns {Promise<HTMLImageElement>}
  */
 export async function rasterizeSvg(svgUrl, maxSize = 1536) {
+  console.log('[RASTERIZE-SVG] Starting SVG rasterization:', svgUrl.substring(0, 50), 'maxSize:', maxSize);
+
   // Load SVG as image first to get dimensions
   const svgImg = await loadImage(svgUrl);
 
   const { naturalWidth, naturalHeight } = svgImg;
+  console.log('[RASTERIZE-SVG] SVG loaded with dimensions:', naturalWidth, 'x', naturalHeight);
 
   // Calculate scale to fit within maxSize
   const scale = Math.min(1, maxSize / Math.max(naturalWidth, naturalHeight));
   const width = Math.round(naturalWidth * scale);
   const height = Math.round(naturalHeight * scale);
+  console.log('[RASTERIZE-SVG] Scaling to:', width, 'x', height, '(scale:', scale.toFixed(2), ')');
 
   // Create canvas and draw scaled SVG
   const canvas = document.createElement('canvas');
@@ -133,12 +152,19 @@ export async function rasterizeSvg(svgUrl, maxSize = 1536) {
 
   const ctx = canvas.getContext('2d');
   ctx.drawImage(svgImg, 0, 0, width, height);
+  console.log('[RASTERIZE-SVG] Drew SVG to canvas');
 
   // Convert canvas to image
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
+    img.onload = () => {
+      console.log('[RASTERIZE-SVG] Successfully rasterized SVG to PNG');
+      resolve(img);
+    };
+    img.onerror = (err) => {
+      console.error('[RASTERIZE-SVG] Failed to convert canvas to image:', err);
+      reject(err);
+    };
     img.src = canvas.toDataURL('image/png');
   });
 }
