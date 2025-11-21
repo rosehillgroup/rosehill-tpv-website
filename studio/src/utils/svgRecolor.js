@@ -8,21 +8,30 @@ import { normalizeHex } from './colorMapping.js';
 /**
  * Fetch and recolor an SVG file
  *
- * @param {string} svgUrl - URL of the original SVG
+ * @param {string} svgUrlOrText - URL of the original SVG, or SVG text content
  * @param {Map<string, Object>} colorMapping - Map of originalHex -> { blendHex, ... }
+ * @param {string} [providedSvgText] - Optional pre-loaded SVG text (to skip fetch)
  * @returns {Promise<string>} Recolored SVG as data URL
  */
-export async function recolorSVG(svgUrl, colorMapping) {
+export async function recolorSVG(svgUrlOrText, colorMapping, providedSvgText = null) {
   try {
-    // Fetch SVG content
-    console.log('[SVG-RECOLOR] Fetching SVG from:', svgUrl);
-    const response = await fetch(svgUrl);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch SVG: ${response.status} ${response.statusText}`);
-    }
+    let svgText;
 
-    const svgText = await response.text();
-    console.log(`[SVG-RECOLOR] Fetched SVG (${svgText.length} chars)`);
+    if (providedSvgText) {
+      // Use provided SVG text (e.g., pre-tagged SVG)
+      svgText = providedSvgText;
+      console.log(`[SVG-RECOLOR] Using provided SVG text (${svgText.length} chars)`);
+    } else {
+      // Fetch SVG content from URL
+      console.log('[SVG-RECOLOR] Fetching SVG from:', svgUrlOrText);
+      const response = await fetch(svgUrlOrText);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch SVG: ${response.status} ${response.statusText}`);
+      }
+
+      svgText = await response.text();
+      console.log(`[SVG-RECOLOR] Fetched SVG (${svgText.length} chars)`);
+    }
 
     // Parse SVG
     const parser = new DOMParser();

@@ -875,10 +875,11 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         setColorMapping(mapping);
 
         // Fetch and tag original SVG with region IDs (for per-element editing)
+        let taggedSvg = null;
         try {
           const svgResponse = await fetch(svg_url);
           const svgText = await svgResponse.text();
-          const taggedSvg = tagSvgRegions(svgText);
+          taggedSvg = tagSvgRegions(svgText);
           setOriginalTaggedSvg(taggedSvg);
           console.log('[TPV-STUDIO] Tagged SVG with region IDs for per-element editing');
         } catch (tagError) {
@@ -893,7 +894,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
           console.log('[TPV-STUDIO] Generating recoloured SVG from:', svg_url);
           console.log('[TPV-STUDIO] Using mapping with', mapping.size, 'colors');
-          const { dataUrl, stats } = await recolorSVG(svg_url, mapping);
+          const { dataUrl, stats } = await recolorSVG(svg_url, mapping, taggedSvg);
           setBlendSvgUrl(dataUrl);
           setProgressMessage('✓ TPV blend ready!');
           console.log('[TPV-STUDIO] Recolour stats:', {
@@ -906,7 +907,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           }
 
           // Auto-generate solid color version in background
-          handleGenerateSolid(svg_url, job_id);
+          handleGenerateSolid(svg_url, job_id, taggedSvg);
         } catch (svgError) {
           console.error('[TPV-STUDIO] Failed to generate recoloured SVG:', svgError);
           // Non-fatal error - recipes are still valid
@@ -999,9 +1000,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   };
 
   // Generate solid TPV color version (auto-called after blend recipes)
-  const handleGenerateSolid = async (svgUrl = null, jobIdParam = null) => {
+  const handleGenerateSolid = async (svgUrl = null, jobIdParam = null, taggedSvgParam = null) => {
     const svg_url = svgUrl || result?.svg_url;
     const job_id = jobIdParam || jobId;
+    const taggedSvg = taggedSvgParam || originalTaggedSvg; // Use passed or state
 
     if (!svg_url) return;
 
@@ -1035,7 +1037,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
         // Generate recoloured SVG with solid colors
         try {
-          const { dataUrl, stats } = await recolorSVG(svg_url, mapping);
+          const { dataUrl, stats } = await recolorSVG(svg_url, mapping, taggedSvg);
           setSolidSvgUrl(dataUrl);
           console.log('[TPV-STUDIO] Solid color SVG generated:', stats);
           if (stats.colorsNotMapped && stats.colorsNotMapped.size > 0) {
@@ -1250,8 +1252,12 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       });
 
       // Two-stage SVG regeneration:
-      // Stage 1: Apply global color mapping (recipes + edits)
-      const { svgText: globalRecolored, stats } = await recolorSVG(result.svg_url, updatedMapping);
+      // Stage 1: Apply global color mapping (recipes + edits) to tagged SVG
+      const { svgText: globalRecolored, stats } = await recolorSVG(
+        result.svg_url,
+        updatedMapping,
+        originalTaggedSvg // Pass tagged SVG to preserve region IDs
+      );
 
       // Stage 2: Apply region-level overrides (per-element edits)
       const finalSvg = applyRegionOverrides(globalRecolored, regionOverrides);
@@ -1351,8 +1357,12 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       });
 
       // Two-stage SVG regeneration:
-      // Stage 1: Apply global color mapping (recipes + edits)
-      const { svgText: globalRecolored, stats } = await recolorSVG(result.svg_url, updatedMapping);
+      // Stage 1: Apply global color mapping (recipes + edits) to tagged SVG
+      const { svgText: globalRecolored, stats } = await recolorSVG(
+        result.svg_url,
+        updatedMapping,
+        originalTaggedSvg // Pass tagged SVG to preserve region IDs
+      );
 
       // Stage 2: Apply region-level overrides (per-element edits)
       const finalSvg = applyRegionOverrides(globalRecolored, regionOverrides);
