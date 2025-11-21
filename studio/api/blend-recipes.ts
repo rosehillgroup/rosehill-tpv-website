@@ -69,6 +69,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const extractor = new PaletteExtractor({
       maxColours: max_colors,
       minAreaPct: 0, // Include all colors, even small design elements
+      mode: 'blend', // Use ΔE ≤ 15 for aggressive gradient collapse
       tpvPalette: tpvColours, // Pass TPV palette to avoid nested JSON imports
       rasterOptions: {
         resampleSize: 400,

@@ -14,6 +14,7 @@ import { getExtractionCache, generateCacheKey, ProgressiveLoader } from './cache
 export interface ExtractionOptions {
   maxColours?: number;
   minAreaPct?: number;
+  mode?: 'solid' | 'blend'; // Affects color merging threshold (solid: ΔE≤9, blend: ΔE≤15)
   combineStrategy?: 'prefer-pdf' | 'prefer-raster' | 'merge';
   rasterFallback?: boolean;
   tpvPalette?: any[]; // Pass TPV palette to avoid nested JSON imports
@@ -57,6 +58,7 @@ export class PaletteExtractor {
     this.options = {
       maxColours: options.maxColours ?? 15,
       minAreaPct: options.minAreaPct ?? 0, // Include all colors, even small design elements
+      mode: options.mode ?? 'blend', // Default to blend mode for backwards compatibility
       combineStrategy: options.combineStrategy ?? 'merge',
       rasterFallback: options.rasterFallback ?? true,
       pdfOptions: {
@@ -133,7 +135,8 @@ export class PaletteExtractor {
           progressLoader?.updateProgress('extracting', 30, 'Parsing SVG colors...');
           const svgResult = await this.svgExtractor.extract(
             fileBuffer,
-            fileValidation.format!
+            fileValidation.format!,
+            this.options.mode
           );
 
           svgColours = svgResult.colours.map(color => ({

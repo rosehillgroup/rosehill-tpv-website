@@ -165,7 +165,7 @@ function recolorSVGElement(svgElement, colorMapping) {
 }
 
 /**
- * Replace a single color value
+ * Replace a single color value using perceptual ΔE matching with guaranteed fallback
  *
  * @param {string} color - Color string (hex, rgb, etc.)
  * @param {Map} colorMapping - Color mapping
@@ -179,30 +179,51 @@ function replaceColor(color, colorMapping, notMappedSet) {
 
   const mappingKey = `#${normalized}`;
 
-  // Try exact match first (fast path)
+  // 1. Try exact match first (fast path)
   const exactMapping = colorMapping.get(mappingKey);
   if (exactMapping) {
     return exactMapping.blendHex;
   }
 
-  // Try tolerance-based match (for collapsed color clusters)
+  // 2. Try perceptual ΔE-based tolerance match + track nearest color
   const colorRgb = hexToRgbObj(normalized);
-  if (colorRgb) {
-    for (const [key, mapping] of colorMapping.entries()) {
-      const keyRgb = hexToRgbObj(key.replace('#', ''));
-      if (keyRgb && colorMatches(colorRgb, keyRgb)) {
-        console.log(`[SVG-RECOLOR] Tolerance match: ${mappingKey} matched to ${key} -> ${mapping.blendHex}`);
-        return mapping.blendHex;
-      }
+  if (!colorRgb) return color;
+
+  const colorLab = rgbToLab(colorRgb);
+  let bestMatch = null;
+  let smallestDeltaE = Infinity;
+
+  for (const [key, mapping] of colorMapping.entries()) {
+    const keyRgb = hexToRgbObj(key.replace('#', ''));
+    if (!keyRgb) continue;
+
+    const keyLab = rgbToLab(keyRgb);
+    const deltaE = deltaE2000(colorLab, keyLab);
+
+    // Track nearest color regardless of tolerance (for guaranteed fallback)
+    if (deltaE < smallestDeltaE) {
+      smallestDeltaE = deltaE;
+      bestMatch = mapping;
+    }
+
+    // If within tolerance (ΔE ≤ 9), return immediately
+    if (deltaE <= 9) {
+      console.log(`[SVG-RECOLOR] Tolerance match: ${mappingKey} → ${key} (ΔE=${deltaE.toFixed(2)})`);
+      return mapping.blendHex;
     }
   }
 
-  // Color not in mapping
-  console.warn(`[SVG-RECOLOR] No match found for: ${mappingKey} RGB(${colorRgb?.r}, ${colorRgb?.g}, ${colorRgb?.b})`);
-  if (notMappedSet) {
-    notMappedSet.add(color);
+  // 3. Guaranteed fallback: Use nearest color by ΔE (ensures no uneditable areas)
+  if (bestMatch) {
+    console.log(`[SVG-RECOLOR] Fallback to nearest: ${mappingKey} → ${bestMatch.blendHex} (ΔE=${smallestDeltaE.toFixed(2)})`);
+    if (notMappedSet) {
+      notMappedSet.add(color);
+    }
+    return bestMatch.blendHex;
   }
 
+  // Should never reach here, but safety fallback
+  console.warn(`[SVG-RECOLOR] No mapping found: ${mappingKey}`);
   return color;
 }
 
@@ -221,18 +242,100 @@ function hexToRgbObj(hex) {
 }
 
 /**
- * Check if two RGB colors match within tolerance
- * @param {Object} rgb1 - {r, g, b}
- * @param {Object} rgb2 - {r, g, b}
- * @returns {boolean}
+ * Convert RGB to LAB color space
+ * @param {Object} rgb - {r, g, b} values 0-255
+ * @returns {Object} {L, a, b} LAB values
  */
-function colorMatches(rgb1, rgb2) {
-  const tolerance = 50; // Same as SVGPreview
-  return (
-    Math.abs(rgb1.r - rgb2.r) <= tolerance &&
-    Math.abs(rgb1.g - rgb2.g) <= tolerance &&
-    Math.abs(rgb1.b - rgb2.b) <= tolerance
+function rgbToLab(rgb) {
+  // RGB to XYZ
+  let r = rgb.r / 255;
+  let g = rgb.g / 255;
+  let b = rgb.b / 255;
+
+  r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
+  g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
+  b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+
+  const x = (r * 0.4124 + g * 0.3576 + b * 0.1805) * 100;
+  const y = (r * 0.2126 + g * 0.7152 + b * 0.0722) * 100;
+  const z = (r * 0.0193 + g * 0.1192 + b * 0.9505) * 100;
+
+  // XYZ to LAB
+  const xn = 95.047;
+  const yn = 100.000;
+  const zn = 108.883;
+
+  let fx = x / xn;
+  let fy = y / yn;
+  let fz = z / zn;
+
+  fx = fx > 0.008856 ? Math.pow(fx, 1/3) : (7.787 * fx + 16/116);
+  fy = fy > 0.008856 ? Math.pow(fy, 1/3) : (7.787 * fy + 16/116);
+  fz = fz > 0.008856 ? Math.pow(fz, 1/3) : (7.787 * fz + 16/116);
+
+  return {
+    L: (116 * fy) - 16,
+    a: 500 * (fx - fy),
+    b: 200 * (fy - fz)
+  };
+}
+
+/**
+ * Calculate perceptual color difference using CIEDE2000 formula
+ * @param {Object} lab1 - {L, a, b}
+ * @param {Object} lab2 - {L, a, b}
+ * @returns {number} ΔE2000 value
+ */
+function deltaE2000(lab1, lab2) {
+  const kL = 1, kC = 1, kH = 1;
+  const deg360InRad = Math.PI * 2;
+  const deg180InRad = Math.PI;
+
+  const avgL = (lab1.L + lab2.L) / 2;
+  const c1 = Math.sqrt(lab1.a * lab1.a + lab1.b * lab1.b);
+  const c2 = Math.sqrt(lab2.a * lab2.a + lab2.b * lab2.b);
+  const avgC = (c1 + c2) / 2;
+  const g = 0.5 * (1 - Math.sqrt(Math.pow(avgC, 7) / (Math.pow(avgC, 7) + Math.pow(25, 7))));
+
+  const a1p = lab1.a * (1 + g);
+  const a2p = lab2.a * (1 + g);
+  const c1p = Math.sqrt(a1p * a1p + lab1.b * lab1.b);
+  const c2p = Math.sqrt(a2p * a2p + lab2.b * lab2.b);
+  const avgCp = (c1p + c2p) / 2;
+
+  let h1p = Math.atan2(lab1.b, a1p);
+  if (h1p < 0) h1p += deg360InRad;
+  let h2p = Math.atan2(lab2.b, a2p);
+  if (h2p < 0) h2p += deg360InRad;
+
+  const avghp = Math.abs(h1p - h2p) > deg180InRad ? (h1p + h2p + deg360InRad) / 2 : (h1p + h2p) / 2;
+  const t = 1 - 0.17 * Math.cos(avghp - Math.PI / 6) + 0.24 * Math.cos(2 * avghp) + 0.32 * Math.cos(3 * avghp + Math.PI / 30) - 0.2 * Math.cos(4 * avghp - 63 * Math.PI / 180);
+
+  let deltahp = h2p - h1p;
+  if (Math.abs(deltahp) > deg180InRad) {
+    deltahp = deltahp > 0 ? deltahp - deg360InRad : deltahp + deg360InRad;
+  }
+
+  const deltaL = lab2.L - lab1.L;
+  const deltaCp = c2p - c1p;
+  const deltaHp = 2 * Math.sqrt(c1p * c2p) * Math.sin(deltahp / 2);
+
+  const sL = 1 + (0.015 * Math.pow(avgL - 50, 2)) / Math.sqrt(20 + Math.pow(avgL - 50, 2));
+  const sC = 1 + 0.045 * avgCp;
+  const sH = 1 + 0.015 * avgCp * t;
+
+  const deltaTheta = 30 * Math.PI / 180 * Math.exp(-Math.pow((avghp - 275 * Math.PI / 180) / (25 * Math.PI / 180), 2));
+  const rC = 2 * Math.sqrt(Math.pow(avgCp, 7) / (Math.pow(avgCp, 7) + Math.pow(25, 7)));
+  const rT = -rC * Math.sin(2 * deltaTheta);
+
+  const deltaE = Math.sqrt(
+    Math.pow(deltaL / (kL * sL), 2) +
+    Math.pow(deltaCp / (kC * sC), 2) +
+    Math.pow(deltaHp / (kH * sH), 2) +
+    rT * (deltaCp / (kC * sC)) * (deltaHp / (kH * sH))
   );
+
+  return deltaE;
 }
 
 /**

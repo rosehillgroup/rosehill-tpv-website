@@ -85,7 +85,7 @@ export class SVGExtractor {
   /**
    * Extract colors from SVG buffer
    */
-  async extract(buffer: ArrayBuffer, format: string): Promise<SVGExtractionResult> {
+  async extract(buffer: ArrayBuffer, format: string, mode: 'solid' | 'blend' = 'blend'): Promise<SVGExtractionResult> {
     const startTime = Date.now();
     const warnings: string[] = [];
 
@@ -131,10 +131,11 @@ export class SVGExtractor {
       }
 
       // ===== PHASE 3: Global color collapse =====
-      // Merge similar colors across entire SVG (ΔE ≤ 15 for moderate gradient collapse)
+      // Mode-specific thresholds: solid mode (ΔE≤9) preserves more distinct colors, blend mode (ΔE≤15) collapses gradients
+      const threshold = mode === 'solid' ? 9 : 15;
       try {
-        colorCounts = this.collapseGlobalColors(colorCounts, 15);
-        warnings.push(`PHASE 3: Collapsed to ${colorCounts.size} color clusters (ΔE ≤ 15)`);
+        colorCounts = this.collapseGlobalColors(colorCounts, threshold);
+        warnings.push(`PHASE 3: Collapsed to ${colorCounts.size} color clusters (${mode} mode: ΔE ≤ ${threshold})`);
       } catch (error) {
         console.error(`[SVG] Error in collapseGlobalColors:`, error);
         warnings.push(`WARNING: Color collapse failed - ${error.message}`);

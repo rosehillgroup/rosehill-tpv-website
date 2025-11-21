@@ -52,6 +52,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const extractor = new PaletteExtractor({
       maxColours: max_colors,
       minAreaPct: 0,
+      mode: 'solid', // Use ΔE ≤ 9 for more distinct color preservation
       tpvPalette: tpvColours,
       rasterOptions: {
         resampleSize: 400,
