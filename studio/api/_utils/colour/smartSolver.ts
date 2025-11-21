@@ -381,18 +381,18 @@ export class SmartBlendSolver {
     let candidateColors = this.enhancedColours;
 
     if (isColored) {
-      // Filter to same hue family (±40° tolerance)
+      // Filter to same hue family (±50° tolerance)
       const hueFiltered = this.enhancedColours.filter(colour => {
         const colourChroma = Math.sqrt(colour.a * colour.a + colour.b * colour.b);
 
-        // Always include high-chroma colors (vibrant playground colors)
-        if (colourChroma > 40) {
+        // Include ALL colored options (pastel through vibrant)
+        if (colourChroma > 15) {
           const colourHue = Math.atan2(colour.b, colour.a) * 180 / Math.PI;
           const normalizedColourHue = ((colourHue % 360) + 360) % 360;
           const hueDiff = Math.abs(normalizedTargetHue - normalizedColourHue);
           const shortestHueDiff = Math.min(hueDiff, 360 - hueDiff);
 
-          return shortestHueDiff <= 40; // Same hue family
+          return shortestHueDiff <= 50; // Same hue family with wider tolerance
         }
 
         // Include low-chroma neutrals only as fallback
@@ -418,11 +418,11 @@ export class SmartBlendSolver {
       if (isColored) {
         // Penalize neutrals when target is colored
         if (colourChroma < 15) {
-          deltaE += 8.0; // Strong penalty for neutral matching colored target
+          deltaE += 12.0; // Strong penalty for neutral matching colored target
         }
 
         // Bonus for vibrant playground colors
-        if (colourChroma > 40) {
+        if (colourChroma > 25) {
           deltaE -= 3.0; // Prefer bold colors
         }
       }
@@ -434,8 +434,8 @@ export class SmartBlendSolver {
       }
 
       // Keep existing Cream preference for light neutrals
-      if (colour.code === 'RH31' && targetLab.L > 82 && targetChroma < 15) {
-        deltaE -= 3.0;
+      if (colour.code === 'RH31' && targetLab.L > 82 && targetChroma < 20) {
+        deltaE -= 8.0;
       }
 
       results.push({
