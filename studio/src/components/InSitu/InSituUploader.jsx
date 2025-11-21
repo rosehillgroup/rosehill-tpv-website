@@ -95,14 +95,23 @@ export default function InSituUploader({ onPhotoUploaded, disabled = false }) {
       console.log('[IN-SITU-UPLOADER] Photo uploaded:', publicUrl);
 
       // Load image to get dimensions
+      console.log('[IN-SITU-UPLOADER] Loading image to get dimensions...');
       const img = new Image();
+      img.crossOrigin = 'anonymous'; // Supabase URLs need CORS
       img.onload = () => {
+        console.log('[IN-SITU-UPLOADER] Image loaded successfully, dimensions:', img.naturalWidth, 'x', img.naturalHeight);
+        console.log('[IN-SITU-UPLOADER] Calling onPhotoUploaded callback...');
         onPhotoUploaded({
           url: publicUrl,
           width: img.naturalWidth,
           height: img.naturalHeight,
           filename: file.name
         });
+      };
+      img.onerror = (err) => {
+        console.error('[IN-SITU-UPLOADER] Failed to load uploaded image:', err);
+        console.error('[IN-SITU-UPLOADER] Public URL was:', publicUrl);
+        throw new Error('Failed to load uploaded image');
       };
       img.src = publicUrl;
 
