@@ -630,6 +630,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     } else if (pendingDownloadAction === 'insitu') {
       // Open in-situ modal with new dimensions
       setTimeout(() => setShowInSituModal(true), 100);
+    } else if (pendingDownloadAction === 'save') {
+      // Open save modal with new dimensions
+      setTimeout(() => setShowSaveModal(true), 100);
     }
 
     setPendingDownloadAction(null);
@@ -690,6 +693,34 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       };
       img.src = svgUrl;
     }
+  };
+
+  // Handle save design click - check dimensions first
+  const handleSaveClick = async () => {
+    const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
+
+    // Check if dimensions are set (prompt mode always has them, image/SVG uploads might not)
+    if ((inputMode === 'image' || inputMode === 'svg') && (!widthMM || !lengthMM)) {
+      console.log('[DIMENSION] No dimensions set for image/SVG upload, showing modal before save...');
+
+      // Detect aspect ratio from SVG
+      const aspectRatio = await detectSVGAspectRatio(svgUrl);
+      if (aspectRatio) {
+        setSvgAspectRatio(aspectRatio);
+        setPendingDownloadAction('save');
+        setShowDimensionModal(true);
+        return;
+      } else {
+        // Fallback: assume square if detection fails
+        setSvgAspectRatio(1);
+        setPendingDownloadAction('save');
+        setShowDimensionModal(true);
+        return;
+      }
+    }
+
+    // Dimensions are set, open save modal directly
+    setShowSaveModal(true);
   };
 
   // Download PDF Export
@@ -1974,7 +2005,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           {/* Action Buttons - Show when design is ready */}
           {blendSvgUrl && (
             <div className="action-buttons">
-              <button onClick={() => setShowSaveModal(true)} className="save-button">
+              <button onClick={handleSaveClick} className="save-button">
                 💾 Save Design
               </button>
               <button onClick={handleDownloadSVG} className="download-button svg">
