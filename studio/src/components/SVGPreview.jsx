@@ -47,7 +47,9 @@ export default function SVGPreview({
         const response = await fetch(blendSvgUrl);
         const svgText = await response.text();
         setInlineSvgContent(svgText);
-        console.log('[SVGPreview] Fetched inline SVG content');
+        const hasRegionTags = svgText.includes('data-region-id');
+        const regionCount = (svgText.match(/data-region-id/g) || []).length;
+        console.log('[SVGPreview] Fetched inline SVG content - length:', svgText.length, 'hasRegionTags:', hasRegionTags, 'regionCount:', regionCount);
       } catch (error) {
         console.error('[SVGPreview] Failed to fetch SVG content:', error);
         setInlineSvgContent(null);
@@ -312,9 +314,13 @@ export default function SVGPreview({
     // Don't trigger color selection if we were dragging
     if (isDragging) return;
 
+    console.log('[SVGPreview] Click detected - onRegionClick:', !!onRegionClick, 'inlineSvgContent:', !!inlineSvgContent, 'target:', e.target.tagName);
+
     // Try region-based click detection first (for inline SVG with region IDs)
     if (onRegionClick && inlineSvgContent) {
+      console.log('[SVGPreview] Attempting region detection on target:', e.target);
       const regionEl = findRegionElement(e.target);
+      console.log('[SVGPreview] Found region element:', regionEl);
       if (regionEl) {
         const regionId = regionEl.getAttribute('data-region-id');
         const fill = regionEl.getAttribute('fill') ||
@@ -328,7 +334,11 @@ export default function SVGPreview({
           element: regionEl
         });
         return;
+      } else {
+        console.log('[SVGPreview] No region element found from target');
       }
+    } else {
+      console.log('[SVGPreview] Region detection skipped - onRegionClick:', !!onRegionClick, 'inlineSvgContent:', !!inlineSvgContent);
     }
 
     // Fallback to pixel-based color detection (for palette clicks or if no region found)
