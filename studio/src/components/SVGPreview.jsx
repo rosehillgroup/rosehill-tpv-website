@@ -19,7 +19,13 @@ export default function SVGPreview({
   isNameLoading = false, // Whether name is being generated
   onInSituClick, // () => void - callback to open in-situ preview
   eyedropperActive = false, // Whether eyedropper mode is active
-  eyedropperRegion = null // Currently selected region for eyedropper
+  eyedropperRegion = null, // Currently selected region for eyedropper
+  // Undo/redo props
+  onRegionUndo, // () => void - callback to undo last region edit
+  onRegionRedo, // () => void - callback to redo next region edit
+  canUndo = false, // Whether undo is available
+  canRedo = false, // Whether redo is available
+  regionOverridesCount = 0 // Number of region overrides applied
 }) {
   const [highlightMask, setHighlightMask] = useState(null);
   const [inlineSvgContent, setInlineSvgContent] = useState(null);
@@ -461,6 +467,34 @@ export default function SVGPreview({
             <span className="zoom-level">{Math.round(zoom * 100)}%</span>
           </div>
 
+          {/* Undo/Redo Controls - Show only when region overrides exist */}
+          {regionOverridesCount > 0 && (
+            <div className="undo-redo-controls">
+              <button
+                onClick={onRegionUndo}
+                className="undo-redo-btn"
+                title="Undo (Ctrl+Z)"
+                disabled={!canUndo}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 7v6h6"/>
+                  <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+                </svg>
+              </button>
+              <button
+                onClick={onRegionRedo}
+                className="undo-redo-btn"
+                title="Redo (Ctrl+Y)"
+                disabled={!canRedo}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 7v6h-6"/>
+                  <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/>
+                </svg>
+              </button>
+            </div>
+          )}
+
           {/* In-Situ Preview Button */}
           {onInSituClick && (
             <button onClick={onInSituClick} className="in-situ-btn" title="Preview In-Situ">
@@ -691,6 +725,56 @@ export default function SVGPreview({
           padding: 0 0.5rem;
         }
 
+        /* Undo/Redo Controls */
+        .undo-redo-controls {
+          position: absolute;
+          top: 5rem;
+          right: 1rem;
+          display: flex;
+          gap: 0.5rem;
+          background: white;
+          border-radius: 8px;
+          padding: 0.5rem;
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+          z-index: 10;
+        }
+
+        .undo-redo-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 36px;
+          height: 36px;
+          padding: 0;
+          background: white;
+          border: 1px solid #e0e0e0;
+          border-radius: 6px;
+          cursor: pointer;
+          color: #1a365d;
+          transition: all 0.2s ease;
+        }
+
+        .undo-redo-btn:hover:not(:disabled) {
+          background: #f8fafc;
+          border-color: #1e4a7a;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .undo-redo-btn:active:not(:disabled) {
+          transform: translateY(0);
+        }
+
+        .undo-redo-btn:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+
+        .undo-redo-btn svg {
+          width: 20px;
+          height: 20px;
+        }
+
         .in-situ-btn {
           position: absolute;
           top: 1rem;
@@ -891,6 +975,11 @@ export default function SVGPreview({
 
           /* Hide zoom controls on mobile - use native pinch-to-zoom */
           .zoom-controls {
+            display: none;
+          }
+
+          /* Hide undo/redo controls on mobile */
+          .undo-redo-controls {
             display: none;
           }
 

@@ -76,6 +76,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   const [regionRecolorQueue, setRegionRecolorQueue] = useState([]); // Queue of {regionId, newHex} operations
   const [isProcessingQueue, setIsProcessingQueue] = useState(false); // Track if currently processing queue
 
+  // Undo/redo history for region overrides
+  const [regionOverridesHistory, setRegionOverridesHistory] = useState([new Map()]); // Array of Map snapshots
+  const [historyIndex, setHistoryIndex] = useState(0); // Current position in history
+
   // Mixer state (for blend mode only)
   const [mixerOpen, setMixerOpen] = useState(false);
   const [mixerColor, setMixerColor] = useState(null); // Color being edited in mixer
@@ -1163,6 +1167,27 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       // Update state after successful regeneration
       setRegionOverrides(newOverrides);
 
+      // Add to history for undo/redo
+      setRegionOverridesHistory(prevHistory => {
+        // If not at end of history, truncate future (standard undo/redo behavior)
+        const newHistory = prevHistory.slice(0, historyIndex + 1);
+        // Add new state
+        newHistory.push(new Map(newOverrides));
+        // Limit history to 50 entries
+        if (newHistory.length > 50) {
+          newHistory.shift();
+          return newHistory;
+        }
+        return newHistory;
+      });
+
+      // Move history index to end
+      setHistoryIndex(prev => {
+        const newHistory = regionOverridesHistory.slice(0, prev + 1);
+        newHistory.push(new Map(newOverrides));
+        return Math.min(newHistory.length - 1, 49); // Cap at 49 (0-indexed, max 50 entries)
+      });
+
       console.log('[TPV-STUDIO] Completed region recolor for:', operation.regionId);
     } catch (err) {
       console.error('[TPV-STUDIO] Failed to process region recolor:', err);
@@ -1178,6 +1203,48 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     console.log('[TPV-STUDIO] Eyedropper cancelled');
     setEyedropperActive(false);
     setEyedropperRegion(null);
+  };
+
+  // Undo last region override change
+  const handleRegionUndo = async () => {
+    if (historyIndex <= 0) return; // Can't undo past the beginning
+
+    const newIndex = historyIndex - 1;
+    const previousOverrides = regionOverridesHistory[newIndex];
+
+    console.log('[TPV-STUDIO] Undoing region override to index:', newIndex);
+
+    // Apply previous state
+    setRegionOverrides(new Map(previousOverrides));
+    setHistoryIndex(newIndex);
+
+    // Regenerate with previous overrides
+    if (viewMode === 'blend') {
+      await regenerateBlendSVG(null, null, previousOverrides);
+    } else {
+      await regenerateSolidSVG(null, null, previousOverrides);
+    }
+  };
+
+  // Redo next region override change
+  const handleRegionRedo = async () => {
+    if (historyIndex >= regionOverridesHistory.length - 1) return; // Can't redo past the end
+
+    const newIndex = historyIndex + 1;
+    const nextOverrides = regionOverridesHistory[newIndex];
+
+    console.log('[TPV-STUDIO] Redoing region override to index:', newIndex);
+
+    // Apply next state
+    setRegionOverrides(new Map(nextOverrides));
+    setHistoryIndex(newIndex);
+
+    // Regenerate with next overrides
+    if (viewMode === 'blend') {
+      await regenerateBlendSVG(null, null, nextOverrides);
+    } else {
+      await regenerateSolidSVG(null, null, nextOverrides);
+    }
   };
 
   // Handle color change from ColorEditorPanel (solid mode only)
@@ -1828,6 +1895,11 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
                 onInSituClick={handleInSituClick}
                 eyedropperActive={eyedropperActive}
                 eyedropperRegion={eyedropperRegion}
+                onRegionUndo={handleRegionUndo}
+                onRegionRedo={handleRegionRedo}
+                canUndo={historyIndex > 0}
+                canRedo={historyIndex < regionOverridesHistory.length - 1}
+                regionOverridesCount={regionOverrides.size}
               />
             </div>
           )}
@@ -1851,6 +1923,11 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
                 onInSituClick={handleInSituClick}
                 eyedropperActive={eyedropperActive}
                 eyedropperRegion={eyedropperRegion}
+                onRegionUndo={handleRegionUndo}
+                onRegionRedo={handleRegionRedo}
+                canUndo={historyIndex > 0}
+                canRedo={historyIndex < regionOverridesHistory.length - 1}
+                regionOverridesCount={regionOverrides.size}
               />
             </div>
           )}
