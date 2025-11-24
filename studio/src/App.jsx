@@ -20,14 +20,27 @@ function App() {
   const checkAdminStatus = async () => {
     try {
       const session = await auth.getSession();
+      console.log('[APP] Session object:', session);
+      console.log('[APP] Access token:', session?.access_token);
+
+      if (!session?.access_token) {
+        console.warn('[APP] No access token found in session');
+        setIsAdmin(false);
+        return;
+      }
+
       const response = await fetch('/api/admin/users', {
         headers: {
-          'Authorization': `Bearer ${session?.access_token}`
+          'Authorization': `Bearer ${session.access_token}`
         }
       });
+
+      console.log('[APP] Admin check response:', response.status, response.ok);
+
       // If we can access admin endpoint, user is admin
       setIsAdmin(response.ok);
     } catch (error) {
+      console.error('[APP] Admin check failed:', error);
       setIsAdmin(false);
     }
   };
