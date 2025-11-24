@@ -1,7 +1,24 @@
 // TPV Studio - API Client (Recraft Vector AI)
 import { API_ENDPOINTS } from '../constants.js';
+import { auth } from './auth.js';
 
 class APIClient {
+  /**
+   * Get authentication headers for API requests
+   * @private
+   */
+  async _getAuthHeaders() {
+    const session = await auth.getSession();
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+
+    if (session?.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
+
+    return headers;
+  }
   // ============================================================================
   // RECRAFT VECTOR AI (Current)
   // ============================================================================
@@ -25,11 +42,11 @@ class APIClient {
       seed: request.seed || null
     };
 
+    const headers = await this._getAuthHeaders();
+
     const response = await fetch('/api/recraft-generate', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(payload)
     });
 
@@ -58,11 +75,11 @@ class APIClient {
       seed: request.seed || null
     };
 
+    const headers = await this._getAuthHeaders();
+
     const response = await fetch('/api/recraft-vectorize', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(payload)
     });
 
@@ -215,11 +232,11 @@ class APIClient {
       dimensions: request.dimensions || {}
     };
 
+    const headers = await this._getAuthHeaders();
+
     const response = await fetch('/api/generate-design-name', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(payload)
     });
 
