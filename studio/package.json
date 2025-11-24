@@ -11,6 +11,8 @@
     "@anthropic-ai/sdk": "^0.32.1",
     "@resvg/resvg-js": "^2.6.2",
     "@supabase/supabase-js": "^2.38.0",
+    "@upstash/ratelimit": "^2.0.7",
+    "@upstash/redis": "^1.35.6",
     "chaikin-smooth": "^1.0.4",
     "color-diff": "^1.4.0",
     "culori": "^4.0.1",
