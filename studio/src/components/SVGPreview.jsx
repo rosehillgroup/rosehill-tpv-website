@@ -100,7 +100,23 @@ export default function SVGPreview({
       return null;
     }
 
-    return sanitized;
+    // Ensure SVG has width and height attributes for proper rendering
+    // Replace opening <svg> tag to add width="100%" height="100%"
+    const svgWithDimensions = sanitized.replace(
+      /<svg([^>]*)>/i,
+      (match, attributes) => {
+        // Only add if not already present
+        if (!attributes.includes('width=')) {
+          attributes += ' width="100%"';
+        }
+        if (!attributes.includes('height=')) {
+          attributes += ' height="100%"';
+        }
+        return `<svg${attributes}>`;
+      }
+    );
+
+    return svgWithDimensions;
   }, [inlineSvgContent]);
 
   // Create highlight mask when a color is selected
@@ -594,6 +610,13 @@ export default function SVGPreview({
                 <div
                   ref={svgContainerRef}
                   className="svg-inline-container"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
                   dangerouslySetInnerHTML={{ __html: sanitizedSvgContent }}
                 />
               ) : (
