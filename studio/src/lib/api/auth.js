@@ -13,11 +13,8 @@ export const auth = {
 
     if (error) throw error;
 
-    // Check if email ends with @rosehill.group
-    if (!email.endsWith('@rosehill.group')) {
-      await supabase.auth.signOut();
-      throw new Error('Access restricted to @rosehill.group emails');
-    }
+    // Note: Email domain restriction removed - users are manually added to Supabase
+    // Access control is managed through user account creation, not email domain
 
     localStorage.setItem(STORAGE_KEYS.AUTH_SESSION, JSON.stringify(data.session));
     return data;

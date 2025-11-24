@@ -421,7 +421,7 @@ export default function LandingPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@rosehill.group"
+                  placeholder="your.email@company.com"
                   required
                 />
               </div>
