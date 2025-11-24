@@ -92,7 +92,14 @@ export default function SVGPreview({
       return null;
     }
 
-    console.log('[SVGPreview] SVG sanitization complete');
+    console.log('[SVGPreview] SVG sanitization complete - length:', sanitized.length);
+    console.log('[SVGPreview] Sanitized content preview:', sanitized.substring(0, 200));
+
+    if (!sanitized.includes('<svg')) {
+      console.error('[SVGPreview] Sanitized SVG does not contain <svg> tag!');
+      return null;
+    }
+
     return sanitized;
   }, [inlineSvgContent]);
 
