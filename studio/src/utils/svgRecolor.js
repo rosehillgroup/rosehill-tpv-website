@@ -4,6 +4,7 @@
  */
 
 import { normalizeHex } from './colorMapping.js';
+import { sanitizeSVG } from './sanitizeSVG.js';
 
 /**
  * Fetch and recolor an SVG file
@@ -33,9 +34,17 @@ export async function recolorSVG(svgUrlOrText, colorMapping, providedSvgText = n
       console.log(`[SVG-RECOLOR] Fetched SVG (${svgText.length} chars)`);
     }
 
+    // Sanitize SVG content before parsing (XSS protection)
+    console.log('[SVG-RECOLOR] Sanitizing SVG...');
+    const sanitizedSvgText = sanitizeSVG(svgText);
+
+    if (!sanitizedSvgText) {
+      throw new Error('SVG sanitization failed - content rejected');
+    }
+
     // Parse SVG
     const parser = new DOMParser();
-    const svgDoc = parser.parseFromString(svgText, 'image/svg+xml');
+    const svgDoc = parser.parseFromString(sanitizedSvgText, 'image/svg+xml');
 
     // Check for parse errors
     const parseError = svgDoc.querySelector('parsererror');

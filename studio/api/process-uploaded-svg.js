@@ -4,6 +4,7 @@
 
 import { getSupabaseServiceClient, getAuthenticatedClient } from './_utils/supabase.js';
 import { randomUUID } from 'crypto';
+import { sanitizeAndValidateSVG, quickValidateSVG } from '../src/utils/sanitizeSVG.js';
 
 /**
  * Process uploaded SVG file (direct path - no AI generation)
@@ -50,11 +51,30 @@ export default async function handler(req, res) {
       });
     }
 
-    // Validate that URL is from Supabase storage (security check)
-    if (!svg_url.includes('supabase.co/storage')) {
+    // Validate that URL is from Supabase storage (security check - SSRF protection)
+    try {
+      const parsedUrl = new URL(svg_url);
+      const allowedOrigin = process.env.VITE_SUPABASE_URL || 'https://okakomwfikxmwllvliva.supabase.co';
+      const allowedUrl = new URL(allowedOrigin);
+
+      if (parsedUrl.origin !== allowedUrl.origin) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid SVG URL. Must be uploaded to Supabase storage first.'
+        });
+      }
+
+      // Ensure it's actually a storage URL
+      if (!parsedUrl.pathname.includes('/storage/v1/object/')) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid SVG URL. Must be a Supabase storage URL.'
+        });
+      }
+    } catch (urlError) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid SVG URL. Must be uploaded to Supabase storage first.'
+        error: 'Invalid SVG URL format.'
       });
     }
 
@@ -95,12 +115,39 @@ export default async function handler(req, res) {
       });
     }
 
-    // Validate SVG content
-    if (!svgContent.trim().toLowerCase().includes('<svg')) {
+    // Quick validation check
+    if (!quickValidateSVG(svgContent)) {
+      console.warn('[PROCESS-SVG] SVG failed quick validation - possible malicious content');
       return res.status(400).json({
         success: false,
-        error: 'Invalid file. Must be a valid SVG file.'
+        error: 'Invalid SVG file. Contains potentially dangerous content or is not a valid SVG.'
       });
+    }
+
+    // Sanitize SVG content to remove XSS vectors
+    console.log('[PROCESS-SVG] Sanitizing SVG content...');
+    const sanitizedSvgContent = sanitizeAndValidateSVG(svgContent);
+
+    if (!sanitizedSvgContent) {
+      console.error('[PROCESS-SVG] SVG sanitization failed - content rejected');
+      return res.status(400).json({
+        success: false,
+        error: 'SVG file contains invalid or potentially dangerous content and was rejected.'
+      });
+    }
+
+    console.log('[PROCESS-SVG] SVG sanitization complete');
+
+    // Log if significant content was removed (possible attack attempt)
+    const inputLength = svgContent.length;
+    const outputLength = sanitizedSvgContent.length;
+    const reductionPercent = ((inputLength - outputLength) / inputLength) * 100;
+
+    if (reductionPercent > 10) {
+      console.warn(
+        `[PROCESS-SVG] Removed ${reductionPercent.toFixed(1)}% of SVG content ` +
+        `during sanitization - possible malicious SVG detected`
+      );
     }
 
     // Generate job ID (UUID format required by Supabase)

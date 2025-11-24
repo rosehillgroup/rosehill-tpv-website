@@ -1,8 +1,9 @@
 // TPV Studio - SVG Preview Component
 // Shows TPV blend SVG with color legend and color highlighting
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import ColorLegend from './ColorLegend';
+import { sanitizeSVG } from '../utils/sanitizeSVG';
 
 export default function SVGPreview({
   blendSvgUrl,
@@ -76,6 +77,24 @@ export default function SVGPreview({
 
     fetchSvgContent();
   }, [blendSvgUrl]);
+
+  // Sanitize SVG content to prevent XSS attacks
+  const sanitizedSvgContent = useMemo(() => {
+    if (!inlineSvgContent) {
+      return null;
+    }
+
+    console.log('[SVGPreview] Sanitizing SVG content...');
+    const sanitized = sanitizeSVG(inlineSvgContent);
+
+    if (!sanitized) {
+      console.error('[SVGPreview] SVG sanitization failed - content rejected');
+      return null;
+    }
+
+    console.log('[SVGPreview] SVG sanitization complete');
+    return sanitized;
+  }, [inlineSvgContent]);
 
   // Create highlight mask when a color is selected
   useEffect(() => {
@@ -563,12 +582,12 @@ export default function SVGPreview({
                 cursor: isDragging ? 'grabbing' : (zoom > 1 ? 'grab' : (eyedropperActive ? 'crosshair' : (onColorClick ? 'pointer' : 'default')))
               }}
             >
-              {inlineSvgContent ? (
-                // Inline SVG for region click detection
+              {sanitizedSvgContent ? (
+                // Inline SVG for region click detection (sanitized to prevent XSS)
                 <div
                   ref={svgContainerRef}
                   className="svg-inline-container"
-                  dangerouslySetInnerHTML={{ __html: inlineSvgContent }}
+                  dangerouslySetInnerHTML={{ __html: sanitizedSvgContent }}
                 />
               ) : (
                 // Fallback to image display
