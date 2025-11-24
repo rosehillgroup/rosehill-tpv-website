@@ -102,7 +102,9 @@ function App() {
   // If showing admin panel, render it fullscreen
   if (showAdmin) {
     return (
-      <AdminDashboard onClose={() => setShowAdmin(false)} />
+      <div className="tpv-studio">
+        <AdminDashboard onClose={() => setShowAdmin(false)} />
+      </div>
     );
   }
 
