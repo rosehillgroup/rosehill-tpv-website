@@ -4,7 +4,7 @@
 
 import { getSupabaseServiceClient, getAuthenticatedClient } from './_utils/supabase.js';
 import { randomUUID } from 'crypto';
-import { sanitizeAndValidateSVG, quickValidateSVG } from '../src/utils/sanitizeSVG.js';
+import { sanitizeAndValidateSVG, quickValidateSVG } from './_utils/svgSanitize.js';
 
 /**
  * Process uploaded SVG file (direct path - no AI generation)

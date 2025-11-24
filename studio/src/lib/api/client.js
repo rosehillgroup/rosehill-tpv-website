@@ -106,11 +106,11 @@ class APIClient {
       length_mm: request.length_mm || 5000
     };
 
+    const headers = await this._getAuthHeaders();
+
     const response = await fetch('/api/process-uploaded-svg', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(payload)
     });
 
