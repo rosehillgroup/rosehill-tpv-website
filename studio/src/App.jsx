@@ -19,9 +19,10 @@ function App() {
   // Check if user has admin role
   const checkAdminStatus = async () => {
     try {
+      const session = await auth.getSession();
       const response = await fetch('/api/admin/users', {
         headers: {
-          'Authorization': `Bearer ${(await auth.getSession())?.access_token}`
+          'Authorization': `Bearer ${session?.access_token}`
         }
       });
       // If we can access admin endpoint, user is admin

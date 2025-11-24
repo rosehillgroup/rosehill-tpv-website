@@ -2,7 +2,7 @@
 // Handles drag-drop or click upload of site photos
 
 import { useState, useRef } from 'react';
-import { supabase } from '../../lib/supabase/client.js';
+import { supabase } from '../../lib/api/auth.js';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];

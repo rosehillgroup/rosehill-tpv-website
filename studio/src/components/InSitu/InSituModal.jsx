@@ -10,7 +10,7 @@ import {
   rasterizeSvg,
   warpDesignOntoPhoto
 } from '../../lib/inSitu/perspectiveWarp.js';
-import { supabase } from '../../lib/supabase/client.js';
+import { supabase } from '../../lib/api/auth.js';
 
 // Workflow steps
 const STEPS = {
