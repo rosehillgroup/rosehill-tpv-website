@@ -5,6 +5,7 @@
 import { getSupabaseServiceClient, getAuthenticatedClient } from './_utils/supabase.js';
 import { generateRecraftSvg } from './_utils/recraft/client.js';
 import { randomUUID } from 'crypto';
+import { checkRateLimit, getRateLimitResponse, getRateLimitIdentifier } from './_utils/rateLimit.js';
 
 /**
  * Generate vector design using Recraft AI
@@ -45,6 +46,21 @@ export default async function handler(req, res) {
         error: 'Authentication required. Please sign in to generate designs.'
       });
     }
+
+    // Check rate limit
+    const identifier = getRateLimitIdentifier(req, user);
+    const rateLimitCheck = await checkRateLimit(identifier, '/api/recraft-generate');
+
+    if (!rateLimitCheck.allowed) {
+      return res.status(429).json(
+        getRateLimitResponse(rateLimitCheck.limit, rateLimitCheck.remaining, rateLimitCheck.reset)
+      );
+    }
+
+    // Set rate limit headers
+    res.setHeader('X-RateLimit-Limit', rateLimitCheck.limit.toString());
+    res.setHeader('X-RateLimit-Remaining', rateLimitCheck.remaining.toString());
+    res.setHeader('X-RateLimit-Reset', rateLimitCheck.reset.toString());
 
     const {
       prompt,

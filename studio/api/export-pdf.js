@@ -7,6 +7,7 @@
  */
 
 import { getAuthenticatedClient } from './_utils/supabase.js';
+import { checkRateLimit, getRateLimitResponse, getRateLimitIdentifier } from './_utils/rateLimit.js';
 
 export const config = {
   api: {
@@ -36,6 +37,21 @@ export default async function handler(req, res) {
         message: 'Please sign in to export PDFs.'
       });
     }
+
+    // Check rate limit
+    const identifier = getRateLimitIdentifier(req, user);
+    const rateLimitCheck = await checkRateLimit(identifier, '/api/export-pdf');
+
+    if (!rateLimitCheck.allowed) {
+      return res.status(429).json(
+        getRateLimitResponse(rateLimitCheck.limit, rateLimitCheck.remaining, rateLimitCheck.reset)
+      );
+    }
+
+    // Set rate limit headers
+    res.setHeader('X-RateLimit-Limit', rateLimitCheck.limit.toString());
+    res.setHeader('X-RateLimit-Remaining', rateLimitCheck.remaining.toString());
+    res.setHeader('X-RateLimit-Reset', rateLimitCheck.reset.toString());
 
     // Dynamic import to avoid CommonJS/ESM issues
     const { generateExportPDF } = await import('./_utils/pdf/generator.js');

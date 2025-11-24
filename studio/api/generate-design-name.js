@@ -4,6 +4,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { getAuthenticatedClient } from './_utils/supabase.js';
+import { checkRateLimit, getRateLimitResponse, getRateLimitIdentifier } from './_utils/rateLimit.js';
 
 /**
  * Initialize Anthropic client
@@ -54,6 +55,21 @@ export default async function handler(req, res) {
         error: 'Authentication required. Please sign in to generate design names.'
       });
     }
+
+    // Check rate limit
+    const identifier = getRateLimitIdentifier(req, user);
+    const rateLimitCheck = await checkRateLimit(identifier, '/api/generate-design-name');
+
+    if (!rateLimitCheck.allowed) {
+      return res.status(429).json(
+        getRateLimitResponse(rateLimitCheck.limit, rateLimitCheck.remaining, rateLimitCheck.reset)
+      );
+    }
+
+    // Set rate limit headers
+    res.setHeader('X-RateLimit-Limit', rateLimitCheck.limit.toString());
+    res.setHeader('X-RateLimit-Remaining', rateLimitCheck.remaining.toString());
+    res.setHeader('X-RateLimit-Reset', rateLimitCheck.reset.toString());
 
     const {
       prompt,

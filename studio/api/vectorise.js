@@ -9,6 +9,7 @@ import { posterizeImage, extractDominantColors } from './_utils/color-quantize.j
 import { vectorizeImage, estimateQuality } from './_utils/vectorize.js';
 import { exportSVG, uploadToStorage } from './_utils/exports.js';
 import { checkRegionConstraints, calculateBOM } from './_utils/constraints.js';
+import { checkRateLimit, getRateLimitResponse, getRateLimitIdentifier } from './_utils/rateLimit.js';
 
 /**
  * Get Supabase client with service role (for storage uploads)
@@ -75,6 +76,22 @@ export default async function handler(req, res) {
         error: 'Authentication required. Please sign in to vectorize images.'
       });
     }
+
+    // Check rate limit
+    const identifier = getRateLimitIdentifier(req, user);
+    const rateLimitCheck = await checkRateLimit(identifier, '/api/vectorise');
+
+    if (!rateLimitCheck.allowed) {
+      return res.status(429).json({
+        ok: false,
+        ...getRateLimitResponse(rateLimitCheck.limit, rateLimitCheck.remaining, rateLimitCheck.reset)
+      });
+    }
+
+    // Set rate limit headers
+    res.setHeader('X-RateLimit-Limit', rateLimitCheck.limit.toString());
+    res.setHeader('X-RateLimit-Remaining', rateLimitCheck.remaining.toString());
+    res.setHeader('X-RateLimit-Reset', rateLimitCheck.reset.toString());
 
     // Parse request
     const {

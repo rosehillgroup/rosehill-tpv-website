@@ -5,6 +5,7 @@
 import { getSupabaseServiceClient, getAuthenticatedClient } from './_utils/supabase.js';
 import { vectorizeImage } from './_utils/recraft/vectorize-client.js';
 import { randomUUID } from 'crypto';
+import { checkRateLimit, getRateLimitResponse, getRateLimitIdentifier } from './_utils/rateLimit.js';
 
 /**
  * Vectorize raster image using Recraft AI
@@ -44,6 +45,21 @@ export default async function handler(req, res) {
         error: 'Authentication required. Please sign in to vectorize images.'
       });
     }
+
+    // Check rate limit
+    const identifier = getRateLimitIdentifier(req, user);
+    const rateLimitCheck = await checkRateLimit(identifier, '/api/recraft-vectorize');
+
+    if (!rateLimitCheck.allowed) {
+      return res.status(429).json(
+        getRateLimitResponse(rateLimitCheck.limit, rateLimitCheck.remaining, rateLimitCheck.reset)
+      );
+    }
+
+    // Set rate limit headers
+    res.setHeader('X-RateLimit-Limit', rateLimitCheck.limit.toString());
+    res.setHeader('X-RateLimit-Remaining', rateLimitCheck.remaining.toString());
+    res.setHeader('X-RateLimit-Reset', rateLimitCheck.reset.toString());
 
     const {
       image_url,
