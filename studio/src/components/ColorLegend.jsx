@@ -57,7 +57,7 @@ export default function ColorLegend({
         <div className="legend-header-left">
           <span className="legend-title">Colours</span>
           <HelpIcon
-            content="Click any color to edit all instances of that color across the design. Changes apply to every region using that color."
+            content="Click any colour to edit all instances of that colour across the design. Changes apply to every region using that colour."
             position="right"
           />
           {onColorClick && <span className="edit-hint">(click to edit)</span>}

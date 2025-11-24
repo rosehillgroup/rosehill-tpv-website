@@ -466,7 +466,7 @@ export default function SVGPreview({
         <div className="color-editing-tip">
           <div className="tip-icon">💡</div>
           <div className="tip-content">
-            <strong>Tip:</strong> Click colors in the legend below to edit all instances,
+            <strong>Tip:</strong> Click colours in the legend below to edit all instances,
             or click directly on the design to edit individual regions.
           </div>
           <button onClick={dismissColorTip} className="tip-close" title="Dismiss tip">

@@ -46,9 +46,24 @@ export function tagSvgRegions(svgText) {
     }
   }
 
-  // Ensure width and height are set to 100% for responsive scaling
-  svgElement.setAttribute('width', '100%');
-  svgElement.setAttribute('height', '100%');
+  // Remove explicit pixel dimensions to allow CSS-based responsive scaling
+  // Keep viewBox for aspect ratio, let CSS (max-width: 100%) handle sizing
+  if (svgElement.hasAttribute('width')) {
+    const widthValue = svgElement.getAttribute('width');
+    // Only remove if it's a pixel value (not percentage or other units)
+    if (widthValue && widthValue.match(/^\d+(\.\d+)?(px)?$/)) {
+      svgElement.removeAttribute('width');
+      console.log(`[SVG-REGION-TAGGER] Removed explicit width: ${widthValue}`);
+    }
+  }
+  if (svgElement.hasAttribute('height')) {
+    const heightValue = svgElement.getAttribute('height');
+    // Only remove if it's a pixel value (not percentage or other units)
+    if (heightValue && heightValue.match(/^\d+(\.\d+)?(px)?$/)) {
+      svgElement.removeAttribute('height');
+      console.log(`[SVG-REGION-TAGGER] Removed explicit height: ${heightValue}`);
+    }
+  }
 
   let idx = 0;
 

@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient } from '../lib/api/client.js';
+import { listDesigns } from '../lib/api/designs.js';
 import BlendRecipesDisplay from './BlendRecipesDisplay.jsx';
 import SolidColorSummary from './SolidColorSummary.jsx';
 import SVGPreview from './SVGPreview.jsx';
@@ -103,6 +104,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   const [svgAspectRatio, setSvgAspectRatio] = useState(null);
   const [pendingDownloadAction, setPendingDownloadAction] = useState(null); // 'pdf' or 'tiles'
 
+  // Welcome box state - check if user has any saved designs
+  const [hasExistingDesigns, setHasExistingDesigns] = useState(null); // null = not checked, true/false = result
+
   // Ref for SVG preview section (for auto-scroll)
   const svgPreviewRef = useRef(null);
 
@@ -119,6 +123,23 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       }, 300);
     }
   }, [solidSvgUrl, blendSvgUrl, mixerOpen, colorEditorOpen]);
+
+  // Check if user has any existing designs (for welcome box visibility)
+  useEffect(() => {
+    const checkForExistingDesigns = async () => {
+      try {
+        const result = await listDesigns({ limit: 1, offset: 0 });
+        setHasExistingDesigns(result.designs.length > 0);
+        console.log('[INSPIRE] Existing designs check:', result.designs.length > 0 ? 'User has designs' : 'No designs found');
+      } catch (err) {
+        console.error('[INSPIRE] Failed to check for existing designs:', err);
+        // On error, assume user has designs (fail-safe to not annoy users)
+        setHasExistingDesigns(true);
+      }
+    };
+
+    checkForExistingDesigns();
+  }, []);
 
   // Reset dimensions when switching to image/SVG upload modes
   useEffect(() => {
@@ -1621,15 +1642,15 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         <p className="subtitle">AI-powered vector designs for playground surfacing</p>
       </div>
 
-      {/* Welcome Guidance - Show only when no design has been created yet */}
-      {!result && !generating && (
+      {/* Welcome Guidance - Show only when user has no saved designs */}
+      {!result && !generating && hasExistingDesigns === false && (
         <div className="welcome-guidance">
           <div className="welcome-icon">✨</div>
           <h3>Create Your First Design</h3>
           <p>
             Choose how you'd like to create your TPV design below. You can describe what you want,
             upload an image to convert, or process an existing SVG file. Once generated, you'll be
-            able to edit colors, export PDFs with specifications, and preview designs on-site.
+            able to edit colours, export PDFs with specifications, and preview designs on-site.
           </p>
         </div>
       )}
@@ -2044,7 +2065,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
                 className="download-button pdf"
                 disabled={generatingPDF || !(viewMode === 'solid' ? solidRecipes : blendRecipes)}
                 title={viewMode === 'solid'
-                  ? 'Export comprehensive PDF with design, TPV color specifications, and installation instructions'
+                  ? 'Export comprehensive PDF with design, TPV colour specifications, and installation instructions'
                   : 'Export comprehensive PDF with design, granule blend recipes, and mixing instructions'}
               >
                 {generatingPDF
@@ -2159,6 +2180,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           onClose={() => setShowSaveModal(false)}
           onSaved={(savedDesign, savedName) => {
             setShowSaveModal(false);
+            // User now has at least one saved design - hide welcome box
+            setHasExistingDesigns(true);
             // Update design name to match what was saved
             if (savedName) {
               setDesignName(savedName);
