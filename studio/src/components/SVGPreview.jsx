@@ -986,13 +986,46 @@ export default function SVGPreview({
             min-height: auto;
           }
 
-          /* Hide zoom controls on mobile - use native pinch-to-zoom */
+          /* Position zoom controls at bottom-right on mobile */
           .zoom-controls {
-            display: none;
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            top: auto;
+            flex-direction: column;
+            gap: 0.25rem;
+            padding: 0.25rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 50;
           }
 
-          /* Hide undo/redo controls on mobile */
+          /* Position undo/redo controls above zoom on mobile */
           .undo-redo-controls {
+            position: fixed;
+            bottom: 10rem;
+            right: 1rem;
+            top: auto;
+            gap: 0.25rem;
+            padding: 0.25rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 50;
+          }
+
+          /* Make buttons circular and compact on mobile */
+          .zoom-btn,
+          .undo-redo-btn {
+            width: 44px;
+            height: 44px;
+            padding: 0;
+            border-radius: 50%;
+            min-width: unset;
+            font-size: 1.1rem;
+          }
+
+          /* Hide text labels on mobile */
+          .zoom-btn span {
             display: none;
           }
 
