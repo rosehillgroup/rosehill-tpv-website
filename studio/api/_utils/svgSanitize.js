@@ -3,10 +3,9 @@
  * Removes XSS vectors from SVG content while preserving visual elements
  */
 
-import DOMPurify from 'isomorphic-dompurify';
-
 /**
- * Sanitize SVG content to remove XSS vectors
+ * Sanitize SVG content using regex-based approach
+ * Simpler than DOMPurify but effective for basic XSS prevention
  * @param {string} svgString - Raw SVG content
  * @returns {string} Sanitized SVG content
  */
@@ -16,27 +15,38 @@ export function sanitizeSVG(svgString) {
     return '';
   }
 
-  const config = {
-    USE_PROFILES: { svg: true, svgFilters: true },
-    FORBID_TAGS: [
-      'script', 'foreignObject', 'iframe', 'object', 'embed',
-      'link', 'style', 'animation', 'set', 'animateMotion',
-      'animateColor', 'animateTransform'
-    ],
-    FORBID_ATTR: [
-      'onload', 'onerror', 'onclick', 'onmouseover', 'onmouseout',
-      'onmouseenter', 'onmouseleave', 'onmousemove', 'onmousedown',
-      'onmouseup', 'onfocus', 'onblur', 'onkeydown', 'onkeyup',
-      'onkeypress', 'xlink:href'
-    ],
-    ALLOW_DATA_ATTR: true,
-    ALLOW_COMMENTS: false,
-    RETURN_DOM: false,
-    RETURN_DOM_FRAGMENT: false
-  };
+  let sanitized = svgString;
 
   try {
-    const sanitized = DOMPurify.sanitize(svgString, config);
+    // Remove script tags
+    sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+
+    // Remove dangerous tags
+    const dangerousTags = ['script', 'foreignObject', 'iframe', 'object', 'embed', 'link'];
+    dangerousTags.forEach(tag => {
+      const regex = new RegExp(`<${tag}\\b[^>]*>.*?<\\/${tag}>`, 'gis');
+      sanitized = sanitized.replace(regex, '');
+      // Also remove self-closing versions
+      const selfClosing = new RegExp(`<${tag}\\b[^>]*\\/?>`, 'gi');
+      sanitized = sanitized.replace(selfClosing, '');
+    });
+
+    // Remove event handlers
+    const eventHandlers = [
+      'onload', 'onerror', 'onclick', 'onmouseover', 'onmouseout',
+      'onmouseenter', 'onmouseleave', 'onmousemove', 'onmousedown',
+      'onmouseup', 'onfocus', 'onblur', 'onkeydown', 'onkeyup', 'onkeypress'
+    ];
+    eventHandlers.forEach(handler => {
+      const regex = new RegExp(`\\s+${handler}\\s*=\\s*["'][^"']*["']`, 'gi');
+      sanitized = sanitized.replace(regex, '');
+    });
+
+    // Remove javascript: protocols
+    sanitized = sanitized.replace(/javascript:/gi, '');
+
+    // Remove data:text/html
+    sanitized = sanitized.replace(/data:text\/html/gi, '');
 
     if (!sanitized || !sanitized.includes('<svg')) {
       console.error('[SVG-SANITIZE] Sanitization removed SVG content');
