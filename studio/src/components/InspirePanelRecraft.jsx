@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient } from '../lib/api/client.js';
+import { auth } from '../lib/api/auth.js';
 import { listDesigns } from '../lib/api/designs.js';
 import BlendRecipesDisplay from './BlendRecipesDisplay.jsx';
 import SolidColorSummary from './SolidColorSummary.jsx';
@@ -796,9 +797,18 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
+      // Get auth token for API request
+      const session = await auth.getSession();
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch('/api/export-pdf', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         signal: controller.signal,
         body: JSON.stringify({
           svgString,
