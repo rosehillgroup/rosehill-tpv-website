@@ -2,6 +2,7 @@
 // Handles operations on a specific project by ID
 
 import { getAuthenticatedClient } from '../_utils/supabase.js';
+import { authorizedUpdate, authorizedDelete, ensureOwnership } from '../_utils/authorization.js';
 
 export default async function handler(req, res) {
   const { id } = req.query;
@@ -35,36 +36,40 @@ export default async function handler(req, res) {
       if (description !== undefined) updates.description = description;
       if (color !== undefined) updates.color = color;
 
-      const { data: project, error } = await client
-        .from('projects')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+      // Use authorized update (CRITICAL: IDOR protection)
+      const result = await authorizedUpdate(client, 'projects', id, user.id, updates);
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return res.status(404).json({ error: 'Project not found' });
+      if (!result.success) {
+        if (result.error.includes('Unauthorized')) {
+          return res.status(403).json({ error: result.error });
         }
-        throw error;
+        return res.status(404).json({ error: 'Project not found' });
       }
 
       console.log(`[UPDATE-PROJECT] Updated project ${id} for user ${user.email}`);
 
       return res.status(200).json({
         success: true,
-        project,
+        project: result.data,
         message: 'Project updated successfully'
       });
     }
 
     // DELETE - Remove project
     if (req.method === 'DELETE') {
-      // Check if project has designs
+      // First verify ownership (CRITICAL: IDOR protection)
+      const ownedProject = await ensureOwnership(client, 'projects', id, user.id);
+
+      if (!ownedProject) {
+        return res.status(404).json({ error: 'Project not found' });
+      }
+
+      // Check if project has designs (only user's designs)
       const { count } = await client
         .from('saved_designs')
         .select('id', { count: 'exact', head: true })
-        .eq('project_id', id);
+        .eq('project_id', id)
+        .eq('user_id', user.id); // CRITICAL: Only count user's designs
 
       if (count > 0) {
         return res.status(400).json({
@@ -74,16 +79,14 @@ export default async function handler(req, res) {
         });
       }
 
-      const { error } = await client
-        .from('projects')
-        .delete()
-        .eq('id', id);
+      // Use authorized delete (CRITICAL: IDOR protection)
+      const result = await authorizedDelete(client, 'projects', id, user.id);
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return res.status(404).json({ error: 'Project not found' });
+      if (!result.success) {
+        if (result.error.includes('Unauthorized')) {
+          return res.status(403).json({ error: result.error });
         }
-        throw error;
+        return res.status(404).json({ error: 'Project not found' });
       }
 
       console.log(`[DELETE-PROJECT] Deleted project ${id} for user ${user.email}`);

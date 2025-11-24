@@ -2,6 +2,7 @@
 // Saves a complete design with all state for future loading
 
 import { getAuthenticatedClient, getSupabaseServiceClient } from '../_utils/supabase.js';
+import { ensureOwnership } from '../_utils/authorization.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST' && req.method !== 'PUT') {
@@ -97,10 +98,20 @@ export default async function handler(req, res) {
 
     if (id) {
       // UPDATE existing design
+      // First verify ownership (CRITICAL: IDOR protection)
+      const ownedDesign = await ensureOwnership(client, 'saved_designs', id, user.id);
+
+      if (!ownedDesign) {
+        return res.status(403).json({
+          error: 'Unauthorized: You do not own this design'
+        });
+      }
+
       const { data, error } = await client
         .from('saved_designs')
         .update(designRecord)
         .eq('id', id)
+        .eq('user_id', user.id) // CRITICAL: Explicit ownership check
         .select()
         .single();
 

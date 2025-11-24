@@ -2,6 +2,7 @@
 // Handles operations on a specific design by ID
 
 import { getAuthenticatedClient } from '../_utils/supabase.js';
+import { ensureOwnership, authorizedUpdate, authorizedDelete } from '../_utils/authorization.js';
 
 export default async function handler(req, res) {
   const { id } = req.query;
@@ -20,6 +21,14 @@ export default async function handler(req, res) {
 
     // GET - Load design
     if (req.method === 'GET') {
+      // First verify ownership (CRITICAL: IDOR protection)
+      const ownedDesign = await ensureOwnership(client, 'saved_designs', id, user.id);
+
+      if (!ownedDesign) {
+        return res.status(404).json({ error: 'Design not found' });
+      }
+
+      // Fetch full design with relations
       const { data: design, error } = await client
         .from('saved_designs')
         .select(`
@@ -31,6 +40,7 @@ export default async function handler(req, res) {
           )
         `)
         .eq('id', id)
+        .eq('user_id', user.id) // CRITICAL: Explicit ownership check
         .single();
 
       if (error) {
@@ -40,11 +50,12 @@ export default async function handler(req, res) {
         throw error;
       }
 
-      // Update last_opened_at timestamp
+      // Update last_opened_at timestamp (with ownership check)
       await client
         .from('saved_designs')
         .update({ last_opened_at: new Date().toISOString() })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id); // CRITICAL: Ownership check in update
 
       console.log(`[GET-DESIGN] Loaded design ${id} for user ${user.email}`);
 
@@ -65,41 +76,35 @@ export default async function handler(req, res) {
       if (tags !== undefined) updates.tags = tags;
       if (is_public !== undefined) updates.is_public = is_public;
 
-      const { data: design, error } = await client
-        .from('saved_designs')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
+      // Use authorized update (CRITICAL: IDOR protection)
+      const result = await authorizedUpdate(client, 'saved_designs', id, user.id, updates);
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return res.status(404).json({ error: 'Design not found' });
+      if (!result.success) {
+        if (result.error.includes('Unauthorized')) {
+          return res.status(403).json({ error: result.error });
         }
-        throw error;
+        return res.status(404).json({ error: 'Design not found' });
       }
 
       console.log(`[UPDATE-DESIGN] Updated design ${id} for user ${user.email}`);
 
       return res.status(200).json({
         success: true,
-        design,
+        design: result.data,
         message: 'Design updated successfully'
       });
     }
 
     // DELETE - Remove design
     if (req.method === 'DELETE') {
-      const { error } = await client
-        .from('saved_designs')
-        .delete()
-        .eq('id', id);
+      // Use authorized delete (CRITICAL: IDOR protection)
+      const result = await authorizedDelete(client, 'saved_designs', id, user.id);
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          return res.status(404).json({ error: 'Design not found' });
+      if (!result.success) {
+        if (result.error.includes('Unauthorized')) {
+          return res.status(403).json({ error: result.error });
         }
-        throw error;
+        return res.status(404).json({ error: 'Design not found' });
       }
 
       console.log(`[DELETE-DESIGN] Deleted design ${id} for user ${user.email}`);
