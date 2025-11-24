@@ -72,10 +72,18 @@ export function quickValidateSVG(svgString) {
 
   const lowerContent = svgString.toLowerCase();
 
+  // Check for obviously dangerous patterns (strict XSS vectors only)
   const dangerousPatterns = [
-    '<script', 'javascript:', 'onload=', 'onerror=', 'onclick=',
-    'onmouseover=', '<foreignobject', '<iframe', '<object',
-    '<embed', 'data:text/html', '<link', '<style'
+    '<script',
+    'javascript:',
+    'onload=',
+    'onerror=',
+    'onclick=',
+    'onmouseover=',
+    '<foreignobject',
+    '<iframe',
+    '<embed',
+    'data:text/html'
   ];
 
   for (const pattern of dangerousPatterns) {
@@ -85,8 +93,9 @@ export function quickValidateSVG(svgString) {
     }
   }
 
-  if (!lowerContent.trim().startsWith('<svg') && !lowerContent.includes('<svg')) {
-    console.warn('[SVG-VALIDATE] Content does not appear to be valid SVG');
+  // Verify it contains SVG tag (anywhere in the content, not just at start)
+  if (!lowerContent.includes('<svg')) {
+    console.warn('[SVG-VALIDATE] Content does not appear to be valid SVG (no <svg> tag found)');
     return false;
   }
 
