@@ -3,6 +3,7 @@
 // Called asynchronously after Flux Dev generation completes
 
 import { createClient } from '@supabase/supabase-js';
+import { getAuthenticatedClient } from './_utils/supabase.js';
 import { downloadImage } from './_utils/replicate.js';
 import { posterizeImage, extractDominantColors } from './_utils/color-quantize.js';
 import { vectorizeImage, estimateQuality } from './_utils/vectorize.js';
@@ -65,6 +66,16 @@ export default async function handler(req, res) {
   const startTime = Date.now();
 
   try {
+    // Get authenticated user (REQUIRED for expensive AI operations)
+    const { user } = await getAuthenticatedClient(req);
+
+    if (!user) {
+      return res.status(401).json({
+        ok: false,
+        error: 'Authentication required. Please sign in to vectorize images.'
+      });
+    }
+
     // Parse request
     const {
       image_url,

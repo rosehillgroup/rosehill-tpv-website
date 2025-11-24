@@ -6,6 +6,8 @@
  * colour breakdown, and installation material requirements.
  */
 
+import { getAuthenticatedClient } from './_utils/supabase.js';
+
 export const config = {
   api: {
     bodyParser: {
@@ -25,6 +27,16 @@ export default async function handler(req, res) {
   console.log('[EXPORT-PDF] Request received');
 
   try {
+    // Get authenticated user (REQUIRED)
+    const { user } = await getAuthenticatedClient(req);
+
+    if (!user) {
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'Please sign in to export PDFs.'
+      });
+    }
+
     // Dynamic import to avoid CommonJS/ESM issues
     const { generateExportPDF } = await import('./_utils/pdf/generator.js');
 

@@ -35,8 +35,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Get authenticated user (if available)
+    // Get authenticated user (REQUIRED for expensive AI operations)
     const { user } = await getAuthenticatedClient(req);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required. Please sign in to vectorize images.'
+      });
+    }
 
     const {
       image_url,

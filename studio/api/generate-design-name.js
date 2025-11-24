@@ -3,6 +3,7 @@
 // Uses Claude Haiku to generate creative project names for TPV designs
 
 import Anthropic from '@anthropic-ai/sdk';
+import { getAuthenticatedClient } from './_utils/supabase.js';
 
 /**
  * Initialize Anthropic client
@@ -44,6 +45,16 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Get authenticated user (REQUIRED for AI operations)
+    const { user } = await getAuthenticatedClient(req);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: 'Authentication required. Please sign in to generate design names.'
+      });
+    }
+
     const {
       prompt,
       colors = [],
