@@ -5,6 +5,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/api/auth.js';
+import GenerationsTab from './GenerationsTab.jsx';
+import RecoveryTab from './RecoveryTab.jsx';
 
 export default function AdminDashboard({ onClose }) {
   const [activeTab, setActiveTab] = useState('overview');
@@ -159,6 +161,18 @@ export default function AdminDashboard({ onClose }) {
             Overview
           </button>
           <button
+            className={activeTab === 'generations' ? 'active' : ''}
+            onClick={() => setActiveTab('generations')}
+          >
+            Generations
+          </button>
+          <button
+            className={activeTab === 'recovery' ? 'active' : ''}
+            onClick={() => setActiveTab('recovery')}
+          >
+            Recovery
+          </button>
+          <button
             className={activeTab === 'users' ? 'active' : ''}
             onClick={() => setActiveTab('users')}
           >
@@ -182,6 +196,14 @@ export default function AdminDashboard({ onClose }) {
       <main className="admin-content">
         {activeTab === 'overview' && stats && (
           <OverviewPanel stats={stats} />
+        )}
+
+        {activeTab === 'generations' && (
+          <GenerationsTab />
+        )}
+
+        {activeTab === 'recovery' && (
+          <RecoveryTab />
         )}
 
         {activeTab === 'users' && (
