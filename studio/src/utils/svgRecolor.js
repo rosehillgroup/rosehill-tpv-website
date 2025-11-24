@@ -389,24 +389,44 @@ function recolorStyleAttribute(style, colorMapping, stats) {
  */
 function recolorCSS(css, colorMapping, stats) {
   let newCSS = css;
+  let replacementCount = 0;
 
   // Match fill: color
   newCSS = newCSS.replace(/fill:\s*([^;}\s]+)/gi, (match, color) => {
-    const newColor = replaceColor(color.trim(), colorMapping, stats.colorsNotMapped);
+    const trimmedColor = color.trim();
+    const newColor = replaceColor(trimmedColor, colorMapping, stats.colorsNotMapped);
+    if (newColor !== trimmedColor) {
+      replacementCount++;
+      console.log(`[SVG-RECOLOR-CSS] Replaced fill: ${trimmedColor} → ${newColor}`);
+    }
     return `fill: ${newColor}`;
   });
 
   // Match stroke: color
   newCSS = newCSS.replace(/stroke:\s*([^;}\s]+)/gi, (match, color) => {
-    const newColor = replaceColor(color.trim(), colorMapping, stats.colorsNotMapped);
+    const trimmedColor = color.trim();
+    const newColor = replaceColor(trimmedColor, colorMapping, stats.colorsNotMapped);
+    if (newColor !== trimmedColor) {
+      replacementCount++;
+      console.log(`[SVG-RECOLOR-CSS] Replaced stroke: ${trimmedColor} → ${newColor}`);
+    }
     return `stroke: ${newColor}`;
   });
 
   // Match stop-color: color
   newCSS = newCSS.replace(/stop-color:\s*([^;}\s]+)/gi, (match, color) => {
-    const newColor = replaceColor(color.trim(), colorMapping, stats.colorsNotMapped);
+    const trimmedColor = color.trim();
+    const newColor = replaceColor(trimmedColor, colorMapping, stats.colorsNotMapped);
+    if (newColor !== trimmedColor) {
+      replacementCount++;
+      console.log(`[SVG-RECOLOR-CSS] Replaced stop-color: ${trimmedColor} → ${newColor}`);
+    }
     return `stop-color: ${newColor}`;
   });
+
+  if (replacementCount > 0) {
+    console.log(`[SVG-RECOLOR-CSS] Total CSS color replacements: ${replacementCount}`);
+  }
 
   return newCSS;
 }
