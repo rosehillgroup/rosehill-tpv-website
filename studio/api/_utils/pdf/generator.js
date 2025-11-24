@@ -316,7 +316,7 @@ async function generateExportPDF(data) {
 
   // Surface area info
   y -= 25;
-  const areaM2 = (dimensions.widthMM / 1000) * (dimensions.lengthMM / 1000);
+  // areaM2 already calculated at function level (line 132)
   page3.drawText(`Total Surface Area: ${areaM2.toFixed(2)} m2`, {
     x: MARGIN,
     y,
