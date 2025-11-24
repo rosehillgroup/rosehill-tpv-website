@@ -1003,7 +1003,7 @@ export default function SVGPreview({
           /* Position undo/redo controls above zoom on mobile */
           .undo-redo-controls {
             position: fixed;
-            bottom: 10rem;
+            bottom: 12rem;
             right: 1rem;
             top: auto;
             gap: 0.25rem;
@@ -1050,8 +1050,7 @@ export default function SVGPreview({
           }
 
           .svg-image-container {
-            /* Disable custom pan/zoom on mobile - use native touch */
-            transform: none !important;
+            /* Allow zoom on mobile via buttons */
             cursor: default !important;
           }
         }
