@@ -2,6 +2,7 @@
 // Modal for specifying installation dimensions after image vectorization
 
 import React, { useState, useEffect } from 'react';
+import HelpIcon from './HelpIcon.jsx';
 
 export default function DimensionModal({
   isOpen,
@@ -57,7 +58,24 @@ export default function DimensionModal({
       <div className="dimension-modal-overlay" onClick={onClose}>
         <div className="dimension-modal" onClick={(e) => e.stopPropagation()}>
         <div className="dimension-modal-header">
-          <h2>Set Installation Size</h2>
+          <div className="dimension-modal-title">
+            <h2>Set Installation Size</h2>
+            <HelpIcon
+              content={
+                <div>
+                  <p><strong>Why specify dimensions?</strong></p>
+                  <p style={{ marginTop: '0.5rem' }}>Accurate dimensions are essential for:</p>
+                  <ul style={{ marginTop: '0.5rem', marginBottom: 0, paddingLeft: '1.25rem' }}>
+                    <li>Calculating exact material quantities</li>
+                    <li>Generating PDF specifications for manufacturers</li>
+                    <li>Slicing designs into 1m×1m installation tiles</li>
+                  </ul>
+                  <p style={{ marginTop: '0.5rem' }}><strong>Tip:</strong> Typical playground installations range from 3m to 20m on the longest side.</p>
+                </div>
+              }
+              position="bottom"
+            />
+          </div>
           <button className="dimension-modal-close" onClick={onClose} aria-label="Close">×</button>
         </div>
 
@@ -86,7 +104,7 @@ export default function DimensionModal({
               <span className="dimension-unit">meters</span>
             </div>
             <p className="dimension-help">
-              Specify how large you want to install this design
+              Enter the measurement of the longest side of your installation area. The other dimension will be calculated automatically based on your design's aspect ratio.
             </p>
           </div>
 
@@ -184,6 +202,12 @@ export default function DimensionModal({
         justify-content: space-between;
         padding: 24px;
         border-bottom: 1px solid #e5e7eb;
+      }
+
+      .dimension-modal-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
       }
 
       .dimension-modal-header h2 {

@@ -41,6 +41,17 @@ export default function SVGPreview({
   const containerRef = useRef(null);
   const dragMovedRef = useRef(false); // Track if mouse actually moved during drag
 
+  // Color editing tip banner state
+  const [showColorTip, setShowColorTip] = useState(() => {
+    const dismissed = localStorage.getItem('tpv_color_editing_tip_dismissed');
+    return dismissed !== 'true';
+  });
+
+  const dismissColorTip = () => {
+    setShowColorTip(false);
+    localStorage.setItem('tpv_color_editing_tip_dismissed', 'true');
+  };
+
   // Fetch SVG content for inline display (needed for region click detection)
   useEffect(() => {
     if (!blendSvgUrl) {
@@ -450,6 +461,20 @@ export default function SVGPreview({
         )}
       </div>
 
+      {/* Color Editing Tip Banner */}
+      {showColorTip && onColorClick && (
+        <div className="color-editing-tip">
+          <div className="tip-icon">💡</div>
+          <div className="tip-content">
+            <strong>Tip:</strong> Click colors in the legend below to edit all instances,
+            or click directly on the design to edit individual regions.
+          </div>
+          <button onClick={dismissColorTip} className="tip-close" title="Dismiss tip">
+            ×
+          </button>
+        </div>
+      )}
+
       {/* SVG Display with Color Legend */}
       <div className="svg-display-container">
         <div className="svg-panel">
@@ -510,7 +535,11 @@ export default function SVGPreview({
 
           {/* In-Situ Preview Button */}
           {onInSituClick && (
-            <button onClick={onInSituClick} className="in-situ-btn" title="Preview In-Situ">
+            <button
+              onClick={onInSituClick}
+              className="in-situ-btn"
+              title="Upload a photo of your installation site and see how this design will look in place with realistic perspective"
+            >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                 <circle cx="8.5" cy="8.5" r="1.5"/>
@@ -664,6 +693,51 @@ export default function SVGPreview({
           font-size: 0.75rem;
           color: #9ca3af;
           font-style: italic;
+        }
+
+        /* Color Editing Tip Banner */
+        .color-editing-tip {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 0.875rem 1rem;
+          background: linear-gradient(to right, #fff7ed, #fffbeb);
+          border: 1px solid #fed7aa;
+          border-radius: 6px;
+          margin-bottom: 1rem;
+          font-size: 0.875rem;
+          line-height: 1.5;
+        }
+
+        .tip-icon {
+          font-size: 1.25rem;
+          flex-shrink: 0;
+        }
+
+        .tip-content {
+          flex: 1;
+          color: #78350f;
+        }
+
+        .tip-content strong {
+          color: #92400e;
+        }
+
+        .tip-close {
+          background: none;
+          border: none;
+          font-size: 1.5rem;
+          color: #92400e;
+          cursor: pointer;
+          padding: 0;
+          line-height: 1;
+          opacity: 0.6;
+          transition: opacity 0.2s;
+          flex-shrink: 0;
+        }
+
+        .tip-close:hover {
+          opacity: 1;
         }
 
         /* SVG Display */

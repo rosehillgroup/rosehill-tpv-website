@@ -1621,6 +1621,19 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         <p className="subtitle">AI-powered vector designs for playground surfacing</p>
       </div>
 
+      {/* Welcome Guidance - Show only when no design has been created yet */}
+      {!result && !generating && (
+        <div className="welcome-guidance">
+          <div className="welcome-icon">✨</div>
+          <h3>Create Your First Design</h3>
+          <p>
+            Choose how you'd like to create your TPV design below. You can describe what you want,
+            upload an image to convert, or process an existing SVG file. Once generated, you'll be
+            able to edit colors, export PDFs with specifications, and preview designs on-site.
+          </p>
+        </div>
+      )}
+
       {/* Input Mode Tabs */}
       <div className="input-mode-tabs">
         <button
@@ -1689,7 +1702,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
               className="prompt-input"
             />
             <p className="helper-text">
-              Describe the design you want to generate. The AI will create a vector illustration based on your description.
+              Describe the design you want to generate. The AI will create a vector illustration based on your description. Perfect for creating completely new designs from scratch - just describe colors, themes, and elements you want.
             </p>
           </div>
         )}
@@ -1737,7 +1750,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
               </label>
             </div>
             <p className="helper-text">
-              Upload a raster image (PNG or JPG). The AI will convert it to vector format (SVG) suitable for TPV surfacing.
+              Upload a raster image (PNG or JPG). The AI will convert it to vector format (SVG) suitable for TPV surfacing. Best for converting photos, logos, or artwork into clean vectors that can be manufactured with TPV granules.
             </p>
           </div>
         )}
@@ -1785,7 +1798,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
               </label>
             </div>
             <p className="helper-text">
-              Upload an existing SVG vector file. It will be processed immediately for TPV colour matching - no AI generation needed.
+              Upload an existing SVG vector file. It will be processed immediately for TPV colour matching - no AI generation needed. Ideal when you already have a vector design and just need to match colors to available TPV granules.
             </p>
           </div>
         )}
@@ -2005,19 +2018,34 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           {/* Action Buttons - Show when design is ready */}
           {blendSvgUrl && (
             <div className="action-buttons">
-              <button onClick={handleSaveClick} className="save-button">
+              <button
+                onClick={handleSaveClick}
+                className="save-button"
+                title="Save this design to your gallery for later access"
+              >
                 💾 Save Design
               </button>
-              <button onClick={handleDownloadSVG} className="download-button svg">
+              <button
+                onClick={handleDownloadSVG}
+                className="download-button svg"
+                title="Download as scalable vector file (SVG) for further editing or printing"
+              >
                 {viewMode === 'solid' ? 'Download Solid TPV SVG' : 'Download TPV Blend SVG'}
               </button>
-              <button onClick={handleDownloadPNG} className="download-button png">
+              <button
+                onClick={handleDownloadPNG}
+                className="download-button png"
+                title="Download as high-resolution image file (PNG) for presentations or sharing"
+              >
                 {viewMode === 'solid' ? 'Download Solid TPV PNG' : 'Download TPV Blend PNG'}
               </button>
               <button
                 onClick={handleDownloadPDF}
                 className="download-button pdf"
                 disabled={generatingPDF || !(viewMode === 'solid' ? solidRecipes : blendRecipes)}
+                title={viewMode === 'solid'
+                  ? 'Export comprehensive PDF with design, TPV color specifications, and installation instructions'
+                  : 'Export comprehensive PDF with design, granule blend recipes, and mixing instructions'}
               >
                 {generatingPDF
                   ? 'Generating PDF...'
@@ -2030,8 +2058,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
                 onClick={handleDownloadTiles}
                 className="download-button tiles"
                 title={widthMM && lengthMM
-                  ? `Download ${Math.ceil(widthMM / 1000) * Math.ceil(lengthMM / 1000)} tiles (1m×1m each)`
-                  : 'Download design sliced into 1m×1m tiles'}
+                  ? `Download ${Math.ceil(widthMM / 1000) * Math.ceil(lengthMM / 1000)} tiles (1m×1m each) as separate SVG files. Perfect for large installations where each section needs to be manufactured separately.`
+                  : 'Download design sliced into 1m×1m tiles as separate SVG files. Perfect for large installations.'}
               >
                 Download Tiles ZIP
               </button>
@@ -2197,6 +2225,38 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           color: var(--color-text-secondary);
           font-size: var(--text-base);
           line-height: var(--leading-relaxed);
+        }
+
+        /* Welcome Guidance */
+        .welcome-guidance {
+          background: linear-gradient(135deg, #fff5f0 0%, #fff9f7 100%);
+          border: 2px solid #ff6b35;
+          border-radius: var(--radius-lg);
+          padding: var(--space-6);
+          margin-bottom: var(--space-6);
+          text-align: center;
+        }
+
+        .welcome-icon {
+          font-size: 3rem;
+          margin-bottom: var(--space-2);
+        }
+
+        .welcome-guidance h3 {
+          margin: 0 0 var(--space-3);
+          font-size: var(--text-xl);
+          font-weight: var(--font-bold);
+          color: var(--color-primary);
+        }
+
+        .welcome-guidance p {
+          margin: 0;
+          color: var(--color-text-secondary);
+          font-size: var(--text-base);
+          line-height: var(--leading-relaxed);
+          max-width: 600px;
+          margin-left: auto;
+          margin-right: auto;
         }
 
         /* Input Mode Tabs - Enhanced cards */
@@ -2869,6 +2929,23 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           }
 
           .subtitle {
+            font-size: var(--text-sm);
+          }
+
+          .welcome-guidance {
+            padding: var(--space-4);
+            margin-bottom: var(--space-4);
+          }
+
+          .welcome-icon {
+            font-size: 2rem;
+          }
+
+          .welcome-guidance h3 {
+            font-size: var(--text-lg);
+          }
+
+          .welcome-guidance p {
             font-size: var(--text-sm);
           }
 

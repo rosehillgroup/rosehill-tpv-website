@@ -2,6 +2,7 @@
 // Displays clickable colour swatches for the TPV blend SVG
 
 import tpvColours from '../../api/_utils/data/rosehill_tpv_21_colours.json';
+import HelpIcon from './HelpIcon.jsx';
 
 export default function ColorLegend({
   recipes,
@@ -55,6 +56,10 @@ export default function ColorLegend({
       <div className="legend-header">
         <div className="legend-header-left">
           <span className="legend-title">Colours</span>
+          <HelpIcon
+            content="Click any color to edit all instances of that color across the design. Changes apply to every region using that color."
+            position="right"
+          />
           {onColorClick && <span className="edit-hint">(click to edit)</span>}
         </div>
         {hasAnyEdits && onResetAll && (

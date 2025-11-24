@@ -2,6 +2,7 @@
 // Interactive 4-corner placement for perspective warp with optional polygon clipping
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import HelpIcon from '../HelpIcon.jsx';
 import {
   loadImage,
   rasterizeSvg,
@@ -734,11 +735,24 @@ export default function FourPointEditor({
   return (
     <div className="four-point-editor" ref={containerRef}>
       <div className="editor-header">
-        <h3>Position Your Design</h3>
+        <div className="header-title">
+          <h3>Position Your Design</h3>
+          <HelpIcon
+            content={
+              <div>
+                <p><strong>Corners Mode:</strong> Drag the 4 corner handles (TL, TR, BR, BL) to position your design with perspective. You can also drag inside the design to move all corners at once.</p>
+                <p style={{ marginTop: '0.5rem' }}><strong>Refine Shape Mode:</strong> Click anywhere to add new vertices for precise shape control. Drag existing vertices to adjust. Double-click or press Delete/Backspace on a vertex to remove it.</p>
+                <p style={{ marginTop: '0.5rem' }}><strong>Overlay Opacity:</strong> Adjust transparency to see how the design blends with your photo.</p>
+                <p style={{ marginTop: '0.5rem' }}><strong>Match Floor Lighting:</strong> Automatically adjusts design brightness to match your floor's lighting conditions.</p>
+              </div>
+            }
+            position="right"
+          />
+        </div>
         <p className="instructions">
           {editMode === 'corners'
-            ? 'Drag the corner handles to position the TPV design on your photo.'
-            : 'Click to add vertices, drag to move them. Double-click to delete a vertex.'}
+            ? 'Drag the corner handles (TL, TR, BR, BL) to position the design. Drag inside to move all corners.'
+            : 'Click to add vertices, drag to move them, double-click or press Delete to remove.'}
         </p>
       </div>
 
@@ -861,8 +875,15 @@ export default function FourPointEditor({
           margin-bottom: 1rem;
         }
 
+        .editor-header .header-title {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 0.5rem;
+        }
+
         .editor-header h3 {
-          margin: 0 0 0.5rem;
+          margin: 0;
           font-size: 1.125rem;
           color: #1e4a7a;
         }
