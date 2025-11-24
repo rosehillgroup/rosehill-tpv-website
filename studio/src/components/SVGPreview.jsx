@@ -598,7 +598,7 @@ export default function SVGPreview({
                     className="eyedropper-color-swatch"
                     style={{ backgroundColor: eyedropperRegion.sourceColor }}
                   />
-                  <span>Click another area to copy its color</span>
+                  <span>Click another area to copy its colour</span>
                 </div>
                 <button
                   className="eyedropper-cancel"
