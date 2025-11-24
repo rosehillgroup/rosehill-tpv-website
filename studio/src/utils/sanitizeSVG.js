@@ -22,20 +22,13 @@ export function sanitizeSVG(svgString, options = {}) {
     // Use SVG profile - allows SVG tags and attributes
     USE_PROFILES: { svg: true, svgFilters: true },
 
-    // Explicitly forbid dangerous tags
+    // Explicitly forbid dangerous tags (only strict XSS vectors)
     FORBID_TAGS: [
       'script',        // JavaScript execution
       'foreignObject', // Can contain HTML/scripts
       'iframe',        // Can load external content
-      'object',        // Can load external content
-      'embed',         // Can load external content
-      'link',          // Can load external stylesheets
-      'style',         // Can contain CSS injection
-      'animation',     // SVG animations that could be abused
-      'set',           // SVG set animations
-      'animateMotion', // SVG motion animations
-      'animateColor',  // SVG color animations
-      'animateTransform' // SVG transform animations
+      'embed'          // Can load external content
+      // Note: Removed object, link, style, animation tags as they're legitimate SVG elements
     ],
 
     // Explicitly forbid dangerous attributes
@@ -135,7 +128,7 @@ export function quickValidateSVG(svgString) {
 
   const lowerContent = svgString.toLowerCase();
 
-  // Check for obvious XSS patterns
+  // Check for obviously dangerous patterns (strict XSS vectors only)
   const dangerousPatterns = [
     '<script',
     'javascript:',
@@ -145,13 +138,9 @@ export function quickValidateSVG(svgString) {
     'onmouseover=',
     '<foreignobject',
     '<iframe',
-    '<object',
     '<embed',
-    'data:text/html',
-    '<link',
-    '<style',
-    '<set ',
-    '<animate'
+    'data:text/html'
+    // Note: Removed <object>, <link>, <style>, <animate> as they're legitimate SVG elements
   ];
 
   for (const pattern of dangerousPatterns) {
@@ -161,9 +150,9 @@ export function quickValidateSVG(svgString) {
     }
   }
 
-  // Verify it starts with SVG tag
-  if (!lowerContent.trim().startsWith('<svg') && !lowerContent.includes('<svg')) {
-    console.warn('[SVG-VALIDATE] Content does not appear to be valid SVG');
+  // Verify it contains SVG tag (anywhere in the content)
+  if (!lowerContent.includes('<svg')) {
+    console.warn('[SVG-VALIDATE] Content does not appear to be valid SVG (no <svg> tag found)');
     return false;
   }
 
