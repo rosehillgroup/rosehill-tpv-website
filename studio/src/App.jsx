@@ -6,6 +6,7 @@ import Header from './components/Header.jsx';
 import DesignGallery from './components/DesignGallery.jsx';
 import AdminDashboard from './components/admin/AdminDashboard.jsx';
 import LandingPage from './components/LandingPage.jsx';
+import SetPassword from './components/SetPassword.jsx';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -15,6 +16,7 @@ function App() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loadedDesign, setLoadedDesign] = useState(null);
   const [currentDesignName, setCurrentDesignName] = useState(null);
+  const [needsPasswordSetup, setNeedsPasswordSetup] = useState(false);
 
   // Check if user has admin role
   const checkAdminStatus = async () => {
@@ -48,20 +50,33 @@ function App() {
   useEffect(() => {
     // Check auth status on mount
     auth.getSession().then(session => {
-      setUser(session?.user || null);
+      const currentUser = session?.user || null;
+      setUser(currentUser);
       setLoading(false);
-      if (session?.user) {
+
+      if (currentUser) {
+        // Check if user needs to set up password (invited users)
+        const passwordSetupComplete = currentUser.user_metadata?.password_setup_complete;
+        setNeedsPasswordSetup(!passwordSetupComplete);
+
         checkAdminStatus();
       }
     });
 
     // Listen for auth changes
     const { data: subscription } = auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-      if (session?.user) {
+      const currentUser = session?.user || null;
+      setUser(currentUser);
+
+      if (currentUser) {
+        // Check if user needs to set up password
+        const passwordSetupComplete = currentUser.user_metadata?.password_setup_complete;
+        setNeedsPasswordSetup(!passwordSetupComplete);
+
         checkAdminStatus();
       } else {
         setIsAdmin(false);
+        setNeedsPasswordSetup(false);
       }
     });
 
@@ -81,6 +96,15 @@ function App() {
     setCurrentDesignName(designName);
   };
 
+  const handlePasswordSet = async () => {
+    console.log('[APP] Password set successfully');
+    setNeedsPasswordSetup(false);
+
+    // Refresh user session to get updated metadata
+    const session = await auth.getSession();
+    setUser(session?.user || null);
+  };
+
   if (loading) {
     return (
       <div className="tpv-studio">
@@ -97,6 +121,11 @@ function App() {
   // Landing page for unauthenticated users
   if (!user) {
     return <LandingPage />;
+  }
+
+  // Password setup for invited users
+  if (needsPasswordSetup) {
+    return <SetPassword user={user} onPasswordSet={handlePasswordSet} />;
   }
 
   // If showing admin panel, render it fullscreen

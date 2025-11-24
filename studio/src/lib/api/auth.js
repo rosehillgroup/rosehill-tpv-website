@@ -30,6 +30,21 @@ export const auth = {
     return data.session;
   },
 
+  async updatePassword(newPassword) {
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+
+    if (error) throw error;
+
+    // Mark password as set in user metadata
+    await supabase.auth.updateUser({
+      data: { password_setup_complete: true }
+    });
+
+    return data;
+  },
+
   onAuthStateChange(callback) {
     return supabase.auth.onAuthStateChange(callback);
   }
