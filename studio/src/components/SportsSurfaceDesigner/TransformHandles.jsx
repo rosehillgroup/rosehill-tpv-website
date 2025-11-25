@@ -161,7 +161,8 @@ function TransformHandles({ court, svgRef }) {
     { type: 'w', x: 0, y: template.dimensions.length_mm / 2, cursor: 'ew-resize' },
   ];
 
-  const handleSize = 12 / scale; // Fixed visual size regardless of court scale
+  const handleSize = 20 / scale; // Larger handles for better interactivity
+  const rotationHandleSize = 15 / scale;
 
   return (
     <g className="transform-handles">
@@ -169,13 +170,13 @@ function TransformHandles({ court, svgRef }) {
       <g
         className="rotation-handle"
         onMouseDown={handleRotationMouseDown}
-        style={{ cursor: 'grab' }}
+        style={{ cursor: isRotating ? 'grabbing' : 'grab' }}
       >
         <line
           x1={rotationHandleX}
           y1={0}
           x2={rotationHandleX}
-          y2={rotationHandleY + handleSize}
+          y2={rotationHandleY + rotationHandleSize}
           stroke="#007bff"
           strokeWidth={2 / scale}
           strokeDasharray={`${4 / scale} ${2 / scale}`}
@@ -183,24 +184,24 @@ function TransformHandles({ court, svgRef }) {
         <circle
           cx={rotationHandleX}
           cy={rotationHandleY}
-          r={handleSize}
+          r={rotationHandleSize}
           fill="white"
           stroke="#007bff"
           strokeWidth={2 / scale}
         />
         <path
-          d={`M ${rotationHandleX - handleSize * 0.4} ${rotationHandleY}
-              A ${handleSize * 0.5} ${handleSize * 0.5} 0 1 1 ${rotationHandleX + handleSize * 0.4} ${rotationHandleY}`}
+          d={`M ${rotationHandleX - rotationHandleSize * 0.4} ${rotationHandleY}
+              A ${rotationHandleSize * 0.5} ${rotationHandleSize * 0.5} 0 1 1 ${rotationHandleX + rotationHandleSize * 0.4} ${rotationHandleY}`}
           fill="none"
           stroke="#007bff"
           strokeWidth={2 / scale}
           strokeLinecap="round"
         />
         <path
-          d={`M ${rotationHandleX + handleSize * 0.4} ${rotationHandleY}
-              L ${rotationHandleX + handleSize * 0.6} ${rotationHandleY - handleSize * 0.2}
-              M ${rotationHandleX + handleSize * 0.4} ${rotationHandleY}
-              L ${rotationHandleX + handleSize * 0.6} ${rotationHandleY + handleSize * 0.2}`}
+          d={`M ${rotationHandleX + rotationHandleSize * 0.4} ${rotationHandleY}
+              L ${rotationHandleX + rotationHandleSize * 0.6} ${rotationHandleY - rotationHandleSize * 0.2}
+              M ${rotationHandleX + rotationHandleSize * 0.4} ${rotationHandleY}
+              L ${rotationHandleX + rotationHandleSize * 0.6} ${rotationHandleY + rotationHandleSize * 0.2}`}
           fill="none"
           stroke="#007bff"
           strokeWidth={2 / scale}
@@ -219,8 +220,13 @@ function TransformHandles({ court, svgRef }) {
           height={handleSize}
           fill="white"
           stroke="#007bff"
-          strokeWidth={2 / scale}
-          style={{ cursor: handle.cursor }}
+          strokeWidth={3 / scale}
+          rx={2 / scale}
+          ry={2 / scale}
+          style={{
+            cursor: isScaling && scaleHandle === handle.type ? 'grabbing' : handle.cursor,
+            pointerEvents: 'all'
+          }}
           onMouseDown={(e) => handleScaleMouseDown(e, handle.type)}
         />
       ))}
@@ -229,7 +235,7 @@ function TransformHandles({ court, svgRef }) {
       {isRotating && (
         <text
           x={template.dimensions.width_mm / 2}
-          y={-rotationHandleDistance - handleSize - 10 / scale}
+          y={-rotationHandleDistance - rotationHandleSize - 10 / scale}
           textAnchor="middle"
           fontSize={14 / scale}
           fill="#007bff"

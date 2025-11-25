@@ -85,7 +85,9 @@
 .properties-panel__content {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
   padding: var(--space-2, 1rem);
+  padding-right: var(--space-4, 2rem); /* Extra padding to prevent clipping */
 }
 
 /* ====== Section ====== */

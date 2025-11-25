@@ -145,9 +145,13 @@ export function constrainPosition(position, courtDimensions, surfaceDimensions) 
   const { width_mm, length_mm } = courtDimensions;
   const { width_mm: surfaceWidth, length_mm: surfaceLength } = surfaceDimensions;
 
+  // Allow generous margin beyond surface edges for positioning flexibility
+  // This is especially important when court size equals surface size
+  const margin = 5000; // 5m margin allows courts to extend beyond surface
+
   return {
-    x: Math.max(0, Math.min(position.x, surfaceWidth - width_mm)),
-    y: Math.max(0, Math.min(position.y, surfaceLength - length_mm))
+    x: Math.max(-margin, Math.min(position.x, surfaceWidth - width_mm + margin)),
+    y: Math.max(-margin, Math.min(position.y, surfaceLength - length_mm + margin))
   };
 }
 
