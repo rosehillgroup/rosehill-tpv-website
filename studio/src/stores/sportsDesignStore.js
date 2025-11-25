@@ -21,6 +21,13 @@ const initialState = {
   // Selected court for manipulation
   selectedCourtId: null,
 
+  // Tracks placed on the surface
+  tracks: {},  // { [trackId]: TrackObject }
+  trackOrder: [], // Array of track IDs for z-order
+
+  // Selected track for manipulation
+  selectedTrackId: null,
+
   // Custom markings not part of standard courts
   customMarkings: [],
 
@@ -279,6 +286,89 @@ export const useSportsDesignStore = create(
       setCourtOrder: (newOrder) => {
         set({ courtOrder: newOrder });
         // Note: History is added by caller (keyboard shortcut) to avoid double entries
+      },
+
+      // ====== Track Actions ======
+      addTrack: (templateId, template) => {
+        const trackId = `track-${Date.now()}`;
+        const track = {
+          id: trackId,
+          templateId,
+          template,
+          position: {
+            x: get().surface.width_mm / 2 - (template.calculatedDimensions.totalWidth_mm / 2),
+            y: get().surface.length_mm / 2 - (template.calculatedDimensions.totalLength_mm / 2)
+          },
+          rotation: 0,
+          parameters: { ...template.parameters }
+        };
+
+        set((state) => ({
+          tracks: {
+            ...state.tracks,
+            [trackId]: track
+          },
+          trackOrder: [...state.trackOrder, trackId],
+          selectedTrackId: trackId,
+          selectedCourtId: null // Deselect any court
+        }));
+        get().addToHistory();
+      },
+
+      removeTrack: (trackId) => {
+        const { [trackId]: removed, ...remainingTracks } = get().tracks;
+        set((state) => ({
+          tracks: remainingTracks,
+          trackOrder: state.trackOrder.filter(id => id !== trackId),
+          selectedTrackId: state.selectedTrackId === trackId ? null : state.selectedTrackId
+        }));
+        get().addToHistory();
+      },
+
+      updateTrackParameters: (trackId, newParams) => {
+        set((state) => ({
+          tracks: {
+            ...state.tracks,
+            [trackId]: {
+              ...state.tracks[trackId],
+              parameters: {
+                ...state.tracks[trackId].parameters,
+                ...newParams
+              }
+            }
+          }
+        }));
+        get().addToHistory();
+      },
+
+      updateTrackPosition: (trackId, position) => {
+        set((state) => ({
+          tracks: {
+            ...state.tracks,
+            [trackId]: {
+              ...state.tracks[trackId],
+              position
+            }
+          }
+        }));
+        // Don't add to history for every drag movement
+      },
+
+      selectTrack: (trackId) => {
+        const { propertiesPanelUserClosed } = get();
+        if (!propertiesPanelUserClosed) {
+          set({ selectedTrackId: trackId, selectedCourtId: null, showPropertiesPanel: true });
+        } else {
+          set({ selectedTrackId: trackId, selectedCourtId: null });
+        }
+      },
+
+      deselectTrack: () => {
+        set({
+          selectedTrackId: null,
+          showPropertiesPanel: false,
+          propertiesPanelUserClosed: true
+        });
       },
 
       // ====== Custom Markings Actions ======
