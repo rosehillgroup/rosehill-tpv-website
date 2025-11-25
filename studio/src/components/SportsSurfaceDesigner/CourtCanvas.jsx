@@ -52,6 +52,19 @@ function CourtCanvas() {
     setIsDragging(true);
   };
 
+  // Handle double-click on court (open properties panel)
+  const handleCourtDoubleClick = (e, courtId) => {
+    e.stopPropagation();
+
+    selectCourt(courtId);
+
+    // Open properties panel by resetting the user closed flag
+    useSportsDesignStore.setState({
+      showPropertiesPanel: true,
+      propertiesPanelUserClosed: false
+    });
+  };
+
   // Reset drag state when surface dimensions change
   useEffect(() => {
     setIsDragging(false);
@@ -146,6 +159,7 @@ function CourtCanvas() {
               court={court}
               isSelected={courtId === selectedCourtId}
               onMouseDown={(e) => handleCourtMouseDown(e, courtId)}
+              onDoubleClick={(e) => handleCourtDoubleClick(e, courtId)}
               svgRef={canvasRef}
             />
           );
@@ -170,7 +184,7 @@ function CourtCanvas() {
 /**
  * Individual court element component
  */
-function CourtElement({ court, isSelected, onMouseDown, svgRef }) {
+function CourtElement({ court, isSelected, onMouseDown, onDoubleClick, svgRef }) {
   const { markings, zones } = generateCourtSVG(court);
 
   return (
@@ -187,6 +201,7 @@ function CourtElement({ court, isSelected, onMouseDown, svgRef }) {
         height={court.template.dimensions.length_mm}
         fill="transparent"
         onMouseDown={onMouseDown}
+        onDoubleClick={onDoubleClick}
         style={{ cursor: 'move' }}
       />
 
