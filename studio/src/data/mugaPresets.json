@@ -24,9 +24,9 @@
       {
         "templateId": "netball-full",
         "name": "Netball",
-        "position": { "x": -1250, "y": -1250 },
+        "position": { "x": -1250, "y": -125 },
         "rotation": 0,
-        "scale": 0.92,
+        "scale": 1.0,
         "defaultLineColor": { "tpv_code": "RH31", "hex": "#FFFFFF", "name": "White" }
       }
     ],
@@ -61,7 +61,7 @@
       {
         "templateId": "basketball-full",
         "name": "Basketball",
-        "position": { "x": 1250, "y": 125 },
+        "position": { "x": 125, "y": 1250 },
         "rotation": 0,
         "scale": 1.0,
         "defaultLineColor": { "tpv_code": "RH17", "hex": "#DC143C", "name": "Red" }
@@ -88,11 +88,11 @@
     },
     "courts": [
       {
-        "templateId": "futsal-5-a-side",
+        "templateId": "futsal-standard",
         "name": "5-a-side Football",
-        "position": { "x": 2500, "y": 1500 },
-        "rotation": 90,
-        "scale": 0.85,
+        "position": { "x": 0, "y": 0 },
+        "rotation": 0,
+        "scale": 1.0,
         "defaultLineColor": { "tpv_code": "RH30", "hex": "#FFD700", "name": "Yellow" }
       },
       {
@@ -134,9 +134,9 @@
     },
     "courts": [
       {
-        "templateId": "futsal-5-a-side",
+        "templateId": "futsal-standard",
         "name": "Futsal",
-        "position": { "x": 0, "y": 2500 },
+        "position": { "x": 0, "y": 0 },
         "rotation": 0,
         "scale": 1.0,
         "defaultLineColor": { "tpv_code": "RH30", "hex": "#FFD700", "name": "Yellow" }
@@ -152,7 +152,7 @@
       {
         "templateId": "volleyball-indoor",
         "name": "Volleyball",
-        "position": { "x": 11000, "y": 1000 },
+        "position": { "x": 20000, "y": 1000 },
         "rotation": 90,
         "scale": 1.0,
         "defaultLineColor": { "tpv_code": "RH29", "hex": "#0066CC", "name": "Blue" }
