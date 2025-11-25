@@ -291,16 +291,41 @@ export const useSportsDesignStore = create(
       // ====== Track Actions ======
       addTrack: (templateId, template) => {
         const trackId = `track-${Date.now()}`;
+        const surface = get().surface;
+
+        // Calculate auto-scaling to fit canvas
+        const canvasWidth = surface.width_mm;
+        const canvasLength = surface.length_mm;
+        const trackWidth = template.calculatedDimensions.totalWidth_mm;
+        const trackLength = template.calculatedDimensions.totalLength_mm;
+
+        // Scale to fit 90% of canvas (leave 5% padding on each side)
+        const widthScale = (canvasWidth * 0.9) / trackWidth;
+        const lengthScale = (canvasLength * 0.9) / trackLength;
+        const scale = Math.min(widthScale, lengthScale, 1.0); // Don't scale up, only down
+
+        // Apply scaling to track parameters
+        const scaledParameters = {
+          ...template.parameters,
+          straightLength_mm: template.parameters.straightLength_mm * scale,
+          cornerRadius_mm: template.parameters.cornerRadius_mm * scale,
+          laneWidth_mm: template.parameters.laneWidth_mm * scale
+        };
+
+        // Calculate scaled dimensions for positioning
+        const scaledWidth = trackWidth * scale;
+        const scaledLength = trackLength * scale;
+
         const track = {
           id: trackId,
           templateId,
           template,
           position: {
-            x: get().surface.width_mm / 2 - (template.calculatedDimensions.totalWidth_mm / 2),
-            y: get().surface.length_mm / 2 - (template.calculatedDimensions.totalLength_mm / 2)
+            x: canvasWidth / 2 - (scaledWidth / 2),
+            y: canvasLength / 2 - (scaledLength / 2)
           },
           rotation: 0,
-          parameters: { ...template.parameters }
+          parameters: scaledParameters
         };
 
         set((state) => ({

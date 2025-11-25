@@ -304,13 +304,18 @@ function TrackPreview({ template }) {
         const laneRadius = cornerRadius + (i * laneWidth);
         const halfStraight = straightLength / 2;
 
-        // Simplified track path (outer boundary of each lane)
+        // Track path following the actual track geometry:
+        // Start bottom-left → line up → arc right → line down → arc left → close
+        const startX = offsetX;
+        const startY = offsetY + laneRadius;
+
         const path = `
-          M ${offsetX} ${offsetY + laneRadius}
-          L ${offsetX} ${offsetY + halfStraight + laneRadius}
-          A ${laneRadius} ${laneRadius} 0 0 0 ${offsetX + laneRadius * 2} ${offsetY + halfStraight + laneRadius}
-          L ${offsetX + laneRadius * 2} ${offsetY + laneRadius}
-          A ${laneRadius} ${laneRadius} 0 0 0 ${offsetX} ${offsetY + laneRadius}
+          M ${startX} ${startY}
+          L ${startX} ${startY + halfStraight}
+          A ${laneRadius} ${laneRadius} 0 0 0 ${startX + laneRadius * 2} ${startY + halfStraight}
+          L ${startX + laneRadius * 2} ${startY}
+          A ${laneRadius} ${laneRadius} 0 0 0 ${startX} ${startY}
+          Z
         `.trim().replace(/\s+/g, ' ');
 
         return (
@@ -318,7 +323,7 @@ function TrackPreview({ template }) {
             key={i}
             d={path}
             stroke="#1e293b"
-            strokeWidth="1"
+            strokeWidth="0.8"
             fill="none"
           />
         );

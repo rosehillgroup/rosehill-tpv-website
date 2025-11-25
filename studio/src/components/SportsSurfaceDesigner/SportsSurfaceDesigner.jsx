@@ -14,7 +14,9 @@ function SportsSurfaceDesigner() {
   const {
     surface,
     courts,
+    tracks,
     selectedCourtId,
+    selectedTrackId,
     showCourtLibrary,
     showPropertiesPanel,
     toggleCourtLibrary,
@@ -283,8 +285,8 @@ function SportsSurfaceDesigner() {
               <CourtCanvas />
             </main>
 
-            {/* Properties Panel - shown when court is selected AND panel is not hidden */}
-            {selectedCourtId && showPropertiesPanel && (
+            {/* Properties Panel - shown when court or track is selected AND panel is not hidden */}
+            {(selectedCourtId || selectedTrackId) && showPropertiesPanel && (
               <aside className="sports-designer__properties">
                 <PropertiesPanel />
               </aside>
@@ -292,14 +294,14 @@ function SportsSurfaceDesigner() {
           </div>
 
           {/* Help Text */}
-          {Object.keys(courts).length === 0 && (
+          {Object.keys(courts).length === 0 && Object.keys(tracks).length === 0 && (
             <div className="sports-designer__empty-state">
               <div className="sports-designer__empty-content">
-                <h3>Add Your First Court</h3>
+                <h3>Add Your First Element</h3>
                 <p>
-                  Select a court from the library on the left to place it on your surface.
+                  Select a court or track from the library on the left to place it on your surface.
                   <br />
-                  You can then move, rotate, and colour the court markings.
+                  You can then move, rotate, scale, and customize your design.
                 </p>
               </div>
             </div>
