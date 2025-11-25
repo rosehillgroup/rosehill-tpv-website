@@ -418,3 +418,38 @@
   padding: 0.125rem 0.5rem;
   border-radius: var(--radius-xs, 4px);
 }
+
+/* ====== Delete Button ====== */
+.property-group--actions {
+  margin-top: var(--space-2, 1rem);
+  padding-top: var(--space-2, 1rem);
+  border-top: 1px solid var(--color-border, #e4e9f0);
+}
+
+.btn-delete {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--color-error, #ef4444);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  font-size: var(--text-sm, 0.875rem);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-delete:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
+}
+
+.btn-delete:active {
+  transform: scale(0.98);
+}

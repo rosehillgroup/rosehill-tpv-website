@@ -13,7 +13,9 @@ function PropertiesPanel() {
     updateCourtScale,
     setLineColor,
     setZoneColor,
-    resetCourtColors
+    resetCourtColors,
+    removeCourt,
+    addToHistory
   } = useSportsDesignStore();
 
   const [activeSection, setActiveSection] = useState('transform'); // 'transform', 'lines', 'zones', 'layers'
@@ -60,6 +62,13 @@ function PropertiesPanel() {
     if (isNaN(numValue) || numValue <= 0) return;
 
     updateCourtScale(selectedCourtId, numValue);
+  };
+
+  // Handle delete court
+  const handleDeleteCourt = () => {
+    if (window.confirm(`Delete ${template.name}? This action cannot be undone.`)) {
+      removeCourt(selectedCourtId);
+    }
   };
 
   // Handle color selection
@@ -236,6 +245,17 @@ function PropertiesPanel() {
                   {((template.dimensions.width_mm * scale) / 1000).toFixed(1)}m × {((template.dimensions.length_mm * scale) / 1000).toFixed(1)}m
                 </span>
               </div>
+            </div>
+
+            {/* Delete Button */}
+            <div className="property-group property-group--actions">
+              <button
+                className="btn-delete"
+                onClick={handleDeleteCourt}
+                title="Delete court (Delete key)"
+              >
+                🗑️ Delete Court
+              </button>
             </div>
           </div>
         )}

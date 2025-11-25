@@ -171,8 +171,9 @@ export function getCourtTransformString(court) {
   const centerX = template.dimensions.width_mm / 2;
   const centerY = template.dimensions.length_mm / 2;
 
-  // Transform order: translate to position, rotate around center, scale
-  return `translate(${position.x}, ${position.y}) rotate(${rotation}, ${centerX}, ${centerY}) scale(${scale})`;
+  // Transform order: translate to position, scale first, then rotate around center
+  // This ensures rotation happens around the correct center point after scaling
+  return `translate(${position.x}, ${position.y}) scale(${scale}) rotate(${rotation}, ${centerX}, ${centerY})`;
 }
 
 /**
