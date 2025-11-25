@@ -142,7 +142,11 @@ function App() {
 
   // Tool selection - show if no tool is active
   if (!activeTool) {
-    return <ToolSelection onSelectTool={setActiveTool} />;
+    return (
+      <div className="tpv-studio">
+        <ToolSelection onSelectTool={setActiveTool} />
+      </div>
+    );
   }
 
   // Sports Surface Designer

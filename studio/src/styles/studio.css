@@ -1,8 +1,6 @@
 /* TPV Studio - Main Stylesheet (Modern Minimal Redesign) */
 /* All styles namespaced under .tpv-studio */
-
-/* Import Google Fonts - Space Grotesk for headings, DM Sans for body */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+/* Fonts loaded in index.html: Space Grotesk (headings) & DM Sans (body) */
 
 .tpv-studio {
   /* ===== Colors (Refined Palette) ===== */
