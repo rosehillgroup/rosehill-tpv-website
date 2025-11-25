@@ -3,6 +3,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { generateCourtSVG } from '../../lib/sports/courtTemplates.js';
 import { snapPositionToGrid, constrainPosition, getCourtTransformString } from '../../lib/sports/geometryUtils.js';
+import TransformHandles from './TransformHandles.jsx';
 import './CourtCanvas.css';
 
 function CourtCanvas() {
@@ -145,6 +146,7 @@ function CourtCanvas() {
               court={court}
               isSelected={courtId === selectedCourtId}
               onMouseDown={(e) => handleCourtMouseDown(e, courtId)}
+              svgRef={canvasRef}
             />
           );
         })}
@@ -168,7 +170,7 @@ function CourtCanvas() {
 /**
  * Individual court element component
  */
-function CourtElement({ court, isSelected, onMouseDown }) {
+function CourtElement({ court, isSelected, onMouseDown, svgRef }) {
   const { markings, zones } = generateCourtSVG(court);
 
   return (
@@ -200,17 +202,21 @@ function CourtElement({ court, isSelected, onMouseDown }) {
 
       {/* Selection indicator */}
       {isSelected && (
-        <rect
-          x="0"
-          y="0"
-          width={court.template.dimensions.width_mm}
-          height={court.template.dimensions.length_mm}
-          fill="none"
-          stroke="#007bff"
-          strokeWidth="50"
-          strokeDasharray="200 200"
-          className="court-canvas__selection-outline"
-        />
+        <>
+          <rect
+            x="0"
+            y="0"
+            width={court.template.dimensions.width_mm}
+            height={court.template.dimensions.length_mm}
+            fill="none"
+            stroke="#007bff"
+            strokeWidth="50"
+            strokeDasharray="200 200"
+            className="court-canvas__selection-outline"
+          />
+          {/* Transform handles for rotation and scaling */}
+          <TransformHandles court={court} svgRef={svgRef} />
+        </>
       )}
     </g>
   );
