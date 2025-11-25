@@ -795,5 +795,329 @@
     ],
 
     "zones": []
+  },
+
+  "volleyball-indoor": {
+    "id": "volleyball-indoor",
+    "name": "Volleyball (Indoor)",
+    "sport": "volleyball",
+    "standard": "FIVB",
+    "category": "court",
+    "description": "Official FIVB standard indoor volleyball court with attack lines",
+
+    "dimensions": {
+      "length_mm": 18000,
+      "width_mm": 9000,
+      "min_surround_mm": 3000
+    },
+
+    "defaultLineColor": "RH31",
+    "defaultLineWidth_mm": 50,
+
+    "markings": [
+      {
+        "id": "boundary",
+        "name": "Boundary Lines",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 9000,
+          "height": 18000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "boundary"
+      },
+      {
+        "id": "center-line",
+        "name": "Center Line",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 9000,
+          "x2": 9000,
+          "y2": 9000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "attack-line-bottom",
+        "name": "Attack Line (Bottom)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 6000,
+          "x2": 9000,
+          "y2": 6000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "attack-line-top",
+        "name": "Attack Line (Top)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 12000,
+          "x2": 9000,
+          "y2": 12000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      }
+    ],
+
+    "zones": []
+  },
+
+  "badminton-full": {
+    "id": "badminton-full",
+    "name": "Badminton (Full Court)",
+    "sport": "badminton",
+    "standard": "BWF",
+    "category": "court",
+    "description": "Official BWF standard full badminton court with singles and doubles lines",
+
+    "dimensions": {
+      "length_mm": 13400,
+      "width_mm": 6100,
+      "min_surround_mm": 1000
+    },
+
+    "defaultLineColor": "RH31",
+    "defaultLineWidth_mm": 40,
+
+    "markings": [
+      {
+        "id": "boundary",
+        "name": "Boundary Lines (Doubles)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 6100,
+          "height": 13400
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 40,
+        "required": true,
+        "category": "boundary"
+      },
+      {
+        "id": "singles-sideline-left",
+        "name": "Singles Sideline (Left)",
+        "type": "line",
+        "params": {
+          "x1": 460,
+          "y1": 0,
+          "x2": 460,
+          "y2": 13400
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 40,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "singles-sideline-right",
+        "name": "Singles Sideline (Right)",
+        "type": "line",
+        "params": {
+          "x1": 5640,
+          "y1": 0,
+          "x2": 5640,
+          "y2": 13400
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 40,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "short-service-line-bottom",
+        "name": "Short Service Line (Bottom)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 1980,
+          "x2": 6100,
+          "y2": 1980
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 40,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "short-service-line-top",
+        "name": "Short Service Line (Top)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 11420,
+          "x2": 6100,
+          "y2": 11420
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 40,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "doubles-long-service-line-bottom",
+        "name": "Doubles Long Service Line (Bottom)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 760,
+          "x2": 6100,
+          "y2": 760
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 40,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "doubles-long-service-line-top",
+        "name": "Doubles Long Service Line (Top)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 12640,
+          "x2": 6100,
+          "y2": 12640
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 40,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-service-line",
+        "name": "Center Service Line",
+        "type": "line",
+        "params": {
+          "x1": 3050,
+          "y1": 1980,
+          "x2": 3050,
+          "y2": 11420
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 40,
+        "required": true,
+        "category": "court-marking"
+      }
+    ],
+
+    "zones": []
+  },
+
+  "pickleball-standard": {
+    "id": "pickleball-standard",
+    "name": "Pickleball",
+    "sport": "pickleball",
+    "standard": "USA Pickleball",
+    "category": "court",
+    "description": "Official USA Pickleball standard court with non-volley zone (kitchen)",
+
+    "dimensions": {
+      "length_mm": 13410,
+      "width_mm": 6100,
+      "min_surround_mm": 1000
+    },
+
+    "defaultLineColor": "RH31",
+    "defaultLineWidth_mm": 50,
+
+    "markings": [
+      {
+        "id": "boundary",
+        "name": "Boundary Lines",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 6100,
+          "height": 13410
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "boundary"
+      },
+      {
+        "id": "non-volley-zone-line-bottom",
+        "name": "Non-Volley Zone Line (Bottom)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 2130,
+          "x2": 6100,
+          "y2": 2130
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "non-volley-zone-line-top",
+        "name": "Non-Volley Zone Line (Top)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 11280,
+          "x2": 6100,
+          "y2": 11280
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-line",
+        "name": "Center Line (Net)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 6705,
+          "x2": 6100,
+          "y2": 6705
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-service-line",
+        "name": "Center Service Line",
+        "type": "line",
+        "params": {
+          "x1": 3050,
+          "y1": 0,
+          "x2": 3050,
+          "y2": 13410
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      }
+    ],
+
+    "zones": []
   }
 }
