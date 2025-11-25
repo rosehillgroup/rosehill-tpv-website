@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { generateCourtSVG } from '../../lib/sports/courtTemplates.js';
-import { snapPositionToGrid, constrainPosition } from '../../lib/sports/geometryUtils.js';
+import { snapPositionToGrid, constrainPosition, getCourtTransformString } from '../../lib/sports/geometryUtils.js';
 import './CourtCanvas.css';
 
 function CourtCanvas() {
@@ -50,6 +50,13 @@ function CourtCanvas() {
     setDragCourtId(courtId);
     setIsDragging(true);
   };
+
+  // Reset drag state when surface dimensions change
+  useEffect(() => {
+    setIsDragging(false);
+    setDragCourtId(null);
+    setDragStart(null);
+  }, [surface.width_mm, surface.length_mm]);
 
   // Handle mouse move (drag court)
   useEffect(() => {
@@ -163,12 +170,11 @@ function CourtCanvas() {
  */
 function CourtElement({ court, isSelected, onMouseDown }) {
   const { markings, zones } = generateCourtSVG(court);
-  const { position, rotation, scale } = court;
 
   return (
     <g
       className={`court-canvas__court ${isSelected ? 'court-canvas__court--selected' : ''}`}
-      transform={`translate(${position.x}, ${position.y}) scale(${scale})`}
+      transform={getCourtTransformString(court)}
       style={{ cursor: 'move' }}
     >
       {/* Invisible clickable area - captures all mouse events */}

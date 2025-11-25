@@ -1,5 +1,6 @@
 // TPV Studio - Court Template Rendering
 import sportsCourtData from '../../data/sportsCourts.json';
+import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 
 /**
  * Get all available court templates
@@ -175,6 +176,20 @@ function renderPolyline(params, color, lineWidth_mm) {
 }
 
 /**
+ * Get hex color from TPV code or return as-is if already hex
+ */
+function getColorHex(colorCodeOrHex) {
+  // If it's already a hex color, return it
+  if (colorCodeOrHex && colorCodeOrHex.startsWith('#')) {
+    return colorCodeOrHex;
+  }
+
+  // Look up TPV color by code
+  const tpvColor = tpvColours.find(c => c.code === colorCodeOrHex);
+  return tpvColor ? tpvColor.hex : '#000000'; // Fallback to black
+}
+
+/**
  * Generate SVG elements for a court
  */
 export function generateCourtSVG(court) {
@@ -187,7 +202,9 @@ export function generateCourtSVG(court) {
 
   // Render markings
   const markings = template.markings.map(marking => {
-    const color = lineColorOverrides[marking.id]?.hex || template.defaultLineColor;
+    // Get color from override or default, then ensure it's a hex value
+    const colorCode = lineColorOverrides[marking.id]?.hex || template.defaultLineColor;
+    const color = getColorHex(colorCode);
     const lineWidth = marking.lineWidth_mm || template.defaultLineWidth_mm;
 
     return {
@@ -199,7 +216,9 @@ export function generateCourtSVG(court) {
 
   // Render zones
   const zones = template.zones?.map(zone => {
-    const color = zoneColorOverrides[zone.id]?.hex || zone.defaultColor;
+    // Get color from override or default, then ensure it's a hex value
+    const colorCode = zoneColorOverrides[zone.id]?.hex || zone.defaultColor;
+    const color = getColorHex(colorCode);
 
     return {
       id: zone.id,
