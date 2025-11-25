@@ -52,7 +52,7 @@ export function calculateTrackGeometry(params) {
 
     lanes.push({
       laneNumber: i + 1,
-      innerPath: generateRoundedRectPath(innerWidth, innerHeight, innerCorners, laneOffset),
+      innerPath: generateRoundedRectPath(innerWidth, innerHeight, innerCorners, nextLaneOffset),
       outerPath: generateRoundedRectPath(outerWidth, outerHeight, outerCorners, laneOffset),
       perimeter: calculateRoundedRectPerimeter(outerWidth, outerHeight, outerCorners)
     });
