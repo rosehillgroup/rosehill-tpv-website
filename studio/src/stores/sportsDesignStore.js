@@ -1,7 +1,6 @@
 // TPV Studio - Sports Surface Designer State Management
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { getCourtTemplate } from '../lib/sports/courtTemplates.js';
 
 const initialState = {
   // Surface configuration
@@ -81,6 +80,37 @@ export const useSportsDesignStore = create(
       // ====== Court Actions ======
       addCourt: (templateId, template) => {
         const courtId = `court-${Date.now()}`;
+
+        // Helper: Convert TPV code to full color object
+        const getTPVColorObject = (tpvCode) => {
+          const colorMap = {
+            'RH17': { tpv_code: 'RH17', hex: '#DC143C', name: 'Red' },
+            'RH31': { tpv_code: 'RH31', hex: '#FFFFFF', name: 'White' },
+            'RH30': { tpv_code: 'RH30', hex: '#FFD700', name: 'Yellow' },
+            'RH29': { tpv_code: 'RH29', hex: '#0066CC', name: 'Blue' },
+            'RH12': { tpv_code: 'RH12', hex: '#006C55', name: 'Dark Green' }
+          };
+          return colorMap[tpvCode] || { tpv_code: tpvCode, hex: '#FFFFFF', name: 'White' };
+        };
+
+        // Apply default color to all markings
+        const lineColorOverrides = {};
+        if (template.defaultLineColor) {
+          const defaultColor = getTPVColorObject(template.defaultLineColor);
+          template.markings.forEach(marking => {
+            lineColorOverrides[marking.id] = defaultColor;
+          });
+        }
+
+        // Apply default color to all zones if they exist
+        const zoneColorOverrides = {};
+        if (template.defaultLineColor && template.zones) {
+          const defaultColor = getTPVColorObject(template.defaultLineColor);
+          template.zones.forEach(zone => {
+            zoneColorOverrides[zone.id] = defaultColor;
+          });
+        }
+
         const court = {
           id: courtId,
           templateId,
@@ -91,8 +121,8 @@ export const useSportsDesignStore = create(
           },
           rotation: 0,
           scale: 1.0,
-          lineColorOverrides: {}, // { markingId: { tpv_code, hex, name } }
-          zoneColorOverrides: {}   // { zoneId: { tpv_code, hex, name } }
+          lineColorOverrides,
+          zoneColorOverrides
         };
 
         set((state) => ({
@@ -114,64 +144,6 @@ export const useSportsDesignStore = create(
           selectedCourtId: state.selectedCourtId === courtId ? null : state.selectedCourtId
         }));
         get().addToHistory();
-      },
-
-      addMUGAPreset: (preset) => {
-        const addedCourtIds = [];
-        const newCourts = {};
-
-        // Add each court from the preset
-        preset.courts.forEach((courtConfig, index) => {
-          const template = getCourtTemplate(courtConfig.templateId);
-          if (!template) return;
-
-          const courtId = `court-${Date.now()}-${index}`;
-
-          // Build lineColorOverrides object - apply default color to all markings
-          const lineColorOverrides = {};
-          if (courtConfig.defaultLineColor) {
-            template.markings.forEach(marking => {
-              lineColorOverrides[marking.id] = courtConfig.defaultLineColor;
-            });
-          }
-
-          // Build zoneColorOverrides if zones exist
-          const zoneColorOverrides = {};
-          if (courtConfig.defaultLineColor && template.zones) {
-            template.zones.forEach(zone => {
-              zoneColorOverrides[zone.id] = courtConfig.defaultLineColor;
-            });
-          }
-
-          const court = {
-            id: courtId,
-            templateId: courtConfig.templateId,
-            template,
-            position: courtConfig.position,
-            rotation: courtConfig.rotation,
-            scale: courtConfig.scale,
-            lineColorOverrides,
-            zoneColorOverrides
-          };
-
-          newCourts[courtId] = court;
-          addedCourtIds.push(courtId);
-        });
-
-        // Add all courts to state in one operation
-        set((state) => ({
-          courts: {
-            ...state.courts,
-            ...newCourts
-          },
-          courtOrder: [...state.courtOrder, ...addedCourtIds],
-          selectedCourtId: addedCourtIds.length > 0 ? addedCourtIds[0] : state.selectedCourtId
-        }));
-
-        // Add single history entry for entire MUGA
-        get().addToHistory();
-
-        return addedCourtIds;
       },
 
       updateCourtPosition: (courtId, position) => {

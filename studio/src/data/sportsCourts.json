@@ -13,7 +13,7 @@
       "min_surround_mm": 2000
     },
 
-    "defaultLineColor": "RH31",
+    "defaultLineColor": "RH17",
     "defaultLineWidth_mm": 50,
 
     "markings": [
@@ -435,7 +435,7 @@
       "min_surround_mm": 3660
     },
 
-    "defaultLineColor": "RH31",
+    "defaultLineColor": "RH29",
     "defaultLineWidth_mm": 50,
 
     "markings": [
@@ -578,7 +578,7 @@
       "min_surround_mm": 1000
     },
 
-    "defaultLineColor": "RH31",
+    "defaultLineColor": "RH30",
     "defaultLineWidth_mm": 80,
 
     "markings": [
@@ -811,7 +811,7 @@
       "min_surround_mm": 3000
     },
 
-    "defaultLineColor": "RH31",
+    "defaultLineColor": "RH29",
     "defaultLineWidth_mm": 50,
 
     "markings": [
@@ -894,7 +894,7 @@
       "min_surround_mm": 1000
     },
 
-    "defaultLineColor": "RH31",
+    "defaultLineColor": "RH12",
     "defaultLineWidth_mm": 40,
 
     "markings": [

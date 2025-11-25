@@ -1,0 +1,88 @@
+{
+  "track-4lane-standard": {
+    "id": "track-4lane-standard",
+    "name": "Running Track (4 Lane)",
+    "type": "running-track",
+    "standard": "World Athletics 2024",
+    "category": "track",
+    "description": "4-lane running track for schools and smaller facilities",
+
+    "parameters": {
+      "numLanes": 4,
+      "laneWidth_mm": 1220,
+      "straightLength_mm": 84390,
+      "cornerRadius_mm": 36800,
+      "lineWidth_mm": 50,
+      "cornerRoundness": 1.0
+    },
+
+    "defaultLineColor": "RH31",
+
+    "calculatedDimensions": {
+      "totalWidth_mm": 78480,
+      "totalLength_mm": 178780,
+      "infieldWidth_mm": 73600,
+      "infieldLength_mm": 84390,
+      "lane1_length_m": 400.0,
+      "lane4_length_m": 423.01
+    }
+  },
+
+  "track-6lane-standard": {
+    "id": "track-6lane-standard",
+    "name": "Running Track (6 Lane)",
+    "type": "running-track",
+    "standard": "World Athletics 2024",
+    "category": "track",
+    "description": "6-lane running track - standard minimum configuration",
+
+    "parameters": {
+      "numLanes": 6,
+      "laneWidth_mm": 1220,
+      "straightLength_mm": 84390,
+      "cornerRadius_mm": 36800,
+      "lineWidth_mm": 50,
+      "cornerRoundness": 1.0
+    },
+
+    "defaultLineColor": "RH31",
+
+    "calculatedDimensions": {
+      "totalWidth_mm": 80920,
+      "totalLength_mm": 178780,
+      "infieldWidth_mm": 73600,
+      "infieldLength_mm": 84390,
+      "lane1_length_m": 400.0,
+      "lane6_length_m": 438.35
+    }
+  },
+
+  "track-8lane-standard": {
+    "id": "track-8lane-standard",
+    "name": "Running Track (8 Lane)",
+    "type": "running-track",
+    "standard": "World Athletics 2024",
+    "category": "track",
+    "description": "8-lane running track - full professional configuration",
+
+    "parameters": {
+      "numLanes": 8,
+      "laneWidth_mm": 1220,
+      "straightLength_mm": 84390,
+      "cornerRadius_mm": 36800,
+      "lineWidth_mm": 50,
+      "cornerRoundness": 1.0
+    },
+
+    "defaultLineColor": "RH31",
+
+    "calculatedDimensions": {
+      "totalWidth_mm": 83360,
+      "totalLength_mm": 178780,
+      "infieldWidth_mm": 73600,
+      "infieldLength_mm": 84390,
+      "lane1_length_m": 400.0,
+      "lane8_length_m": 453.69
+    }
+  }
+}
