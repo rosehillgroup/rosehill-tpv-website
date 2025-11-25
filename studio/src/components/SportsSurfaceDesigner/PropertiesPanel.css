@@ -453,3 +453,18 @@
 .btn-delete:active {
   transform: scale(0.98);
 }
+
+/* ====== Property Hint ====== */
+.property-hint {
+  margin-top: 0.25rem;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--color-text-tertiary, #94a3b8);
+  font-style: italic;
+}
+
+/* ====== Property Divider ====== */
+.property-divider {
+  height: 1px;
+  background: var(--color-border, #e4e9f0);
+  margin: var(--space-3, 1.5rem) 0;
+}

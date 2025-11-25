@@ -4,6 +4,7 @@ import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { generateCourtSVG } from '../../lib/sports/courtTemplates.js';
 import { snapPositionToGrid, constrainPosition, getCourtTransformString } from '../../lib/sports/geometryUtils.js';
 import TransformHandles from './TransformHandles.jsx';
+import TrackElement from './TrackRenderer.jsx';
 import './CourtCanvas.css';
 
 function CourtCanvas() {
@@ -11,17 +12,24 @@ function CourtCanvas() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
   const [dragCourtId, setDragCourtId] = useState(null);
+  const [dragTrackId, setDragTrackId] = useState(null);
 
   const {
     surface,
     courts,
     courtOrder,
+    tracks,
+    trackOrder,
     selectedCourtId,
+    selectedTrackId,
     snapToGrid,
     gridSize_mm,
     selectCourt,
     deselectCourt,
-    updateCourtPosition
+    selectTrack,
+    deselectTrack,
+    updateCourtPosition,
+    updateTrackPosition
   } = useSportsDesignStore();
 
   // Convert screen coordinates to SVG coordinates
@@ -65,19 +73,48 @@ function CourtCanvas() {
     });
   };
 
+  // Handle mouse down on track (start drag)
+  const handleTrackMouseDown = (e, trackId) => {
+    e.stopPropagation();
+
+    selectTrack(trackId);
+
+    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    const track = tracks[trackId];
+
+    setDragStart({
+      x: svgPoint.x - track.position.x,
+      y: svgPoint.y - track.position.y
+    });
+    setDragTrackId(trackId);
+    setIsDragging(true);
+  };
+
+  // Handle double-click on track (open properties panel)
+  const handleTrackDoubleClick = (e, trackId) => {
+    e.stopPropagation();
+
+    selectTrack(trackId);
+
+    useSportsDesignStore.setState({
+      showPropertiesPanel: true,
+      propertiesPanelUserClosed: false
+    });
+  };
+
   // Reset drag state when surface dimensions change
   useEffect(() => {
     setIsDragging(false);
     setDragCourtId(null);
+    setDragTrackId(null);
     setDragStart(null);
   }, [surface.width_mm, surface.length_mm]);
 
-  // Handle mouse move (drag court)
+  // Handle mouse move (drag court or track)
   useEffect(() => {
-    if (!isDragging || !dragCourtId) return;
+    if (!isDragging || (!dragCourtId && !dragTrackId)) return;
 
     const handleMouseMove = (e) => {
-      // Convert screen coordinates to SVG coordinates
       const svgPoint = screenToSVG(e.clientX, e.clientY);
 
       let newPosition = {
@@ -90,27 +127,31 @@ function CourtCanvas() {
         newPosition = snapPositionToGrid(newPosition, gridSize_mm);
       }
 
-      // Constrain to surface bounds
-      const court = courts[dragCourtId];
-      const courtDimensions = {
-        width_mm: court.template.dimensions.width_mm * court.scale,
-        length_mm: court.template.dimensions.length_mm * court.scale
-      };
-
-      newPosition = constrainPosition(newPosition, courtDimensions, surface);
-
-      updateCourtPosition(dragCourtId, newPosition);
+      // Update position based on what's being dragged
+      if (dragCourtId) {
+        const court = courts[dragCourtId];
+        const courtDimensions = {
+          width_mm: court.template.dimensions.width_mm * court.scale,
+          length_mm: court.template.dimensions.length_mm * court.scale
+        };
+        newPosition = constrainPosition(newPosition, courtDimensions, surface);
+        updateCourtPosition(dragCourtId, newPosition);
+      } else if (dragTrackId) {
+        // Tracks don't constrain to bounds (they're usually large)
+        updateTrackPosition(dragTrackId, newPosition);
+      }
     };
 
     const handleMouseUp = () => {
       // Add to history when drag completes
-      if (dragCourtId) {
+      if (dragCourtId || dragTrackId) {
         const { addToHistory } = useSportsDesignStore.getState();
         addToHistory();
       }
 
       setIsDragging(false);
       setDragCourtId(null);
+      setDragTrackId(null);
       setDragStart(null);
     };
 
@@ -121,12 +162,13 @@ function CourtCanvas() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragCourtId, dragStart, courts, snapToGrid, gridSize_mm, surface, updateCourtPosition]);
+  }, [isDragging, dragCourtId, dragTrackId, dragStart, courts, tracks, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition]);
 
   // Handle click on canvas background (deselect)
   const handleCanvasClick = (e) => {
     if (e.target === e.currentTarget) {
       deselectCourt();
+      deselectTrack();
     }
   };
 
@@ -147,6 +189,22 @@ function CourtCanvas() {
           fill={surface.color.hex}
           className="court-canvas__surface"
         />
+
+        {/* Render Tracks in Order (below courts) */}
+        {trackOrder.map(trackId => {
+          const track = tracks[trackId];
+          if (!track) return null;
+
+          return (
+            <TrackElement
+              key={trackId}
+              track={track}
+              isSelected={trackId === selectedTrackId}
+              onMouseDown={(e) => handleTrackMouseDown(e, trackId)}
+              onDoubleClick={(e) => handleTrackDoubleClick(e, trackId)}
+            />
+          );
+        })}
 
         {/* Render Courts in Order */}
         {courtOrder.map(courtId => {

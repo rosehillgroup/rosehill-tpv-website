@@ -2,14 +2,17 @@
 import React, { useState } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { getAllCourtTemplates, getCourtTemplate } from '../../lib/sports/courtTemplates.js';
+import { getAllTrackTemplates, getTrackTemplate } from '../../lib/sports/trackTemplates.js';
 import './CourtLibrary.css';
 
 function CourtLibrary() {
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
+  const [activeTab, setActiveTab] = useState('courts'); // 'courts' or 'tracks'
 
-  const { addCourt } = useSportsDesignStore();
+  const { addCourt, addTrack } = useSportsDesignStore();
 
   const templates = getAllCourtTemplates();
+  const trackTemplates = getAllTrackTemplates();
 
   const handleAddCourt = (templateId) => {
     const template = getCourtTemplate(templateId);
@@ -18,54 +21,121 @@ function CourtLibrary() {
     }
   };
 
+  const handleAddTrack = (templateId) => {
+    const template = getTrackTemplate(templateId);
+    if (template) {
+      addTrack(templateId, template);
+    }
+  };
+
   return (
     <div className="court-library">
       <div className="court-library__header">
-        <h2>Court Library</h2>
-        <p>Select a court to add to your surface</p>
+        <h2>{activeTab === 'courts' ? 'Court Library' : 'Track Library'}</h2>
+        <p>{activeTab === 'courts' ? 'Select a court to add to your surface' : 'Select a running track to add to your surface'}</p>
+      </div>
+
+      {/* Tabs */}
+      <div className="court-library__tabs">
+        <button
+          className={`court-library__tab ${activeTab === 'courts' ? 'court-library__tab--active' : ''}`}
+          onClick={() => {
+            setActiveTab('courts');
+            setSelectedTemplateId(null);
+          }}
+        >
+          Courts
+        </button>
+        <button
+          className={`court-library__tab ${activeTab === 'tracks' ? 'court-library__tab--active' : ''}`}
+          onClick={() => {
+            setActiveTab('tracks');
+            setSelectedTemplateId(null);
+          }}
+        >
+          Tracks
+        </button>
       </div>
 
       <div className="court-library__list">
-            {templates.map(template => (
-              <div
-                key={template.id}
-                className={`court-library__item ${selectedTemplateId === template.id ? 'court-library__item--selected' : ''}`}
-                onClick={() => setSelectedTemplateId(template.id)}
-                onDoubleClick={() => handleAddCourt(template.id)}
-              >
-                {/* Preview Thumbnail */}
-                <div className="court-library__preview">
-                  <CourtPreview template={template} />
-                </div>
+        {/* Courts View */}
+        {activeTab === 'courts' && templates.map(template => (
+          <div
+            key={template.id}
+            className={`court-library__item ${selectedTemplateId === template.id ? 'court-library__item--selected' : ''}`}
+            onClick={() => setSelectedTemplateId(template.id)}
+            onDoubleClick={() => handleAddCourt(template.id)}
+          >
+            {/* Preview Thumbnail */}
+            <div className="court-library__preview">
+              <CourtPreview template={template} />
+            </div>
 
-                {/* Court Info */}
-                <div className="court-library__info">
-                  <div className="court-library__name">{template.name}</div>
-                  <div className="court-library__dimensions">
-                    {(template.dimensions.width_mm / 1000).toFixed(1)}m × {(template.dimensions.length_mm / 1000).toFixed(1)}m
-                  </div>
-                  <div className="court-library__standard">{template.standard}</div>
-                </div>
-
-                {/* Add Button */}
-                {selectedTemplateId === template.id && (
-                  <button
-                    className="court-library__add-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddCourt(template.id);
-                    }}
-                  >
-                    + ADD
-                  </button>
-                )}
+            {/* Court Info */}
+            <div className="court-library__info">
+              <div className="court-library__name">{template.name}</div>
+              <div className="court-library__dimensions">
+                {(template.dimensions.width_mm / 1000).toFixed(1)}m × {(template.dimensions.length_mm / 1000).toFixed(1)}m
               </div>
-            ))}
+              <div className="court-library__standard">{template.standard}</div>
+            </div>
+
+            {/* Add Button */}
+            {selectedTemplateId === template.id && (
+              <button
+                className="court-library__add-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddCourt(template.id);
+                }}
+              >
+                + ADD
+              </button>
+            )}
+          </div>
+        ))}
+
+        {/* Tracks View */}
+        {activeTab === 'tracks' && trackTemplates.map(template => (
+          <div
+            key={template.id}
+            className={`court-library__item ${selectedTemplateId === template.id ? 'court-library__item--selected' : ''}`}
+            onClick={() => setSelectedTemplateId(template.id)}
+            onDoubleClick={() => handleAddTrack(template.id)}
+          >
+            {/* Preview Thumbnail */}
+            <div className="court-library__preview">
+              <TrackPreview template={template} />
+            </div>
+
+            {/* Track Info */}
+            <div className="court-library__info">
+              <div className="court-library__name">{template.name}</div>
+              <div className="court-library__dimensions">
+                {(template.calculatedDimensions.totalWidth_mm / 1000).toFixed(1)}m × {(template.calculatedDimensions.totalLength_mm / 1000).toFixed(1)}m
+              </div>
+              <div className="court-library__standard">{template.parameters.numLanes} Lanes • {template.standard}</div>
+            </div>
+
+            {/* Add Button */}
+            {selectedTemplateId === template.id && (
+              <button
+                className="court-library__add-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAddTrack(template.id);
+                }}
+              >
+                + ADD
+              </button>
+            )}
+          </div>
+        ))}
       </div>
 
       <div className="court-library__footer">
         <p className="court-library__hint">
-          💡 Double-click a court to add it instantly
+          💡 {activeTab === 'courts' ? 'Double-click a court to add it instantly' : 'Double-click a track to add it instantly'}
         </p>
       </div>
     </div>
@@ -188,6 +258,73 @@ function CourtMarkingPreview({ marking, scale, offsetX, offsetY }) {
     default:
       return null;
   }
+}
+
+/**
+ * Track preview component
+ * Renders a simplified SVG preview of a running track
+ */
+function TrackPreview({ template }) {
+  const { parameters, calculatedDimensions } = template;
+  const width = calculatedDimensions.totalWidth_mm;
+  const height = calculatedDimensions.totalLength_mm;
+
+  // Scale to fit in 62x62 preview box
+  const scale = Math.min(62 / width, 62 / height);
+  const scaledWidth = width * scale;
+  const scaledHeight = height * scale;
+
+  // Calculate lane positions for preview
+  const numLanes = parameters.numLanes;
+  const laneWidth = parameters.laneWidth_mm * scale;
+  const cornerRadius = parameters.cornerRadius_mm * scale;
+  const straightLength = parameters.straightLength_mm * scale;
+
+  const offsetX = (62 - scaledWidth) / 2;
+  const offsetY = (62 - scaledHeight) / 2;
+
+  return (
+    <svg
+      width="62"
+      height="62"
+      viewBox={`0 0 62 62`}
+      className="court-library__svg-preview"
+    >
+      {/* Background */}
+      <rect
+        x={offsetX}
+        y={offsetY}
+        width={scaledWidth}
+        height={scaledHeight}
+        fill="#e5e7eb"
+      />
+
+      {/* Render simplified track lanes */}
+      {Array.from({ length: numLanes }).map((_, i) => {
+        const laneRadius = cornerRadius + (i * laneWidth);
+        const halfStraight = straightLength / 2;
+
+        // Simplified track path (outer boundary of each lane)
+        const path = `
+          M ${offsetX} ${offsetY + laneRadius}
+          L ${offsetX} ${offsetY + halfStraight + laneRadius}
+          A ${laneRadius} ${laneRadius} 0 0 0 ${offsetX + laneRadius * 2} ${offsetY + halfStraight + laneRadius}
+          L ${offsetX + laneRadius * 2} ${offsetY + laneRadius}
+          A ${laneRadius} ${laneRadius} 0 0 0 ${offsetX} ${offsetY + laneRadius}
+        `.trim().replace(/\s+/g, ' ');
+
+        return (
+          <path
+            key={i}
+            d={path}
+            stroke="#1e293b"
+            strokeWidth="1"
+            fill="none"
+          />
+        );
+      })}
+    </svg>
+  );
 }
 
 export default CourtLibrary;

@@ -28,6 +28,38 @@
   color: var(--color-text-secondary, #64748b);
 }
 
+/* ====== Tabs ====== */
+.court-library__tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0 0.75rem;
+  border-bottom: 1px solid var(--color-border, #e4e9f0);
+}
+
+.court-library__tab {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 0.6875rem;
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-weight: 600;
+  color: var(--color-text-secondary, #64748b);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.court-library__tab:hover {
+  color: var(--color-primary, #1e4a7a);
+  background: var(--color-bg-subtle, #f8fafc);
+}
+
+.court-library__tab--active {
+  color: var(--color-primary, #1e4a7a);
+  border-bottom-color: var(--color-primary, #1e4a7a);
+}
+
 /* ====== List ====== */
 .court-library__list {
   flex: 1;
