@@ -69,8 +69,8 @@
           "cx": 7500,
           "cy": 26425,
           "radius": 6750,
-          "startAngle": 203,
-          "endAngle": 337
+          "startAngle": 192,
+          "endAngle": 348
         },
         "defaultColor": "RH31",
         "lineWidth_mm": 50,
@@ -85,8 +85,68 @@
           "cx": 7500,
           "cy": 1575,
           "radius": 6750,
-          "startAngle": 23,
-          "endAngle": 157
+          "startAngle": 12,
+          "endAngle": 168
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "three-point-line-bottom-left",
+        "name": "Three-Point Line Bottom Left",
+        "type": "line",
+        "params": {
+          "x1": 900,
+          "y1": 0,
+          "x2": 900,
+          "y2": 2990
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "three-point-line-bottom-right",
+        "name": "Three-Point Line Bottom Right",
+        "type": "line",
+        "params": {
+          "x1": 14100,
+          "y1": 0,
+          "x2": 14100,
+          "y2": 2990
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "three-point-line-top-left",
+        "name": "Three-Point Line Top Left",
+        "type": "line",
+        "params": {
+          "x1": 900,
+          "y1": 25010,
+          "x2": 900,
+          "y2": 28000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "three-point-line-top-right",
+        "name": "Three-Point Line Top Right",
+        "type": "line",
+        "params": {
+          "x1": 14100,
+          "y1": 25010,
+          "x2": 14100,
+          "y2": 28000
         },
         "defaultColor": "RH31",
         "lineWidth_mm": 50,

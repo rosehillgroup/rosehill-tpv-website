@@ -169,9 +169,19 @@ function CourtElement({ court, isSelected, onMouseDown }) {
     <g
       className={`court-canvas__court ${isSelected ? 'court-canvas__court--selected' : ''}`}
       transform={`translate(${position.x}, ${position.y}) scale(${scale})`}
-      onMouseDown={onMouseDown}
       style={{ cursor: 'move' }}
     >
+      {/* Invisible clickable area - captures all mouse events */}
+      <rect
+        x="0"
+        y="0"
+        width={court.template.dimensions.width_mm}
+        height={court.template.dimensions.length_mm}
+        fill="transparent"
+        onMouseDown={onMouseDown}
+        style={{ cursor: 'move' }}
+      />
+
       {/* Zones (filled areas) - render first so they're behind lines */}
       {zones.map(zone => (
         <ZoneElement key={zone.id} zone={zone} />

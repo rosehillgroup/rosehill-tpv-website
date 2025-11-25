@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import CourtCanvas from './CourtCanvas.jsx';
 import CourtLibrary from './CourtLibrary.jsx';
+import PropertiesPanel from './PropertiesPanel.jsx';
 import './SportsSurfaceDesigner.css';
 
 function SportsSurfaceDesigner() {
@@ -205,6 +206,13 @@ function SportsSurfaceDesigner() {
             <main className="sports-designer__canvas-container">
               <CourtCanvas />
             </main>
+
+            {/* Properties Panel - shown when court is selected */}
+            {selectedCourtId && (
+              <aside className="sports-designer__properties">
+                <PropertiesPanel />
+              </aside>
+            )}
           </div>
 
           {/* Help Text */}

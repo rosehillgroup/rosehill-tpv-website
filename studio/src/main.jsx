@@ -12,6 +12,7 @@ import './components/ToolSelection.css';
 import './components/SportsSurfaceDesigner/SportsSurfaceDesigner.css';
 import './components/SportsSurfaceDesigner/CourtCanvas.css';
 import './components/SportsSurfaceDesigner/CourtLibrary.css';
+import './components/SportsSurfaceDesigner/PropertiesPanel.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
