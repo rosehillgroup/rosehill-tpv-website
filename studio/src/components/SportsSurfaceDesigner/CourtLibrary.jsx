@@ -39,11 +39,11 @@ function CourtLibrary() {
 
             {/* Court Info */}
             <div className="court-library__info">
-              <h3 className="court-library__name">{template.name}</h3>
-              <p className="court-library__dimensions">
+              <div className="court-library__name">{template.name}</div>
+              <div className="court-library__dimensions">
                 {(template.dimensions.width_mm / 1000).toFixed(1)}m × {(template.dimensions.length_mm / 1000).toFixed(1)}m
-              </p>
-              <p className="court-library__standard">{template.standard}</p>
+              </div>
+              <div className="court-library__standard">{template.standard}</div>
             </div>
 
             {/* Add Button */}

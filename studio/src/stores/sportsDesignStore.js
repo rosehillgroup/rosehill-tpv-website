@@ -236,12 +236,11 @@ export const useSportsDesignStore = create(
       },
 
       deselectCourt: () => {
-        // Just deselect and close panel
-        // Don't set propertiesPanelUserClosed flag here
-        // That flag should only be set via togglePropertiesPanel()
+        // Clicking grid to deselect indicates user wants panel closed
         set({
           selectedCourtId: null,
-          showPropertiesPanel: false
+          showPropertiesPanel: false,
+          propertiesPanelUserClosed: true
         });
       },
 

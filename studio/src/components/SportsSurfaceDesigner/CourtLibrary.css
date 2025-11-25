@@ -96,9 +96,6 @@
   font-weight: 600;
   color: var(--color-text-primary, #1a202c);
   line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .court-library__dimensions {
@@ -114,9 +111,6 @@
   font-size: 0.5625rem;
   color: var(--color-text-tertiary, #94a3b8);
   line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* ====== Add Button ====== */
