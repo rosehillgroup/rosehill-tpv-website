@@ -1,6 +1,7 @@
 // TPV Studio - Sports Surface Designer State Management
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { getCourtTemplate } from '../lib/sports/courtTemplates.js';
 
 const initialState = {
   // Surface configuration
@@ -113,6 +114,64 @@ export const useSportsDesignStore = create(
           selectedCourtId: state.selectedCourtId === courtId ? null : state.selectedCourtId
         }));
         get().addToHistory();
+      },
+
+      addMUGAPreset: (preset) => {
+        const addedCourtIds = [];
+        const newCourts = {};
+
+        // Add each court from the preset
+        preset.courts.forEach((courtConfig, index) => {
+          const template = getCourtTemplate(courtConfig.templateId);
+          if (!template) return;
+
+          const courtId = `court-${Date.now()}-${index}`;
+
+          // Build lineColorOverrides object - apply default color to all markings
+          const lineColorOverrides = {};
+          if (courtConfig.defaultLineColor) {
+            template.markings.forEach(marking => {
+              lineColorOverrides[marking.id] = courtConfig.defaultLineColor;
+            });
+          }
+
+          // Build zoneColorOverrides if zones exist
+          const zoneColorOverrides = {};
+          if (courtConfig.defaultLineColor && template.zones) {
+            template.zones.forEach(zone => {
+              zoneColorOverrides[zone.id] = courtConfig.defaultLineColor;
+            });
+          }
+
+          const court = {
+            id: courtId,
+            templateId: courtConfig.templateId,
+            template,
+            position: courtConfig.position,
+            rotation: courtConfig.rotation,
+            scale: courtConfig.scale,
+            lineColorOverrides,
+            zoneColorOverrides
+          };
+
+          newCourts[courtId] = court;
+          addedCourtIds.push(courtId);
+        });
+
+        // Add all courts to state in one operation
+        set((state) => ({
+          courts: {
+            ...state.courts,
+            ...newCourts
+          },
+          courtOrder: [...state.courtOrder, ...addedCourtIds],
+          selectedCourtId: addedCourtIds.length > 0 ? addedCourtIds[0] : state.selectedCourtId
+        }));
+
+        // Add single history entry for entire MUGA
+        get().addToHistory();
+
+        return addedCourtIds;
       },
 
       updateCourtPosition: (courtId, position) => {

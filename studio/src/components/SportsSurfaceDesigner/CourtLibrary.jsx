@@ -2,13 +2,18 @@
 import React, { useState } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { getAllCourtTemplates, getCourtTemplate } from '../../lib/sports/courtTemplates.js';
+import { getAllMUGAPresets, checkMUGACompatibility } from '../../lib/sports/mugaPresets.js';
 import './CourtLibrary.css';
 
 function CourtLibrary() {
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
-  const { addCourt } = useSportsDesignStore();
+  const [selectedMUGAId, setSelectedMUGAId] = useState(null);
+  const [activeTab, setActiveTab] = useState('courts'); // 'courts' or 'mugas'
+
+  const { addCourt, addMUGAPreset, surface } = useSportsDesignStore();
 
   const templates = getAllCourtTemplates();
+  const mugaPresets = getAllMUGAPresets();
 
   const handleAddCourt = (templateId) => {
     const template = getCourtTemplate(templateId);
@@ -17,56 +22,154 @@ function CourtLibrary() {
     }
   };
 
+  const handleAddMUGA = (preset) => {
+    addMUGAPreset(preset);
+    setSelectedMUGAId(null);
+  };
+
   return (
     <div className="court-library">
       <div className="court-library__header">
         <h2>Court Library</h2>
-        <p>Select a court to add to your surface</p>
-      </div>
+        <p>Select a court or MUGA to add to your surface</p>
 
-      <div className="court-library__list">
-        {templates.map(template => (
-          <div
-            key={template.id}
-            className={`court-library__item ${selectedTemplateId === template.id ? 'court-library__item--selected' : ''}`}
-            onClick={() => setSelectedTemplateId(template.id)}
-            onDoubleClick={() => handleAddCourt(template.id)}
+        {/* Tab Selector */}
+        <div className="court-library__tabs">
+          <button
+            className={`court-library__tab ${activeTab === 'courts' ? 'court-library__tab--active' : ''}`}
+            onClick={() => setActiveTab('courts')}
           >
-            {/* Preview Thumbnail */}
-            <div className="court-library__preview">
-              <CourtPreview template={template} />
-            </div>
+            Single Courts
+          </button>
+          <button
+            className={`court-library__tab ${activeTab === 'mugas' ? 'court-library__tab--active' : ''}`}
+            onClick={() => setActiveTab('mugas')}
+          >
+            MUGA Presets
+          </button>
+        </div>
+      </div>
 
-            {/* Court Info */}
-            <div className="court-library__info">
-              <div className="court-library__name">{template.name}</div>
-              <div className="court-library__dimensions">
-                {(template.dimensions.width_mm / 1000).toFixed(1)}m × {(template.dimensions.length_mm / 1000).toFixed(1)}m
-              </div>
-              <div className="court-library__standard">{template.standard}</div>
-            </div>
-
-            {/* Add Button */}
-            {selectedTemplateId === template.id && (
-              <button
-                className="court-library__add-btn"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleAddCourt(template.id);
-                }}
+      {/* Single Courts View */}
+      {activeTab === 'courts' && (
+        <>
+          <div className="court-library__list">
+            {templates.map(template => (
+              <div
+                key={template.id}
+                className={`court-library__item ${selectedTemplateId === template.id ? 'court-library__item--selected' : ''}`}
+                onClick={() => setSelectedTemplateId(template.id)}
+                onDoubleClick={() => handleAddCourt(template.id)}
               >
-                + Add to Surface
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
+                {/* Preview Thumbnail */}
+                <div className="court-library__preview">
+                  <CourtPreview template={template} />
+                </div>
 
-      <div className="court-library__footer">
-        <p className="court-library__hint">
-          💡 Double-click a court to add it instantly
-        </p>
-      </div>
+                {/* Court Info */}
+                <div className="court-library__info">
+                  <div className="court-library__name">{template.name}</div>
+                  <div className="court-library__dimensions">
+                    {(template.dimensions.width_mm / 1000).toFixed(1)}m × {(template.dimensions.length_mm / 1000).toFixed(1)}m
+                  </div>
+                  <div className="court-library__standard">{template.standard}</div>
+                </div>
+
+                {/* Add Button */}
+                {selectedTemplateId === template.id && (
+                  <button
+                    className="court-library__add-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddCourt(template.id);
+                    }}
+                  >
+                    + ADD
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="court-library__footer">
+            <p className="court-library__hint">
+              💡 Double-click a court to add it instantly
+            </p>
+          </div>
+        </>
+      )}
+
+      {/* MUGA Presets View */}
+      {activeTab === 'mugas' && (
+        <>
+          <div className="court-library__list">
+            {mugaPresets.map(preset => {
+              const compatibility = checkMUGACompatibility(
+                preset,
+                surface.width_mm,
+                surface.length_mm
+              );
+
+              return (
+                <div
+                  key={preset.id}
+                  className={`court-library__muga-item ${selectedMUGAId === preset.id ? 'court-library__muga-item--selected' : ''}`}
+                  onClick={() => setSelectedMUGAId(preset.id)}
+                >
+                  {/* MUGA Info */}
+                  <div className="muga-info">
+                    <div className="muga-info__name">{preset.name}</div>
+                    <div className="muga-info__description">{preset.description}</div>
+                    <div className="muga-info__dimensions">
+                      Recommended: {(preset.recommendedSurface.width_mm / 1000).toFixed(1)}m × {(preset.recommendedSurface.length_mm / 1000).toFixed(1)}m
+                    </div>
+
+                    {/* Compatibility Badge */}
+                    <div className={`muga-compatibility muga-compatibility--${compatibility.status}`}>
+                      {compatibility.status === 'optimal' && '✓ Perfect Fit'}
+                      {compatibility.status === 'compatible' && '⚠ Will Fit'}
+                      {compatibility.status === 'incompatible' && '✗ Too Small'}
+                    </div>
+
+                    {/* Color Scheme */}
+                    <div className="muga-color-scheme">
+                      {preset.colorScheme.map((item, idx) => (
+                        <div key={idx} className="muga-color-item">
+                          <span className="muga-color-sport">{item.sport}:</span>
+                          <span className="muga-color-name">{item.color}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Apply Button */}
+                  {selectedMUGAId === preset.id && (
+                    <button
+                      className={`court-library__add-btn ${compatibility.status === 'incompatible' ? 'court-library__add-btn--disabled' : ''}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (compatibility.status !== 'incompatible') {
+                          handleAddMUGA(preset);
+                        }
+                      }}
+                      disabled={compatibility.status === 'incompatible'}
+                      title={compatibility.status === 'incompatible' ? compatibility.message : 'Apply MUGA Preset'}
+                    >
+                      {compatibility.status === 'incompatible' ? 'TOO SMALL' : '+ APPLY MUGA'}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="court-library__footer">
+            <p className="court-library__hint">
+              💡 MUGA presets add multiple courts with different colors
+            </p>
+          </div>
+        </>
+      )}
     </div>
   );
 }
