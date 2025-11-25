@@ -1,12 +1,13 @@
 // TPV Studio - Track Renderer Component
 import React from 'react';
 import { calculateTrackGeometry } from '../../lib/sports/trackGeometry.js';
+import TrackResizeHandles from './TrackResizeHandles.jsx';
 
 /**
  * Individual track element component
  * Renders a complete running track with all lanes
  */
-function TrackElement({ track, isSelected, onMouseDown, onDoubleClick }) {
+function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef }) {
   const { parameters, position, rotation } = track;
 
   // Calculate track geometry
@@ -53,18 +54,22 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick }) {
 
       {/* Selection indicator */}
       {isSelected && (
-        <rect
-          x="-10"
-          y="-10"
-          width={boundingWidth + 20}
-          height={boundingLength + 20}
-          fill="none"
-          stroke="#0066CC"
-          strokeWidth="80"
-          strokeDasharray="400 400"
-          opacity="0.5"
-          pointerEvents="none"
-        />
+        <>
+          <rect
+            x="-10"
+            y="-10"
+            width={boundingWidth + 20}
+            height={boundingLength + 20}
+            fill="none"
+            stroke="#0066CC"
+            strokeWidth="80"
+            strokeDasharray="400 400"
+            opacity="0.5"
+            pointerEvents="none"
+          />
+          {/* Resize handles for selected track */}
+          <TrackResizeHandles track={track} svgRef={svgRef} />
+        </>
       )}
     </g>
   );

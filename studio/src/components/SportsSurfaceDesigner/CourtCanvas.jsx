@@ -202,6 +202,7 @@ function CourtCanvas() {
               isSelected={trackId === selectedTrackId}
               onMouseDown={(e) => handleTrackMouseDown(e, trackId)}
               onDoubleClick={(e) => handleTrackDoubleClick(e, trackId)}
+              svgRef={canvasRef}
             />
           );
         })}

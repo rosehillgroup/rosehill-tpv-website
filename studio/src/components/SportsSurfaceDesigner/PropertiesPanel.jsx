@@ -386,6 +386,7 @@ function PropertiesPanel() {
 function TrackPropertiesPanel({ track, trackId }) {
   const { updateTrackParameters, removeTrack } = useSportsDesignStore();
   const { parameters, template } = track;
+  const [cornersLocked, setCornersLocked] = React.useState(true);
 
   // Calculate current geometry
   const geometry = calculateTrackGeometry(parameters);
@@ -398,8 +399,49 @@ function TrackPropertiesPanel({ track, trackId }) {
   // Handle parameter updates
   const handleNumLanesChange = (value) => {
     const numValue = parseInt(value);
-    if (isNaN(numValue) || numValue < 4 || numValue > 8) return;
+    if (isNaN(numValue) || numValue < 1 || numValue > 8) return;
     updateTrackParameters(trackId, { numLanes: numValue });
+  };
+
+  const handleWidthChange = (value) => {
+    const numValue = parseFloat(value) * 1000; // Convert meters to mm
+    if (isNaN(numValue) || numValue < 3000) return;
+    updateTrackParameters(trackId, { width_mm: numValue });
+  };
+
+  const handleHeightChange = (value) => {
+    const numValue = parseFloat(value) * 1000; // Convert meters to mm
+    if (isNaN(numValue) || numValue < 3000) return;
+    updateTrackParameters(trackId, { height_mm: numValue });
+  };
+
+  const handleCornerRadiusChange = (corner, value) => {
+    const numValue = parseFloat(value) * 1000; // Convert meters to mm
+    if (isNaN(numValue) || numValue < 0) return;
+
+    // Clamp to max of half the smallest dimension
+    const maxRadius = Math.min(parameters.width_mm, parameters.height_mm) / 2;
+    const clampedValue = Math.min(numValue, maxRadius);
+
+    if (cornersLocked) {
+      // Update all corners to the same value
+      updateTrackParameters(trackId, {
+        cornerRadius: {
+          topLeft: clampedValue,
+          topRight: clampedValue,
+          bottomLeft: clampedValue,
+          bottomRight: clampedValue
+        }
+      });
+    } else {
+      // Update only the specified corner
+      updateTrackParameters(trackId, {
+        cornerRadius: {
+          ...parameters.cornerRadius,
+          [corner]: clampedValue
+        }
+      });
+    }
   };
 
   // Handle delete track
@@ -460,22 +502,134 @@ function TrackPropertiesPanel({ track, trackId }) {
             </div>
           </div>
 
-          {/* Track Dimensions (Read-only for now) */}
-          <div className="property-group property-group--info">
-            <label>Track Size</label>
-            <div className="property-info">
-              <span>
-                {(parameters.width_mm / 1000).toFixed(1)}m × {(parameters.height_mm / 1000).toFixed(1)}m
-              </span>
+          {/* Track Width (Editable) */}
+          <div className="property-group">
+            <label>Track Width</label>
+            <div className="property-input-group">
+              <input
+                type="number"
+                value={(parameters.width_mm / 1000).toFixed(1)}
+                onChange={(e) => handleWidthChange(e.target.value)}
+                min="3"
+                max="100"
+                step="0.5"
+              />
+              <span className="property-unit">m</span>
             </div>
           </div>
 
-          {/* Average Corner Radius (Read-only for now) */}
-          <div className="property-group property-group--info">
-            <label>Corner Radius (avg)</label>
-            <div className="property-info">
-              <span>{(avgCornerRadius / 1000).toFixed(2)}m</span>
+          {/* Track Height (Editable) */}
+          <div className="property-group">
+            <label>Track Height</label>
+            <div className="property-input-group">
+              <input
+                type="number"
+                value={(parameters.height_mm / 1000).toFixed(1)}
+                onChange={(e) => handleHeightChange(e.target.value)}
+                min="3"
+                max="100"
+                step="0.5"
+              />
+              <span className="property-unit">m</span>
             </div>
+          </div>
+
+          {/* Corner Radius Controls */}
+          <div className="property-group">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label>Corner Radius</label>
+              <button
+                className="btn-toggle"
+                onClick={() => setCornersLocked(!cornersLocked)}
+                style={{
+                  padding: '0.25rem 0.5rem',
+                  fontSize: '0.75rem',
+                  background: cornersLocked ? '#0066CC' : '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+                title={cornersLocked ? 'Click to edit corners independently' : 'Click to lock all corners together'}
+              >
+                {cornersLocked ? '🔒 Locked' : '🔓 Independent'}
+              </button>
+            </div>
+
+            {cornersLocked ? (
+              // Single input when locked
+              <div className="property-input-group">
+                <input
+                  type="number"
+                  value={(avgCornerRadius / 1000).toFixed(2)}
+                  onChange={(e) => handleCornerRadiusChange('topLeft', e.target.value)}
+                  min="0"
+                  max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(2)}
+                  step="0.1"
+                />
+                <span className="property-unit">m</span>
+              </div>
+            ) : (
+              // Four inputs when unlocked
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#64748b' }}>Top Left</label>
+                  <div className="property-input-group">
+                    <input
+                      type="number"
+                      value={(parameters.cornerRadius.topLeft / 1000).toFixed(2)}
+                      onChange={(e) => handleCornerRadiusChange('topLeft', e.target.value)}
+                      min="0"
+                      max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(2)}
+                      step="0.1"
+                    />
+                    <span className="property-unit">m</span>
+                  </div>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#64748b' }}>Top Right</label>
+                  <div className="property-input-group">
+                    <input
+                      type="number"
+                      value={(parameters.cornerRadius.topRight / 1000).toFixed(2)}
+                      onChange={(e) => handleCornerRadiusChange('topRight', e.target.value)}
+                      min="0"
+                      max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(2)}
+                      step="0.1"
+                    />
+                    <span className="property-unit">m</span>
+                  </div>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#64748b' }}>Bottom Left</label>
+                  <div className="property-input-group">
+                    <input
+                      type="number"
+                      value={(parameters.cornerRadius.bottomLeft / 1000).toFixed(2)}
+                      onChange={(e) => handleCornerRadiusChange('bottomLeft', e.target.value)}
+                      min="0"
+                      max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(2)}
+                      step="0.1"
+                    />
+                    <span className="property-unit">m</span>
+                  </div>
+                </div>
+                <div>
+                  <label style={{ fontSize: '0.75rem', color: '#64748b' }}>Bottom Right</label>
+                  <div className="property-input-group">
+                    <input
+                      type="number"
+                      value={(parameters.cornerRadius.bottomRight / 1000).toFixed(2)}
+                      onChange={(e) => handleCornerRadiusChange('bottomRight', e.target.value)}
+                      min="0"
+                      max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(2)}
+                      step="0.1"
+                    />
+                    <span className="property-unit">m</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Lane Width (Read-only) */}
@@ -519,10 +673,10 @@ function TrackPropertiesPanel({ track, trackId }) {
             </div>
           )}
 
-          {/* Note about future enhancements */}
+          {/* Usage hint */}
           <div className="property-group">
             <div className="property-hint" style={{fontStyle: 'normal', color: '#64748b', fontSize: '0.75rem', marginTop: '1rem'}}>
-              Note: Full editing capabilities (width, height, per-corner radius) coming soon. Use drag handles to resize.
+              💡 Tip: Use drag handles on the canvas or edit values here. Corner radius auto-adjusts when locked.
             </div>
           </div>
 
