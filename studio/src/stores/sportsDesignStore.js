@@ -319,6 +319,23 @@ export const useSportsDesignStore = create(
           bottomRight: templateCorners.bottomRight * scale
         };
 
+        // Helper: Convert TPV code to full color object
+        const getTPVColorObject = (tpvCode) => {
+          const colorMap = {
+            'RH17': { tpv_code: 'RH17', hex: '#DC143C', name: 'Red' },
+            'RH31': { tpv_code: 'RH31', hex: '#FFFFFF', name: 'White' },
+            'RH30': { tpv_code: 'RH30', hex: '#FFD700', name: 'Yellow' },
+            'RH29': { tpv_code: 'RH29', hex: '#0066CC', name: 'Blue' },
+            'RH12': { tpv_code: 'RH12', hex: '#006C55', name: 'Dark Green' }
+          };
+          return colorMap[tpvCode] || { tpv_code: tpvCode, hex: '#DC143C', name: 'Red' };
+        };
+
+        // Set default track surface color
+        const trackSurfaceColor = template.defaultTrackSurfaceColor
+          ? getTPVColorObject(template.defaultTrackSurfaceColor)
+          : getTPVColorObject('RH17');
+
         // Create track parameters - NOTE: laneWidth_mm is FIXED (not scaled)
         const trackParameters = {
           ...template.parameters,
@@ -337,7 +354,8 @@ export const useSportsDesignStore = create(
             y: canvasLength / 2 - (trackHeight / 2)
           },
           rotation: 0,
-          parameters: trackParameters
+          parameters: trackParameters,
+          trackSurfaceColor
         };
 
         set((state) => ({
@@ -389,6 +407,19 @@ export const useSportsDesignStore = create(
           }
         }));
         // Don't add to history for every drag movement
+      },
+
+      setTrackSurfaceColor: (trackId, color) => {
+        set((state) => ({
+          tracks: {
+            ...state.tracks,
+            [trackId]: {
+              ...state.tracks[trackId],
+              trackSurfaceColor: color
+            }
+          }
+        }));
+        get().addToHistory();
       },
 
       selectTrack: (trackId) => {

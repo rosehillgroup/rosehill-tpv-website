@@ -8,7 +8,7 @@ import TrackResizeHandles from './TrackResizeHandles.jsx';
  * Renders a complete running track with all lanes
  */
 function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef }) {
-  const { parameters, position, rotation } = track;
+  const { parameters, position, rotation, trackSurfaceColor } = track;
 
   // Calculate track geometry
   const geometry = calculateTrackGeometry(parameters);
@@ -20,7 +20,8 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
   // Build transform string
   const transform = `translate(${position.x}, ${position.y}) rotate(${rotation})`;
 
-  // Track line color (default white)
+  // Track surface and line colors
+  const surfaceColor = trackSurfaceColor?.hex || '#DC143C'; // Default red
   const lineColor = '#FFFFFF';
   const lineWidth = parameters.lineWidth_mm || 50;
 
@@ -47,6 +48,7 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
         <LaneElement
           key={lane.laneNumber}
           lane={lane}
+          surfaceColor={surfaceColor}
           lineColor={lineColor}
           lineWidth={lineWidth}
           isLastLane={index === geometry.lanes.length - 1}
@@ -78,9 +80,9 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
 
 /**
  * Individual lane element
- * Renders lane boundaries - outer path for all lanes, inner path only for innermost lane
+ * Renders lane with colored surface and white boundary lines
  */
-function LaneElement({ lane, lineColor, lineWidth, isLastLane }) {
+function LaneElement({ lane, surfaceColor, lineColor, lineWidth, isLastLane }) {
   const { laneNumber, innerPath, outerPath } = lane;
 
   // Reduce line width for cleaner appearance (30mm minimum instead of 100mm)
@@ -88,7 +90,23 @@ function LaneElement({ lane, lineColor, lineWidth, isLastLane }) {
 
   return (
     <g className="track-lane">
-      {/* Outer lane boundary - always render (track edge or lane separator) */}
+      {/* Filled track surface - outer boundary with track color */}
+      <path
+        d={outerPath}
+        fill={surfaceColor}
+        stroke="none"
+      />
+
+      {/* White infield - only for innermost lane */}
+      {isLastLane && (
+        <path
+          d={innerPath}
+          fill="#FFFFFF"
+          stroke="none"
+        />
+      )}
+
+      {/* Lane separator line - outer boundary stroke */}
       <path
         d={outerPath}
         fill="none"
@@ -97,7 +115,7 @@ function LaneElement({ lane, lineColor, lineWidth, isLastLane }) {
         vectorEffect="non-scaling-stroke"
       />
 
-      {/* Inner lane boundary - only render for innermost lane (infield edge) */}
+      {/* Infield edge line - only for innermost lane */}
       {isLastLane && (
         <path
           d={innerPath}

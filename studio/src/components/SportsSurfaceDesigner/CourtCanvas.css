@@ -17,7 +17,7 @@
   max-height: 100%;
   border: 1px solid #333;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  background: white;
+  background: transparent;
 }
 
 /* ====== Surface ====== */

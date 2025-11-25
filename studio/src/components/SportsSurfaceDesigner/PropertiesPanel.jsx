@@ -384,8 +384,8 @@ function PropertiesPanel() {
  * TODO: Add full editing capabilities for width, height, and per-corner radius
  */
 function TrackPropertiesPanel({ track, trackId }) {
-  const { updateTrackParameters, removeTrack } = useSportsDesignStore();
-  const { parameters, template } = track;
+  const { updateTrackParameters, removeTrack, setTrackSurfaceColor } = useSportsDesignStore();
+  const { parameters, template, trackSurfaceColor } = track;
   const [cornersLocked, setCornersLocked] = React.useState(true);
 
   // Calculate current geometry
@@ -638,6 +638,34 @@ function TrackPropertiesPanel({ track, trackId }) {
             <div className="property-info">
               <span>{(parameters.laneWidth_mm / 1000).toFixed(2)}m (Fixed)</span>
             </div>
+          </div>
+
+          {/* Track Surface Color */}
+          <div className="property-group">
+            <label>Track Surface Color</label>
+            <div className="color-selector">
+              {[
+                { code: 'RH17', hex: '#DC143C', name: 'Red' },
+                { code: 'RH12', hex: '#006C55', name: 'Dark Green' },
+                { code: 'RH29', hex: '#0066CC', name: 'Blue' },
+                { code: 'RH30', hex: '#FFD700', name: 'Yellow' },
+                { code: 'RH31', hex: '#FFFFFF', name: 'White' }
+              ].map((color) => (
+                <button
+                  key={color.code}
+                  className={`color-selector__swatch ${trackSurfaceColor?.tpv_code === color.code ? 'color-selector__swatch--selected' : ''}`}
+                  style={{ backgroundColor: color.hex }}
+                  onClick={() => setTrackSurfaceColor(trackId, { tpv_code: color.code, hex: color.hex, name: color.name })}
+                  title={`${color.name} (${color.code})`}
+                  aria-label={`${color.name} (${color.code})`}
+                />
+              ))}
+            </div>
+            {trackSurfaceColor && (
+              <div className="property-info" style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#64748b' }}>
+                {trackSurfaceColor.name} ({trackSurfaceColor.tpv_code})
+              </div>
+            )}
           </div>
 
           {/* Divider */}
