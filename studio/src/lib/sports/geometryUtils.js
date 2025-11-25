@@ -145,13 +145,21 @@ export function constrainPosition(position, courtDimensions, surfaceDimensions) 
   const { width_mm, length_mm } = courtDimensions;
   const { width_mm: surfaceWidth, length_mm: surfaceLength } = surfaceDimensions;
 
-  // Allow generous margin beyond surface edges for positioning flexibility
-  // This is especially important when court size equals surface size
-  const margin = 5000; // 5m margin allows courts to extend beyond surface
+  // Allow court to extend beyond surface, but ensure at least a small part remains visible
+  // Minimum visible portion: 500mm (0.5m) must remain on canvas
+  const minVisible = 500;
+
+  // Calculate constraint bounds
+  // Min: Court can move left/up until only minVisible portion of right/bottom edge is on surface
+  // Max: Court can move right/down until only minVisible portion of left/top edge is on surface
+  const minX = -(width_mm - minVisible);
+  const maxX = surfaceWidth - minVisible;
+  const minY = -(length_mm - minVisible);
+  const maxY = surfaceLength - minVisible;
 
   return {
-    x: Math.max(-margin, Math.min(position.x, surfaceWidth - width_mm + margin)),
-    y: Math.max(-margin, Math.min(position.y, surfaceLength - length_mm + margin))
+    x: Math.max(minX, Math.min(position.x, maxX)),
+    y: Math.max(minY, Math.min(position.y, maxY))
   };
 }
 
