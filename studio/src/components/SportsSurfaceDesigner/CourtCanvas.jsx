@@ -23,20 +23,26 @@ function CourtCanvas() {
     updateCourtPosition
   } = useSportsDesignStore();
 
+  // Convert screen coordinates to SVG coordinates
+  const screenToSVG = (screenX, screenY) => {
+    const svg = canvasRef.current;
+    const pt = svg.createSVGPoint();
+    pt.x = screenX;
+    pt.y = screenY;
+    const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+    return { x: svgP.x, y: svgP.y };
+  };
+
   // Handle mouse down on court (start drag)
   const handleCourtMouseDown = (e, courtId) => {
     e.stopPropagation();
 
     selectCourt(courtId);
 
-    const svgRect = canvasRef.current.getBoundingClientRect();
-    const svgPoint = {
-      x: e.clientX - svgRect.left,
-      y: e.clientY - svgRect.top
-    };
-
-    // Convert to SVG coordinates
+    // Convert screen coordinates to SVG coordinates
+    const svgPoint = screenToSVG(e.clientX, e.clientY);
     const court = courts[courtId];
+
     setDragStart({
       x: svgPoint.x - court.position.x,
       y: svgPoint.y - court.position.y
@@ -50,11 +56,8 @@ function CourtCanvas() {
     if (!isDragging || !dragCourtId) return;
 
     const handleMouseMove = (e) => {
-      const svgRect = canvasRef.current.getBoundingClientRect();
-      const svgPoint = {
-        x: e.clientX - svgRect.left,
-        y: e.clientY - svgRect.top
-      };
+      // Convert screen coordinates to SVG coordinates
+      const svgPoint = screenToSVG(e.clientX, e.clientY);
 
       let newPosition = {
         x: svgPoint.x - dragStart.x,
@@ -79,6 +82,12 @@ function CourtCanvas() {
     };
 
     const handleMouseUp = () => {
+      // Add to history when drag completes
+      if (dragCourtId) {
+        const { addToHistory } = useSportsDesignStore.getState();
+        addToHistory();
+      }
+
       setIsDragging(false);
       setDragCourtId(null);
       setDragStart(null);
