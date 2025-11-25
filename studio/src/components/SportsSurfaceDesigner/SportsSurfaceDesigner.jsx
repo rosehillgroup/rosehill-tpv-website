@@ -36,22 +36,37 @@ function SportsSurfaceDesigner() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
+      const {
+        removeCourt,
+        deselectCourt,
+        undo,
+        redo,
+        canUndo,
+        canRedo,
+        duplicateCourt,
+        updateCourtPosition,
+        courts,
+        courtOrder,
+        setCourtOrder,
+        toggleSnapToGrid,
+        snapToGrid: isSnapEnabled,
+        addToHistory
+      } = useSportsDesignStore.getState();
+
       // Delete key - remove selected court
       if (e.key === 'Delete' && selectedCourtId) {
-        const { removeCourt } = useSportsDesignStore.getState();
+        e.preventDefault();
         removeCourt(selectedCourtId);
       }
 
       // Escape key - deselect court
       if (e.key === 'Escape' && selectedCourtId) {
-        const { deselectCourt } = useSportsDesignStore.getState();
         deselectCourt();
       }
 
       // Ctrl/Cmd + Z - Undo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
-        const { undo, canUndo } = useSportsDesignStore.getState();
         if (canUndo()) {
           undo();
         }
@@ -60,7 +75,6 @@ function SportsSurfaceDesigner() {
       // Ctrl/Cmd + Shift + Z - Redo
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && e.shiftKey) {
         e.preventDefault();
-        const { redo, canRedo } = useSportsDesignStore.getState();
         if (canRedo()) {
           redo();
         }
@@ -69,8 +83,58 @@ function SportsSurfaceDesigner() {
       // Ctrl/Cmd + D - Duplicate selected court
       if ((e.ctrlKey || e.metaKey) && e.key === 'd' && selectedCourtId) {
         e.preventDefault();
-        const { duplicateCourt } = useSportsDesignStore.getState();
         duplicateCourt(selectedCourtId);
+      }
+
+      // Arrow Keys - Nudge court position
+      if (selectedCourtId && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        const court = courts[selectedCourtId];
+        if (!court) return;
+
+        const nudgeAmount = e.shiftKey ? 10 : 100; // Shift = fine (10mm), normal = coarse (100mm)
+        let deltaX = 0;
+        let deltaY = 0;
+
+        if (e.key === 'ArrowLeft') deltaX = -nudgeAmount;
+        if (e.key === 'ArrowRight') deltaX = nudgeAmount;
+        if (e.key === 'ArrowUp') deltaY = -nudgeAmount;
+        if (e.key === 'ArrowDown') deltaY = nudgeAmount;
+
+        updateCourtPosition(selectedCourtId, {
+          x: court.position.x + deltaX,
+          y: court.position.y + deltaY
+        });
+        addToHistory();
+      }
+
+      // [ ] - Move court in layer order (backward/forward)
+      if (selectedCourtId && (e.key === '[' || e.key === ']')) {
+        e.preventDefault();
+        const currentIndex = courtOrder.indexOf(selectedCourtId);
+        if (currentIndex === -1) return;
+
+        const newOrder = [...courtOrder];
+
+        if (e.key === '[' && currentIndex > 0) {
+          // Move backward (down in z-order)
+          [newOrder[currentIndex], newOrder[currentIndex - 1]] =
+          [newOrder[currentIndex - 1], newOrder[currentIndex]];
+          setCourtOrder(newOrder);
+          addToHistory();
+        } else if (e.key === ']' && currentIndex < courtOrder.length - 1) {
+          // Move forward (up in z-order)
+          [newOrder[currentIndex], newOrder[currentIndex + 1]] =
+          [newOrder[currentIndex + 1], newOrder[currentIndex]];
+          setCourtOrder(newOrder);
+          addToHistory();
+        }
+      }
+
+      // G - Toggle snap to grid
+      if (e.key === 'g' || e.key === 'G') {
+        e.preventDefault();
+        toggleSnapToGrid();
       }
     };
 

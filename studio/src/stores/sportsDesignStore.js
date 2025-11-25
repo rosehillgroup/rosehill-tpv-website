@@ -232,6 +232,12 @@ export const useSportsDesignStore = create(
         set({ selectedCourtId: null });
       },
 
+      // ====== Layer Order Actions ======
+      setCourtOrder: (newOrder) => {
+        set({ courtOrder: newOrder });
+        // Note: History is added by caller (keyboard shortcut) to avoid double entries
+      },
+
       // ====== Custom Markings Actions ======
       addCustomMarking: (marking) => {
         set((state) => ({
