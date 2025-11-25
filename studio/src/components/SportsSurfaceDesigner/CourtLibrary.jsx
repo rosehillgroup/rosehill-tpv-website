@@ -79,22 +79,22 @@ function CourtPreview({ template }) {
   const width = template.dimensions.width_mm;
   const height = template.dimensions.length_mm;
 
-  // Scale to fit in 76x76 preview box (80px - 4px padding)
-  const scale = Math.min(72 / width, 72 / height);
+  // Scale to fit in 62x62 preview box (64px - 2px padding)
+  const scale = Math.min(62 / width, 62 / height);
   const scaledWidth = width * scale;
   const scaledHeight = height * scale;
 
   return (
     <svg
-      width="76"
-      height="76"
-      viewBox={`0 0 76 76`}
+      width="62"
+      height="62"
+      viewBox={`0 0 62 62`}
       className="court-library__svg-preview"
     >
       {/* Background */}
       <rect
-        x={(76 - scaledWidth) / 2}
-        y={(76 - scaledHeight) / 2}
+        x={(62 - scaledWidth) / 2}
+        y={(62 - scaledHeight) / 2}
         width={scaledWidth}
         height={scaledHeight}
         fill="#e5e7eb"
@@ -108,8 +108,8 @@ function CourtPreview({ template }) {
           key={idx}
           marking={marking}
           scale={scale}
-          offsetX={(76 - scaledWidth) / 2}
-          offsetY={(76 - scaledHeight) / 2}
+          offsetX={(62 - scaledWidth) / 2}
+          offsetY={(62 - scaledHeight) / 2}
         />
       ))}
     </svg>
