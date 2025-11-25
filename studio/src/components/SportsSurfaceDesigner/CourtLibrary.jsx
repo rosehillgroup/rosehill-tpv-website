@@ -79,27 +79,27 @@ function CourtPreview({ template }) {
   const width = template.dimensions.width_mm;
   const height = template.dimensions.length_mm;
 
-  // Scale to fit in 100x100 preview box
-  const scale = Math.min(96 / width, 96 / height);
+  // Scale to fit in 76x76 preview box (80px - 4px padding)
+  const scale = Math.min(72 / width, 72 / height);
   const scaledWidth = width * scale;
   const scaledHeight = height * scale;
 
   return (
     <svg
-      width="100"
-      height="100"
-      viewBox={`0 0 100 100`}
+      width="76"
+      height="76"
+      viewBox={`0 0 76 76`}
       className="court-library__svg-preview"
     >
       {/* Background */}
       <rect
-        x={(100 - scaledWidth) / 2}
-        y={(100 - scaledHeight) / 2}
+        x={(76 - scaledWidth) / 2}
+        y={(76 - scaledHeight) / 2}
         width={scaledWidth}
         height={scaledHeight}
         fill="#e5e7eb"
         stroke="#9ca3af"
-        strokeWidth="2"
+        strokeWidth="1.5"
       />
 
       {/* Show all markings for accurate preview */}
@@ -108,8 +108,8 @@ function CourtPreview({ template }) {
           key={idx}
           marking={marking}
           scale={scale}
-          offsetX={(100 - scaledWidth) / 2}
-          offsetY={(100 - scaledHeight) / 2}
+          offsetX={(76 - scaledWidth) / 2}
+          offsetY={(76 - scaledHeight) / 2}
         />
       ))}
     </svg>
@@ -131,7 +131,7 @@ function CourtMarkingPreview({ marking, scale, offsetX, offsetY }) {
           x2={params.x2 * scale + offsetX}
           y2={params.y2 * scale + offsetY}
           stroke="#1e293b"
-          strokeWidth="2"
+          strokeWidth="1.5"
         />
       );
 
@@ -143,7 +143,7 @@ function CourtMarkingPreview({ marking, scale, offsetX, offsetY }) {
           width={params.width * scale}
           height={params.height * scale}
           stroke="#1e293b"
-          strokeWidth="2"
+          strokeWidth="1.5"
           fill="none"
         />
       );
@@ -155,7 +155,7 @@ function CourtMarkingPreview({ marking, scale, offsetX, offsetY }) {
           cy={params.cy * scale + offsetY}
           r={params.radius * scale}
           stroke="#1e293b"
-          strokeWidth="2"
+          strokeWidth="1.5"
           fill="none"
         />
       );
@@ -178,7 +178,7 @@ function CourtMarkingPreview({ marking, scale, offsetX, offsetY }) {
         <path
           d={pathData}
           stroke="#1e293b"
-          strokeWidth="2"
+          strokeWidth="1.5"
           fill="none"
         />
       );

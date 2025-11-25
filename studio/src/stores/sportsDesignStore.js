@@ -236,7 +236,12 @@ export const useSportsDesignStore = create(
       },
 
       deselectCourt: () => {
-        set({ selectedCourtId: null });
+        const { showPropertiesPanel } = get();
+        // If properties panel is open when deselecting, mark it as user closed
+        set({
+          selectedCourtId: null,
+          propertiesPanelUserClosed: showPropertiesPanel ? true : get().propertiesPanelUserClosed
+        });
       },
 
       // ====== Layer Order Actions ======
