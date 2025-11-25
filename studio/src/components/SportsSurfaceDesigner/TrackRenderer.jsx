@@ -43,12 +43,13 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
       />
 
       {/* Render each lane */}
-      {geometry.lanes.map(lane => (
+      {geometry.lanes.map((lane, index) => (
         <LaneElement
           key={lane.laneNumber}
           lane={lane}
           lineColor={lineColor}
           lineWidth={lineWidth}
+          isLastLane={index === geometry.lanes.length - 1}
         />
       ))}
 
@@ -77,26 +78,17 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
 
 /**
  * Individual lane element
- * Renders the inner and outer boundaries of a single lane
+ * Renders lane boundaries - outer path for all lanes, inner path only for innermost lane
  */
-function LaneElement({ lane, lineColor, lineWidth }) {
+function LaneElement({ lane, lineColor, lineWidth, isLastLane }) {
   const { laneNumber, innerPath, outerPath } = lane;
 
-  // Increase line width for better visibility after scaling
-  const visibleLineWidth = Math.max(lineWidth, 100);
+  // Reduce line width for cleaner appearance (30mm minimum instead of 100mm)
+  const visibleLineWidth = Math.max(lineWidth, 30);
 
   return (
     <g className="track-lane">
-      {/* Inner lane boundary - always render for all lanes */}
-      <path
-        d={innerPath}
-        fill="none"
-        stroke={lineColor}
-        strokeWidth={visibleLineWidth}
-        vectorEffect="non-scaling-stroke"
-      />
-
-      {/* Outer lane boundary (always visible) */}
+      {/* Outer lane boundary - always render (track edge or lane separator) */}
       <path
         d={outerPath}
         fill="none"
@@ -104,6 +96,17 @@ function LaneElement({ lane, lineColor, lineWidth }) {
         strokeWidth={visibleLineWidth}
         vectorEffect="non-scaling-stroke"
       />
+
+      {/* Inner lane boundary - only render for innermost lane (infield edge) */}
+      {isLastLane && (
+        <path
+          d={innerPath}
+          fill="none"
+          stroke={lineColor}
+          strokeWidth={visibleLineWidth}
+          vectorEffect="non-scaling-stroke"
+        />
+      )}
     </g>
   );
 }
