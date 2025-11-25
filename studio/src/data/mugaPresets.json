@@ -1,0 +1,167 @@
+{
+  "muga-28x15-standard": {
+    "id": "muga-28x15-standard",
+    "name": "MUGA Standard (28m × 15m)",
+    "description": "Basketball + Netball - Most compact MUGA configuration",
+    "category": "muga",
+    "recommendedSurface": {
+      "width_mm": 28000,
+      "length_mm": 15000
+    },
+    "minSurface": {
+      "width_mm": 28000,
+      "length_mm": 15000
+    },
+    "courts": [
+      {
+        "templateId": "basketball-full",
+        "name": "Basketball",
+        "position": { "x": 0, "y": 0 },
+        "rotation": 0,
+        "scale": 1.0,
+        "defaultLineColor": { "tpv_code": "RH17", "hex": "#DC143C", "name": "Red" }
+      },
+      {
+        "templateId": "netball-full",
+        "name": "Netball",
+        "position": { "x": -1250, "y": -1250 },
+        "rotation": 0,
+        "scale": 0.92,
+        "defaultLineColor": { "tpv_code": "RH31", "hex": "#FFFFFF", "name": "White" }
+      }
+    ],
+    "colorScheme": [
+      { "sport": "Basketball", "color": "Red (RH17)" },
+      { "sport": "Netball", "color": "White (RH31)" }
+    ]
+  },
+
+  "muga-30x15-uk-school": {
+    "id": "muga-30x15-uk-school",
+    "name": "MUGA UK School (30.5m × 15.25m)",
+    "description": "Netball + Basketball - Standard UK school MUGA",
+    "category": "muga",
+    "recommendedSurface": {
+      "width_mm": 30500,
+      "length_mm": 15250
+    },
+    "minSurface": {
+      "width_mm": 30500,
+      "length_mm": 15250
+    },
+    "courts": [
+      {
+        "templateId": "netball-full",
+        "name": "Netball",
+        "position": { "x": 0, "y": 0 },
+        "rotation": 0,
+        "scale": 1.0,
+        "defaultLineColor": { "tpv_code": "RH31", "hex": "#FFFFFF", "name": "White" }
+      },
+      {
+        "templateId": "basketball-full",
+        "name": "Basketball",
+        "position": { "x": 1250, "y": 125 },
+        "rotation": 0,
+        "scale": 1.0,
+        "defaultLineColor": { "tpv_code": "RH17", "hex": "#DC143C", "name": "Red" }
+      }
+    ],
+    "colorScheme": [
+      { "sport": "Netball", "color": "White (RH31)" },
+      { "sport": "Basketball", "color": "Red (RH17)" }
+    ]
+  },
+
+  "muga-34x20-plus": {
+    "id": "muga-34x20-plus",
+    "name": "MUGA Plus (34m × 20m)",
+    "description": "Basketball + Netball + 5-a-side - Multi-sport recreational facility",
+    "category": "muga",
+    "recommendedSurface": {
+      "width_mm": 34000,
+      "length_mm": 20000
+    },
+    "minSurface": {
+      "width_mm": 34000,
+      "length_mm": 20000
+    },
+    "courts": [
+      {
+        "templateId": "futsal-5-a-side",
+        "name": "5-a-side Football",
+        "position": { "x": 2500, "y": 1500 },
+        "rotation": 90,
+        "scale": 0.85,
+        "defaultLineColor": { "tpv_code": "RH30", "hex": "#FFD700", "name": "Yellow" }
+      },
+      {
+        "templateId": "netball-full",
+        "name": "Netball",
+        "position": { "x": 1750, "y": 2375 },
+        "rotation": 0,
+        "scale": 1.0,
+        "defaultLineColor": { "tpv_code": "RH31", "hex": "#FFFFFF", "name": "White" }
+      },
+      {
+        "templateId": "basketball-full",
+        "name": "Basketball",
+        "position": { "x": 3000, "y": 2500 },
+        "rotation": 0,
+        "scale": 1.0,
+        "defaultLineColor": { "tpv_code": "RH17", "hex": "#DC143C", "name": "Red" }
+      }
+    ],
+    "colorScheme": [
+      { "sport": "5-a-side", "color": "Yellow (RH30)" },
+      { "sport": "Netball", "color": "White (RH31)" },
+      { "sport": "Basketball", "color": "Red (RH17)" }
+    ]
+  },
+
+  "muga-40x20-large": {
+    "id": "muga-40x20-large",
+    "name": "MUGA Large (40m × 20m)",
+    "description": "Futsal + Basketball + Volleyball - Full-size multi-sport facility",
+    "category": "muga",
+    "recommendedSurface": {
+      "width_mm": 40000,
+      "length_mm": 20000
+    },
+    "minSurface": {
+      "width_mm": 40000,
+      "length_mm": 20000
+    },
+    "courts": [
+      {
+        "templateId": "futsal-5-a-side",
+        "name": "Futsal",
+        "position": { "x": 0, "y": 2500 },
+        "rotation": 0,
+        "scale": 1.0,
+        "defaultLineColor": { "tpv_code": "RH30", "hex": "#FFD700", "name": "Yellow" }
+      },
+      {
+        "templateId": "basketball-full",
+        "name": "Basketball",
+        "position": { "x": 6000, "y": 2500 },
+        "rotation": 0,
+        "scale": 1.0,
+        "defaultLineColor": { "tpv_code": "RH17", "hex": "#DC143C", "name": "Red" }
+      },
+      {
+        "templateId": "volleyball-indoor",
+        "name": "Volleyball",
+        "position": { "x": 11000, "y": 1000 },
+        "rotation": 90,
+        "scale": 1.0,
+        "defaultLineColor": { "tpv_code": "RH29", "hex": "#0066CC", "name": "Blue" }
+      }
+    ],
+    "colorScheme": [
+      { "sport": "Futsal", "color": "Yellow (RH30)" },
+      { "sport": "Basketball", "color": "Red (RH17)" },
+      { "sport": "Volleyball", "color": "Blue (RH29)" }
+    ]
+  }
+}
