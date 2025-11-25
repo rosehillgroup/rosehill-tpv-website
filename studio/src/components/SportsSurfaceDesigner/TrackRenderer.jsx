@@ -77,43 +77,28 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick }) {
 function LaneElement({ lane, lineColor, lineWidth }) {
   const { laneNumber, innerPath, outerPath } = lane;
 
+  // Increase line width for better visibility after scaling
+  const visibleLineWidth = Math.max(lineWidth, 100);
+
   return (
     <g className="track-lane">
-      {/* Inner lane boundary */}
-      {laneNumber > 1 && (
-        <path
-          d={innerPath}
-          fill="none"
-          stroke={lineColor}
-          strokeWidth={lineWidth}
-          vectorEffect="non-scaling-stroke"
-        />
-      )}
+      {/* Inner lane boundary - always render for all lanes */}
+      <path
+        d={innerPath}
+        fill="none"
+        stroke={lineColor}
+        strokeWidth={visibleLineWidth}
+        vectorEffect="non-scaling-stroke"
+      />
 
       {/* Outer lane boundary (always visible) */}
       <path
         d={outerPath}
         fill="none"
         stroke={lineColor}
-        strokeWidth={lineWidth}
+        strokeWidth={visibleLineWidth}
         vectorEffect="non-scaling-stroke"
       />
-
-      {/* Lane number label (optional - at start of straight) */}
-      {laneNumber <= 8 && (
-        <text
-          x={lane.outerRadius + 500}
-          y="1000"
-          fill={lineColor}
-          fontSize="1200"
-          fontWeight="bold"
-          textAnchor="middle"
-          opacity="0.5"
-          pointerEvents="none"
-        >
-          {laneNumber}
-        </text>
-      )}
     </g>
   );
 }

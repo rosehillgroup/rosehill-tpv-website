@@ -262,23 +262,27 @@ function CourtMarkingPreview({ marking, scale, offsetX, offsetY }) {
 
 /**
  * Track preview component
- * Renders a simplified SVG preview of a running track
+ * Renders a simplified SVG preview of a rounded rectangle track
  */
 function TrackPreview({ template }) {
-  const { parameters, calculatedDimensions } = template;
-  const width = calculatedDimensions.totalWidth_mm;
-  const height = calculatedDimensions.totalLength_mm;
+  const { parameters } = template;
+  const width = parameters.width_mm;
+  const height = parameters.height_mm;
 
   // Scale to fit in 62x62 preview box
-  const scale = Math.min(62 / width, 62 / height);
+  const scale = Math.min(58 / width, 58 / height);
   const scaledWidth = width * scale;
   const scaledHeight = height * scale;
 
   // Calculate lane positions for preview
   const numLanes = parameters.numLanes;
   const laneWidth = parameters.laneWidth_mm * scale;
-  const cornerRadius = parameters.cornerRadius_mm * scale;
-  const straightLength = parameters.straightLength_mm * scale;
+
+  // Get corner radius (use uniform value for preview simplicity)
+  const cornerRadius = parameters.cornerRadius;
+  const avgCornerRadius = (cornerRadius.topLeft + cornerRadius.topRight +
+    cornerRadius.bottomLeft + cornerRadius.bottomRight) / 4;
+  const scaledCornerRadius = avgCornerRadius * scale;
 
   const offsetX = (62 - scaledWidth) / 2;
   const offsetY = (62 - scaledHeight) / 2;
@@ -296,34 +300,25 @@ function TrackPreview({ template }) {
         y={offsetY}
         width={scaledWidth}
         height={scaledHeight}
+        rx={scaledCornerRadius}
         fill="#e5e7eb"
       />
 
-      {/* Render simplified track lanes */}
+      {/* Render simplified track lanes - concentric rounded rectangles */}
       {Array.from({ length: numLanes }).map((_, i) => {
-        const laneRadius = cornerRadius + (i * laneWidth);
-        const halfStraight = straightLength / 2;
-
-        // Track path following the actual track geometry:
-        // Start bottom-left → line up → arc right → line down → arc left → close
-        const startX = offsetX;
-        const startY = offsetY + laneRadius;
-
-        const path = `
-          M ${startX} ${startY}
-          L ${startX} ${startY + halfStraight}
-          A ${laneRadius} ${laneRadius} 0 0 0 ${startX + laneRadius * 2} ${startY + halfStraight}
-          L ${startX + laneRadius * 2} ${startY}
-          A ${laneRadius} ${laneRadius} 0 0 0 ${startX} ${startY}
-          Z
-        `.trim().replace(/\s+/g, ' ');
+        const inset = i * laneWidth;
+        const laneRx = Math.max(0, scaledCornerRadius - inset);
 
         return (
-          <path
+          <rect
             key={i}
-            d={path}
+            x={offsetX + inset}
+            y={offsetY + inset}
+            width={Math.max(0, scaledWidth - (inset * 2))}
+            height={Math.max(0, scaledHeight - (inset * 2))}
+            rx={laneRx}
             stroke="#1e293b"
-            strokeWidth="0.8"
+            strokeWidth="1"
             fill="none"
           />
         );

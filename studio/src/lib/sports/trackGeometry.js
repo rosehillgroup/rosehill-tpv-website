@@ -1,17 +1,24 @@
 // TPV Studio - Running Track Geometry Calculations
+// Flexible rounded rectangle model with per-corner radius support
 
 /**
  * Calculate complete track geometry for all lanes
  * @param {object} params - Track parameters
+ * @param {number} params.width_mm - Track width in mm
+ * @param {number} params.height_mm - Track height in mm
+ * @param {number} params.numLanes - Number of lanes
+ * @param {number} params.laneWidth_mm - Fixed lane width in mm
+ * @param {object} params.cornerRadius - Corner radii {topLeft, topRight, bottomLeft, bottomRight}
+ * @param {number} params.lineWidth_mm - Line width for rendering (default 50)
  * @returns {object} Track geometry with lane paths
  */
 export function calculateTrackGeometry(params) {
   const {
+    width_mm,
+    height_mm,
     numLanes,
     laneWidth_mm,
-    straightLength_mm,
-    cornerRadius_mm,
-    cornerRoundness = 1.0,
+    cornerRadius = { topLeft: 3000, topRight: 3000, bottomLeft: 3000, bottomRight: 3000 },
     lineWidth_mm = 50
   } = params;
 
@@ -19,190 +26,169 @@ export function calculateTrackGeometry(params) {
 
   // Calculate each lane's inner and outer paths
   for (let i = 0; i < numLanes; i++) {
-    const innerRadius = cornerRadius_mm + (i * laneWidth_mm);
-    const outerRadius = cornerRadius_mm + ((i + 1) * laneWidth_mm);
+    const laneOffset = i * laneWidth_mm;
+    const nextLaneOffset = (i + 1) * laneWidth_mm;
+
+    // Calculate dimensions for this lane (inset from outer edge)
+    const innerWidth = Math.max(0, width_mm - (nextLaneOffset * 2));
+    const innerHeight = Math.max(0, height_mm - (nextLaneOffset * 2));
+    const outerWidth = Math.max(0, width_mm - (laneOffset * 2));
+    const outerHeight = Math.max(0, height_mm - (laneOffset * 2));
+
+    // Calculate corner radii for this lane (reduced by lane offset, clamped to 0)
+    const innerCorners = {
+      topLeft: Math.max(0, cornerRadius.topLeft - nextLaneOffset),
+      topRight: Math.max(0, cornerRadius.topRight - nextLaneOffset),
+      bottomLeft: Math.max(0, cornerRadius.bottomLeft - nextLaneOffset),
+      bottomRight: Math.max(0, cornerRadius.bottomRight - nextLaneOffset)
+    };
+
+    const outerCorners = {
+      topLeft: Math.max(0, cornerRadius.topLeft - laneOffset),
+      topRight: Math.max(0, cornerRadius.topRight - laneOffset),
+      bottomLeft: Math.max(0, cornerRadius.bottomLeft - laneOffset),
+      bottomRight: Math.max(0, cornerRadius.bottomRight - laneOffset)
+    };
 
     lanes.push({
       laneNumber: i + 1,
-      innerRadius,
-      outerRadius,
-      innerPath: generateLanePath(innerRadius, straightLength_mm, cornerRoundness),
-      outerPath: generateLanePath(outerRadius, straightLength_mm, cornerRoundness),
-      length: calculateTrackLength(innerRadius, straightLength_mm)
+      innerPath: generateRoundedRectPath(innerWidth, innerHeight, innerCorners, laneOffset),
+      outerPath: generateRoundedRectPath(outerWidth, outerHeight, outerCorners, laneOffset),
+      perimeter: calculateRoundedRectPerimeter(outerWidth, outerHeight, outerCorners)
     });
   }
 
-  const totalWidth = (numLanes * laneWidth_mm) + (cornerRadius_mm * 2);
-  const totalLength = straightLength_mm + (cornerRadius_mm * 2) + ((numLanes * laneWidth_mm) * 2);
-
   return {
     lanes,
-    totalWidth,
-    totalLength,
-    infieldWidth: cornerRadius_mm * 2,
-    infieldLength: straightLength_mm
+    totalWidth: width_mm,
+    totalLength: height_mm,
+    usableWidth: width_mm - (numLanes * laneWidth_mm * 2),
+    usableHeight: height_mm - (numLanes * laneWidth_mm * 2)
   };
 }
 
 /**
- * Generate SVG path for a single lane boundary
- * Supports adjustable corner roundness from rounded rectangle to full oval
- * @param {number} radius - Radius for this lane
- * @param {number} straightLength - Length of straight sections in mm
- * @param {number} roundness - Corner roundness (0 = rounded rect, 1 = full semicircle)
+ * Generate SVG path for a rounded rectangle with per-corner radius
+ * @param {number} width - Rectangle width in mm
+ * @param {number} height - Rectangle height in mm
+ * @param {object} corners - Corner radii {topLeft, topRight, bottomLeft, bottomRight}
+ * @param {number} offset - Offset from outer edge (for positioning)
  * @returns {string} SVG path d attribute
  */
-export function generateLanePath(radius, straightLength, roundness = 1.0) {
-  // Clamp roundness between 0 and 1
-  roundness = Math.max(0, Math.min(1, roundness));
-
-  const halfStraight = straightLength / 2;
-
-  if (roundness === 1.0) {
-    // Full track shape with semicircular ends
-    return generateFullTrackPath(radius, straightLength);
-  } else if (roundness === 0) {
-    // Rounded rectangle with minimal corner radius
-    const cornerRadius = Math.min(radius * 0.1, 1000); // Max 1m corner radius
-    return generateRoundedRectPath(straightLength, radius * 2, cornerRadius);
-  } else {
-    // Interpolate between rounded rectangle and full track
-    return generateInterpolatedPath(radius, straightLength, roundness);
+function generateRoundedRectPath(width, height, corners, offset = 0) {
+  // Handle edge cases
+  if (width <= 0 || height <= 0) {
+    return `M ${offset} ${offset} L ${offset} ${offset}`;
   }
-}
 
-/**
- * Generate path for full track shape (standard athletics track)
- * Two straights connected by two semicircles
- */
-function generateFullTrackPath(radius, straightLength) {
-  const halfStraight = straightLength / 2;
+  // Clamp corner radii to valid values (max half of smallest dimension)
+  const maxRadius = Math.min(width / 2, height / 2);
+  const tl = Math.min(corners.topLeft, maxRadius);
+  const tr = Math.min(corners.topRight, maxRadius);
+  const br = Math.min(corners.bottomRight, maxRadius);
+  const bl = Math.min(corners.bottomLeft, maxRadius);
 
-  // Start at bottom-left of straight section
-  const startX = 0;
-  const startY = radius;
+  // Calculate positions relative to offset
+  const left = offset;
+  const right = offset + width;
+  const top = offset;
+  const bottom = offset + height;
 
-  // Path: straight up → semicircle right → straight down → semicircle left → close
-  return `
-    M ${startX} ${startY}
-    L ${startX} ${halfStraight + radius}
-    A ${radius} ${radius} 0 0 0 ${radius * 2} ${halfStraight + radius}
-    L ${radius * 2} ${radius}
-    A ${radius} ${radius} 0 0 0 ${startX} ${startY}
+  // Build path: Start top-left, go clockwise
+  const path = `
+    M ${left + tl} ${top}
+    L ${right - tr} ${top}
+    ${tr > 0 ? `A ${tr} ${tr} 0 0 1 ${right} ${top + tr}` : ''}
+    L ${right} ${bottom - br}
+    ${br > 0 ? `A ${br} ${br} 0 0 1 ${right - br} ${bottom}` : ''}
+    L ${left + bl} ${bottom}
+    ${bl > 0 ? `A ${bl} ${bl} 0 0 1 ${left} ${bottom - bl}` : ''}
+    L ${left} ${top + tl}
+    ${tl > 0 ? `A ${tl} ${tl} 0 0 1 ${left + tl} ${top}` : ''}
     Z
   `.trim().replace(/\s+/g, ' ');
+
+  return path;
 }
 
 /**
- * Generate path for rounded rectangle
+ * Calculate perimeter of rounded rectangle
+ * @param {number} width - Rectangle width in mm
+ * @param {number} height - Rectangle height in mm
+ * @param {object} corners - Corner radii
+ * @returns {number} Perimeter in meters
  */
-function generateRoundedRectPath(length, width, cornerRadius) {
-  const halfLength = length / 2;
-  const halfWidth = width / 2;
+function calculateRoundedRectPerimeter(width, height, corners) {
+  if (width <= 0 || height <= 0) return 0;
 
-  return `
-    M ${cornerRadius} 0
-    L ${halfLength - cornerRadius} 0
-    A ${cornerRadius} ${cornerRadius} 0 0 1 ${halfLength} ${cornerRadius}
-    L ${halfLength} ${halfWidth - cornerRadius}
-    A ${cornerRadius} ${cornerRadius} 0 0 1 ${halfLength - cornerRadius} ${halfWidth}
-    L ${-halfLength + cornerRadius} ${halfWidth}
-    A ${cornerRadius} ${cornerRadius} 0 0 1 ${-halfLength} ${halfWidth - cornerRadius}
-    L ${-halfLength} ${cornerRadius}
-    A ${cornerRadius} ${cornerRadius} 0 0 1 ${-halfLength + cornerRadius} 0
-    L ${cornerRadius} 0
-  `.trim().replace(/\s+/g, ' ');
-}
+  // Clamp corner radii
+  const maxRadius = Math.min(width / 2, height / 2);
+  const tl = Math.min(corners.topLeft, maxRadius);
+  const tr = Math.min(corners.topRight, maxRadius);
+  const br = Math.min(corners.bottomRight, maxRadius);
+  const bl = Math.min(corners.bottomLeft, maxRadius);
 
-/**
- * Generate interpolated path between rounded rectangle and full track
- * @param {number} radius - Lane radius
- * @param {number} straightLength - Length of straights
- * @param {number} roundness - Interpolation factor (0-1)
- */
-function generateInterpolatedPath(radius, straightLength, roundness) {
-  const halfStraight = straightLength / 2;
+  // Calculate straight sections
+  const topStraight = width - tl - tr;
+  const rightStraight = height - tr - br;
+  const bottomStraight = width - br - bl;
+  const leftStraight = height - bl - tl;
 
-  // Calculate effective corner radius based on roundness
-  // At roundness=0: use small corner radius
-  // At roundness=1: use full radius for semicircle
-  const minCornerRadius = Math.min(radius * 0.1, 1000);
-  const effectiveRadius = minCornerRadius + (radius - minCornerRadius) * roundness;
+  // Calculate curved sections (quarter circles)
+  const topLeftArc = (Math.PI * tl) / 2;
+  const topRightArc = (Math.PI * tr) / 2;
+  const bottomRightArc = (Math.PI * br) / 2;
+  const bottomLeftArc = (Math.PI * bl) / 2;
 
-  // Calculate arc sweep angle (90° at roundness=0, 180° at roundness=1)
-  const sweepAngle = 90 + (90 * roundness);
-  const largeArcFlag = sweepAngle > 90 ? 1 : 0;
+  const totalMm = topStraight + rightStraight + bottomStraight + leftStraight +
+    topLeftArc + topRightArc + bottomRightArc + bottomLeftArc;
 
-  // Start position
-  const startX = 0;
-  const startY = effectiveRadius;
-
-  // Calculate end points of curves based on roundness
-  const curveEndX = effectiveRadius * Math.sin((sweepAngle * Math.PI) / 180);
-  const curveEndY = effectiveRadius - effectiveRadius * Math.cos((sweepAngle * Math.PI) / 180);
-
-  return `
-    M ${startX} ${startY}
-    L ${startX} ${halfStraight + startY}
-    A ${effectiveRadius} ${effectiveRadius} 0 ${largeArcFlag} 0 ${effectiveRadius + curveEndX} ${halfStraight + startY + curveEndY}
-    L ${effectiveRadius + curveEndX} ${startY + curveEndY}
-    A ${effectiveRadius} ${effectiveRadius} 0 ${largeArcFlag} 0 ${startX} ${startY}
-    Z
-  `.trim().replace(/\s+/g, ' ');
-}
-
-/**
- * Calculate track length for a given lane
- * Formula: 2 × straightLength + 2 × π × radius
- * @param {number} radius - Lane radius in mm
- * @param {number} straightLength - Straight section length in mm
- * @returns {number} Track length in meters
- */
-export function calculateTrackLength(radius, straightLength) {
-  const circumference = 2 * Math.PI * radius;
-  const totalLength = (2 * straightLength) + circumference;
-  return totalLength / 1000; // Convert mm to meters
-}
-
-/**
- * Calculate infield dimensions (space inside the track)
- * @param {object} params - Track parameters
- * @returns {object} Infield dimensions
- */
-export function calculateInfieldDimensions(params) {
-  const { cornerRadius_mm, straightLength_mm } = params;
-
-  return {
-    width_mm: cornerRadius_mm * 2,
-    length_mm: straightLength_mm
-  };
-}
-
-/**
- * Calculate stagger distances for lane starts
- * Used for staggered starts in races
- * @param {number} innerRadius - Inside radius of lane 1 in mm
- * @param {number} laneRadius - Radius of the specific lane in mm
- * @returns {number} Stagger distance in meters
- */
-export function calculateLaneStagger(innerRadius, laneRadius) {
-  const staggerMm = 2 * Math.PI * (laneRadius - innerRadius);
-  return staggerMm / 1000; // Convert to meters
+  return totalMm / 1000; // Convert to meters
 }
 
 /**
  * Get bounding box for track
  * @param {object} params - Track parameters
- * @returns {object} Bounding box { width, height }
+ * @returns {object} Bounding box {width_mm, height_mm}
  */
 export function getTrackBoundingBox(params) {
-  const { numLanes, laneWidth_mm, cornerRadius_mm, straightLength_mm } = params;
+  return {
+    width_mm: params.width_mm,
+    height_mm: params.height_mm
+  };
+}
 
-  const totalRadius = cornerRadius_mm + (numLanes * laneWidth_mm);
+/**
+ * Calculate usable infield dimensions (space inside all lanes)
+ * @param {object} params - Track parameters
+ * @returns {object} Infield dimensions
+ */
+export function calculateInfieldDimensions(params) {
+  const { width_mm, height_mm, numLanes, laneWidth_mm } = params;
+
+  const totalLaneWidth = numLanes * laneWidth_mm * 2; // Both sides
 
   return {
-    width_mm: totalRadius * 2,
-    length_mm: straightLength_mm + (totalRadius * 2)
+    width_mm: Math.max(0, width_mm - totalLaneWidth),
+    height_mm: Math.max(0, height_mm - totalLaneWidth)
+  };
+}
+
+/**
+ * Validate corner radii don't exceed track dimensions
+ * @param {number} width_mm - Track width
+ * @param {number} height_mm - Track height
+ * @param {object} cornerRadius - Corner radii object
+ * @returns {object} Validated corner radii
+ */
+export function validateCornerRadii(width_mm, height_mm, cornerRadius) {
+  const maxRadius = Math.min(width_mm / 2, height_mm / 2);
+
+  return {
+    topLeft: Math.min(cornerRadius.topLeft, maxRadius),
+    topRight: Math.min(cornerRadius.topRight, maxRadius),
+    bottomLeft: Math.min(cornerRadius.bottomLeft, maxRadius),
+    bottomRight: Math.min(cornerRadius.bottomRight, maxRadius)
   };
 }
 
@@ -216,11 +202,11 @@ export function checkCourtFitsInInfield(trackParams, courtDimensions) {
   const infield = calculateInfieldDimensions(trackParams);
 
   const widthFits = courtDimensions.width_mm <= infield.width_mm;
-  const lengthFits = courtDimensions.length_mm <= infield.length_mm;
+  const lengthFits = courtDimensions.length_mm <= infield.height_mm;
 
   // Try rotated orientation
   const widthFitsRotated = courtDimensions.length_mm <= infield.width_mm;
-  const lengthFitsRotated = courtDimensions.width_mm <= infield.length_mm;
+  const lengthFitsRotated = courtDimensions.width_mm <= infield.height_mm;
 
   const fitsNormal = widthFits && lengthFits;
   const fitsRotated = widthFitsRotated && lengthFitsRotated;

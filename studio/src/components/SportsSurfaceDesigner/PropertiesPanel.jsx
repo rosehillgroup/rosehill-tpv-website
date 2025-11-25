@@ -1,7 +1,7 @@
 // TPV Studio - Properties Panel for Selected Court or Track
 import React, { useState } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
-import { calculateTrackGeometry, calculateTrackLength } from '../../lib/sports/trackGeometry.js';
+import { calculateTrackGeometry } from '../../lib/sports/trackGeometry.js';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import './PropertiesPanel.css';
 
@@ -381,14 +381,19 @@ function PropertiesPanel() {
 /**
  * Track Properties Panel Component
  * Displays and allows editing of track parameters
+ * TODO: Add full editing capabilities for width, height, and per-corner radius
  */
 function TrackPropertiesPanel({ track, trackId }) {
-  const { updateTrackParameters, removeTrack, addToHistory } = useSportsDesignStore();
+  const { updateTrackParameters, removeTrack } = useSportsDesignStore();
   const { parameters, template } = track;
 
   // Calculate current geometry
   const geometry = calculateTrackGeometry(parameters);
-  const lane1Length = calculateTrackLength(parameters.cornerRadius_mm, parameters.straightLength_mm);
+
+  // Get lane perimeters
+  const lane1Perimeter = geometry.lanes[0]?.perimeter || 0;
+  const lastLane = geometry.lanes[geometry.lanes.length - 1];
+  const lastLanePerimeter = lastLane?.perimeter || 0;
 
   // Handle parameter updates
   const handleNumLanesChange = (value) => {
@@ -397,30 +402,20 @@ function TrackPropertiesPanel({ track, trackId }) {
     updateTrackParameters(trackId, { numLanes: numValue });
   };
 
-  const handleRoundnessChange = (value) => {
-    const numValue = parseFloat(value);
-    if (isNaN(numValue) || numValue < 0 || numValue > 1) return;
-    updateTrackParameters(trackId, { cornerRoundness: numValue });
-  };
-
-  const handleStraightLengthChange = (value) => {
-    const numValue = parseFloat(value);
-    if (isNaN(numValue) || numValue < 10000) return; // Min 10m
-    updateTrackParameters(trackId, { straightLength_mm: numValue });
-  };
-
-  const handleCornerRadiusChange = (value) => {
-    const numValue = parseFloat(value);
-    if (isNaN(numValue) || numValue < 10000) return; // Min 10m
-    updateTrackParameters(trackId, { cornerRadius_mm: numValue });
-  };
-
   // Handle delete track
   const handleDeleteTrack = () => {
     if (window.confirm(`Delete ${template.name}? This action cannot be undone.`)) {
       removeTrack(trackId);
     }
   };
+
+  // Calculate average corner radius for display
+  const avgCornerRadius = (
+    parameters.cornerRadius.topLeft +
+    parameters.cornerRadius.topRight +
+    parameters.cornerRadius.bottomLeft +
+    parameters.cornerRadius.bottomRight
+  ) / 4;
 
   return (
     <div className="properties-panel">
@@ -446,7 +441,7 @@ function TrackPropertiesPanel({ track, trackId }) {
             <div className="property-input-row">
               <input
                 type="range"
-                min="4"
+                min="1"
                 max="8"
                 value={parameters.numLanes}
                 onChange={(e) => handleNumLanesChange(e.target.value)}
@@ -457,7 +452,7 @@ function TrackPropertiesPanel({ track, trackId }) {
                   type="number"
                   value={parameters.numLanes}
                   onChange={(e) => handleNumLanesChange(e.target.value)}
-                  min="4"
+                  min="1"
                   max="8"
                 />
                 <span className="property-unit">lanes</span>
@@ -465,67 +460,21 @@ function TrackPropertiesPanel({ track, trackId }) {
             </div>
           </div>
 
-          {/* Corner Roundness */}
-          <div className="property-group">
-            <label>Corner Roundness</label>
-            <div className="property-input-row">
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={parameters.cornerRoundness}
-                onChange={(e) => handleRoundnessChange(e.target.value)}
-                className="property-slider"
-              />
-              <div className="property-input-group property-input-group--compact">
-                <input
-                  type="number"
-                  value={Math.round(parameters.cornerRoundness * 100)}
-                  onChange={(e) => handleRoundnessChange(parseFloat(e.target.value) / 100)}
-                  min="0"
-                  max="100"
-                />
-                <span className="property-unit">%</span>
-              </div>
+          {/* Track Dimensions (Read-only for now) */}
+          <div className="property-group property-group--info">
+            <label>Track Size</label>
+            <div className="property-info">
+              <span>
+                {(parameters.width_mm / 1000).toFixed(1)}m × {(parameters.height_mm / 1000).toFixed(1)}m
+              </span>
             </div>
           </div>
 
-          {/* Straight Length */}
-          <div className="property-group">
-            <label>Straight Length</label>
-            <div className="property-input-row">
-              <div className="property-input-group">
-                <input
-                  type="number"
-                  value={Math.round(parameters.straightLength_mm)}
-                  onChange={(e) => handleStraightLengthChange(e.target.value)}
-                  step="1000"
-                />
-                <span className="property-unit">mm</span>
-              </div>
-            </div>
-            <div className="property-hint">
-              {(parameters.straightLength_mm / 1000).toFixed(1)}m
-            </div>
-          </div>
-
-          {/* Corner Radius */}
-          <div className="property-group">
-            <label>Corner Radius</label>
-            <div className="property-input-row">
-              <div className="property-input-group">
-                <input
-                  type="number"
-                  value={Math.round(parameters.cornerRadius_mm)}
-                  onChange={(e) => handleCornerRadiusChange(e.target.value)}
-                  step="1000"
-                />
-                <span className="property-unit">mm</span>
-              </div>
-            </div>
-            <div className="property-hint">
-              {(parameters.cornerRadius_mm / 1000).toFixed(1)}m
+          {/* Average Corner Radius (Read-only for now) */}
+          <div className="property-group property-group--info">
+            <label>Corner Radius (avg)</label>
+            <div className="property-info">
+              <span>{(avgCornerRadius / 1000).toFixed(2)}m</span>
             </div>
           </div>
 
@@ -533,7 +482,7 @@ function TrackPropertiesPanel({ track, trackId }) {
           <div className="property-group property-group--info">
             <label>Lane Width</label>
             <div className="property-info">
-              <span>{(parameters.laneWidth_mm / 1000).toFixed(2)}m (Standard)</span>
+              <span>{(parameters.laneWidth_mm / 1000).toFixed(2)}m (Fixed)</span>
             </div>
           </div>
 
@@ -546,43 +495,36 @@ function TrackPropertiesPanel({ track, trackId }) {
           </div>
 
           <div className="property-group property-group--info">
-            <label>Total Track Size</label>
+            <label>Usable Infield</label>
             <div className="property-info">
               <span>
-                {(geometry.totalWidth / 1000).toFixed(1)}m × {(geometry.totalLength / 1000).toFixed(1)}m
+                {(geometry.usableWidth / 1000).toFixed(1)}m × {(geometry.usableHeight / 1000).toFixed(1)}m
               </span>
             </div>
           </div>
 
           <div className="property-group property-group--info">
-            <label>Infield Size</label>
+            <label>Lane 1 Perimeter</label>
             <div className="property-info">
-              <span>
-                {(geometry.infieldWidth / 1000).toFixed(1)}m × {(geometry.infieldLength / 1000).toFixed(1)}m
-              </span>
+              <span>{lane1Perimeter.toFixed(2)}m</span>
             </div>
           </div>
 
-          <div className="property-group property-group--info">
-            <label>Lane 1 Distance</label>
-            <div className="property-info">
-              <span>{lane1Length.toFixed(2)}m</span>
-            </div>
-          </div>
-
-          {parameters.numLanes >= 4 && (
+          {parameters.numLanes > 1 && (
             <div className="property-group property-group--info">
-              <label>Lane {parameters.numLanes} Distance</label>
+              <label>Lane {parameters.numLanes} Perimeter</label>
               <div className="property-info">
-                <span>
-                  {calculateTrackLength(
-                    parameters.cornerRadius_mm + (parameters.numLanes - 1) * parameters.laneWidth_mm,
-                    parameters.straightLength_mm
-                  ).toFixed(2)}m
-                </span>
+                <span>{lastLanePerimeter.toFixed(2)}m</span>
               </div>
             </div>
           )}
+
+          {/* Note about future enhancements */}
+          <div className="property-group">
+            <div className="property-hint" style={{fontStyle: 'normal', color: '#64748b', fontSize: '0.75rem', marginTop: '1rem'}}>
+              Note: Full editing capabilities (width, height, per-corner radius) coming soon. Use drag handles to resize.
+            </div>
+          </div>
 
           {/* Delete Button */}
           <div className="property-group property-group--actions">

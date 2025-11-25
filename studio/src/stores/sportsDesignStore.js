@@ -293,39 +293,51 @@ export const useSportsDesignStore = create(
         const trackId = `track-${Date.now()}`;
         const surface = get().surface;
 
-        // Calculate auto-scaling to fit canvas
+        // Calculate dimensions to fill 90% of canvas (with 5% padding)
         const canvasWidth = surface.width_mm;
         const canvasLength = surface.length_mm;
-        const trackWidth = template.calculatedDimensions.totalWidth_mm;
-        const trackLength = template.calculatedDimensions.totalLength_mm;
 
-        // Scale to fit 90% of canvas (leave 5% padding on each side)
-        const widthScale = (canvasWidth * 0.9) / trackWidth;
-        const lengthScale = (canvasLength * 0.9) / trackLength;
-        const scale = Math.min(widthScale, lengthScale, 1.0); // Don't scale up, only down
+        const trackWidth = canvasWidth * 0.9;
+        const trackHeight = canvasLength * 0.9;
 
-        // Apply scaling to track parameters
-        const scaledParameters = {
-          ...template.parameters,
-          straightLength_mm: template.parameters.straightLength_mm * scale,
-          cornerRadius_mm: template.parameters.cornerRadius_mm * scale,
-          laneWidth_mm: template.parameters.laneWidth_mm * scale
+        // Calculate scaling factor for corner radius (scale proportionally with dimensions)
+        const templateWidth = template.parameters.width_mm || 25000;
+        const templateHeight = template.parameters.height_mm || 15000;
+        const widthScale = trackWidth / templateWidth;
+        const heightScale = trackHeight / templateHeight;
+        const scale = Math.min(widthScale, heightScale);
+
+        // Scale corner radii proportionally
+        const templateCorners = template.parameters.cornerRadius || {
+          topLeft: 3000, topRight: 3000, bottomLeft: 3000, bottomRight: 3000
         };
 
-        // Calculate scaled dimensions for positioning
-        const scaledWidth = trackWidth * scale;
-        const scaledLength = trackLength * scale;
+        const scaledCorners = {
+          topLeft: templateCorners.topLeft * scale,
+          topRight: templateCorners.topRight * scale,
+          bottomLeft: templateCorners.bottomLeft * scale,
+          bottomRight: templateCorners.bottomRight * scale
+        };
+
+        // Create track parameters - NOTE: laneWidth_mm is FIXED (not scaled)
+        const trackParameters = {
+          ...template.parameters,
+          width_mm: trackWidth,
+          height_mm: trackHeight,
+          cornerRadius: scaledCorners,
+          laneWidth_mm: template.parameters.laneWidth_mm // Keep fixed at 1220mm
+        };
 
         const track = {
           id: trackId,
           templateId,
           template,
           position: {
-            x: canvasWidth / 2 - (scaledWidth / 2),
-            y: canvasLength / 2 - (scaledLength / 2)
+            x: canvasWidth / 2 - (trackWidth / 2),
+            y: canvasLength / 2 - (trackHeight / 2)
           },
           rotation: 0,
-          parameters: scaledParameters
+          parameters: trackParameters
         };
 
         set((state) => ({
