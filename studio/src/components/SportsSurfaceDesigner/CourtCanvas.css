@@ -7,7 +7,8 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  padding: 2rem;
+  padding: var(--space-4, 2rem);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
 }
 
 /* ====== SVG Canvas ====== */
@@ -52,21 +53,22 @@
 /* ====== Canvas Info Overlay ====== */
 .court-canvas__info {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: var(--space-2, 1rem);
+  right: var(--space-2, 1rem);
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  font-size: 0.85rem;
-  color: #666;
+  gap: var(--space-1, 0.5rem);
+  padding: var(--space-1, 0.5rem) var(--space-2, 1rem);
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: var(--radius-sm, 6px);
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.08));
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--color-text-secondary, #64748b);
   pointer-events: none;
+  backdrop-filter: blur(8px);
 }
 
 .court-canvas__grid-indicator {
-  color: #1e4e7a;
-  font-weight: 500;
+  color: var(--color-primary, #1e4a7a);
+  font-weight: var(--font-medium, 500);
 }

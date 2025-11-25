@@ -2,11 +2,12 @@
 
 .tool-selection {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
+  background: linear-gradient(135deg, var(--color-bg-page, #fafbfc) 0%, var(--color-bg-subtle, #f8fafc) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  padding: var(--space-4, 2rem);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
 }
 
 .tool-selection__container {
@@ -21,15 +22,17 @@
 }
 
 .tool-selection__header h1 {
-  margin: 0 0 0.5rem 0;
-  font-size: 2.5rem;
-  color: #1e4e7a;
+  margin: 0 0 var(--space-1, 0.5rem) 0;
+  font-size: var(--text-4xl, 3rem);
+  font-family: var(--font-heading, 'Space Grotesk', sans-serif);
+  font-weight: var(--font-bold, 700);
+  color: var(--color-primary, #1e4a7a);
 }
 
 .tool-selection__header p {
   margin: 0;
-  font-size: 1.25rem;
-  color: #666;
+  font-size: var(--text-xl, 1.5rem);
+  color: var(--color-text-secondary, #64748b);
 }
 
 /* ====== Tools Grid ====== */
@@ -48,37 +51,40 @@
 
 /* ====== Tool Card ====== */
 .tool-selection__card {
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background: var(--color-bg-card, white);
+  border-radius: var(--radius-lg, 16px);
+  padding: var(--space-4, 2rem);
+  box-shadow: var(--shadow-lg, 0 10px 24px rgba(0, 0, 0, 0.1));
   transition: all 0.3s;
   cursor: pointer;
 }
 
 .tool-selection__card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl, 0 20px 40px rgba(0, 0, 0, 0.15));
 }
 
 .tool-selection__icon {
   font-size: 4rem;
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-2, 1rem);
   text-align: center;
 }
 
 .tool-selection__card h2 {
-  margin: 0 0 0.75rem 0;
-  font-size: 1.75rem;
-  color: #1e4e7a;
+  margin: 0 0 var(--space-2, 0.75rem) 0;
+  font-size: var(--text-2xl, 1.875rem);
+  font-family: var(--font-heading, 'Space Grotesk', sans-serif);
+  font-weight: var(--font-bold, 700);
+  color: var(--color-primary, #1e4a7a);
   text-align: center;
 }
 
 .tool-selection__card > p {
-  margin: 0 0 1.5rem 0;
-  color: #666;
+  margin: 0 0 var(--space-3, 1.5rem) 0;
+  color: var(--color-text-secondary, #64748b);
   text-align: center;
-  line-height: 1.6;
+  line-height: var(--leading-relaxed, 1.75);
+  font-size: var(--text-base, 1.0625rem);
 }
 
 /* ====== Features List ====== */
@@ -107,31 +113,36 @@
 /* ====== Buttons ====== */
 .tool-selection__btn {
   width: 100%;
-  padding: 1rem;
+  padding: var(--space-2, 1rem);
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
+  border-radius: var(--radius-md, 12px);
+  font-size: var(--text-base, 1.0625rem);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-weight: var(--font-semibold, 600);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .tool-selection__btn--primary {
-  background: #ff6b35;
+  background: var(--color-accent, #ff6b35);
   color: white;
 }
 
 .tool-selection__btn--primary:hover {
-  background: #e5552a;
+  background: var(--color-accent-hover, #e55a2a);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg, 0 10px 24px rgba(255, 107, 53, 0.3));
 }
 
 .tool-selection__btn--secondary {
-  background: #1e4e7a;
+  background: var(--color-primary, #1e4a7a);
   color: white;
 }
 
 .tool-selection__btn--secondary:hover {
-  background: #163a5a;
+  background: var(--color-primary-hover, #2a5a8e);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg, 0 10px 24px rgba(30, 78, 122, 0.3));
 }
 
 .tool-selection__btn:active {
