@@ -40,6 +40,7 @@ const initialState = {
   // UI state
   showCourtLibrary: true,
   showPropertiesPanel: true,
+  propertiesPanelUserClosed: false, // Track if user manually closed the panel
   showColorEditor: false,
   snapToGrid: true,
   gridSize_mm: 100,
@@ -225,7 +226,13 @@ export const useSportsDesignStore = create(
 
       // ====== Selection Actions ======
       selectCourt: (courtId) => {
-        set({ selectedCourtId: courtId });
+        const { propertiesPanelUserClosed } = get();
+        // Only auto-open properties panel if user hasn't manually closed it
+        if (!propertiesPanelUserClosed) {
+          set({ selectedCourtId: courtId, showPropertiesPanel: true });
+        } else {
+          set({ selectedCourtId: courtId });
+        }
       },
 
       deselectCourt: () => {
@@ -340,7 +347,11 @@ export const useSportsDesignStore = create(
       },
 
       togglePropertiesPanel: () => {
-        set((state) => ({ showPropertiesPanel: !state.showPropertiesPanel }));
+        set((state) => ({
+          showPropertiesPanel: !state.showPropertiesPanel,
+          // Track if user is closing it manually
+          propertiesPanelUserClosed: state.showPropertiesPanel ? true : false
+        }));
       },
 
       toggleColorEditor: () => {

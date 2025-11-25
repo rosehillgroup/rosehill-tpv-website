@@ -16,7 +16,9 @@ function SportsSurfaceDesigner() {
     courts,
     selectedCourtId,
     showCourtLibrary,
+    showPropertiesPanel,
     toggleCourtLibrary,
+    togglePropertiesPanel,
     setSurfaceDimensions,
     setSurfaceColor
   } = useSportsDesignStore();
@@ -212,6 +214,16 @@ function SportsSurfaceDesigner() {
                 {showCourtLibrary ? 'Hide' : 'Show'} Courts
               </button>
 
+              <button
+                className="sports-designer__toolbar-btn"
+                onClick={togglePropertiesPanel}
+                title="Toggle Properties Panel"
+                disabled={!selectedCourtId}
+              >
+                <span className="sports-designer__icon">⚙️</span>
+                {showPropertiesPanel ? 'Hide' : 'Show'} Properties
+              </button>
+
               <div className="sports-designer__surface-info">
                 <span className="sports-designer__label">Surface:</span>
                 <span className="sports-designer__value">
@@ -271,8 +283,8 @@ function SportsSurfaceDesigner() {
               <CourtCanvas />
             </main>
 
-            {/* Properties Panel - shown when court is selected */}
-            {selectedCourtId && (
+            {/* Properties Panel - shown when court is selected AND panel is not hidden */}
+            {selectedCourtId && showPropertiesPanel && (
               <aside className="sports-designer__properties">
                 <PropertiesPanel />
               </aside>

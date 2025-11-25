@@ -102,8 +102,8 @@ function CourtPreview({ template }) {
         strokeWidth="2"
       />
 
-      {/* Simplified markings (just show boundary and a few key lines) */}
-      {template.markings.slice(0, 5).map((marking, idx) => (
+      {/* Show all markings for accurate preview */}
+      {template.markings.map((marking, idx) => (
         <CourtMarkingPreview
           key={idx}
           marking={marking}
