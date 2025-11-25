@@ -51,6 +51,7 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
           surfaceColor={surfaceColor}
           lineColor={lineColor}
           lineWidth={lineWidth}
+          isFirstLane={index === 0}
           isLastLane={index === geometry.lanes.length - 1}
         />
       ))}
@@ -82,7 +83,7 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
  * Individual lane element
  * Renders lane with colored surface and white boundary lines
  */
-function LaneElement({ lane, surfaceColor, lineColor, lineWidth, isLastLane }) {
+function LaneElement({ lane, surfaceColor, lineColor, lineWidth, isFirstLane, isLastLane }) {
   const { laneNumber, innerPath, outerPath } = lane;
 
   // Reduce line width for cleaner appearance (30mm minimum instead of 100mm)
@@ -90,14 +91,16 @@ function LaneElement({ lane, surfaceColor, lineColor, lineWidth, isLastLane }) {
 
   return (
     <g className="track-lane">
-      {/* Filled track surface - outer boundary with track color */}
-      <path
-        d={outerPath}
-        fill={surfaceColor}
-        stroke="none"
-      />
+      {/* Filled track surface - ONLY fill outermost boundary (Lane 1) */}
+      {isFirstLane && (
+        <path
+          d={outerPath}
+          fill={surfaceColor}
+          stroke="none"
+        />
+      )}
 
-      {/* White infield - only for innermost lane */}
+      {/* White infield - ONLY fill innermost boundary (last lane) */}
       {isLastLane && (
         <path
           d={innerPath}
