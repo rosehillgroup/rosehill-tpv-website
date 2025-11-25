@@ -210,8 +210,8 @@ function CourtElement({ court, isSelected, onMouseDown, svgRef }) {
             height={court.template.dimensions.length_mm}
             fill="none"
             stroke="#007bff"
-            strokeWidth="50"
-            strokeDasharray="200 200"
+            strokeWidth="100"
+            strokeDasharray="400 400"
             className="court-canvas__selection-outline"
           />
           {/* Transform handles for rotation and scaling */}

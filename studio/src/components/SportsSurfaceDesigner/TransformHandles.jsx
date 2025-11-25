@@ -20,7 +20,7 @@ function TransformHandles({ court, svgRef }) {
   const centerY = position.y + (template.dimensions.length_mm * scale) / 2;
 
   // Rotation handle position (above top center)
-  const rotationHandleDistance = 60 / scale; // Fixed visual distance regardless of scale
+  const rotationHandleDistance = 1000; // 1 meter above the court
   const rotationHandleX = template.dimensions.width_mm / 2;
   const rotationHandleY = -rotationHandleDistance;
 
@@ -161,8 +161,8 @@ function TransformHandles({ court, svgRef }) {
     { type: 'w', x: 0, y: template.dimensions.length_mm / 2, cursor: 'ew-resize' },
   ];
 
-  const handleSize = 20 / scale; // Larger handles for better interactivity
-  const rotationHandleSize = 15 / scale;
+  const handleSize = 300; // 300mm handles (clearly visible at scale)
+  const rotationHandleSize = 250; // 250mm rotation handle
 
   return (
     <g className="transform-handles">
@@ -178,8 +178,8 @@ function TransformHandles({ court, svgRef }) {
           x2={rotationHandleX}
           y2={rotationHandleY + rotationHandleSize}
           stroke="#007bff"
-          strokeWidth={2 / scale}
-          strokeDasharray={`${4 / scale} ${2 / scale}`}
+          strokeWidth={30}
+          strokeDasharray="100 50"
         />
         <circle
           cx={rotationHandleX}
@@ -187,14 +187,14 @@ function TransformHandles({ court, svgRef }) {
           r={rotationHandleSize}
           fill="white"
           stroke="#007bff"
-          strokeWidth={2 / scale}
+          strokeWidth={40}
         />
         <path
           d={`M ${rotationHandleX - rotationHandleSize * 0.4} ${rotationHandleY}
               A ${rotationHandleSize * 0.5} ${rotationHandleSize * 0.5} 0 1 1 ${rotationHandleX + rotationHandleSize * 0.4} ${rotationHandleY}`}
           fill="none"
           stroke="#007bff"
-          strokeWidth={2 / scale}
+          strokeWidth={30}
           strokeLinecap="round"
         />
         <path
@@ -204,7 +204,7 @@ function TransformHandles({ court, svgRef }) {
               L ${rotationHandleX + rotationHandleSize * 0.6} ${rotationHandleY + rotationHandleSize * 0.2}`}
           fill="none"
           stroke="#007bff"
-          strokeWidth={2 / scale}
+          strokeWidth={30}
           strokeLinecap="round"
         />
       </g>
@@ -220,9 +220,9 @@ function TransformHandles({ court, svgRef }) {
           height={handleSize}
           fill="white"
           stroke="#007bff"
-          strokeWidth={3 / scale}
-          rx={2 / scale}
-          ry={2 / scale}
+          strokeWidth={40}
+          rx={30}
+          ry={30}
           style={{
             cursor: isScaling && scaleHandle === handle.type ? 'grabbing' : handle.cursor,
             pointerEvents: 'all'
@@ -235,9 +235,9 @@ function TransformHandles({ court, svgRef }) {
       {isRotating && (
         <text
           x={template.dimensions.width_mm / 2}
-          y={-rotationHandleDistance - rotationHandleSize - 10 / scale}
+          y={-rotationHandleDistance - rotationHandleSize - 200}
           textAnchor="middle"
-          fontSize={14 / scale}
+          fontSize={400}
           fill="#007bff"
           fontWeight="bold"
           style={{ pointerEvents: 'none' }}
@@ -250,9 +250,9 @@ function TransformHandles({ court, svgRef }) {
       {isScaling && (
         <text
           x={template.dimensions.width_mm / 2}
-          y={template.dimensions.length_mm + 20 / scale}
+          y={template.dimensions.length_mm + 600}
           textAnchor="middle"
-          fontSize={14 / scale}
+          fontSize={400}
           fill="#007bff"
           fontWeight="bold"
           style={{ pointerEvents: 'none' }}
