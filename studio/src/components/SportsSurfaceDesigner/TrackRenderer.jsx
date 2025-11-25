@@ -25,6 +25,11 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
   const lineColor = '#FFFFFF';
   const lineWidth = parameters.lineWidth_mm || 50;
 
+  // Debug logging
+  console.log('TrackRenderer - trackSurfaceColor:', trackSurfaceColor);
+  console.log('TrackRenderer - surfaceColor:', surfaceColor);
+  console.log('TrackRenderer - geometry.lanes.length:', geometry.lanes.length);
+
   return (
     <g
       className={`track-element ${isSelected ? 'track-element--selected' : ''}`}
@@ -88,6 +93,9 @@ function LaneElement({ lane, surfaceColor, lineColor, lineWidth, isFirstLane, is
 
   // Reduce line width for cleaner appearance (30mm minimum instead of 100mm)
   const visibleLineWidth = Math.max(lineWidth, 30);
+
+  // Debug logging
+  console.log(`Lane ${laneNumber} - isFirstLane: ${isFirstLane}, isLastLane: ${isLastLane}, surfaceColor: ${surfaceColor}`);
 
   return (
     <g className="track-lane">

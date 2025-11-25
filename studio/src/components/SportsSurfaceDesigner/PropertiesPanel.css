@@ -300,6 +300,36 @@
   box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.08));
 }
 
+/* ====== Track Color Selector ====== */
+.color-selector {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.color-selector__swatch {
+  width: 48px;
+  height: 48px;
+  border: 2px solid var(--color-border, #e4e9f0);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.color-selector__swatch:hover {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.08));
+  border-color: var(--color-primary, #1e4a7a);
+}
+
+.color-selector__swatch--selected {
+  border-color: var(--color-primary, #1e4a7a);
+  border-width: 3px;
+  box-shadow: 0 0 0 3px rgba(30, 74, 122, 0.15);
+}
+
 /* ====== Empty State ====== */
 .properties-panel__empty-state {
   text-align: center;
