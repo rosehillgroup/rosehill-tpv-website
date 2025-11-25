@@ -9,11 +9,13 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
+    "@flatten-js/core": "^1.6.8",
     "@resvg/resvg-js": "^2.6.2",
     "@supabase/supabase-js": "^2.38.0",
     "@upstash/ratelimit": "^2.0.7",
     "@upstash/redis": "^1.35.6",
     "chaikin-smooth": "^1.0.4",
+    "classnames": "^2.5.1",
     "color-diff": "^1.4.0",
     "culori": "^4.0.1",
     "d3-delaunay": "^6.0.4",
@@ -31,7 +33,8 @@
     "react-dom": "^18.2.0",
     "replicate": "^0.32.0",
     "sharp": "^0.34.5",
-    "simplex-noise": "^4.0.3"
+    "simplex-noise": "^4.0.3",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",

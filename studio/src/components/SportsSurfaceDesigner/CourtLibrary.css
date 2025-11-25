@@ -1,0 +1,131 @@
+/* TPV Studio - Court Library Styles */
+
+.court-library {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: white;
+}
+
+/* ====== Header ====== */
+.court-library__header {
+  padding: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.court-library__header h2 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+  color: #1e4e7a;
+}
+
+.court-library__header p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+/* ====== List ====== */
+.court-library__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+/* ====== Court Item ====== */
+.court-library__item {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.court-library__item:hover {
+  border-color: #1e4e7a;
+  background: #f5f7fa;
+}
+
+.court-library__item--selected {
+  border-color: #1e4e7a;
+  background: #e8f1f8;
+}
+
+/* ====== Preview ====== */
+.court-library__preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  background: #f5f5f5;
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+
+.court-library__svg-preview {
+  display: block;
+}
+
+/* ====== Info ====== */
+.court-library__info {
+  text-align: center;
+}
+
+.court-library__name {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.court-library__dimensions {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.85rem;
+  color: #1e4e7a;
+  font-weight: 500;
+}
+
+.court-library__standard {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #999;
+}
+
+/* ====== Add Button ====== */
+.court-library__add-btn {
+  margin-top: 0.75rem;
+  padding: 0.5rem;
+  background: #1e4e7a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.court-library__add-btn:hover {
+  background: #163a5a;
+}
+
+.court-library__add-btn:active {
+  transform: scale(0.98);
+}
+
+/* ====== Footer ====== */
+.court-library__footer {
+  padding: 1rem;
+  border-top: 1px solid #e0e0e0;
+  background: #f5f7fa;
+}
+
+.court-library__hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #666;
+  text-align: center;
+}

@@ -1,0 +1,739 @@
+{
+  "basketball-full": {
+    "id": "basketball-full",
+    "name": "Basketball (Full Court)",
+    "sport": "basketball",
+    "standard": "FIBA 2020",
+    "category": "court",
+    "description": "Official FIBA standard full basketball court with all markings",
+
+    "dimensions": {
+      "length_mm": 28000,
+      "width_mm": 15000,
+      "min_surround_mm": 2000
+    },
+
+    "defaultLineColor": "RH31",
+    "defaultLineWidth_mm": 50,
+
+    "markings": [
+      {
+        "id": "boundary",
+        "name": "Boundary Lines",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 15000,
+          "height": 28000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "boundary"
+      },
+      {
+        "id": "center-line",
+        "name": "Center Line",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 14000,
+          "x2": 15000,
+          "y2": 14000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-circle",
+        "name": "Center Circle",
+        "type": "circle",
+        "params": {
+          "cx": 7500,
+          "cy": 14000,
+          "radius": 1800
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "three-point-arc-top",
+        "name": "Three-Point Arc (Top)",
+        "type": "arc",
+        "params": {
+          "cx": 7500,
+          "cy": 26425,
+          "radius": 6750,
+          "startAngle": 203,
+          "endAngle": 337
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "three-point-arc-bottom",
+        "name": "Three-Point Arc (Bottom)",
+        "type": "arc",
+        "params": {
+          "cx": 7500,
+          "cy": 1575,
+          "radius": 6750,
+          "startAngle": 23,
+          "endAngle": 157
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "free-throw-line-top",
+        "name": "Free Throw Line (Top)",
+        "type": "line",
+        "params": {
+          "x1": 5050,
+          "y1": 22200,
+          "x2": 9950,
+          "y2": 22200
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "free-throw-line-bottom",
+        "name": "Free Throw Line (Bottom)",
+        "type": "line",
+        "params": {
+          "x1": 5050,
+          "y1": 5800,
+          "x2": 9950,
+          "y2": 5800
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "free-throw-circle-top",
+        "name": "Free Throw Circle (Top)",
+        "type": "circle",
+        "params": {
+          "cx": 7500,
+          "cy": 22200,
+          "radius": 1800
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "free-throw-circle-bottom",
+        "name": "Free Throw Circle (Bottom)",
+        "type": "circle",
+        "params": {
+          "cx": 7500,
+          "cy": 5800,
+          "radius": 1800
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "key-lane-top",
+        "name": "Key Lane (Top)",
+        "type": "rectangle",
+        "params": {
+          "x": 5050,
+          "y": 22200,
+          "width": 4900,
+          "height": 5800
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "key-lane-bottom",
+        "name": "Key Lane (Bottom)",
+        "type": "rectangle",
+        "params": {
+          "x": 5050,
+          "y": 0,
+          "width": 4900,
+          "height": 5800
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "restricted-area-top",
+        "name": "Restricted Area (Top)",
+        "type": "arc",
+        "params": {
+          "cx": 7500,
+          "cy": 28000,
+          "radius": 1250,
+          "startAngle": 180,
+          "endAngle": 360
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "restricted-area-bottom",
+        "name": "Restricted Area (Bottom)",
+        "type": "arc",
+        "params": {
+          "cx": 7500,
+          "cy": 0,
+          "radius": 1250,
+          "startAngle": 0,
+          "endAngle": 180
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      }
+    ],
+
+    "zones": [
+      {
+        "id": "key-area-top",
+        "name": "Key Area (Top)",
+        "type": "rectangle",
+        "params": {
+          "x": 5050,
+          "y": 22200,
+          "width": 4900,
+          "height": 5800
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 28.42
+      },
+      {
+        "id": "key-area-bottom",
+        "name": "Key Area (Bottom)",
+        "type": "rectangle",
+        "params": {
+          "x": 5050,
+          "y": 0,
+          "width": 4900,
+          "height": 5800
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 28.42
+      }
+    ]
+  },
+
+  "netball-full": {
+    "id": "netball-full",
+    "name": "Netball (Full Court)",
+    "sport": "netball",
+    "standard": "World Netball 2020",
+    "category": "court",
+    "description": "Official World Netball standard court with goal circles and thirds",
+
+    "dimensions": {
+      "length_mm": 30500,
+      "width_mm": 15250,
+      "min_surround_mm": 3050
+    },
+
+    "defaultLineColor": "RH31",
+    "defaultLineWidth_mm": 50,
+
+    "markings": [
+      {
+        "id": "boundary",
+        "name": "Boundary Lines",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 15250,
+          "height": 30500
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "boundary"
+      },
+      {
+        "id": "transverse-line-1",
+        "name": "Transverse Line 1",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 10167,
+          "x2": 15250,
+          "y2": 10167
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "transverse-line-2",
+        "name": "Transverse Line 2",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 20333,
+          "x2": 15250,
+          "y2": 20333
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-circle",
+        "name": "Center Circle",
+        "type": "circle",
+        "params": {
+          "cx": 7625,
+          "cy": 15250,
+          "radius": 450
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "goal-circle-bottom",
+        "name": "Goal Circle (Bottom)",
+        "type": "arc",
+        "params": {
+          "cx": 7625,
+          "cy": 0,
+          "radius": 4900,
+          "startAngle": 0,
+          "endAngle": 180
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "goal-circle-top",
+        "name": "Goal Circle (Top)",
+        "type": "arc",
+        "params": {
+          "cx": 7625,
+          "cy": 30500,
+          "radius": 4900,
+          "startAngle": 180,
+          "endAngle": 360
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      }
+    ],
+
+    "zones": []
+  },
+
+  "tennis-doubles": {
+    "id": "tennis-doubles",
+    "name": "Tennis (Doubles)",
+    "sport": "tennis",
+    "standard": "ITF 2020",
+    "category": "court",
+    "description": "Official ITF standard doubles tennis court with all service boxes",
+
+    "dimensions": {
+      "length_mm": 23770,
+      "width_mm": 10970,
+      "min_surround_mm": 3660
+    },
+
+    "defaultLineColor": "RH31",
+    "defaultLineWidth_mm": 50,
+
+    "markings": [
+      {
+        "id": "boundary",
+        "name": "Boundary Lines",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 10970,
+          "height": 23770
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "boundary"
+      },
+      {
+        "id": "singles-sideline-left",
+        "name": "Singles Sideline (Left)",
+        "type": "line",
+        "params": {
+          "x1": 1370,
+          "y1": 0,
+          "x2": 1370,
+          "y2": 23770
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "singles-sideline-right",
+        "name": "Singles Sideline (Right)",
+        "type": "line",
+        "params": {
+          "x1": 9600,
+          "y1": 0,
+          "x2": 9600,
+          "y2": 23770
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "service-line-bottom",
+        "name": "Service Line (Bottom)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 6400,
+          "x2": 10970,
+          "y2": 6400
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "service-line-top",
+        "name": "Service Line (Top)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 17370,
+          "x2": 10970,
+          "y2": 17370
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-service-line",
+        "name": "Center Service Line",
+        "type": "line",
+        "params": {
+          "x1": 5485,
+          "y1": 6400,
+          "x2": 5485,
+          "y2": 17370
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-mark-bottom",
+        "name": "Center Mark (Bottom)",
+        "type": "line",
+        "params": {
+          "x1": 5485,
+          "y1": 0,
+          "x2": 5485,
+          "y2": 100
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-mark-top",
+        "name": "Center Mark (Top)",
+        "type": "line",
+        "params": {
+          "x1": 5485,
+          "y1": 23670,
+          "x2": 5485,
+          "y2": 23770
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      }
+    ],
+
+    "zones": []
+  },
+
+  "futsal-standard": {
+    "id": "futsal-standard",
+    "name": "Futsal (5-a-side)",
+    "sport": "futsal",
+    "standard": "FIFA 2020",
+    "category": "court",
+    "description": "Official FIFA standard futsal court for international matches",
+
+    "dimensions": {
+      "length_mm": 40000,
+      "width_mm": 20000,
+      "min_surround_mm": 1000
+    },
+
+    "defaultLineColor": "RH31",
+    "defaultLineWidth_mm": 80,
+
+    "markings": [
+      {
+        "id": "boundary",
+        "name": "Boundary Lines",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 20000,
+          "height": 40000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 80,
+        "required": true,
+        "category": "boundary"
+      },
+      {
+        "id": "center-line",
+        "name": "Center Line",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 20000,
+          "x2": 20000,
+          "y2": 20000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 80,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-circle",
+        "name": "Center Circle",
+        "type": "circle",
+        "params": {
+          "cx": 10000,
+          "cy": 20000,
+          "radius": 3000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 80,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-spot",
+        "name": "Center Spot",
+        "type": "circle",
+        "params": {
+          "cx": 10000,
+          "cy": 20000,
+          "radius": 100
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 80,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "penalty-area-bottom",
+        "name": "Penalty Area (Bottom)",
+        "type": "arc",
+        "params": {
+          "cx": 10000,
+          "cy": 0,
+          "radius": 6000,
+          "startAngle": 0,
+          "endAngle": 180
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 80,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "penalty-area-top",
+        "name": "Penalty Area (Top)",
+        "type": "arc",
+        "params": {
+          "cx": 10000,
+          "cy": 40000,
+          "radius": 6000,
+          "startAngle": 180,
+          "endAngle": 360
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 80,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "penalty-mark-bottom",
+        "name": "Penalty Mark (Bottom)",
+        "type": "circle",
+        "params": {
+          "cx": 10000,
+          "cy": 6000,
+          "radius": 100
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 80,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "penalty-mark-top",
+        "name": "Penalty Mark (Top)",
+        "type": "circle",
+        "params": {
+          "cx": 10000,
+          "cy": 34000,
+          "radius": 100
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 80,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "second-penalty-mark-bottom",
+        "name": "Second Penalty Mark (Bottom)",
+        "type": "circle",
+        "params": {
+          "cx": 10000,
+          "cy": 10000,
+          "radius": 100
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 80,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "second-penalty-mark-top",
+        "name": "Second Penalty Mark (Top)",
+        "type": "circle",
+        "params": {
+          "cx": 10000,
+          "cy": 30000,
+          "radius": 100
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 80,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "corner-arc-bl",
+        "name": "Corner Arc (Bottom Left)",
+        "type": "arc",
+        "params": {
+          "cx": 0,
+          "cy": 0,
+          "radius": 250,
+          "startAngle": 0,
+          "endAngle": 90
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 80,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "corner-arc-br",
+        "name": "Corner Arc (Bottom Right)",
+        "type": "arc",
+        "params": {
+          "cx": 20000,
+          "cy": 0,
+          "radius": 250,
+          "startAngle": 90,
+          "endAngle": 180
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 80,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "corner-arc-tl",
+        "name": "Corner Arc (Top Left)",
+        "type": "arc",
+        "params": {
+          "cx": 0,
+          "cy": 40000,
+          "radius": 250,
+          "startAngle": 270,
+          "endAngle": 360
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 80,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "corner-arc-tr",
+        "name": "Corner Arc (Top Right)",
+        "type": "arc",
+        "params": {
+          "cx": 20000,
+          "cy": 40000,
+          "radius": 250,
+          "startAngle": 180,
+          "endAngle": 270
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 80,
+        "required": true,
+        "category": "court-marking"
+      }
+    ],
+
+    "zones": []
+  }
+}

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { auth } from './lib/api/auth.js';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import InspirePanelRecraft from './components/InspirePanelRecraft.jsx';
+import SportsSurfaceDesigner from './components/SportsSurfaceDesigner/SportsSurfaceDesigner.jsx';
+import ToolSelection from './components/ToolSelection.jsx';
 import Header from './components/Header.jsx';
 import DesignGallery from './components/DesignGallery.jsx';
 import AdminDashboard from './components/admin/AdminDashboard.jsx';
@@ -17,6 +19,7 @@ function App() {
   const [loadedDesign, setLoadedDesign] = useState(null);
   const [currentDesignName, setCurrentDesignName] = useState(null);
   const [needsPasswordSetup, setNeedsPasswordSetup] = useState(false);
+  const [activeTool, setActiveTool] = useState(null); // null, 'playground', 'sports'
 
   // Check if user has admin role
   const checkAdminStatus = async () => {
@@ -137,6 +140,40 @@ function App() {
     );
   }
 
+  // Tool selection - show if no tool is active
+  if (!activeTool) {
+    return <ToolSelection onSelectTool={setActiveTool} />;
+  }
+
+  // Sports Surface Designer
+  if (activeTool === 'sports') {
+    return (
+      <ErrorBoundary>
+        <div className="tpv-studio">
+          <Header
+            onShowDesigns={() => setShowGallery(true)}
+            onShowAdmin={() => setShowAdmin(true)}
+            isAdmin={isAdmin}
+            currentDesignName="Sports Surface"
+            onBackToTools={() => setActiveTool(null)}
+          />
+
+          <main className="tpv-studio__container">
+            <SportsSurfaceDesigner />
+          </main>
+
+          {showGallery && (
+            <DesignGallery
+              onClose={() => setShowGallery(false)}
+              onLoadDesign={handleLoadDesign}
+            />
+          )}
+        </div>
+      </ErrorBoundary>
+    );
+  }
+
+  // Playground Designer (default)
   return (
     <ErrorBoundary>
       <div className="tpv-studio">
@@ -145,6 +182,7 @@ function App() {
           onShowAdmin={() => setShowAdmin(true)}
           isAdmin={isAdmin}
           currentDesignName={currentDesignName}
+          onBackToTools={() => setActiveTool(null)}
         />
 
         <main className="tpv-studio__container">

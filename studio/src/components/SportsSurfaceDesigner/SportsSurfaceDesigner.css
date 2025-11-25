@@ -1,0 +1,236 @@
+/* TPV Studio - Sports Surface Designer Styles */
+
+.sports-designer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #f5f7fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ====== Modal Overlay ====== */
+.sports-designer__modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.sports-designer__modal {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  max-width: 500px;
+  width: 90%;
+}
+
+.sports-designer__modal h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  color: #1e4e7a;
+}
+
+.sports-designer__modal > p {
+  margin: 0 0 1.5rem 0;
+  color: #666;
+}
+
+/* ====== Dimension Inputs ====== */
+.sports-designer__dimension-inputs {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.sports-designer__input-group {
+  flex: 1;
+}
+
+.sports-designer__input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.sports-designer__input-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.sports-designer__input-group input:focus {
+  outline: none;
+  border-color: #1e4e7a;
+  box-shadow: 0 0 0 3px rgba(30, 78, 122, 0.1);
+}
+
+.sports-designer__dimension-separator {
+  font-size: 1.5rem;
+  color: #999;
+  margin-top: 1.5rem;
+}
+
+.sports-designer__dimension-hint {
+  margin: 0 0 1.5rem 0;
+  font-size: 0.85rem;
+  color: #666;
+  font-style: italic;
+}
+
+/* ====== Buttons ====== */
+.sports-designer__btn-primary {
+  width: 100%;
+  padding: 0.75rem;
+  background: #1e4e7a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.sports-designer__btn-primary:hover {
+  background: #163a5a;
+}
+
+.sports-designer__btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* ====== Toolbar ====== */
+.sports-designer__toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.sports-designer__toolbar-left,
+.sports-designer__toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sports-designer__toolbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sports-designer__toolbar-btn:hover:not(:disabled) {
+  background: #f5f7fa;
+  border-color: #1e4e7a;
+}
+
+.sports-designer__toolbar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sports-designer__icon {
+  font-size: 1.2rem;
+}
+
+.sports-designer__surface-info,
+.sports-designer__court-count {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+
+.sports-designer__label {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.sports-designer__value {
+  font-size: 0.9rem;
+  color: #1e4e7a;
+  font-weight: 600;
+}
+
+/* ====== Content Area ====== */
+.sports-designer__content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ====== Sidebar ====== */
+.sports-designer__sidebar {
+  width: 280px;
+  background: white;
+  border-right: 1px solid #e0e0e0;
+  overflow-y: auto;
+}
+
+/* ====== Canvas Container ====== */
+.sports-designer__canvas-container {
+  flex: 1;
+  position: relative;
+  overflow: auto;
+  background:
+    linear-gradient(90deg, #e0e0e0 1px, transparent 1px),
+    linear-gradient(#e0e0e0 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: -1px -1px;
+}
+
+/* ====== Empty State ====== */
+.sports-designer__empty-state {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.sports-designer__empty-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sports-designer__empty-content h3 {
+  margin: 0 0 0.5rem 0;
+  color: #1e4e7a;
+  font-size: 1.25rem;
+}
+
+.sports-designer__empty-content p {
+  margin: 0;
+  color: #666;
+  line-height: 1.6;
+}

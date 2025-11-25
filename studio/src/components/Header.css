@@ -61,6 +61,28 @@
   gap: 12px;
 }
 
+.tpv-studio .btn-back-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tpv-studio .btn-back-tools:hover {
+  background: #4b5563;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(107, 114, 128, 0.3);
+}
+
 .tpv-studio .btn-my-designs {
   display: flex;
   align-items: center;
@@ -218,6 +240,7 @@
   }
 
   /* Buttons - hide text, show only icons with proper touch targets */
+  .tpv-studio .btn-back-tools,
   .tpv-studio .btn-my-designs,
   .tpv-studio .btn-admin {
     padding: 0;
@@ -229,6 +252,7 @@
     border-radius: 8px;
   }
 
+  .tpv-studio .btn-back-tools svg,
   .tpv-studio .btn-my-designs svg,
   .tpv-studio .btn-admin svg {
     width: 20px;
@@ -236,6 +260,11 @@
   }
 
   /* Hide button text on mobile, use aria-label for accessibility */
+  .tpv-studio .btn-back-tools {
+    font-size: 0;
+    gap: 0;
+  }
+
   .tpv-studio .btn-my-designs {
     font-size: 0;
     gap: 0;
@@ -288,6 +317,7 @@
   }
 
   /* Slightly smaller buttons on very small screens but still 44px min */
+  .tpv-studio .btn-back-tools,
   .tpv-studio .btn-my-designs,
   .tpv-studio .btn-admin,
   .tpv-studio .user-menu-button {
