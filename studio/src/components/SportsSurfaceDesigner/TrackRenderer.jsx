@@ -48,15 +48,24 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
         style={{ cursor: 'move' }}
       />
 
-      {/* Render each lane */}
+      {/* Render all fills first (background layer) */}
       {geometry.lanes.map((lane, index) => (
-        <LaneElement
-          key={lane.laneNumber}
+        <LaneFillElement
+          key={`fill-${lane.laneNumber}`}
           lane={lane}
           surfaceColor={surfaceColor}
+          isFirstLane={index === 0}
+          isLastLane={index === geometry.lanes.length - 1}
+        />
+      ))}
+
+      {/* Render all strokes second (line layer on top) */}
+      {geometry.lanes.map((lane, index) => (
+        <LaneStrokeElement
+          key={`stroke-${lane.laneNumber}`}
+          lane={lane}
           lineColor={lineColor}
           lineWidth={lineWidth}
-          isFirstLane={index === 0}
           isLastLane={index === geometry.lanes.length - 1}
         />
       ))}
@@ -85,20 +94,16 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
 }
 
 /**
- * Individual lane element
- * Renders lane with colored surface and white boundary lines
+ * Lane fill component - renders colored backgrounds only
  */
-function LaneElement({ lane, surfaceColor, lineColor, lineWidth, isFirstLane, isLastLane }) {
+function LaneFillElement({ lane, surfaceColor, isFirstLane, isLastLane }) {
   const { laneNumber, innerPath, outerPath } = lane;
 
-  // Reduce line width for cleaner appearance (30mm minimum instead of 100mm)
-  const visibleLineWidth = Math.max(lineWidth, 30);
-
   // Debug logging
-  console.log(`Lane ${laneNumber} - isFirstLane: ${isFirstLane}, isLastLane: ${isLastLane}, surfaceColor: ${surfaceColor}`);
+  console.log(`Lane ${laneNumber} FILL - isFirstLane: ${isFirstLane}, isLastLane: ${isLastLane}, surfaceColor: ${surfaceColor}`);
 
   return (
-    <g className="track-lane">
+    <g className="track-lane-fill">
       {/* Filled track surface - ONLY fill outermost boundary (Lane 1) */}
       {isFirstLane && (
         <path
@@ -116,7 +121,21 @@ function LaneElement({ lane, surfaceColor, lineColor, lineWidth, isFirstLane, is
           stroke="none"
         />
       )}
+    </g>
+  );
+}
 
+/**
+ * Lane stroke component - renders white boundary lines only
+ */
+function LaneStrokeElement({ lane, lineColor, lineWidth, isLastLane }) {
+  const { innerPath, outerPath } = lane;
+
+  // Reduce line width for cleaner appearance (30mm minimum instead of 100mm)
+  const visibleLineWidth = Math.max(lineWidth, 30);
+
+  return (
+    <g className="track-lane-stroke">
       {/* Lane separator line - outer boundary stroke */}
       <path
         d={outerPath}
