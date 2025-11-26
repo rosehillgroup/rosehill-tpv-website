@@ -48,17 +48,6 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
         style={{ cursor: 'move' }}
       />
 
-      {/* DEBUG: Test rectangle to verify colored rendering works */}
-      <rect
-        x="1000"
-        y="1000"
-        width="5000"
-        height="3000"
-        fill={surfaceColor}
-        stroke="black"
-        strokeWidth="100"
-      />
-
       {/* Render all fills first (background layer) */}
       {geometry.lanes.map((lane, index) => (
         <LaneFillElement
@@ -124,14 +113,7 @@ function LaneFillElement({ lane, surfaceColor, isFirstLane, isLastLane }) {
         />
       )}
 
-      {/* White infield - ONLY fill innermost boundary (last lane) */}
-      {isLastLane && (
-        <path
-          d={innerPath}
-          fill="#FFFFFF"
-          stroke="none"
-        />
-      )}
+      {/* No infield fill - let surface color show through */}
     </g>
   );
 }
