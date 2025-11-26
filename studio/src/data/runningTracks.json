@@ -22,7 +22,7 @@
     },
 
     "defaultLineColor": "RH31",
-    "defaultTrackSurfaceColor": "RH17",
+    "defaultTrackSurfaceColor": "RH01",
 
     "calculatedDimensions": {
       "totalWidth_mm": 25000,

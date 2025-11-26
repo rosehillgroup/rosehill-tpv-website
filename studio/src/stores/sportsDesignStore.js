@@ -91,13 +91,13 @@ export const useSportsDesignStore = create(
         // Helper: Convert TPV code to full color object
         const getTPVColorObject = (tpvCode) => {
           const colorMap = {
-            'RH17': { tpv_code: 'RH17', hex: '#DC143C', name: 'Red' },
-            'RH31': { tpv_code: 'RH31', hex: '#FFFFFF', name: 'White' },
-            'RH30': { tpv_code: 'RH30', hex: '#FFD700', name: 'Yellow' },
-            'RH29': { tpv_code: 'RH29', hex: '#0066CC', name: 'Blue' },
-            'RH12': { tpv_code: 'RH12', hex: '#006C55', name: 'Dark Green' }
+            'RH01': { tpv_code: 'RH01', hex: '#B71E2D', name: 'Standard Red' },
+            'RH31': { tpv_code: 'RH31', hex: '#F2E6C8', name: 'Cream' },
+            'RH30': { tpv_code: 'RH30', hex: '#D4B585', name: 'Standard Beige' },
+            'RH20': { tpv_code: 'RH20', hex: '#1B4F9C', name: 'Standard Blue' },
+            'RH12': { tpv_code: 'RH12', hex: '#006747', name: 'Dark Green' }
           };
-          return colorMap[tpvCode] || { tpv_code: tpvCode, hex: '#FFFFFF', name: 'White' };
+          return colorMap[tpvCode] || { tpv_code: 'RH31', hex: '#F2E6C8', name: 'Cream' };
         };
 
         // Apply default color to all markings
@@ -322,19 +322,19 @@ export const useSportsDesignStore = create(
         // Helper: Convert TPV code to full color object
         const getTPVColorObject = (tpvCode) => {
           const colorMap = {
-            'RH17': { tpv_code: 'RH17', hex: '#DC143C', name: 'Red' },
-            'RH31': { tpv_code: 'RH31', hex: '#FFFFFF', name: 'White' },
-            'RH30': { tpv_code: 'RH30', hex: '#FFD700', name: 'Yellow' },
-            'RH29': { tpv_code: 'RH29', hex: '#0066CC', name: 'Blue' },
-            'RH12': { tpv_code: 'RH12', hex: '#006C55', name: 'Dark Green' }
+            'RH01': { tpv_code: 'RH01', hex: '#B71E2D', name: 'Standard Red' },
+            'RH31': { tpv_code: 'RH31', hex: '#F2E6C8', name: 'Cream' },
+            'RH30': { tpv_code: 'RH30', hex: '#D4B585', name: 'Standard Beige' },
+            'RH20': { tpv_code: 'RH20', hex: '#1B4F9C', name: 'Standard Blue' },
+            'RH12': { tpv_code: 'RH12', hex: '#006747', name: 'Dark Green' }
           };
-          return colorMap[tpvCode] || { tpv_code: tpvCode, hex: '#DC143C', name: 'Red' };
+          return colorMap[tpvCode] || { tpv_code: tpvCode, hex: '#B71E2D', name: 'Standard Red' };
         };
 
         // Set default track surface color
         const trackSurfaceColor = template.defaultTrackSurfaceColor
           ? getTPVColorObject(template.defaultTrackSurfaceColor)
-          : getTPVColorObject('RH17');
+          : getTPVColorObject('RH01');
 
         // Create track parameters - NOTE: laneWidth_mm is FIXED (not scaled)
         const trackParameters = {

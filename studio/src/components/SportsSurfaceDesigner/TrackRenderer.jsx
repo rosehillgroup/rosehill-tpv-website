@@ -21,7 +21,7 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
   const transform = `translate(${position.x}, ${position.y}) rotate(${rotation})`;
 
   // Track surface and line colors
-  const surfaceColor = trackSurfaceColor?.hex || '#DC143C'; // Default red
+  const surfaceColor = trackSurfaceColor?.hex || '#B71E2D'; // Default Standard Red (RH01)
   const lineColor = '#FFFFFF';
   const lineWidth = parameters.lineWidth_mm || 50;
 
