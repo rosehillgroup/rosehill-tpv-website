@@ -14,6 +14,11 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
   // Calculate track geometry
   const geometry = calculateTrackGeometry(parameters);
 
+  // Detect if this is a straight track (parallel lanes)
+  const isStraightTrack =
+    geometry.lanes.length > 0 &&
+    geometry.lanes[0].isParallel === true;
+
   // Get track dimensions for bounding box
   const boundingWidth = geometry.totalWidth;
   const boundingLength = geometry.totalLength;
@@ -49,14 +54,28 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
         style={{ cursor: 'move' }}
       />
 
-      {/* Track surface fill - donut shape (outer boundary minus inner infield) */}
-      <path
-        d={`${geometry.lanes[0].outerPath} ${geometry.lanes[geometry.lanes.length - 1].innerPath}`}
-        fill={surfaceColor}
-        fillRule="evenodd"
-        stroke="none"
-        pointerEvents="none"
-      />
+      {/* Track surface fill */}
+      {isStraightTrack ? (
+        // Straight track: render each lane as filled rectangle
+        geometry.lanes.map((lane) => (
+          <path
+            key={`lane-fill-${lane.laneNumber}`}
+            d={lane.outerPath}
+            fill={surfaceColor}
+            stroke="none"
+            pointerEvents="none"
+          />
+        ))
+      ) : (
+        // Curved track: render donut shape (outer boundary minus inner infield)
+        <path
+          d={`${geometry.lanes[0].outerPath} ${geometry.lanes[geometry.lanes.length - 1].innerPath}`}
+          fill={surfaceColor}
+          fillRule="evenodd"
+          stroke="none"
+          pointerEvents="none"
+        />
+      )}
 
       {/* Render all strokes second (line layer on top) */}
       {geometry.lanes.map((lane, index) => (
@@ -66,6 +85,8 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
           lineColor={lineColor}
           lineWidth={lineWidth}
           isLastLane={index === geometry.lanes.length - 1}
+          isStraightTrack={isStraightTrack}
+          geometry={geometry}
         />
       ))}
 
@@ -112,35 +133,66 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
 /**
  * Lane stroke component - renders white boundary lines only
  */
-function LaneStrokeElement({ lane, lineColor, lineWidth, isLastLane }) {
+function LaneStrokeElement({ lane, lineColor, lineWidth, isLastLane, isStraightTrack, geometry }) {
   const { innerPath, outerPath } = lane;
 
   // Reduce line width for cleaner appearance (30mm minimum instead of 100mm)
   const visibleLineWidth = Math.max(lineWidth, 30);
 
-  return (
-    <g className="track-lane-stroke">
-      {/* Lane separator line - outer boundary stroke */}
-      <path
-        d={outerPath}
-        fill="none"
-        stroke={lineColor}
-        strokeWidth={visibleLineWidth}
-        pointerEvents="none"
-      />
-
-      {/* Infield edge line - only for innermost lane */}
-      {isLastLane && (
+  if (isStraightTrack) {
+    // For parallel lanes, render vertical lines instead of paths
+    return (
+      <g className="track-lane-stroke">
+        {/* First lane gets left edge */}
+        {lane.laneNumber === 1 && (
+          <line
+            x1={lane.laneX}
+            y1={0}
+            x2={lane.laneX}
+            y2={geometry.totalLength}
+            stroke={lineColor}
+            strokeWidth={visibleLineWidth}
+            pointerEvents="none"
+          />
+        )}
+        {/* All lanes get right edge (acts as separator between lanes) */}
+        <line
+          x1={lane.laneX + lane.laneWidth}
+          y1={0}
+          x2={lane.laneX + lane.laneWidth}
+          y2={geometry.totalLength}
+          stroke={lineColor}
+          strokeWidth={visibleLineWidth}
+          pointerEvents="none"
+        />
+      </g>
+    );
+  } else {
+    // Curved track: use path stroking
+    return (
+      <g className="track-lane-stroke">
+        {/* Lane separator line - outer boundary stroke */}
         <path
-          d={innerPath}
+          d={outerPath}
           fill="none"
           stroke={lineColor}
           strokeWidth={visibleLineWidth}
           pointerEvents="none"
         />
-      )}
-    </g>
-  );
+
+        {/* Infield edge line - only for innermost lane */}
+        {isLastLane && (
+          <path
+            d={innerPath}
+            fill="none"
+            stroke={lineColor}
+            strokeWidth={visibleLineWidth}
+            pointerEvents="none"
+          />
+        )}
+      </g>
+    );
+  }
 }
 
 export default TrackElement;

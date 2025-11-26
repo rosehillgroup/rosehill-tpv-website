@@ -24,8 +24,33 @@ export function calculateTrackGeometry(params) {
 
   const lanes = [];
 
-  // Calculate each lane's inner and outer paths
-  for (let i = 0; i < numLanes; i++) {
+  // Detect if this is a straight track (all corner radii = 0)
+  const isStraightTrack =
+    cornerRadius.topLeft === 0 &&
+    cornerRadius.topRight === 0 &&
+    cornerRadius.bottomLeft === 0 &&
+    cornerRadius.bottomRight === 0;
+
+  if (isStraightTrack) {
+    // Parallel lane rendering for straight tracks
+    for (let i = 0; i < numLanes; i++) {
+      const laneX = i * laneWidth_mm;
+
+      lanes.push({
+        laneNumber: i + 1,
+        innerPath: null,  // Not used for parallel lanes
+        outerPath: generateParallelLanePath(laneWidth_mm, height_mm, i),
+        perimeter: (2 * height_mm) / 1000,  // Convert to meters (length * 2)
+        // Additional metadata for rendering
+        isParallel: true,
+        laneX: laneX,
+        laneWidth: laneWidth_mm
+      });
+    }
+  } else {
+    // Concentric lane rendering for curved tracks
+    // Calculate each lane's inner and outer paths
+    for (let i = 0; i < numLanes; i++) {
     const laneOffset = i * laneWidth_mm;
     const nextLaneOffset = (i + 1) * laneWidth_mm;
 
@@ -50,12 +75,14 @@ export function calculateTrackGeometry(params) {
       bottomRight: Math.max(0, cornerRadius.bottomRight - laneOffset)
     };
 
-    lanes.push({
-      laneNumber: i + 1,
-      innerPath: generateRoundedRectPath(innerWidth, innerHeight, innerCorners, nextLaneOffset),
-      outerPath: generateRoundedRectPath(outerWidth, outerHeight, outerCorners, laneOffset),
-      perimeter: calculateRoundedRectPerimeter(outerWidth, outerHeight, outerCorners)
-    });
+      lanes.push({
+        laneNumber: i + 1,
+        innerPath: generateRoundedRectPath(innerWidth, innerHeight, innerCorners, nextLaneOffset),
+        outerPath: generateRoundedRectPath(outerWidth, outerHeight, outerCorners, laneOffset),
+        perimeter: calculateRoundedRectPerimeter(outerWidth, outerHeight, outerCorners),
+        isParallel: false
+      });
+    }
   }
 
   return {
@@ -109,6 +136,20 @@ function generateRoundedRectPath(width, height, corners, offset = 0) {
   `.trim().replace(/\s+/g, ' ');
 
   return path;
+}
+
+/**
+ * Generate SVG path for a parallel lane strip (vertical rectangle)
+ * Used for straight tracks to create parallel lanes instead of concentric
+ *
+ * @param {number} laneWidth - Lane width in mm
+ * @param {number} trackHeight - Full track height/length in mm
+ * @param {number} laneIndex - Lane index (0-based)
+ * @returns {string} SVG path d attribute for lane rectangle
+ */
+function generateParallelLanePath(laneWidth, trackHeight, laneIndex) {
+  const x = laneIndex * laneWidth;
+  return `M ${x} 0 L ${x + laneWidth} 0 L ${x + laneWidth} ${trackHeight} L ${x} ${trackHeight} Z`;
 }
 
 /**
