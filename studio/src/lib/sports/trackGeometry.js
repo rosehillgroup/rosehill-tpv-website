@@ -265,26 +265,259 @@ export function checkCourtFitsInInfield(trackParams, courtDimensions) {
  * Calculate staggered start positions for curved tracks
  * Outer lanes have longer perimeters, so runners start ahead to equalize distance
  *
+ * Note: In the geometry, index 0 = outermost lane, last index = innermost lane
+ * For staggered starts, innermost lane is the reference (stagger = 0)
+ * Outer lanes start further along the track (positive stagger)
+ *
  * @param {object} geometry - Track geometry from calculateTrackGeometry()
- * @returns {array} Array of stagger offsets in mm [0, 7660, 15330, ...] for each lane
+ * @returns {array} Array of stagger offsets in meters [large, medium, small, 0] for each lane
  */
 export function calculateStaggeredStarts(geometry) {
   if (!geometry || !geometry.lanes || geometry.lanes.length === 0) {
     return [];
   }
 
-  // Lane 1 (innermost/first lane) is the reference - starts at position 0
-  const lane1Perimeter = geometry.lanes[0].perimeter;
+  // Innermost lane (last index) is the reference - shortest perimeter, starts at position 0
+  const innermostIndex = geometry.lanes.length - 1;
+  const innermostPerimeter = geometry.lanes[innermostIndex].perimeter;
 
-  // Calculate offset for each lane based on perimeter difference
+  // Calculate offset for each lane based on perimeter difference from innermost lane
   return geometry.lanes.map((lane, index) => {
-    if (index === 0) return 0; // Lane 1 starts at 0
-
     const lanePerimeter = lane.perimeter;
-    const perimeterDifference = lanePerimeter - lane1Perimeter;
+    const perimeterDifference = lanePerimeter - innermostPerimeter;
 
-    // Stagger offset is the perimeter difference (in mm)
-    // Outer lanes start further ahead by this amount
+    // Stagger offset is the perimeter difference (in meters)
+    // Outer lanes (larger perimeter) get positive offsets (start further along)
     return perimeterDifference;
   });
+}
+
+/**
+ * Get a point at a specific distance along a lane's outer path
+ * Traverses the rounded rectangle clockwise starting from the bottom-left curve
+ *
+ * Path order (clockwise from bottom-left):
+ * 1. Bottom-left curve (90° arc)
+ * 2. Left straight (going up)
+ * 3. Top-left curve (90° arc)
+ * 4. Top straight (going right)
+ * 5. Top-right curve (90° arc)
+ * 6. Right straight (going down)
+ * 7. Bottom-right curve (90° arc)
+ * 8. Bottom straight (going left)
+ *
+ * @param {number} laneIndex - Lane index (0-based, 0 = outermost lane)
+ * @param {number} distance_mm - Distance along the path in mm (0 = start of bottom-left curve)
+ * @param {object} params - Track parameters
+ * @returns {object} {x, y, angle} - Position and tangent angle (radians, 0 = right, PI/2 = down)
+ */
+export function getPointOnLanePath(laneIndex, distance_mm, params) {
+  const {
+    width_mm,
+    height_mm,
+    laneWidth_mm,
+    cornerRadius = { topLeft: 3000, topRight: 3000, bottomLeft: 3000, bottomRight: 3000 }
+  } = params;
+
+  // Calculate this lane's offset from outer edge
+  const laneOffset = laneIndex * laneWidth_mm;
+
+  // Calculate dimensions for this lane's outer edge
+  const laneWidth = Math.max(0, width_mm - (laneOffset * 2));
+  const laneHeight = Math.max(0, height_mm - (laneOffset * 2));
+
+  // Calculate corner radii for this lane (reduced by lane offset)
+  const maxRadius = Math.min(laneWidth / 2, laneHeight / 2);
+  const tl = Math.min(Math.max(0, cornerRadius.topLeft - laneOffset), maxRadius);
+  const tr = Math.min(Math.max(0, cornerRadius.topRight - laneOffset), maxRadius);
+  const br = Math.min(Math.max(0, cornerRadius.bottomRight - laneOffset), maxRadius);
+  const bl = Math.min(Math.max(0, cornerRadius.bottomLeft - laneOffset), maxRadius);
+
+  // Calculate positions relative to lane offset
+  const left = laneOffset;
+  const right = laneOffset + laneWidth;
+  const top = laneOffset;
+  const bottom = laneOffset + laneHeight;
+
+  // Calculate segment lengths
+  const segments = [
+    { type: 'arc', length: (Math.PI * bl) / 2, radius: bl, corner: 'bottomLeft' },     // Bottom-left curve
+    { type: 'straight', length: laneHeight - bl - tl, dir: 'up' },                      // Left straight
+    { type: 'arc', length: (Math.PI * tl) / 2, radius: tl, corner: 'topLeft' },        // Top-left curve
+    { type: 'straight', length: laneWidth - tl - tr, dir: 'right' },                    // Top straight
+    { type: 'arc', length: (Math.PI * tr) / 2, radius: tr, corner: 'topRight' },       // Top-right curve
+    { type: 'straight', length: laneHeight - tr - br, dir: 'down' },                    // Right straight
+    { type: 'arc', length: (Math.PI * br) / 2, radius: br, corner: 'bottomRight' },    // Bottom-right curve
+    { type: 'straight', length: laneWidth - br - bl, dir: 'left' },                     // Bottom straight
+  ];
+
+  // Handle negative or zero distances
+  let d = distance_mm;
+  const totalPerimeter = segments.reduce((sum, s) => sum + s.length, 0);
+
+  // Wrap distance to be within perimeter
+  while (d < 0) d += totalPerimeter;
+  while (d >= totalPerimeter) d -= totalPerimeter;
+
+  // Find which segment the distance falls on
+  let accumulated = 0;
+  for (const segment of segments) {
+    if (d <= accumulated + segment.length) {
+      const segmentDistance = d - accumulated;
+      const t = segment.length > 0 ? segmentDistance / segment.length : 0;
+
+      if (segment.type === 'arc') {
+        return calculateArcPoint(segment, t, { left, right, top, bottom, tl, tr, br, bl });
+      } else {
+        return calculateStraightPoint(segment, t, { left, right, top, bottom, tl, tr, br, bl });
+      }
+    }
+    accumulated += segment.length;
+  }
+
+  // Fallback (shouldn't reach here)
+  return { x: left, y: bottom - bl, angle: -Math.PI / 2 };
+}
+
+/**
+ * Calculate point on an arc segment
+ */
+function calculateArcPoint(segment, t, bounds) {
+  const { left, right, top, bottom, tl, tr, br, bl } = bounds;
+
+  // Arc angle: t goes from 0 to 1 over 90 degrees (PI/2)
+  const arcAngle = t * (Math.PI / 2);
+
+  switch (segment.corner) {
+    case 'bottomLeft': {
+      // Center at (left + bl, bottom - bl), arc from 90° to 180° (bottom to left)
+      const cx = left + bl;
+      const cy = bottom - bl;
+      const startAngle = Math.PI / 2; // 90° (pointing down)
+      const angle = startAngle + arcAngle; // Goes toward 180° (pointing left)
+      return {
+        x: cx + bl * Math.cos(angle),
+        y: cy + bl * Math.sin(angle),
+        angle: angle + Math.PI / 2 // Tangent is perpendicular to radius (pointing along track)
+      };
+    }
+    case 'topLeft': {
+      // Center at (left + tl, top + tl), arc from 180° to 270° (left to top)
+      const cx = left + tl;
+      const cy = top + tl;
+      const startAngle = Math.PI; // 180° (pointing left)
+      const angle = startAngle + arcAngle;
+      return {
+        x: cx + tl * Math.cos(angle),
+        y: cy + tl * Math.sin(angle),
+        angle: angle + Math.PI / 2
+      };
+    }
+    case 'topRight': {
+      // Center at (right - tr, top + tr), arc from 270° to 360° (top to right)
+      const cx = right - tr;
+      const cy = top + tr;
+      const startAngle = -Math.PI / 2; // 270° (pointing up)
+      const angle = startAngle + arcAngle;
+      return {
+        x: cx + tr * Math.cos(angle),
+        y: cy + tr * Math.sin(angle),
+        angle: angle + Math.PI / 2
+      };
+    }
+    case 'bottomRight': {
+      // Center at (right - br, bottom - br), arc from 0° to 90° (right to bottom)
+      const cx = right - br;
+      const cy = bottom - br;
+      const startAngle = 0; // 0° (pointing right)
+      const angle = startAngle + arcAngle;
+      return {
+        x: cx + br * Math.cos(angle),
+        y: cy + br * Math.sin(angle),
+        angle: angle + Math.PI / 2
+      };
+    }
+    default:
+      return { x: left, y: top, angle: 0 };
+  }
+}
+
+/**
+ * Calculate point on a straight segment
+ */
+function calculateStraightPoint(segment, t, bounds) {
+  const { left, right, top, bottom, tl, tr, br, bl } = bounds;
+
+  switch (segment.dir) {
+    case 'up': {
+      // Left edge, going from bottom-bl to top+tl
+      const startY = bottom - bl;
+      const endY = top + tl;
+      return {
+        x: left,
+        y: startY + t * (endY - startY),
+        angle: -Math.PI / 2 // Pointing up (tangent direction)
+      };
+    }
+    case 'right': {
+      // Top edge, going from left+tl to right-tr
+      const startX = left + tl;
+      const endX = right - tr;
+      return {
+        x: startX + t * (endX - startX),
+        y: top,
+        angle: 0 // Pointing right
+      };
+    }
+    case 'down': {
+      // Right edge, going from top+tr to bottom-br
+      const startY = top + tr;
+      const endY = bottom - br;
+      return {
+        x: right,
+        y: startY + t * (endY - startY),
+        angle: Math.PI / 2 // Pointing down
+      };
+    }
+    case 'left': {
+      // Bottom edge, going from right-br to left+bl
+      const startX = right - br;
+      const endX = left + bl;
+      return {
+        x: startX + t * (endX - startX),
+        y: bottom,
+        angle: Math.PI // Pointing left
+      };
+    }
+    default:
+      return { x: left, y: top, angle: 0 };
+  }
+}
+
+/**
+ * Get the center point of a lane at a specific distance along the path
+ * Returns the midpoint between inner and outer edges
+ *
+ * @param {number} laneIndex - Lane index (0-based)
+ * @param {number} distance_mm - Distance along the path in mm
+ * @param {object} params - Track parameters
+ * @returns {object} {x, y, angle, innerX, innerY, outerX, outerY}
+ */
+export function getLaneCenterAtDistance(laneIndex, distance_mm, params) {
+  // Get point on outer edge
+  const outerPoint = getPointOnLanePath(laneIndex, distance_mm, params);
+
+  // Get point on inner edge (next lane's outer edge)
+  const innerPoint = getPointOnLanePath(laneIndex + 1, distance_mm, params);
+
+  // Calculate center point
+  return {
+    x: (outerPoint.x + innerPoint.x) / 2,
+    y: (outerPoint.y + innerPoint.y) / 2,
+    angle: outerPoint.angle,
+    innerX: innerPoint.x,
+    innerY: innerPoint.y,
+    outerX: outerPoint.x,
+    outerY: outerPoint.y
+  };
 }

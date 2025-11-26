@@ -1,5 +1,6 @@
 // TPV Studio - Starting Boxes Component
 import React from 'react';
+import { getLaneCenterAtDistance } from '../../lib/sports/trackGeometry.js';
 
 /**
  * StartingBoxes Component
@@ -18,7 +19,7 @@ function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor, isStraig
   const {
     depth_mm = 400,
     lineWidth_mm = 50,
-    perLaneOffsets = []  // For staggered starts: [0, 7660, 15330, ...]
+    perLaneOffsets = []  // For staggered starts: [0, 7660, 15330, ...] (in meters, converted to mm)
   } = boxConfig;
 
   // Use track surface color for boxes by default
@@ -29,28 +30,13 @@ function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor, isStraig
     <g className="starting-boxes">
       {geometry.lanes.map((lane, index) => {
         const laneNumber = index + 1;
-        const laneOffset = index * parameters.laneWidth_mm;
-        const nextLaneOffset = (index + 1) * parameters.laneWidth_mm;
-
-        // Calculate box position (with stagger for curved tracks)
-        const staggerOffset = perLaneOffsets[index] || 0;
-
-        // For curved tracks, account for top corner radius
-        // The track surface doesn't start at y=0, it starts at y=cornerRadius
-        const cornerRadiusOffset = isStraightTrack ? 0 : Math.max(
-          parameters.cornerRadius?.topLeft || 0,
-          parameters.cornerRadius?.topRight || 0
-        );
-
-        const boxY = cornerRadiusOffset + staggerOffset; // Position along track
-
-        // Box rectangle dimensions
-        let boxX, boxWidth;
 
         if (isStraightTrack) {
           // Straight track: lanes are parallel vertical strips
-          boxX = index * parameters.laneWidth_mm;
-          boxWidth = parameters.laneWidth_mm;
+          // Starting boxes are horizontal rectangles at the start
+          const boxX = index * parameters.laneWidth_mm;
+          const boxWidth = parameters.laneWidth_mm;
+          const boxY = 0; // Start at top of track
 
           return (
             <g key={`start-box-${laneNumber}`}>
@@ -77,17 +63,17 @@ function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor, isStraig
                 pointerEvents="none"
               />
 
-              {/* Lane number label (optional, for visibility) */}
+              {/* Lane number label */}
               <text
                 x={boxX + boxWidth / 2}
                 y={boxY + depth_mm / 2}
-                fontSize={Math.min(boxWidth * 0.15, parameters.laneWidth_mm * 0.3)}
+                fontSize={Math.min(boxWidth * 0.4, parameters.laneWidth_mm * 0.5)}
                 fill={lineColor}
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fontWeight="bold"
                 pointerEvents="none"
-                opacity="0.6"
+                opacity="0.8"
               >
                 {laneNumber}
               </text>
@@ -95,28 +81,42 @@ function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor, isStraig
           );
         } else {
           // Curved track: lanes are concentric rings
-          // Draw starting box as a section of the lane ring
-          const outerLeft = laneOffset;
-          const outerRight = parameters.width_mm - laneOffset;
-          const innerLeft = nextLaneOffset;
-          const innerRight = parameters.width_mm - nextLaneOffset;
+          // Starting boxes follow the curve at the stagger position
 
-          // Create a path that outlines the lane section for the starting box
+          // Stagger offset (in mm) - perimeter difference converted to distance along track
+          // perLaneOffsets are in meters from calculateStaggeredStarts, convert to mm
+          const staggerOffset = (perLaneOffsets[index] || 0) * 1000;
+
+          // Get the lane center position at the stagger distance
+          // This gives us the point where the starting line should be
+          const startPoint = getLaneCenterAtDistance(index, staggerOffset, parameters);
+
+          // Calculate the perpendicular angle for the starting line
+          // The angle from getLaneCenterAtDistance is the tangent direction
+          const perpAngle = startPoint.angle + Math.PI / 2;
+
+          // Get points for the starting line (perpendicular to track direction)
+          // Draw from outer edge to inner edge of this lane
+          const x1 = startPoint.outerX;
+          const y1 = startPoint.outerY;
+          const x2 = startPoint.innerX;
+          const y2 = startPoint.innerY;
+
+          // Calculate box end points (depth_mm further along the track)
+          const endPoint = getLaneCenterAtDistance(index, staggerOffset + depth_mm, parameters);
+
+          // Create a path for the box fill (quadrilateral following the lane)
           const boxPath = `
-            M ${outerLeft} ${boxY}
-            L ${outerRight} ${boxY}
-            L ${outerRight} ${boxY + depth_mm}
-            L ${innerRight} ${boxY + depth_mm}
-            L ${innerRight} ${boxY}
-            L ${innerLeft} ${boxY}
-            L ${innerLeft} ${boxY + depth_mm}
-            L ${outerLeft} ${boxY + depth_mm}
+            M ${startPoint.outerX} ${startPoint.outerY}
+            L ${startPoint.innerX} ${startPoint.innerY}
+            L ${endPoint.innerX} ${endPoint.innerY}
+            L ${endPoint.outerX} ${endPoint.outerY}
             Z
           `.trim().replace(/\s+/g, ' ');
 
           return (
             <g key={`start-box-${laneNumber}`}>
-              {/* Starting box fill as path */}
+              {/* Starting box fill - quadrilateral following the lane curve */}
               <path
                 d={boxPath}
                 fill={boxFillColor}
@@ -124,41 +124,30 @@ function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor, isStraig
                 pointerEvents="none"
               />
 
-              {/* Starting line (at front edge of box) - outer edge */}
+              {/* Starting line (at front edge of box) - perpendicular to track */}
               <line
-                x1={outerLeft}
-                y1={boxY}
-                x2={outerRight}
-                y2={boxY}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
                 stroke={lineColor}
                 strokeWidth={lineWidth_mm}
                 strokeLinecap="butt"
                 pointerEvents="none"
               />
 
-              {/* Starting line - inner edge */}
-              <line
-                x1={innerLeft}
-                y1={boxY}
-                x2={innerRight}
-                y2={boxY}
-                stroke={lineColor}
-                strokeWidth={lineWidth_mm}
-                strokeLinecap="butt"
-                pointerEvents="none"
-              />
-
-              {/* Lane number label (centered in lane) */}
+              {/* Lane number label (centered in the box) */}
               <text
-                x={parameters.width_mm / 2}
-                y={boxY + depth_mm / 2}
-                fontSize={parameters.laneWidth_mm * 0.3}
+                x={startPoint.x}
+                y={startPoint.y}
+                fontSize={parameters.laneWidth_mm * 0.5}
                 fill={lineColor}
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fontWeight="bold"
                 pointerEvents="none"
-                opacity="0.6"
+                opacity="0.8"
+                transform={`rotate(${(startPoint.angle * 180 / Math.PI) + 90}, ${startPoint.x}, ${startPoint.y})`}
               >
                 {laneNumber}
               </text>

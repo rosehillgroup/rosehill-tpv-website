@@ -138,8 +138,8 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
 function LaneStrokeElement({ lane, lineColor, lineWidth, isLastLane, isStraightTrack, geometry }) {
   const { innerPath, outerPath } = lane;
 
-  // Reduce line width for cleaner appearance (30mm minimum instead of 100mm)
-  const visibleLineWidth = Math.max(lineWidth, 30);
+  // World Athletics standard: 50mm line width for all track markings
+  const visibleLineWidth = 50;
 
   if (isStraightTrack) {
     // For parallel lanes, render vertical lines instead of paths
