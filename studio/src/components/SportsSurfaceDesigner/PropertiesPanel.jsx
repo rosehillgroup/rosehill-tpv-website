@@ -387,6 +387,7 @@ function TrackPropertiesPanel({ track, trackId }) {
   const { updateTrackParameters, removeTrack, setTrackSurfaceColor } = useSportsDesignStore();
   const { parameters, template, trackSurfaceColor } = track;
   const [cornersLocked, setCornersLocked] = React.useState(true);
+  const [showTrackColorPicker, setShowTrackColorPicker] = React.useState(false);
 
   // Calculate current geometry
   const geometry = calculateTrackGeometry(parameters);
@@ -449,6 +450,16 @@ function TrackPropertiesPanel({ track, trackId }) {
     if (window.confirm(`Delete ${template.name}? This action cannot be undone.`)) {
       removeTrack(trackId);
     }
+  };
+
+  // Handle track color selection
+  const handleTrackColorSelect = (tpvColor) => {
+    setTrackSurfaceColor(trackId, {
+      tpv_code: tpvColor.code,
+      hex: tpvColor.hex,
+      name: tpvColor.name
+    });
+    setShowTrackColorPicker(false);
   };
 
   // Calculate average corner radius for display
@@ -643,29 +654,20 @@ function TrackPropertiesPanel({ track, trackId }) {
           {/* Track Surface Color */}
           <div className="property-group">
             <label>Track Surface Color</label>
-            <div className="color-selector">
-              {[
-                { code: 'RH17', hex: '#DC143C', name: 'Red' },
-                { code: 'RH12', hex: '#006C55', name: 'Dark Green' },
-                { code: 'RH29', hex: '#0066CC', name: 'Blue' },
-                { code: 'RH30', hex: '#FFD700', name: 'Yellow' },
-                { code: 'RH31', hex: '#FFFFFF', name: 'White' }
-              ].map((color) => (
-                <button
-                  key={color.code}
-                  className={`color-selector__swatch ${trackSurfaceColor?.tpv_code === color.code ? 'color-selector__swatch--selected' : ''}`}
-                  style={{ backgroundColor: color.hex }}
-                  onClick={() => setTrackSurfaceColor(trackId, { tpv_code: color.code, hex: color.hex, name: color.name })}
-                  title={`${color.name} (${color.code})`}
-                  aria-label={`${color.name} (${color.code})`}
-                />
-              ))}
-            </div>
-            {trackSurfaceColor && (
-              <div className="property-info" style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#64748b' }}>
-                {trackSurfaceColor.name} ({trackSurfaceColor.tpv_code})
+            <div className="color-item">
+              <div className="color-item__info">
+                <span className="color-item__name">{trackSurfaceColor?.name || 'Select Color'}</span>
+                {trackSurfaceColor && (
+                  <span className="color-item__code">{trackSurfaceColor.tpv_code}</span>
+                )}
               </div>
-            )}
+              <button
+                className="color-item__swatch"
+                style={{ backgroundColor: trackSurfaceColor?.hex || '#DC143C' }}
+                onClick={() => setShowTrackColorPicker(true)}
+                title={trackSurfaceColor?.name || 'Select color'}
+              />
+            </div>
           </div>
 
           {/* Divider */}
@@ -720,6 +722,31 @@ function TrackPropertiesPanel({ track, trackId }) {
           </div>
         </div>
       </div>
+
+      {/* Color Picker Modal for Track Surface */}
+      {showTrackColorPicker && (
+        <div className="color-picker-modal" onClick={() => setShowTrackColorPicker(false)}>
+          <div className="color-picker-modal__content" onClick={(e) => e.stopPropagation()}>
+            <div className="color-picker-modal__header">
+              <h4>Select Track Surface Color</h4>
+              <button onClick={() => setShowTrackColorPicker(false)}>×</button>
+            </div>
+            <div className="color-picker-grid">
+              {tpvColours.map(color => (
+                <button
+                  key={color.code}
+                  className="color-picker-swatch"
+                  style={{ backgroundColor: color.hex }}
+                  onClick={() => handleTrackColorSelect(color)}
+                  title={`${color.code} - ${color.name}`}
+                >
+                  <span className="color-picker-swatch__code">{color.code}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
