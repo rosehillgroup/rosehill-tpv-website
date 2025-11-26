@@ -16,6 +16,7 @@ function PropertiesPanel() {
     updateCourtScale,
     setLineColor,
     setZoneColor,
+    setCourtSurfaceColor,
     resetCourtColors,
     removeCourt,
     removeTrack,
@@ -88,17 +89,23 @@ function PropertiesPanel() {
   const handleColorSelect = (tpvColor) => {
     if (!colorPickerTarget) return;
 
+    const colorObj = {
+      tpv_code: tpvColor.code,
+      hex: tpvColor.hex,
+      name: tpvColor.name
+    };
+
     if (colorPickerTarget.type === 'line') {
-      setLineColor(selectedCourtId, colorPickerTarget.id, {
-        tpv_code: tpvColor.code,
-        hex: tpvColor.hex,
-        name: tpvColor.name
-      });
+      setLineColor(selectedCourtId, colorPickerTarget.id, colorObj);
     } else if (colorPickerTarget.type === 'zone') {
-      setZoneColor(selectedCourtId, colorPickerTarget.id, {
-        tpv_code: tpvColor.code,
-        hex: tpvColor.hex,
-        name: tpvColor.name
+      setZoneColor(selectedCourtId, colorPickerTarget.id, colorObj);
+    } else if (colorPickerTarget.type === 'courtSurface') {
+      // tpvColor can be null for "No Fill" option
+      setCourtSurfaceColor(selectedCourtId, tpvColor ? colorObj : null);
+    } else if (colorPickerTarget.type === 'allLines') {
+      // Apply color to all line markings
+      template.markings.forEach(marking => {
+        setLineColor(selectedCourtId, marking.id, colorObj);
       });
     }
 
@@ -287,6 +294,21 @@ function PropertiesPanel() {
               </button>
             </div>
 
+            {/* Change All Lines option */}
+            <div className="color-item color-item--all-lines">
+              <div className="color-item__info">
+                <span className="color-item__name">Change All Lines</span>
+                <span className="color-item__hint">Set all lines to same colour</span>
+              </div>
+              <button
+                className="color-item__swatch color-item__swatch--all"
+                onClick={() => setColorPickerTarget({ type: 'allLines' })}
+                title="Change all line colours at once"
+              >
+                <span style={{ fontSize: '1rem' }}>🎨</span>
+              </button>
+            </div>
+
             <div className="color-list">
               {template.markings.map(marking => {
                 const currentColor = getMarkingColor(marking);
@@ -315,10 +337,36 @@ function PropertiesPanel() {
         {activeSection === 'zones' && (
           <div className="properties-section">
             <div className="properties-section__header">
-              <h4>Paint Zones</h4>
+              <h4>Fill Colours</h4>
             </div>
 
-            {template.zones && template.zones.length > 0 ? (
+            {/* Court Surface Fill Color */}
+            <div className="color-item color-item--surface-fill">
+              <div className="color-item__info">
+                <span className="color-item__name">Court Surface</span>
+                <span className="color-item__hint">
+                  {court.courtSurfaceColor ? court.courtSurfaceColor.name : 'No Fill (transparent)'}
+                </span>
+                {court.courtSurfaceColor && (
+                  <span className="color-item__code">{court.courtSurfaceColor.tpv_code}</span>
+                )}
+              </div>
+              <button
+                className={`color-item__swatch ${!court.courtSurfaceColor ? 'color-item__swatch--no-fill' : ''}`}
+                style={{ backgroundColor: court.courtSurfaceColor?.hex || 'transparent' }}
+                onClick={() => setColorPickerTarget({ type: 'courtSurface' })}
+                title={court.courtSurfaceColor?.name || 'No Fill - Click to select colour'}
+              />
+            </div>
+
+            {/* Divider if there are zones */}
+            {template.zones && template.zones.length > 0 && (
+              <div className="properties-section__divider">
+                <span>Paint Zones</span>
+              </div>
+            )}
+
+            {template.zones && template.zones.length > 0 && (
               <div className="color-list">
                 {template.zones.map(zone => {
                   const currentColor = getZoneColor(zone);
@@ -341,10 +389,6 @@ function PropertiesPanel() {
                   );
                 })}
               </div>
-            ) : (
-              <div className="properties-section__empty">
-                <p>This court has no paintable zones</p>
-              </div>
             )}
           </div>
         )}
@@ -355,10 +399,24 @@ function PropertiesPanel() {
         <div className="color-picker-modal" onClick={() => setColorPickerTarget(null)}>
           <div className="color-picker-modal__content" onClick={(e) => e.stopPropagation()}>
             <div className="color-picker-modal__header">
-              <h4>Select TPV Colour</h4>
+              <h4>
+                {colorPickerTarget.type === 'allLines' ? 'Change All Line Colours' :
+                 colorPickerTarget.type === 'courtSurface' ? 'Select Court Fill Colour' :
+                 'Select TPV Colour'}
+              </h4>
               <button onClick={() => setColorPickerTarget(null)}>×</button>
             </div>
             <div className="color-picker-grid">
+              {/* No Fill option for court surface */}
+              {colorPickerTarget.type === 'courtSurface' && (
+                <button
+                  className="color-picker-swatch color-picker-swatch--no-fill"
+                  onClick={() => handleColorSelect(null)}
+                  title="No Fill (transparent)"
+                >
+                  <span className="color-picker-swatch__code">None</span>
+                </button>
+              )}
               {tpvColours.map(color => (
                 <button
                   key={color.code}
