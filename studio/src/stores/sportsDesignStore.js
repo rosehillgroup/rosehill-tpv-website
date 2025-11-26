@@ -16,17 +16,19 @@ const initialState = {
 
   // Courts placed on the surface
   courts: {},  // { [courtId]: CourtObject }
-  courtOrder: [], // Array of court IDs for z-order
 
   // Selected court for manipulation
   selectedCourtId: null,
 
   // Tracks placed on the surface
   tracks: {},  // { [trackId]: TrackObject }
-  trackOrder: [], // Array of track IDs for z-order
 
   // Selected track for manipulation
   selectedTrackId: null,
+
+  // Unified element order for z-index (courts and tracks combined)
+  // Elements render bottom-to-top: first = bottom layer, last = top layer
+  elementOrder: [], // ['track-123', 'court-456', 'court-789']
 
   // Custom markings not part of standard courts
   customMarkings: [],
@@ -159,8 +161,9 @@ export const useSportsDesignStore = create(
             ...state.courts,
             [courtId]: court
           },
-          courtOrder: [...state.courtOrder, courtId],
-          selectedCourtId: courtId
+          elementOrder: [...state.elementOrder, courtId], // Add to top layer
+          selectedCourtId: courtId,
+          selectedTrackId: null // Deselect any track
         }));
         get().addToHistory();
       },
@@ -169,7 +172,7 @@ export const useSportsDesignStore = create(
         const { [courtId]: removed, ...remainingCourts } = get().courts;
         set((state) => ({
           courts: remainingCourts,
-          courtOrder: state.courtOrder.filter(id => id !== courtId),
+          elementOrder: state.elementOrder.filter(id => id !== courtId),
           selectedCourtId: state.selectedCourtId === courtId ? null : state.selectedCourtId
         }));
         get().addToHistory();
@@ -231,8 +234,9 @@ export const useSportsDesignStore = create(
             ...state.courts,
             [newCourtId]: newCourt
           },
-          courtOrder: [...state.courtOrder, newCourtId],
-          selectedCourtId: newCourtId
+          elementOrder: [...state.elementOrder, newCourtId], // Add to top layer
+          selectedCourtId: newCourtId,
+          selectedTrackId: null
         }));
         get().addToHistory();
       },
@@ -318,9 +322,49 @@ export const useSportsDesignStore = create(
       },
 
       // ====== Layer Order Actions ======
-      setCourtOrder: (newOrder) => {
-        set({ courtOrder: newOrder });
-        // Note: History is added by caller (keyboard shortcut) to avoid double entries
+      setElementOrder: (newOrder) => {
+        set({ elementOrder: newOrder });
+        // Note: History is added by caller to avoid double entries
+      },
+
+      moveElementUp: (elementId) => {
+        const { elementOrder } = get();
+        const currentIndex = elementOrder.indexOf(elementId);
+        if (currentIndex < elementOrder.length - 1) {
+          const newOrder = [...elementOrder];
+          [newOrder[currentIndex], newOrder[currentIndex + 1]] =
+            [newOrder[currentIndex + 1], newOrder[currentIndex]];
+          set({ elementOrder: newOrder });
+          get().addToHistory();
+        }
+      },
+
+      moveElementDown: (elementId) => {
+        const { elementOrder } = get();
+        const currentIndex = elementOrder.indexOf(elementId);
+        if (currentIndex > 0) {
+          const newOrder = [...elementOrder];
+          [newOrder[currentIndex], newOrder[currentIndex - 1]] =
+            [newOrder[currentIndex - 1], newOrder[currentIndex]];
+          set({ elementOrder: newOrder });
+          get().addToHistory();
+        }
+      },
+
+      bringToFront: (elementId) => {
+        const { elementOrder } = get();
+        const newOrder = elementOrder.filter(id => id !== elementId);
+        newOrder.push(elementId);
+        set({ elementOrder: newOrder });
+        get().addToHistory();
+      },
+
+      sendToBack: (elementId) => {
+        const { elementOrder } = get();
+        const newOrder = elementOrder.filter(id => id !== elementId);
+        newOrder.unshift(elementId);
+        set({ elementOrder: newOrder });
+        get().addToHistory();
       },
 
       // ====== Track Actions ======
@@ -438,7 +482,7 @@ export const useSportsDesignStore = create(
             ...state.tracks,
             [trackId]: track
           },
-          trackOrder: [...state.trackOrder, trackId],
+          elementOrder: [...state.elementOrder, trackId], // Add to top layer
           selectedTrackId: trackId,
           selectedCourtId: null // Deselect any court
         }));
@@ -449,7 +493,7 @@ export const useSportsDesignStore = create(
         const { [trackId]: removed, ...remainingTracks } = get().tracks;
         set((state) => ({
           tracks: remainingTracks,
-          trackOrder: state.trackOrder.filter(id => id !== trackId),
+          elementOrder: state.elementOrder.filter(id => id !== trackId),
           selectedTrackId: state.selectedTrackId === trackId ? null : state.selectedTrackId
         }));
         get().addToHistory();
@@ -607,7 +651,8 @@ export const useSportsDesignStore = create(
         const snapshot = {
           surface: currentState.surface,
           courts: currentState.courts,
-          courtOrder: currentState.courtOrder,
+          tracks: currentState.tracks,
+          elementOrder: currentState.elementOrder,
           customMarkings: currentState.customMarkings,
           backgroundZones: currentState.backgroundZones
         };
@@ -690,16 +735,28 @@ export const useSportsDesignStore = create(
 
       // Load a saved design
       loadDesign: (designData) => {
+        // Migration: Handle old format with separate courtOrder/trackOrder
+        let elementOrder = designData.elementOrder;
+        if (!elementOrder && (designData.courtOrder || designData.trackOrder)) {
+          // Merge old arrays: tracks first (bottom), then courts (top)
+          elementOrder = [
+            ...(designData.trackOrder || []),
+            ...(designData.courtOrder || [])
+          ];
+        }
+
         set({
           surface: designData.surface || initialState.surface,
           courts: designData.courts || {},
-          courtOrder: designData.courtOrder || [],
+          tracks: designData.tracks || {},
+          elementOrder: elementOrder || [],
           customMarkings: designData.customMarkings || [],
           backgroundZones: designData.backgroundZones || [],
           designName: designData.name || 'Untitled Sports Surface',
           designDescription: designData.description || '',
           designTags: designData.tags || [],
           selectedCourtId: null,
+          selectedTrackId: null,
           history: [],
           historyIndex: -1
         });
@@ -712,7 +769,8 @@ export const useSportsDesignStore = create(
         return {
           surface: state.surface,
           courts: state.courts,
-          courtOrder: state.courtOrder,
+          tracks: state.tracks,
+          elementOrder: state.elementOrder,
           customMarkings: state.customMarkings,
           backgroundZones: state.backgroundZones,
           name: state.designName,

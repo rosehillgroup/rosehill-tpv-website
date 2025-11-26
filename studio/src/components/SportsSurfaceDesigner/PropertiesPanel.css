@@ -584,3 +584,200 @@
   background: rgba(100, 116, 139, 0.9);
   color: white;
 }
+
+/* ====== Layers Panel ====== */
+.layers-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 200px;
+}
+
+.layers-panel--empty {
+  justify-content: center;
+  align-items: center;
+}
+
+.layers-panel__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-1, 0.5rem);
+}
+
+.layers-panel__header h4 {
+  margin: 0;
+  font-size: var(--text-base, 1.0625rem);
+  font-family: var(--font-heading, 'Space Grotesk', sans-serif);
+  font-weight: var(--font-semibold, 600);
+  color: var(--color-text-primary, #1a202c);
+}
+
+.layers-panel__count {
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: var(--font-medium, 500);
+  color: var(--color-text-tertiary, #94a3b8);
+  background: var(--color-bg-subtle, #f8fafc);
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-sm, 6px);
+}
+
+.layers-panel__hint {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--color-text-tertiary, #94a3b8);
+  margin-bottom: var(--space-2, 1rem);
+  font-style: italic;
+}
+
+.layers-panel__list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.layers-panel__empty-state {
+  text-align: center;
+  padding: var(--space-4, 2rem) var(--space-2, 1rem);
+}
+
+.layers-panel__empty-icon {
+  font-size: 2rem;
+  margin-bottom: var(--space-1, 0.5rem);
+  display: block;
+  opacity: 0.5;
+}
+
+.layers-panel__empty-state p {
+  margin: 0 0 0.25rem 0;
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: var(--font-medium, 500);
+  color: var(--color-text-secondary, #64748b);
+}
+
+.layers-panel__empty-hint {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--color-text-tertiary, #94a3b8);
+}
+
+.layers-panel__footer {
+  margin-top: var(--space-2, 1rem);
+  padding-top: var(--space-2, 1rem);
+  border-top: 1px solid var(--color-border, #e4e9f0);
+}
+
+.layers-panel__shortcut-hint {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--color-text-tertiary, #94a3b8);
+  font-style: italic;
+}
+
+/* ====== Layer Item ====== */
+.layer-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--color-border, #e4e9f0);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--color-bg-card, white);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.layer-item:hover {
+  border-color: var(--color-primary, #1e4a7a);
+  background: var(--color-bg-subtle, #f8fafc);
+}
+
+.layer-item--selected {
+  border-color: var(--color-primary, #1e4a7a);
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  box-shadow: 0 0 0 2px rgba(30, 74, 122, 0.15);
+}
+
+.layer-item--drag-over {
+  border-color: var(--color-accent, #ff6b35);
+  border-style: dashed;
+  border-width: 2px;
+  background: #fff7ed;
+}
+
+.layer-item--dragging {
+  opacity: 0.5;
+  transform: scale(0.98);
+}
+
+.layer-item__handle {
+  font-size: var(--text-lg, 1.25rem);
+  color: var(--color-text-tertiary, #94a3b8);
+  cursor: grab;
+  padding: 0 0.25rem;
+  line-height: 1;
+}
+
+.layer-item__handle:active {
+  cursor: grabbing;
+}
+
+.layer-item__icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.layer-item__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.layer-item__name {
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: var(--font-medium, 500);
+  color: var(--color-text-primary, #1a202c);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.layer-item__type {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--color-text-tertiary, #94a3b8);
+}
+
+.layer-item__actions {
+  display: flex;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.layer-item__action {
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--color-border, #e4e9f0);
+  border-radius: var(--radius-xs, 4px);
+  background: var(--color-bg-card, white);
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--color-text-secondary, #64748b);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.layer-item__action:hover:not(:disabled) {
+  border-color: var(--color-primary, #1e4a7a);
+  color: var(--color-primary, #1e4a7a);
+  background: var(--color-bg-subtle, #f8fafc);
+}
+
+.layer-item__action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

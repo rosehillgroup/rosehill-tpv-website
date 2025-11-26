@@ -54,30 +54,44 @@ function SportsSurfaceDesigner() {
     const handleKeyDown = (e) => {
       const {
         removeCourt,
+        removeTrack,
         deselectCourt,
+        deselectTrack,
         undo,
         redo,
         canUndo,
         canRedo,
         duplicateCourt,
         updateCourtPosition,
+        updateTrackPosition,
         courts,
-        courtOrder,
-        setCourtOrder,
+        tracks,
+        elementOrder,
+        setElementOrder,
         toggleSnapToGrid,
         snapToGrid: isSnapEnabled,
         addToHistory
       } = useSportsDesignStore.getState();
 
-      // Delete key - remove selected court
-      if (e.key === 'Delete' && selectedCourtId) {
+      const selectedId = selectedCourtId || selectedTrackId;
+
+      // Delete key - remove selected element
+      if (e.key === 'Delete' && selectedId) {
         e.preventDefault();
-        removeCourt(selectedCourtId);
+        if (selectedCourtId) {
+          removeCourt(selectedCourtId);
+        } else if (selectedTrackId) {
+          removeTrack(selectedTrackId);
+        }
       }
 
-      // Escape key - deselect court
-      if (e.key === 'Escape' && selectedCourtId) {
-        deselectCourt();
+      // Escape key - deselect element
+      if (e.key === 'Escape' && selectedId) {
+        if (selectedCourtId) {
+          deselectCourt();
+        } else if (selectedTrackId) {
+          deselectTrack();
+        }
       }
 
       // Ctrl/Cmd + Z - Undo
@@ -102,11 +116,9 @@ function SportsSurfaceDesigner() {
         duplicateCourt(selectedCourtId);
       }
 
-      // Arrow Keys - Nudge court position
-      if (selectedCourtId && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      // Arrow Keys - Nudge element position
+      if (selectedId && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
-        const court = courts[selectedCourtId];
-        if (!court) return;
 
         const nudgeAmount = e.shiftKey ? 10 : 100; // Shift = fine (10mm), normal = coarse (100mm)
         let deltaX = 0;
@@ -117,32 +129,46 @@ function SportsSurfaceDesigner() {
         if (e.key === 'ArrowUp') deltaY = -nudgeAmount;
         if (e.key === 'ArrowDown') deltaY = nudgeAmount;
 
-        updateCourtPosition(selectedCourtId, {
-          x: court.position.x + deltaX,
-          y: court.position.y + deltaY
-        });
-        addToHistory();
+        if (selectedCourtId) {
+          const court = courts[selectedCourtId];
+          if (court) {
+            updateCourtPosition(selectedCourtId, {
+              x: court.position.x + deltaX,
+              y: court.position.y + deltaY
+            });
+            addToHistory();
+          }
+        } else if (selectedTrackId) {
+          const track = tracks[selectedTrackId];
+          if (track) {
+            updateTrackPosition(selectedTrackId, {
+              x: track.position.x + deltaX,
+              y: track.position.y + deltaY
+            });
+            addToHistory();
+          }
+        }
       }
 
-      // [ ] - Move court in layer order (backward/forward)
-      if (selectedCourtId && (e.key === '[' || e.key === ']')) {
+      // [ ] - Move element in layer order (backward/forward)
+      if (selectedId && (e.key === '[' || e.key === ']')) {
         e.preventDefault();
-        const currentIndex = courtOrder.indexOf(selectedCourtId);
+        const currentIndex = elementOrder.indexOf(selectedId);
         if (currentIndex === -1) return;
 
-        const newOrder = [...courtOrder];
+        const newOrder = [...elementOrder];
 
         if (e.key === '[' && currentIndex > 0) {
           // Move backward (down in z-order)
           [newOrder[currentIndex], newOrder[currentIndex - 1]] =
           [newOrder[currentIndex - 1], newOrder[currentIndex]];
-          setCourtOrder(newOrder);
+          setElementOrder(newOrder);
           addToHistory();
-        } else if (e.key === ']' && currentIndex < courtOrder.length - 1) {
+        } else if (e.key === ']' && currentIndex < elementOrder.length - 1) {
           // Move forward (up in z-order)
           [newOrder[currentIndex], newOrder[currentIndex + 1]] =
           [newOrder[currentIndex + 1], newOrder[currentIndex]];
-          setCourtOrder(newOrder);
+          setElementOrder(newOrder);
           addToHistory();
         }
       }
@@ -156,7 +182,7 @@ function SportsSurfaceDesigner() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedCourtId]);
+  }, [selectedCourtId, selectedTrackId]);
 
   return (
     <div className="sports-designer">

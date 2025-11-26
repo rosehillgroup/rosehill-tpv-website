@@ -17,9 +17,8 @@ function CourtCanvas() {
   const {
     surface,
     courts,
-    courtOrder,
     tracks,
-    trackOrder,
+    elementOrder,
     selectedCourtId,
     selectedTrackId,
     snapToGrid,
@@ -190,38 +189,43 @@ function CourtCanvas() {
           className="court-canvas__surface"
         />
 
-        {/* Render Tracks in Order (below courts) */}
-        {trackOrder.map(trackId => {
-          const track = tracks[trackId];
-          if (!track) return null;
+        {/* Render Elements in Unified Layer Order */}
+        {elementOrder.map(elementId => {
+          // Check if it's a court
+          if (elementId.startsWith('court-')) {
+            const court = courts[elementId];
+            if (!court) return null;
 
-          return (
-            <TrackElement
-              key={trackId}
-              track={track}
-              isSelected={trackId === selectedTrackId}
-              onMouseDown={(e) => handleTrackMouseDown(e, trackId)}
-              onDoubleClick={(e) => handleTrackDoubleClick(e, trackId)}
-              svgRef={canvasRef}
-            />
-          );
-        })}
+            return (
+              <CourtElement
+                key={elementId}
+                court={court}
+                isSelected={elementId === selectedCourtId}
+                onMouseDown={(e) => handleCourtMouseDown(e, elementId)}
+                onDoubleClick={(e) => handleCourtDoubleClick(e, elementId)}
+                svgRef={canvasRef}
+              />
+            );
+          }
 
-        {/* Render Courts in Order */}
-        {courtOrder.map(courtId => {
-          const court = courts[courtId];
-          if (!court) return null;
+          // Check if it's a track
+          if (elementId.startsWith('track-')) {
+            const track = tracks[elementId];
+            if (!track) return null;
 
-          return (
-            <CourtElement
-              key={courtId}
-              court={court}
-              isSelected={courtId === selectedCourtId}
-              onMouseDown={(e) => handleCourtMouseDown(e, courtId)}
-              onDoubleClick={(e) => handleCourtDoubleClick(e, courtId)}
-              svgRef={canvasRef}
-            />
-          );
+            return (
+              <TrackElement
+                key={elementId}
+                track={track}
+                isSelected={elementId === selectedTrackId}
+                onMouseDown={(e) => handleTrackMouseDown(e, elementId)}
+                onDoubleClick={(e) => handleTrackDoubleClick(e, elementId)}
+                svgRef={canvasRef}
+              />
+            );
+          }
+
+          return null;
         })}
       </svg>
 

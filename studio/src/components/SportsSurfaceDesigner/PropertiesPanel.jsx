@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { calculateTrackGeometry, calculateStaggeredStarts } from '../../lib/sports/trackGeometry.js';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
+import LayersPanel from './LayersPanel.jsx';
 import './PropertiesPanel.css';
 
 function PropertiesPanel() {
@@ -89,6 +90,16 @@ function PropertiesPanel() {
   const handleColorSelect = (tpvColor) => {
     if (!colorPickerTarget) return;
 
+    // Handle "No Fill" option for court surface
+    if (colorPickerTarget.type === 'courtSurface' && tpvColor === null) {
+      setCourtSurfaceColor(selectedCourtId, null);
+      setColorPickerTarget(null);
+      return;
+    }
+
+    // For all other cases, tpvColor must exist
+    if (!tpvColor) return;
+
     const colorObj = {
       tpv_code: tpvColor.code,
       hex: tpvColor.hex,
@@ -100,8 +111,7 @@ function PropertiesPanel() {
     } else if (colorPickerTarget.type === 'zone') {
       setZoneColor(selectedCourtId, colorPickerTarget.id, colorObj);
     } else if (colorPickerTarget.type === 'courtSurface') {
-      // tpvColor can be null for "No Fill" option
-      setCourtSurfaceColor(selectedCourtId, tpvColor ? colorObj : null);
+      setCourtSurfaceColor(selectedCourtId, colorObj);
     } else if (colorPickerTarget.type === 'allLines') {
       // Apply color to all line markings
       template.markings.forEach(marking => {
@@ -166,6 +176,12 @@ function PropertiesPanel() {
           onClick={() => setActiveSection('zones')}
         >
           Zones
+        </button>
+        <button
+          className={`tab ${activeSection === 'layers' ? 'tab--active' : ''}`}
+          onClick={() => setActiveSection('layers')}
+        >
+          Layers
         </button>
       </div>
 
@@ -391,6 +407,11 @@ function PropertiesPanel() {
               </div>
             )}
           </div>
+        )}
+
+        {/* Layers Section */}
+        {activeSection === 'layers' && (
+          <LayersPanel />
         )}
       </div>
 
