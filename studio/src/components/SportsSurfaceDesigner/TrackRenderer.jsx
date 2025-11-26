@@ -48,16 +48,13 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
         style={{ cursor: 'move' }}
       />
 
-      {/* Render all fills first (background layer) */}
-      {geometry.lanes.map((lane, index) => (
-        <LaneFillElement
-          key={`fill-${lane.laneNumber}`}
-          lane={lane}
-          surfaceColor={surfaceColor}
-          isFirstLane={index === 0}
-          isLastLane={index === geometry.lanes.length - 1}
-        />
-      ))}
+      {/* Track surface fill - donut shape (outer boundary minus inner infield) */}
+      <path
+        d={`${geometry.lanes[0].outerPath} ${geometry.lanes[geometry.lanes.length - 1].innerPath}`}
+        fill={surfaceColor}
+        fillRule="evenodd"
+        stroke="none"
+      />
 
       {/* Render all strokes second (line layer on top) */}
       {geometry.lanes.map((lane, index) => (
@@ -89,31 +86,6 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
           <TrackResizeHandles track={track} svgRef={svgRef} />
         </>
       )}
-    </g>
-  );
-}
-
-/**
- * Lane fill component - renders colored backgrounds only
- */
-function LaneFillElement({ lane, surfaceColor, isFirstLane, isLastLane }) {
-  const { laneNumber, innerPath, outerPath } = lane;
-
-  // Debug logging
-  console.log(`Lane ${laneNumber} FILL - isFirstLane: ${isFirstLane}, isLastLane: ${isLastLane}, surfaceColor: ${surfaceColor}`);
-
-  return (
-    <g className="track-lane-fill">
-      {/* Filled track surface - ONLY fill outermost boundary (Lane 1) */}
-      {isFirstLane && (
-        <path
-          d={outerPath}
-          fill={surfaceColor}
-          stroke="none"
-        />
-      )}
-
-      {/* No infield fill - let surface color show through */}
     </g>
   );
 }
