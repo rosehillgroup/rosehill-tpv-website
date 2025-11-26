@@ -88,29 +88,34 @@ function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor, isStraig
           const staggerOffset = (perLaneOffsets[index] || 0) * 1000;
 
           // Get the lane center position at the stagger distance
-          // This gives us the point where the starting line should be
           const startPoint = getLaneCenterAtDistance(index, staggerOffset, parameters);
 
-          // Calculate the perpendicular angle for the starting line
-          // The angle from getLaneCenterAtDistance is the tangent direction
+          // Calculate perpendicular angle for the starting line
+          // angle is the tangent direction, perpendicular is +90 degrees
           const perpAngle = startPoint.angle + Math.PI / 2;
 
-          // Get points for the starting line (perpendicular to track direction)
-          // Draw from outer edge to inner edge of this lane
-          const x1 = startPoint.outerX;
-          const y1 = startPoint.outerY;
-          const x2 = startPoint.innerX;
-          const y2 = startPoint.innerY;
+          // Calculate starting line endpoints - perpendicular to track at center point
+          // Line spans the full lane width, centered on the lane center
+          const halfLaneWidth = parameters.laneWidth_mm / 2;
+          const x1 = startPoint.x + Math.cos(perpAngle) * halfLaneWidth;
+          const y1 = startPoint.y + Math.sin(perpAngle) * halfLaneWidth;
+          const x2 = startPoint.x - Math.cos(perpAngle) * halfLaneWidth;
+          const y2 = startPoint.y - Math.sin(perpAngle) * halfLaneWidth;
 
           // Calculate box end points (depth_mm further along the track)
           const endPoint = getLaneCenterAtDistance(index, staggerOffset + depth_mm, parameters);
+          const endPerpAngle = endPoint.angle + Math.PI / 2;
+          const ex1 = endPoint.x + Math.cos(endPerpAngle) * halfLaneWidth;
+          const ey1 = endPoint.y + Math.sin(endPerpAngle) * halfLaneWidth;
+          const ex2 = endPoint.x - Math.cos(endPerpAngle) * halfLaneWidth;
+          const ey2 = endPoint.y - Math.sin(endPerpAngle) * halfLaneWidth;
 
           // Create a path for the box fill (quadrilateral following the lane)
           const boxPath = `
-            M ${startPoint.outerX} ${startPoint.outerY}
-            L ${startPoint.innerX} ${startPoint.innerY}
-            L ${endPoint.innerX} ${endPoint.innerY}
-            L ${endPoint.outerX} ${endPoint.outerY}
+            M ${x1} ${y1}
+            L ${x2} ${y2}
+            L ${ex2} ${ey2}
+            L ${ex1} ${ey1}
             Z
           `.trim().replace(/\s+/g, ' ');
 
