@@ -23,8 +23,10 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
   const boundingWidth = geometry.totalWidth;
   const boundingLength = geometry.totalLength;
 
-  // Build transform string
-  const transform = `translate(${position.x}, ${position.y}) rotate(${rotation})`;
+  // Build transform string - rotate around center point
+  const centerX = boundingWidth / 2;
+  const centerY = boundingLength / 2;
+  const transform = `translate(${position.x}, ${position.y}) rotate(${rotation}, ${centerX}, ${centerY})`;
 
   // Track surface and line colors
   const surfaceColor = trackSurfaceColor?.hex || '#A5362F'; // Default Standard Red (RH01)

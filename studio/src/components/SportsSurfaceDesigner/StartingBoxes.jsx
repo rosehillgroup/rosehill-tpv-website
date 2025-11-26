@@ -34,7 +34,15 @@ function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor, isStraig
 
         // Calculate box position (with stagger for curved tracks)
         const staggerOffset = perLaneOffsets[index] || 0;
-        const boxY = staggerOffset; // Position along track
+
+        // For curved tracks, account for top corner radius
+        // The track surface doesn't start at y=0, it starts at y=cornerRadius
+        const cornerRadiusOffset = isStraightTrack ? 0 : Math.max(
+          parameters.cornerRadius?.topLeft || 0,
+          parameters.cornerRadius?.topRight || 0
+        );
+
+        const boxY = cornerRadiusOffset + staggerOffset; // Position along track
 
         // Box rectangle dimensions
         let boxX, boxWidth;
