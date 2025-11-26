@@ -10,8 +10,9 @@ import React from 'react';
  * @param {object} parameters - Track parameters
  * @param {object} boxConfig - Starting box configuration
  * @param {string} surfaceColor - Track surface color hex value
+ * @param {boolean} isStraightTrack - Whether this is a straight track (parallel lanes) vs curved (concentric lanes)
  */
-function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor }) {
+function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor, isStraightTrack }) {
   if (!boxConfig || !boxConfig.enabled) return null;
 
   const {
@@ -28,15 +29,24 @@ function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor }) {
     <g className="starting-boxes">
       {geometry.lanes.map((lane, index) => {
         const laneNumber = index + 1;
-        const laneOffset = (laneNumber - 1) * parameters.laneWidth_mm;
+        const laneOffset = index * parameters.laneWidth_mm;
 
         // Calculate box position (with stagger for curved tracks)
         const staggerOffset = perLaneOffsets[index] || 0;
         const boxY = staggerOffset; // Position along track
 
         // Box rectangle dimensions
-        const boxX = laneOffset;
-        const boxWidth = parameters.laneWidth_mm;
+        let boxX, boxWidth;
+
+        if (isStraightTrack) {
+          // Straight track: lanes are parallel vertical strips
+          boxX = index * parameters.laneWidth_mm;
+          boxWidth = parameters.laneWidth_mm;
+        } else {
+          // Curved track: lanes are concentric rings, boxes span width at start position
+          boxX = laneOffset;
+          boxWidth = parameters.width_mm - (2 * laneOffset);
+        }
 
         return (
           <g key={`start-box-${laneNumber}`}>
@@ -67,7 +77,7 @@ function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor }) {
             <text
               x={boxX + boxWidth / 2}
               y={boxY + depth_mm / 2}
-              fontSize={parameters.laneWidth_mm * 0.3}
+              fontSize={Math.min(boxWidth * 0.15, parameters.laneWidth_mm * 0.3)}
               fill={lineColor}
               textAnchor="middle"
               dominantBaseline="middle"

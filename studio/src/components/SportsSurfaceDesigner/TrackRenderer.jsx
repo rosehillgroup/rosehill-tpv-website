@@ -82,6 +82,7 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
               : []
           }}
           surfaceColor={surfaceColor}
+          isStraightTrack={track.template?.trackType === 'straight'}
         />
       )}
 
