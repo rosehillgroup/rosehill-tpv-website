@@ -3,127 +3,127 @@
     {
       "id": "RH31",
       "name": "Cream",
-      "hex": "#E6DCC7",
+      "hex": "#E8E3D8",
       "enabled": true
     },
     {
       "id": "RH30",
       "name": "Beige",
-      "hex": "#E8C399",
+      "hex": "#E4C4AA",
       "enabled": true
     },
     {
       "id": "RH41",
       "name": "Bright Yellow",
-      "hex": "#E7CE62",
+      "hex": "#FFD833",
       "enabled": true
     },
     {
       "id": "RH40",
       "name": "Mustard Yellow",
-      "hex": "#CF9C2E",
+      "hex": "#E5A144",
       "enabled": true
     },
     {
       "id": "RH26",
       "name": "Turquoise",
-      "hex": "#5ABBC1",
+      "hex": "#00A6A3",
       "enabled": true
     },
     {
       "id": "RH23",
       "name": "Azure",
-      "hex": "#339AC1",
+      "hex": "#039DC4",
       "enabled": true
     },
     {
       "id": "RH22",
       "name": "Light Blue",
-      "hex": "#60A3D3",
+      "hex": "#47AFE3",
       "enabled": true
     },
     {
       "id": "RH20",
       "name": "Standard Blue",
-      "hex": "#376FAB",
+      "hex": "#0075BC",
       "enabled": true
     },
     {
       "id": "RH21",
       "name": "Purple",
-      "hex": "#49498C",
+      "hex": "#493D8C",
       "enabled": true
     },
     {
       "id": "RH90",
       "name": "Funky Pink",
-      "hex": "#DD4586",
+      "hex": "#E8457E",
       "enabled": true
     },
     {
       "id": "RH11",
       "name": "Bright Green",
-      "hex": "#62AF4A",
+      "hex": "#3BB44A",
       "enabled": true
     },
     {
       "id": "RH10",
       "name": "Standard Green",
-      "hex": "#78965E",
+      "hex": "#609B63",
       "enabled": true
     },
     {
       "id": "RH12",
       "name": "Dark Green",
-      "hex": "#49A087",
+      "hex": "#006C55",
       "enabled": true
     },
     {
       "id": "RH50",
       "name": "Orange",
-      "hex": "#D54F27",
+      "hex": "#F15B32",
       "enabled": true
     },
     {
       "id": "RH02",
       "name": "Bright Red",
-      "hex": "#CC2027",
+      "hex": "#E21F2F",
       "enabled": true
     },
     {
       "id": "RH01",
       "name": "Standard Red",
-      "hex": "#A33128",
+      "hex": "#A5362F",
       "enabled": true
     },
     {
       "id": "RH32",
       "name": "Brown",
-      "hex": "#AD6943",
+      "hex": "#8B5F3C",
       "enabled": true
     },
     {
       "id": "RH65",
       "name": "Pale Grey",
-      "hex": "#C8C6C7",
+      "hex": "#D9D9D6",
       "enabled": true
     },
     {
       "id": "RH61",
       "name": "Light Grey",
-      "hex": "#9A9990",
+      "hex": "#939598",
       "enabled": true
     },
     {
       "id": "RH60",
       "name": "Dark Grey",
-      "hex": "#77736F",
+      "hex": "#59595B",
       "enabled": true
     },
     {
       "id": "RH70",
       "name": "Black",
-      "hex": "#131519",
+      "hex": "#231F20",
       "enabled": true
     }
   ],

@@ -1,11 +1,16 @@
 // TPV Studio - Mixer Utilities
 // Extracted from mixer.html for use in blend mode color editing
 
+import tpvColours from '../../api/_utils/data/rosehill_tpv_21_colours.json';
+
 /**
  * TPV Color Palette (21 colors)
- * Data from rosehill_tpv_21_colours.json
+ * Imported from rosehill_tpv_21_colours.json
  */
-export const PALETTE = [
+export const PALETTE = tpvColours;
+
+// Keep original hardcoded export for backward compatibility (now commented out)
+export const PALETTE_ORIGINAL = [
   {
     "code": "RH01",
     "name": "Standard Red",

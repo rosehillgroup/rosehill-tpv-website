@@ -663,7 +663,7 @@ function TrackPropertiesPanel({ track, trackId }) {
               </div>
               <button
                 className="color-item__swatch"
-                style={{ backgroundColor: trackSurfaceColor?.hex || '#B71E2D' }}
+                style={{ backgroundColor: trackSurfaceColor?.hex || '#A5362F' }}
                 onClick={() => setShowTrackColorPicker(true)}
                 title={trackSurfaceColor?.name || 'Select color'}
               />
