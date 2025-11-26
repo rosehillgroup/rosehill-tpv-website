@@ -267,9 +267,9 @@ export const useSportsDesignStore = create(
         const { propertiesPanelUserClosed } = get();
         // Only auto-open properties panel if user hasn't manually closed it
         if (!propertiesPanelUserClosed) {
-          set({ selectedCourtId: courtId, showPropertiesPanel: true });
+          set({ selectedCourtId: courtId, selectedTrackId: null, showPropertiesPanel: true });
         } else {
-          set({ selectedCourtId: courtId });
+          set({ selectedCourtId: courtId, selectedTrackId: null });
         }
       },
 

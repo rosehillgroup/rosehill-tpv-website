@@ -1,7 +1,7 @@
 // TPV Studio - Properties Panel for Selected Court or Track
 import React, { useState } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
-import { calculateTrackGeometry } from '../../lib/sports/trackGeometry.js';
+import { calculateTrackGeometry, calculateStaggeredStarts } from '../../lib/sports/trackGeometry.js';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import './PropertiesPanel.css';
 
@@ -389,6 +389,9 @@ function TrackPropertiesPanel({ track, trackId }) {
   const [cornersLocked, setCornersLocked] = React.useState(true);
   const [showTrackColorPicker, setShowTrackColorPicker] = React.useState(false);
 
+  // Detect track type
+  const isStraightTrack = template.trackType === 'straight';
+
   // Calculate current geometry
   const geometry = calculateTrackGeometry(parameters);
 
@@ -397,11 +400,24 @@ function TrackPropertiesPanel({ track, trackId }) {
   const lastLane = geometry.lanes[geometry.lanes.length - 1];
   const lastLanePerimeter = lastLane?.perimeter || 0;
 
+  // Calculate staggered starts for curved tracks
+  const staggerOffsets = !isStraightTrack ? calculateStaggeredStarts(geometry) : [];
+
   // Handle parameter updates
   const handleNumLanesChange = (value) => {
     const numValue = parseInt(value);
     if (isNaN(numValue) || numValue < 1 || numValue > 8) return;
-    updateTrackParameters(trackId, { numLanes: numValue });
+
+    // For straight tracks, auto-adjust width based on lanes
+    if (isStraightTrack) {
+      const newWidth = numValue * parameters.laneWidth_mm;
+      updateTrackParameters(trackId, {
+        numLanes: numValue,
+        width_mm: newWidth
+      });
+    } else {
+      updateTrackParameters(trackId, { numLanes: numValue });
+    }
   };
 
   const handleWidthChange = (value) => {
@@ -462,6 +478,29 @@ function TrackPropertiesPanel({ track, trackId }) {
     setShowTrackColorPicker(false);
   };
 
+  // Handle starting boxes toggle
+  const handleStartingBoxToggle = (enabled) => {
+    updateTrackParameters(trackId, {
+      startingBoxes: {
+        ...parameters.startingBoxes,
+        enabled
+      }
+    });
+  };
+
+  // Handle box depth change
+  const handleBoxDepthChange = (value) => {
+    const numValue = parseFloat(value) * 1000; // Convert meters to mm
+    if (isNaN(numValue) || numValue < 100) return;
+
+    updateTrackParameters(trackId, {
+      startingBoxes: {
+        ...parameters.startingBoxes,
+        depth_mm: numValue
+      }
+    });
+  };
+
   // Calculate average corner radius for display
   const avgCornerRadius = (
     parameters.cornerRadius.topLeft +
@@ -513,25 +552,34 @@ function TrackPropertiesPanel({ track, trackId }) {
             </div>
           </div>
 
-          {/* Track Width (Editable) */}
-          <div className="property-group">
-            <label>Track Width</label>
-            <div className="property-input-group">
-              <input
-                type="number"
-                value={(parameters.width_mm / 1000).toFixed(1)}
-                onChange={(e) => handleWidthChange(e.target.value)}
-                min="3"
-                max="100"
-                step="0.5"
-              />
-              <span className="property-unit">m</span>
+          {/* Track Width (Read-only for straight tracks, editable for curved) */}
+          {isStraightTrack ? (
+            <div className="property-group property-group--info">
+              <label>Track Width</label>
+              <div className="property-info">
+                <span>{(parameters.width_mm / 1000).toFixed(1)}m (Auto-calculated from lanes)</span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="property-group">
+              <label>Track Width</label>
+              <div className="property-input-group">
+                <input
+                  type="number"
+                  value={(parameters.width_mm / 1000).toFixed(1)}
+                  onChange={(e) => handleWidthChange(e.target.value)}
+                  min="3"
+                  max="100"
+                  step="0.5"
+                />
+                <span className="property-unit">m</span>
+              </div>
+            </div>
+          )}
 
-          {/* Track Height (Editable) */}
+          {/* Track Height/Length (Editable) */}
           <div className="property-group">
-            <label>Track Height</label>
+            <label>{isStraightTrack ? 'Track Length' : 'Track Height'}</label>
             <div className="property-input-group">
               <input
                 type="number"
@@ -545,8 +593,9 @@ function TrackPropertiesPanel({ track, trackId }) {
             </div>
           </div>
 
-          {/* Corner Radius Controls */}
-          <div className="property-group">
+          {/* Corner Radius Controls (hidden for straight tracks) */}
+          {!isStraightTrack && (
+            <div className="property-group">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <label>Corner Radius</label>
               <button
@@ -641,7 +690,8 @@ function TrackPropertiesPanel({ track, trackId }) {
                 </div>
               </div>
             )}
-          </div>
+            </div>
+          )}
 
           {/* Lane Width (Read-only) */}
           <div className="property-group property-group--info">
@@ -668,6 +718,60 @@ function TrackPropertiesPanel({ track, trackId }) {
                 title={trackSurfaceColor?.name || 'Select color'}
               />
             </div>
+          </div>
+
+          {/* Starting Boxes Section */}
+          <div className="property-group">
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="checkbox"
+                checked={parameters.startingBoxes?.enabled || false}
+                onChange={(e) => handleStartingBoxToggle(e.target.checked)}
+              />
+              Show Starting Boxes
+            </label>
+
+            {parameters.startingBoxes?.enabled && (
+              <div style={{ marginTop: '0.75rem' }}>
+                {/* Box Depth */}
+                <div className="property-input-group" style={{ marginBottom: '0.5rem' }}>
+                  <span className="property-label" style={{ fontSize: '0.875rem' }}>Depth</span>
+                  <input
+                    type="number"
+                    value={(parameters.startingBoxes.depth_mm / 1000).toFixed(2)}
+                    onChange={(e) => handleBoxDepthChange(e.target.value)}
+                    min="0.1"
+                    max="1.0"
+                    step="0.05"
+                  />
+                  <span className="property-unit">m</span>
+                </div>
+
+                {/* Info: Boxes use track surface color */}
+                <div className="property-info" style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>
+                  Boxes use track surface color with white starting line and lane numbers
+                </div>
+
+                {/* Stagger information for curved tracks */}
+                {!isStraightTrack && staggerOffsets.length > 0 && (
+                  <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: '#f8fafc', borderRadius: '4px' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#1e293b', marginBottom: '0.25rem' }}>
+                      Auto-Calculated Staggers:
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: '#64748b', lineHeight: '1.4' }}>
+                      {staggerOffsets.map((offset, index) => (
+                        <div key={index}>
+                          Lane {index + 1}: {(offset / 1000).toFixed(2)}m
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: '0.25rem', fontStyle: 'italic' }}>
+                      Outer lanes start ahead to equalize distance
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Divider */}

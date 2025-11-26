@@ -220,7 +220,7 @@ function SportsSurfaceDesigner() {
                 className="sports-designer__toolbar-btn"
                 onClick={togglePropertiesPanel}
                 title="Toggle Properties Panel"
-                disabled={!selectedCourtId}
+                disabled={!selectedCourtId && !selectedTrackId}
               >
                 <span className="sports-designer__icon">⚙️</span>
                 {showPropertiesPanel ? 'Hide' : 'Show'} Properties

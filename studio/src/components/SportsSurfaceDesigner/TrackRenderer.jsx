@@ -1,7 +1,8 @@
 // TPV Studio - Track Renderer Component
 import React from 'react';
-import { calculateTrackGeometry } from '../../lib/sports/trackGeometry.js';
+import { calculateTrackGeometry, calculateStaggeredStarts } from '../../lib/sports/trackGeometry.js';
 import TrackResizeHandles from './TrackResizeHandles.jsx';
+import StartingBoxes from './StartingBoxes.jsx';
 
 /**
  * Individual track element component
@@ -67,6 +68,22 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
           isLastLane={index === geometry.lanes.length - 1}
         />
       ))}
+
+      {/* Starting boxes (if enabled) */}
+      {parameters.startingBoxes?.enabled && (
+        <StartingBoxes
+          geometry={geometry}
+          parameters={parameters}
+          boxConfig={{
+            ...parameters.startingBoxes,
+            // Auto-calculate staggers for curved tracks (all radii > 0)
+            perLaneOffsets: track.template?.trackType === 'curved'
+              ? calculateStaggeredStarts(geometry)
+              : []
+          }}
+          surfaceColor={surfaceColor}
+        />
+      )}
 
       {/* Selection indicator */}
       {isSelected && (

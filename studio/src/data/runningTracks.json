@@ -3,6 +3,7 @@
     "id": "track-flexible",
     "name": "Running Track",
     "type": "running-track",
+    "trackType": "curved",
     "standard": "Flexible Design",
     "category": "track",
     "description": "Flexible running track - adjust size, lanes, and corner radius to fit your surface",
@@ -18,7 +19,12 @@
         "bottomLeft": 3000,
         "bottomRight": 3000
       },
-      "lineWidth_mm": 50
+      "lineWidth_mm": 50,
+      "startingBoxes": {
+        "enabled": false,
+        "depth_mm": 400,
+        "lineWidth_mm": 50
+      }
     },
 
     "defaultLineColor": "RH31",
@@ -27,6 +33,42 @@
     "calculatedDimensions": {
       "totalWidth_mm": 25000,
       "totalLength_mm": 15000
+    }
+  },
+  "track-straight": {
+    "id": "track-straight",
+    "name": "Straight Track",
+    "type": "running-track",
+    "trackType": "straight",
+    "standard": "Sprint Track",
+    "category": "track",
+    "description": "Straight sprint track - perfect for 60m, 100m, or custom length sprints",
+
+    "parameters": {
+      "numLanes": 6,
+      "laneWidth_mm": 1220,
+      "width_mm": 7320,
+      "height_mm": 100000,
+      "cornerRadius": {
+        "topLeft": 0,
+        "topRight": 0,
+        "bottomLeft": 0,
+        "bottomRight": 0
+      },
+      "lineWidth_mm": 50,
+      "startingBoxes": {
+        "enabled": false,
+        "depth_mm": 400,
+        "lineWidth_mm": 50
+      }
+    },
+
+    "defaultLineColor": "RH31",
+    "defaultTrackSurfaceColor": "RH01",
+
+    "calculatedDimensions": {
+      "totalWidth_mm": 7320,
+      "totalLength_mm": 100000
     }
   }
 }

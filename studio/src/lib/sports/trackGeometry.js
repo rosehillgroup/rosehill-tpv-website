@@ -219,3 +219,31 @@ export function checkCourtFitsInInfield(trackParams, courtDimensions) {
     infieldDimensions: infield
   };
 }
+
+/**
+ * Calculate staggered start positions for curved tracks
+ * Outer lanes have longer perimeters, so runners start ahead to equalize distance
+ *
+ * @param {object} geometry - Track geometry from calculateTrackGeometry()
+ * @returns {array} Array of stagger offsets in mm [0, 7660, 15330, ...] for each lane
+ */
+export function calculateStaggeredStarts(geometry) {
+  if (!geometry || !geometry.lanes || geometry.lanes.length === 0) {
+    return [];
+  }
+
+  // Lane 1 (innermost/first lane) is the reference - starts at position 0
+  const lane1Perimeter = geometry.lanes[0].perimeter;
+
+  // Calculate offset for each lane based on perimeter difference
+  return geometry.lanes.map((lane, index) => {
+    if (index === 0) return 0; // Lane 1 starts at 0
+
+    const lanePerimeter = lane.perimeter;
+    const perimeterDifference = lanePerimeter - lane1Perimeter;
+
+    // Stagger offset is the perimeter difference (in mm)
+    // Outer lanes start further ahead by this amount
+    return perimeterDifference;
+  });
+}
