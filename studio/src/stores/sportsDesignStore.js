@@ -293,31 +293,8 @@ export const useSportsDesignStore = create(
         const trackId = `track-${Date.now()}`;
         const surface = get().surface;
 
-        // Calculate dimensions to fill 90% of canvas (with 5% padding)
         const canvasWidth = surface.width_mm;
         const canvasLength = surface.length_mm;
-
-        const trackWidth = canvasWidth * 0.9;
-        const trackHeight = canvasLength * 0.9;
-
-        // Calculate scaling factor for corner radius (scale proportionally with dimensions)
-        const templateWidth = template.parameters.width_mm || 25000;
-        const templateHeight = template.parameters.height_mm || 15000;
-        const widthScale = trackWidth / templateWidth;
-        const heightScale = trackHeight / templateHeight;
-        const scale = Math.min(widthScale, heightScale);
-
-        // Scale corner radii proportionally
-        const templateCorners = template.parameters.cornerRadius || {
-          topLeft: 3000, topRight: 3000, bottomLeft: 3000, bottomRight: 3000
-        };
-
-        const scaledCorners = {
-          topLeft: templateCorners.topLeft * scale,
-          topRight: templateCorners.topRight * scale,
-          bottomLeft: templateCorners.bottomLeft * scale,
-          bottomRight: templateCorners.bottomRight * scale
-        };
 
         // Helper: Convert TPV code to full color object
         const getTPVColorObject = (tpvCode) => {
@@ -336,24 +313,87 @@ export const useSportsDesignStore = create(
           ? getTPVColorObject(template.defaultTrackSurfaceColor)
           : getTPVColorObject('RH01');
 
-        // Create track parameters - NOTE: laneWidth_mm is FIXED (not scaled)
-        const trackParameters = {
-          ...template.parameters,
-          width_mm: trackWidth,
-          height_mm: trackHeight,
-          cornerRadius: scaledCorners,
-          laneWidth_mm: template.parameters.laneWidth_mm // Keep fixed at 1220mm
-        };
+        // Detect if this is a straight track
+        const isStraightTrack = template.trackType === 'straight';
+
+        let trackParameters;
+        let trackPosition;
+        let trackRotation;
+
+        if (isStraightTrack) {
+          // STRAIGHT TRACK: Fixed lane width, scale length to fit, horizontal orientation
+          const numLanes = template.parameters.numLanes;
+          const laneWidth = template.parameters.laneWidth_mm; // Fixed at 1220mm
+          const actualTrackWidth = numLanes * laneWidth; // Actual width based on lanes
+
+          // Scale track length to fit canvas (use longer dimension, with padding)
+          const maxAvailableLength = Math.max(canvasWidth, canvasLength) * 0.9;
+          const templateLength = template.parameters.height_mm || 100000;
+          const trackLength = Math.min(templateLength, maxAvailableLength);
+
+          trackParameters = {
+            ...template.parameters,
+            width_mm: actualTrackWidth,  // Fixed: numLanes × laneWidth
+            height_mm: trackLength,       // Scaled to fit
+            cornerRadius: { topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0 },
+            laneWidth_mm: laneWidth
+          };
+
+          // Default to horizontal orientation (90° rotation)
+          // After rotation, track width becomes height and vice versa for positioning
+          trackRotation = 90;
+
+          // Position: center the rotated track
+          // When rotated 90°, the track's visual width is trackLength and height is actualTrackWidth
+          trackPosition = {
+            x: canvasWidth / 2 - (trackLength / 2),
+            y: canvasLength / 2 - (actualTrackWidth / 2)
+          };
+        } else {
+          // CURVED TRACK: Scale proportionally to fill canvas
+          const trackWidth = canvasWidth * 0.9;
+          const trackHeight = canvasLength * 0.9;
+
+          // Calculate scaling factor for corner radius
+          const templateWidth = template.parameters.width_mm || 25000;
+          const templateHeight = template.parameters.height_mm || 15000;
+          const widthScale = trackWidth / templateWidth;
+          const heightScale = trackHeight / templateHeight;
+          const scale = Math.min(widthScale, heightScale);
+
+          // Scale corner radii proportionally
+          const templateCorners = template.parameters.cornerRadius || {
+            topLeft: 3000, topRight: 3000, bottomLeft: 3000, bottomRight: 3000
+          };
+
+          const scaledCorners = {
+            topLeft: templateCorners.topLeft * scale,
+            topRight: templateCorners.topRight * scale,
+            bottomLeft: templateCorners.bottomLeft * scale,
+            bottomRight: templateCorners.bottomRight * scale
+          };
+
+          trackParameters = {
+            ...template.parameters,
+            width_mm: trackWidth,
+            height_mm: trackHeight,
+            cornerRadius: scaledCorners,
+            laneWidth_mm: template.parameters.laneWidth_mm
+          };
+
+          trackRotation = 0;
+          trackPosition = {
+            x: canvasWidth / 2 - (trackWidth / 2),
+            y: canvasLength / 2 - (trackHeight / 2)
+          };
+        }
 
         const track = {
           id: trackId,
           templateId,
           template,
-          position: {
-            x: canvasWidth / 2 - (trackWidth / 2),
-            y: canvasLength / 2 - (trackHeight / 2)
-          },
-          rotation: 0,
+          position: trackPosition,
+          rotation: trackRotation,
           parameters: trackParameters,
           trackSurfaceColor
         };

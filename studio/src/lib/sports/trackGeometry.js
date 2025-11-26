@@ -33,6 +33,9 @@ export function calculateTrackGeometry(params) {
 
   if (isStraightTrack) {
     // Parallel lane rendering for straight tracks
+    // Calculate actual track width based on number of lanes (not the scaled width_mm)
+    const actualTrackWidth = numLanes * laneWidth_mm;
+
     for (let i = 0; i < numLanes; i++) {
       const laneX = i * laneWidth_mm;
 
@@ -47,6 +50,16 @@ export function calculateTrackGeometry(params) {
         laneWidth: laneWidth_mm
       });
     }
+
+    // Return with actual track dimensions (not scaled canvas dimensions)
+    return {
+      lanes,
+      totalWidth: actualTrackWidth,    // Actual track width = numLanes × laneWidth
+      totalLength: height_mm,          // Track length
+      usableWidth: actualTrackWidth,
+      usableHeight: height_mm,
+      isStraightTrack: true
+    };
   } else {
     // Concentric lane rendering for curved tracks
     // Calculate each lane's inner and outer paths
