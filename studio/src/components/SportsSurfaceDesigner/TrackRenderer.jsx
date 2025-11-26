@@ -54,6 +54,7 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
         fill={surfaceColor}
         fillRule="evenodd"
         stroke="none"
+        pointerEvents="none"
       />
 
       {/* Render all strokes second (line layer on top) */}
@@ -107,6 +108,7 @@ function LaneStrokeElement({ lane, lineColor, lineWidth, isLastLane }) {
         fill="none"
         stroke={lineColor}
         strokeWidth={visibleLineWidth}
+        pointerEvents="none"
       />
 
       {/* Infield edge line - only for innermost lane */}
@@ -116,6 +118,7 @@ function LaneStrokeElement({ lane, lineColor, lineWidth, isLastLane }) {
           fill="none"
           stroke={lineColor}
           strokeWidth={visibleLineWidth}
+          pointerEvents="none"
         />
       )}
     </g>
