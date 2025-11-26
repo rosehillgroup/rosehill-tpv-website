@@ -88,14 +88,30 @@ export const useSportsDesignStore = create(
       addCourt: (templateId, template) => {
         const courtId = `court-${Date.now()}`;
 
-        // Helper: Convert TPV code to full color object
+        // Helper: Convert TPV code to full color object (all 21 TPV colors)
         const getTPVColorObject = (tpvCode) => {
           const colorMap = {
             'RH01': { tpv_code: 'RH01', hex: '#A5362F', name: 'Standard Red' },
-            'RH31': { tpv_code: 'RH31', hex: '#E8E3D8', name: 'Cream' },
-            'RH30': { tpv_code: 'RH30', hex: '#E4C4AA', name: 'Standard Beige' },
+            'RH02': { tpv_code: 'RH02', hex: '#E21F2F', name: 'Bright Red' },
+            'RH10': { tpv_code: 'RH10', hex: '#609B63', name: 'Standard Green' },
+            'RH11': { tpv_code: 'RH11', hex: '#3BB44A', name: 'Bright Green' },
+            'RH12': { tpv_code: 'RH12', hex: '#006C55', name: 'Dark Green' },
             'RH20': { tpv_code: 'RH20', hex: '#0075BC', name: 'Standard Blue' },
-            'RH12': { tpv_code: 'RH12', hex: '#006C55', name: 'Dark Green' }
+            'RH21': { tpv_code: 'RH21', hex: '#493D8C', name: 'Purple' },
+            'RH22': { tpv_code: 'RH22', hex: '#47AFE3', name: 'Light Blue' },
+            'RH23': { tpv_code: 'RH23', hex: '#039DC4', name: 'Azure' },
+            'RH26': { tpv_code: 'RH26', hex: '#00A6A3', name: 'Turquoise' },
+            'RH30': { tpv_code: 'RH30', hex: '#E4C4AA', name: 'Standard Beige' },
+            'RH31': { tpv_code: 'RH31', hex: '#E8E3D8', name: 'Cream' },
+            'RH32': { tpv_code: 'RH32', hex: '#8B5F3C', name: 'Brown' },
+            'RH40': { tpv_code: 'RH40', hex: '#E5A144', name: 'Mustard Yellow' },
+            'RH41': { tpv_code: 'RH41', hex: '#FFD833', name: 'Bright Yellow' },
+            'RH50': { tpv_code: 'RH50', hex: '#F15B32', name: 'Orange' },
+            'RH60': { tpv_code: 'RH60', hex: '#59595B', name: 'Dark Grey' },
+            'RH61': { tpv_code: 'RH61', hex: '#939598', name: 'Light Grey' },
+            'RH65': { tpv_code: 'RH65', hex: '#D9D9D6', name: 'Pale Grey' },
+            'RH70': { tpv_code: 'RH70', hex: '#231F20', name: 'Black' },
+            'RH90': { tpv_code: 'RH90', hex: '#E8457E', name: 'Funky Pink' }
           };
           return colorMap[tpvCode] || { tpv_code: 'RH31', hex: '#E8E3D8', name: 'Cream' };
         };
@@ -118,6 +134,11 @@ export const useSportsDesignStore = create(
           });
         }
 
+        // Set court surface color from template default
+        const courtSurfaceColor = template.defaultSurfaceColor
+          ? getTPVColorObject(template.defaultSurfaceColor)
+          : null; // null means use canvas surface color
+
         const court = {
           id: courtId,
           templateId,
@@ -129,7 +150,8 @@ export const useSportsDesignStore = create(
           rotation: 0,
           scale: 1.0,
           lineColorOverrides,
-          zoneColorOverrides
+          zoneColorOverrides,
+          courtSurfaceColor
         };
 
         set((state) => ({
@@ -256,6 +278,19 @@ export const useSportsDesignStore = create(
               ...state.courts[courtId],
               lineColorOverrides: {},
               zoneColorOverrides: {}
+            }
+          }
+        }));
+        get().addToHistory();
+      },
+
+      setCourtSurfaceColor: (courtId, color) => {
+        set((state) => ({
+          courts: {
+            ...state.courts,
+            [courtId]: {
+              ...state.courts[courtId],
+              courtSurfaceColor: color
             }
           }
         }));

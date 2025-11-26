@@ -246,12 +246,27 @@ function CourtCanvas() {
 function CourtElement({ court, isSelected, onMouseDown, onDoubleClick, svgRef }) {
   const { markings, zones } = generateCourtSVG(court);
 
+  // Get court surface color (if set) - this colors the entire court area
+  const courtSurfaceColor = court.courtSurfaceColor?.hex || null;
+
   return (
     <g
       className={`court-canvas__court ${isSelected ? 'court-canvas__court--selected' : ''}`}
       transform={getCourtTransformString(court)}
       style={{ cursor: 'move' }}
     >
+      {/* Court surface fill - renders behind all other elements */}
+      {courtSurfaceColor && (
+        <rect
+          x="0"
+          y="0"
+          width={court.template.dimensions.width_mm}
+          height={court.template.dimensions.length_mm}
+          fill={courtSurfaceColor}
+          className="court-canvas__court-surface"
+        />
+      )}
+
       {/* Invisible clickable area - captures all mouse events */}
       <rect
         x="0"

@@ -13,7 +13,8 @@
       "min_surround_mm": 2000
     },
 
-    "defaultLineColor": "RH17",
+    "defaultSurfaceColor": "RH20",
+    "defaultLineColor": "RH31",
     "defaultLineWidth_mm": 50,
 
     "markings": [
@@ -321,6 +322,7 @@
       "min_surround_mm": 3050
     },
 
+    "defaultSurfaceColor": "RH01",
     "defaultLineColor": "RH31",
     "defaultLineWidth_mm": 50,
 
@@ -435,6 +437,7 @@
       "min_surround_mm": 3660
     },
 
+    "defaultSurfaceColor": "RH22",
     "defaultLineColor": "RH29",
     "defaultLineWidth_mm": 50,
 
@@ -578,6 +581,7 @@
       "min_surround_mm": 1000
     },
 
+    "defaultSurfaceColor": "RH50",
     "defaultLineColor": "RH30",
     "defaultLineWidth_mm": 80,
 
@@ -811,6 +815,7 @@
       "min_surround_mm": 3000
     },
 
+    "defaultSurfaceColor": "RH40",
     "defaultLineColor": "RH29",
     "defaultLineWidth_mm": 50,
 
@@ -894,6 +899,7 @@
       "min_surround_mm": 1000
     },
 
+    "defaultSurfaceColor": "RH26",
     "defaultLineColor": "RH12",
     "defaultLineWidth_mm": 40,
 
@@ -1037,6 +1043,7 @@
       "min_surround_mm": 1000
     },
 
+    "defaultSurfaceColor": "RH11",
     "defaultLineColor": "RH31",
     "defaultLineWidth_mm": 50,
 

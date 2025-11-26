@@ -4,12 +4,14 @@ import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import CourtCanvas from './CourtCanvas.jsx';
 import CourtLibrary from './CourtLibrary.jsx';
 import PropertiesPanel from './PropertiesPanel.jsx';
+import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import './SportsSurfaceDesigner.css';
 
 function SportsSurfaceDesigner() {
   const [showDimensionModal, setShowDimensionModal] = useState(true);
   const [widthInput, setWidthInput] = useState('28');
   const [lengthInput, setLengthInput] = useState('15');
+  const [showSurfaceColorPicker, setShowSurfaceColorPicker] = useState(false);
 
   const {
     surface,
@@ -35,6 +37,16 @@ function SportsSurfaceDesigner() {
       setSurfaceDimensions(width_mm, length_mm);
       setShowDimensionModal(false);
     }
+  };
+
+  // Handle surface color selection
+  const handleSurfaceColorSelect = (tpvColor) => {
+    setSurfaceColor({
+      tpv_code: tpvColor.code,
+      hex: tpvColor.hex,
+      name: tpvColor.name
+    });
+    setShowSurfaceColorPicker(false);
   };
 
   // Keyboard shortcuts
@@ -231,6 +243,12 @@ function SportsSurfaceDesigner() {
                 <span className="sports-designer__value">
                   {(surface.width_mm / 1000).toFixed(1)}m × {(surface.length_mm / 1000).toFixed(1)}m
                 </span>
+                <button
+                  className="sports-designer__surface-color-btn"
+                  style={{ backgroundColor: surface.color.hex }}
+                  onClick={() => setShowSurfaceColorPicker(true)}
+                  title={`Surface Color: ${surface.color.name} (${surface.color.tpv_code}) - Click to change`}
+                />
               </div>
 
               <div className="sports-designer__court-count">
@@ -303,6 +321,31 @@ function SportsSurfaceDesigner() {
                   <br />
                   You can then move, rotate, scale, and customize your design.
                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* Surface Color Picker Modal */}
+          {showSurfaceColorPicker && (
+            <div className="sports-designer__color-modal-overlay" onClick={() => setShowSurfaceColorPicker(false)}>
+              <div className="sports-designer__color-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="sports-designer__color-modal-header">
+                  <h4>Select Surface Colour</h4>
+                  <button onClick={() => setShowSurfaceColorPicker(false)}>×</button>
+                </div>
+                <div className="sports-designer__color-grid">
+                  {tpvColours.map(color => (
+                    <button
+                      key={color.code}
+                      className={`sports-designer__color-swatch ${surface.color.tpv_code === color.code ? 'sports-designer__color-swatch--selected' : ''}`}
+                      style={{ backgroundColor: color.hex }}
+                      onClick={() => handleSurfaceColorSelect(color)}
+                      title={`${color.code} - ${color.name}`}
+                    >
+                      <span className="sports-designer__color-code">{color.code}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
