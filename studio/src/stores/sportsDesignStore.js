@@ -340,14 +340,14 @@ export const useSportsDesignStore = create(
           };
 
           // Default to horizontal orientation (90° rotation)
-          // After rotation, track width becomes height and vice versa for positioning
           trackRotation = 90;
 
-          // Position: center the rotated track
-          // When rotated 90°, the track's visual width is trackLength and height is actualTrackWidth
+          // Position: center the track on canvas
+          // The rotation happens around the track's center, so we position based on
+          // the original (unrotated) dimensions to place the center at canvas center
           trackPosition = {
-            x: canvasWidth / 2 - (trackLength / 2),
-            y: canvasLength / 2 - (actualTrackWidth / 2)
+            x: canvasWidth / 2 - (actualTrackWidth / 2),
+            y: canvasLength / 2 - (trackLength / 2)
           };
         } else {
           // CURVED TRACK: Scale proportionally to fill canvas
@@ -421,18 +421,49 @@ export const useSportsDesignStore = create(
       },
 
       updateTrackParameters: (trackId, newParams) => {
-        set((state) => ({
-          tracks: {
-            ...state.tracks,
-            [trackId]: {
-              ...state.tracks[trackId],
-              parameters: {
-                ...state.tracks[trackId].parameters,
-                ...newParams
+        set((state) => {
+          const track = state.tracks[trackId];
+          if (!track) return state;
+
+          const oldParams = track.parameters;
+          const updatedParams = { ...oldParams, ...newParams };
+
+          // For straight tracks, keep the track centered when lanes change
+          const isStraightTrack = track.template?.trackType === 'straight';
+          let newPosition = track.position;
+
+          if (isStraightTrack && newParams.numLanes !== undefined && newParams.numLanes !== oldParams.numLanes) {
+            // Calculate old and new track widths
+            const laneWidth = oldParams.laneWidth_mm;
+            const oldTrackWidth = oldParams.numLanes * laneWidth;
+            const newTrackWidth = newParams.numLanes * laneWidth;
+
+            // Also update width_mm to match new lane count
+            updatedParams.width_mm = newTrackWidth;
+
+            // Calculate the center of the track (in canvas coordinates)
+            // For rotated tracks, the center is at position + (width/2, height/2)
+            const oldCenterX = track.position.x + oldTrackWidth / 2;
+            const oldCenterY = track.position.y + oldParams.height_mm / 2;
+
+            // Keep the center in the same place with new dimensions
+            newPosition = {
+              x: oldCenterX - newTrackWidth / 2,
+              y: oldCenterY - updatedParams.height_mm / 2
+            };
+          }
+
+          return {
+            tracks: {
+              ...state.tracks,
+              [trackId]: {
+                ...track,
+                parameters: updatedParams,
+                position: newPosition
               }
             }
-          }
-        }));
+          };
+        });
         get().addToHistory();
       },
 
