@@ -6,29 +6,29 @@
 import { useState, useEffect } from 'react';
 import { auth } from '../lib/api/auth.js';
 
-// TPV Colour palette for visual showcase
+// TPV Colour palette for visual showcase (corrected from mixer.html)
 const TPV_COLORS = [
-  { code: 'RH60', name: 'Beige', hex: '#C8B88A' },
-  { code: 'RH61', name: 'Cream', hex: '#F5F0D5' },
-  { code: 'RH40', name: 'Bright Yellow', hex: '#FFD700' },
-  { code: 'RH41', name: 'Mustard', hex: '#D4A017' },
-  { code: 'RH50', name: 'Orange', hex: '#FF8C00' },
-  { code: 'RH01', name: 'Standard Red', hex: '#C41E3A' },
-  { code: 'RH02', name: 'Bright Red', hex: '#FF2400' },
-  { code: 'RH90', name: 'Funky Pink', hex: '#FF69B4' },
-  { code: 'RH23', name: 'Purple', hex: '#6A0DAD' },
-  { code: 'RH20', name: 'Standard Blue', hex: '#1E3A8A' },
-  { code: 'RH21', name: 'Light Blue', hex: '#6CB4EE' },
-  { code: 'RH26', name: 'Azure', hex: '#007FFF' },
-  { code: 'RH22', name: 'Turquoise', hex: '#30D5C8' },
-  { code: 'RH10', name: 'Dark Green', hex: '#013220' },
-  { code: 'RH11', name: 'Standard Green', hex: '#228B22' },
-  { code: 'RH12', name: 'Bright Green', hex: '#32CD32' },
-  { code: 'RH65', name: 'Brown', hex: '#5C4033' },
-  { code: 'RH30', name: 'Pale Grey', hex: '#D3D3D3' },
-  { code: 'RH31', name: 'Light Grey', hex: '#A9A9A9' },
-  { code: 'RH32', name: 'Dark Grey', hex: '#505050' },
-  { code: 'RH70', name: 'Black', hex: '#1A1A1A' }
+  { code: 'RH30', name: 'Beige', hex: '#E4C4AA' },
+  { code: 'RH31', name: 'Cream', hex: '#E8E3D8' },
+  { code: 'RH41', name: 'Bright Yellow', hex: '#FFD833' },
+  { code: 'RH40', name: 'Mustard', hex: '#E5A144' },
+  { code: 'RH50', name: 'Orange', hex: '#F15B32' },
+  { code: 'RH01', name: 'Standard Red', hex: '#A5362F' },
+  { code: 'RH02', name: 'Bright Red', hex: '#E21F2F' },
+  { code: 'RH90', name: 'Funky Pink', hex: '#E8457E' },
+  { code: 'RH21', name: 'Purple', hex: '#493D8C' },
+  { code: 'RH20', name: 'Standard Blue', hex: '#0075BC' },
+  { code: 'RH22', name: 'Light Blue', hex: '#47AFE3' },
+  { code: 'RH23', name: 'Azure', hex: '#039DC4' },
+  { code: 'RH26', name: 'Turquoise', hex: '#00A6A3' },
+  { code: 'RH12', name: 'Dark Green', hex: '#006C55' },
+  { code: 'RH10', name: 'Standard Green', hex: '#609B63' },
+  { code: 'RH11', name: 'Bright Green', hex: '#3BB44A' },
+  { code: 'RH32', name: 'Brown', hex: '#8B5F3C' },
+  { code: 'RH65', name: 'Pale Grey', hex: '#D9D9D6' },
+  { code: 'RH61', name: 'Light Grey', hex: '#939598' },
+  { code: 'RH60', name: 'Dark Grey', hex: '#59595B' },
+  { code: 'RH70', name: 'Black', hex: '#231F20' }
 ];
 
 // Example prompts to cycle through in hero animation
