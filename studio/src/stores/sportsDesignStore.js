@@ -409,6 +409,19 @@ export const useSportsDesignStore = create(
         // Don't add to history for every drag movement
       },
 
+      updateTrackRotation: (trackId, rotation) => {
+        set((state) => ({
+          tracks: {
+            ...state.tracks,
+            [trackId]: {
+              ...state.tracks[trackId],
+              rotation
+            }
+          }
+        }));
+        // Don't add to history for every drag movement
+      },
+
       setTrackSurfaceColor: (trackId, color) => {
         set((state) => ({
           tracks: {

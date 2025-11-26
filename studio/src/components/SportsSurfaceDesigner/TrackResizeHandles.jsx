@@ -1,21 +1,32 @@
 // TPV Studio - Track Resize Handles Component
 import React, { useState, useEffect } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
+import { normalizeAngle } from '../../lib/sports/geometryUtils.js';
 
 /**
- * Resize handles for tracks
- * Allows resizing width/height independently or proportionally
+ * Resize and rotation handles for tracks
+ * Allows resizing width/height independently or proportionally, plus rotation
  */
 function TrackResizeHandles({ track, svgRef }) {
-  const { updateTrackParameters, updateTrackPosition, addToHistory } = useSportsDesignStore();
+  const { updateTrackParameters, updateTrackPosition, updateTrackRotation, addToHistory } = useSportsDesignStore();
 
   const [isResizing, setIsResizing] = useState(false);
+  const [isRotating, setIsRotating] = useState(false);
   const [resizeHandle, setResizeHandle] = useState(null); // 'nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'
   const [dragStart, setDragStart] = useState(null);
 
-  const { parameters, position } = track;
+  const { parameters, position, rotation } = track;
   const width = parameters.width_mm;
   const height = parameters.height_mm;
+
+  // Calculate center point in SVG coordinates (for rotation)
+  const centerX = position.x + width / 2;
+  const centerY = position.y + height / 2;
+
+  // Rotation handle position (above top center)
+  const rotationHandleDistance = 1000; // 1 meter above the track
+  const rotationHandleX = width / 2;
+  const rotationHandleY = -rotationHandleDistance;
 
   // Convert screen coordinates to SVG coordinates
   const screenToSVG = (screenX, screenY) => {
@@ -25,6 +36,13 @@ function TrackResizeHandles({ track, svgRef }) {
     pt.y = screenY;
     const svgP = pt.matrixTransform(svgRef.current.getScreenCTM().inverse());
     return { x: svgP.x, y: svgP.y };
+  };
+
+  // Handle rotation start
+  const handleRotationMouseDown = (e) => {
+    e.stopPropagation();
+    setIsRotating(true);
+    setDragStart({ x: e.clientX, y: e.clientY });
   };
 
   // Handle resize start
@@ -47,11 +65,29 @@ function TrackResizeHandles({ track, svgRef }) {
     });
   };
 
-  // Handle mouse move for resizing
+  // Handle mouse move for resizing and rotation
   useEffect(() => {
-    if (!isResizing || !dragStart) return;
+    if (!isResizing && !isRotating) return;
 
     const handleMouseMove = (e) => {
+      if (isRotating) {
+        // Calculate angle from center to mouse
+        const svgPoint = screenToSVG(e.clientX, e.clientY);
+        const dx = svgPoint.x - centerX;
+        const dy = svgPoint.y - centerY;
+        let angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90; // +90 to start from top
+        angle = normalizeAngle(angle);
+
+        // Snap to 15° if shift is held
+        if (e.shiftKey) {
+          angle = Math.round(angle / 15) * 15;
+        }
+
+        updateTrackRotation(track.id, angle);
+        return;
+      }
+
+      if (!dragStart) return;
       const svgPoint = screenToSVG(e.clientX, e.clientY);
 
       const deltaX = svgPoint.x - dragStart.svgX;
@@ -191,10 +227,11 @@ function TrackResizeHandles({ track, svgRef }) {
     };
 
     const handleMouseUp = () => {
-      if (isResizing) {
+      if (isResizing || isRotating) {
         addToHistory();
       }
       setIsResizing(false);
+      setIsRotating(false);
       setResizeHandle(null);
       setDragStart(null);
     };
@@ -224,6 +261,57 @@ function TrackResizeHandles({ track, svgRef }) {
 
   return (
     <g className="track-resize-handles">
+      {/* Rotation Handle */}
+      <g className="rotation-handle-group">
+        {/* Connection line from track to rotation handle */}
+        <line
+          x1={rotationHandleX}
+          y1={0}
+          x2={rotationHandleX}
+          y2={rotationHandleY}
+          stroke="#0066CC"
+          strokeWidth={30}
+          strokeDasharray="100 100"
+          opacity={0.5}
+          style={{ pointerEvents: 'none' }}
+        />
+
+        {/* Rotation handle (circular) */}
+        <circle
+          className="rotation-handle"
+          cx={rotationHandleX}
+          cy={rotationHandleY}
+          r={handleSize / 2}
+          fill="white"
+          stroke="#0066CC"
+          strokeWidth={50}
+          style={{
+            cursor: isRotating ? 'grabbing' : 'grab',
+            pointerEvents: 'all'
+          }}
+          onMouseDown={handleRotationMouseDown}
+        />
+
+        {/* Rotation icon (curved arrow) */}
+        <path
+          d={`M ${rotationHandleX - 100} ${rotationHandleY - 50}
+              A 100 100 0 1 1 ${rotationHandleX + 100} ${rotationHandleY - 50}`}
+          fill="none"
+          stroke="#0066CC"
+          strokeWidth={40}
+          strokeLinecap="round"
+          style={{ pointerEvents: 'none' }}
+        />
+        <path
+          d={`M ${rotationHandleX + 100} ${rotationHandleY - 50}
+              L ${rotationHandleX + 80} ${rotationHandleY - 120}
+              L ${rotationHandleX + 150} ${rotationHandleY - 80}
+              Z`}
+          fill="#0066CC"
+          style={{ pointerEvents: 'none' }}
+        />
+      </g>
+
       {/* Resize Handles */}
       {handles.map((handle) => (
         <rect
@@ -258,6 +346,21 @@ function TrackResizeHandles({ track, svgRef }) {
           style={{ pointerEvents: 'none' }}
         >
           {(width / 1000).toFixed(1)}m × {(height / 1000).toFixed(1)}m
+        </text>
+      )}
+
+      {/* Rotation angle indicator */}
+      {isRotating && (
+        <text
+          x={width / 2}
+          y={-1500}
+          textAnchor="middle"
+          fontSize={400}
+          fill="#0066CC"
+          fontWeight="bold"
+          style={{ pointerEvents: 'none' }}
+        >
+          {rotation.toFixed(0)}°
         </text>
       )}
     </g>
