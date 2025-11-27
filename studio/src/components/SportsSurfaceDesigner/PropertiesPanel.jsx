@@ -297,7 +297,7 @@ function PropertiesPanel() {
               <button
                 className="btn-reset"
                 onClick={() => resetCourtColors(selectedCourtId)}
-                title="Reset all colors to defaults"
+                title="Reset all colours to defaults"
               >
                 Reset
               </button>
@@ -333,7 +333,7 @@ function PropertiesPanel() {
                       className="color-item__swatch"
                       style={{ backgroundColor: currentColor?.hex || '#000' }}
                       onClick={() => setColorPickerTarget({ type: 'line', id: marking.id })}
-                      title={currentColor?.name || 'Select color'}
+                      title={currentColor?.name || 'Select colour'}
                     />
                   </div>
                 );
@@ -392,7 +392,7 @@ function PropertiesPanel() {
                         className="color-item__swatch"
                         style={{ backgroundColor: currentColor?.hex || '#000' }}
                         onClick={() => setColorPickerTarget({ type: 'zone', id: zone.id })}
-                        title={currentColor?.name || 'Select color'}
+                        title={currentColor?.name || 'Select colour'}
                       />
                     </div>
                   );
@@ -722,11 +722,13 @@ function TrackPropertiesPanel({ track, trackId }) {
               <div className="property-input-group">
                 <input
                   type="number"
-                  value={(avgCornerRadius / 1000).toFixed(2)}
-                  onChange={(e) => handleCornerRadiusChange('topLeft', e.target.value)}
+                  defaultValue={(avgCornerRadius / 1000).toFixed(2)}
+                  key={`locked-${avgCornerRadius}`}
+                  onBlur={(e) => handleCornerRadiusChange('topLeft', e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
                   min="0"
-                  max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(2)}
-                  step="0.1"
+                  max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(0)}
+                  step="0.5"
                 />
                 <span className="property-unit">m</span>
               </div>
@@ -738,11 +740,13 @@ function TrackPropertiesPanel({ track, trackId }) {
                   <div className="property-input-group">
                     <input
                       type="number"
-                      value={(parameters.cornerRadius.topLeft / 1000).toFixed(2)}
-                      onChange={(e) => handleCornerRadiusChange('topLeft', e.target.value)}
+                      defaultValue={(parameters.cornerRadius.topLeft / 1000).toFixed(2)}
+                      key={`tl-${parameters.cornerRadius.topLeft}`}
+                      onBlur={(e) => handleCornerRadiusChange('topLeft', e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
                       min="0"
-                      max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(2)}
-                      step="0.1"
+                      max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(0)}
+                      step="0.5"
                     />
                     <span className="property-unit">m</span>
                   </div>
@@ -752,11 +756,13 @@ function TrackPropertiesPanel({ track, trackId }) {
                   <div className="property-input-group">
                     <input
                       type="number"
-                      value={(parameters.cornerRadius.topRight / 1000).toFixed(2)}
-                      onChange={(e) => handleCornerRadiusChange('topRight', e.target.value)}
+                      defaultValue={(parameters.cornerRadius.topRight / 1000).toFixed(2)}
+                      key={`tr-${parameters.cornerRadius.topRight}`}
+                      onBlur={(e) => handleCornerRadiusChange('topRight', e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
                       min="0"
-                      max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(2)}
-                      step="0.1"
+                      max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(0)}
+                      step="0.5"
                     />
                     <span className="property-unit">m</span>
                   </div>
@@ -766,11 +772,13 @@ function TrackPropertiesPanel({ track, trackId }) {
                   <div className="property-input-group">
                     <input
                       type="number"
-                      value={(parameters.cornerRadius.bottomLeft / 1000).toFixed(2)}
-                      onChange={(e) => handleCornerRadiusChange('bottomLeft', e.target.value)}
+                      defaultValue={(parameters.cornerRadius.bottomLeft / 1000).toFixed(2)}
+                      key={`bl-${parameters.cornerRadius.bottomLeft}`}
+                      onBlur={(e) => handleCornerRadiusChange('bottomLeft', e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
                       min="0"
-                      max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(2)}
-                      step="0.1"
+                      max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(0)}
+                      step="0.5"
                     />
                     <span className="property-unit">m</span>
                   </div>
@@ -780,11 +788,13 @@ function TrackPropertiesPanel({ track, trackId }) {
                   <div className="property-input-group">
                     <input
                       type="number"
-                      value={(parameters.cornerRadius.bottomRight / 1000).toFixed(2)}
-                      onChange={(e) => handleCornerRadiusChange('bottomRight', e.target.value)}
+                      defaultValue={(parameters.cornerRadius.bottomRight / 1000).toFixed(2)}
+                      key={`br-${parameters.cornerRadius.bottomRight}`}
+                      onBlur={(e) => handleCornerRadiusChange('bottomRight', e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
                       min="0"
-                      max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(2)}
-                      step="0.1"
+                      max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(0)}
+                      step="0.5"
                     />
                     <span className="property-unit">m</span>
                   </div>
@@ -802,12 +812,12 @@ function TrackPropertiesPanel({ track, trackId }) {
             </div>
           </div>
 
-          {/* Track Surface Color */}
+          {/* Track Surface Colour */}
           <div className="property-group">
-            <label>Track Surface Color</label>
+            <label>Track Surface Colour</label>
             <div className="color-item">
               <div className="color-item__info">
-                <span className="color-item__name">{trackSurfaceColor?.name || 'Select Color'}</span>
+                <span className="color-item__name">{trackSurfaceColor?.name || 'Select Colour'}</span>
                 {trackSurfaceColor && (
                   <span className="color-item__code">{trackSurfaceColor.tpv_code}</span>
                 )}
@@ -816,7 +826,7 @@ function TrackPropertiesPanel({ track, trackId }) {
                 className="color-item__swatch"
                 style={{ backgroundColor: trackSurfaceColor?.hex || '#A5362F' }}
                 onClick={() => setShowTrackColorPicker(true)}
-                title={trackSurfaceColor?.name || 'Select color'}
+                title={trackSurfaceColor?.name || 'Select colour'}
               />
             </div>
           </div>
@@ -919,9 +929,9 @@ function TrackPropertiesPanel({ track, trackId }) {
                   </div>
                 )}
 
-                {/* Info: Boxes use track surface color */}
+                {/* Info: Boxes use track surface colour */}
                 <div className="property-info" style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>
-                  Boxes use track surface color with white starting line and lane numbers
+                  Boxes use track surface colour with white starting line and lane numbers
                 </div>
 
                 {/* Stagger information for curved tracks - only show if style includes staggered */}
@@ -1004,7 +1014,7 @@ function TrackPropertiesPanel({ track, trackId }) {
         <div className="color-picker-modal" onClick={() => setShowTrackColorPicker(false)}>
           <div className="color-picker-modal__content" onClick={(e) => e.stopPropagation()}>
             <div className="color-picker-modal__header">
-              <h4>Select Track Surface Color</h4>
+              <h4>Select Track Surface Colour</h4>
               <button onClick={() => setShowTrackColorPicker(false)}>×</button>
             </div>
             <div className="color-picker-grid">
