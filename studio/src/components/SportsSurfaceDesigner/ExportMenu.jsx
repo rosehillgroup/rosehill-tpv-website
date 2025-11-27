@@ -4,7 +4,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { generateSportsSVG, downloadSVG, downloadPNG, generateFilename } from '../../lib/sports/sportsExport.js';
-import { calculateSportsQuantities, generateElementSpecs } from '../../utils/sportsDesignSerializer.js';
+import { generateSportsPDF, downloadPDF } from '../../lib/sports/sportsPdfExport.js';
 
 export default function ExportMenu({ svgRef }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -83,44 +83,23 @@ export default function ExportMenu({ svgRef }) {
   const handleExportPDF = async () => {
     setExporting('pdf');
     try {
+      const svgElement = getSvgElement();
+      if (!svgElement) {
+        throw new Error('Canvas not found');
+      }
+
       const state = exportDesignData();
+      const designName = state.name || 'Sports Surface Design';
 
-      // Calculate quantities and specs
-      const quantities = calculateSportsQuantities(state);
-      const specs = generateElementSpecs(state);
+      // Generate PDF
+      console.log('[EXPORT] Generating PDF report...');
+      const pdfBytes = await generateSportsPDF(svgElement, state, designName);
 
-      // For now, generate a simple JSON report (PDF generation will be server-side)
-      const report = {
-        title: state.name || 'Sports Surface Design',
-        generated: new Date().toISOString(),
-        surface: {
-          width_m: state.surface.width_mm / 1000,
-          length_m: state.surface.length_mm / 1000,
-          area_m2: (state.surface.width_mm * state.surface.length_mm) / 1_000_000,
-          color: state.surface.color
-        },
-        elements: specs,
-        quantities: quantities,
-        courtCount: Object.keys(state.courts || {}).length,
-        trackCount: Object.keys(state.tracks || {}).length
-      };
+      // Download
+      const filename = generateFilename(designName, 'pdf');
+      downloadPDF(pdfBytes, filename);
 
-      // Download as JSON for now (PDF generation requires server-side)
-      const filename = generateFilename(state.name, 'json');
-      const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(url);
-
-      // Note: Full PDF export will be implemented server-side
-      console.log('[EXPORT] PDF report data:', report);
+      console.log('[EXPORT] PDF downloaded:', filename);
     } catch (error) {
       console.error('PDF export failed:', error);
       alert('Failed to export PDF: ' + error.message);
@@ -133,13 +112,14 @@ export default function ExportMenu({ svgRef }) {
   return (
     <div className="export-menu" ref={menuRef}>
       <button
-        className="sports-designer__toolbar-btn"
+        className="sports-toolbar__btn-export"
         onClick={() => setIsOpen(!isOpen)}
         title="Export Design"
       >
-        <span className="sports-designer__icon">📥</span>
         Export
-        <span className="export-menu__arrow">{isOpen ? '▲' : '▼'}</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d={isOpen ? "M18 15l-6-6-6 6" : "M6 9l6 6 6-6"} />
+        </svg>
       </button>
 
       {isOpen && (
@@ -179,12 +159,12 @@ export default function ExportMenu({ svgRef }) {
             onClick={handleExportPDF}
             disabled={exporting !== null}
           >
-            <span className="export-menu__icon">📊</span>
+            <span className="export-menu__icon">📄</span>
             <div className="export-menu__item-content">
               <span className="export-menu__item-title">
-                {exporting === 'pdf' ? 'Generating...' : 'Quantities Report'}
+                {exporting === 'pdf' ? 'Generating...' : 'Materials Report (PDF)'}
               </span>
-              <span className="export-menu__item-desc">Material specs & quantities</span>
+              <span className="export-menu__item-desc">TPV quantities & specifications</span>
             </div>
           </button>
         </div>
