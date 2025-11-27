@@ -534,3 +534,92 @@ export function getLaneCenterAtDistance(laneIndex, distance_mm, params) {
     outerY: outerPoint.y
   };
 }
+
+/**
+ * Get segment information for a lane at a given distance
+ * Returns which segment the position is on and the parametric position (0-1) within it
+ *
+ * @param {number} laneIndex - Lane index (0-based)
+ * @param {number} distance_mm - Distance along the path in mm
+ * @param {object} params - Track parameters
+ * @returns {object} { segmentIndex, t, segments } - Segment index, parametric position, and segments array
+ */
+function getSegmentInfo(laneIndex, distance_mm, params) {
+  const {
+    width_mm,
+    height_mm,
+    laneWidth_mm,
+    cornerRadius = { topLeft: 3000, topRight: 3000, bottomLeft: 3000, bottomRight: 3000 }
+  } = params;
+
+  const laneOffset = laneIndex * laneWidth_mm;
+  const laneWidth = Math.max(0, width_mm - (laneOffset * 2));
+  const laneHeight = Math.max(0, height_mm - (laneOffset * 2));
+
+  const maxRadius = Math.min(laneWidth / 2, laneHeight / 2);
+  const tl = Math.min(Math.max(0, cornerRadius.topLeft - laneOffset), maxRadius);
+  const tr = Math.min(Math.max(0, cornerRadius.topRight - laneOffset), maxRadius);
+  const br = Math.min(Math.max(0, cornerRadius.bottomRight - laneOffset), maxRadius);
+  const bl = Math.min(Math.max(0, cornerRadius.bottomLeft - laneOffset), maxRadius);
+
+  const segments = [
+    { type: 'arc', length: (Math.PI * bl) / 2, corner: 'bottomLeft' },
+    { type: 'straight', length: laneHeight - bl - tl, dir: 'up' },
+    { type: 'arc', length: (Math.PI * tl) / 2, corner: 'topLeft' },
+    { type: 'straight', length: laneWidth - tl - tr, dir: 'right' },
+    { type: 'arc', length: (Math.PI * tr) / 2, corner: 'topRight' },
+    { type: 'straight', length: laneHeight - tr - br, dir: 'down' },
+    { type: 'arc', length: (Math.PI * br) / 2, corner: 'bottomRight' },
+    { type: 'straight', length: laneWidth - br - bl, dir: 'left' },
+  ];
+
+  const totalPerimeter = segments.reduce((sum, s) => sum + s.length, 0);
+
+  // Wrap distance
+  let d = distance_mm;
+  while (d < 0) d += totalPerimeter;
+  while (d >= totalPerimeter) d -= totalPerimeter;
+
+  // Find segment
+  let accumulated = 0;
+  for (let i = 0; i < segments.length; i++) {
+    if (d <= accumulated + segments[i].length) {
+      const segmentDistance = d - accumulated;
+      const t = segments[i].length > 0 ? segmentDistance / segments[i].length : 0;
+      return { segmentIndex: i, t, segments, totalPerimeter };
+    }
+    accumulated += segments[i].length;
+  }
+
+  return { segmentIndex: 0, t: 0, segments, totalPerimeter };
+}
+
+/**
+ * Calculate the distance on a target lane that is radially aligned with a reference position
+ * Radial alignment means same parametric position within the same segment type
+ *
+ * @param {number} targetLaneIndex - Target lane index
+ * @param {number} referenceDistance - Distance on reference lane (innermost)
+ * @param {number} referenceLaneIndex - Reference lane index (typically innermost)
+ * @param {object} params - Track parameters
+ * @returns {number} Distance on target lane in mm
+ */
+export function getRadiallyAlignedDistance(targetLaneIndex, referenceDistance, referenceLaneIndex, params) {
+  // Get segment info for reference lane
+  const refInfo = getSegmentInfo(referenceLaneIndex, referenceDistance, params);
+
+  // Get segment info for target lane (to get its segment lengths)
+  const targetInfo = getSegmentInfo(targetLaneIndex, 0, params);
+
+  // Calculate accumulated distance to start of target segment
+  let targetAccumulated = 0;
+  for (let i = 0; i < refInfo.segmentIndex; i++) {
+    targetAccumulated += targetInfo.segments[i].length;
+  }
+
+  // Add the parametric position within the segment
+  const targetSegmentLength = targetInfo.segments[refInfo.segmentIndex].length;
+  const targetDistance = targetAccumulated + (refInfo.t * targetSegmentLength);
+
+  return targetDistance;
+}

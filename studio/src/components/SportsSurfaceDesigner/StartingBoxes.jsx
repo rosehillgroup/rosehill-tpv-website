@@ -1,6 +1,6 @@
 // TPV Studio - Starting Boxes Component
 import React from 'react';
-import { getLaneCenterAtDistance } from '../../lib/sports/trackGeometry.js';
+import { getLaneCenterAtDistance, getRadiallyAlignedDistance } from '../../lib/sports/trackGeometry.js';
 
 /**
  * StartingBoxes Component
@@ -243,10 +243,11 @@ function StartingBox({ x, y, width, height, laneNumber, boxFillColor, lineColor,
 /**
  * Render starting boxes for curved tracks
  *
- * Position calculation:
- * - Uses percentage of EACH lane's own perimeter for base position
- * - This ensures all lanes stay at the same angular/radial position as slider moves
- * - Stagger offsets are then added on top for staggered starts
+ * Position calculation uses radial alignment:
+ * - Calculate reference position on innermost lane (Lane 1)
+ * - Use getRadiallyAlignedDistance to find corresponding position on each lane
+ * - This ensures all lanes are at the same parametric position within each segment
+ * - Stagger offsets are added for staggered starts
  */
 function renderCurvedTrackBoxes(
   index,
@@ -265,26 +266,39 @@ function renderCurvedTrackBoxes(
 ) {
   const isClockwise = direction === 'clockwise';
 
-  // Get THIS lane's perimeter for position calculations
-  // Using each lane's own perimeter ensures radial alignment at any position
+  // Get innermost lane index (Lane 1 = last index in geometry array)
+  const innermostLaneIndex = geometry.lanes.length - 1;
+
+  // Get innermost lane's perimeter for reference calculations
+  const refPerimeterMm = (geometry.lanes[innermostLaneIndex]?.perimeter || 0) * 1000;
+  const halfRefPerimeter = refPerimeterMm / 2;
+
+  // Calculate reference position on innermost lane
+  const refBasePositionMm = (startPosition / 100) * refPerimeterMm;
+
+  // Get radially aligned position for THIS lane
+  // This ensures all lanes are at the same geometric position (same segment, same parametric t)
+  const alignedBasePosition = getRadiallyAlignedDistance(
+    index,
+    refBasePositionMm,
+    innermostLaneIndex,
+    parameters
+  );
+
+  // Get this lane's half perimeter for opposite-side calculations
   const lanePerimeterMm = (geometry.lanes[index]?.perimeter || 0) * 1000;
   const halfLanePerimeter = lanePerimeterMm / 2;
 
-  // Calculate base position as percentage of THIS lane's perimeter
-  // This keeps all lanes at the same angular position around the track
-  const basePositionMm = (startPosition / 100) * lanePerimeterMm;
-
   // Stagger offset for this lane (in mm)
-  // These compensate for perimeter differences so runners travel equal distances
   const staggerOffset = (perLaneOffsets[index] || 0) * 1000;
 
   const boxes = [];
 
   if (renderStaggered && !renderStraight) {
-    // Staggered only - base position + stagger offset
+    // Staggered only - aligned position + stagger offset
     const distance = isClockwise
-      ? basePositionMm + halfLanePerimeter + staggerOffset
-      : basePositionMm + staggerOffset;
+      ? alignedBasePosition + halfLanePerimeter + staggerOffset
+      : alignedBasePosition + staggerOffset;
     boxes.push(
       <CurvedStartingBox
         key={`stagger-${laneNumber}`}
@@ -299,10 +313,10 @@ function renderCurvedTrackBoxes(
       />
     );
   } else if (renderStraight && !renderStaggered) {
-    // Straight only - all lanes at same angular position (no stagger)
+    // Straight only - all lanes radially aligned (no stagger)
     const distance = isClockwise
-      ? basePositionMm + halfLanePerimeter
-      : basePositionMm;
+      ? alignedBasePosition + halfLanePerimeter
+      : alignedBasePosition;
     boxes.push(
       <CurvedStartingBox
         key={`straight-${laneNumber}`}
@@ -319,11 +333,20 @@ function renderCurvedTrackBoxes(
   } else if (renderStaggered && renderStraight) {
     // Both - staggered at primary, straight at secondary
     const primaryDistance = isClockwise
-      ? basePositionMm + halfLanePerimeter + staggerOffset
-      : basePositionMm + staggerOffset;
+      ? alignedBasePosition + halfLanePerimeter + staggerOffset
+      : alignedBasePosition + staggerOffset;
+
+    // For secondary (opposite side), also need radial alignment
+    const refSecondaryPosition = isClockwise ? refBasePositionMm : refBasePositionMm + halfRefPerimeter;
+    const alignedSecondaryPosition = getRadiallyAlignedDistance(
+      index,
+      refSecondaryPosition,
+      innermostLaneIndex,
+      parameters
+    );
     const secondaryDistance = isClockwise
-      ? basePositionMm
-      : basePositionMm + halfLanePerimeter;
+      ? alignedSecondaryPosition
+      : alignedSecondaryPosition;
 
     boxes.push(
       <CurvedStartingBox
