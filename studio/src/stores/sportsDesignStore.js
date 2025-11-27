@@ -5,8 +5,8 @@ import { devtools } from 'zustand/middleware';
 const initialState = {
   // Surface configuration
   surface: {
-    width_mm: 28000,
-    length_mm: 15000,
+    width_mm: 50000,
+    length_mm: 50000,
     color: {
       tpv_code: 'RH12',
       hex: '#006C55',
