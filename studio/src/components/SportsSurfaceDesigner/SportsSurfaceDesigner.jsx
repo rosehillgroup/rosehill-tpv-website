@@ -272,88 +272,99 @@ function SportsSurfaceDesigner({ loadedDesign }) {
       {/* Main Designer Interface */}
       {!showDimensionModal && (
         <>
-          {/* Toolbar */}
-          <div className="sports-designer__toolbar">
-            <div className="sports-designer__toolbar-left">
+          {/* Floating Toolbar */}
+          <div className="sports-toolbar">
+            {/* Panel toggles */}
+            <div className="sports-toolbar__group">
               <button
-                className="sports-designer__toolbar-btn"
+                className={`sports-toolbar__btn ${showCourtLibrary ? 'sports-toolbar__btn--active' : ''}`}
                 onClick={toggleCourtLibrary}
-                title="Toggle Court Library"
+                title="Court Library"
               >
-                <span className="sports-designer__icon">📚</span>
-                {showCourtLibrary ? 'Hide' : 'Show'} Courts
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                </svg>
               </button>
-
               <button
-                className="sports-designer__toolbar-btn"
+                className={`sports-toolbar__btn ${showPropertiesPanel && (selectedCourtId || selectedTrackId) ? 'sports-toolbar__btn--active' : ''}`}
                 onClick={togglePropertiesPanel}
-                title="Toggle Properties Panel"
+                title="Properties"
                 disabled={!selectedCourtId && !selectedTrackId}
               >
-                <span className="sports-designer__icon">⚙️</span>
-                {showPropertiesPanel ? 'Hide' : 'Show'} Properties
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="4" y1="21" x2="4" y2="14" />
+                  <line x1="4" y1="10" x2="4" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="12" />
+                  <line x1="12" y1="8" x2="12" y2="3" />
+                  <line x1="20" y1="21" x2="20" y2="16" />
+                  <line x1="20" y1="12" x2="20" y2="3" />
+                  <line x1="1" y1="14" x2="7" y2="14" />
+                  <line x1="9" y1="8" x2="15" y2="8" />
+                  <line x1="17" y1="16" x2="23" y2="16" />
+                </svg>
               </button>
-
-              <div className="sports-designer__surface-info">
-                <span className="sports-designer__label">Surface:</span>
-                <span className="sports-designer__value">
-                  {(surface.width_mm / 1000).toFixed(1)}m × {(surface.length_mm / 1000).toFixed(1)}m
-                </span>
-                <button
-                  className="sports-designer__surface-color-btn"
-                  style={{ backgroundColor: surface.color.hex }}
-                  onClick={() => setShowSurfaceColorPicker(true)}
-                  title={`Surface Color: ${surface.color.name} (${surface.color.tpv_code}) - Click to change`}
-                />
-              </div>
-
-              <div className="sports-designer__court-count">
-                <span className="sports-designer__label">Courts:</span>
-                <span className="sports-designer__value">{Object.keys(courts).length}</span>
-              </div>
             </div>
 
-            <div className="sports-designer__toolbar-right">
-              <button
-                className="sports-designer__toolbar-btn"
-                onClick={() => setShowDimensionModal(true)}
-                title="Change Surface Dimensions"
-              >
-                <span className="sports-designer__icon">📏</span>
-                Resize
-              </button>
+            <div className="sports-toolbar__divider" />
 
+            {/* Canvas info */}
+            <div className="sports-toolbar__group">
               <button
-                className="sports-designer__toolbar-btn"
+                className="sports-toolbar__dimensions"
+                onClick={() => setShowDimensionModal(true)}
+                title="Click to resize surface"
+              >
+                {(surface.width_mm / 1000).toFixed(0)}m × {(surface.length_mm / 1000).toFixed(0)}m
+              </button>
+              <button
+                className="sports-toolbar__color-swatch"
+                style={{ backgroundColor: surface.color.hex }}
+                onClick={() => setShowSurfaceColorPicker(true)}
+                title={`${surface.color.name} (${surface.color.tpv_code}) - Click to change`}
+              />
+            </div>
+
+            <div className="sports-toolbar__divider" />
+
+            {/* History */}
+            <div className="sports-toolbar__group">
+              <button
+                className="sports-toolbar__btn"
                 disabled={!useSportsDesignStore.getState().canUndo()}
                 onClick={() => useSportsDesignStore.getState().undo()}
                 title="Undo (Ctrl+Z)"
               >
-                <span className="sports-designer__icon">↶</span>
-                Undo
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 7v6h6" />
+                  <path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13" />
+                </svg>
               </button>
-
               <button
-                className="sports-designer__toolbar-btn"
+                className="sports-toolbar__btn"
                 disabled={!useSportsDesignStore.getState().canRedo()}
                 onClick={() => useSportsDesignStore.getState().redo()}
                 title="Redo (Ctrl+Shift+Z)"
               >
-                <span className="sports-designer__icon">↷</span>
-                Redo
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 7v6h-6" />
+                  <path d="M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7" />
+                </svg>
               </button>
+            </div>
 
-              <div className="sports-designer__toolbar-divider" />
+            <div className="sports-toolbar__divider" />
 
+            {/* Actions */}
+            <div className="sports-toolbar__group">
               <button
-                className="sports-designer__toolbar-btn sports-designer__toolbar-btn--primary"
+                className="sports-toolbar__btn-primary"
                 onClick={() => setShowSaveModal(true)}
-                title="Save Design"
               >
-                <span className="sports-designer__icon">💾</span>
                 Save
               </button>
-
               <ExportMenu svgRef={svgRef} />
             </div>
           </div>

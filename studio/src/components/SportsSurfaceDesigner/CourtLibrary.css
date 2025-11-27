@@ -14,12 +14,29 @@
   border-bottom: 1px solid var(--color-border, #e4e9f0);
 }
 
+.court-library__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
 .court-library__header h2 {
-  margin: 0 0 0.25rem 0;
+  margin: 0;
   font-size: 1rem;
   font-family: var(--font-heading, 'Space Grotesk', sans-serif);
   font-weight: 700;
   color: var(--color-primary, #1e4a7a);
+}
+
+.court-library__count {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
 .court-library__header p {

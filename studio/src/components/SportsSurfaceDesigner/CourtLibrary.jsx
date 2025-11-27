@@ -9,7 +9,11 @@ function CourtLibrary() {
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
   const [activeTab, setActiveTab] = useState('courts'); // 'courts' or 'tracks'
 
-  const { addCourt, addTrack } = useSportsDesignStore();
+  const { addCourt, addTrack, courts, tracks } = useSportsDesignStore();
+
+  // Count elements on canvas
+  const courtCount = Object.keys(courts).length;
+  const trackCount = Object.keys(tracks).length;
 
   const templates = getAllCourtTemplates();
   const trackTemplates = getAllTrackTemplates();
@@ -31,8 +35,13 @@ function CourtLibrary() {
   return (
     <div className="court-library">
       <div className="court-library__header">
-        <h2>{activeTab === 'courts' ? 'Court Library' : 'Track Library'}</h2>
-        <p>{activeTab === 'courts' ? 'Select a court to add to your surface' : 'Select a running track to add to your surface'}</p>
+        <div className="court-library__header-row">
+          <h2>{activeTab === 'courts' ? 'Court Library' : 'Track Library'}</h2>
+          <span className="court-library__count">
+            {activeTab === 'courts' ? courtCount : trackCount} on canvas
+          </span>
+        </div>
+        <p>{activeTab === 'courts' ? 'Select a court to add' : 'Select a track to add'}</p>
       </div>
 
       {/* Tabs */}
