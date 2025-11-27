@@ -76,8 +76,8 @@ export default async function handler(req, res) {
         dimensions: design_data.dimensions, // { width_mm, length_mm }
         design_data: design_data, // Store complete sports design as JSONB
 
-        // No SVG URLs for sports (generated client-side)
-        original_svg_url: null,
+        // Placeholder for sports (SVG generated client-side, not stored)
+        original_svg_url: 'sports_surface',
         original_png_url: null,
         thumbnail_url: null,
 
