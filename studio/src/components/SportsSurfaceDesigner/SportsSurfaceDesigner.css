@@ -213,13 +213,14 @@
   min-height: 0;
 }
 
-/* Layers panel at bottom with fixed max-height */
+/* Layers panel at bottom with guaranteed space */
 .sports-designer__sidebar > .layers-panel {
-  flex-shrink: 0;
-  max-height: 280px;
+  flex: 0 0 auto;
+  min-height: 280px;
+  max-height: 45%;
   border-top: 1px solid var(--color-border, #e4e9f0);
   overflow-y: auto;
-  padding: var(--space-2, 1rem);
+  padding: var(--space-3, 1.25rem);
   background: var(--color-bg-subtle, #f8fafc);
 }
 
@@ -235,39 +236,52 @@
   background-position: -1px -1px;
 }
 
-/* ====== Empty State ====== */
+/* ====== Empty State - Banner style above canvas ====== */
 .sports-designer__empty-state {
   position: absolute;
-  top: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
   pointer-events: none;
   z-index: 1;
-  max-width: 400px;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(to bottom, rgba(248, 250, 252, 0.95) 0%, rgba(248, 250, 252, 0) 100%);
 }
 
 .sports-designer__empty-content {
-  background: rgba(255, 255, 255, 0.95);
-  padding: 0.75rem 1.25rem;
-  border-radius: var(--radius-sm, 8px);
-  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.08));
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--color-bg-card, white);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm, 6px);
+  box-shadow: var(--shadow-sm, 0 1px 3px rgba(0, 0, 0, 0.08));
   border: 1px solid var(--color-border, #e4e9f0);
 }
 
 .sports-designer__empty-content h3 {
-  margin: 0 0 0.25rem 0;
+  margin: 0;
   color: var(--color-primary, #1e4a7a);
-  font-size: var(--text-base, 1rem);
+  font-size: var(--text-sm, 0.875rem);
   font-family: var(--font-heading, 'Space Grotesk', sans-serif);
   font-weight: var(--font-semibold, 600);
+  white-space: nowrap;
+}
+
+.sports-designer__empty-content h3::after {
+  content: ':';
 }
 
 .sports-designer__empty-content p {
   margin: 0;
   color: var(--color-text-secondary, #64748b);
-  line-height: var(--leading-normal, 1.5);
   font-size: var(--text-sm, 0.875rem);
+}
+
+.sports-designer__empty-content p br {
+  display: none;
 }
 
 /* ====== Surface Color Button ====== */

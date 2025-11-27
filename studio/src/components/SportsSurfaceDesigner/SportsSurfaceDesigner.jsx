@@ -339,16 +339,12 @@ function SportsSurfaceDesigner() {
             )}
           </div>
 
-          {/* Help Text */}
+          {/* Help Text - compact banner */}
           {Object.keys(courts).length === 0 && Object.keys(tracks).length === 0 && (
             <div className="sports-designer__empty-state">
               <div className="sports-designer__empty-content">
-                <h3>Add Your First Element</h3>
-                <p>
-                  Select a court or track from the library on the left to place it on your surface.
-                  <br />
-                  You can then move, rotate, scale, and customize your design.
-                </p>
+                <h3>Getting Started</h3>
+                <p>Select a court or track from the library to add it to your surface</p>
               </div>
             </div>
           )}

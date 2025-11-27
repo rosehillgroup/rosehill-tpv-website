@@ -242,6 +242,9 @@ function StartingBox({ x, y, width, height, laneNumber, boxFillColor, lineColor,
 
 /**
  * Render starting boxes for curved tracks
+ *
+ * IMPORTANT: Uses innermost lane (Lane 1) as reference for position calculations.
+ * This ensures "straight" starts are truly aligned and position slider works consistently.
  */
 function renderCurvedTrackBoxes(
   index,
@@ -258,46 +261,34 @@ function renderCurvedTrackBoxes(
   direction,
   startPosition = 0
 ) {
-  // For curved tracks:
-  // - counterclockwise: boxes at "start" position
-  // - clockwise: boxes at opposite end from start position
   const isClockwise = direction === 'clockwise';
 
-  // Get lane perimeter for calculating positions
-  const lanePerimeter = geometry.lanes[index]?.perimeter || 0;
-  const lanePerimeterMm = lanePerimeter * 1000; // Convert to mm
-  const halfPerimeter = lanePerimeterMm / 2;
+  // Get Lane 1 (innermost) perimeter as the REFERENCE for all lanes
+  // This ensures all lanes align to the same physical position
+  const innermostIndex = geometry.lanes.length - 1;
+  const referencePerimeterMm = (geometry.lanes[innermostIndex]?.perimeter || 0) * 1000;
+  const halfReferencePerimeter = referencePerimeterMm / 2;
 
-  // Start position offset: convert percentage to distance along track
-  // 0% = default position (bottom-left corner area)
-  // 50% = opposite side
-  // 100% = back to start
-  const startPositionOffset = (startPosition / 100) * lanePerimeterMm;
+  // Calculate base position using REFERENCE perimeter (not per-lane)
+  // This ensures the start position slider works consistently across all lanes
+  const basePositionMm = (startPosition / 100) * referencePerimeterMm;
 
-  // Stagger offset for this lane (in mm)
+  // Stagger offset for this lane (in mm) - these ARE per-lane intentionally
   const staggerOffset = (perLaneOffsets[index] || 0) * 1000;
 
   const boxes = [];
 
-  // Calculate base distances for primary and secondary positions
-  // Primary position: where the main start is (adjusted by startPosition)
-  // Secondary position: opposite end of track from primary
-  const basePosition = startPositionOffset;
-  const primaryDistance = isClockwise
-    ? (basePosition + halfPerimeter + staggerOffset) % lanePerimeterMm
-    : (basePosition + staggerOffset) % lanePerimeterMm;
-  const secondaryDistance = isClockwise
-    ? basePosition % lanePerimeterMm
-    : (basePosition + halfPerimeter) % lanePerimeterMm;
-
   if (renderStaggered && !renderStraight) {
-    // Staggered only
+    // Staggered only - apply stagger offset to reference position
+    const distance = isClockwise
+      ? basePositionMm + halfReferencePerimeter + staggerOffset
+      : basePositionMm + staggerOffset;
     boxes.push(
       <CurvedStartingBox
         key={`stagger-${laneNumber}`}
         index={index}
         laneNumber={laneNumber}
-        distance={primaryDistance}
+        distance={distance}
         depth_mm={depth_mm}
         parameters={parameters}
         boxFillColor={boxFillColor}
@@ -306,16 +297,16 @@ function renderCurvedTrackBoxes(
       />
     );
   } else if (renderStraight && !renderStaggered) {
-    // Straight only - use base distance without individual stagger
-    const straightDistance = isClockwise
-      ? (basePosition + halfPerimeter) % lanePerimeterMm
-      : basePosition % lanePerimeterMm;
+    // Straight only - ALL lanes use same reference position (no stagger)
+    const distance = isClockwise
+      ? basePositionMm + halfReferencePerimeter
+      : basePositionMm;
     boxes.push(
       <CurvedStartingBox
         key={`straight-${laneNumber}`}
         index={index}
         laneNumber={laneNumber}
-        distance={straightDistance}
+        distance={distance}
         depth_mm={depth_mm}
         parameters={parameters}
         boxFillColor={boxFillColor}
@@ -325,6 +316,13 @@ function renderCurvedTrackBoxes(
     );
   } else if (renderStaggered && renderStraight) {
     // Both - staggered at primary, straight at secondary
+    const primaryDistance = isClockwise
+      ? basePositionMm + halfReferencePerimeter + staggerOffset
+      : basePositionMm + staggerOffset;
+    const secondaryDistance = isClockwise
+      ? basePositionMm
+      : basePositionMm + halfReferencePerimeter;
+
     boxes.push(
       <CurvedStartingBox
         key={`stagger-${laneNumber}`}
