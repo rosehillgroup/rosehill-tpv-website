@@ -76,6 +76,12 @@ function SportsSurfaceDesigner({ loadedDesign }) {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // Skip shortcuts when typing in input fields
+      const tagName = e.target.tagName.toLowerCase();
+      if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
+        return;
+      }
+
       const {
         removeCourt,
         removeTrack,
