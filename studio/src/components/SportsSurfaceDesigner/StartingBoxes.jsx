@@ -243,8 +243,10 @@ function StartingBox({ x, y, width, height, laneNumber, boxFillColor, lineColor,
 /**
  * Render starting boxes for curved tracks
  *
- * IMPORTANT: Uses innermost lane (Lane 1) as reference for position calculations.
- * This ensures "straight" starts are truly aligned and position slider works consistently.
+ * Position calculation:
+ * - Uses percentage of EACH lane's own perimeter for base position
+ * - This ensures all lanes stay at the same angular/radial position as slider moves
+ * - Stagger offsets are then added on top for staggered starts
  */
 function renderCurvedTrackBoxes(
   index,
@@ -263,25 +265,25 @@ function renderCurvedTrackBoxes(
 ) {
   const isClockwise = direction === 'clockwise';
 
-  // Get Lane 1 (innermost) perimeter as the REFERENCE for all lanes
-  // This ensures all lanes align to the same physical position
-  const innermostIndex = geometry.lanes.length - 1;
-  const referencePerimeterMm = (geometry.lanes[innermostIndex]?.perimeter || 0) * 1000;
-  const halfReferencePerimeter = referencePerimeterMm / 2;
+  // Get THIS lane's perimeter for position calculations
+  // Using each lane's own perimeter ensures radial alignment at any position
+  const lanePerimeterMm = (geometry.lanes[index]?.perimeter || 0) * 1000;
+  const halfLanePerimeter = lanePerimeterMm / 2;
 
-  // Calculate base position using REFERENCE perimeter (not per-lane)
-  // This ensures the start position slider works consistently across all lanes
-  const basePositionMm = (startPosition / 100) * referencePerimeterMm;
+  // Calculate base position as percentage of THIS lane's perimeter
+  // This keeps all lanes at the same angular position around the track
+  const basePositionMm = (startPosition / 100) * lanePerimeterMm;
 
-  // Stagger offset for this lane (in mm) - these ARE per-lane intentionally
+  // Stagger offset for this lane (in mm)
+  // These compensate for perimeter differences so runners travel equal distances
   const staggerOffset = (perLaneOffsets[index] || 0) * 1000;
 
   const boxes = [];
 
   if (renderStaggered && !renderStraight) {
-    // Staggered only - apply stagger offset to reference position
+    // Staggered only - base position + stagger offset
     const distance = isClockwise
-      ? basePositionMm + halfReferencePerimeter + staggerOffset
+      ? basePositionMm + halfLanePerimeter + staggerOffset
       : basePositionMm + staggerOffset;
     boxes.push(
       <CurvedStartingBox
@@ -297,9 +299,9 @@ function renderCurvedTrackBoxes(
       />
     );
   } else if (renderStraight && !renderStaggered) {
-    // Straight only - ALL lanes use same reference position (no stagger)
+    // Straight only - all lanes at same angular position (no stagger)
     const distance = isClockwise
-      ? basePositionMm + halfReferencePerimeter
+      ? basePositionMm + halfLanePerimeter
       : basePositionMm;
     boxes.push(
       <CurvedStartingBox
@@ -317,11 +319,11 @@ function renderCurvedTrackBoxes(
   } else if (renderStaggered && renderStraight) {
     // Both - staggered at primary, straight at secondary
     const primaryDistance = isClockwise
-      ? basePositionMm + halfReferencePerimeter + staggerOffset
+      ? basePositionMm + halfLanePerimeter + staggerOffset
       : basePositionMm + staggerOffset;
     const secondaryDistance = isClockwise
       ? basePositionMm
-      : basePositionMm + halfReferencePerimeter;
+      : basePositionMm + halfLanePerimeter;
 
     boxes.push(
       <CurvedStartingBox
