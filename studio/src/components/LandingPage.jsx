@@ -390,6 +390,17 @@ export default function LandingPage() {
             <h3>Region Editor</h3>
             <p>Click any colour region to customise. Real-time preview updates as you design.</p>
           </div>
+
+          <div className="feature-card">
+            <div className="feature-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M12 3v18M3 12h18"/>
+                <circle cx="12" cy="12" r="9"/>
+              </svg>
+            </div>
+            <h3>Solid & Blend Modes</h3>
+            <p>Choose between single-colour purity or multi-granule blends for precise colour accuracy.</p>
+          </div>
         </div>
 
         {/* Sports Features */}
@@ -449,18 +460,7 @@ export default function LandingPage() {
           <span className="section-tag">Shared Tools</span>
         </div>
 
-        <div className="features-grid">
-          <div className="feature-card">
-            <div className="feature-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M12 3v18M3 12h18"/>
-                <circle cx="12" cy="12" r="9"/>
-              </svg>
-            </div>
-            <h3>Solid & Blend Modes</h3>
-            <p>Choose between single-colour purity or multi-granule blends for precise colour accuracy.</p>
-          </div>
-
+        <div className="features-grid shared-features-grid">
           <div className="feature-card">
             <div className="feature-icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -1403,6 +1403,11 @@ export default function LandingPage() {
           color: #00a6a3;
         }
 
+        /* Shared Features Grid 3 columns */
+        .shared-features-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
+
         /* Benefits Grid 4 columns */
         .benefits-grid-4 {
           grid-template-columns: repeat(4, 1fr);
@@ -1712,6 +1717,10 @@ export default function LandingPage() {
             grid-template-columns: repeat(2, 1fr);
           }
 
+          .shared-features-grid {
+            grid-template-columns: repeat(3, 1fr);
+          }
+
           .feature-highlight {
             grid-column: span 2;
           }
@@ -1772,7 +1781,8 @@ export default function LandingPage() {
             padding: 4rem 1.5rem;
           }
 
-          .sports-features-grid {
+          .sports-features-grid,
+          .shared-features-grid {
             grid-template-columns: 1fr;
           }
 
