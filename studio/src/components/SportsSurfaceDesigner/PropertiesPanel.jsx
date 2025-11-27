@@ -569,6 +569,26 @@ function TrackPropertiesPanel({ track, trackId }) {
     });
   };
 
+  // Handle starting box style change
+  const handleBoxStyleChange = (style) => {
+    updateTrackParameters(trackId, {
+      startingBoxes: {
+        ...parameters.startingBoxes,
+        style
+      }
+    });
+  };
+
+  // Handle direction of travel change
+  const handleDirectionChange = (direction) => {
+    updateTrackParameters(trackId, {
+      startingBoxes: {
+        ...parameters.startingBoxes,
+        direction
+      }
+    });
+  };
+
   // Calculate average corner radius for display
   const avgCornerRadius = (
     parameters.cornerRadius.topLeft +
@@ -802,7 +822,7 @@ function TrackPropertiesPanel({ track, trackId }) {
             {parameters.startingBoxes?.enabled && (
               <div style={{ marginTop: '0.75rem' }}>
                 {/* Box Depth */}
-                <div className="property-input-group" style={{ marginBottom: '0.5rem' }}>
+                <div className="property-input-group" style={{ marginBottom: '0.75rem' }}>
                   <span className="property-label" style={{ fontSize: '0.875rem' }}>Depth</span>
                   <input
                     type="number"
@@ -815,13 +835,60 @@ function TrackPropertiesPanel({ track, trackId }) {
                   <span className="property-unit">m</span>
                 </div>
 
+                {/* Starting Box Style */}
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#64748b', marginBottom: '0.375rem' }}>
+                    Start Style
+                  </label>
+                  <select
+                    value={parameters.startingBoxes.style || 'staggered'}
+                    onChange={(e) => handleBoxStyleChange(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      border: '1px solid #e4e9f0',
+                      borderRadius: '6px',
+                      fontSize: '0.875rem',
+                      fontFamily: 'inherit',
+                      background: 'white'
+                    }}
+                  >
+                    <option value="straight">Straight Start</option>
+                    <option value="staggered">Staggered Start</option>
+                    <option value="both">Both (opposite ends)</option>
+                  </select>
+                </div>
+
+                {/* Direction of Travel */}
+                <div style={{ marginBottom: '0.75rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#64748b', marginBottom: '0.375rem' }}>
+                    Direction of Travel
+                  </label>
+                  <select
+                    value={parameters.startingBoxes.direction || 'counterclockwise'}
+                    onChange={(e) => handleDirectionChange(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      border: '1px solid #e4e9f0',
+                      borderRadius: '6px',
+                      fontSize: '0.875rem',
+                      fontFamily: 'inherit',
+                      background: 'white'
+                    }}
+                  >
+                    <option value="counterclockwise">Counterclockwise (Standard)</option>
+                    <option value="clockwise">Clockwise</option>
+                  </select>
+                </div>
+
                 {/* Info: Boxes use track surface color */}
                 <div className="property-info" style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>
                   Boxes use track surface color with white starting line and lane numbers
                 </div>
 
-                {/* Stagger information for curved tracks */}
-                {!isStraightTrack && staggerOffsets.length > 0 && (
+                {/* Stagger information for curved tracks - only show if style includes staggered */}
+                {!isStraightTrack && staggerOffsets.length > 0 && (parameters.startingBoxes.style === 'staggered' || parameters.startingBoxes.style === 'both') && (
                   <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: '#f8fafc', borderRadius: '4px' }}>
                     <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#1e293b', marginBottom: '0.25rem' }}>
                       Auto-Calculated Staggers:

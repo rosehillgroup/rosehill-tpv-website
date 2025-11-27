@@ -399,6 +399,14 @@ export const useSportsDesignStore = create(
         let trackPosition;
         let trackRotation;
 
+        // Default starting boxes configuration
+        const defaultStartingBoxes = {
+          enabled: false,
+          depth_mm: 500,
+          style: 'staggered',           // 'straight' | 'staggered' | 'both'
+          direction: 'counterclockwise' // 'clockwise' | 'counterclockwise'
+        };
+
         if (isStraightTrack) {
           // STRAIGHT TRACK: Fixed lane width, scale length to fit, horizontal orientation
           const numLanes = template.parameters.numLanes;
@@ -415,7 +423,8 @@ export const useSportsDesignStore = create(
             width_mm: actualTrackWidth,  // Fixed: numLanes × laneWidth
             height_mm: trackLength,       // Scaled to fit
             cornerRadius: { topLeft: 0, topRight: 0, bottomLeft: 0, bottomRight: 0 },
-            laneWidth_mm: laneWidth
+            laneWidth_mm: laneWidth,
+            startingBoxes: { ...defaultStartingBoxes, ...template.parameters.startingBoxes }
           };
 
           // Default to horizontal orientation (90° rotation)
@@ -457,7 +466,8 @@ export const useSportsDesignStore = create(
             width_mm: trackWidth,
             height_mm: trackHeight,
             cornerRadius: scaledCorners,
-            laneWidth_mm: template.parameters.laneWidth_mm
+            laneWidth_mm: template.parameters.laneWidth_mm,
+            startingBoxes: { ...defaultStartingBoxes, ...template.parameters.startingBoxes }
           };
 
           trackRotation = 0;
