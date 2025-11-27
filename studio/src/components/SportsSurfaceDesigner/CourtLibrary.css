@@ -145,6 +145,15 @@
   line-height: 1.2;
 }
 
+.court-library__note {
+  margin: 0;
+  font-size: 0.5rem;
+  color: var(--color-text-tertiary, #94a3b8);
+  font-style: italic;
+  line-height: 1.2;
+  opacity: 0.8;
+}
+
 /* ====== Add Button ====== */
 .court-library__add-btn {
   flex-shrink: 0;

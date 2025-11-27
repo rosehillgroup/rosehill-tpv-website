@@ -111,10 +111,8 @@ function CourtLibrary() {
             {/* Track Info */}
             <div className="court-library__info">
               <div className="court-library__name">{template.name}</div>
-              <div className="court-library__dimensions">
-                {(template.calculatedDimensions.totalWidth_mm / 1000).toFixed(1)}m × {(template.calculatedDimensions.totalLength_mm / 1000).toFixed(1)}m
-              </div>
               <div className="court-library__standard">{template.parameters.numLanes} Lanes • {template.standard}</div>
+              <div className="court-library__note">Scales to fit canvas</div>
             </div>
 
             {/* Add Button */}

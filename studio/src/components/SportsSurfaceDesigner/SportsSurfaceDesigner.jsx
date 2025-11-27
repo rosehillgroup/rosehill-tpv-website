@@ -1,18 +1,41 @@
 // TPV Studio - Sports Surface Designer (Main Component)
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import CourtCanvas from './CourtCanvas.jsx';
 import CourtLibrary from './CourtLibrary.jsx';
 import PropertiesPanel from './PropertiesPanel.jsx';
 import LayersPanel from './LayersPanel.jsx';
+import SaveDesignModal from './SaveDesignModal.jsx';
+import ExportMenu from './ExportMenu.jsx';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import './SportsSurfaceDesigner.css';
 
-function SportsSurfaceDesigner() {
+function SportsSurfaceDesigner({ loadedDesign }) {
   const [showDimensionModal, setShowDimensionModal] = useState(true);
   const [widthInput, setWidthInput] = useState('50');
   const [lengthInput, setLengthInput] = useState('50');
   const [showSurfaceColorPicker, setShowSurfaceColorPicker] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [designId, setDesignId] = useState(null);
+  const [designName, setDesignName] = useState('');
+  const svgRef = useRef(null);
+
+  // Load design when loadedDesign prop changes
+  useEffect(() => {
+    if (loadedDesign && loadedDesign.design_data) {
+      console.log('[SPORTS] Loading design from prop:', loadedDesign.id, loadedDesign.name);
+
+      // Load the design data into the store
+      useSportsDesignStore.getState().loadDesign(loadedDesign.design_data);
+
+      // Update local state for save functionality
+      setDesignId(loadedDesign.id);
+      setDesignName(loadedDesign.name || '');
+
+      // Skip the dimension modal since we're loading an existing design
+      setShowDimensionModal(false);
+    }
+  }, [loadedDesign]);
 
   const {
     surface,
@@ -313,6 +336,19 @@ function SportsSurfaceDesigner() {
                 <span className="sports-designer__icon">↷</span>
                 Redo
               </button>
+
+              <div className="sports-designer__toolbar-divider" />
+
+              <button
+                className="sports-designer__toolbar-btn sports-designer__toolbar-btn--primary"
+                onClick={() => setShowSaveModal(true)}
+                title="Save Design"
+              >
+                <span className="sports-designer__icon">💾</span>
+                Save
+              </button>
+
+              <ExportMenu svgRef={svgRef} />
             </div>
           </div>
 
@@ -362,6 +398,20 @@ function SportsSurfaceDesigner() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Save Design Modal */}
+          {showSaveModal && (
+            <SaveDesignModal
+              existingDesignId={designId}
+              initialName={designName}
+              onClose={() => setShowSaveModal(false)}
+              onSaved={(result, name) => {
+                setDesignId(result.design_id);
+                setDesignName(name);
+                console.log('[SPORTS] Design saved:', result.design_id);
+              }}
+            />
           )}
         </>
       )}

@@ -83,6 +83,50 @@
   box-shadow: 0 8px 24px rgba(107, 114, 128, 0.3);
 }
 
+/* Mode Toggle - Segmented Control */
+.tpv-studio .mode-toggle {
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.tpv-studio .mode-toggle__btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.tpv-studio .mode-toggle__btn:hover {
+  color: #374151;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.tpv-studio .mode-toggle__btn--active {
+  background: white;
+  color: #1a202c;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tpv-studio .mode-toggle__btn--active:hover {
+  background: white;
+}
+
+.tpv-studio .mode-toggle__icon {
+  font-size: 14px;
+}
+
 .tpv-studio .btn-my-designs {
   display: flex;
   align-items: center;

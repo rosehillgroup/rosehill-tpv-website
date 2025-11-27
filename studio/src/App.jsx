@@ -16,10 +16,14 @@ function App() {
   const [showGallery, setShowGallery] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [loadedDesign, setLoadedDesign] = useState(null);
-  const [currentDesignName, setCurrentDesignName] = useState(null);
   const [needsPasswordSetup, setNeedsPasswordSetup] = useState(false);
   const [activeTool, setActiveTool] = useState(null); // null, 'playground', 'sports'
+
+  // Per-mode design state - each mode remembers its loaded design
+  const [playgroundDesign, setPlaygroundDesign] = useState(null);
+  const [sportsDesign, setSportsDesign] = useState(null);
+  const [playgroundDesignName, setPlaygroundDesignName] = useState(null);
+  const [sportsDesignName, setSportsDesignName] = useState(null);
 
   // Check if user has admin role
   const checkAdminStatus = async () => {
@@ -88,15 +92,31 @@ function App() {
 
   const handleLoadDesign = (design) => {
     console.log('[APP] Loading design:', design);
-    console.log('[APP] Design original_svg_url:', design.original_svg_url);
     console.log('[APP] Design ID:', design.id);
-    setLoadedDesign(design);
-    setCurrentDesignName(design.name);
-    console.log('[INSPIRE] Loaded design:', design.name);
+
+    // Detect design type and auto-switch to correct mode
+    const isSportsDesign = design.design_data?.type === 'sports_surface';
+
+    if (isSportsDesign) {
+      console.log('[APP] Sports design detected, switching to sports mode');
+      setSportsDesign(design);
+      setSportsDesignName(design.name);
+      setActiveTool('sports');
+    } else {
+      console.log('[APP] Playground design detected, switching to playground mode');
+      setPlaygroundDesign(design);
+      setPlaygroundDesignName(design.name);
+      setActiveTool('playground');
+    }
   };
 
   const handleDesignSaved = (designName) => {
-    setCurrentDesignName(designName);
+    // Update the design name for the active mode
+    if (activeTool === 'sports') {
+      setSportsDesignName(designName);
+    } else {
+      setPlaygroundDesignName(designName);
+    }
   };
 
   const handlePasswordSet = async () => {
@@ -158,12 +178,13 @@ function App() {
             onShowDesigns={() => setShowGallery(true)}
             onShowAdmin={() => setShowAdmin(true)}
             isAdmin={isAdmin}
-            currentDesignName="Sports Surface"
-            onBackToTools={() => setActiveTool(null)}
+            currentDesignName={sportsDesignName}
+            activeTool={activeTool}
+            onSwitchTool={setActiveTool}
           />
 
           <main className="tpv-studio__container">
-            <SportsSurfaceDesigner />
+            <SportsSurfaceDesigner loadedDesign={sportsDesign} />
           </main>
 
           {showGallery && (
@@ -185,13 +206,14 @@ function App() {
           onShowDesigns={() => setShowGallery(true)}
           onShowAdmin={() => setShowAdmin(true)}
           isAdmin={isAdmin}
-          currentDesignName={currentDesignName}
-          onBackToTools={() => setActiveTool(null)}
+          currentDesignName={playgroundDesignName}
+          activeTool={activeTool}
+          onSwitchTool={setActiveTool}
         />
 
         <main className="tpv-studio__container">
           <InspirePanelRecraft
-            loadedDesign={loadedDesign}
+            loadedDesign={playgroundDesign}
             onDesignSaved={handleDesignSaved}
           />
         </main>
