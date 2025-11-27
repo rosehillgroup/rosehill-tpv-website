@@ -11,9 +11,18 @@ import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import './SportsSurfaceDesigner.css';
 
 function SportsSurfaceDesigner({ loadedDesign }) {
-  const [showDimensionModal, setShowDimensionModal] = useState(true);
-  const [widthInput, setWidthInput] = useState('50');
-  const [lengthInput, setLengthInput] = useState('50');
+  // Only show dimension modal if there's no existing work in the store
+  const [showDimensionModal, setShowDimensionModal] = useState(() => {
+    return !useSportsDesignStore.getState().hasUnsavedChanges();
+  });
+  const [widthInput, setWidthInput] = useState(() => {
+    const surface = useSportsDesignStore.getState().surface;
+    return surface?.width_mm ? String(surface.width_mm / 1000) : '50';
+  });
+  const [lengthInput, setLengthInput] = useState(() => {
+    const surface = useSportsDesignStore.getState().surface;
+    return surface?.length_mm ? String(surface.length_mm / 1000) : '50';
+  });
   const [showSurfaceColorPicker, setShowSurfaceColorPicker] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [designId, setDesignId] = useState(null);
