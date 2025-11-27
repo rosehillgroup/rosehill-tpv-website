@@ -793,6 +793,14 @@ export const useSportsDesignStore = create(
       // Reset to initial state
       resetDesign: () => {
         set(initialState);
+      },
+
+      // Check if there are unsaved changes (any courts, tracks, or modifications)
+      hasUnsavedChanges: () => {
+        const state = get();
+        // Has changes if any courts or tracks have been added
+        return Object.keys(state.courts).length > 0 ||
+               Object.keys(state.tracks).length > 0;
       }
     }),
     { name: 'SportsDesignStore' }

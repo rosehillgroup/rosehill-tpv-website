@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { apiClient } from '../lib/api/client.js';
 import { auth } from '../lib/api/auth.js';
 import { listDesigns } from '../lib/api/designs.js';
+import { usePlaygroundDesignStore } from '../stores/playgroundDesignStore.js';
 import BlendRecipesDisplay from './BlendRecipesDisplay.jsx';
 import SolidColorSummary from './SolidColorSummary.jsx';
 import SVGPreview from './SVGPreview.jsx';
@@ -24,79 +25,94 @@ import { downloadSvgTiles } from '../lib/svgTileSlicer.js';
 import tpvColours from '../../api/_utils/data/rosehill_tpv_21_colours.json';
 
 export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
-  // Input mode state - three options: prompt, image, svg
-  const [inputMode, setInputMode] = useState('prompt'); // 'prompt', 'image', 'svg'
+  // ====== PERSISTENT STATE (from Zustand store - survives mode switches) ======
+  const store = usePlaygroundDesignStore();
 
-  // Form state
-  const [prompt, setPrompt] = useState('');
-  const [lengthMM, setLengthMM] = useState(5000);
-  const [widthMM, setWidthMM] = useState(5000);
+  // Destructure for direct access (store functions are used via store.xxx for setters)
+  const {
+    inputMode, prompt, lengthMM, widthMM, arMapping, uploadedFileUrl,
+    result, jobId,
+    blendRecipes, colorMapping, blendSvgUrl, blendEditedColors,
+    solidRecipes, solidColorMapping, solidSvgUrl, solidEditedColors,
+    viewMode, showFinalRecipes, showSolidSummary,
+    regionOverrides, originalTaggedSvg, regionOverridesHistory, historyIndex,
+    designName, currentDesignId,
+    hasUnsavedChanges, resetDesign
+  } = store;
 
-  // File upload state
+  // Store action shortcuts (for cleaner JSX)
+  const setInputMode = store.setInputMode;
+  const setPrompt = store.setPrompt;
+  const setDimensions = store.setDimensions;
+  const setArMapping = store.setArMapping;
+  const setGenerationResult = store.setGenerationResult;
+  const setResult = store.setResult;
+  const setJobId = store.setJobId;
+  const setBlendState = store.setBlendState;
+  const setBlendRecipes = store.setBlendRecipes;
+  const setColorMapping = store.setColorMapping;
+  const setBlendSvgUrl = store.setBlendSvgUrl;
+  const setSolidState = store.setSolidState;
+  const setSolidRecipes = store.setSolidRecipes;
+  const setSolidColorMapping = store.setSolidColorMapping;
+  const setSolidSvgUrl = store.setSolidSvgUrl;
+  const updateBlendSvgUrl = store.updateBlendSvgUrl;
+  const updateSolidSvgUrl = store.updateSolidSvgUrl;
+  const setBlendEditedColors = store.setBlendEditedColors;
+  const setSolidEditedColors = store.setSolidEditedColors;
+  const setViewMode = store.setViewMode;
+  const setShowFinalRecipes = store.setShowFinalRecipes;
+  const setShowSolidSummary = store.setShowSolidSummary;
+  const setRegionOverrides = store.setRegionOverrides;
+  const addRegionOverride = store.addRegionOverride;
+  const setOriginalTaggedSvg = store.setOriginalTaggedSvg;
+  const setRegionOverridesHistory = store.setRegionOverridesHistory;
+  const setHistoryIndex = store.setHistoryIndex;
+  const canUndo = store.canUndo;
+  const canRedo = store.canRedo;
+  const storeUndo = store.undo;
+  const storeRedo = store.redo;
+  const setDesignName = store.setDesignName;
+  const setCurrentDesignId = store.setCurrentDesignId;
+  const loadDesignFromStore = store.loadDesign;
+
+  // Helper setters for individual dimensions (wrap setDimensions)
+  const setWidthMM = (width) => setDimensions(width, lengthMM);
+  const setLengthMM = (length) => setDimensions(widthMM, length);
+
+  // ====== LOCAL STATE (UI-only, resets on remount - that's fine) ======
+
+  // File upload state (File object can't be in store, but uploaded URL can)
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // Aspect ratio mapping
-  const [arMapping, setArMapping] = useState(null);
-
-  // Generation state
+  // Generation progress state
   const [generating, setGenerating] = useState(false);
-  const [jobId, setJobId] = useState(null);
   const [status, setStatus] = useState(null);
-  const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-
-  // Progress tracking
   const [progressMessage, setProgressMessage] = useState('');
   const [attemptInfo, setAttemptInfo] = useState(null);
 
-  // Blend recipes state
-  const [blendRecipes, setBlendRecipes] = useState(null);
-  const [blendSvgUrl, setBlendSvgUrl] = useState(null);
-  const [colorMapping, setColorMapping] = useState(null);
-  const [showFinalRecipes, setShowFinalRecipes] = useState(false);
-
-  // Solid color mode state
-  const [viewMode, setViewMode] = useState('solid'); // 'blend' or 'solid' - default to solid
-  const [solidRecipes, setSolidRecipes] = useState(null);
-  const [solidSvgUrl, setSolidSvgUrl] = useState(null);
-  const [solidColorMapping, setSolidColorMapping] = useState(null);
-  const [showSolidSummary, setShowSolidSummary] = useState(false);
-
-  // Color editor state
+  // Color editor UI state
   const [colorEditorOpen, setColorEditorOpen] = useState(false);
   const [selectedColor, setSelectedColor] = useState(null);
-  const [solidEditedColors, setSolidEditedColors] = useState(new Map()); // originalHex -> {newHex}
-  const [blendEditedColors, setBlendEditedColors] = useState(new Map()); // originalHex -> {newHex}
 
-  // Region-based eyedropper state (for per-element editing)
-  const [regionOverrides, setRegionOverrides] = useState(new Map()); // regionId -> hex
+  // Eyedropper UI state
   const [eyedropperActive, setEyedropperActive] = useState(false);
   const [eyedropperRegion, setEyedropperRegion] = useState(null); // {regionId, sourceColor}
-  const [originalTaggedSvg, setOriginalTaggedSvg] = useState(null); // SVG with region IDs
   const [regionRecolorQueue, setRegionRecolorQueue] = useState([]); // Queue of {regionId, newHex} operations
   const [isProcessingQueue, setIsProcessingQueue] = useState(false); // Track if currently processing queue
 
-  // Undo/redo history for region overrides
-  const [regionOverridesHistory, setRegionOverridesHistory] = useState([new Map()]); // Array of Map snapshots
-  const [historyIndex, setHistoryIndex] = useState(0); // Current position in history
-
-  // Mixer state (for blend mode only)
+  // Mixer UI state (for blend mode only)
   const [mixerOpen, setMixerOpen] = useState(false);
   const [mixerColor, setMixerColor] = useState(null); // Color being edited in mixer
 
-  // Save design state
+  // Save modal state
   const [showSaveModal, setShowSaveModal] = useState(false);
-
-  // Design name state
-  const [designName, setDesignName] = useState('');
   const [isNameLoading, setIsNameLoading] = useState(false);
 
-  // Track loaded design ID for updates
-  const [currentDesignId, setCurrentDesignId] = useState(null);
-
-  // In-situ preview state
+  // In-situ preview modal state
   const [showInSituModal, setShowInSituModal] = useState(false);
   const [inSituData, setInSituData] = useState(null);
 
@@ -146,18 +162,16 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   useEffect(() => {
     if (inputMode === 'image' || inputMode === 'svg') {
       // Clear dimensions for upload modes - they'll be set via modal when needed
-      setWidthMM(null);
-      setLengthMM(null);
+      setDimensions(null, null);
       console.log('[DIMENSION] Reset dimensions for upload mode:', inputMode);
     } else if (inputMode === 'prompt') {
       // Restore default dimensions for prompt mode if they're null
       if (widthMM === null || lengthMM === null) {
-        setWidthMM(5000);
-        setLengthMM(5000);
+        setDimensions(5000, 5000);
         console.log('[DIMENSION] Restored default dimensions for prompt mode');
       }
     }
-  }, [inputMode]);
+  }, [inputMode, setDimensions]);
 
   // Cleanup blob URLs on unmount to prevent memory leaks
   useEffect(() => {
@@ -197,38 +211,18 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       const restoredState = deserializeDesign(loadedDesign);
       console.log('[INSPIRE] Restored state:', restoredState);
 
-      // Restore all state
-      setInputMode(restoredState.inputMode);
-      setPrompt(restoredState.prompt);
-      setSelectedFile(restoredState.selectedFile);
-      setLengthMM(restoredState.lengthMM);
-      setWidthMM(restoredState.widthMM);
-      setResult(restoredState.result);
-      setBlendRecipes(restoredState.blendRecipes);
-      setSolidRecipes(restoredState.solidRecipes);
-      setColorMapping(restoredState.colorMapping);
-      setSolidColorMapping(restoredState.solidColorMapping);
-      setSolidEditedColors(restoredState.solidEditedColors);
-      setBlendEditedColors(restoredState.blendEditedColors);
-      setBlendSvgUrl(restoredState.blendSvgUrl);
-      setSolidSvgUrl(restoredState.solidSvgUrl);
-      setViewMode(restoredState.viewMode);
-      setArMapping(restoredState.arMapping);
-      setJobId(restoredState.jobId);
-      setShowFinalRecipes(restoredState.showFinalRecipes);
-      setShowSolidSummary(restoredState.showSolidSummary);
+      // Load state into the Zustand store
+      loadDesignFromStore(restoredState);
 
-      console.log('[INSPIRE] Loaded design:', loadedDesign.name);
-
-      // Set design name from saved design
+      // Set design name and ID from saved design
       if (loadedDesign.name) {
         setDesignName(loadedDesign.name);
       }
-
-      // Track design ID for updates
       if (loadedDesign.id) {
         setCurrentDesignId(loadedDesign.id);
       }
+
+      console.log('[INSPIRE] Loaded design:', loadedDesign.name);
 
       // Regenerate SVGs from saved state (blob URLs don't survive page reload)
       // This needs to happen after state is set, so we use a timeout
@@ -277,7 +271,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
         }
       }, 100);
     }
-  }, [loadedDesign]);
+  }, [loadedDesign, loadDesignFromStore, setDesignName, setCurrentDesignId, setOriginalTaggedSvg]);
 
   // Handle file selection
   const handleFileSelect = (event) => {
@@ -715,6 +709,34 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       };
       img.src = svgUrl;
     }
+  };
+
+  // Handle new design - reset all state
+  const handleNewDesign = () => {
+    // Check for unsaved work
+    if (hasUnsavedChanges()) {
+      const confirmed = window.confirm(
+        'Start a new design?\n\nYou have unsaved changes that will be lost.'
+      );
+      if (!confirmed) return;
+    }
+
+    // Reset all state via the store
+    resetDesign();
+
+    // Reset local UI state
+    setSelectedFile(null);
+    setGenerating(false);
+    setStatus(null);
+    setError(null);
+    setProgressMessage('');
+    setAttemptInfo(null);
+    setColorEditorOpen(false);
+    setSelectedColor(null);
+    setEyedropperActive(false);
+    setEyedropperRegion(null);
+    setMixerOpen(false);
+    setMixerColor(null);
   };
 
   // Handle save design click - check dimensions first
@@ -2049,6 +2071,13 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           {/* Action Buttons - Show when design is ready */}
           {blendSvgUrl && (
             <div className="action-buttons">
+              <button
+                onClick={handleNewDesign}
+                className="new-button"
+                title="Start a new design"
+              >
+                ➕ New Design
+              </button>
               <button
                 onClick={handleSaveClick}
                 className="save-button"
