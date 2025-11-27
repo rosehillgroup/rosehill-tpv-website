@@ -45,7 +45,7 @@ export async function generateSportsPDF(svgElement, designState, designName) {
 
   // Capture canvas as PNG
   const pngDataUrl = await captureCanvasAsPng(svgElement);
-  const pngBytes = await fetch(pngDataUrl).then(r => r.arrayBuffer());
+  const pngBytes = dataUrlToBytes(pngDataUrl);
   const pngImage = await pdfDoc.embedPng(pngBytes);
 
   // Calculate image dimensions
@@ -311,6 +311,19 @@ export async function generateSportsPDF(svgElement, designState, designName) {
   console.log(`[SPORTS-PDF] Generated ${pdfBytes.length} bytes`);
 
   return pdfBytes;
+}
+
+/**
+ * Convert data URL to Uint8Array (without using fetch)
+ */
+function dataUrlToBytes(dataUrl) {
+  const base64 = dataUrl.split(',')[1];
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
 }
 
 /**
