@@ -47,11 +47,15 @@ export default function DesignCard({
   };
 
   // Use thumbnail, PNG, or SVG as fallback for preview
-  const thumbnailUrl = design.thumbnail_url || design.original_png_url || design.original_svg_url;
+  // Sports designs don't have image URLs (they're generated client-side)
+  const isSportsDesign = design.input_mode === 'sports_surface';
+  const thumbnailUrl = !isSportsDesign
+    ? (design.thumbnail_url || design.original_png_url || design.original_svg_url)
+    : null;
 
   return (
     <div
-      className={`design-card ${isDeleting ? 'deleting' : ''}`}
+      className={`design-card ${isDeleting ? 'deleting' : ''} ${isSportsDesign ? 'sports-design' : ''}`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
@@ -59,6 +63,11 @@ export default function DesignCard({
       <div className="card-thumbnail" onClick={() => onLoad(design.id)}>
         {thumbnailUrl ? (
           <img src={thumbnailUrl} alt={design.name} />
+        ) : isSportsDesign ? (
+          <div className="sports-thumbnail">
+            <span className="sports-icon">⚽</span>
+            <span className="sports-label">Sports Surface</span>
+          </div>
         ) : (
           <div className="no-thumbnail">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
