@@ -24,7 +24,8 @@ export default async function handler(req, res) {
       project_id,
       tags,
       design_data,
-      is_public
+      is_public,
+      thumbnail_url // For sports designs
     } = req.body;
 
     // Validate required fields
@@ -76,10 +77,10 @@ export default async function handler(req, res) {
         dimensions: design_data.dimensions, // { width_mm, length_mm }
         design_data: design_data, // Store complete sports design as JSONB
 
-        // Placeholder for sports (SVG generated client-side, not stored)
+        // Sports designs generate thumbnails client-side
         original_svg_url: 'sports_surface',
         original_png_url: null,
-        thumbnail_url: null,
+        thumbnail_url: thumbnail_url || null,
 
         // No color recipes (sports uses TPV colors directly)
         blend_recipes: null,

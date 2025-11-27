@@ -370,7 +370,7 @@ function SportsSurfaceDesigner({ loadedDesign }) {
 
             {/* Canvas Area */}
             <main className="sports-designer__canvas-container">
-              <CourtCanvas />
+              <CourtCanvas ref={svgRef} />
             </main>
 
             {/* Properties Panel - shown when court or track is selected AND panel is not hidden */}
@@ -411,6 +411,7 @@ function SportsSurfaceDesigner({ loadedDesign }) {
             <SaveDesignModal
               existingDesignId={designId}
               initialName={designName}
+              svgRef={svgRef}
               onClose={() => setShowSaveModal(false)}
               onSaved={(result, name) => {
                 setDesignId(result.design_id);

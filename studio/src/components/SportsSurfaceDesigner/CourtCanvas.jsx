@@ -1,5 +1,5 @@
 // TPV Studio - Court Canvas Component
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { generateCourtSVG } from '../../lib/sports/courtTemplates.js';
 import { snapPositionToGrid, constrainPosition, getCourtTransformString } from '../../lib/sports/geometryUtils.js';
@@ -7,8 +7,11 @@ import TransformHandles from './TransformHandles.jsx';
 import TrackElement from './TrackRenderer.jsx';
 import './CourtCanvas.css';
 
-function CourtCanvas() {
+const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const canvasRef = useRef(null);
+
+  // Expose the SVG ref to parent
+  useImperativeHandle(ref, () => canvasRef.current);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
   const [dragCourtId, setDragCourtId] = useState(null);
@@ -242,7 +245,7 @@ function CourtCanvas() {
       </div>
     </div>
   );
-}
+});
 
 /**
  * Individual court element component

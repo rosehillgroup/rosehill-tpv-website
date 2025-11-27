@@ -2,14 +2,114 @@
 // Modal for saving sports surface designs with project assignment
 
 import { useState, useEffect } from 'react';
+import { supabase } from '../../lib/api/auth.js';
 import { saveDesign } from '../../lib/api/designs.js';
 import { createProject, listProjects } from '../../lib/api/projects.js';
 import { serializeSportsDesign, validateSportsDesign } from '../../utils/sportsDesignSerializer.js';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 
+/**
+ * Generate a thumbnail PNG from an SVG element
+ */
+async function generateThumbnail(svgElement, maxSize = 400) {
+  return new Promise((resolve, reject) => {
+    try {
+      // Clone the SVG to avoid modifying the original
+      const svgClone = svgElement.cloneNode(true);
+
+      // Remove selection indicators and transform handles
+      svgClone.querySelectorAll('.court-canvas__court--selected, .transform-handles').forEach(el => {
+        el.classList.remove('court-canvas__court--selected');
+      });
+      svgClone.querySelectorAll('.transform-handles').forEach(el => el.remove());
+
+      // Get viewBox dimensions
+      const viewBox = svgElement.getAttribute('viewBox').split(' ').map(Number);
+      const svgWidth = viewBox[2];
+      const svgHeight = viewBox[3];
+
+      // Calculate thumbnail dimensions maintaining aspect ratio
+      let width, height;
+      if (svgWidth > svgHeight) {
+        width = maxSize;
+        height = Math.round((svgHeight / svgWidth) * maxSize);
+      } else {
+        height = maxSize;
+        width = Math.round((svgWidth / svgHeight) * maxSize);
+      }
+
+      // Set explicit dimensions on clone
+      svgClone.setAttribute('width', width);
+      svgClone.setAttribute('height', height);
+
+      // Serialize SVG
+      const svgString = new XMLSerializer().serializeToString(svgClone);
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+
+      // Create image and canvas
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+
+        // Draw white background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+
+        // Draw SVG
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to blob
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(url);
+          resolve(blob);
+        }, 'image/png', 0.9);
+      };
+
+      img.onerror = (err) => {
+        URL.revokeObjectURL(url);
+        reject(new Error('Failed to load SVG for thumbnail'));
+      };
+
+      img.src = url;
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+/**
+ * Upload thumbnail to Supabase storage
+ */
+async function uploadThumbnail(blob) {
+  const filename = `sports-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.png`;
+  const filePath = `thumbnails/sports/${filename}`;
+
+  const { data, error } = await supabase.storage
+    .from('tpv-studio-uploads')
+    .upload(filePath, blob, {
+      cacheControl: '3600',
+      contentType: 'image/png',
+      upsert: false
+    });
+
+  if (error) throw error;
+
+  // Get public URL
+  const { data: { publicUrl } } = supabase.storage
+    .from('tpv-studio-uploads')
+    .getPublicUrl(filePath);
+
+  return publicUrl;
+}
+
 export default function SaveDesignModal({
   existingDesignId = null,
   initialName = '',
+  svgRef = null,
   onClose,
   onSaved
 }) {
@@ -99,6 +199,21 @@ export default function SaveDesignModal({
     setError(null);
 
     try {
+      // Generate and upload thumbnail if we have the SVG ref
+      let thumbnailUrl = null;
+      if (svgRef?.current) {
+        try {
+          console.log('[SPORTS-SAVE] Generating thumbnail...');
+          const thumbnailBlob = await generateThumbnail(svgRef.current);
+          console.log('[SPORTS-SAVE] Uploading thumbnail...');
+          thumbnailUrl = await uploadThumbnail(thumbnailBlob);
+          console.log('[SPORTS-SAVE] Thumbnail uploaded:', thumbnailUrl);
+        } catch (thumbErr) {
+          console.warn('[SPORTS-SAVE] Thumbnail generation failed, continuing without:', thumbErr);
+          // Continue without thumbnail - not critical
+        }
+      }
+
       // Serialize design state with metadata
       const designData = serializeSportsDesign(currentState, {
         name: name.trim(),
@@ -115,7 +230,8 @@ export default function SaveDesignModal({
         project_id: projectId || null,
         tags: tags.split(',').map(t => t.trim()).filter(t => t),
         is_public: isPublic,
-        design_data: designData
+        design_data: designData,
+        thumbnail_url: thumbnailUrl
       };
 
       // Add ID for updates (unless saving as new)
