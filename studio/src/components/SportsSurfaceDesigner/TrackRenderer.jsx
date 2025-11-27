@@ -50,7 +50,8 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
         y="0"
         width={boundingWidth}
         height={boundingLength}
-        fill="transparent"
+        fill="none"
+        pointerEvents="all"
         onMouseDown={onMouseDown}
         onDoubleClick={onDoubleClick}
         style={{ cursor: 'move' }}

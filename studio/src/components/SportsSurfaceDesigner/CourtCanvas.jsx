@@ -280,7 +280,8 @@ function CourtElement({ court, isSelected, onMouseDown, onDoubleClick, svgRef })
         y="0"
         width={court.template.dimensions.width_mm}
         height={court.template.dimensions.length_mm}
-        fill="transparent"
+        fill="none"
+        pointerEvents="all"
         onMouseDown={onMouseDown}
         onDoubleClick={onDoubleClick}
         style={{ cursor: 'move' }}
