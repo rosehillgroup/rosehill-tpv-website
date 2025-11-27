@@ -4,6 +4,7 @@ import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import CourtCanvas from './CourtCanvas.jsx';
 import CourtLibrary from './CourtLibrary.jsx';
 import PropertiesPanel from './PropertiesPanel.jsx';
+import LayersPanel from './LayersPanel.jsx';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import './SportsSurfaceDesigner.css';
 
@@ -321,6 +322,7 @@ function SportsSurfaceDesigner() {
             {showCourtLibrary && (
               <aside className="sports-designer__sidebar">
                 <CourtLibrary />
+                <LayersPanel />
               </aside>
             )}
 

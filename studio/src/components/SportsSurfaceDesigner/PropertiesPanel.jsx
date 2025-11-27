@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { calculateTrackGeometry, calculateStaggeredStarts } from '../../lib/sports/trackGeometry.js';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
-import LayersPanel from './LayersPanel.jsx';
 import './PropertiesPanel.css';
 
 function PropertiesPanel() {
@@ -25,7 +24,7 @@ function PropertiesPanel() {
     addToHistory
   } = useSportsDesignStore();
 
-  const [activeSection, setActiveSection] = useState('transform'); // 'transform', 'lines', 'zones', 'layers'
+  const [activeSection, setActiveSection] = useState('transform'); // 'transform', 'lines', 'zones'
   const [colorPickerTarget, setColorPickerTarget] = useState(null); // { type: 'line'|'zone', id: string }
 
   // Show track properties if track is selected
@@ -176,12 +175,6 @@ function PropertiesPanel() {
           onClick={() => setActiveSection('zones')}
         >
           Zones
-        </button>
-        <button
-          className={`tab ${activeSection === 'layers' ? 'tab--active' : ''}`}
-          onClick={() => setActiveSection('layers')}
-        >
-          Layers
         </button>
       </div>
 
@@ -409,10 +402,6 @@ function PropertiesPanel() {
           </div>
         )}
 
-        {/* Layers Section */}
-        {activeSection === 'layers' && (
-          <LayersPanel />
-        )}
       </div>
 
       {/* Color Picker Modal */}

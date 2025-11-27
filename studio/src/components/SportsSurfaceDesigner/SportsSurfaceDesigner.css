@@ -200,7 +200,27 @@
   width: 280px;
   background: var(--color-bg-card, white);
   border-right: 1px solid var(--color-border, #e4e9f0);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Court Library takes available space */
+.sports-designer__sidebar > :first-child {
+  flex: 1;
   overflow-y: auto;
+  min-height: 0;
+}
+
+/* Layers panel at bottom with fixed max-height */
+.sports-designer__sidebar > .layers-panel {
+  flex-shrink: 0;
+  max-height: 280px;
+  border-top: 1px solid var(--color-border, #e4e9f0);
+  overflow-y: auto;
+  padding: var(--space-2, 1rem);
+  background: var(--color-bg-subtle, #f8fafc);
 }
 
 /* ====== Canvas Container ====== */
