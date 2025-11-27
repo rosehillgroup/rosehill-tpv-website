@@ -10,8 +10,8 @@ import './SportsSurfaceDesigner.css';
 
 function SportsSurfaceDesigner() {
   const [showDimensionModal, setShowDimensionModal] = useState(true);
-  const [widthInput, setWidthInput] = useState('28');
-  const [lengthInput, setLengthInput] = useState('15');
+  const [widthInput, setWidthInput] = useState('50');
+  const [lengthInput, setLengthInput] = useState('50');
   const [showSurfaceColorPicker, setShowSurfaceColorPicker] = useState(false);
 
   const {
@@ -229,7 +229,7 @@ function SportsSurfaceDesigner() {
               </div>
 
               <p className="sports-designer__dimension-hint">
-                Common MUGA size: 28m × 15m (basketball) or 40m × 20m (futsal)
+                Common sizes: 37m × 34m (tennis), 40m × 20m (futsal), 50m × 50m (multi-sport)
               </p>
 
               <button type="submit" className="sports-designer__btn-primary">
