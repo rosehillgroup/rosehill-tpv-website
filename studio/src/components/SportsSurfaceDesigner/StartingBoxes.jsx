@@ -405,6 +405,9 @@ function CurvedStartingBox({ index, laneNumber, distance, depth_mm, parameters, 
   const ex2 = endPoint.x - Math.cos(endPerpAngle) * halfLaneWidth;
   const ey2 = endPoint.y - Math.sin(endPerpAngle) * halfLaneWidth;
 
+  // Calculate center point of box for label (midway between start and end)
+  const centerPoint = getLaneCenterAtDistance(index, distance + depth_mm / 2, parameters);
+
   // Create path for box fill
   const boxPath = `
     M ${x1} ${y1}
@@ -436,10 +439,10 @@ function CurvedStartingBox({ index, laneNumber, distance, depth_mm, parameters, 
         pointerEvents="none"
       />
 
-      {/* Lane number label */}
+      {/* Lane number label - positioned in center of box */}
       <text
-        x={startPoint.x}
-        y={startPoint.y}
+        x={centerPoint.x}
+        y={centerPoint.y}
         fontSize={parameters.laneWidth_mm * 0.5}
         fill={lineColor}
         textAnchor="middle"
@@ -447,7 +450,7 @@ function CurvedStartingBox({ index, laneNumber, distance, depth_mm, parameters, 
         fontWeight="bold"
         pointerEvents="none"
         opacity="0.8"
-        transform={`rotate(${(startPoint.angle * 180 / Math.PI) + 90}, ${startPoint.x}, ${startPoint.y})`}
+        transform={`rotate(${(centerPoint.angle * 180 / Math.PI) + 90}, ${centerPoint.x}, ${centerPoint.y})`}
       >
         {laneNumber}
       </text>
