@@ -334,8 +334,12 @@ async function captureCanvasAsPng(svgElement) {
     try {
       const svgClone = svgElement.cloneNode(true);
 
-      // Remove selection indicators
-      svgClone.querySelectorAll('[class*="selected"], .transform-handles, .track-resize-handles').forEach(el => {
+      // Remove selection indicators and transform handles
+      svgClone.querySelectorAll(
+        '[class*="selected"], .transform-handles, .track-resize-handles, ' +
+        '.court-canvas__selection-outline, [class*="selection"], [class*="handle"], ' +
+        '[stroke-dasharray]'
+      ).forEach(el => {
         el.remove();
       });
 
@@ -346,6 +350,10 @@ async function captureCanvasAsPng(svgElement) {
 
       svgClone.setAttribute('width', width);
       svgClone.setAttribute('height', height);
+
+      // Set proper XML namespaces - required for SVG to render correctly when serialized
+      svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
 
       const svgString = new XMLSerializer().serializeToString(svgClone);
       const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
