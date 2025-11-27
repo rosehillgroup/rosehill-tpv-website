@@ -339,16 +339,6 @@ function SportsSurfaceDesigner() {
             )}
           </div>
 
-          {/* Help Text - compact banner */}
-          {Object.keys(courts).length === 0 && Object.keys(tracks).length === 0 && (
-            <div className="sports-designer__empty-state">
-              <div className="sports-designer__empty-content">
-                <h3>Getting Started</h3>
-                <p>Select a court or track from the library to add it to your surface</p>
-              </div>
-            </div>
-          )}
-
           {/* Surface Color Picker Modal */}
           {showSurfaceColorPicker && (
             <div className="sports-designer__color-modal-overlay" onClick={() => setShowSurfaceColorPicker(false)}>

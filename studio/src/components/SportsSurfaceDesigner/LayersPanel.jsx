@@ -204,16 +204,8 @@ function LayersPanel() {
                 ≡
               </span>
 
-              {/* Element Icon */}
-              <span className="layer-item__icon">{info.icon}</span>
-
-              {/* Element Info */}
-              <div className="layer-item__info">
-                <span className="layer-item__name">{info.name}</span>
-                <span className="layer-item__type">
-                  {info.type === 'court' ? 'Court' : 'Track'}
-                </span>
-              </div>
+              {/* Element Name */}
+              <span className="layer-item__name">{info.name}</span>
 
               {/* Quick Actions */}
               <div className="layer-item__actions">
