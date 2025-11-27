@@ -589,6 +589,19 @@ function TrackPropertiesPanel({ track, trackId }) {
     });
   };
 
+  // Handle start position change (curved tracks only)
+  const handleStartPositionChange = (value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue < 0 || numValue > 100) return;
+
+    updateTrackParameters(trackId, {
+      startingBoxes: {
+        ...parameters.startingBoxes,
+        startPosition: numValue
+      }
+    });
+  };
+
   // Calculate average corner radius for display
   const avgCornerRadius = (
     parameters.cornerRadius.topLeft +
@@ -835,29 +848,31 @@ function TrackPropertiesPanel({ track, trackId }) {
                   <span className="property-unit">m</span>
                 </div>
 
-                {/* Starting Box Style */}
-                <div style={{ marginBottom: '0.75rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#64748b', marginBottom: '0.375rem' }}>
-                    Start Style
-                  </label>
-                  <select
-                    value={parameters.startingBoxes.style || 'staggered'}
-                    onChange={(e) => handleBoxStyleChange(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '0.5rem',
-                      border: '1px solid #e4e9f0',
-                      borderRadius: '6px',
-                      fontSize: '0.875rem',
-                      fontFamily: 'inherit',
-                      background: 'white'
-                    }}
-                  >
-                    <option value="straight">Straight Start</option>
-                    <option value="staggered">Staggered Start</option>
-                    <option value="both">Both (opposite ends)</option>
-                  </select>
-                </div>
+                {/* Starting Box Style - only show for curved tracks */}
+                {!isStraightTrack && (
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#64748b', marginBottom: '0.375rem' }}>
+                      Start Style
+                    </label>
+                    <select
+                      value={parameters.startingBoxes.style || 'staggered'}
+                      onChange={(e) => handleBoxStyleChange(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.5rem',
+                        border: '1px solid #e4e9f0',
+                        borderRadius: '6px',
+                        fontSize: '0.875rem',
+                        fontFamily: 'inherit',
+                        background: 'white'
+                      }}
+                    >
+                      <option value="straight">Straight Start</option>
+                      <option value="staggered">Staggered Start</option>
+                      <option value="both">Both (opposite ends)</option>
+                    </select>
+                  </div>
+                )}
 
                 {/* Direction of Travel */}
                 <div style={{ marginBottom: '0.75rem' }}>
@@ -881,6 +896,28 @@ function TrackPropertiesPanel({ track, trackId }) {
                     <option value="clockwise">Clockwise</option>
                   </select>
                 </div>
+
+                {/* Start Position - only for curved tracks */}
+                {!isStraightTrack && (
+                  <div style={{ marginBottom: '0.75rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#64748b', marginBottom: '0.375rem' }}>
+                      Start Position ({parameters.startingBoxes.startPosition || 0}%)
+                    </label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={parameters.startingBoxes.startPosition || 0}
+                      onChange={(e) => handleStartPositionChange(e.target.value)}
+                      className="property-slider"
+                      style={{ width: '100%' }}
+                    />
+                    <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.25rem' }}>
+                      Slide to adjust where the start line appears around the track
+                    </div>
+                  </div>
+                )}
 
                 {/* Info: Boxes use track surface color */}
                 <div className="property-info" style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.5rem' }}>
