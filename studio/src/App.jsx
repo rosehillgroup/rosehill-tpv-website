@@ -183,7 +183,7 @@ function App() {
             onSwitchTool={setActiveTool}
           />
 
-          <main className="tpv-studio__container">
+          <main className="tpv-studio__container tpv-studio__container--full">
             <SportsSurfaceDesigner loadedDesign={sportsDesign} />
           </main>
 

@@ -222,6 +222,12 @@
   padding: var(--space-4);
 }
 
+/* Full-width container for design tools */
+.tpv-studio__container--full {
+  max-width: none;
+  padding: 0;
+}
+
 /* Card - Premium elevation */
 .tpv-studio__card {
   background: var(--color-bg-card);
