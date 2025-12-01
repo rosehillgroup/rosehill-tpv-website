@@ -47,11 +47,8 @@ export default function DesignCard({
   };
 
   // Use thumbnail, PNG, or SVG as fallback for preview
-  // Sports designs don't have image URLs (they're generated client-side)
   const isSportsDesign = design.input_mode === 'sports_surface';
-  const thumbnailUrl = !isSportsDesign
-    ? (design.thumbnail_url || design.original_png_url || design.original_svg_url)
-    : null;
+  const thumbnailUrl = design.thumbnail_url || design.original_png_url || design.original_svg_url;
 
   return (
     <div

@@ -765,3 +765,131 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* ====== Overflow Menu ====== */
+.layer-item__menu-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--color-text-tertiary, #94a3b8);
+  cursor: pointer;
+  border-radius: var(--radius-sm, 6px);
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.layer-item__menu-btn:hover {
+  background: var(--color-bg-subtle, #f8fafc);
+  color: var(--color-text-primary, #1a202c);
+}
+
+.layer-item__actions {
+  position: relative;
+}
+
+.layer-item__menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 140px;
+  background: white;
+  border: 1px solid var(--color-border, #e4e9f0);
+  border-radius: var(--radius-md, 8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.layer-item__menu button {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--color-text-primary, #1a202c);
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: inherit;
+}
+
+.layer-item__menu button:hover:not(:disabled) {
+  background: var(--color-bg-subtle, #f8fafc);
+}
+
+.layer-item__menu button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.layer-item__menu-divider {
+  height: 1px;
+  background: var(--color-border, #e4e9f0);
+  margin: 0.25rem 0;
+}
+
+/* ====== Layer Item States ====== */
+.layer-item--locked {
+  opacity: 0.75;
+}
+
+.layer-item__handle--disabled {
+  cursor: not-allowed;
+  color: var(--color-text-tertiary, #94a3b8);
+}
+
+.layer-item--hidden {
+  opacity: 0.5;
+}
+
+.layer-item__name--hidden {
+  text-decoration: line-through;
+  color: var(--color-text-tertiary, #94a3b8);
+}
+
+/* ====== Status Indicators ====== */
+.layer-item__indicators {
+  display: flex;
+  gap: 4px;
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.layer-item__indicator {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+/* ====== Rename Input ====== */
+.layer-item__rename-input {
+  flex: 1;
+  min-width: 0;
+  padding: 2px 6px;
+  border: 1px solid var(--color-primary, #1a365d);
+  border-radius: var(--radius-sm, 4px);
+  font-size: var(--text-sm, 0.875rem);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  background: white;
+  outline: none;
+}
+
+.layer-item__rename-input:focus {
+  box-shadow: 0 0 0 2px rgba(26, 54, 93, 0.2);
+}
+
+/* ====== Delete Button Styling ====== */
+.layer-item__menu-delete {
+  color: #dc2626 !important;
+}
+
+.layer-item__menu-delete:hover:not(:disabled) {
+  background: #fef2f2 !important;
+}

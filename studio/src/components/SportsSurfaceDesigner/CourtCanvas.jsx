@@ -50,9 +50,12 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
 
     selectCourt(courtId);
 
+    const court = courts[courtId];
+    // Don't allow dragging locked courts
+    if (court?.locked) return;
+
     // Convert screen coordinates to SVG coordinates
     const svgPoint = screenToSVG(e.clientX, e.clientY);
-    const court = courts[courtId];
 
     setDragStart({
       x: svgPoint.x - court.position.x,
@@ -81,8 +84,11 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
 
     selectTrack(trackId);
 
-    const svgPoint = screenToSVG(e.clientX, e.clientY);
     const track = tracks[trackId];
+    // Don't allow dragging locked tracks
+    if (track?.locked) return;
+
+    const svgPoint = screenToSVG(e.clientX, e.clientY);
 
     setDragStart({
       x: svgPoint.x - track.position.x,
@@ -198,6 +204,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
           if (elementId.startsWith('court-')) {
             const court = courts[elementId];
             if (!court) return null;
+            // Skip hidden courts
+            if (court.visible === false) return null;
 
             return (
               <CourtElement
@@ -215,6 +223,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
           if (elementId.startsWith('track-')) {
             const track = tracks[elementId];
             if (!track) return null;
+            // Skip hidden tracks
+            if (track.visible === false) return null;
 
             return (
               <TrackElement

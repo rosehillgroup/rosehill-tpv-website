@@ -241,6 +241,110 @@ export const useSportsDesignStore = create(
         get().addToHistory();
       },
 
+      duplicateTrack: (trackId) => {
+        const track = get().tracks[trackId];
+        if (!track) return;
+
+        const newTrackId = `track-${Date.now()}`;
+        const newTrack = {
+          ...track,
+          id: newTrackId,
+          position: {
+            x: track.position.x + 500,
+            y: track.position.y + 500
+          }
+        };
+
+        set((state) => ({
+          tracks: {
+            ...state.tracks,
+            [newTrackId]: newTrack
+          },
+          elementOrder: [...state.elementOrder, newTrackId],
+          selectedTrackId: newTrackId,
+          selectedCourtId: null
+        }));
+        get().addToHistory();
+      },
+
+      // ====== Rename Actions ======
+      renameElement: (elementId, customName) => {
+        if (elementId.startsWith('court-')) {
+          set((state) => ({
+            courts: {
+              ...state.courts,
+              [elementId]: {
+                ...state.courts[elementId],
+                customName
+              }
+            }
+          }));
+        } else if (elementId.startsWith('track-')) {
+          set((state) => ({
+            tracks: {
+              ...state.tracks,
+              [elementId]: {
+                ...state.tracks[elementId],
+                customName
+              }
+            }
+          }));
+        }
+        get().addToHistory();
+      },
+
+      // ====== Lock Actions ======
+      toggleElementLock: (elementId) => {
+        if (elementId.startsWith('court-')) {
+          set((state) => ({
+            courts: {
+              ...state.courts,
+              [elementId]: {
+                ...state.courts[elementId],
+                locked: !state.courts[elementId]?.locked
+              }
+            }
+          }));
+        } else if (elementId.startsWith('track-')) {
+          set((state) => ({
+            tracks: {
+              ...state.tracks,
+              [elementId]: {
+                ...state.tracks[elementId],
+                locked: !state.tracks[elementId]?.locked
+              }
+            }
+          }));
+        }
+        get().addToHistory();
+      },
+
+      // ====== Visibility Actions ======
+      toggleElementVisibility: (elementId) => {
+        if (elementId.startsWith('court-')) {
+          set((state) => ({
+            courts: {
+              ...state.courts,
+              [elementId]: {
+                ...state.courts[elementId],
+                visible: state.courts[elementId]?.visible === false ? true : false
+              }
+            }
+          }));
+        } else if (elementId.startsWith('track-')) {
+          set((state) => ({
+            tracks: {
+              ...state.tracks,
+              [elementId]: {
+                ...state.tracks[elementId],
+                visible: state.tracks[elementId]?.visible === false ? true : false
+              }
+            }
+          }));
+        }
+        get().addToHistory();
+      },
+
       // ====== Color Assignment Actions ======
       setLineColor: (courtId, markingId, color) => {
         set((state) => ({

@@ -5,13 +5,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { generateSportsSVG, downloadSVG, downloadPNG, generateFilename } from '../../lib/sports/sportsExport.js';
 import { generateSportsPDF, downloadPDF } from '../../lib/sports/sportsPdfExport.js';
+import { sliceSvgIntoTiles, downloadBlob } from '../../lib/svgTileSlicer.js';
 
 export default function ExportMenu({ svgRef }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [exporting, setExporting] = useState(null); // 'svg' | 'png' | 'pdf' | null
+  const [exporting, setExporting] = useState(null); // 'svg' | 'png' | 'pdf' | 'tiles' | null
   const menuRef = useRef(null);
 
   const exportDesignData = useSportsDesignStore((state) => state.exportDesignData);
+  const surface = useSportsDesignStore((state) => state.surface);
+  const designName = useSportsDesignStore((state) => state.designName);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -109,6 +112,43 @@ export default function ExportMenu({ svgRef }) {
     }
   };
 
+  const handleExportTiles = async () => {
+    setExporting('tiles');
+    setIsOpen(false);
+
+    try {
+      const svgElement = getSvgElement();
+      if (!svgElement) {
+        throw new Error('Canvas not found');
+      }
+
+      // Serialize SVG to string
+      const serializer = new XMLSerializer();
+      const svgString = serializer.serializeToString(svgElement);
+
+      // Get dimensions from store
+      const dimensions = {
+        width: surface.width_mm,
+        length: surface.length_mm
+      };
+
+      // Generate tiles ZIP
+      const name = designName || 'sports-surface';
+      const zipBlob = await sliceSvgIntoTiles(svgString, dimensions, name);
+
+      // Download
+      const filename = `${name.replace(/[^a-zA-Z0-9-_]/g, '-')}-tiles-1mx1m.zip`;
+      downloadBlob(zipBlob, filename);
+
+      console.log('[EXPORT] Tiles ZIP downloaded:', filename);
+    } catch (error) {
+      console.error('Tiles export failed:', error);
+      alert('Failed to export tiles: ' + error.message);
+    } finally {
+      setExporting(null);
+    }
+  };
+
   return (
     <div className="export-menu" ref={menuRef}>
       <button
@@ -149,6 +189,20 @@ export default function ExportMenu({ svgRef }) {
                 {exporting === 'png' ? 'Exporting...' : 'Download PNG'}
               </span>
               <span className="export-menu__item-desc">High-res image for presentations</span>
+            </div>
+          </button>
+
+          <button
+            className="export-menu__item"
+            onClick={handleExportTiles}
+            disabled={exporting !== null}
+          >
+            <span className="export-menu__icon">🗂️</span>
+            <div className="export-menu__item-content">
+              <span className="export-menu__item-title">
+                {exporting === 'tiles' ? 'Generating...' : 'Download Tiles ZIP'}
+              </span>
+              <span className="export-menu__item-desc">1m×1m SVG tiles for large-format printing</span>
             </div>
           </button>
 
