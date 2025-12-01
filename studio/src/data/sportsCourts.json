@@ -1515,7 +1515,7 @@
       "min_surround_mm": 0
     },
 
-    "defaultSurfaceColor": "RH70",
+    "defaultSurfaceColor": "RH60",
     "defaultLineColor": "RH29",
     "defaultLineWidth_mm": 50,
 
