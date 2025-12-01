@@ -1252,26 +1252,22 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
       // Update state after successful regeneration
       setRegionOverrides(newOverrides);
 
-      // Add to history for undo/redo
-      setRegionOverridesHistory(prevHistory => {
-        // If not at end of history, truncate future (standard undo/redo behavior)
-        const newHistory = prevHistory.slice(0, historyIndex + 1);
-        // Add new state
-        newHistory.push(new Map(newOverrides));
-        // Limit history to 50 entries
-        if (newHistory.length > 50) {
-          newHistory.shift();
-          return newHistory;
-        }
-        return newHistory;
-      });
+      // Add to history for undo/redo (use fresh state from store)
+      const currentHistoryIndex = store.historyIndex;
+      const currentHistory = store.regionOverridesHistory;
 
-      // Move history index to end
-      setHistoryIndex(prev => {
-        const newHistory = regionOverridesHistory.slice(0, prev + 1);
-        newHistory.push(new Map(newOverrides));
-        return Math.min(newHistory.length - 1, 49); // Cap at 49 (0-indexed, max 50 entries)
-      });
+      // Truncate future if not at end (standard undo/redo behavior)
+      const newHistory = currentHistory.slice(0, currentHistoryIndex + 1);
+      newHistory.push(new Map(newOverrides));
+
+      // Limit history to 50 entries
+      if (newHistory.length > 50) {
+        newHistory.shift();
+      }
+
+      // Update both history and index atomically
+      setRegionOverridesHistory(newHistory);
+      setHistoryIndex(newHistory.length - 1);
 
       console.log('[TPV-STUDIO] Completed region recolor for:', operation.regionId);
     } catch (err) {

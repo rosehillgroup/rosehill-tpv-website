@@ -180,8 +180,14 @@ export const usePlaygroundDesignStore = create(
         });
       },
 
-      // Set history state directly
-      setRegionOverridesHistory: (history) => set({ regionOverridesHistory: history }),
+      // Set history state directly (supports updater function)
+      setRegionOverridesHistory: (historyOrUpdater) => {
+        if (typeof historyOrUpdater === 'function') {
+          set({ regionOverridesHistory: historyOrUpdater(get().regionOverridesHistory) });
+        } else {
+          set({ regionOverridesHistory: historyOrUpdater });
+        }
+      },
 
       // Individual setter for history index (supports updater function)
       setHistoryIndex: (indexOrUpdater) => {
