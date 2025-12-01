@@ -22,6 +22,7 @@ import { mapDimensionsToRecraft, getLayoutDescription, needsLayoutWarning } from
 import { uploadFile, validateFile } from '../lib/supabase/uploadFile.js';
 import { deserializeDesign } from '../utils/designSerializer.js';
 import { downloadSvgTiles } from '../lib/svgTileSlicer.js';
+import PlaygroundExportMenu from './PlaygroundExportMenu.jsx';
 import tpvColours from '../../api/_utils/data/rosehill_tpv_21_colours.json';
 
 export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
@@ -2068,61 +2069,45 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
             </div>
           )}
 
-          {/* Action Buttons - Show when design is ready */}
+          {/* Action Bar - Clean grouped layout */}
           {blendSvgUrl && (
-            <div className="action-buttons">
+            <div className="action-bar">
+              {/* New Design */}
               <button
+                className="action-bar__btn action-bar__btn--secondary"
                 onClick={handleNewDesign}
-                className="new-button"
                 title="Start a new design"
               >
-                ➕ New Design
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                New
               </button>
+
+              {/* Save Design */}
               <button
+                className="action-bar__btn action-bar__btn--primary"
                 onClick={handleSaveClick}
-                className="save-button"
-                title="Save this design to your gallery for later access"
+                title="Save this design to your gallery"
               >
-                💾 Save Design
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                  <polyline points="17 21 17 13 7 13 7 21"/>
+                  <polyline points="7 3 7 8 15 8"/>
+                </svg>
+                Save
               </button>
-              <button
-                onClick={handleDownloadSVG}
-                className="download-button svg"
-                title="Download as scalable vector file (SVG) for further editing or printing"
-              >
-                {viewMode === 'solid' ? 'Download Solid TPV SVG' : 'Download TPV Blend SVG'}
-              </button>
-              <button
-                onClick={handleDownloadPNG}
-                className="download-button png"
-                title="Download as high-resolution image file (PNG) for presentations or sharing"
-              >
-                {viewMode === 'solid' ? 'Download Solid TPV PNG' : 'Download TPV Blend PNG'}
-              </button>
-              <button
-                onClick={handleDownloadPDF}
-                className="download-button pdf"
-                disabled={generatingPDF || !(viewMode === 'solid' ? solidRecipes : blendRecipes)}
-                title={viewMode === 'solid'
-                  ? 'Export comprehensive PDF with design, TPV colour specifications, and installation instructions'
-                  : 'Export comprehensive PDF with design, granule blend recipes, and mixing instructions'}
-              >
-                {generatingPDF
-                  ? 'Generating PDF...'
-                  : viewMode === 'solid'
-                    ? 'Export Solid PDF'
-                    : 'Export Blend PDF'
-                }
-              </button>
-              <button
-                onClick={handleDownloadTiles}
-                className="download-button tiles"
-                title={widthMM && lengthMM
-                  ? `Download ${Math.ceil(widthMM / 1000) * Math.ceil(lengthMM / 1000)} tiles (1m×1m each) as separate SVG files. Perfect for large installations where each section needs to be manufactured separately.`
-                  : 'Download design sliced into 1m×1m tiles as separate SVG files. Perfect for large installations.'}
-              >
-                Download Tiles ZIP
-              </button>
+
+              {/* Export Dropdown */}
+              <PlaygroundExportMenu
+                onExportSVG={handleDownloadSVG}
+                onExportPNG={handleDownloadPNG}
+                onExportPDF={handleDownloadPDF}
+                onExportTiles={handleDownloadTiles}
+                viewMode={viewMode}
+                exporting={generatingPDF}
+                disabled={!blendSvgUrl}
+              />
             </div>
           )}
         </div>
@@ -2791,119 +2776,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           display: block;
         }
 
-        .action-buttons {
-          display: flex;
-          gap: var(--space-2);
-          margin-top: var(--space-4);
-        }
-
-        .download-button,
-        .blend-button,
-        .new-generation-button,
-        .save-button {
-          flex: 1;
-          padding: var(--space-3);
-          border: none;
-          border-radius: var(--radius-md);
-          font-weight: var(--font-semibold);
-          font-size: var(--text-base);
-          cursor: pointer;
-          transition: all var(--transition-base);
-          box-shadow: var(--shadow-sm);
-        }
-
-        .download-button.svg {
-          background: var(--color-primary);
-          color: white;
-        }
-
-        .download-button.svg:hover {
-          background: var(--color-primary-hover);
-          transform: translateY(-1px);
-          box-shadow: var(--shadow-md);
-        }
-
-        .download-button.png {
-          background: var(--color-success);
-          color: white;
-        }
-
-        .download-button.png:hover {
-          background: var(--color-success-hover);
-          transform: translateY(-1px);
-          box-shadow: var(--shadow-md);
-        }
-
-        .download-button.pdf {
-          background: var(--color-info);
-          color: white;
-        }
-
-        .download-button.pdf:hover:not(:disabled) {
-          background: #2563eb;
-          transform: translateY(-1px);
-          box-shadow: var(--shadow-md);
-        }
-
-        .download-button.pdf:disabled {
-          background: var(--color-text-tertiary);
-          cursor: not-allowed;
-          transform: none;
-        }
-
-        .download-button.tiles {
-          background: #8b5cf6;
-          color: white;
-        }
-
-        .download-button.tiles:hover {
-          background: #7c3aed;
-          transform: translateY(-1px);
-          box-shadow: var(--shadow-md);
-        }
-
-        .blend-button {
-          background: var(--color-accent);
-          color: white;
-        }
-
-        .blend-button:hover:not(:disabled) {
-          background: var(--color-accent-hover);
-          transform: translateY(-2px);
-          box-shadow: 0 8px 24px rgba(255, 107, 53, 0.3);
-        }
-
-        .blend-button:disabled {
-          background: var(--color-bg-subtle);
-          color: var(--color-text-tertiary);
-          cursor: not-allowed;
-          transform: none;
-          box-shadow: none;
-        }
-
-        .new-generation-button {
-          background: var(--color-bg-subtle);
-          color: var(--color-text-primary);
-          border: 1px solid var(--color-border);
-        }
-
-        .new-generation-button:hover {
-          background: var(--color-border);
-          transform: translateY(-1px);
-          box-shadow: var(--shadow-md);
-        }
-
-        .save-button {
-          background: #10b981;
-          color: white;
-        }
-
-        .save-button:hover {
-          background: #059669;
-          transform: translateY(-1px);
-          box-shadow: var(--shadow-md);
-        }
-
         /* Finalize Section */
         .finalize-section {
           background: var(--color-accent-light);
@@ -3111,23 +2983,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
             display: none;
           }
 
-          /* Action buttons - 2x2 grid on mobile */
-          .action-buttons {
-            flex-wrap: wrap;
-            gap: var(--space-2);
-          }
-
-          .download-button,
-          .blend-button,
-          .new-generation-button,
-          .save-button {
-            flex: 1 1 calc(50% - var(--space-1));
-            min-width: calc(50% - var(--space-1));
-            padding: var(--space-2);
-            font-size: var(--text-sm);
-            min-height: 44px;
-          }
-
           /* AR info */
           .ar-info {
             padding: var(--space-2) var(--space-3);
@@ -3165,19 +3020,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
             padding: var(--space-1);
             margin: 0 calc(-1 * var(--space-1));
             border-radius: 0;
-          }
-
-          /* Stack all action buttons vertically */
-          .action-buttons {
-            flex-direction: column;
-          }
-
-          .download-button,
-          .blend-button,
-          .new-generation-button,
-          .save-button {
-            flex: 1 1 100%;
-            min-width: 100%;
           }
 
           .input-mode-tab {
