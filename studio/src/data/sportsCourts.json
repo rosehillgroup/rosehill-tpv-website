@@ -1126,5 +1126,913 @@
     ],
 
     "zones": []
+  },
+
+  "basketball-half": {
+    "id": "basketball-half",
+    "name": "Basketball (Half Court / 3x3)",
+    "sport": "basketball",
+    "standard": "FIBA 3x3",
+    "category": "court",
+    "description": "Half-court basketball for 3x3 games, practice, or space-constrained areas",
+
+    "dimensions": {
+      "length_mm": 15000,
+      "width_mm": 11000,
+      "min_surround_mm": 2000
+    },
+
+    "defaultSurfaceColor": "RH20",
+    "defaultLineColor": "RH31",
+    "defaultLineWidth_mm": 50,
+
+    "markings": [
+      {
+        "id": "boundary",
+        "name": "Boundary Lines",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 15000,
+          "height": 11000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "boundary"
+      },
+      {
+        "id": "three-point-arc",
+        "name": "Three-Point Arc",
+        "type": "arc",
+        "params": {
+          "cx": 7500,
+          "cy": 1575,
+          "radius": 6750,
+          "startAngle": 12,
+          "endAngle": 168
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "three-point-line-left",
+        "name": "Three-Point Line (Left)",
+        "type": "line",
+        "params": {
+          "x1": 900,
+          "y1": 0,
+          "x2": 900,
+          "y2": 2990
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "three-point-line-right",
+        "name": "Three-Point Line (Right)",
+        "type": "line",
+        "params": {
+          "x1": 14100,
+          "y1": 0,
+          "x2": 14100,
+          "y2": 2990
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "free-throw-line",
+        "name": "Free Throw Line",
+        "type": "line",
+        "params": {
+          "x1": 5050,
+          "y1": 5800,
+          "x2": 9950,
+          "y2": 5800
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "free-throw-circle",
+        "name": "Free Throw Circle",
+        "type": "circle",
+        "params": {
+          "cx": 7500,
+          "cy": 5800,
+          "radius": 1800
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "key-lane",
+        "name": "Key Lane",
+        "type": "rectangle",
+        "params": {
+          "x": 5050,
+          "y": 0,
+          "width": 4900,
+          "height": 5800
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "restricted-area",
+        "name": "Restricted Area",
+        "type": "arc",
+        "params": {
+          "cx": 7500,
+          "cy": 0,
+          "radius": 1250,
+          "startAngle": 0,
+          "endAngle": 180
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      }
+    ],
+
+    "zones": [
+      {
+        "id": "key-area",
+        "name": "Key Area",
+        "type": "rectangle",
+        "params": {
+          "x": 5050,
+          "y": 0,
+          "width": 4900,
+          "height": 5800
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 28.42
+      }
+    ]
+  },
+
+  "tennis-singles": {
+    "id": "tennis-singles",
+    "name": "Tennis (Singles)",
+    "sport": "tennis",
+    "standard": "ITF",
+    "category": "court",
+    "description": "Singles-only tennis court without doubles alleys",
+
+    "dimensions": {
+      "length_mm": 23770,
+      "width_mm": 8230,
+      "min_surround_mm": 3660
+    },
+
+    "defaultSurfaceColor": "RH22",
+    "defaultLineColor": "RH29",
+    "defaultLineWidth_mm": 50,
+
+    "markings": [
+      {
+        "id": "boundary",
+        "name": "Boundary Lines",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 8230,
+          "height": 23770
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "boundary"
+      },
+      {
+        "id": "service-line-bottom",
+        "name": "Service Line (Bottom)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 6400,
+          "x2": 8230,
+          "y2": 6400
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "service-line-top",
+        "name": "Service Line (Top)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 17370,
+          "x2": 8230,
+          "y2": 17370
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-service-line",
+        "name": "Center Service Line",
+        "type": "line",
+        "params": {
+          "x1": 4115,
+          "y1": 6400,
+          "x2": 4115,
+          "y2": 17370
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-mark-bottom",
+        "name": "Center Mark (Bottom)",
+        "type": "line",
+        "params": {
+          "x1": 4115,
+          "y1": 0,
+          "x2": 4115,
+          "y2": 100
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-mark-top",
+        "name": "Center Mark (Top)",
+        "type": "line",
+        "params": {
+          "x1": 4115,
+          "y1": 23670,
+          "x2": 4115,
+          "y2": 23770
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      }
+    ],
+
+    "zones": []
+  },
+
+  "mini-tennis-red": {
+    "id": "mini-tennis-red",
+    "name": "Mini Tennis (Red Court)",
+    "sport": "tennis",
+    "standard": "ITF Play+Stay",
+    "category": "court",
+    "description": "Beginner/youth court for red stage tennis coaching (36ft)",
+
+    "dimensions": {
+      "length_mm": 10970,
+      "width_mm": 5490,
+      "min_surround_mm": 2000
+    },
+
+    "defaultSurfaceColor": "RH02",
+    "defaultLineColor": "RH29",
+    "defaultLineWidth_mm": 50,
+
+    "markings": [
+      {
+        "id": "boundary",
+        "name": "Boundary Lines",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 5490,
+          "height": 10970
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "boundary"
+      },
+      {
+        "id": "net-line",
+        "name": "Net Line",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 5485,
+          "x2": 5490,
+          "y2": 5485
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "service-line-bottom",
+        "name": "Service Line (Bottom)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 2745,
+          "x2": 5490,
+          "y2": 2745
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "service-line-top",
+        "name": "Service Line (Top)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 8225,
+          "x2": 5490,
+          "y2": 8225
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-service-line",
+        "name": "Center Service Line",
+        "type": "line",
+        "params": {
+          "x1": 2745,
+          "y1": 2745,
+          "x2": 2745,
+          "y2": 8225
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      }
+    ],
+
+    "zones": []
+  },
+
+  "padel-standard": {
+    "id": "padel-standard",
+    "name": "Padel",
+    "sport": "padel",
+    "standard": "FIP",
+    "category": "court",
+    "description": "Official FIP padel court with service boxes",
+
+    "dimensions": {
+      "length_mm": 20000,
+      "width_mm": 10000,
+      "min_surround_mm": 0
+    },
+
+    "defaultSurfaceColor": "RH23",
+    "defaultLineColor": "RH29",
+    "defaultLineWidth_mm": 50,
+
+    "markings": [
+      {
+        "id": "boundary",
+        "name": "Boundary Lines",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 10000,
+          "height": 20000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "boundary"
+      },
+      {
+        "id": "net-line",
+        "name": "Net Line",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 10000,
+          "x2": 10000,
+          "y2": 10000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "service-line-bottom",
+        "name": "Service Line (Bottom)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 3000,
+          "x2": 10000,
+          "y2": 3000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "service-line-top",
+        "name": "Service Line (Top)",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 17000,
+          "x2": 10000,
+          "y2": 17000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-service-line-bottom",
+        "name": "Center Service Line (Bottom)",
+        "type": "line",
+        "params": {
+          "x1": 5000,
+          "y1": 0,
+          "x2": 5000,
+          "y2": 3000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-service-line-top",
+        "name": "Center Service Line (Top)",
+        "type": "line",
+        "params": {
+          "x1": 5000,
+          "y1": 17000,
+          "x2": 5000,
+          "y2": 20000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-line",
+        "name": "Center Line",
+        "type": "line",
+        "params": {
+          "x1": 5000,
+          "y1": 3000,
+          "x2": 5000,
+          "y2": 17000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      }
+    ],
+
+    "zones": []
+  },
+
+  "handball-standard": {
+    "id": "handball-standard",
+    "name": "Handball",
+    "sport": "handball",
+    "standard": "IHF",
+    "category": "court",
+    "description": "Official IHF handball court with goal areas and penalty lines",
+
+    "dimensions": {
+      "length_mm": 40000,
+      "width_mm": 20000,
+      "min_surround_mm": 1000
+    },
+
+    "defaultSurfaceColor": "RH10",
+    "defaultLineColor": "RH31",
+    "defaultLineWidth_mm": 50,
+
+    "markings": [
+      {
+        "id": "boundary",
+        "name": "Boundary Lines",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 20000,
+          "height": 40000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "boundary"
+      },
+      {
+        "id": "center-line",
+        "name": "Center Line",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 20000,
+          "x2": 20000,
+          "y2": 20000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "goal-area-bottom",
+        "name": "Goal Area (Bottom)",
+        "type": "arc",
+        "params": {
+          "cx": 10000,
+          "cy": 0,
+          "radius": 6000,
+          "startAngle": 0,
+          "endAngle": 180
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "goal-area-top",
+        "name": "Goal Area (Top)",
+        "type": "arc",
+        "params": {
+          "cx": 10000,
+          "cy": 40000,
+          "radius": 6000,
+          "startAngle": 180,
+          "endAngle": 360
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "free-throw-line-bottom",
+        "name": "Free-Throw Line (Bottom)",
+        "type": "arc",
+        "params": {
+          "cx": 10000,
+          "cy": 0,
+          "radius": 9000,
+          "startAngle": 0,
+          "endAngle": 180,
+          "dashed": true,
+          "dashPattern": "300 150"
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "free-throw-line-top",
+        "name": "Free-Throw Line (Top)",
+        "type": "arc",
+        "params": {
+          "cx": 10000,
+          "cy": 40000,
+          "radius": 9000,
+          "startAngle": 180,
+          "endAngle": 360,
+          "dashed": true,
+          "dashPattern": "300 150"
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "7m-line-bottom",
+        "name": "7m Penalty Line (Bottom)",
+        "type": "line",
+        "params": {
+          "x1": 9000,
+          "y1": 7000,
+          "x2": 11000,
+          "y2": 7000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "7m-line-top",
+        "name": "7m Penalty Line (Top)",
+        "type": "line",
+        "params": {
+          "x1": 9000,
+          "y1": 33000,
+          "x2": 11000,
+          "y2": 33000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "goalkeeper-line-bottom",
+        "name": "Goalkeeper Restriction Line (Bottom)",
+        "type": "line",
+        "params": {
+          "x1": 9500,
+          "y1": 4000,
+          "x2": 10500,
+          "y2": 4000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "goalkeeper-line-top",
+        "name": "Goalkeeper Restriction Line (Top)",
+        "type": "line",
+        "params": {
+          "x1": 9500,
+          "y1": 36000,
+          "x2": 10500,
+          "y2": 36000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      }
+    ],
+
+    "zones": [
+      {
+        "id": "goal-area-zone-bottom",
+        "name": "Goal Area (Bottom)",
+        "type": "circle",
+        "params": {
+          "cx": 10000,
+          "cy": 0,
+          "radius": 6000
+        },
+        "defaultColor": "RH11",
+        "paintable": true,
+        "area_m2": 56.55
+      },
+      {
+        "id": "goal-area-zone-top",
+        "name": "Goal Area (Top)",
+        "type": "circle",
+        "params": {
+          "cx": 10000,
+          "cy": 40000,
+          "radius": 6000
+        },
+        "defaultColor": "RH11",
+        "paintable": true,
+        "area_m2": 56.55
+      }
+    ]
+  },
+
+  "hockey-d": {
+    "id": "hockey-d",
+    "name": "Field Hockey D",
+    "sport": "hockey",
+    "standard": "FIH",
+    "category": "overlay",
+    "description": "Hockey shooting circle (D) for overlay on sports surfaces",
+
+    "dimensions": {
+      "length_mm": 14630,
+      "width_mm": 32920,
+      "min_surround_mm": 0
+    },
+
+    "defaultSurfaceColor": "RH12",
+    "defaultLineColor": "RH29",
+    "defaultLineWidth_mm": 50,
+
+    "markings": [
+      {
+        "id": "shooting-circle",
+        "name": "Shooting Circle (D)",
+        "type": "arc",
+        "params": {
+          "cx": 16460,
+          "cy": 0,
+          "radius": 14630,
+          "startAngle": 117,
+          "endAngle": 243
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "goal-line",
+        "name": "Goal Line",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 0,
+          "x2": 32920,
+          "y2": 0
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "boundary"
+      },
+      {
+        "id": "penalty-spot",
+        "name": "Penalty Spot",
+        "type": "circle",
+        "params": {
+          "cx": 16460,
+          "cy": 6400,
+          "radius": 150
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      }
+    ],
+
+    "zones": []
+  },
+
+  "hockey-5s": {
+    "id": "hockey-5s",
+    "name": "Hockey 5s",
+    "sport": "hockey",
+    "standard": "England Hockey",
+    "category": "court",
+    "description": "Scaled-down hockey pitch for 5-a-side games",
+
+    "dimensions": {
+      "length_mm": 55000,
+      "width_mm": 41100,
+      "min_surround_mm": 2000
+    },
+
+    "defaultSurfaceColor": "RH12",
+    "defaultLineColor": "RH29",
+    "defaultLineWidth_mm": 50,
+
+    "markings": [
+      {
+        "id": "boundary",
+        "name": "Boundary Lines",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 41100,
+          "height": 55000
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "boundary"
+      },
+      {
+        "id": "center-line",
+        "name": "Center Line",
+        "type": "line",
+        "params": {
+          "x1": 0,
+          "y1": 27500,
+          "x2": 41100,
+          "y2": 27500
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "center-spot",
+        "name": "Center Spot",
+        "type": "circle",
+        "params": {
+          "cx": 20550,
+          "cy": 27500,
+          "radius": 150
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "shooting-circle-bottom",
+        "name": "Shooting Circle (Bottom)",
+        "type": "arc",
+        "params": {
+          "cx": 20550,
+          "cy": 0,
+          "radius": 9000,
+          "startAngle": 0,
+          "endAngle": 180
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "shooting-circle-top",
+        "name": "Shooting Circle (Top)",
+        "type": "arc",
+        "params": {
+          "cx": 20550,
+          "cy": 55000,
+          "radius": 9000,
+          "startAngle": 180,
+          "endAngle": 360
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "penalty-spot-bottom",
+        "name": "Penalty Spot (Bottom)",
+        "type": "circle",
+        "params": {
+          "cx": 20550,
+          "cy": 6400,
+          "radius": 150
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      },
+      {
+        "id": "penalty-spot-top",
+        "name": "Penalty Spot (Top)",
+        "type": "circle",
+        "params": {
+          "cx": 20550,
+          "cy": 48600,
+          "radius": 150
+        },
+        "defaultColor": "RH31",
+        "lineWidth_mm": 50,
+        "required": true,
+        "category": "court-marking"
+      }
+    ],
+
+    "zones": []
   }
 }

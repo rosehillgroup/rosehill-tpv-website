@@ -87,7 +87,7 @@ export function renderZone(zone, color) {
  * Render a line marking
  */
 function renderLine(params, color, lineWidth_mm) {
-  return {
+  const result = {
     type: 'line',
     x1: params.x1,
     y1: params.y1,
@@ -96,6 +96,13 @@ function renderLine(params, color, lineWidth_mm) {
     stroke: color,
     strokeWidth: lineWidth_mm
   };
+
+  // Support dashed lines (e.g., handball free-throw line)
+  if (params.dashed) {
+    result.strokeDasharray = params.dashPattern || '200 100';
+  }
+
+  return result;
 }
 
 /**
@@ -151,13 +158,20 @@ function renderArc(params, color, lineWidth_mm) {
   // Create SVG arc path
   const pathData = `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`;
 
-  return {
+  const result = {
     type: 'path',
     d: pathData,
     stroke: color,
     strokeWidth: lineWidth_mm,
     fill: 'none'
   };
+
+  // Support dashed arcs (e.g., handball free-throw line)
+  if (params.dashed) {
+    result.strokeDasharray = params.dashPattern || '200 100';
+  }
+
+  return result;
 }
 
 /**
