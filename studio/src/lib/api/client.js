@@ -128,7 +128,10 @@ class APIClient {
    * @returns {Promise} Status object with recraft-specific fields
    */
   async getRecraftStatus(jobId) {
-    const response = await fetch(`/api/studio-job-status?jobId=${jobId}`);
+    const headers = await this._getAuthHeaders();
+    const response = await fetch(`/api/studio-job-status?jobId=${jobId}`, {
+      headers
+    });
 
     if (!response.ok) {
       const error = await response.json();
@@ -291,7 +294,10 @@ class APIClient {
 
   // Poll simple mode job status until completed or failed
   async inspireSimpleGetStatus(jobId) {
-    const response = await fetch(`/api/studio-job-status?jobId=${jobId}`);
+    const headers = await this._getAuthHeaders();
+    const response = await fetch(`/api/studio-job-status?jobId=${jobId}`, {
+      headers
+    });
 
     if (!response.ok) {
       const error = await response.json();
