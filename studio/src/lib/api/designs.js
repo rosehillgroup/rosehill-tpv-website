@@ -43,7 +43,7 @@ export async function saveDesign(designData) {
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error || 'Failed to save design');
+    throw new Error(error.error || 'Unable to save your design. Please check your connection and try again.');
   }
 
   return response.json();
@@ -74,7 +74,7 @@ export async function listDesigns({ project_id, limit = 50, offset = 0, search }
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error || 'Failed to list designs');
+    throw new Error(error.error || 'Unable to load your designs. Please refresh the page and try again.');
   }
 
   return response.json();
@@ -95,7 +95,7 @@ export async function loadDesign(designId) {
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error || 'Failed to load design');
+    throw new Error(error.error || 'Unable to open this design. It may have been deleted or you may not have permission to view it.');
   }
 
   return response.json();
@@ -118,7 +118,7 @@ export async function updateDesign(designId, updates) {
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error || 'Failed to update design');
+    throw new Error(error.error || 'Unable to update this design. Please check your connection and try again.');
   }
 
   return response.json();
@@ -139,7 +139,7 @@ export async function deleteDesign(designId) {
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error || 'Failed to delete design');
+    throw new Error(error.error || 'Unable to delete this design. Please check your connection and try again.');
   }
 
   return response.json();

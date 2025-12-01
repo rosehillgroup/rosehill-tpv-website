@@ -15,9 +15,27 @@ function SetPassword({ user, onPasswordSet }) {
     e.preventDefault();
     setError('');
 
-    // Validation
+    // Password complexity validation
     if (password.length < 8) {
       setError('Password must be at least 8 characters long');
+      return;
+    }
+
+    // Check for uppercase letter
+    if (!/[A-Z]/.test(password)) {
+      setError('Password must contain at least one uppercase letter');
+      return;
+    }
+
+    // Check for lowercase letter
+    if (!/[a-z]/.test(password)) {
+      setError('Password must contain at least one lowercase letter');
+      return;
+    }
+
+    // Check for number
+    if (!/[0-9]/.test(password)) {
+      setError('Password must contain at least one number');
       return;
     }
 
@@ -31,11 +49,8 @@ function SetPassword({ user, onPasswordSet }) {
     try {
       // Update user's password
       await auth.updatePassword(password);
-
-      console.log('[SET-PASSWORD] Password set successfully');
       onPasswordSet();
     } catch (err) {
-      console.error('[SET-PASSWORD] Failed to set password:', err);
       setError(err.message || 'Failed to set password. Please try again.');
     } finally {
       setLoading(false);
@@ -91,7 +106,7 @@ function SetPassword({ user, onPasswordSet }) {
                 }}
               />
               <small style={{ display: 'block', marginTop: '0.25rem', color: '#666' }}>
-                At least 8 characters
+                At least 8 characters with uppercase, lowercase, and a number
               </small>
             </div>
 

@@ -29,11 +29,8 @@ function App() {
   const checkAdminStatus = async () => {
     try {
       const session = await auth.getSession();
-      console.log('[APP] Session object:', session);
-      console.log('[APP] Access token:', session?.access_token);
 
       if (!session?.access_token) {
-        console.warn('[APP] No access token found in session');
         setIsAdmin(false);
         return;
       }
@@ -44,12 +41,10 @@ function App() {
         }
       });
 
-      console.log('[APP] Admin check response:', response.status, response.ok);
-
       // If we can access admin endpoint, user is admin
       setIsAdmin(response.ok);
     } catch (error) {
-      console.error('[APP] Admin check failed:', error);
+      console.error('[APP] Admin check failed');
       setIsAdmin(false);
     }
   };
@@ -91,19 +86,14 @@ function App() {
   }, []);
 
   const handleLoadDesign = (design) => {
-    console.log('[APP] Loading design:', design);
-    console.log('[APP] Design ID:', design.id);
-
     // Detect design type and auto-switch to correct mode
     const isSportsDesign = design.design_data?.type === 'sports_surface';
 
     if (isSportsDesign) {
-      console.log('[APP] Sports design detected, switching to sports mode');
       setSportsDesign(design);
       setSportsDesignName(design.name);
       setActiveTool('sports');
     } else {
-      console.log('[APP] Playground design detected, switching to playground mode');
       setPlaygroundDesign(design);
       setPlaygroundDesignName(design.name);
       setActiveTool('playground');
@@ -120,7 +110,6 @@ function App() {
   };
 
   const handlePasswordSet = async () => {
-    console.log('[APP] Password set successfully');
     setNeedsPasswordSetup(false);
 
     // Refresh user session to get updated metadata

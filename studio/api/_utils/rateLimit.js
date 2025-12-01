@@ -36,16 +36,20 @@ for (const [endpoint, config] of Object.entries(ENDPOINT_LIMITS)) {
  * Check if request should be rate limited
  * @param {string} identifier - User ID, IP, or other unique identifier
  * @param {string} endpoint - Endpoint name for logging
- * @returns {Promise<{allowed: boolean, limit: number, remaining: number, reset: number}>}
+ * @param {Object} options - Options
+ * @param {boolean} options.failOpen - If true, allow request on error (default: false)
+ * @returns {Promise<{allowed: boolean, limit: number, remaining: number, reset: number, error?: string}>}
  */
-export async function checkRateLimit(identifier, endpoint = 'unknown') {
+export async function checkRateLimit(identifier, endpoint = 'unknown', options = {}) {
+  const { failOpen = false } = options;
+
   try {
     // Get the appropriate rate limiter for this endpoint
     const ratelimiter = rateLimiters[endpoint];
 
     if (!ratelimiter) {
       console.warn(`[RATE-LIMIT] No rate limiter configured for endpoint: ${endpoint}`);
-      // Fail open - allow request if no rate limiter configured
+      // No limiter configured - allow request (this is a config issue, not a service failure)
       const defaultLimit = ENDPOINT_LIMITS[endpoint]?.requests || 10;
       return {
         allowed: true,
@@ -58,9 +62,7 @@ export async function checkRateLimit(identifier, endpoint = 'unknown') {
     const result = await ratelimiter.limit(identifier);
 
     if (!result.success) {
-      console.warn(`[RATE-LIMIT] Limit exceeded - endpoint: ${endpoint}, identifier: ${identifier.substring(0, 20)}...`);
-    } else {
-      console.log(`[RATE-LIMIT] Request allowed - endpoint: ${endpoint}, remaining: ${result.remaining}/${result.limit}`);
+      console.warn(`[RATE-LIMIT] Limit exceeded - endpoint: ${endpoint}`);
     }
 
     return {
@@ -70,14 +72,28 @@ export async function checkRateLimit(identifier, endpoint = 'unknown') {
       reset: result.reset
     };
   } catch (error) {
-    console.error(`[RATE-LIMIT] Error checking rate limit:`, error);
-    // Fail open - allow request if rate limiting service is down
-    const defaultLimit = ENDPOINT_LIMITS[endpoint]?.requests || 10;
+    console.error(`[RATE-LIMIT] Service error:`, error.message);
+
+    // SECURITY: Fail closed by default to prevent abuse when rate limiting is down
+    if (failOpen) {
+      console.warn(`[RATE-LIMIT] Failing OPEN for ${endpoint} (configured)`);
+      const defaultLimit = ENDPOINT_LIMITS[endpoint]?.requests || 10;
+      return {
+        allowed: true,
+        limit: defaultLimit,
+        remaining: defaultLimit,
+        reset: Date.now() + 3600000,
+        error: 'Rate limit service unavailable - request allowed (fail-open)'
+      };
+    }
+
+    console.warn(`[RATE-LIMIT] Failing CLOSED for ${endpoint} (security default)`);
     return {
-      allowed: true,
-      limit: defaultLimit,
-      remaining: defaultLimit,
-      reset: Date.now() + 3600000
+      allowed: false,
+      limit: 0,
+      remaining: 0,
+      reset: Date.now() + 60000, // Retry in 1 minute
+      error: 'Rate limit service unavailable - please try again shortly'
     };
   }
 }

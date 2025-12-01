@@ -61,21 +61,31 @@ export default async function handler(req, res) {
     // Get raw body for signature verification
     const rawBody = await getRawBody(req);
 
-    // Layer 2: Optional signature verification (if header present)
-    const { verified, reason } = verifyReplicateSignature({
-      headers: req.headers,
-      rawBody,
-      signingKey: process.env.REPLICATE_WEBHOOK_SIGNING_SECRET || ''
-    });
+    // Layer 2: Signature verification (required when signing secret is configured)
+    const signingSecret = process.env.REPLICATE_WEBHOOK_SIGNING_SECRET;
+    const hasSignatureHeader = getSigHeader(req.headers);
 
-    if (getSigHeader(req.headers)) {
+    if (signingSecret) {
+      // Signing secret is configured - signature verification is REQUIRED
+      if (!hasSignatureHeader) {
+        console.error('[WEBHOOK] Missing signature header (required when signing secret is configured)');
+        return res.status(401).send('Missing signature');
+      }
+
+      const { verified, reason } = verifyReplicateSignature({
+        headers: req.headers,
+        rawBody,
+        signingKey: signingSecret
+      });
+
       if (!verified) {
         console.error('[WEBHOOK] Signature verification failed:', reason);
         return res.status(401).send('Invalid signature');
       }
       console.log('[WEBHOOK] Signature verified');
     } else {
-      console.warn('[WEBHOOK] Unsigned webhook (allowed via URL token)');
+      // No signing secret configured - URL token auth only (log warning)
+      console.warn('[WEBHOOK] No signing secret configured - using URL token auth only');
     }
 
     console.log('[WEBHOOK] Authentication successful');

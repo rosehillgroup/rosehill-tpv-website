@@ -76,11 +76,30 @@ export default async function handler(req, res) {
       });
     }
 
-    // Validate that URL is from Supabase storage (security check)
-    if (!image_url.includes('supabase.co/storage')) {
+    // SECURITY: Validate URL origin to prevent SSRF attacks
+    // Use proper URL parsing instead of string includes()
+    const allowedOrigins = [
+      process.env.SUPABASE_URL ? new URL(process.env.SUPABASE_URL).origin : null
+    ].filter(Boolean);
+
+    let isAllowedUrl = false;
+    try {
+      const parsedUrl = new URL(image_url);
+      // Check if origin matches an allowed origin
+      isAllowedUrl = allowedOrigins.some(origin => parsedUrl.origin === origin);
+      // Also check for Supabase storage path
+      if (!isAllowedUrl && parsedUrl.hostname.endsWith('.supabase.co') && parsedUrl.pathname.includes('/storage/')) {
+        isAllowedUrl = true;
+      }
+    } catch {
+      // Invalid URL format
+      isAllowedUrl = false;
+    }
+
+    if (!isAllowedUrl) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid image URL. Must be uploaded to Supabase storage first.'
+        error: 'Invalid image URL: must be from allowed origin (Supabase storage)'
       });
     }
 

@@ -39,7 +39,7 @@ export async function createProject(projectData) {
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error || 'Failed to create project');
+    throw new Error(error.error || 'Unable to create project. Please check your connection and try again.');
   }
 
   return response.json();
@@ -59,7 +59,7 @@ export async function listProjects() {
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error || 'Failed to list projects');
+    throw new Error(error.error || 'Unable to load your projects. Please refresh the page and try again.');
   }
 
   return response.json();
@@ -82,7 +82,7 @@ export async function updateProject(projectId, updates) {
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error || 'Failed to update project');
+    throw new Error(error.error || 'Unable to update this project. Please check your connection and try again.');
   }
 
   return response.json();
@@ -103,7 +103,7 @@ export async function deleteProject(projectId) {
 
   if (!response.ok) {
     const error = await response.json();
-    throw new Error(error.error || 'Failed to delete project');
+    throw new Error(error.error || 'Unable to delete this project. Please check your connection and try again.');
   }
 
   return response.json();

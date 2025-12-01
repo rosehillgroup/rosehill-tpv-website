@@ -1,7 +1,8 @@
 // TPV Studio - Get Job Status (Vercel)
 // Polls studio_jobs table for job status with Replicate reconciliation
 
-import { getSupabaseServiceClient } from './_utils/supabase.js';
+import { getSupabaseServiceClient, getAuthenticatedClient } from './_utils/supabase.js';
+import { ensureOwnership } from './_utils/authorization.js';
 import { getPrediction, downloadImage } from './_utils/replicate.js';
 import { cropPadToExactAR, makeThumbnail } from './_utils/image.js';
 import { uploadToStorage } from './_utils/exports.js';
@@ -15,20 +16,25 @@ export default async function handler(req, res) {
     const jobId = req.query.jobId;
 
     if (!jobId) {
-      throw new Error('jobId parameter is required');
+      return res.status(400).json({ error: 'jobId parameter is required' });
     }
 
+    // Authenticate user
+    const { client, user } = await getAuthenticatedClient(req);
+
+    if (!user) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+
+    // Use service client for operations but verify ownership first
     const supabase = getSupabaseServiceClient();
 
-    // Get job status
-    const { data: job, error } = await supabase
-      .from('studio_jobs')
-      .select('*')
-      .eq('id', jobId)
-      .single();
+    // Verify user owns this job
+    const job = await ensureOwnership(supabase, 'studio_jobs', jobId, user.id);
 
-    if (error) throw error;
-    if (!job) throw new Error('Job not found');
+    if (!job) {
+      return res.status(403).json({ error: 'Access denied: You do not own this job' });
+    }
 
     // Reconciliation: If job is stuck in queued/running and has a prediction_id,
     // fetch actual status from Replicate and update if webhook was missed
@@ -191,15 +197,9 @@ export default async function handler(req, res) {
     return res.status(200).json(response);
 
   } catch (error) {
-    console.error('[JOB-STATUS ERROR]', {
-      message: error.message,
-      details: error.stack,
-      hint: error.hint || '',
-      code: error.code || ''
-    });
+    console.error('[JOB-STATUS ERROR]', error.message);
     return res.status(500).json({
-      error: error.message,
-      hint: 'Check Vercel function logs for details'
+      error: 'An error occurred while fetching job status'
     });
   }
 }

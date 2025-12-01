@@ -84,6 +84,31 @@ export default async function handler(req, res) {
     // Fetch SVG from URL if not provided directly
     let svgContent = svgString;
     if (!svgContent && svgUrl) {
+      // SECURITY: Validate URL origin to prevent SSRF attacks
+      const allowedOrigins = [
+        process.env.SUPABASE_URL ? new URL(process.env.SUPABASE_URL).origin : null,
+        'https://replicate.delivery',
+        'https://pbxt.replicate.delivery'
+      ].filter(Boolean);
+
+      let isAllowedUrl = false;
+      try {
+        const parsedUrl = new URL(svgUrl);
+        isAllowedUrl = allowedOrigins.some(origin => parsedUrl.origin === origin);
+        // Also allow Supabase storage subdomains
+        if (!isAllowedUrl && parsedUrl.hostname.endsWith('.supabase.co')) {
+          isAllowedUrl = true;
+        }
+      } catch {
+        isAllowedUrl = false;
+      }
+
+      if (!isAllowedUrl) {
+        return res.status(400).json({
+          error: 'Invalid SVG URL: must be from allowed origin'
+        });
+      }
+
       console.log('[EXPORT-PDF] Fetching SVG from URL...');
       const svgResponse = await fetch(svgUrl);
       if (!svgResponse.ok) {

@@ -7,6 +7,7 @@ import PropertiesPanel from './PropertiesPanel.jsx';
 import LayersPanel from './LayersPanel.jsx';
 import SaveDesignModal from './SaveDesignModal.jsx';
 import ExportMenu from './ExportMenu.jsx';
+import KeyboardShortcutsModal from './KeyboardShortcutsModal.jsx';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import './SportsSurfaceDesigner.css';
 
@@ -25,6 +26,7 @@ function SportsSurfaceDesigner({ loadedDesign }) {
   });
   const [showSurfaceColorPicker, setShowSurfaceColorPicker] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [designId, setDesignId] = useState(null);
   const [designName, setDesignName] = useState('');
   const svgRef = useRef(null);
@@ -238,6 +240,12 @@ function SportsSurfaceDesigner({ loadedDesign }) {
         e.preventDefault();
         toggleSnapToGrid();
       }
+
+      // ? - Show keyboard shortcuts help
+      if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+        e.preventDefault();
+        setShowShortcutsModal(true);
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -414,6 +422,17 @@ function SportsSurfaceDesigner({ loadedDesign }) {
                     </svg>
                   </button>
                   <button
+                    className="sports-toolbar__btn"
+                    onClick={() => setShowShortcutsModal(true)}
+                    title="Keyboard shortcuts (?)"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                      <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                  </button>
+                  <button
                     className="sports-toolbar__btn-primary"
                     onClick={() => setShowSaveModal(true)}
                   >
@@ -473,6 +492,12 @@ function SportsSurfaceDesigner({ loadedDesign }) {
               }}
             />
           )}
+
+          {/* Keyboard Shortcuts Help Modal */}
+          <KeyboardShortcutsModal
+            isOpen={showShortcutsModal}
+            onClose={() => setShowShortcutsModal(false)}
+          />
         </>
       )}
     </div>

@@ -283,7 +283,7 @@ class APIClient {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Job creation failed');
+      throw new Error(error.message || 'Unable to start design generation. Please check your connection and try again.');
     }
 
     return response.json();
@@ -295,7 +295,7 @@ class APIClient {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Status fetch failed');
+      throw new Error(error.message || 'Unable to check generation status. Please try again.');
     }
 
     return response.json();
@@ -354,7 +354,7 @@ class APIClient {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Vectorization failed');
+      throw new Error(error.message || 'Unable to convert image to vector format. Please try a different image.');
     }
 
     return response.json();
@@ -390,7 +390,7 @@ class APIClient {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Geometric generation failed');
+      throw new Error(error.message || 'Unable to generate design. Please try a different prompt or settings.');
     }
 
     return response.json();
