@@ -1137,8 +1137,8 @@
     "description": "Half-court basketball for 3x3 games, practice, or space-constrained areas",
 
     "dimensions": {
-      "length_mm": 15000,
-      "width_mm": 11000,
+      "length_mm": 11000,
+      "width_mm": 15000,
       "min_surround_mm": 2000
     },
 
@@ -1809,34 +1809,7 @@
       }
     ],
 
-    "zones": [
-      {
-        "id": "goal-area-zone-bottom",
-        "name": "Goal Area (Bottom)",
-        "type": "circle",
-        "params": {
-          "cx": 10000,
-          "cy": 0,
-          "radius": 6000
-        },
-        "defaultColor": "RH11",
-        "paintable": true,
-        "area_m2": 56.55
-      },
-      {
-        "id": "goal-area-zone-top",
-        "name": "Goal Area (Top)",
-        "type": "circle",
-        "params": {
-          "cx": 10000,
-          "cy": 40000,
-          "radius": 6000
-        },
-        "defaultColor": "RH11",
-        "paintable": true,
-        "area_m2": 56.55
-      }
-    ]
+    "zones": []
   },
 
   "hockey-d": {
@@ -1849,7 +1822,7 @@
 
     "dimensions": {
       "length_mm": 14630,
-      "width_mm": 32920,
+      "width_mm": 29260,
       "min_surround_mm": 0
     },
 
@@ -1863,11 +1836,11 @@
         "name": "Shooting Circle (D)",
         "type": "arc",
         "params": {
-          "cx": 16460,
+          "cx": 14630,
           "cy": 0,
           "radius": 14630,
-          "startAngle": 117,
-          "endAngle": 243
+          "startAngle": 0,
+          "endAngle": 180
         },
         "defaultColor": "RH31",
         "lineWidth_mm": 50,
@@ -1881,7 +1854,7 @@
         "params": {
           "x1": 0,
           "y1": 0,
-          "x2": 32920,
+          "x2": 29260,
           "y2": 0
         },
         "defaultColor": "RH31",
@@ -1894,7 +1867,7 @@
         "name": "Penalty Spot",
         "type": "circle",
         "params": {
-          "cx": 16460,
+          "cx": 14630,
           "cy": 6400,
           "radius": 150
         },
