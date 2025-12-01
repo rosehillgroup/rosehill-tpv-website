@@ -319,7 +319,7 @@ async function generateExportPDF(data) {
 
   // Binder section
   y -= 20;
-  y = drawBinderSection(finalPage, fontBold, fontRegular, y, totalKg, 'playground');
+  y = drawBinderSection(finalPage, fontBold, fontRegular, y);
 
   // Notes section
   y -= 30;

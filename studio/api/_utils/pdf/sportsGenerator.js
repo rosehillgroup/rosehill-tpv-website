@@ -372,7 +372,7 @@ export async function generateSportsSurfacePDF(data) {
 
   // Binder section
   y -= 25;
-  y = drawBinderSection(page3, fontBold, fontRegular, y, totalKg, 'sports');
+  y = drawBinderSection(page3, fontBold, fontRegular, y);
 
   // Installation notes
   y -= 30;

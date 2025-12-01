@@ -319,22 +319,22 @@ export function drawMaterialRow(page, fontBold, fontRegular, x, y, options) {
 }
 
 /**
- * Draw binder requirements section
+ * Draw binder and ancillary requirements section
+ * Shows generic application rate ranges rather than specific product calculations
  */
-export function drawBinderSection(page, fontBold, fontRegular, y, totalKg, surfaceType) {
+export function drawBinderSection(page, fontBold, fontRegular, y) {
   const { margin } = PDF_CONFIG;
-  const binder = calculateBinder(totalKg, surfaceType);
 
   y -= 10;
   page.drawLine({
     start: { x: margin, y: y + 5 },
-    end: { x: margin + 380, y: y + 5 },
+    end: { x: margin + 420, y: y + 5 },
     thickness: 0.5,
     color: COLORS.border,
   });
 
   y -= 15;
-  page.drawText('Binder Requirements', {
+  page.drawText('Binder & Ancillary Requirements', {
     x: margin,
     y,
     size: 11,
@@ -342,33 +342,65 @@ export function drawBinderSection(page, fontBold, fontRegular, y, totalKg, surfa
     color: COLORS.text,
   });
 
-  y -= 18;
-  page.drawText(`${binder.product}:`, {
+  // Binder usage rates
+  y -= 20;
+  page.drawText('Binder usage rates (% of TPV weight):', {
     x: margin,
     y,
-    size: 10,
+    size: 9,
+    font: fontBold,
+    color: COLORS.text,
+  });
+
+  y -= 14;
+  page.drawText('\u2022 Wet pour installations: 12-20%', {
+    x: margin + 10,
+    y,
+    size: 9,
     font: fontRegular,
     color: COLORS.text,
   });
 
-  page.drawText(`${binder.quantity} kg`, {
-    x: margin + 150,
-    y,
-    size: 10,
-    font: fontBold,
-    color: COLORS.primary,
-  });
-
-  page.drawText(`(${calculateBags(binder.quantity)} bags)`, {
-    x: margin + 220,
+  y -= 12;
+  page.drawText('\u2022 Paver applications: 10-12%', {
+    x: margin + 10,
     y,
     size: 9,
     font: fontRegular,
-    color: COLORS.textLight,
+    color: COLORS.text,
+  });
+
+  y -= 12;
+  page.drawText('\u2022 Compression moulding: 6%', {
+    x: margin + 10,
+    y,
+    size: 9,
+    font: fontRegular,
+    color: COLORS.text,
+  });
+
+  // Primer and pre-treatment
+  y -= 18;
+  page.drawText('Primer coverage: 2-3 m\u00B2/kg', {
+    x: margin,
+    y,
+    size: 9,
+    font: fontRegular,
+    color: COLORS.text,
   });
 
   y -= 14;
-  page.drawText(`Coverage: ${binder.coverage} m\u00B2/kg  |  ${binder.notes}`, {
+  page.drawText('Pre-treatment: 1-2% of rubber weight', {
+    x: margin,
+    y,
+    size: 9,
+    font: fontRegular,
+    color: COLORS.text,
+  });
+
+  // Contact note
+  y -= 18;
+  page.drawText('Contact Rosehill for specific product recommendations based on climate and application.', {
     x: margin,
     y,
     size: 8,
