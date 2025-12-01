@@ -4,8 +4,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { generateSportsSVG, downloadSVG, downloadPNG, generateFilename } from '../../lib/sports/sportsExport.js';
-import { generateSportsPDF, downloadPDF } from '../../lib/sports/sportsPdfExport.js';
 import { sliceSvgIntoTiles, downloadBlob } from '../../lib/svgTileSlicer.js';
+import { auth } from '../../lib/api/auth.js';
 
 export default function ExportMenu({ svgRef }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -85,22 +85,73 @@ export default function ExportMenu({ svgRef }) {
 
   const handleExportPDF = async () => {
     setExporting('pdf');
+    setIsOpen(false);
+
     try {
       const svgElement = getSvgElement();
       if (!svgElement) {
         throw new Error('Canvas not found');
       }
 
+      // Get auth token
+      const session = await auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Authentication required for PDF export');
+      }
+
       const state = exportDesignData();
-      const designName = state.name || 'Sports Surface Design';
+      const name = state.name || 'Sports Surface Design';
 
-      // Generate PDF
-      console.log('[EXPORT] Generating PDF report...');
-      const pdfBytes = await generateSportsPDF(svgElement, state, designName);
+      // Serialize SVG (cleaned for export)
+      const svgClone = svgElement.cloneNode(true);
+      // Remove selection indicators and handles
+      svgClone.querySelectorAll(
+        '[class*="selected"], .transform-handles, .track-resize-handles, ' +
+        '.court-canvas__selection-outline, [class*="selection"], [class*="handle"], ' +
+        '[stroke-dasharray]'
+      ).forEach(el => el.remove());
+      svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+      const svgString = new XMLSerializer().serializeToString(svgClone);
 
-      // Download
-      const filename = generateFilename(designName, 'pdf');
-      downloadPDF(pdfBytes, filename);
+      console.log('[EXPORT] Generating PDF report via API...');
+
+      // Call server-side API
+      const response = await fetch('/api/export-sports-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          svgString,
+          designName: name,
+          surface: state.surface,
+          courts: state.courts,
+          tracks: state.tracks,
+          dimensions: {
+            widthMM: state.surface.width_mm,
+            lengthMM: state.surface.length_mm,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(error.error || `Server error: ${response.status}`);
+      }
+
+      // Download the PDF
+      const pdfBlob = await response.blob();
+      const filename = generateFilename(name, 'pdf');
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(pdfBlob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
 
       console.log('[EXPORT] PDF downloaded:', filename);
     } catch (error) {
@@ -108,7 +159,6 @@ export default function ExportMenu({ svgRef }) {
       alert('Failed to export PDF: ' + error.message);
     } finally {
       setExporting(null);
-      setIsOpen(false);
     }
   };
 

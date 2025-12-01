@@ -1,34 +1,36 @@
 /**
- * PDF Export Generator for TPV Studio
+ * PDF Export Generator for TPV Studio - Playground Designs
  * Creates professional PDF documents with design preview, colour tables, and installation data
+ *
+ * Refactored to use unified PDF utilities for consistent branding
  */
 
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { createRequire } from 'module';
+import {
+  PDF_CONFIG,
+  COLORS,
+  MATERIAL_CONFIG,
+  hexToRgb,
+  formatWeight,
+  calculateBags,
+  formatDate,
+  calculateBinder,
+  drawHeader,
+  drawFooter,
+  drawColorSwatch,
+  drawDimensionsPanel,
+  drawMaterialRow,
+  drawBinderSection,
+  drawInstallationNotes,
+  calculateRowsPerPage,
+} from './unifiedPdfGenerator.js';
 
 // Load JSON data
 const require = createRequire(import.meta.url);
 const TPV_COLOURS = require('../data/rosehill_tpv_21_colours.json');
 
-// Page dimensions (A4 in points: 595.28 x 841.89)
-const PAGE_WIDTH = 595.28;
-const PAGE_HEIGHT = 841.89;
-const MARGIN = 40;
-const CONTENT_WIDTH = PAGE_WIDTH - (MARGIN * 2);
-
-// Material calculation constants
-const SAFETY_FACTOR = 1.1; // 10% safety margin for wastage and trimming
-
-// Colour definitions
-const COLORS = {
-  primary: rgb(0.118, 0.306, 0.478),      // #1e4e7a - Rosehill navy
-  accent: rgb(1, 0.420, 0.208),           // #ff6b35 - Rosehill orange
-  text: rgb(0.102, 0.125, 0.173),         // #1a202c
-  textLight: rgb(0.392, 0.455, 0.545),    // #64748b
-  border: rgb(0.894, 0.914, 0.941),       // #e4e9f0
-  white: rgb(1, 1, 1),
-  black: rgb(0, 0, 0),
-};
+const { pageWidth: PAGE_WIDTH, pageHeight: PAGE_HEIGHT, margin: MARGIN, contentWidth: CONTENT_WIDTH } = PDF_CONFIG;
 
 /**
  * Validate component weights sum to 1.0 (100%)
@@ -61,13 +63,13 @@ function validateCoveragePercentages(recipes) {
 function verifyCalculations(recipes, areaM2, mode) {
   if (mode !== 'blend') return;
 
-  const DENSITY_KG_PER_M2 = 8;
+  const { densityKgPerM2, safetyMargin } = MATERIAL_CONFIG;
 
   // Calculate total from individual colors
   const individualTotal = recipes.reduce((sum, r) => {
     const areaPct = r.targetColor?.areaPct || 0;
     const areaNeeded = (areaPct / 100) * areaM2;
-    return sum + (areaNeeded * DENSITY_KG_PER_M2 * SAFETY_FACTOR);
+    return sum + (areaNeeded * densityKgPerM2 * safetyMargin);
   }, 0);
 
   // Calculate total from aggregated components
@@ -80,7 +82,7 @@ function verifyCalculations(recipes, areaM2, mode) {
     for (const comp of components) {
       const code = comp.code;
       const weight = comp.weight || 0;
-      const kgNeeded = areaNeeded * DENSITY_KG_PER_M2 * weight * SAFETY_FACTOR;
+      const kgNeeded = areaNeeded * densityKgPerM2 * weight * safetyMargin;
 
       if (!tpvTotals[code]) {
         tpvTotals[code] = 0;
@@ -121,7 +123,7 @@ async function generateExportPDF(data) {
   const {
     svgString,
     designName = 'Untitled Design',
-    projectName = 'No Project',
+    projectName = 'TPV Studio',
     dimensions = { widthMM: 5000, lengthMM: 5000 },
     recipes = [],
     mode = 'solid',
@@ -129,7 +131,9 @@ async function generateExportPDF(data) {
   } = data;
 
   // Calculate area for validation
-  const areaM2 = (dimensions.widthMM / 1000) * (dimensions.lengthMM / 1000);
+  const widthM = dimensions.widthMM / 1000;
+  const lengthM = dimensions.lengthMM / 1000;
+  const areaM2 = widthM * lengthM;
 
   // Run validation checks
   validateComponentWeights(recipes);
@@ -159,7 +163,7 @@ async function generateExportPDF(data) {
 
   // Calculate image dimensions to fit on page
   const maxImageWidth = CONTENT_WIDTH;
-  const maxImageHeight = 350;
+  const maxImageHeight = 320;
   const imageAspect = pngImage.width / pngImage.height;
   let imageWidth, imageHeight;
 
@@ -179,7 +183,8 @@ async function generateExportPDF(data) {
   let y = PAGE_HEIGHT - MARGIN;
 
   // Header
-  y = drawHeader(page1, fontBold, fontRegular, y);
+  const reportType = mode === 'blend' ? 'Blend Recipe Report' : 'Solid Colour Report';
+  y = drawHeader(page1, fontBold, fontRegular, y, reportType);
 
   // Design info
   y -= 30;
@@ -201,12 +206,7 @@ async function generateExportPDF(data) {
   });
 
   y -= 16;
-  const dateStr = new Date().toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric'
-  });
-  page1.drawText(`Generated: ${dateStr}`, {
+  page1.drawText(`Generated: ${formatDate()}`, {
     x: MARGIN,
     y,
     size: 11,
@@ -226,11 +226,11 @@ async function generateExportPDF(data) {
   }
 
   // Dimensions panel
-  y -= 35;
-  y = drawDimensionsPanel(page1, fontBold, fontRegular, dimensions, y);
+  y -= 30;
+  y = drawDimensionsPanel(page1, fontBold, fontRegular, widthM, lengthM, y);
 
   // Design image
-  y -= 20;
+  y -= 25;
   const imageX = MARGIN + (CONTENT_WIDTH - imageWidth) / 2;
   page1.drawImage(pngImage, {
     x: imageX,
@@ -264,49 +264,37 @@ async function generateExportPDF(data) {
   });
 
   // Footer
-  drawFooter(page1, fontRegular, 1);
+  const totalPages = 3 + Math.max(0, Math.ceil((recipes.length - 10) / 15)); // Estimate
+  drawFooter(page1, fontRegular, 1, totalPages);
 
   // ============================================================================
-  // PAGE 2: Colour/Blend Breakdown
+  // PAGE 2+: Colour/Blend Breakdown (with pagination)
   // ============================================================================
-  console.log('[PDF-EXPORT] Creating Page 2: Colour Breakdown');
-  const page2 = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  console.log('[PDF-EXPORT] Creating Colour Breakdown Pages');
+  const { pages: colourPages, totalRows } = await drawColourTablePaginated(
+    pdfDoc, fontBold, fontRegular, recipes, mode, areaM2
+  );
+
+  // Update page numbers for colour pages
+  let pageNum = 2;
+  for (const colourPage of colourPages) {
+    drawFooter(colourPage, fontRegular, pageNum, totalPages);
+    pageNum++;
+  }
+
+  // ============================================================================
+  // FINAL PAGE: Installation Material Requirements
+  // ============================================================================
+  console.log('[PDF-EXPORT] Creating Material Summary Page');
+  const finalPage = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   y = PAGE_HEIGHT - MARGIN;
 
   // Header
-  y = drawHeader(page2, fontBold, fontRegular, y);
+  y = drawHeader(finalPage, fontBold, fontRegular, y, reportType);
 
   // Title
   y -= 30;
-  const tableTitle = mode === 'blend' ? 'Blend Colour Breakdown' : 'TPV Colour Breakdown';
-  page2.drawText(tableTitle, {
-    x: MARGIN,
-    y,
-    size: 16,
-    font: fontBold,
-    color: COLORS.text,
-  });
-
-  // Draw colour table
-  y -= 25;
-  y = await drawColourTable(pdfDoc, page2, fontBold, fontRegular, recipes, mode, dimensions, y);
-
-  // Footer
-  drawFooter(page2, fontRegular, 2);
-
-  // ============================================================================
-  // PAGE 3: Installation Totals
-  // ============================================================================
-  console.log('[PDF-EXPORT] Creating Page 3: Installation Totals');
-  const page3 = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-  y = PAGE_HEIGHT - MARGIN;
-
-  // Header
-  y = drawHeader(page3, fontBold, fontRegular, y);
-
-  // Title
-  y -= 30;
-  page3.drawText('Installation Material Requirements', {
+  finalPage.drawText('Installation Material Requirements', {
     x: MARGIN,
     y,
     size: 16,
@@ -316,8 +304,7 @@ async function generateExportPDF(data) {
 
   // Surface area info
   y -= 25;
-  // areaM2 already calculated at function level (line 132)
-  page3.drawText(`Total Surface Area: ${areaM2.toFixed(2)} m2`, {
+  finalPage.drawText(`Total Surface Area: ${areaM2.toFixed(2)} m\u00B2`, {
     x: MARGIN,
     y,
     size: 12,
@@ -327,47 +314,25 @@ async function generateExportPDF(data) {
 
   // Draw material totals
   y -= 30;
-  y = drawMaterialTotals(page3, fontBold, fontRegular, recipes, mode, areaM2, y);
+  const { y: newY, totalKg } = drawMaterialTotals(finalPage, fontBold, fontRegular, recipes, mode, areaM2, y);
+  y = newY;
+
+  // Binder section
+  y -= 20;
+  y = drawBinderSection(finalPage, fontBold, fontRegular, y, totalKg, 'playground');
 
   // Notes section
-  y -= 40;
-  page3.drawText('Installation Notes', {
-    x: MARGIN,
-    y,
-    size: 12,
-    font: fontBold,
-    color: COLORS.text,
-  });
-
-  y -= 20;
-  const notes = [
-    '• Material quantities include 10% safety margin for wastage and trimming',
-    '• Quantities calculated for 20mm depth installation (adjust for 15mm or 25mm)',
-    '• Quantities are estimates based on coverage percentages',
-    '• Actual quantities may vary based on installation conditions',
-    '• Consult Rosehill technical team for binder requirements',
-    '• Ensure sub-base is properly prepared before installation',
-  ];
-
-  for (const note of notes) {
-    page3.drawText(note, {
-      x: MARGIN,
-      y,
-      size: 9,
-      font: fontRegular,
-      color: COLORS.textLight,
-    });
-    y -= 14;
-  }
+  y -= 30;
+  y = drawInstallationNotes(finalPage, fontBold, fontRegular, y, 'playground');
 
   // Footer
-  drawFooter(page3, fontRegular, 3);
+  drawFooter(finalPage, fontRegular, pageNum, totalPages);
 
   // Save PDF
   console.log('[PDF-EXPORT] Saving PDF...');
   const pdfBytes = await pdfDoc.save();
 
-  console.log(`[PDF-EXPORT] PDF generated: ${pdfBytes.length} bytes`);
+  console.log(`[PDF-EXPORT] PDF generated: ${pdfBytes.length} bytes, ${pdfDoc.getPageCount()} pages`);
 
   return Buffer.from(pdfBytes);
 }
@@ -379,7 +344,6 @@ async function renderSvgToPng(svgString, dimensions, Resvg) {
   const { widthMM = 5000, lengthMM = 5000 } = dimensions;
 
   // Calculate DPI based on surface size
-  // Use higher DPI for smaller surfaces, lower for larger
   const maxDimension = Math.max(widthMM, lengthMM);
   let dpi = 150;
   if (maxDimension < 2000) dpi = 300;
@@ -410,116 +374,88 @@ async function renderSvgToPng(svgString, dimensions, Resvg) {
 }
 
 /**
- * Draw page header with Rosehill branding
+ * Draw colour/blend table with automatic pagination
+ * Returns array of pages created
  */
-function drawHeader(page, fontBold, fontRegular, y) {
-  // Logo text (simplified - could be replaced with actual logo image)
-  page.drawText('ROSEHILL', {
-    x: MARGIN,
-    y,
-    size: 14,
-    font: fontBold,
-    color: COLORS.primary,
-  });
+async function drawColourTablePaginated(pdfDoc, fontBold, fontRegular, recipes, mode, areaM2) {
+  const pages = [];
+  const rowHeight = 24;
+  const headerHeight = 50;
+  const bottomMargin = 80;
 
-  page.drawText('TPV STUDIO', {
-    x: MARGIN + 75,
-    y,
-    size: 14,
-    font: fontRegular,
-    color: COLORS.accent,
-  });
+  // Calculate rows per page
+  const firstPageRows = calculateRowsPerPage(PAGE_HEIGHT - MARGIN - 80, rowHeight, bottomMargin);
+  const subsequentPageRows = calculateRowsPerPage(PAGE_HEIGHT - MARGIN - 60, rowHeight, bottomMargin);
 
-  // Divider line
-  y -= 15;
-  page.drawLine({
-    start: { x: MARGIN, y },
-    end: { x: PAGE_WIDTH - MARGIN, y },
-    thickness: 1,
-    color: COLORS.border,
-  });
+  let recipeIndex = 0;
+  let isFirstPage = true;
 
-  return y;
+  while (recipeIndex < recipes.length) {
+    const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+    pages.push(page);
+
+    let y = PAGE_HEIGHT - MARGIN;
+
+    // Header
+    const reportType = mode === 'blend' ? 'Blend Recipe Report' : 'Solid Colour Report';
+    y = drawHeader(page, fontBold, fontRegular, y, reportType);
+
+    // Title (only on first page)
+    if (isFirstPage) {
+      y -= 30;
+      const tableTitle = mode === 'blend' ? 'Blend Colour Breakdown' : 'TPV Colour Breakdown';
+      page.drawText(tableTitle, {
+        x: MARGIN,
+        y,
+        size: 16,
+        font: fontBold,
+        color: COLORS.text,
+      });
+      y -= 10;
+    } else {
+      y -= 20;
+      page.drawText(`Colour Breakdown (continued)`, {
+        x: MARGIN,
+        y,
+        size: 12,
+        font: fontRegular,
+        color: COLORS.textLight,
+      });
+    }
+
+    // Table headers
+    y -= 25;
+    y = drawTableHeaders(page, fontBold, mode, y);
+
+    // Calculate how many rows fit on this page
+    const maxRows = isFirstPage ? firstPageRows - 2 : subsequentPageRows;
+    const rowsToRender = Math.min(maxRows, recipes.length - recipeIndex);
+
+    // Draw rows
+    for (let i = 0; i < rowsToRender && recipeIndex < recipes.length; i++) {
+      const recipe = recipes[recipeIndex];
+      y = drawTableRow(page, fontBold, fontRegular, recipe, mode, areaM2, y);
+      recipeIndex++;
+    }
+
+    isFirstPage = false;
+  }
+
+  return { pages, totalRows: recipes.length };
 }
 
 /**
- * Draw page footer
+ * Draw table headers
  */
-function drawFooter(page, fontRegular, pageNum) {
-  const y = 30;
-
-  page.drawText(`Page ${pageNum}`, {
-    x: MARGIN,
-    y,
-    size: 9,
-    font: fontRegular,
-    color: COLORS.textLight,
-  });
-
-  page.drawText('www.rosehilltpv.com', {
-    x: PAGE_WIDTH - MARGIN - 100,
-    y,
-    size: 9,
-    font: fontRegular,
-    color: COLORS.textLight,
-  });
-}
-
-/**
- * Draw dimensions panel
- */
-function drawDimensionsPanel(page, fontBold, fontRegular, dimensions, y) {
-  const { widthMM, lengthMM } = dimensions;
-  const widthM = (widthMM / 1000).toFixed(2);
-  const lengthM = (lengthMM / 1000).toFixed(2);
-  const areaM2 = ((widthMM / 1000) * (lengthMM / 1000)).toFixed(2);
-
-  page.drawText('Surface Dimensions', {
-    x: MARGIN,
-    y,
-    size: 11,
-    font: fontBold,
-    color: COLORS.text,
-  });
-
-  y -= 18;
-  page.drawText(`Width: ${widthM}m (${widthMM}mm)    Length: ${lengthM}m (${lengthMM}mm)    Area: ${areaM2}m2`, {
-    x: MARGIN,
-    y,
-    size: 10,
-    font: fontRegular,
-    color: COLORS.textLight,
-  });
-
-  // Add note about dimension source
-  y -= 16;
-  page.drawText('Note: Dimensions represent intended installation size. Material calculations based on these values.', {
-    x: MARGIN,
-    y,
-    size: 8,
-    font: fontRegular,
-    color: rgb(0.5, 0.5, 0.5),
-  });
-
-  return y - 5; // Add a bit more spacing after the note
-}
-
-/**
- * Draw colour/blend table
- */
-async function drawColourTable(pdfDoc, page, fontBold, fontRegular, recipes, mode, dimensions, y) {
-  const areaM2 = (dimensions.widthMM / 1000) * (dimensions.lengthMM / 1000);
-
-  // Table headers
+function drawTableHeaders(page, fontBold, mode, y) {
   const headers = mode === 'blend'
-    ? ['Colour', 'Blend Name', 'dE', 'Recipe', 'Coverage', 'Area (m2)']
-    : ['Colour', 'TPV Code', 'Name', 'Hex', 'Coverage', 'Area (m2)'];
+    ? ['Colour', 'Blend Name', 'dE', 'Recipe', 'Coverage', 'Area (m\u00B2)']
+    : ['Colour', 'TPV Code', 'Name', 'Hex', 'Coverage', 'Area (m\u00B2)'];
 
   const colWidths = mode === 'blend'
-    ? [40, 120, 35, 140, 60, 60]
-    : [40, 60, 100, 70, 60, 60];
+    ? [45, 110, 40, 150, 60, 60]
+    : [45, 65, 110, 70, 60, 60];
 
-  // Draw header row
   let x = MARGIN;
   for (let i = 0; i < headers.length; i++) {
     page.drawText(headers[i], {
@@ -532,7 +468,7 @@ async function drawColourTable(pdfDoc, page, fontBold, fontRegular, recipes, mod
     x += colWidths[i];
   }
 
-  y -= 5;
+  y -= 8;
   page.drawLine({
     start: { x: MARGIN, y },
     end: { x: PAGE_WIDTH - MARGIN, y },
@@ -540,159 +476,136 @@ async function drawColourTable(pdfDoc, page, fontBold, fontRegular, recipes, mod
     color: COLORS.border,
   });
 
-  // Draw rows
-  y -= 20;
-  let rowsDrawn = 0;
-  for (const recipe of recipes) {
-    if (y < 80) break; // Don't overflow page
+  return y - 15;
+}
 
-    rowsDrawn++;
-    x = MARGIN;
+/**
+ * Draw a single table row
+ */
+function drawTableRow(page, fontBold, fontRegular, recipe, mode, areaM2, y) {
+  const colWidths = mode === 'blend'
+    ? [45, 110, 40, 150, 60, 60]
+    : [45, 65, 110, 70, 60, 60];
 
-    // Get colour info
-    let hex, name, code, deltaE, recipeText, coverage;
+  let x = MARGIN;
 
-    if (mode === 'blend') {
-      hex = recipe.blendColor?.hex || recipe.targetColor?.hex || '#000000';
-      name = getBlendName(recipe);
-      deltaE = recipe.chosenRecipe?.deltaE?.toFixed(2) || '-';
-      recipeText = formatRecipe(recipe.chosenRecipe);
-      coverage = (recipe.targetColor?.areaPct || 0).toFixed(1) + '%';
-    } else {
-      // Solid mode
-      const tpvInfo = recipe.chosenRecipe?.components?.[0] || {};
-      code = tpvInfo.code || 'RH00';
-      name = tpvInfo.name || 'Unknown';
-      hex = getHexForCode(code);
-      coverage = (recipe.targetColor?.areaPct || 0).toFixed(1) + '%';
-    }
+  // Get colour info
+  let hex, name, code, deltaE, recipeText, coverage;
 
-    const areaPct = recipe.targetColor?.areaPct || 0;
-    const areaNeeded = ((areaPct / 100) * areaM2).toFixed(2);
+  if (mode === 'blend') {
+    hex = recipe.blendColor?.hex || recipe.targetColor?.hex || '#000000';
+    name = getBlendName(recipe);
+    deltaE = recipe.chosenRecipe?.deltaE?.toFixed(2) || '-';
+    recipeText = formatRecipe(recipe.chosenRecipe);
+    coverage = (recipe.targetColor?.areaPct || 0).toFixed(1) + '%';
+  } else {
+    const tpvInfo = recipe.chosenRecipe?.components?.[0] || {};
+    code = tpvInfo.code || 'RH00';
+    name = tpvInfo.name || 'Unknown';
+    hex = getHexForCode(code);
+    coverage = (recipe.targetColor?.areaPct || 0).toFixed(1) + '%';
+  }
 
-    // Draw colour swatch
-    const hexClean = hex.replace('#', '');
-    const r = parseInt(hexClean.substring(0, 2), 16) / 255;
-    const g = parseInt(hexClean.substring(2, 4), 16) / 255;
-    const b = parseInt(hexClean.substring(4, 6), 16) / 255;
+  const areaPct = recipe.targetColor?.areaPct || 0;
+  const areaNeeded = ((areaPct / 100) * areaM2).toFixed(2);
 
-    page.drawRectangle({
-      x: x + 5,
-      y: y - 8,
-      width: 25,
-      height: 12,
-      color: rgb(r, g, b),
-      borderColor: COLORS.border,
-      borderWidth: 0.5,
-    });
-    x += colWidths[0];
+  // Draw colour swatch
+  drawColorSwatch(page, x + 8, y - 8, hex, 28, 14);
+  x += colWidths[0];
 
-    if (mode === 'blend') {
-      // Blend name
-      page.drawText(name.substring(0, 20), {
-        x: x + 5,
-        y: y - 3,
-        size: 8,
-        font: fontRegular,
-        color: COLORS.text,
-      });
-      x += colWidths[1];
-
-      // Delta E
-      page.drawText(deltaE, {
-        x: x + 5,
-        y: y - 3,
-        size: 8,
-        font: fontRegular,
-        color: COLORS.text,
-      });
-      x += colWidths[2];
-
-      // Recipe
-      page.drawText(recipeText.substring(0, 28), {
-        x: x + 5,
-        y: y - 3,
-        size: 7,
-        font: fontRegular,
-        color: COLORS.textLight,
-      });
-      x += colWidths[3];
-    } else {
-      // TPV Code
-      page.drawText(code, {
-        x: x + 5,
-        y: y - 3,
-        size: 8,
-        font: fontRegular,
-        color: COLORS.text,
-      });
-      x += colWidths[1];
-
-      // Name
-      page.drawText(name.substring(0, 18), {
-        x: x + 5,
-        y: y - 3,
-        size: 8,
-        font: fontRegular,
-        color: COLORS.text,
-      });
-      x += colWidths[2];
-
-      // Hex
-      page.drawText(hex, {
-        x: x + 5,
-        y: y - 3,
-        size: 8,
-        font: fontRegular,
-        color: COLORS.textLight,
-      });
-      x += colWidths[3];
-    }
-
-    // Coverage
-    page.drawText(coverage, {
+  if (mode === 'blend') {
+    // Blend name (with truncation if needed)
+    const displayName = name.length > 18 ? name.substring(0, 17) + '\u2026' : name;
+    page.drawText(displayName, {
       x: x + 5,
       y: y - 3,
       size: 8,
       font: fontRegular,
       color: COLORS.text,
     });
-    x += colWidths[4];
+    x += colWidths[1];
 
-    // Area needed
-    page.drawText(areaNeeded, {
+    // Delta E
+    page.drawText(deltaE, {
       x: x + 5,
       y: y - 3,
       size: 8,
       font: fontRegular,
       color: COLORS.text,
     });
+    x += colWidths[2];
 
-    y -= 22;
-  }
+    // Recipe (with truncation)
+    const displayRecipe = recipeText.length > 26 ? recipeText.substring(0, 25) + '\u2026' : recipeText;
+    page.drawText(displayRecipe, {
+      x: x + 5,
+      y: y - 3,
+      size: 7,
+      font: fontRegular,
+      color: COLORS.textLight,
+    });
+    x += colWidths[3];
+  } else {
+    // TPV Code
+    page.drawText(code, {
+      x: x + 5,
+      y: y - 3,
+      size: 9,
+      font: fontBold,
+      color: COLORS.primary,
+    });
+    x += colWidths[1];
 
-  // Add overflow warning if not all recipes fit
-  if (rowsDrawn < recipes.length) {
-    y -= 10;
-    page.drawText(`Note: ${recipes.length - rowsDrawn} additional colour${recipes.length - rowsDrawn > 1 ? 's' : ''} not shown due to space. See material totals below.`, {
-      x: MARGIN,
-      y,
+    // Name (with truncation)
+    const displayName = name.length > 16 ? name.substring(0, 15) + '\u2026' : name;
+    page.drawText(displayName, {
+      x: x + 5,
+      y: y - 3,
       size: 8,
       font: fontRegular,
-      color: COLORS.accent,
+      color: COLORS.text,
     });
-    y -= 20;
+    x += colWidths[2];
+
+    // Hex
+    page.drawText(hex, {
+      x: x + 5,
+      y: y - 3,
+      size: 8,
+      font: fontRegular,
+      color: COLORS.textLight,
+    });
+    x += colWidths[3];
   }
 
-  return y;
+  // Coverage
+  page.drawText(coverage, {
+    x: x + 5,
+    y: y - 3,
+    size: 8,
+    font: fontRegular,
+    color: COLORS.text,
+  });
+  x += colWidths[4];
+
+  // Area needed
+  page.drawText(areaNeeded, {
+    x: x + 5,
+    y: y - 3,
+    size: 8,
+    font: fontRegular,
+    color: COLORS.text,
+  });
+
+  return y - 24;
 }
 
 /**
  * Draw material totals for installers
  */
 function drawMaterialTotals(page, fontBold, fontRegular, recipes, mode, areaM2, y) {
-  // Material density estimate (kg/m² at standard depth)
-  const DENSITY_KG_PER_M2 = 8; // Approximate for TPV at 20mm depth
+  const { densityKgPerM2, safetyMargin } = MATERIAL_CONFIG;
+  let totalKg = 0;
 
   if (mode === 'blend') {
     // Aggregate by TPV components
@@ -706,7 +619,7 @@ function drawMaterialTotals(page, fontBold, fontRegular, recipes, mode, areaM2, 
       for (const comp of components) {
         const code = comp.code;
         const weight = comp.weight || 0;
-        const kgNeeded = areaNeeded * DENSITY_KG_PER_M2 * weight * SAFETY_FACTOR;
+        const kgNeeded = areaNeeded * densityKgPerM2 * weight * safetyMargin;
 
         if (!tpvTotals[code]) {
           tpvTotals[code] = {
@@ -719,7 +632,7 @@ function drawMaterialTotals(page, fontBold, fontRegular, recipes, mode, areaM2, 
       }
     }
 
-    // Draw totals
+    // Draw header
     page.drawText('TPV Material Required (by component):', {
       x: MARGIN,
       y,
@@ -728,47 +641,36 @@ function drawMaterialTotals(page, fontBold, fontRegular, recipes, mode, areaM2, 
       color: COLORS.text,
     });
 
-    y -= 20;
+    y -= 22;
+
+    // Table header
+    page.drawText('Colour', { x: MARGIN, y, size: 9, font: fontBold, color: COLORS.text });
+    page.drawText('Quantity', { x: MARGIN + 220, y, size: 9, font: fontBold, color: COLORS.text });
+    page.drawText('Bags (25kg)', { x: MARGIN + 300, y, size: 9, font: fontBold, color: COLORS.text });
+
+    y -= 8;
+    page.drawLine({
+      start: { x: MARGIN, y: y + 5 },
+      end: { x: MARGIN + 380, y: y + 5 },
+      thickness: 0.5,
+      color: COLORS.border,
+    });
+
+    y -= 15;
 
     const sortedTotals = Object.values(tpvTotals).sort((a, b) => b.kg - a.kg);
 
     for (const total of sortedTotals) {
       const hex = getHexForCode(total.code);
-      const hexClean = hex.replace('#', '');
-      const r = parseInt(hexClean.substring(0, 2), 16) / 255;
-      const g = parseInt(hexClean.substring(2, 4), 16) / 255;
-      const b = parseInt(hexClean.substring(4, 6), 16) / 255;
+      totalKg += total.kg;
 
-      // Swatch
-      page.drawRectangle({
-        x: MARGIN,
-        y: y - 6,
-        width: 20,
-        height: 10,
-        color: rgb(r, g, b),
-        borderColor: COLORS.border,
-        borderWidth: 0.5,
+      y = drawMaterialRow(page, fontBold, fontRegular, MARGIN, y, {
+        hex,
+        code: total.code,
+        name: total.name,
+        kg: total.kg,
+        showBags: true,
       });
-
-      // Code and name
-      page.drawText(`${total.code} - ${total.name}`, {
-        x: MARGIN + 30,
-        y,
-        size: 10,
-        font: fontRegular,
-        color: COLORS.text,
-      });
-
-      // Quantity
-      page.drawText(`${total.kg.toFixed(1)} kg`, {
-        x: MARGIN + 200,
-        y,
-        size: 10,
-        font: fontBold,
-        color: COLORS.text,
-      });
-
-      y -= 18;
     }
 
   } else {
@@ -781,83 +683,79 @@ function drawMaterialTotals(page, fontBold, fontRegular, recipes, mode, areaM2, 
       color: COLORS.text,
     });
 
-    y -= 20;
+    y -= 22;
+
+    // Table header
+    page.drawText('Colour', { x: MARGIN, y, size: 9, font: fontBold, color: COLORS.text });
+    page.drawText('Quantity', { x: MARGIN + 220, y, size: 9, font: fontBold, color: COLORS.text });
+    page.drawText('Bags (25kg)', { x: MARGIN + 300, y, size: 9, font: fontBold, color: COLORS.text });
+
+    y -= 8;
+    page.drawLine({
+      start: { x: MARGIN, y: y + 5 },
+      end: { x: MARGIN + 380, y: y + 5 },
+      thickness: 0.5,
+      color: COLORS.border,
+    });
+
+    y -= 15;
 
     for (const recipe of recipes) {
       const areaPct = recipe.targetColor?.areaPct || 0;
       const areaNeeded = (areaPct / 100) * areaM2;
-      const kgNeeded = areaNeeded * DENSITY_KG_PER_M2 * SAFETY_FACTOR;
+      const kgNeeded = areaNeeded * densityKgPerM2 * safetyMargin;
+      totalKg += kgNeeded;
 
       const tpvInfo = recipe.chosenRecipe?.components?.[0] || {};
       const code = tpvInfo.code || 'RH00';
       const name = tpvInfo.name || 'Unknown';
       const hex = getHexForCode(code);
 
-      const hexClean = hex.replace('#', '');
-      const r = parseInt(hexClean.substring(0, 2), 16) / 255;
-      const g = parseInt(hexClean.substring(2, 4), 16) / 255;
-      const b = parseInt(hexClean.substring(4, 6), 16) / 255;
-
-      // Swatch
-      page.drawRectangle({
-        x: MARGIN,
-        y: y - 6,
-        width: 20,
-        height: 10,
-        color: rgb(r, g, b),
-        borderColor: COLORS.border,
-        borderWidth: 0.5,
+      y = drawMaterialRow(page, fontBold, fontRegular, MARGIN, y, {
+        hex,
+        code,
+        name,
+        kg: kgNeeded,
+        showBags: true,
       });
-
-      // Code and name
-      page.drawText(`${code} - ${name}`, {
-        x: MARGIN + 30,
-        y,
-        size: 10,
-        font: fontRegular,
-        color: COLORS.text,
-      });
-
-      // Quantity
-      page.drawText(`${kgNeeded.toFixed(1)} kg`, {
-        x: MARGIN + 200,
-        y,
-        size: 10,
-        font: fontBold,
-        color: COLORS.text,
-      });
-
-      y -= 18;
     }
   }
 
-  // Total estimate
-  const totalKg = areaM2 * DENSITY_KG_PER_M2;
-  y -= 15;
+  // Total row
+  y -= 5;
   page.drawLine({
-    start: { x: MARGIN, y: y + 10 },
-    end: { x: MARGIN + 280, y: y + 10 },
-    thickness: 0.5,
+    start: { x: MARGIN, y: y + 12 },
+    end: { x: MARGIN + 380, y: y + 12 },
+    thickness: 1,
     color: COLORS.border,
   });
 
-  page.drawText('Total TPV (estimated):', {
-    x: MARGIN,
+  y -= 5;
+  page.drawText('TOTAL TPV', {
+    x: MARGIN + 28,
     y,
     size: 10,
     font: fontBold,
     color: COLORS.text,
   });
 
-  page.drawText(`${totalKg.toFixed(1)} kg`, {
-    x: MARGIN + 200,
+  page.drawText(formatWeight(totalKg), {
+    x: MARGIN + 220,
     y,
     size: 10,
     font: fontBold,
     color: COLORS.primary,
   });
 
-  return y;
+  page.drawText(`${calculateBags(totalKg)} bags`, {
+    x: MARGIN + 300,
+    y,
+    size: 10,
+    font: fontBold,
+    color: COLORS.text,
+  });
+
+  return { y, totalKg };
 }
 
 /**
@@ -869,9 +767,10 @@ function getBlendName(recipe) {
     return components[0].name;
   } else if (components.length === 2) {
     return `${components[0].name}/${components[1].name}`;
-  } else {
-    return 'Custom Blend';
+  } else if (components.length > 2) {
+    return `${components[0].name}/${components[1].name} +${components.length - 2}`;
   }
+  return 'Custom Blend';
 }
 
 /**
