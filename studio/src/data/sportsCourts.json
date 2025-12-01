@@ -1826,7 +1826,7 @@
       "min_surround_mm": 0
     },
 
-    "defaultSurfaceColor": "RH12",
+    "defaultSurfaceColor": "RH23",
     "defaultLineColor": "RH29",
     "defaultLineWidth_mm": 50,
 
@@ -1895,7 +1895,7 @@
       "min_surround_mm": 2000
     },
 
-    "defaultSurfaceColor": "RH12",
+    "defaultSurfaceColor": "RH23",
     "defaultLineColor": "RH29",
     "defaultLineWidth_mm": 50,
 
