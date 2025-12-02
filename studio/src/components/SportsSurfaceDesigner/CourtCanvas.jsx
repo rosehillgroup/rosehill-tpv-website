@@ -19,6 +19,16 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const [dragTrackId, setDragTrackId] = useState(null);
   const [dragMotifId, setDragMotifId] = useState(null);
 
+  // Motif scaling state
+  const [isScaling, setIsScaling] = useState(false);
+  const [scaleMotifId, setScaleMotifId] = useState(null);
+  const [scaleStart, setScaleStart] = useState(null); // { mousePos, originalScale, corner, motifCenter }
+
+  // Motif rotation state
+  const [isRotating, setIsRotating] = useState(false);
+  const [rotateMotifId, setRotateMotifId] = useState(null);
+  const [rotateStart, setRotateStart] = useState(null); // { mouseAngle, originalRotation, motifCenter }
+
   const {
     surface,
     courts,
@@ -38,7 +48,9 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     deselectMotif,
     updateCourtPosition,
     updateTrackPosition,
-    updateMotifPosition
+    updateMotifPosition,
+    updateMotifScale,
+    updateMotifRotation
   } = useSportsDesignStore();
 
   // Convert screen coordinates to SVG coordinates
@@ -149,6 +161,71 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     });
   };
 
+  // Handle scale start on motif corner handle
+  const handleMotifScaleStart = (e, motifId, corner) => {
+    e.stopPropagation();
+
+    const motif = motifs[motifId];
+    if (!motif || motif.locked) return;
+
+    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    const scaledWidth = motif.originalWidth_mm * (motif.scale || 1);
+    const scaledHeight = motif.originalHeight_mm * (motif.scale || 1);
+
+    // Calculate motif center in SVG coordinates
+    const motifCenter = {
+      x: motif.position.x + scaledWidth / 2,
+      y: motif.position.y + scaledHeight / 2
+    };
+
+    // Calculate initial distance from center to mouse
+    const initialDistance = Math.sqrt(
+      Math.pow(svgPoint.x - motifCenter.x, 2) +
+      Math.pow(svgPoint.y - motifCenter.y, 2)
+    );
+
+    setScaleStart({
+      initialDistance,
+      originalScale: motif.scale || 1,
+      corner,
+      motifCenter
+    });
+    setScaleMotifId(motifId);
+    setIsScaling(true);
+  };
+
+  // Handle rotation start on motif rotation handle
+  const handleMotifRotateStart = (e, motifId) => {
+    e.stopPropagation();
+
+    const motif = motifs[motifId];
+    if (!motif || motif.locked) return;
+
+    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    const scaledWidth = motif.originalWidth_mm * (motif.scale || 1);
+    const scaledHeight = motif.originalHeight_mm * (motif.scale || 1);
+
+    // Calculate motif center in SVG coordinates
+    const motifCenter = {
+      x: motif.position.x + scaledWidth / 2,
+      y: motif.position.y + scaledHeight / 2
+    };
+
+    // Calculate initial angle from center to mouse
+    const initialAngle = Math.atan2(
+      svgPoint.y - motifCenter.y,
+      svgPoint.x - motifCenter.x
+    ) * (180 / Math.PI);
+
+    setRotateStart({
+      initialAngle,
+      originalRotation: motif.rotation || 0,
+      motifCenter
+    });
+    setRotateMotifId(motifId);
+    setIsRotating(true);
+  };
+
   // Reset drag state when surface dimensions change
   useEffect(() => {
     setIsDragging(false);
@@ -221,6 +298,101 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isDragging, dragCourtId, dragTrackId, dragMotifId, dragStart, courts, tracks, motifs, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition, updateMotifPosition]);
+
+  // Handle mouse move/up for motif scaling
+  useEffect(() => {
+    if (!isScaling || !scaleMotifId || !scaleStart) return;
+
+    const handleMouseMove = (e) => {
+      const svgPoint = screenToSVG(e.clientX, e.clientY);
+      const motif = motifs[scaleMotifId];
+      if (!motif) return;
+
+      // Calculate current distance from original center to mouse
+      const currentDistance = Math.sqrt(
+        Math.pow(svgPoint.x - scaleStart.motifCenter.x, 2) +
+        Math.pow(svgPoint.y - scaleStart.motifCenter.y, 2)
+      );
+
+      // Calculate new scale based on distance ratio
+      const scaleRatio = currentDistance / scaleStart.initialDistance;
+      let newScale = scaleStart.originalScale * scaleRatio;
+
+      // Clamp scale between 0.1 and 5
+      newScale = Math.max(0.1, Math.min(5, newScale));
+
+      // Round to 2 decimal places
+      newScale = Math.round(newScale * 100) / 100;
+
+      updateMotifScale(scaleMotifId, newScale);
+    };
+
+    const handleMouseUp = () => {
+      const { addToHistory } = useSportsDesignStore.getState();
+      addToHistory();
+
+      setIsScaling(false);
+      setScaleMotifId(null);
+      setScaleStart(null);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isScaling, scaleMotifId, scaleStart, motifs, updateMotifScale]);
+
+  // Handle mouse move/up for motif rotation
+  useEffect(() => {
+    if (!isRotating || !rotateMotifId || !rotateStart) return;
+
+    const handleMouseMove = (e) => {
+      const svgPoint = screenToSVG(e.clientX, e.clientY);
+
+      // Calculate current angle from center to mouse
+      const currentAngle = Math.atan2(
+        svgPoint.y - rotateStart.motifCenter.y,
+        svgPoint.x - rotateStart.motifCenter.x
+      ) * (180 / Math.PI);
+
+      // Calculate rotation delta
+      const angleDelta = currentAngle - rotateStart.initialAngle;
+      let newRotation = rotateStart.originalRotation + angleDelta;
+
+      // Normalize to 0-360 range
+      newRotation = ((newRotation % 360) + 360) % 360;
+
+      // Snap to 15-degree increments if shift is held
+      if (e.shiftKey) {
+        newRotation = Math.round(newRotation / 15) * 15;
+      }
+
+      // Round to 1 decimal place
+      newRotation = Math.round(newRotation * 10) / 10;
+
+      updateMotifRotation(rotateMotifId, newRotation);
+    };
+
+    const handleMouseUp = () => {
+      const { addToHistory } = useSportsDesignStore.getState();
+      addToHistory();
+
+      setIsRotating(false);
+      setRotateMotifId(null);
+      setRotateStart(null);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isRotating, rotateMotifId, rotateStart, updateMotifRotation]);
 
   // Handle click on canvas background (deselect)
   const handleCanvasClick = (e) => {
@@ -303,6 +475,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                 isSelected={elementId === selectedMotifId}
                 onMouseDown={(e) => handleMotifMouseDown(e, elementId)}
                 onDoubleClick={(e) => handleMotifDoubleClick(e, elementId)}
+                onScaleStart={(e, corner) => handleMotifScaleStart(e, elementId, corner)}
+                onRotateStart={(e) => handleMotifRotateStart(e, elementId)}
               />
             );
           }

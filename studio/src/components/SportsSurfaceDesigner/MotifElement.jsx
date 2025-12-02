@@ -12,8 +12,10 @@ import React, { useMemo } from 'react';
  * @param {boolean} props.isSelected - Whether this motif is selected
  * @param {Function} props.onMouseDown - Handler for mouse down (drag start)
  * @param {Function} props.onDoubleClick - Handler for double click (open properties)
+ * @param {Function} props.onScaleStart - Handler for scale handle drag start
+ * @param {Function} props.onRotateStart - Handler for rotation handle drag start
  */
-function MotifElement({ motif, isSelected, onMouseDown, onDoubleClick }) {
+function MotifElement({ motif, isSelected, onMouseDown, onDoubleClick, onScaleStart, onRotateStart }) {
   const {
     svgContent,
     originalWidth_mm,
@@ -152,11 +154,13 @@ function MotifElement({ motif, isSelected, onMouseDown, onDoubleClick }) {
         />
       )}
 
-      {/* Corner resize/rotation handles when selected */}
+      {/* Corner resize handles and rotation handle when selected */}
       {isSelected && (
         <MotifHandles
           width={scaledWidth}
           height={scaledHeight}
+          onScaleStart={onScaleStart}
+          onRotateStart={onRotateStart}
         />
       )}
     </g>
@@ -164,27 +168,33 @@ function MotifElement({ motif, isSelected, onMouseDown, onDoubleClick }) {
 }
 
 /**
- * Resize/Rotation handles for selected motif
- * Visual indicators at corners - actual drag handling is in parent
+ * Resize and rotation handles for selected motif
+ * Corner handles for scaling, top-center handle for rotation
  */
-function MotifHandles({ width, height }) {
+function MotifHandles({ width, height, onScaleStart, onRotateStart }) {
   const handleSize = Math.min(width, height) * 0.08;
   const minHandleSize = 150;
   const maxHandleSize = 400;
   const size = Math.max(minHandleSize, Math.min(maxHandleSize, handleSize));
 
-  const handles = [
-    { x: -size / 2, y: -size / 2, cursor: 'nwse-resize' },
-    { x: width - size / 2, y: -size / 2, cursor: 'nesw-resize' },
-    { x: -size / 2, y: height - size / 2, cursor: 'nesw-resize' },
-    { x: width - size / 2, y: height - size / 2, cursor: 'nwse-resize' }
+  // Corner handles for scaling
+  const scaleHandles = [
+    { x: -size / 2, y: -size / 2, corner: 'nw', cursor: 'nwse-resize' },
+    { x: width - size / 2, y: -size / 2, corner: 'ne', cursor: 'nesw-resize' },
+    { x: -size / 2, y: height - size / 2, corner: 'sw', cursor: 'nesw-resize' },
+    { x: width - size / 2, y: height - size / 2, corner: 'se', cursor: 'nwse-resize' }
   ];
 
+  // Rotation handle - positioned above top center
+  const rotateHandleDistance = size * 2.5;
+  const rotateHandleSize = size * 0.8;
+
   return (
-    <g className="motif-handles" pointerEvents="none">
-      {handles.map((handle, index) => (
+    <g className="motif-handles">
+      {/* Scale handles at corners */}
+      {scaleHandles.map((handle) => (
         <rect
-          key={index}
+          key={handle.corner}
           x={handle.x}
           y={handle.y}
           width={size}
@@ -193,8 +203,60 @@ function MotifHandles({ width, height }) {
           stroke="#fff"
           strokeWidth="20"
           rx={size / 4}
+          style={{ cursor: handle.cursor }}
+          pointerEvents="all"
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            onScaleStart?.(e, handle.corner);
+          }}
         />
       ))}
+
+      {/* Rotation handle stem */}
+      <line
+        x1={width / 2}
+        y1={0}
+        x2={width / 2}
+        y2={-rotateHandleDistance + rotateHandleSize / 2}
+        stroke="#9333EA"
+        strokeWidth="30"
+        pointerEvents="none"
+      />
+
+      {/* Rotation handle circle */}
+      <circle
+        cx={width / 2}
+        cy={-rotateHandleDistance}
+        r={rotateHandleSize}
+        fill="#9333EA"
+        stroke="#fff"
+        strokeWidth="20"
+        style={{ cursor: 'grab' }}
+        pointerEvents="all"
+        onMouseDown={(e) => {
+          e.stopPropagation();
+          onRotateStart?.(e);
+        }}
+      />
+
+      {/* Rotation icon inside handle */}
+      <path
+        d={`M ${width / 2 - rotateHandleSize * 0.4} ${-rotateHandleDistance}
+            A ${rotateHandleSize * 0.4} ${rotateHandleSize * 0.4} 0 1 1
+            ${width / 2 + rotateHandleSize * 0.4} ${-rotateHandleDistance}`}
+        fill="none"
+        stroke="#fff"
+        strokeWidth="25"
+        strokeLinecap="round"
+        pointerEvents="none"
+      />
+      <polygon
+        points={`${width / 2 + rotateHandleSize * 0.4},${-rotateHandleDistance - rotateHandleSize * 0.25}
+                 ${width / 2 + rotateHandleSize * 0.4},${-rotateHandleDistance + rotateHandleSize * 0.25}
+                 ${width / 2 + rotateHandleSize * 0.65},${-rotateHandleDistance}`}
+        fill="#fff"
+        pointerEvents="none"
+      />
     </g>
   );
 }
