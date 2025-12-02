@@ -1242,9 +1242,9 @@ function MotifPropertiesPanel({ motif, motifId }) {
               <input
                 type="range"
                 min="0.1"
-                max="3.0"
+                max="10"
                 step="0.1"
-                value={scale || 1}
+                value={Math.min(scale || 1, 10)}
                 onChange={(e) => handleScaleChange(e.target.value)}
                 className="property-slider"
               />
@@ -1254,7 +1254,6 @@ function MotifPropertiesPanel({ motif, motifId }) {
                   value={(scale || 1).toFixed(2)}
                   onChange={(e) => handleScaleChange(e.target.value)}
                   min="0.1"
-                  max="3.0"
                   step="0.1"
                 />
                 <span className="property-unit">×</span>

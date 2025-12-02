@@ -318,8 +318,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       const scaleRatio = currentDistance / scaleStart.initialDistance;
       let newScale = scaleStart.originalScale * scaleRatio;
 
-      // Clamp scale between 0.1 and 5
-      newScale = Math.max(0.1, Math.min(5, newScale));
+      // Minimum scale of 0.1, no upper limit
+      newScale = Math.max(0.1, newScale);
 
       // Round to 2 decimal places
       newScale = Math.round(newScale * 100) / 100;
