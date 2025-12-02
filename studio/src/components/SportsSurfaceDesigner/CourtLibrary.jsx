@@ -504,7 +504,9 @@ function MotifPreview({ design }) {
         onError={(e) => {
           // Fall back to placeholder on error
           e.target.style.display = 'none';
-          e.target.nextSibling?.style.display = 'flex';
+          if (e.target.nextSibling) {
+            e.target.nextSibling.style.display = 'flex';
+          }
         }}
       />
     );
