@@ -1055,8 +1055,8 @@ function TrackPropertiesPanel({ track, trackId }) {
  * Displays and allows editing of motif position, rotation, and scale
  */
 function MotifPropertiesPanel({ motif, motifId }) {
-  const { updateMotifPosition, updateMotifRotation, updateMotifScale, removeMotif, duplicateMotif, refreshMotif } = useSportsDesignStore();
-  const { position, rotation, scale, sourceDesignName, sourceDesignId, originalWidth_mm, originalHeight_mm, sourceThumbnailUrl } = motif;
+  const { updateMotifPosition, updateMotifRotation, updateMotifScale, removeMotif, duplicateMotif, refreshMotif, setMotifViewMode } = useSportsDesignStore();
+  const { position, rotation, scale, sourceDesignName, sourceDesignId, originalWidth_mm, originalHeight_mm, sourceThumbnailUrl, viewMode, hasBothVersions } = motif;
 
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [refreshError, setRefreshError] = React.useState(null);
@@ -1170,6 +1170,27 @@ function MotifPropertiesPanel({ motif, motifId }) {
                     objectFit: 'contain'
                   }}
                 />
+              </div>
+            </div>
+          )}
+
+          {/* View Mode Toggle - only show if both versions available */}
+          {hasBothVersions && (
+            <div className="property-group">
+              <label>Colour Style</label>
+              <div className="property-toggle-buttons">
+                <button
+                  className={`toggle-btn ${viewMode === 'solid' ? 'toggle-btn--active' : ''}`}
+                  onClick={() => setMotifViewMode(motifId, 'solid')}
+                >
+                  Solid
+                </button>
+                <button
+                  className={`toggle-btn ${viewMode === 'blend' ? 'toggle-btn--active' : ''}`}
+                  onClick={() => setMotifViewMode(motifId, 'blend')}
+                >
+                  Blend
+                </button>
               </div>
             </div>
           )}

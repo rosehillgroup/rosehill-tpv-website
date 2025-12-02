@@ -754,7 +754,7 @@ export const useSportsDesignStore = create(
       },
 
       // ====== Motif Actions ======
-      addMotif: (sourceDesignId, sourceDesignName, svgContent, originalWidth_mm, originalHeight_mm, thumbnailUrl = null) => {
+      addMotif: (sourceDesignId, sourceDesignName, svgContent, originalWidth_mm, originalHeight_mm, thumbnailUrl = null, motifData = {}) => {
         const motifId = `motif-${Date.now()}`;
         const surface = get().surface;
 
@@ -765,7 +765,14 @@ export const useSportsDesignStore = create(
           sourceDesignId,
           sourceDesignName,
           sourceThumbnailUrl: thumbnailUrl,
-          svgContent,
+          // Store both solid and blend versions if available
+          solidSvgContent: motifData.solidSvgContent || svgContent,
+          blendSvgContent: motifData.blendSvgContent || null,
+          hasBothVersions: motifData.hasBothVersions || false,
+          // Current view mode - defaults to 'solid'
+          viewMode: 'solid',
+          // Active SVG content (based on viewMode)
+          svgContent: motifData.solidSvgContent || svgContent,
           originalWidth_mm,
           originalHeight_mm,
           position: {
@@ -834,6 +841,28 @@ export const useSportsDesignStore = create(
             }
           }
         }));
+      },
+
+      setMotifViewMode: (motifId, viewMode) => {
+        const motif = get().motifs[motifId];
+        if (!motif) return;
+
+        // Determine which SVG content to use
+        const newSvgContent = viewMode === 'blend'
+          ? (motif.blendSvgContent || motif.solidSvgContent)
+          : (motif.solidSvgContent || motif.blendSvgContent);
+
+        set((state) => ({
+          motifs: {
+            ...state.motifs,
+            [motifId]: {
+              ...state.motifs[motifId],
+              viewMode,
+              svgContent: newSvgContent
+            }
+          }
+        }));
+        get().addToHistory();
       },
 
       duplicateMotif: (motifId) => {

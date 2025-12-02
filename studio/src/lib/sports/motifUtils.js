@@ -23,36 +23,41 @@ export async function fetchMotifFromDesign(designId) {
     throw new Error('Cannot use a sports surface design as a motif');
   }
 
-  // Determine which SVG URL to use
-  // Priority: final_solid_svg_url (recolored) > final_blend_svg_url > original_svg_url
-  // These are stored at the TOP level of the design record, not in design_data
-  // Note: Skip blob: URLs as they're only valid in the session that created them
-  const candidateUrls = [
-    design.final_solid_svg_url,
-    design.final_blend_svg_url,
-    design.original_svg_url
-  ].filter(url => url && !url.startsWith('blob:'));
+  // Get valid URLs (skip blob: URLs as they're only valid in the session that created them)
+  const solidUrl = design.final_solid_svg_url && !design.final_solid_svg_url.startsWith('blob:')
+    ? design.final_solid_svg_url : null;
+  const blendUrl = design.final_blend_svg_url && !design.final_blend_svg_url.startsWith('blob:')
+    ? design.final_blend_svg_url : null;
+  const originalUrl = design.original_svg_url && !design.original_svg_url.startsWith('blob:')
+    ? design.original_svg_url : null;
 
-  if (candidateUrls.length === 0) {
-    throw new Error('Design does not have a valid SVG URL. Please ensure the design was saved after generation.');
+  // Try to fetch both solid and blend versions
+  let solidSvgContent = null;
+  let blendSvgContent = null;
+
+  // Fetch solid version (preferred)
+  if (solidUrl) {
+    console.log('[MOTIF] Fetching solid SVG from:', solidUrl);
+    solidSvgContent = await fetchAndSanitizeSVG(solidUrl);
   }
 
-  // Try each URL until one works
-  let svgContent = null;
-  let lastError = null;
-
-  for (const url of candidateUrls) {
-    console.log('[MOTIF] Trying to fetch SVG from:', url);
-    const content = await fetchAndSanitizeSVG(url);
-    if (content) {
-      svgContent = content;
-      break;
-    }
-    lastError = `Failed to load from ${url}`;
+  // Fetch blend version
+  if (blendUrl) {
+    console.log('[MOTIF] Fetching blend SVG from:', blendUrl);
+    blendSvgContent = await fetchAndSanitizeSVG(blendUrl);
   }
 
-  if (!svgContent) {
-    throw new Error(lastError || 'Failed to load or sanitize the design SVG');
+  // If neither worked, try the original
+  if (!solidSvgContent && !blendSvgContent && originalUrl) {
+    console.log('[MOTIF] Fetching original SVG from:', originalUrl);
+    const originalContent = await fetchAndSanitizeSVG(originalUrl);
+    // Use original as solid fallback
+    solidSvgContent = originalContent;
+  }
+
+  // Must have at least one version
+  if (!solidSvgContent && !blendSvgContent) {
+    throw new Error('Failed to load any SVG version. Please ensure the design was saved after generation.');
   }
 
   // Extract dimensions from design.dimensions (JSONB field)
@@ -63,11 +68,20 @@ export async function fetchMotifFromDesign(designId) {
   // Get thumbnail URL for preview (stored at top level)
   const thumbnailUrl = design.thumbnail_url || design.original_png_url || null;
 
+  // Determine if both versions are available
+  const hasBothVersions = solidSvgContent && blendSvgContent;
+
   return {
     sourceDesignId: designId,
     sourceDesignName: design.name || 'Unnamed Design',
     sourceThumbnailUrl: thumbnailUrl,
-    svgContent,
+    // Store both versions (one may be null)
+    solidSvgContent: solidSvgContent,
+    blendSvgContent: blendSvgContent,
+    // For backward compatibility, also provide svgContent (defaults to solid)
+    svgContent: solidSvgContent || blendSvgContent,
+    // Flag indicating if user can switch between versions
+    hasBothVersions,
     originalWidth_mm: width_mm,
     originalHeight_mm: height_mm
   };

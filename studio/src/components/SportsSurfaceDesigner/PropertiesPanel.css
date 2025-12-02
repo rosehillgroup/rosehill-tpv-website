@@ -893,3 +893,40 @@
 .layer-item__menu-delete:hover:not(:disabled) {
   background: #fef2f2 !important;
 }
+
+/* ====== Toggle Buttons ====== */
+.property-toggle-buttons {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--color-border, #e4e9f0);
+  border-radius: var(--radius-sm, 6px);
+  overflow: hidden;
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 0.5rem 1rem;
+  border: none;
+  background: var(--color-bg-card, white);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: var(--font-medium, 500);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  color: var(--color-text-secondary, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.toggle-btn:not(:last-child) {
+  border-right: 1px solid var(--color-border, #e4e9f0);
+}
+
+.toggle-btn:hover:not(.toggle-btn--active) {
+  background: var(--color-bg-subtle, #f8fafc);
+  color: var(--color-text-primary, #1a202c);
+}
+
+.toggle-btn--active {
+  background: var(--color-primary, #1e4a7a);
+  color: white;
+  font-weight: var(--font-semibold, 600);
+}

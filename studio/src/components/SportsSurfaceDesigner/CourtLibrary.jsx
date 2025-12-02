@@ -73,7 +73,13 @@ function CourtLibrary() {
         motifData.svgContent,
         motifData.originalWidth_mm,
         motifData.originalHeight_mm,
-        motifData.sourceThumbnailUrl
+        motifData.sourceThumbnailUrl,
+        // Pass extra data for solid/blend switching
+        {
+          solidSvgContent: motifData.solidSvgContent,
+          blendSvgContent: motifData.blendSvgContent,
+          hasBothVersions: motifData.hasBothVersions
+        }
       );
     } catch (error) {
       console.error('[MOTIFS] Failed to add motif:', error);
