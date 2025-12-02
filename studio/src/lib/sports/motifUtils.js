@@ -107,21 +107,21 @@ export async function listPlaygroundDesigns(options = {}) {
   const result = await listDesigns(options);
 
   // Filter to only playground designs (exclude sports surfaces)
-  const playgroundDesigns = (result.designs || []).filter(
-    design => design.input_mode !== 'sports_surface'
-  );
+  // The list API returns metadata only (not full design_data), so we check:
+  // - input_mode !== 'sports_surface' (playground designs)
+  // - Has thumbnail_url or original_svg_url (has generated content)
+  const validDesigns = (result.designs || []).filter(design => {
+    // Exclude sports surface designs
+    if (design.input_mode === 'sports_surface') return false;
 
-  // Only include designs that have SVG output
-  const validDesigns = playgroundDesigns.filter(design => {
-    const data = design.design_data || {};
-    return data.solidSvgUrl || data.blendSvgUrl || data.result?.svg_url;
+    // Include if it has any visual output (thumbnail or SVG)
+    // These fields are set when a design is saved after generation
+    return design.thumbnail_url || design.original_svg_url || design.original_png_url;
   });
 
   return {
     designs: validDesigns,
-    total: result.total,
-    limit: result.limit,
-    offset: result.offset
+    pagination: result.pagination
   };
 }
 
