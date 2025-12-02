@@ -26,17 +26,33 @@ export async function fetchMotifFromDesign(designId) {
   // Determine which SVG URL to use
   // Priority: final_solid_svg_url (recolored) > final_blend_svg_url > original_svg_url
   // These are stored at the TOP level of the design record, not in design_data
-  let svgUrl = design.final_solid_svg_url || design.final_blend_svg_url || design.original_svg_url;
+  // Note: Skip blob: URLs as they're only valid in the session that created them
+  const candidateUrls = [
+    design.final_solid_svg_url,
+    design.final_blend_svg_url,
+    design.original_svg_url
+  ].filter(url => url && !url.startsWith('blob:'));
 
-  if (!svgUrl) {
-    throw new Error('Design does not have an SVG output. Please ensure the design was saved after generation.');
+  if (candidateUrls.length === 0) {
+    throw new Error('Design does not have a valid SVG URL. Please ensure the design was saved after generation.');
   }
 
-  // Fetch the SVG content
-  const svgContent = await fetchAndSanitizeSVG(svgUrl);
+  // Try each URL until one works
+  let svgContent = null;
+  let lastError = null;
+
+  for (const url of candidateUrls) {
+    console.log('[MOTIF] Trying to fetch SVG from:', url);
+    const content = await fetchAndSanitizeSVG(url);
+    if (content) {
+      svgContent = content;
+      break;
+    }
+    lastError = `Failed to load from ${url}`;
+  }
 
   if (!svgContent) {
-    throw new Error('Failed to load or sanitize the design SVG');
+    throw new Error(lastError || 'Failed to load or sanitize the design SVG');
   }
 
   // Extract dimensions from design.dimensions (JSONB field)
@@ -64,7 +80,7 @@ export async function fetchMotifFromDesign(designId) {
  */
 async function fetchAndSanitizeSVG(url) {
   try {
-    // Handle blob URLs (from local state) vs remote URLs
+    console.log('[MOTIF] Fetching SVG from:', url);
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -73,6 +89,8 @@ async function fetchAndSanitizeSVG(url) {
     }
 
     const svgText = await response.text();
+    console.log('[MOTIF] Fetched content length:', svgText.length, 'chars');
+    console.log('[MOTIF] Content starts with:', svgText.substring(0, 100));
 
     // Quick validation first
     if (!quickValidateSVG(svgText)) {
@@ -88,6 +106,7 @@ async function fetchAndSanitizeSVG(url) {
       return null;
     }
 
+    console.log('[MOTIF] Sanitized SVG length:', sanitized.length, 'chars');
     return sanitized;
   } catch (error) {
     console.error('[MOTIF] Error fetching SVG:', error);
