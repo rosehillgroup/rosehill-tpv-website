@@ -24,12 +24,16 @@ export async function fetchMotifFromDesign(designId) {
   }
 
   // Get valid URLs (skip blob: URLs as they're only valid in the session that created them)
+  // Note: We only use final_solid and final_blend - never original_svg_url
+  // The original is the raw Recraft output before TPV color mapping
   const solidUrl = design.final_solid_svg_url && !design.final_solid_svg_url.startsWith('blob:')
     ? design.final_solid_svg_url : null;
   const blendUrl = design.final_blend_svg_url && !design.final_blend_svg_url.startsWith('blob:')
     ? design.final_blend_svg_url : null;
-  const originalUrl = design.original_svg_url && !design.original_svg_url.startsWith('blob:')
-    ? design.original_svg_url : null;
+
+  if (!solidUrl && !blendUrl) {
+    throw new Error('Design does not have TPV-mapped SVG outputs. Please ensure the design was saved after color mapping.');
+  }
 
   // Try to fetch both solid and blend versions
   let solidSvgContent = null;
@@ -47,17 +51,9 @@ export async function fetchMotifFromDesign(designId) {
     blendSvgContent = await fetchAndSanitizeSVG(blendUrl);
   }
 
-  // If neither worked, try the original
-  if (!solidSvgContent && !blendSvgContent && originalUrl) {
-    console.log('[MOTIF] Fetching original SVG from:', originalUrl);
-    const originalContent = await fetchAndSanitizeSVG(originalUrl);
-    // Use original as solid fallback
-    solidSvgContent = originalContent;
-  }
-
   // Must have at least one version
   if (!solidSvgContent && !blendSvgContent) {
-    throw new Error('Failed to load any SVG version. Please ensure the design was saved after generation.');
+    throw new Error('Failed to load SVG content. The design files may have been moved or deleted.');
   }
 
   // Extract dimensions from design.dimensions (JSONB field)
