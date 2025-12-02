@@ -14,18 +14,23 @@ function LayersPanel() {
   const {
     courts,
     tracks,
+    motifs,
     elementOrder,
     selectedCourtId,
     selectedTrackId,
+    selectedMotifId,
     setElementOrder,
     selectCourt,
     selectTrack,
+    selectMotif,
     bringToFront,
     sendToBack,
     duplicateCourt,
     duplicateTrack,
+    duplicateMotif,
     removeCourt,
     removeTrack,
+    removeMotif,
     renameElement,
     toggleElementLock,
     toggleElementVisibility,
@@ -77,13 +82,23 @@ function LayersPanel() {
         locked: track?.locked || false,
         visible: track?.visible !== false
       };
+    } else if (elementId.startsWith('motif-')) {
+      const motif = motifs[elementId];
+      return {
+        type: 'motif',
+        name: motif?.customName || motif?.sourceDesignName || 'Unknown Motif',
+        icon: '🎨',
+        sport: 'playground',
+        locked: motif?.locked || false,
+        visible: motif?.visible !== false
+      };
     }
     return { type: 'unknown', name: 'Unknown', icon: '❓', sport: '', locked: false, visible: true };
   };
 
   // Check if element is selected
   const isSelected = (elementId) => {
-    return elementId === selectedCourtId || elementId === selectedTrackId;
+    return elementId === selectedCourtId || elementId === selectedTrackId || elementId === selectedMotifId;
   };
 
   // Handle element selection
@@ -92,6 +107,8 @@ function LayersPanel() {
       selectCourt(elementId);
     } else if (elementId.startsWith('track-')) {
       selectTrack(elementId);
+    } else if (elementId.startsWith('motif-')) {
+      selectMotif(elementId);
     }
   };
 
@@ -189,6 +206,8 @@ function LayersPanel() {
       duplicateCourt(elementId);
     } else if (elementId.startsWith('track-')) {
       duplicateTrack(elementId);
+    } else if (elementId.startsWith('motif-')) {
+      duplicateMotif(elementId);
     }
     setMenuOpenId(null);
   };
@@ -201,6 +220,8 @@ function LayersPanel() {
         removeCourt(elementId);
       } else if (elementId.startsWith('track-')) {
         removeTrack(elementId);
+      } else if (elementId.startsWith('motif-')) {
+        removeMotif(elementId);
       }
     }
     setMenuOpenId(null);
@@ -255,7 +276,7 @@ function LayersPanel() {
           <span className="layers-panel__empty-icon">📑</span>
           <p>No elements yet</p>
           <span className="layers-panel__empty-hint">
-            Add courts or tracks from the library
+            Add courts, tracks, or motifs from the library
           </span>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from './lib/api/auth.js';
+import { loadDesign } from './lib/api/designs.js';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import InspirePanelRecraft from './components/InspirePanelRecraft.jsx';
 import SportsSurfaceDesigner from './components/SportsSurfaceDesigner/SportsSurfaceDesigner.jsx';
@@ -49,6 +50,23 @@ function App() {
     }
   };
 
+  // Load design from URL parameter if present
+  const loadDesignFromUrl = async (designId) => {
+    try {
+      console.log('[APP] Loading design from URL:', designId);
+      const { design } = await loadDesign(designId);
+      if (design) {
+        handleLoadDesign(design);
+        // Clear the URL parameter after loading
+        const url = new URL(window.location);
+        url.searchParams.delete('design');
+        window.history.replaceState({}, '', url);
+      }
+    } catch (error) {
+      console.error('[APP] Failed to load design from URL:', error);
+    }
+  };
+
   useEffect(() => {
     // Check auth status on mount
     auth.getSession().then(session => {
@@ -62,6 +80,13 @@ function App() {
         setNeedsPasswordSetup(!passwordSetupComplete);
 
         checkAdminStatus();
+
+        // Check for design ID in URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const designId = urlParams.get('design');
+        if (designId) {
+          loadDesignFromUrl(designId);
+        }
       }
     });
 

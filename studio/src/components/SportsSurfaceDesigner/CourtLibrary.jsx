@@ -1,22 +1,51 @@
 // TPV Studio - Court Library Component
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { getAllCourtTemplates, getCourtTemplate } from '../../lib/sports/courtTemplates.js';
 import { getAllTrackTemplates, getTrackTemplate } from '../../lib/sports/trackTemplates.js';
+import { listPlaygroundDesigns, fetchMotifFromDesign } from '../../lib/sports/motifUtils.js';
 import './CourtLibrary.css';
 
 function CourtLibrary() {
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
-  const [activeTab, setActiveTab] = useState('courts'); // 'courts' or 'tracks'
+  const [activeTab, setActiveTab] = useState('courts'); // 'courts', 'tracks', or 'motifs'
 
-  const { addCourt, addTrack, courts, tracks } = useSportsDesignStore();
+  // Motifs state
+  const [playgroundDesigns, setPlaygroundDesigns] = useState([]);
+  const [motifsLoading, setMotifsLoading] = useState(false);
+  const [motifsError, setMotifsError] = useState(null);
+  const [addingMotifId, setAddingMotifId] = useState(null);
+
+  const { addCourt, addTrack, addMotif, courts, tracks, motifs } = useSportsDesignStore();
 
   // Count elements on canvas
   const courtCount = Object.keys(courts).length;
   const trackCount = Object.keys(tracks).length;
+  const motifCount = Object.keys(motifs).length;
 
   const templates = getAllCourtTemplates();
   const trackTemplates = getAllTrackTemplates();
+
+  // Load playground designs when motifs tab is active
+  useEffect(() => {
+    if (activeTab === 'motifs' && playgroundDesigns.length === 0 && !motifsLoading) {
+      loadPlaygroundDesigns();
+    }
+  }, [activeTab]);
+
+  const loadPlaygroundDesigns = async () => {
+    setMotifsLoading(true);
+    setMotifsError(null);
+    try {
+      const result = await listPlaygroundDesigns({ limit: 50 });
+      setPlaygroundDesigns(result.designs || []);
+    } catch (error) {
+      console.error('[MOTIFS] Failed to load designs:', error);
+      setMotifsError(error.message || 'Failed to load designs');
+    } finally {
+      setMotifsLoading(false);
+    }
+  };
 
   const handleAddCourt = (templateId) => {
     const template = getCourtTemplate(templateId);
@@ -32,16 +61,54 @@ function CourtLibrary() {
     }
   };
 
+  const handleAddMotif = async (designId) => {
+    if (addingMotifId) return; // Prevent double-clicks
+
+    setAddingMotifId(designId);
+    try {
+      const motifData = await fetchMotifFromDesign(designId);
+      addMotif(
+        motifData.sourceDesignId,
+        motifData.sourceDesignName,
+        motifData.svgContent,
+        motifData.originalWidth_mm,
+        motifData.originalHeight_mm,
+        motifData.sourceThumbnailUrl
+      );
+    } catch (error) {
+      console.error('[MOTIFS] Failed to add motif:', error);
+      alert(`Failed to add motif: ${error.message}`);
+    } finally {
+      setAddingMotifId(null);
+    }
+  };
+
+  // Get tab title and count
+  const getTabInfo = () => {
+    switch (activeTab) {
+      case 'courts':
+        return { title: 'Court Library', count: courtCount, hint: 'Select a court to add' };
+      case 'tracks':
+        return { title: 'Track Library', count: trackCount, hint: 'Select a track to add' };
+      case 'motifs':
+        return { title: 'Motif Library', count: motifCount, hint: 'Add your saved playground designs' };
+      default:
+        return { title: 'Library', count: 0, hint: '' };
+    }
+  };
+
+  const tabInfo = getTabInfo();
+
   return (
     <div className="court-library">
       <div className="court-library__header">
         <div className="court-library__header-row">
-          <h2>{activeTab === 'courts' ? 'Court Library' : 'Track Library'}</h2>
+          <h2>{tabInfo.title}</h2>
           <span className="court-library__count">
-            {activeTab === 'courts' ? courtCount : trackCount} on canvas
+            {tabInfo.count} on canvas
           </span>
         </div>
-        <p>{activeTab === 'courts' ? 'Select a court to add' : 'Select a track to add'}</p>
+        <p>{tabInfo.hint}</p>
       </div>
 
       {/* Tabs */}
@@ -63,6 +130,15 @@ function CourtLibrary() {
           }}
         >
           Tracks
+        </button>
+        <button
+          className={`court-library__tab ${activeTab === 'motifs' ? 'court-library__tab--active' : ''}`}
+          onClick={() => {
+            setActiveTab('motifs');
+            setSelectedTemplateId(null);
+          }}
+        >
+          Motifs
         </button>
       </div>
 
@@ -138,11 +214,78 @@ function CourtLibrary() {
             )}
           </div>
         ))}
+
+        {/* Motifs View */}
+        {activeTab === 'motifs' && (
+          <>
+            {motifsLoading && (
+              <div className="court-library__loading">
+                <div className="court-library__spinner"></div>
+                <p>Loading your designs...</p>
+              </div>
+            )}
+
+            {motifsError && (
+              <div className="court-library__error">
+                <p>{motifsError}</p>
+                <button onClick={loadPlaygroundDesigns}>Try Again</button>
+              </div>
+            )}
+
+            {!motifsLoading && !motifsError && playgroundDesigns.length === 0 && (
+              <div className="court-library__empty">
+                <p>No playground designs found.</p>
+                <p className="court-library__empty-hint">
+                  Create and save designs in the Playground Designer to use them as motifs here.
+                </p>
+              </div>
+            )}
+
+            {!motifsLoading && playgroundDesigns.map(design => (
+              <div
+                key={design.id}
+                className={`court-library__item ${selectedTemplateId === design.id ? 'court-library__item--selected' : ''} ${addingMotifId === design.id ? 'court-library__item--loading' : ''}`}
+                onClick={() => setSelectedTemplateId(design.id)}
+                onDoubleClick={() => handleAddMotif(design.id)}
+              >
+                {/* Preview Thumbnail */}
+                <div className="court-library__preview">
+                  <MotifPreview design={design} />
+                </div>
+
+                {/* Motif Info */}
+                <div className="court-library__info">
+                  <div className="court-library__name">{design.name || 'Unnamed Design'}</div>
+                  <div className="court-library__dimensions">
+                    {((design.design_data?.widthMM || 5000) / 1000).toFixed(1)}m × {((design.design_data?.lengthMM || 5000) / 1000).toFixed(1)}m
+                  </div>
+                  <div className="court-library__note">Playground Design</div>
+                </div>
+
+                {/* Add Button */}
+                {selectedTemplateId === design.id && (
+                  <button
+                    className="court-library__add-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddMotif(design.id);
+                    }}
+                    disabled={addingMotifId === design.id}
+                  >
+                    {addingMotifId === design.id ? 'Adding...' : '+ ADD'}
+                  </button>
+                )}
+              </div>
+            ))}
+          </>
+        )}
       </div>
 
       <div className="court-library__footer">
         <p className="court-library__hint">
-          💡 {activeTab === 'courts' ? 'Double-click a court to add it instantly' : 'Double-click a track to add it instantly'}
+          {activeTab === 'courts' && '💡 Double-click a court to add it instantly'}
+          {activeTab === 'tracks' && '💡 Double-click a track to add it instantly'}
+          {activeTab === 'motifs' && '💡 Double-click a design to add it as a motif'}
         </p>
       </div>
     </div>
@@ -331,6 +474,61 @@ function TrackPreview({ template }) {
         );
       })}
     </svg>
+  );
+}
+
+/**
+ * Motif preview component
+ * Displays a thumbnail preview of a playground design
+ */
+function MotifPreview({ design }) {
+  // Try to get a thumbnail URL from the design
+  const thumbnailUrl = design.thumbnail_url ||
+    design.design_data?.result?.png_url ||
+    design.design_data?.solidSvgUrl ||
+    design.design_data?.blendSvgUrl;
+
+  if (thumbnailUrl) {
+    return (
+      <img
+        src={thumbnailUrl}
+        alt={design.name || 'Design preview'}
+        className="court-library__motif-img"
+        style={{
+          width: '62px',
+          height: '62px',
+          objectFit: 'contain',
+          borderRadius: '4px',
+          backgroundColor: '#f3f4f6'
+        }}
+        onError={(e) => {
+          // Fall back to placeholder on error
+          e.target.style.display = 'none';
+          e.target.nextSibling?.style.display = 'flex';
+        }}
+      />
+    );
+  }
+
+  // Fallback placeholder
+  return (
+    <div
+      className="court-library__motif-placeholder"
+      style={{
+        width: '62px',
+        height: '62px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#e5e7eb',
+        borderRadius: '4px',
+        color: '#9ca3af',
+        fontSize: '10px',
+        textAlign: 'center'
+      }}
+    >
+      No Preview
+    </div>
   );
 }
 

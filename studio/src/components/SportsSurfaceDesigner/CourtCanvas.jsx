@@ -5,6 +5,7 @@ import { generateCourtSVG } from '../../lib/sports/courtTemplates.js';
 import { snapPositionToGrid, constrainPosition, getCourtTransformString } from '../../lib/sports/geometryUtils.js';
 import TransformHandles from './TransformHandles.jsx';
 import TrackElement from './TrackRenderer.jsx';
+import MotifElement from './MotifElement.jsx';
 import './CourtCanvas.css';
 
 const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
@@ -16,22 +17,28 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const [dragStart, setDragStart] = useState(null);
   const [dragCourtId, setDragCourtId] = useState(null);
   const [dragTrackId, setDragTrackId] = useState(null);
+  const [dragMotifId, setDragMotifId] = useState(null);
 
   const {
     surface,
     courts,
     tracks,
+    motifs,
     elementOrder,
     selectedCourtId,
     selectedTrackId,
+    selectedMotifId,
     snapToGrid,
     gridSize_mm,
     selectCourt,
     deselectCourt,
     selectTrack,
     deselectTrack,
+    selectMotif,
+    deselectMotif,
     updateCourtPosition,
-    updateTrackPosition
+    updateTrackPosition,
+    updateMotifPosition
   } = useSportsDesignStore();
 
   // Convert screen coordinates to SVG coordinates
@@ -110,17 +117,50 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     });
   };
 
+  // Handle mouse down on motif (start drag)
+  const handleMotifMouseDown = (e, motifId) => {
+    e.stopPropagation();
+
+    selectMotif(motifId);
+
+    const motif = motifs[motifId];
+    // Don't allow dragging locked motifs
+    if (motif?.locked) return;
+
+    const svgPoint = screenToSVG(e.clientX, e.clientY);
+
+    setDragStart({
+      x: svgPoint.x - motif.position.x,
+      y: svgPoint.y - motif.position.y
+    });
+    setDragMotifId(motifId);
+    setIsDragging(true);
+  };
+
+  // Handle double-click on motif (open properties panel)
+  const handleMotifDoubleClick = (e, motifId) => {
+    e.stopPropagation();
+
+    selectMotif(motifId);
+
+    useSportsDesignStore.setState({
+      showPropertiesPanel: true,
+      propertiesPanelUserClosed: false
+    });
+  };
+
   // Reset drag state when surface dimensions change
   useEffect(() => {
     setIsDragging(false);
     setDragCourtId(null);
     setDragTrackId(null);
+    setDragMotifId(null);
     setDragStart(null);
   }, [surface.width_mm, surface.length_mm]);
 
-  // Handle mouse move (drag court or track)
+  // Handle mouse move (drag court, track, or motif)
   useEffect(() => {
-    if (!isDragging || (!dragCourtId && !dragTrackId)) return;
+    if (!isDragging || (!dragCourtId && !dragTrackId && !dragMotifId)) return;
 
     const handleMouseMove = (e) => {
       const svgPoint = screenToSVG(e.clientX, e.clientY);
@@ -147,12 +187,21 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       } else if (dragTrackId) {
         // Tracks don't constrain to bounds (they're usually large)
         updateTrackPosition(dragTrackId, newPosition);
+      } else if (dragMotifId) {
+        // Motifs: constrain to surface bounds
+        const motif = motifs[dragMotifId];
+        const motifDimensions = {
+          width_mm: motif.originalWidth_mm * (motif.scale || 1),
+          length_mm: motif.originalHeight_mm * (motif.scale || 1)
+        };
+        newPosition = constrainPosition(newPosition, motifDimensions, surface);
+        updateMotifPosition(dragMotifId, newPosition);
       }
     };
 
     const handleMouseUp = () => {
       // Add to history when drag completes
-      if (dragCourtId || dragTrackId) {
+      if (dragCourtId || dragTrackId || dragMotifId) {
         const { addToHistory } = useSportsDesignStore.getState();
         addToHistory();
       }
@@ -160,6 +209,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       setIsDragging(false);
       setDragCourtId(null);
       setDragTrackId(null);
+      setDragMotifId(null);
       setDragStart(null);
     };
 
@@ -170,13 +220,14 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragCourtId, dragTrackId, dragStart, courts, tracks, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition]);
+  }, [isDragging, dragCourtId, dragTrackId, dragMotifId, dragStart, courts, tracks, motifs, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition, updateMotifPosition]);
 
   // Handle click on canvas background (deselect)
   const handleCanvasClick = (e) => {
     if (e.target === e.currentTarget) {
       deselectCourt();
       deselectTrack();
+      deselectMotif();
     }
   };
 
@@ -234,6 +285,24 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                 onMouseDown={(e) => handleTrackMouseDown(e, elementId)}
                 onDoubleClick={(e) => handleTrackDoubleClick(e, elementId)}
                 svgRef={canvasRef}
+              />
+            );
+          }
+
+          // Check if it's a motif
+          if (elementId.startsWith('motif-')) {
+            const motif = motifs[elementId];
+            if (!motif) return null;
+            // Skip hidden motifs
+            if (motif.visible === false) return null;
+
+            return (
+              <MotifElement
+                key={elementId}
+                motif={motif}
+                isSelected={elementId === selectedMotifId}
+                onMouseDown={(e) => handleMotifMouseDown(e, elementId)}
+                onDoubleClick={(e) => handleMotifDoubleClick(e, elementId)}
               />
             );
           }

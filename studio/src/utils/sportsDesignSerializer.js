@@ -27,6 +27,9 @@ export function serializeSportsDesign(state, metadata = {}) {
     // Tracks with full data
     tracks: serializeTracks(state.tracks),
 
+    // Motifs (playground designs placed on canvas)
+    motifs: serializeMotifs(state.motifs),
+
     // Unified element render order
     elementOrder: state.elementOrder || [],
 
@@ -89,6 +92,32 @@ function serializeTracks(tracks) {
 }
 
 /**
+ * Serialize motifs (playground designs placed on canvas)
+ */
+function serializeMotifs(motifs) {
+  if (!motifs) return {};
+
+  return Object.fromEntries(
+    Object.entries(motifs).map(([id, motif]) => [
+      id,
+      {
+        id: motif.id,
+        type: 'motif',
+        sourceDesignId: motif.sourceDesignId,
+        sourceDesignName: motif.sourceDesignName,
+        sourceThumbnailUrl: motif.sourceThumbnailUrl,
+        svgContent: motif.svgContent,
+        originalWidth_mm: motif.originalWidth_mm,
+        originalHeight_mm: motif.originalHeight_mm,
+        position: motif.position,
+        rotation: motif.rotation,
+        scale: motif.scale
+      }
+    ])
+  );
+}
+
+/**
  * Deserialize saved design data back into store format
  * @param {Object} savedData - Design data from database
  * @returns {Object} State object to load into store
@@ -105,6 +134,7 @@ export function deserializeSportsDesign(savedData) {
     },
     courts: data.courts || {},
     tracks: data.tracks || {},
+    motifs: data.motifs || {},
     elementOrder: data.elementOrder || [],
     customMarkings: data.customMarkings || [],
     backgroundZones: data.backgroundZones || [],
@@ -132,10 +162,11 @@ export function validateSportsDesign(state) {
 
   const hasElements =
     (state.courts && Object.keys(state.courts).length > 0) ||
-    (state.tracks && Object.keys(state.tracks).length > 0);
+    (state.tracks && Object.keys(state.tracks).length > 0) ||
+    (state.motifs && Object.keys(state.motifs).length > 0);
 
   if (!hasElements) {
-    errors.push('Add at least one court or track to save');
+    errors.push('Add at least one court, track, or motif to save');
   }
 
   return {

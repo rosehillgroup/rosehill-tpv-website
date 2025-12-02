@@ -9,8 +9,10 @@ function PropertiesPanel() {
   const {
     courts,
     tracks,
+    motifs,
     selectedCourtId,
     selectedTrackId,
+    selectedMotifId,
     updateCourtPosition,
     updateCourtRotation,
     updateCourtScale,
@@ -20,12 +22,23 @@ function PropertiesPanel() {
     resetCourtColors,
     removeCourt,
     removeTrack,
+    removeMotif,
+    updateMotifPosition,
+    updateMotifRotation,
+    updateMotifScale,
     updateTrackParameters,
     addToHistory
   } = useSportsDesignStore();
 
   const [activeSection, setActiveSection] = useState('transform'); // 'transform', 'lines', 'zones'
   const [colorPickerTarget, setColorPickerTarget] = useState(null); // { type: 'line'|'zone', id: string }
+
+  // Show motif properties if motif is selected
+  if (selectedMotifId) {
+    const motif = motifs[selectedMotifId];
+    if (!motif) return null;
+    return <MotifPropertiesPanel motif={motif} motifId={selectedMotifId} />;
+  }
 
   // Show track properties if track is selected
   if (selectedTrackId) {
@@ -41,7 +54,7 @@ function PropertiesPanel() {
         <div className="properties-panel__empty-state">
           <p>No element selected</p>
           <span className="properties-panel__hint">
-            Click on a court or track to view and edit its properties
+            Click on a court, track, or motif to view and edit its properties
           </span>
         </div>
       </div>
@@ -1033,6 +1046,351 @@ function TrackPropertiesPanel({ track, trackId }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Motif Properties Panel Component
+ * Displays and allows editing of motif position, rotation, and scale
+ */
+function MotifPropertiesPanel({ motif, motifId }) {
+  const { updateMotifPosition, updateMotifRotation, updateMotifScale, removeMotif, duplicateMotif, refreshMotif } = useSportsDesignStore();
+  const { position, rotation, scale, sourceDesignName, sourceDesignId, originalWidth_mm, originalHeight_mm, sourceThumbnailUrl } = motif;
+
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const [refreshError, setRefreshError] = React.useState(null);
+
+  // Handle position updates
+  const handlePositionChange = (axis, value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return;
+
+    updateMotifPosition(motifId, {
+      ...position,
+      [axis]: numValue
+    });
+  };
+
+  // Handle rotation update
+  const handleRotationChange = (value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return;
+    updateMotifRotation(motifId, numValue);
+  };
+
+  // Handle scale update (aspect-locked)
+  const handleScaleChange = (value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue <= 0) return;
+    updateMotifScale(motifId, numValue);
+  };
+
+  // Handle delete motif
+  const handleDeleteMotif = () => {
+    if (window.confirm(`Delete this motif? This action cannot be undone.`)) {
+      removeMotif(motifId);
+    }
+  };
+
+  // Handle duplicate motif
+  const handleDuplicateMotif = () => {
+    duplicateMotif(motifId);
+  };
+
+  // Handle edit source design - opens playground designer with this design
+  const handleEditSource = () => {
+    if (!sourceDesignId) {
+      alert('Source design ID not found');
+      return;
+    }
+    // Navigate to studio with the design ID
+    // Opens in new tab so user doesn't lose sports canvas work
+    // The app will auto-detect it's a playground design and switch to that mode
+    window.open(`/studio/?design=${sourceDesignId}`, '_blank');
+  };
+
+  // Handle refresh from source - re-fetches SVG after editing
+  const handleRefreshFromSource = async () => {
+    if (isRefreshing) return;
+
+    setIsRefreshing(true);
+    setRefreshError(null);
+
+    try {
+      const result = await refreshMotif(motifId);
+      if (!result.success) {
+        setRefreshError(result.error || 'Failed to refresh');
+      }
+    } catch (error) {
+      setRefreshError(error.message || 'Failed to refresh');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Calculate current dimensions
+  const currentWidth = (originalWidth_mm * (scale || 1)) / 1000;
+  const currentHeight = (originalHeight_mm * (scale || 1)) / 1000;
+
+  return (
+    <div className="properties-panel">
+      {/* Panel Header */}
+      <div className="properties-panel__header">
+        <h3>Motif Properties</h3>
+        <div className="properties-panel__court-info">
+          <span className="court-name">{sourceDesignName || 'Unnamed Motif'}</span>
+          <span className="court-standard">Playground Design</span>
+        </div>
+      </div>
+
+      {/* Panel Content */}
+      <div className="properties-panel__content">
+        <div className="properties-section">
+          {/* Motif Preview */}
+          {sourceThumbnailUrl && (
+            <div className="property-group">
+              <label>Preview</label>
+              <div style={{
+                width: '100%',
+                height: '80px',
+                background: '#f3f4f6',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden'
+              }}>
+                <img
+                  src={sourceThumbnailUrl}
+                  alt={sourceDesignName}
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain'
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="properties-section__header">
+            <h4>Transform</h4>
+          </div>
+
+          {/* Position */}
+          <div className="property-group">
+            <label>Position</label>
+            <div className="property-input-row">
+              <div className="property-input-group">
+                <span className="property-label">X</span>
+                <input
+                  type="number"
+                  value={Math.round(position.x)}
+                  onChange={(e) => handlePositionChange('x', e.target.value)}
+                  step="100"
+                />
+                <span className="property-unit">mm</span>
+              </div>
+              <div className="property-input-group">
+                <span className="property-label">Y</span>
+                <input
+                  type="number"
+                  value={Math.round(position.y)}
+                  onChange={(e) => handlePositionChange('y', e.target.value)}
+                  step="100"
+                />
+                <span className="property-unit">mm</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Rotation */}
+          <div className="property-group">
+            <label>Rotation</label>
+            <div className="property-input-row">
+              <input
+                type="range"
+                min="0"
+                max="360"
+                value={rotation || 0}
+                onChange={(e) => handleRotationChange(e.target.value)}
+                className="property-slider"
+              />
+              <div className="property-input-group property-input-group--compact">
+                <input
+                  type="number"
+                  value={Math.round(rotation || 0)}
+                  onChange={(e) => handleRotationChange(e.target.value)}
+                  min="0"
+                  max="360"
+                />
+                <span className="property-unit">°</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Scale (Aspect-Locked) */}
+          <div className="property-group">
+            <label>
+              Scale
+              <span style={{ fontSize: '0.7rem', color: '#64748b', marginLeft: '0.5rem' }}>
+                (aspect locked)
+              </span>
+            </label>
+            <div className="property-input-row">
+              <input
+                type="range"
+                min="0.1"
+                max="3.0"
+                step="0.1"
+                value={scale || 1}
+                onChange={(e) => handleScaleChange(e.target.value)}
+                className="property-slider"
+              />
+              <div className="property-input-group property-input-group--compact">
+                <input
+                  type="number"
+                  value={(scale || 1).toFixed(2)}
+                  onChange={(e) => handleScaleChange(e.target.value)}
+                  min="0.1"
+                  max="3.0"
+                  step="0.1"
+                />
+                <span className="property-unit">×</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Current Dimensions Display */}
+          <div className="property-group property-group--info">
+            <label>Current Size</label>
+            <div className="property-info">
+              <span>{currentWidth.toFixed(2)}m × {currentHeight.toFixed(2)}m</span>
+            </div>
+          </div>
+
+          {/* Original Dimensions Display */}
+          <div className="property-group property-group--info">
+            <label>Original Size</label>
+            <div className="property-info">
+              <span>{(originalWidth_mm / 1000).toFixed(2)}m × {(originalHeight_mm / 1000).toFixed(2)}m</span>
+            </div>
+          </div>
+
+          {/* Source Design Section */}
+          <div className="properties-section__divider" style={{ margin: '1rem 0' }}>
+            <span>Source Design</span>
+          </div>
+
+          {/* Edit Source Design Button */}
+          <div className="property-group property-group--actions">
+            <button
+              className="btn-primary"
+              onClick={handleEditSource}
+              title="Edit the source playground design in a new tab"
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                background: 'var(--color-primary, #1e4a7a)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                marginBottom: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              ✏️ Edit Source Design
+            </button>
+          </div>
+
+          {/* Refresh from Source Button */}
+          <div className="property-group property-group--actions">
+            <button
+              className="btn-secondary"
+              onClick={handleRefreshFromSource}
+              disabled={isRefreshing}
+              title="Refresh this motif with the latest version from the source design"
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                background: isRefreshing ? '#e5e7eb' : '#f3f4f6',
+                border: '1px solid #e4e9f0',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                fontFamily: 'inherit',
+                cursor: isRefreshing ? 'not-allowed' : 'pointer',
+                marginBottom: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              {isRefreshing ? '⏳ Refreshing...' : '🔄 Refresh from Source'}
+            </button>
+            {refreshError && (
+              <div style={{ fontSize: '0.75rem', color: '#dc2626', marginTop: '0.25rem' }}>
+                {refreshError}
+              </div>
+            )}
+            <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.25rem' }}>
+              Click after editing the source design to update this motif
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="properties-section__divider" style={{ margin: '1rem 0' }}>
+            <span>Actions</span>
+          </div>
+
+          {/* Duplicate Button */}
+          <div className="property-group property-group--actions">
+            <button
+              className="btn-secondary"
+              onClick={handleDuplicateMotif}
+              title="Duplicate motif (Ctrl+D)"
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                background: '#f3f4f6',
+                border: '1px solid #e4e9f0',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                marginBottom: '0.5rem'
+              }}
+            >
+              📋 Duplicate Motif
+            </button>
+          </div>
+
+          {/* Delete Button */}
+          <div className="property-group property-group--actions">
+            <button
+              className="btn-delete"
+              onClick={handleDeleteMotif}
+              title="Delete motif (Delete key)"
+            >
+              🗑️ Delete Motif
+            </button>
+          </div>
+
+          {/* Tip */}
+          <div className="property-group">
+            <div className="property-hint" style={{ fontStyle: 'normal', color: '#64748b', fontSize: '0.75rem', marginTop: '1rem' }}>
+              💡 Tip: Drag the motif on the canvas to reposition. Edit the source design and click "Refresh" to update.
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

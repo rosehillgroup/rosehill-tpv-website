@@ -26,7 +26,13 @@ const initialState = {
   // Selected track for manipulation
   selectedTrackId: null,
 
-  // Unified element order for z-index (courts and tracks combined)
+  // Motifs (playground designs placed on canvas)
+  motifs: {},  // { [motifId]: MotifObject }
+
+  // Selected motif for manipulation
+  selectedMotifId: null,
+
+  // Unified element order for z-index (courts, tracks, and motifs combined)
   // Elements render bottom-to-top: first = bottom layer, last = top layer
   elementOrder: [], // ['track-123', 'court-456', 'court-789']
 
@@ -289,6 +295,16 @@ export const useSportsDesignStore = create(
               }
             }
           }));
+        } else if (elementId.startsWith('motif-')) {
+          set((state) => ({
+            motifs: {
+              ...state.motifs,
+              [elementId]: {
+                ...state.motifs[elementId],
+                customName
+              }
+            }
+          }));
         }
         get().addToHistory();
       },
@@ -315,6 +331,16 @@ export const useSportsDesignStore = create(
               }
             }
           }));
+        } else if (elementId.startsWith('motif-')) {
+          set((state) => ({
+            motifs: {
+              ...state.motifs,
+              [elementId]: {
+                ...state.motifs[elementId],
+                locked: !state.motifs[elementId]?.locked
+              }
+            }
+          }));
         }
         get().addToHistory();
       },
@@ -338,6 +364,16 @@ export const useSportsDesignStore = create(
               [elementId]: {
                 ...state.tracks[elementId],
                 visible: state.tracks[elementId]?.visible === false ? true : false
+              }
+            }
+          }));
+        } else if (elementId.startsWith('motif-')) {
+          set((state) => ({
+            motifs: {
+              ...state.motifs,
+              [elementId]: {
+                ...state.motifs[elementId],
+                visible: state.motifs[elementId]?.visible === false ? true : false
               }
             }
           }));
@@ -717,6 +753,167 @@ export const useSportsDesignStore = create(
         });
       },
 
+      // ====== Motif Actions ======
+      addMotif: (sourceDesignId, sourceDesignName, svgContent, originalWidth_mm, originalHeight_mm, thumbnailUrl = null) => {
+        const motifId = `motif-${Date.now()}`;
+        const surface = get().surface;
+
+        // Center the motif on the canvas
+        const motif = {
+          id: motifId,
+          type: 'motif',
+          sourceDesignId,
+          sourceDesignName,
+          sourceThumbnailUrl: thumbnailUrl,
+          svgContent,
+          originalWidth_mm,
+          originalHeight_mm,
+          position: {
+            x: surface.width_mm / 2 - originalWidth_mm / 2,
+            y: surface.length_mm / 2 - originalHeight_mm / 2
+          },
+          rotation: 0,
+          scale: 1.0
+        };
+
+        set((state) => ({
+          motifs: {
+            ...state.motifs,
+            [motifId]: motif
+          },
+          elementOrder: [...state.elementOrder, motifId],
+          selectedMotifId: motifId,
+          selectedCourtId: null,
+          selectedTrackId: null
+        }));
+        get().addToHistory();
+      },
+
+      removeMotif: (motifId) => {
+        const { [motifId]: removed, ...remainingMotifs } = get().motifs;
+        set((state) => ({
+          motifs: remainingMotifs,
+          elementOrder: state.elementOrder.filter(id => id !== motifId),
+          selectedMotifId: state.selectedMotifId === motifId ? null : state.selectedMotifId
+        }));
+        get().addToHistory();
+      },
+
+      updateMotifPosition: (motifId, position) => {
+        set((state) => ({
+          motifs: {
+            ...state.motifs,
+            [motifId]: {
+              ...state.motifs[motifId],
+              position
+            }
+          }
+        }));
+        // Don't add to history for every drag movement
+      },
+
+      updateMotifRotation: (motifId, rotation) => {
+        set((state) => ({
+          motifs: {
+            ...state.motifs,
+            [motifId]: {
+              ...state.motifs[motifId],
+              rotation
+            }
+          }
+        }));
+      },
+
+      updateMotifScale: (motifId, scale) => {
+        set((state) => ({
+          motifs: {
+            ...state.motifs,
+            [motifId]: {
+              ...state.motifs[motifId],
+              scale
+            }
+          }
+        }));
+      },
+
+      duplicateMotif: (motifId) => {
+        const motif = get().motifs[motifId];
+        if (!motif) return;
+
+        const newMotifId = `motif-${Date.now()}`;
+        const newMotif = {
+          ...motif,
+          id: newMotifId,
+          position: {
+            x: motif.position.x + 500,
+            y: motif.position.y + 500
+          }
+        };
+
+        set((state) => ({
+          motifs: {
+            ...state.motifs,
+            [newMotifId]: newMotif
+          },
+          elementOrder: [...state.elementOrder, newMotifId],
+          selectedMotifId: newMotifId,
+          selectedCourtId: null,
+          selectedTrackId: null
+        }));
+        get().addToHistory();
+      },
+
+      // Refresh motif SVG from source design (after editing in playground designer)
+      refreshMotif: async (motifId) => {
+        const motif = get().motifs[motifId];
+        if (!motif) return { success: false, error: 'Motif not found' };
+
+        try {
+          // Dynamic import to avoid circular dependency
+          const { fetchMotifFromDesign } = await import('../lib/sports/motifUtils.js');
+          const refreshedData = await fetchMotifFromDesign(motif.sourceDesignId);
+
+          set((state) => ({
+            motifs: {
+              ...state.motifs,
+              [motifId]: {
+                ...state.motifs[motifId],
+                svgContent: refreshedData.svgContent,
+                sourceThumbnailUrl: refreshedData.sourceThumbnailUrl,
+                sourceDesignName: refreshedData.sourceDesignName,
+                // Update dimensions if they changed
+                originalWidth_mm: refreshedData.originalWidth_mm,
+                originalHeight_mm: refreshedData.originalHeight_mm
+              }
+            },
+            lastModified: Date.now()
+          }));
+
+          get().addToHistory();
+          return { success: true };
+        } catch (error) {
+          console.error('[MOTIF] Failed to refresh:', error);
+          return { success: false, error: error.message };
+        }
+      },
+
+      selectMotif: (motifId) => {
+        const { propertiesPanelUserClosed } = get();
+        if (!propertiesPanelUserClosed) {
+          set({ selectedMotifId: motifId, selectedCourtId: null, selectedTrackId: null, showPropertiesPanel: true });
+        } else {
+          set({ selectedMotifId: motifId, selectedCourtId: null, selectedTrackId: null });
+        }
+      },
+
+      deselectMotif: () => {
+        set({
+          selectedMotifId: null,
+          showPropertiesPanel: false,
+          propertiesPanelUserClosed: true
+        });
+      },
+
       // ====== Custom Markings Actions ======
       addCustomMarking: (marking) => {
         set((state) => ({
@@ -767,6 +964,7 @@ export const useSportsDesignStore = create(
           surface: currentState.surface,
           courts: currentState.courts,
           tracks: currentState.tracks,
+          motifs: currentState.motifs,
           elementOrder: currentState.elementOrder,
           customMarkings: currentState.customMarkings,
           backgroundZones: currentState.backgroundZones
@@ -864,6 +1062,7 @@ export const useSportsDesignStore = create(
           surface: designData.surface || initialState.surface,
           courts: designData.courts || {},
           tracks: designData.tracks || {},
+          motifs: designData.motifs || {},
           elementOrder: elementOrder || [],
           customMarkings: designData.customMarkings || [],
           backgroundZones: designData.backgroundZones || [],
@@ -872,6 +1071,7 @@ export const useSportsDesignStore = create(
           designTags: designData.tags || [],
           selectedCourtId: null,
           selectedTrackId: null,
+          selectedMotifId: null,
           history: [],
           historyIndex: -1
         });
@@ -885,6 +1085,7 @@ export const useSportsDesignStore = create(
           surface: state.surface,
           courts: state.courts,
           tracks: state.tracks,
+          motifs: state.motifs,
           elementOrder: state.elementOrder,
           customMarkings: state.customMarkings,
           backgroundZones: state.backgroundZones,
@@ -899,12 +1100,13 @@ export const useSportsDesignStore = create(
         set(initialState);
       },
 
-      // Check if there are unsaved changes (any courts, tracks, or modifications)
+      // Check if there are unsaved changes (any courts, tracks, motifs, or modifications)
       hasUnsavedChanges: () => {
         const state = get();
-        // Has changes if any courts or tracks have been added
+        // Has changes if any courts, tracks, or motifs have been added
         return Object.keys(state.courts).length > 0 ||
-               Object.keys(state.tracks).length > 0;
+               Object.keys(state.tracks).length > 0 ||
+               Object.keys(state.motifs).length > 0;
       }
     }),
     { name: 'SportsDesignStore' }

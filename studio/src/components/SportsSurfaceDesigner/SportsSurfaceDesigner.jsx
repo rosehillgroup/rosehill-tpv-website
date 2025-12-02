@@ -54,6 +54,7 @@ function SportsSurfaceDesigner({ loadedDesign }) {
     tracks,
     selectedCourtId,
     selectedTrackId,
+    selectedMotifId,
     showCourtLibrary,
     showPropertiesPanel,
     toggleCourtLibrary,
@@ -117,17 +118,23 @@ function SportsSurfaceDesigner({ loadedDesign }) {
       const {
         removeCourt,
         removeTrack,
+        removeMotif,
         deselectCourt,
         deselectTrack,
+        deselectMotif,
         undo,
         redo,
         canUndo,
         canRedo,
         duplicateCourt,
+        duplicateMotif,
         updateCourtPosition,
         updateTrackPosition,
+        updateMotifPosition,
         courts,
         tracks,
+        motifs,
+        selectedMotifId,
         elementOrder,
         setElementOrder,
         toggleSnapToGrid,
@@ -135,7 +142,7 @@ function SportsSurfaceDesigner({ loadedDesign }) {
         addToHistory
       } = useSportsDesignStore.getState();
 
-      const selectedId = selectedCourtId || selectedTrackId;
+      const selectedId = selectedCourtId || selectedTrackId || selectedMotifId;
 
       // Delete key - remove selected element
       if (e.key === 'Delete' && selectedId) {
@@ -144,6 +151,8 @@ function SportsSurfaceDesigner({ loadedDesign }) {
           removeCourt(selectedCourtId);
         } else if (selectedTrackId) {
           removeTrack(selectedTrackId);
+        } else if (selectedMotifId) {
+          removeMotif(selectedMotifId);
         }
       }
 
@@ -153,6 +162,8 @@ function SportsSurfaceDesigner({ loadedDesign }) {
           deselectCourt();
         } else if (selectedTrackId) {
           deselectTrack();
+        } else if (selectedMotifId) {
+          deselectMotif();
         }
       }
 
@@ -172,10 +183,14 @@ function SportsSurfaceDesigner({ loadedDesign }) {
         }
       }
 
-      // Ctrl/Cmd + D - Duplicate selected court
-      if ((e.ctrlKey || e.metaKey) && e.key === 'd' && selectedCourtId) {
+      // Ctrl/Cmd + D - Duplicate selected element
+      if ((e.ctrlKey || e.metaKey) && e.key === 'd' && selectedId) {
         e.preventDefault();
-        duplicateCourt(selectedCourtId);
+        if (selectedCourtId) {
+          duplicateCourt(selectedCourtId);
+        } else if (selectedMotifId) {
+          duplicateMotif(selectedMotifId);
+        }
       }
 
       // Arrow Keys - Nudge element position
@@ -206,6 +221,15 @@ function SportsSurfaceDesigner({ loadedDesign }) {
             updateTrackPosition(selectedTrackId, {
               x: track.position.x + deltaX,
               y: track.position.y + deltaY
+            });
+            addToHistory();
+          }
+        } else if (selectedMotifId) {
+          const motif = motifs[selectedMotifId];
+          if (motif) {
+            updateMotifPosition(selectedMotifId, {
+              x: motif.position.x + deltaX,
+              y: motif.position.y + deltaY
             });
             addToHistory();
           }
@@ -250,7 +274,7 @@ function SportsSurfaceDesigner({ loadedDesign }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedCourtId, selectedTrackId]);
+  }, [selectedCourtId, selectedTrackId, selectedMotifId]);
 
   return (
     <div className="sports-designer">
@@ -339,10 +363,10 @@ function SportsSurfaceDesigner({ loadedDesign }) {
                     </svg>
                   </button>
                   <button
-                    className={`sports-toolbar__btn ${showPropertiesPanel && (selectedCourtId || selectedTrackId) ? 'sports-toolbar__btn--active' : ''}`}
+                    className={`sports-toolbar__btn ${showPropertiesPanel && (selectedCourtId || selectedTrackId || selectedMotifId) ? 'sports-toolbar__btn--active' : ''}`}
                     onClick={togglePropertiesPanel}
                     title="Properties"
-                    disabled={!selectedCourtId && !selectedTrackId}
+                    disabled={!selectedCourtId && !selectedTrackId && !selectedMotifId}
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="4" y1="21" x2="4" y2="14" />
@@ -445,8 +469,8 @@ function SportsSurfaceDesigner({ loadedDesign }) {
               <CourtCanvas ref={svgRef} />
             </main>
 
-            {/* Properties Panel - shown when court or track is selected AND panel is not hidden */}
-            {(selectedCourtId || selectedTrackId) && showPropertiesPanel && (
+            {/* Properties Panel - shown when court, track, or motif is selected AND panel is not hidden */}
+            {(selectedCourtId || selectedTrackId || selectedMotifId) && showPropertiesPanel && (
               <aside className="sports-designer__properties">
                 <PropertiesPanel />
               </aside>
