@@ -483,10 +483,8 @@ function TrackPreview({ template }) {
  */
 function MotifPreview({ design }) {
   // Try to get a thumbnail URL from the design
-  const thumbnailUrl = design.thumbnail_url ||
-    design.design_data?.result?.png_url ||
-    design.design_data?.solidSvgUrl ||
-    design.design_data?.blendSvgUrl;
+  // Note: List API returns these at top level, not in design_data
+  const thumbnailUrl = design.thumbnail_url || design.original_png_url;
 
   if (thumbnailUrl) {
     return (

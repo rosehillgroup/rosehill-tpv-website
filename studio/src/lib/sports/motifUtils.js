@@ -10,8 +10,9 @@ import { sanitizeSVG, quickValidateSVG } from '../../utils/sanitizeSVG.js';
  * @returns {Promise<Object>} Motif data ready for sportsDesignStore.addMotif()
  */
 export async function fetchMotifFromDesign(designId) {
-  // Load the design from API
-  const design = await loadDesign(designId);
+  // Load the design from API - returns { design }
+  const result = await loadDesign(designId);
+  const design = result?.design || result;
 
   if (!design) {
     throw new Error('Design not found');
@@ -22,12 +23,10 @@ export async function fetchMotifFromDesign(designId) {
     throw new Error('Cannot use a sports surface design as a motif');
   }
 
-  // Get the design data (stored design state)
-  const designData = design.design_data || {};
-
   // Determine which SVG URL to use
-  // Priority: solidSvgUrl (final recolored) > blendSvgUrl > result.svg_url (original)
-  let svgUrl = designData.solidSvgUrl || designData.blendSvgUrl || designData.result?.svg_url;
+  // Priority: final_solid_svg_url (recolored) > final_blend_svg_url > original_svg_url
+  // These are stored at the TOP level of the design record, not in design_data
+  let svgUrl = design.final_solid_svg_url || design.final_blend_svg_url || design.original_svg_url;
 
   if (!svgUrl) {
     throw new Error('Design does not have an SVG output. Please ensure the design was saved after generation.');
@@ -40,12 +39,13 @@ export async function fetchMotifFromDesign(designId) {
     throw new Error('Failed to load or sanitize the design SVG');
   }
 
-  // Extract dimensions from design
-  const width_mm = designData.widthMM || designData.width_mm || 5000;
-  const height_mm = designData.lengthMM || designData.length_mm || 5000;
+  // Extract dimensions from design.dimensions (JSONB field)
+  const dimensions = design.dimensions || {};
+  const width_mm = dimensions.widthMM || dimensions.width_mm || 5000;
+  const height_mm = dimensions.lengthMM || dimensions.length_mm || 5000;
 
-  // Get thumbnail URL for preview
-  const thumbnailUrl = design.thumbnail_url || designData.result?.png_url || null;
+  // Get thumbnail URL for preview (stored at top level)
+  const thumbnailUrl = design.thumbnail_url || design.original_png_url || null;
 
   return {
     sourceDesignId: designId,
