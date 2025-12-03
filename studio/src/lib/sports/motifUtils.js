@@ -3,9 +3,11 @@
 
 import { loadDesign, listDesigns } from '../api/designs.js';
 import { sanitizeSVG, quickValidateSVG } from '../../utils/sanitizeSVG.js';
+import { recolorSVG } from '../../utils/svgRecolor.js';
 
 /**
  * Fetch a playground design and prepare it for use as a motif
+ * Regenerates TPV-recolored SVGs from the original SVG + stored color mappings
  * @param {string} designId - UUID of the saved playground design
  * @returns {Promise<Object>} Motif data ready for sportsDesignStore.addMotif()
  */
@@ -23,37 +25,63 @@ export async function fetchMotifFromDesign(designId) {
     throw new Error('Cannot use a sports surface design as a motif');
   }
 
-  // Get valid URLs (skip blob: URLs as they're only valid in the session that created them)
-  // Note: We only use final_solid and final_blend - never original_svg_url
-  // The original is the raw Recraft output before TPV color mapping
-  const solidUrl = design.final_solid_svg_url && !design.final_solid_svg_url.startsWith('blob:')
-    ? design.final_solid_svg_url : null;
-  const blendUrl = design.final_blend_svg_url && !design.final_blend_svg_url.startsWith('blob:')
-    ? design.final_blend_svg_url : null;
+  // We need the original SVG URL and color mappings to regenerate the recolored versions
+  // Note: final_solid_svg_url and final_blend_svg_url are always NULL (blob URLs can't be stored)
+  // So we regenerate them on-the-fly from original + color mappings (same as InspirePanelRecraft does)
+  const originalUrl = design.original_svg_url;
 
-  if (!solidUrl && !blendUrl) {
-    throw new Error('Design does not have TPV-mapped SVG outputs. Please ensure the design was saved after color mapping.');
+  if (!originalUrl || originalUrl.startsWith('blob:')) {
+    throw new Error('Design does not have a valid original SVG. Please ensure the design was saved after generation.');
   }
 
-  // Try to fetch both solid and blend versions
+  // Need at least one color mapping to regenerate
+  if (!design.solid_color_mapping && !design.color_mapping) {
+    throw new Error('Design does not have color mappings. Please ensure the design was saved after color mapping.');
+  }
+
+  console.log('[MOTIF] Fetching original SVG from:', originalUrl);
+
+  // Fetch and sanitize the original SVG
+  const originalSvg = await fetchAndSanitizeSVG(originalUrl);
+  if (!originalSvg) {
+    throw new Error('Failed to load or sanitize the original SVG.');
+  }
+
+  console.log('[MOTIF] Original SVG loaded, regenerating recolored versions...');
+
+  // Regenerate solid and blend versions using the stored color mappings
   let solidSvgContent = null;
   let blendSvgContent = null;
 
-  // Fetch solid version (preferred)
-  if (solidUrl) {
-    console.log('[MOTIF] Fetching solid SVG from:', solidUrl);
-    solidSvgContent = await fetchAndSanitizeSVG(solidUrl);
+  // Generate solid version from solid_color_mapping
+  if (design.solid_color_mapping && Object.keys(design.solid_color_mapping).length > 0) {
+    try {
+      const solidMapping = deserializeColorMapping(design.solid_color_mapping);
+      console.log('[MOTIF] Solid mapping has', solidMapping.size, 'colors');
+      const { svgText } = await recolorSVG(null, solidMapping, originalSvg);
+      solidSvgContent = svgText;
+      console.log('[MOTIF] Generated solid SVG:', solidSvgContent.length, 'chars');
+    } catch (error) {
+      console.error('[MOTIF] Failed to generate solid SVG:', error);
+    }
   }
 
-  // Fetch blend version
-  if (blendUrl) {
-    console.log('[MOTIF] Fetching blend SVG from:', blendUrl);
-    blendSvgContent = await fetchAndSanitizeSVG(blendUrl);
+  // Generate blend version from color_mapping (blend colors)
+  if (design.color_mapping && Object.keys(design.color_mapping).length > 0) {
+    try {
+      const blendMapping = deserializeColorMapping(design.color_mapping);
+      console.log('[MOTIF] Blend mapping has', blendMapping.size, 'colors');
+      const { svgText } = await recolorSVG(null, blendMapping, originalSvg);
+      blendSvgContent = svgText;
+      console.log('[MOTIF] Generated blend SVG:', blendSvgContent.length, 'chars');
+    } catch (error) {
+      console.error('[MOTIF] Failed to generate blend SVG:', error);
+    }
   }
 
   // Must have at least one version
   if (!solidSvgContent && !blendSvgContent) {
-    throw new Error('Failed to load SVG content. The design files may have been moved or deleted.');
+    throw new Error('Failed to regenerate TPV-recolored SVG versions.');
   }
 
   // Extract dimensions from design.dimensions (JSONB field)
@@ -81,6 +109,27 @@ export async function fetchMotifFromDesign(designId) {
     originalWidth_mm: width_mm,
     originalHeight_mm: height_mm
   };
+}
+
+/**
+ * Deserialize a color mapping from Object (stored in DB) to Map (for recolorSVG)
+ * @param {Object} colorMappingObj - Object with hex keys -> mapping values
+ * @returns {Map<string, Object>} Map for use with recolorSVG()
+ */
+function deserializeColorMapping(colorMappingObj) {
+  const map = new Map();
+
+  if (!colorMappingObj || typeof colorMappingObj !== 'object') {
+    return map;
+  }
+
+  for (const [originalHex, mapping] of Object.entries(colorMappingObj)) {
+    // Ensure the key has a # prefix (normalize)
+    const normalizedKey = originalHex.startsWith('#') ? originalHex : `#${originalHex}`;
+    map.set(normalizedKey, mapping);
+  }
+
+  return map;
 }
 
 /**
