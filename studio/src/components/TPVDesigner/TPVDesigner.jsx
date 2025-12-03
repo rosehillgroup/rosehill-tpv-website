@@ -1,6 +1,7 @@
 // TPV Studio - TPV Designer (Main Component)
 import React, { useState, useEffect, useRef } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
+import { usePlaygroundDesignStore } from '../../stores/playgroundDesignStore.js';
 import CourtCanvas from './CourtCanvas.jsx';
 import CourtLibrary from './CourtLibrary.jsx';
 import PropertiesPanel from './PropertiesPanel.jsx';
@@ -9,6 +10,10 @@ import SaveDesignModal from './SaveDesignModal.jsx';
 import ExportMenu from './ExportMenu.jsx';
 import KeyboardShortcutsModal from './KeyboardShortcutsModal.jsx';
 import DesignEditorModal from './DesignEditorModal.jsx';
+import InSituModal from '../InSitu/InSituModal.jsx';
+import { generateSportsSVG } from '../../lib/sports/sportsExport.js';
+import { loadDesign } from '../../lib/api/designs.js';
+import { deserializeDesign } from '../../utils/designSerializer.js';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import './TPVDesigner.css';
 
@@ -27,6 +32,8 @@ function TPVDesigner({ loadedDesign }) {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [showDesignEditor, setShowDesignEditor] = useState(false);
+  const [showInSituModal, setShowInSituModal] = useState(false);
+  const [inSituSvgUrl, setInSituSvgUrl] = useState(null);
   const [designId, setDesignId] = useState(null);
   const [designName, setDesignName] = useState('');
   const svgRef = useRef(null);
@@ -34,17 +41,43 @@ function TPVDesigner({ loadedDesign }) {
   // Load design when loadedDesign prop changes
   useEffect(() => {
     if (loadedDesign && loadedDesign.design_data) {
-      console.log('[SPORTS] Loading design from prop:', loadedDesign.id, loadedDesign.name);
+      const designData = loadedDesign.design_data;
 
-      // Load the design data into the store
-      useSportsDesignStore.getState().loadDesign(loadedDesign.design_data);
+      // Check if this is a playground design (has input_mode) vs sports design (has courts/surface)
+      const isPlaygroundDesign = designData.input_mode || designData.blend_recipes || designData.solid_recipes;
+      const isSportsDesign = designData.courts || designData.surface || designData.tracks;
 
-      // Update local state for save functionality
-      setDesignId(loadedDesign.id);
-      setDesignName(loadedDesign.name || '');
+      if (isPlaygroundDesign && !isSportsDesign) {
+        // This is a playground design - open in the Design Editor Modal
+        console.log('[TPV] Loading playground design into editor:', loadedDesign.id, loadedDesign.name);
 
-      // Skip the dimension modal since we're loading an existing design
-      setShowDimensionModal(false);
+        // Deserialize and load into playground store
+        const restoredState = deserializeDesign(loadedDesign);
+        const playgroundStore = usePlaygroundDesignStore.getState();
+        playgroundStore.loadDesign(restoredState);
+
+        // Set design name and ID
+        if (loadedDesign.name) {
+          playgroundStore.setDesignName(loadedDesign.name);
+        }
+        playgroundStore.setCurrentDesignId(loadedDesign.id);
+
+        // Open the design editor modal
+        setShowDesignEditor(true);
+      } else {
+        // This is a sports design - load into sports store
+        console.log('[SPORTS] Loading design from prop:', loadedDesign.id, loadedDesign.name);
+
+        // Load the design data into the store
+        useSportsDesignStore.getState().loadDesign(designData);
+
+        // Update local state for save functionality
+        setDesignId(loadedDesign.id);
+        setDesignName(loadedDesign.name || '');
+
+        // Skip the dimension modal since we're loading an existing design
+        setShowDimensionModal(false);
+      }
     }
   }, [loadedDesign]);
 
@@ -106,6 +139,83 @@ function TPVDesigner({ loadedDesign }) {
     setWidthInput('50');
     setLengthInput('50');
     // Don't show dimension modal - user can click the dimensions button to edit
+  };
+
+  // Handle opening in-situ preview modal
+  const handleOpenInSitu = () => {
+    // Get the SVG element
+    const svgElement = svgRef.current || document.querySelector('.court-canvas__svg');
+    if (!svgElement) {
+      alert('Canvas not ready');
+      return;
+    }
+
+    // Get current state from store
+    const state = useSportsDesignStore.getState().exportDesignData();
+
+    // Generate clean SVG content
+    const svgContent = generateSportsSVG(svgElement, state);
+
+    // Create blob URL
+    const blob = new Blob([svgContent], { type: 'image/svg+xml' });
+    const blobUrl = URL.createObjectURL(blob);
+
+    // Clean up previous blob URL if exists
+    if (inSituSvgUrl) {
+      URL.revokeObjectURL(inSituSvgUrl);
+    }
+
+    setInSituSvgUrl(blobUrl);
+    setShowInSituModal(true);
+  };
+
+  // Handle closing in-situ modal
+  const handleCloseInSitu = () => {
+    setShowInSituModal(false);
+    // Clean up blob URL
+    if (inSituSvgUrl) {
+      URL.revokeObjectURL(inSituSvgUrl);
+      setInSituSvgUrl(null);
+    }
+  };
+
+  // Handle editing a source design - loads design into playground store and opens editor
+  const handleEditSourceDesign = async (sourceDesignId) => {
+    if (!sourceDesignId) {
+      alert('Source design ID not found');
+      return;
+    }
+
+    try {
+      // Fetch the design from API
+      const result = await loadDesign(sourceDesignId);
+      const design = result?.design || result;
+
+      if (!design) {
+        throw new Error('Design not found');
+      }
+
+      // Deserialize the design data
+      const restoredState = deserializeDesign(design);
+
+      // Load into playground store
+      const playgroundStore = usePlaygroundDesignStore.getState();
+      playgroundStore.loadDesign(restoredState);
+
+      // Set design name and ID
+      if (design.name) {
+        playgroundStore.setDesignName(design.name);
+      }
+      playgroundStore.setCurrentDesignId(sourceDesignId);
+
+      // Open the design editor modal
+      setShowDesignEditor(true);
+
+      console.log('[TPV] Loaded source design for editing:', design.name);
+    } catch (error) {
+      console.error('[TPV] Failed to load source design:', error);
+      alert('Failed to load design: ' + error.message);
+    }
   };
 
   // Keyboard shortcuts
@@ -484,6 +594,17 @@ function TPVDesigner({ loadedDesign }) {
                   </button>
                   <button
                     className="sports-toolbar__btn"
+                    onClick={handleOpenInSitu}
+                    title="View In-Situ Preview"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                  </button>
+                  <button
+                    className="sports-toolbar__btn"
                     onClick={() => setShowShortcutsModal(true)}
                     title="Keyboard shortcuts (?)"
                   >
@@ -509,7 +630,7 @@ function TPVDesigner({ loadedDesign }) {
             {/* Properties Panel - shown when court, track, or motif is selected AND panel is not hidden AND not in standalone mode */}
             {(selectedCourtId || selectedTrackId || selectedMotifId) && showPropertiesPanel && !standaloneMode && (
               <aside className="sports-designer__properties">
-                <PropertiesPanel />
+                <PropertiesPanel onEditSourceDesign={handleEditSourceDesign} />
               </aside>
             )}
           </div>
@@ -565,6 +686,22 @@ function TPVDesigner({ loadedDesign }) {
             isOpen={showDesignEditor}
             onClose={() => setShowDesignEditor(false)}
           />
+
+          {/* In-Situ Preview Modal */}
+          {showInSituModal && inSituSvgUrl && (
+            <InSituModal
+              designUrl={inSituSvgUrl}
+              designDimensions={{
+                width: surface.width_mm,
+                length: surface.length_mm
+              }}
+              onClose={handleCloseInSitu}
+              onSaved={(data) => {
+                console.log('[TPV] In-situ preview saved:', data);
+                handleCloseInSitu();
+              }}
+            />
+          )}
         </>
     </div>
   );

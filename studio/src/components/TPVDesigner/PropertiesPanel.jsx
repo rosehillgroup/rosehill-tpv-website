@@ -5,7 +5,7 @@ import { calculateTrackGeometry, calculateStaggeredStarts } from '../../lib/spor
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import './PropertiesPanel.css';
 
-function PropertiesPanel() {
+function PropertiesPanel({ onEditSourceDesign }) {
   const {
     courts,
     tracks,
@@ -37,7 +37,7 @@ function PropertiesPanel() {
   if (selectedMotifId) {
     const motif = motifs[selectedMotifId];
     if (!motif) return null;
-    return <MotifPropertiesPanel motif={motif} motifId={selectedMotifId} />;
+    return <MotifPropertiesPanel motif={motif} motifId={selectedMotifId} onEditSourceDesign={onEditSourceDesign} />;
   }
 
   // Show track properties if track is selected
@@ -1054,7 +1054,7 @@ function TrackPropertiesPanel({ track, trackId }) {
  * Motif Properties Panel Component
  * Displays and allows editing of motif position, rotation, and scale
  */
-function MotifPropertiesPanel({ motif, motifId }) {
+function MotifPropertiesPanel({ motif, motifId, onEditSourceDesign }) {
   const { updateMotifPosition, updateMotifRotation, updateMotifScale, removeMotif, duplicateMotif, refreshMotif, setMotifViewMode } = useSportsDesignStore();
   const { position, rotation, scale, sourceDesignName, sourceDesignId, originalWidth_mm, originalHeight_mm, sourceThumbnailUrl, viewMode, hasBothVersions } = motif;
 
@@ -1098,16 +1098,18 @@ function MotifPropertiesPanel({ motif, motifId }) {
     duplicateMotif(motifId);
   };
 
-  // Handle edit source design - opens playground designer with this design
+  // Handle edit source design - opens the design editor modal
   const handleEditSource = () => {
-    if (!sourceDesignId) {
-      alert('Source design ID not found');
-      return;
+    if (onEditSourceDesign) {
+      onEditSourceDesign(sourceDesignId);
+    } else {
+      // Fallback to opening in new tab if callback not provided
+      if (!sourceDesignId) {
+        alert('Source design ID not found');
+        return;
+      }
+      window.open(`/studio/?design=${sourceDesignId}`, '_blank');
     }
-    // Navigate to studio with the design ID
-    // Opens in new tab so user doesn't lose sports canvas work
-    // The app will auto-detect it's a playground design and switch to that mode
-    window.open(`/studio/?design=${sourceDesignId}`, '_blank');
   };
 
   // Handle refresh from source - re-fetches SVG after editing

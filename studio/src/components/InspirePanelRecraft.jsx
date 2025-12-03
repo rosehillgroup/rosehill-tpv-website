@@ -275,6 +275,62 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     }
   }, [loadedDesign, loadDesignFromStore, setDesignName, setCurrentDesignId, setOriginalTaggedSvg]);
 
+  // Regenerate SVGs when store has result but no SVG URLs (e.g., loaded via handleEditSourceDesign)
+  useEffect(() => {
+    // Skip if we're using the loadedDesign prop flow (that handles its own regeneration)
+    if (loadedDesign) return;
+
+    // Check if we have result with svg_url but no generated SVG URLs
+    const needsRegeneration = result?.svg_url && !blendSvgUrl && !solidSvgUrl && (blendRecipes || solidRecipes);
+
+    if (!needsRegeneration) return;
+
+    console.log('[INSPIRE] Detected design loaded directly into store, regenerating SVGs...');
+
+    const regenerateSvgs = async () => {
+      // First, fetch and tag the original SVG for region-based editing
+      let taggedSvg = null;
+      try {
+        const svgResponse = await fetch(result.svg_url);
+        const svgText = await svgResponse.text();
+        taggedSvg = tagSvgRegions(svgText);
+        setOriginalTaggedSvg(taggedSvg);
+        console.log('[INSPIRE] Tagged SVG with region IDs');
+      } catch (tagError) {
+        console.error('[INSPIRE] Failed to tag SVG regions:', tagError);
+      }
+
+      try {
+        // Regenerate blend SVG if we have blend recipes
+        if (blendRecipes && colorMapping) {
+          await regenerateBlendSVGFromState(
+            result.svg_url,
+            colorMapping,
+            blendRecipes,
+            blendEditedColors,
+            taggedSvg
+          );
+        }
+
+        // Regenerate solid SVG if we have solid recipes
+        if (solidRecipes && solidColorMapping) {
+          await regenerateSolidSVGFromState(
+            result.svg_url,
+            solidColorMapping,
+            solidRecipes,
+            solidEditedColors,
+            taggedSvg
+          );
+        }
+      } catch (err) {
+        console.error('[INSPIRE] Failed to regenerate SVGs:', err);
+        setError('Failed to restore design preview. Please try reloading.');
+      }
+    };
+
+    regenerateSvgs();
+  }, [result, blendSvgUrl, solidSvgUrl, blendRecipes, solidRecipes, colorMapping, solidColorMapping, loadedDesign]);
+
   // Handle file selection
   const handleFileSelect = (event) => {
     const file = event.target.files?.[0];
