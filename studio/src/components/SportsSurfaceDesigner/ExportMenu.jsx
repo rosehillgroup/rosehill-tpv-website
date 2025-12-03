@@ -6,6 +6,67 @@ import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { generateSportsSVG, downloadSVG, downloadPNG, generateFilename } from '../../lib/sports/sportsExport.js';
 import { sliceSvgIntoTiles, downloadBlob } from '../../lib/svgTileSlicer.js';
 import { auth } from '../../lib/api/auth.js';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client for fetching motif source designs
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+/**
+ * Collect motif data with recipes for PDF generation
+ * Fetches recipe data from each motif's source playground design
+ */
+async function collectMotifDataForPdf(motifs) {
+  const motifEntries = Object.values(motifs || {});
+  if (motifEntries.length === 0) return [];
+
+  const results = await Promise.all(
+    motifEntries.map(async (motif) => {
+      try {
+        // Fetch source design from database
+        const { data: design, error } = await supabase
+          .from('designs')
+          .select('data, name')
+          .eq('id', motif.sourceDesignId)
+          .single();
+
+        if (error || !design) {
+          console.warn(`[EXPORT] Could not fetch design for motif ${motif.id}:`, error);
+          return null;
+        }
+
+        // Calculate motif area in m² (accounting for scale)
+        const scale = motif.scale || 1;
+        const widthM = (motif.originalWidth_mm * scale) / 1000;
+        const heightM = (motif.originalHeight_mm * scale) / 1000;
+        const areaM2 = widthM * heightM;
+
+        // Get recipes based on current viewMode
+        const viewMode = motif.viewMode || 'solid';
+        const recipes = viewMode === 'blend'
+          ? design.data?.blend_recipes
+          : design.data?.solid_recipes;
+
+        return {
+          id: motif.id,
+          name: motif.customName || motif.sourceDesignName || design.name || 'Motif',
+          areaM2,
+          viewMode,
+          widthM,
+          heightM,
+          recipes: recipes || []
+        };
+      } catch (err) {
+        console.error(`[EXPORT] Error processing motif ${motif.id}:`, err);
+        return null;
+      }
+    })
+  );
+
+  // Filter out any failed fetches
+  return results.filter(Boolean);
+}
 
 export default function ExportMenu({ svgRef }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,6 +76,7 @@ export default function ExportMenu({ svgRef }) {
   const exportDesignData = useSportsDesignStore((state) => state.exportDesignData);
   const surface = useSportsDesignStore((state) => state.surface);
   const designName = useSportsDesignStore((state) => state.designName);
+  const motifs = useSportsDesignStore((state) => state.motifs);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -116,6 +178,10 @@ export default function ExportMenu({ svgRef }) {
 
       console.log('[EXPORT] Generating PDF report via API...');
 
+      // Collect motif data with recipes from source designs
+      const motifDataForPdf = await collectMotifDataForPdf(motifs);
+      console.log('[EXPORT] Motifs for PDF:', motifDataForPdf.length);
+
       // Call server-side API
       const response = await fetch('/api/export-sports-pdf', {
         method: 'POST',
@@ -129,6 +195,7 @@ export default function ExportMenu({ svgRef }) {
           surface: state.surface,
           courts: state.courts,
           tracks: state.tracks,
+          motifs: motifDataForPdf,
           dimensions: {
             widthMM: state.surface.width_mm,
             lengthMM: state.surface.length_mm,

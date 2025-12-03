@@ -53,6 +53,7 @@ export async function generateSportsSurfacePDF(data) {
     surface,
     courts = {},
     tracks = {},
+    motifs = [],
     dimensions,
   } = data;
 
@@ -97,7 +98,13 @@ export async function generateSportsSurfacePDF(data) {
   }
 
   // Calculate all materials upfront
-  const materials = calculateMaterials(surface, courts, tracks, totalAreaM2);
+  const courtTrackMaterials = calculateMaterials(surface, courts, tracks, totalAreaM2);
+  const motifMaterials = calculateMotifMaterials(motifs);
+  const allMaterials = [...courtTrackMaterials, ...motifMaterials];
+
+  console.log('[SPORTS-PDF] Court/Track materials:', courtTrackMaterials.length);
+  console.log('[SPORTS-PDF] Motif materials:', motifMaterials.length);
+
   const totalPages = 3;
 
   // ============================================================================
@@ -147,9 +154,11 @@ export async function generateSportsSurfacePDF(data) {
   // Element summary
   const courtCount = Object.keys(courts).length;
   const trackCount = Object.keys(tracks).length;
+  const motifCount = motifs.length;
   const elements = [];
   if (courtCount > 0) elements.push(`${courtCount} court${courtCount > 1 ? 's' : ''}`);
   if (trackCount > 0) elements.push(`${trackCount} track${trackCount > 1 ? 's' : ''}`);
+  if (motifCount > 0) elements.push(`${motifCount} motif${motifCount > 1 ? 's' : ''}`);
 
   page1.drawText(`Design Elements: ${elements.length > 0 ? elements.join(', ') : 'Base surface only'}`, {
     x: MARGIN,
@@ -199,12 +208,24 @@ export async function generateSportsSurfacePDF(data) {
   });
   y -= 15;
 
-  // Draw each material row
-  for (const mat of materials) {
+  // Add section header if there are motifs
+  if (motifMaterials.length > 0 && courtTrackMaterials.length > 0) {
+    page2.drawText('Courts & Tracks', {
+      x: MARGIN,
+      y,
+      size: 11,
+      font: fontBold,
+      color: COLORS.primary,
+    });
+    y -= 18;
+  }
+
+  // Draw each court/track material row
+  for (const mat of courtTrackMaterials) {
     y = drawElementRow(page2, fontBold, fontRegular, mat, y);
 
     // Check if we need to break to avoid overflow
-    if (y < 120) {
+    if (y < 180) {
       page2.drawText('(continued on next page...)', {
         x: MARGIN,
         y: y - 10,
@@ -213,6 +234,77 @@ export async function generateSportsSurfacePDF(data) {
         color: COLORS.textLight,
       });
       break;
+    }
+  }
+
+  // ---- Playground Motifs Section ----
+  if (motifMaterials.length > 0) {
+    y -= 20;
+
+    // Section header
+    page2.drawText('Playground Motifs', {
+      x: MARGIN,
+      y,
+      size: 11,
+      font: fontBold,
+      color: COLORS.primary,
+    });
+
+    y -= 5;
+    page2.drawLine({
+      start: { x: MARGIN, y },
+      end: { x: PAGE_WIDTH - MARGIN, y },
+      thickness: 0.5,
+      color: COLORS.primary,
+    });
+    y -= 15;
+
+    // Group materials by motif
+    const motifGroups = groupMaterialsByMotif(motifMaterials);
+
+    for (const group of Object.values(motifGroups)) {
+      // Check if we need to break to avoid overflow
+      if (y < 120) {
+        page2.drawText('(continued on next page...)', {
+          x: MARGIN,
+          y: y - 10,
+          size: 8,
+          font: fontRegular,
+          color: COLORS.textLight,
+        });
+        break;
+      }
+
+      // Motif name as sub-header
+      const totalMotifArea = group.materials.reduce((sum, m) => sum + m.area, 0);
+      page2.drawText(`${group.name} (${totalMotifArea.toFixed(2)} m²)`, {
+        x: MARGIN,
+        y,
+        size: 9,
+        font: fontBold,
+        color: COLORS.text,
+      });
+
+      if (group.dimensions) {
+        page2.drawText(group.dimensions, {
+          x: MARGIN + 200,
+          y,
+          size: 8,
+          font: fontRegular,
+          color: COLORS.textLight,
+        });
+      }
+
+      y -= 15;
+
+      // Draw each color row for this motif (indented)
+      for (const mat of group.materials) {
+        y = drawMotifColorRow(page2, fontBold, fontRegular, mat, y);
+
+        if (y < 100) break;
+      }
+
+      y -= 5;
     }
   }
 
@@ -225,8 +317,8 @@ export async function generateSportsSurfacePDF(data) {
     color: COLORS.border,
   });
 
-  const totalKg = materials.reduce((sum, m) => sum + m.kg, 0);
-  const totalArea = materials.reduce((sum, m) => sum + m.area, 0);
+  const totalKg = allMaterials.reduce((sum, m) => sum + m.kg, 0);
+  const totalArea = allMaterials.reduce((sum, m) => sum + m.area, 0);
 
   y -= 5;
   page2.drawText('TOTAL', {
@@ -305,8 +397,8 @@ export async function generateSportsSurfacePDF(data) {
 
   y -= 20;
 
-  // Group materials by colour
-  const colourTotals = aggregateMaterialsByColour(materials);
+  // Group all materials (courts + tracks + motifs) by colour
+  const colourTotals = aggregateMaterialsByColour(allMaterials);
 
   // Table header
   page3.drawText('Colour', { x: MARGIN, y, size: 9, font: fontBold, color: COLORS.text });
@@ -563,6 +655,82 @@ function calculateMaterials(surface, courts, tracks, totalAreaM2) {
 }
 
 /**
+ * Calculate materials for motifs (playground designs placed on sports surface)
+ * Each motif has recipes from its source playground design
+ */
+function calculateMotifMaterials(motifs) {
+  const { densityKgPerM2, safetyMargin } = MATERIAL_CONFIG;
+  const materials = [];
+
+  for (const motif of motifs) {
+    if (!motif.recipes || motif.recipes.length === 0) {
+      console.log(`[SPORTS-PDF] Motif ${motif.name} has no recipes, skipping`);
+      continue;
+    }
+
+    console.log(`[SPORTS-PDF] Processing motif: ${motif.name} (${motif.areaM2.toFixed(2)} m²)`);
+
+    for (const recipe of motif.recipes) {
+      // Get the coverage percentage for this color in the design
+      const areaPct = recipe.targetColor?.areaPct || recipe.originalColor?.areaPct || 0;
+      if (areaPct <= 0) continue;
+
+      // Calculate the actual area this color covers in the motif
+      const colorArea = (areaPct / 100) * motif.areaM2;
+
+      // Get the recipe components (TPV colors and their weights)
+      const components = recipe.chosenRecipe?.components || [];
+      if (components.length === 0) continue;
+
+      // For each component in the recipe, calculate its material contribution
+      for (const comp of components) {
+        const weight = comp.weight || 1;
+        const componentArea = colorArea * weight;
+        const kg = componentArea * densityKgPerM2 * safetyMargin;
+
+        materials.push({
+          element: motif.name,
+          elementType: 'motif-surface',
+          motifId: motif.id,
+          colour: {
+            hex: recipe.blendColor?.hex || recipe.targetColor?.hex || '#808080',
+            tpv_code: comp.code || '',
+            name: comp.name || 'Unknown'
+          },
+          area: componentArea,
+          kg,
+          dimensions: `${motif.widthM?.toFixed(1) || '?'}m × ${motif.heightM?.toFixed(1) || '?'}m`,
+          coverage: areaPct
+        });
+      }
+    }
+  }
+
+  return materials;
+}
+
+/**
+ * Group motif materials by motif name for display
+ */
+function groupMaterialsByMotif(materials) {
+  const groups = {};
+  for (const mat of materials) {
+    const name = mat.element;
+    if (!groups[name]) {
+      groups[name] = {
+        name,
+        materials: [],
+        totalArea: 0,
+        dimensions: mat.dimensions
+      };
+    }
+    groups[name].materials.push(mat);
+    groups[name].totalArea += mat.area;
+  }
+  return groups;
+}
+
+/**
  * Aggregate materials by colour for summary table
  */
 function aggregateMaterialsByColour(materials) {
@@ -654,6 +822,57 @@ function drawElementRow(page, fontBold, fontRegular, material, y) {
   });
 
   return y - (material.dimensions ? 24 : 18);
+}
+
+/**
+ * Draw a motif color row (indented, simpler format)
+ */
+function drawMotifColorRow(page, fontBold, fontRegular, material, y) {
+  const indent = 15;
+
+  // Colour swatch and name
+  const hex = material.colour?.hex || '#808080';
+  const colourName = material.colour?.name || 'Unknown';
+  const colourCode = material.colour?.tpv_code || '';
+
+  drawColorSwatch(page, MARGIN + indent, y - 8, hex, 16, 9);
+
+  page.drawText(colourCode ? `${colourCode} ${colourName}` : colourName, {
+    x: MARGIN + indent + 22,
+    y: y - 2,
+    size: 8,
+    font: fontRegular,
+    color: COLORS.text,
+  });
+
+  // Area
+  page.drawText(`${material.area.toFixed(2)} m²`, {
+    x: MARGIN + 290,
+    y: y - 2,
+    size: 8,
+    font: fontRegular,
+    color: COLORS.text,
+  });
+
+  // TPV kg
+  page.drawText(`${material.kg.toFixed(0)} kg`, {
+    x: MARGIN + 370,
+    y: y - 2,
+    size: 8,
+    font: fontRegular,
+    color: COLORS.text,
+  });
+
+  // Bags
+  page.drawText(`${calculateBags(material.kg)}`, {
+    x: MARGIN + 440,
+    y: y - 2,
+    size: 8,
+    font: fontRegular,
+    color: COLORS.textLight,
+  });
+
+  return y - 15;
 }
 
 export {
