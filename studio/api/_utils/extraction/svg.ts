@@ -52,11 +52,12 @@ export class SVGExtractor {
   constructor(options: SVGExtractorOptions = {}) {
     this.options = {
       maxColours: options.maxColours ?? 12, // Updated default to 12
-      minPercentage: options.minPercentage ?? 0 // Include all colors, even tiny accents
+      minPercentage: options.minPercentage ?? 0, // Include all colors, even tiny accents
+      tpvPalette: options.tpvPalette ?? []
     };
 
     // Use provided TPV palette or empty array (will be set by extractor.ts)
-    this.tpvColors = options.tpvPalette || [];
+    this.tpvColors = this.options.tpvPalette;
 
     // Find lightest color (Cream RH31, L=91.8) if palette provided
     if (this.tpvColors.length > 0) {

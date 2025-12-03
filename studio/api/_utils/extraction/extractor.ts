@@ -61,6 +61,7 @@ export class PaletteExtractor {
       mode: options.mode ?? 'blend', // Default to blend mode for backwards compatibility
       combineStrategy: options.combineStrategy ?? 'merge',
       rasterFallback: options.rasterFallback ?? true,
+      tpvPalette: options.tpvPalette ?? [],
       pdfOptions: {
         minFrequency: 3,
         tolerance: 8,

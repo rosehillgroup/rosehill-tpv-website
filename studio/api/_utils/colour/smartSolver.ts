@@ -22,6 +22,7 @@ export interface SmartSolverConstraints {
     enabled: boolean;
     total?: number;
     minPer?: number;
+    maxPer?: number;
   };
   preferAnchor?: boolean; // Force main component to be closest single
 }
