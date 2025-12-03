@@ -174,7 +174,8 @@ export function validateDesignState(state) {
     errors.push('Input mode is required');
   }
 
-  if (!state.widthMM || !state.lengthMM) {
+  // Check for valid positive dimensions (not 0, null, or undefined)
+  if (!(state.widthMM > 0) || !(state.lengthMM > 0)) {
     errors.push('Surface dimensions are required');
   }
 

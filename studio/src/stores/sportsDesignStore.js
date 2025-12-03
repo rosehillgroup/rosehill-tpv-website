@@ -902,12 +902,23 @@ export const useSportsDesignStore = create(
           const { fetchMotifFromDesign } = await import('../lib/sports/motifUtils.js');
           const refreshedData = await fetchMotifFromDesign(motif.sourceDesignId);
 
+          // Preserve current viewMode and update svgContent accordingly
+          const currentViewMode = motif.viewMode || 'solid';
+          const newSvgContent = currentViewMode === 'blend'
+            ? (refreshedData.blendSvgContent || refreshedData.solidSvgContent)
+            : (refreshedData.solidSvgContent || refreshedData.blendSvgContent);
+
           set((state) => ({
             motifs: {
               ...state.motifs,
               [motifId]: {
                 ...state.motifs[motifId],
-                svgContent: refreshedData.svgContent,
+                // Update both solid and blend versions
+                solidSvgContent: refreshedData.solidSvgContent,
+                blendSvgContent: refreshedData.blendSvgContent,
+                hasBothVersions: refreshedData.hasBothVersions,
+                // Set active content based on current viewMode
+                svgContent: newSvgContent,
                 sourceThumbnailUrl: refreshedData.sourceThumbnailUrl,
                 sourceDesignName: refreshedData.sourceDesignName,
                 // Update dimensions if they changed

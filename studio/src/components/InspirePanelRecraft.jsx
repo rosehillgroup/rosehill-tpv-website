@@ -121,6 +121,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   const [showDimensionModal, setShowDimensionModal] = useState(false);
   const [svgAspectRatio, setSvgAspectRatio] = useState(null);
   const [pendingDownloadAction, setPendingDownloadAction] = useState(null); // 'pdf' or 'tiles'
+  const [confirmedDimensions, setConfirmedDimensions] = useState(null); // {width, height} - directly passed to modals
 
   // Welcome box state - check if user has any saved designs
   const [hasExistingDesigns, setHasExistingDesigns] = useState(null); // null = not checked, true/false = result
@@ -637,19 +638,22 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
     setWidthMM(width);
     setLengthMM(height);
 
+    // Store confirmed dimensions to pass directly to modals (avoids async state timing issues)
+    setConfirmedDimensions({ width, height });
+
     // Execute the pending download action
     if (pendingDownloadAction === 'pdf') {
-      // Trigger PDF download with new dimensions
+      // Trigger PDF download with new dimensions (passes dimensions directly)
       setTimeout(() => executePDFDownload(width, height), 100);
     } else if (pendingDownloadAction === 'tiles') {
-      // Trigger tiles download with new dimensions
+      // Trigger tiles download with new dimensions (passes dimensions directly)
       setTimeout(() => executeTilesDownload(width, height), 100);
     } else if (pendingDownloadAction === 'insitu') {
       // Open in-situ modal with new dimensions
       setTimeout(() => setShowInSituModal(true), 100);
     } else if (pendingDownloadAction === 'save') {
-      // Open save modal with new dimensions
-      setTimeout(() => setShowSaveModal(true), 100);
+      // Open save modal immediately - dimensions passed via confirmedDimensions state
+      setShowSaveModal(true);
     }
 
     setPendingDownloadAction(null);
@@ -744,8 +748,13 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
   const handleSaveClick = async () => {
     const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
 
-    // Check if dimensions are set (prompt mode always has them, image/SVG uploads might not)
-    if ((inputMode === 'image' || inputMode === 'svg') && (!widthMM || !lengthMM)) {
+    // Check if dimensions are valid (must be positive numbers)
+    // For image/SVG uploads, we need to prompt for dimensions if not set
+    // For prompt mode or loaded designs with dimensions, skip the modal
+    const hasValidDimensions = widthMM > 0 && lengthMM > 0;
+    const needsDimensionPrompt = (inputMode === 'image' || inputMode === 'svg') && !hasValidDimensions;
+
+    if (needsDimensionPrompt) {
       console.log('[DIMENSION] No dimensions set for image/SVG upload, showing modal before save...');
 
       // Detect aspect ratio from SVG
@@ -2179,8 +2188,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
             inputMode,
             prompt,
             selectedFile,
-            lengthMM,
-            widthMM,
+            // Use confirmed dimensions if available (from dimension modal), otherwise use state
+            lengthMM: confirmedDimensions?.height || lengthMM,
+            widthMM: confirmedDimensions?.width || widthMM,
             result,
             viewMode,
             blendRecipes,
@@ -2197,9 +2207,13 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
           }}
           existingDesignId={currentDesignId}
           initialName={designName}
-          onClose={() => setShowSaveModal(false)}
+          onClose={() => {
+            setShowSaveModal(false);
+            setConfirmedDimensions(null); // Clear confirmed dimensions on close
+          }}
           onSaved={(savedDesign, savedName) => {
             setShowSaveModal(false);
+            setConfirmedDimensions(null); // Clear confirmed dimensions on save
             // User now has at least one saved design - hide welcome box
             setHasExistingDesigns(true);
             // Update design name to match what was saved
