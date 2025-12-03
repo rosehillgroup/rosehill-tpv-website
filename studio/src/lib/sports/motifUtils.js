@@ -1,4 +1,4 @@
-// TPV Studio - Motif Utilities for Sports Surface Designer
+// TPV Studio - Motif Utilities for TPV Designer
 // Handles fetching, sanitizing, and preparing playground designs for use as motifs
 
 import { loadDesign, listDesigns } from '../api/designs.js';

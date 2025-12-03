@@ -2,7 +2,7 @@ import React from 'react';
 
 /**
  * Keyboard Shortcuts Help Modal
- * Shows all available keyboard shortcuts for the Sports Surface Designer
+ * Shows all available keyboard shortcuts for TPV Designer
  */
 function KeyboardShortcutsModal({ isOpen, onClose }) {
   if (!isOpen) return null;

@@ -1,0 +1,199 @@
+/* TPV Designer - Design Generator Panel Styles */
+
+/* Overlay */
+.generator-panel-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-start;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Panel */
+.generator-panel {
+  width: 420px;
+  max-width: 90vw;
+  height: 100vh;
+  background: var(--color-bg-card, white);
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+/* Header */
+.generator-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--color-border, #e4e9f0);
+  background: var(--color-bg-subtle, #f8fafc);
+}
+
+.generator-panel__header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-family: var(--font-heading, 'Space Grotesk', sans-serif);
+  font-weight: 700;
+  color: var(--color-primary, #1e4a7a);
+}
+
+.generator-panel__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--color-text-secondary, #64748b);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.generator-panel__close:hover {
+  background: var(--color-bg-hover, #e2e8f0);
+  color: var(--color-text-primary, #1a202c);
+}
+
+/* Content */
+.generator-panel__content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* When InspirePanelRecraft is embedded, adjust its styles */
+.generator-panel__content .tpv-studio__container {
+  padding: 0;
+  height: 100%;
+}
+
+.generator-panel__content .inspire-panel {
+  height: 100%;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Footer */
+.generator-panel__footer {
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--color-border, #e4e9f0);
+  background: var(--color-bg-subtle, #f8fafc);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.generator-panel__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary, #64748b);
+  text-align: center;
+}
+
+.generator-panel__add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.generator-panel__add-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.generator-panel__add-btn:disabled {
+  background: var(--color-text-tertiary, #94a3b8);
+  cursor: not-allowed;
+}
+
+.generator-panel__add-btn svg {
+  flex-shrink: 0;
+}
+
+/* Spinner for loading state */
+.generator-panel__spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Success state */
+.generator-panel__footer--success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-top-color: #059669;
+}
+
+.generator-panel__success {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: white;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  padding: 0.5rem 0;
+  animation: successPop 0.3s ease-out;
+}
+
+@keyframes successPop {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Keyboard hint */
+.generator-panel__header::after {
+  content: 'Press Esc to close';
+  font-size: 0.6875rem;
+  color: var(--color-text-tertiary, #94a3b8);
+  font-weight: 400;
+  position: absolute;
+  right: 52px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.7;
+}
+
+.generator-panel__header {
+  position: relative;
+}

@@ -1,4 +1,4 @@
-// TPV Studio - Sports Surface Designer Save Modal
+// TPV Studio - TPV Designer Save Modal
 // Modal for saving sports surface designs with project assignment
 
 import { useState, useEffect } from 'react';
@@ -261,7 +261,7 @@ export default function SaveDesignModal({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content save-design-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>{existingDesignId ? 'Update Design' : 'Save Sports Surface'}</h2>
+          <h2>{existingDesignId ? 'Update Design' : 'Save Design'}</h2>
           <button onClick={onClose} className="close-button">×</button>
         </div>
 

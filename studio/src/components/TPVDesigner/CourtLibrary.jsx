@@ -6,9 +6,9 @@ import { getAllTrackTemplates, getTrackTemplate } from '../../lib/sports/trackTe
 import { listPlaygroundDesigns, fetchMotifFromDesign } from '../../lib/sports/motifUtils.js';
 import './CourtLibrary.css';
 
-function CourtLibrary() {
+function CourtLibrary({ onOpenGenerator }) {
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
-  const [activeTab, setActiveTab] = useState('courts'); // 'courts', 'tracks', or 'motifs'
+  const [activeTab, setActiveTab] = useState('courts'); // 'courts', 'tracks', or 'designs'
 
   // Motifs state
   const [playgroundDesigns, setPlaygroundDesigns] = useState([]);
@@ -26,9 +26,9 @@ function CourtLibrary() {
   const templates = getAllCourtTemplates();
   const trackTemplates = getAllTrackTemplates();
 
-  // Load playground designs when motifs tab is active
+  // Load playground designs when designs tab is active
   useEffect(() => {
-    if (activeTab === 'motifs' && playgroundDesigns.length === 0 && !motifsLoading) {
+    if (activeTab === 'designs' && playgroundDesigns.length === 0 && !motifsLoading) {
       loadPlaygroundDesigns();
     }
   }, [activeTab]);
@@ -93,11 +93,11 @@ function CourtLibrary() {
   const getTabInfo = () => {
     switch (activeTab) {
       case 'courts':
-        return { title: 'Court Library', count: courtCount, hint: 'Select a court to add' };
+        return { title: 'Courts', count: courtCount, hint: 'Select a court to add' };
       case 'tracks':
-        return { title: 'Track Library', count: trackCount, hint: 'Select a track to add' };
-      case 'motifs':
-        return { title: 'Motif Library', count: motifCount, hint: 'Add your saved playground designs' };
+        return { title: 'Tracks', count: trackCount, hint: 'Select a track to add' };
+      case 'designs':
+        return { title: 'Designs', count: motifCount, hint: 'Add your saved designs as motifs' };
       default:
         return { title: 'Library', count: 0, hint: '' };
     }
@@ -138,13 +138,13 @@ function CourtLibrary() {
           Tracks
         </button>
         <button
-          className={`court-library__tab ${activeTab === 'motifs' ? 'court-library__tab--active' : ''}`}
+          className={`court-library__tab ${activeTab === 'designs' ? 'court-library__tab--active' : ''}`}
           onClick={() => {
-            setActiveTab('motifs');
+            setActiveTab('designs');
             setSelectedTemplateId(null);
           }}
         >
-          Motifs
+          Designs
         </button>
       </div>
 
@@ -221,8 +221,8 @@ function CourtLibrary() {
           </div>
         ))}
 
-        {/* Motifs View */}
-        {activeTab === 'motifs' && (
+        {/* Designs View */}
+        {activeTab === 'designs' && (
           <>
             {motifsLoading && (
               <div className="court-library__loading">
@@ -240,9 +240,9 @@ function CourtLibrary() {
 
             {!motifsLoading && !motifsError && playgroundDesigns.length === 0 && (
               <div className="court-library__empty">
-                <p>No playground designs found.</p>
+                <p>No designs found.</p>
                 <p className="court-library__empty-hint">
-                  Create and save designs in the Playground Designer to use them as motifs here.
+                  Generate new designs or save them to use as motifs.
                 </p>
               </div>
             )}
@@ -287,11 +287,24 @@ function CourtLibrary() {
         )}
       </div>
 
+      {/* Generate New Design Button */}
+      <div className="court-library__generate">
+        <button
+          className="court-library__generate-btn"
+          onClick={onOpenGenerator}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Generate New Design
+        </button>
+      </div>
+
       <div className="court-library__footer">
         <p className="court-library__hint">
-          {activeTab === 'courts' && '💡 Double-click a court to add it instantly'}
-          {activeTab === 'tracks' && '💡 Double-click a track to add it instantly'}
-          {activeTab === 'motifs' && '💡 Double-click a design to add it as a motif'}
+          {activeTab === 'courts' && 'Double-click a court to add it instantly'}
+          {activeTab === 'tracks' && 'Double-click a track to add it instantly'}
+          {activeTab === 'designs' && 'Double-click a design to add it as a motif'}
         </p>
       </div>
     </div>

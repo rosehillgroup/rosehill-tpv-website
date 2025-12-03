@@ -72,3 +72,79 @@
   color: var(--color-primary, #1e4a7a);
   font-weight: var(--font-medium, 500);
 }
+
+/* ====== Empty Canvas State ====== */
+.court-canvas__empty-state {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-6, 3rem);
+  max-width: 400px;
+  pointer-events: none;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, -45%); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+.court-canvas__empty-icon {
+  color: #94a3b8;
+  margin-bottom: var(--space-3, 1.5rem);
+  opacity: 0.6;
+}
+
+.court-canvas__empty-title {
+  font-family: var(--font-heading, 'Overpass', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0 0 var(--space-2, 1rem) 0;
+}
+
+.court-canvas__empty-text {
+  font-size: 0.9375rem;
+  color: #64748b;
+  margin: 0 0 var(--space-4, 2rem) 0;
+  line-height: 1.5;
+}
+
+.court-canvas__empty-hints {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 1rem);
+  width: 100%;
+}
+
+.court-canvas__hint {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 1rem);
+  text-align: left;
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+.court-canvas__hint strong {
+  color: #1e4a7a;
+}
+
+.court-canvas__hint-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e2e8f0;
+  color: #64748b;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 600;
+}

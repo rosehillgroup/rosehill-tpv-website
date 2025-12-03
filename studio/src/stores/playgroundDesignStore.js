@@ -1,5 +1,5 @@
-// TPV Studio - Playground Designer State Management
-// Zustand store for preserving playground state across mode switches
+// TPV Studio - Design Generator State Management
+// Zustand store for preserving design generation state (AI prompts, SVG uploads, color editing)
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 

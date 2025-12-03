@@ -20,6 +20,43 @@
   pointer-events: none;
 }
 
+/* Type Badge */
+.tpv-studio .design-type-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tpv-studio .design-type-badge .type-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.tpv-studio .design-type-badge .type-label {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tpv-studio .design-type-badge.type-surface {
+  background: rgba(16, 185, 129, 0.9);
+  color: white;
+}
+
+.tpv-studio .design-type-badge.type-motif {
+  background: rgba(99, 102, 241, 0.9);
+  color: white;
+}
+
 /* Thumbnail */
 
 .tpv-studio .card-thumbnail {

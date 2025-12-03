@@ -25,7 +25,7 @@ import { downloadSvgTiles } from '../lib/svgTileSlicer.js';
 import PlaygroundExportMenu from './PlaygroundExportMenu.jsx';
 import tpvColours from '../../api/_utils/data/rosehill_tpv_21_colours.json';
 
-export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
+export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmbedded = false }) {
   // ====== PERSISTENT STATE (from Zustand store - survives mode switches) ======
   const store = usePlaygroundDesignStore();
 
@@ -1674,11 +1674,13 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved }) {
 
 
   return (
-    <div className="inspire-panel-recraft">
-      <div className="panel-header">
-        <h2>TPV Studio - Vector AI</h2>
-        <p className="subtitle">AI-powered vector designs for playground surfacing</p>
-      </div>
+    <div className={`inspire-panel-recraft${isEmbedded ? ' inspire-panel-recraft--embedded' : ''}`}>
+      {!isEmbedded && (
+        <div className="panel-header">
+          <h2>TPV Studio - Vector AI</h2>
+          <p className="subtitle">AI-powered vector designs for playground surfacing</p>
+        </div>
+      )}
 
       {/* Welcome Guidance - Show only when user has no saved designs */}
       {!result && !generating && hasExistingDesigns === false && (

@@ -1,5 +1,5 @@
-// TPV Studio - Sports Surface Design Serializer
-// Converts sports design state to/from database format
+// TPV Studio - TPV Design Serializer
+// Converts TPV design state to/from database format
 
 /**
  * Serialize sports design state for database storage
@@ -14,7 +14,7 @@ export function serializeSportsDesign(state, metadata = {}) {
     version: '1.0',
 
     // Design metadata
-    name: metadata.name || state.name || 'Untitled Sports Surface',
+    name: metadata.name || state.name || 'Untitled Design',
     description: metadata.description || state.description || '',
     tags: metadata.tags || state.tags || [],
 
@@ -138,7 +138,7 @@ export function deserializeSportsDesign(savedData) {
     elementOrder: data.elementOrder || [],
     customMarkings: data.customMarkings || [],
     backgroundZones: data.backgroundZones || [],
-    name: data.name || savedData.name || 'Untitled Sports Surface',
+    name: data.name || savedData.name || 'Untitled Design',
     description: data.description || savedData.description || '',
     tags: data.tags || savedData.tags || []
   };

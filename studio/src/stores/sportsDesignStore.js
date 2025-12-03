@@ -1,4 +1,4 @@
-// TPV Studio - Sports Surface Designer State Management
+// TPV Studio - TPV Designer State Management
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
@@ -43,7 +43,7 @@ const initialState = {
   backgroundZones: [],
 
   // Design metadata
-  designName: 'Untitled Sports Surface',
+  designName: 'Untitled Design',
   designDescription: '',
   designTags: [],
 
@@ -59,6 +59,10 @@ const initialState = {
   showColorEditor: false,
   snapToGrid: true,
   gridSize_mm: 100,
+
+  // Standalone mode - full-bleed single design (no courts/tracks)
+  standaloneMode: false,
+  standaloneDesignId: null, // ID of the design being shown in standalone mode
 
   // Export state
   isSaving: false,
@@ -1077,6 +1081,18 @@ export const useSportsDesignStore = create(
         set({ gridSize_mm });
       },
 
+      // ====== Standalone Mode Actions ======
+      toggleStandaloneMode: () => {
+        set((state) => ({ standaloneMode: !state.standaloneMode }));
+      },
+
+      setStandaloneMode: (enabled, designId = null) => {
+        set({
+          standaloneMode: enabled,
+          standaloneDesignId: designId
+        });
+      },
+
       // ====== Save/Load Actions ======
       setSaving: (isSaving) => {
         set({ isSaving });
@@ -1106,7 +1122,7 @@ export const useSportsDesignStore = create(
           elementOrder: elementOrder || [],
           customMarkings: designData.customMarkings || [],
           backgroundZones: designData.backgroundZones || [],
-          designName: designData.name || 'Untitled Sports Surface',
+          designName: designData.name || 'Untitled Design',
           designDescription: designData.description || '',
           designTags: designData.tags || [],
           selectedCourtId: null,

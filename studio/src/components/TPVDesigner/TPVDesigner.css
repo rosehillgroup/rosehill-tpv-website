@@ -1,4 +1,4 @@
-/* TPV Studio - Sports Surface Designer Styles */
+/* TPV Studio - TPV Designer Styles */
 
 .sports-designer {
   display: flex;
@@ -219,6 +219,45 @@
 .sports-toolbar__color-swatch:hover {
   transform: scale(1.1);
   box-shadow: 0 0 0 1px #d1d5db, 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Mode Toggle Button */
+.sports-toolbar__mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  transition: all 0.15s;
+}
+
+.sports-toolbar__mode-toggle:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #374151;
+}
+
+.sports-toolbar__mode-toggle--active {
+  background: #fef3c7;
+  border-color: #fcd34d;
+  color: #92400e;
+}
+
+.sports-toolbar__mode-toggle--active:hover {
+  background: #fde68a;
+  border-color: #fbbf24;
+  color: #78350f;
+}
+
+.sports-toolbar__mode-toggle svg {
+  flex-shrink: 0;
 }
 
 .sports-toolbar__btn-primary {

@@ -199,6 +199,44 @@
   transform: scale(0.97);
 }
 
+/* ====== Generate Button ====== */
+.court-library__generate {
+  padding: 0.75rem;
+  border-top: 1px solid var(--color-border, #e4e9f0);
+}
+
+.court-library__generate-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  background: linear-gradient(135deg, var(--color-primary, #1e4a7a) 0%, #2a5a8e 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.court-library__generate-btn:hover {
+  background: linear-gradient(135deg, #2a5a8e 0%, #3b6f9f 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(30, 74, 122, 0.3);
+}
+
+.court-library__generate-btn:active {
+  transform: translateY(0);
+}
+
+.court-library__generate-btn svg {
+  flex-shrink: 0;
+}
+
 /* ====== Footer ====== */
 .court-library__footer {
   padding: 0.5rem;

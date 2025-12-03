@@ -47,24 +47,35 @@ export default function DesignCard({
   };
 
   // Use thumbnail, PNG, or SVG as fallback for preview
-  const isSportsDesign = design.input_mode === 'sports_surface';
+  const isSportsDesign = design.input_mode === 'sports_surface' || design.design_data?.type === 'sports_surface';
   const thumbnailUrl = design.thumbnail_url || design.original_png_url || design.original_svg_url;
+
+  // Get design type label
+  const getDesignType = () => {
+    if (isSportsDesign) {
+      return { label: 'Surface', icon: '🏟️', className: 'type-surface' };
+    }
+    return { label: 'Motif', icon: '🎨', className: 'type-motif' };
+  };
+
+  const designType = getDesignType();
 
   return (
     <div
-      className={`design-card ${isDeleting ? 'deleting' : ''} ${isSportsDesign ? 'sports-design' : ''}`}
+      className={`design-card ${isDeleting ? 'deleting' : ''}`}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
+      {/* Type Badge */}
+      <div className={`design-type-badge ${designType.className}`}>
+        <span className="type-icon">{designType.icon}</span>
+        <span className="type-label">{designType.label}</span>
+      </div>
+
       {/* Thumbnail */}
       <div className="card-thumbnail" onClick={() => onLoad(design.id)}>
         {thumbnailUrl ? (
           <img src={thumbnailUrl} alt={design.name} />
-        ) : isSportsDesign ? (
-          <div className="sports-thumbnail">
-            <span className="sports-icon">⚽</span>
-            <span className="sports-label">Sports Surface</span>
-          </div>
         ) : (
           <div className="no-thumbnail">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -76,7 +87,7 @@ export default function DesignCard({
         )}
         {showActions && (
           <div className="thumbnail-overlay">
-            <button className="btn-load">Open Design</button>
+            <button className="btn-load">Open</button>
           </div>
         )}
       </div>

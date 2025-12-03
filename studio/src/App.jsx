@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { auth } from './lib/api/auth.js';
 import { loadDesign } from './lib/api/designs.js';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
-import InspirePanelRecraft from './components/InspirePanelRecraft.jsx';
-import SportsSurfaceDesigner from './components/SportsSurfaceDesigner/SportsSurfaceDesigner.jsx';
-import ToolSelection from './components/ToolSelection.jsx';
+import TPVDesigner from './components/TPVDesigner/TPVDesigner.jsx';
 import Header from './components/Header.jsx';
 import DesignGallery from './components/DesignGallery.jsx';
 import AdminDashboard from './components/admin/AdminDashboard.jsx';
@@ -18,13 +16,10 @@ function App() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [needsPasswordSetup, setNeedsPasswordSetup] = useState(false);
-  const [activeTool, setActiveTool] = useState(null); // null, 'playground', 'sports'
 
-  // Per-mode design state - each mode remembers its loaded design
-  const [playgroundDesign, setPlaygroundDesign] = useState(null);
-  const [sportsDesign, setSportsDesign] = useState(null);
-  const [playgroundDesignName, setPlaygroundDesignName] = useState(null);
-  const [sportsDesignName, setSportsDesignName] = useState(null);
+  // Design state
+  const [loadedDesign, setLoadedDesign] = useState(null);
+  const [designName, setDesignName] = useState(null);
 
   // Check if user has admin role
   const checkAdminStatus = async () => {
@@ -111,27 +106,12 @@ function App() {
   }, []);
 
   const handleLoadDesign = (design) => {
-    // Detect design type and auto-switch to correct mode
-    const isSportsDesign = design.design_data?.type === 'sports_surface';
-
-    if (isSportsDesign) {
-      setSportsDesign(design);
-      setSportsDesignName(design.name);
-      setActiveTool('sports');
-    } else {
-      setPlaygroundDesign(design);
-      setPlaygroundDesignName(design.name);
-      setActiveTool('playground');
-    }
+    setLoadedDesign(design);
+    setDesignName(design.name);
   };
 
-  const handleDesignSaved = (designName) => {
-    // Update the design name for the active mode
-    if (activeTool === 'sports') {
-      setSportsDesignName(designName);
-    } else {
-      setPlaygroundDesignName(designName);
-    }
+  const handleDesignSaved = (name) => {
+    setDesignName(name);
   };
 
   const handlePasswordSet = async () => {
@@ -174,45 +154,7 @@ function App() {
     );
   }
 
-  // Tool selection - show if no tool is active
-  if (!activeTool) {
-    return (
-      <div className="tpv-studio">
-        <ToolSelection onSelectTool={setActiveTool} />
-      </div>
-    );
-  }
-
-  // Sports Surface Designer
-  if (activeTool === 'sports') {
-    return (
-      <ErrorBoundary>
-        <div className="tpv-studio">
-          <Header
-            onShowDesigns={() => setShowGallery(true)}
-            onShowAdmin={() => setShowAdmin(true)}
-            isAdmin={isAdmin}
-            currentDesignName={sportsDesignName}
-            activeTool={activeTool}
-            onSwitchTool={setActiveTool}
-          />
-
-          <main className="tpv-studio__container tpv-studio__container--full">
-            <SportsSurfaceDesigner loadedDesign={sportsDesign} />
-          </main>
-
-          {showGallery && (
-            <DesignGallery
-              onClose={() => setShowGallery(false)}
-              onLoadDesign={handleLoadDesign}
-            />
-          )}
-        </div>
-      </ErrorBoundary>
-    );
-  }
-
-  // Playground Designer (default)
+  // Main TPV Designer
   return (
     <ErrorBoundary>
       <div className="tpv-studio">
@@ -220,16 +162,11 @@ function App() {
           onShowDesigns={() => setShowGallery(true)}
           onShowAdmin={() => setShowAdmin(true)}
           isAdmin={isAdmin}
-          currentDesignName={playgroundDesignName}
-          activeTool={activeTool}
-          onSwitchTool={setActiveTool}
+          currentDesignName={designName}
         />
 
-        <main className="tpv-studio__container">
-          <InspirePanelRecraft
-            loadedDesign={playgroundDesign}
-            onDesignSaved={handleDesignSaved}
-          />
+        <main className="tpv-studio__container tpv-studio__container--full">
+          <TPVDesigner loadedDesign={loadedDesign} />
         </main>
 
         {showGallery && (

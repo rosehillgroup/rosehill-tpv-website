@@ -161,7 +161,7 @@ export default function ExportMenu({ svgRef }) {
       }
 
       const state = exportDesignData();
-      const name = state.name || 'Sports Surface Design';
+      const name = state.name || 'TPV Design';
 
       // Serialize SVG (cleaned for export)
       const svgClone = svgElement.cloneNode(true);

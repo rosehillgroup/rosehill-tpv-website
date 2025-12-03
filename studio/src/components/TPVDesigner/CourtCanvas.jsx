@@ -496,6 +496,37 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
           </span>
         )}
       </div>
+
+      {/* Empty Canvas Guidance */}
+      {elementOrder.length === 0 && (
+        <div className="court-canvas__empty-state">
+          <div className="court-canvas__empty-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <line x1="12" y1="8" x2="12" y2="16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+          </div>
+          <h3 className="court-canvas__empty-title">Your canvas is ready</h3>
+          <p className="court-canvas__empty-text">
+            Add courts, tracks or designs from the sidebar to get started.
+          </p>
+          <div className="court-canvas__empty-hints">
+            <div className="court-canvas__hint">
+              <span className="court-canvas__hint-icon">1</span>
+              <span>Browse <strong>Courts</strong> or <strong>Tracks</strong> in the sidebar</span>
+            </div>
+            <div className="court-canvas__hint">
+              <span className="court-canvas__hint-icon">2</span>
+              <span>Click to add elements to the canvas</span>
+            </div>
+            <div className="court-canvas__hint">
+              <span className="court-canvas__hint-icon">3</span>
+              <span>Drag to position, double-click to edit</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

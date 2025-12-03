@@ -1,4 +1,4 @@
-// TPV Studio - Sports Surface Designer (Main Component)
+// TPV Studio - TPV Designer (Main Component)
 import React, { useState, useEffect, useRef } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import CourtCanvas from './CourtCanvas.jsx';
@@ -8,10 +8,11 @@ import LayersPanel from './LayersPanel.jsx';
 import SaveDesignModal from './SaveDesignModal.jsx';
 import ExportMenu from './ExportMenu.jsx';
 import KeyboardShortcutsModal from './KeyboardShortcutsModal.jsx';
+import DesignGeneratorPanel from './DesignGeneratorPanel.jsx';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
-import './SportsSurfaceDesigner.css';
+import './TPVDesigner.css';
 
-function SportsSurfaceDesigner({ loadedDesign }) {
+function TPVDesigner({ loadedDesign }) {
   // Dimension modal - only shown when user clicks to edit (default surface is 50m x 50m)
   const [showDimensionModal, setShowDimensionModal] = useState(false);
   const [widthInput, setWidthInput] = useState(() => {
@@ -25,6 +26,7 @@ function SportsSurfaceDesigner({ loadedDesign }) {
   const [showSurfaceColorPicker, setShowSurfaceColorPicker] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const [showGeneratorPanel, setShowGeneratorPanel] = useState(false);
   const [designId, setDesignId] = useState(null);
   const [designName, setDesignName] = useState('');
   const svgRef = useRef(null);
@@ -60,7 +62,9 @@ function SportsSurfaceDesigner({ loadedDesign }) {
     setSurfaceDimensions,
     setSurfaceColor,
     resetDesign,
-    hasUnsavedChanges
+    hasUnsavedChanges,
+    standaloneMode,
+    toggleStandaloneMode
   } = useSportsDesignStore();
 
   // Handle dimension form submit
@@ -333,10 +337,10 @@ function SportsSurfaceDesigner({ loadedDesign }) {
       <>
         {/* Main Content Area */}
           <div className="sports-designer__content">
-            {/* Court Library Sidebar */}
-            {showCourtLibrary && (
+            {/* Court Library Sidebar - hidden in standalone mode */}
+            {showCourtLibrary && !standaloneMode && (
               <aside className="sports-designer__sidebar">
-                <CourtLibrary />
+                <CourtLibrary onOpenGenerator={() => setShowGeneratorPanel(true)} />
                 <LayersPanel />
               </aside>
             )}
@@ -350,7 +354,8 @@ function SportsSurfaceDesigner({ loadedDesign }) {
                   <button
                     className={`sports-toolbar__btn ${showCourtLibrary ? 'sports-toolbar__btn--active' : ''}`}
                     onClick={toggleCourtLibrary}
-                    title="Court Library"
+                    title="Element Library"
+                    disabled={standaloneMode}
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <rect x="3" y="3" width="7" height="7" />
@@ -363,7 +368,7 @@ function SportsSurfaceDesigner({ loadedDesign }) {
                     className={`sports-toolbar__btn ${showPropertiesPanel && (selectedCourtId || selectedTrackId || selectedMotifId) ? 'sports-toolbar__btn--active' : ''}`}
                     onClick={togglePropertiesPanel}
                     title="Properties"
-                    disabled={!selectedCourtId && !selectedTrackId && !selectedMotifId}
+                    disabled={(!selectedCourtId && !selectedTrackId && !selectedMotifId) || standaloneMode}
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="4" y1="21" x2="4" y2="14" />
@@ -376,6 +381,36 @@ function SportsSurfaceDesigner({ loadedDesign }) {
                       <line x1="9" y1="8" x2="15" y2="8" />
                       <line x1="17" y1="16" x2="23" y2="16" />
                     </svg>
+                  </button>
+                </div>
+
+                <div className="sports-toolbar__divider" />
+
+                {/* Mode Toggle */}
+                <div className="sports-toolbar__group">
+                  <button
+                    className={`sports-toolbar__mode-toggle ${standaloneMode ? 'sports-toolbar__mode-toggle--active' : ''}`}
+                    onClick={toggleStandaloneMode}
+                    title={standaloneMode ? 'Switch to Multi-Element Mode' : 'Switch to Standalone Mode'}
+                  >
+                    {standaloneMode ? (
+                      <>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                        </svg>
+                        <span>Standalone</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="3" y="3" width="7" height="7" />
+                          <rect x="14" y="3" width="7" height="7" />
+                          <rect x="3" y="14" width="7" height="7" />
+                          <rect x="14" y="14" width="7" height="7" />
+                        </svg>
+                        <span>Multi-Element</span>
+                      </>
+                    )}
                   </button>
                 </div>
 
@@ -471,8 +506,8 @@ function SportsSurfaceDesigner({ loadedDesign }) {
               <CourtCanvas ref={svgRef} />
             </main>
 
-            {/* Properties Panel - shown when court, track, or motif is selected AND panel is not hidden */}
-            {(selectedCourtId || selectedTrackId || selectedMotifId) && showPropertiesPanel && (
+            {/* Properties Panel - shown when court, track, or motif is selected AND panel is not hidden AND not in standalone mode */}
+            {(selectedCourtId || selectedTrackId || selectedMotifId) && showPropertiesPanel && !standaloneMode && (
               <aside className="sports-designer__properties">
                 <PropertiesPanel />
               </aside>
@@ -524,9 +559,15 @@ function SportsSurfaceDesigner({ loadedDesign }) {
             isOpen={showShortcutsModal}
             onClose={() => setShowShortcutsModal(false)}
           />
+
+          {/* Design Generator Panel */}
+          <DesignGeneratorPanel
+            isOpen={showGeneratorPanel}
+            onClose={() => setShowGeneratorPanel(false)}
+          />
         </>
     </div>
   );
 }
 
-export default SportsSurfaceDesigner;
+export default TPVDesigner;
