@@ -8,7 +8,7 @@ import LayersPanel from './LayersPanel.jsx';
 import SaveDesignModal from './SaveDesignModal.jsx';
 import ExportMenu from './ExportMenu.jsx';
 import KeyboardShortcutsModal from './KeyboardShortcutsModal.jsx';
-import DesignGeneratorPanel from './DesignGeneratorPanel.jsx';
+import DesignEditorModal from './DesignEditorModal.jsx';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import './TPVDesigner.css';
 
@@ -26,7 +26,7 @@ function TPVDesigner({ loadedDesign }) {
   const [showSurfaceColorPicker, setShowSurfaceColorPicker] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
-  const [showGeneratorPanel, setShowGeneratorPanel] = useState(false);
+  const [showDesignEditor, setShowDesignEditor] = useState(false);
   const [designId, setDesignId] = useState(null);
   const [designName, setDesignName] = useState('');
   const svgRef = useRef(null);
@@ -340,7 +340,7 @@ function TPVDesigner({ loadedDesign }) {
             {/* Court Library Sidebar - hidden in standalone mode */}
             {showCourtLibrary && !standaloneMode && (
               <aside className="sports-designer__sidebar">
-                <CourtLibrary onOpenGenerator={() => setShowGeneratorPanel(true)} />
+                <CourtLibrary onOpenGenerator={() => setShowDesignEditor(true)} />
                 <LayersPanel />
               </aside>
             )}
@@ -560,10 +560,10 @@ function TPVDesigner({ loadedDesign }) {
             onClose={() => setShowShortcutsModal(false)}
           />
 
-          {/* Design Generator Panel */}
-          <DesignGeneratorPanel
-            isOpen={showGeneratorPanel}
-            onClose={() => setShowGeneratorPanel(false)}
+          {/* Full-Screen Design Editor Modal */}
+          <DesignEditorModal
+            isOpen={showDesignEditor}
+            onClose={() => setShowDesignEditor(false)}
           />
         </>
     </div>

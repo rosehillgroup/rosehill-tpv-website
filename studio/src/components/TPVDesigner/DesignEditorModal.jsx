@@ -1,0 +1,237 @@
+// TPV Designer - Full-Screen Design Editor Modal
+// Full-screen modal for generating and editing designs with proper space for color editing
+
+import React, { useState, useEffect, useCallback } from 'react';
+import InspirePanelRecraft from '../InspirePanelRecraft.jsx';
+import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
+import { usePlaygroundDesignStore } from '../../stores/playgroundDesignStore.js';
+import { fetchMotifFromDesign } from '../../lib/sports/motifUtils.js';
+import { saveDesign } from '../../lib/api/designs.js';
+import { serializeDesign } from '../../utils/designSerializer.js';
+import './DesignEditorModal.css';
+
+/**
+ * DesignEditorModal - Full-screen modal for design generation and editing
+ *
+ * Provides full viewport space for:
+ * - AI prompt generation or SVG upload
+ * - Large SVG preview with zoom/pan
+ * - Color legend and editing tools
+ * - Mixer widget for blend adjustments
+ */
+function DesignEditorModal({ isOpen, onClose }) {
+  const [isAddingToCanvas, setIsAddingToCanvas] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [addSuccess, setAddSuccess] = useState(false);
+  const { addMotif } = useSportsDesignStore();
+
+  // Get playground store state for checking if design exists
+  const playgroundStore = usePlaygroundDesignStore();
+  const { currentDesignId, blendSvgUrl, solidSvgUrl, designName } = playgroundStore;
+
+  // Check if there's a design ready (either saved or generated)
+  const hasDesign = blendSvgUrl || solidSvgUrl;
+  const isSaved = !!currentDesignId;
+
+  // Handle Escape key to close modal
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setAddSuccess(false);
+      setIsAddingToCanvas(false);
+      setIsSaving(false);
+    }
+  }, [isOpen]);
+
+  // Handle design saved callback from InspirePanelRecraft
+  const handleDesignSaved = useCallback((name, designId) => {
+    console.log('[EDITOR] Design saved:', name, designId);
+    setAddSuccess(false);
+  }, []);
+
+  // Auto-save and add to canvas
+  const handleAddToCanvas = async () => {
+    if (!hasDesign || isAddingToCanvas) return;
+
+    setIsAddingToCanvas(true);
+    try {
+      let designId = currentDesignId;
+
+      // If not saved yet, auto-save first
+      if (!designId) {
+        setIsSaving(true);
+
+        // Generate a name if none exists
+        const autoName = designName || `Design ${new Date().toLocaleString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit'
+        })}`;
+
+        // Serialize the current design state
+        const designData = serializeDesign(playgroundStore);
+
+        // Save to database
+        const savedDesign = await saveDesign({
+          name: autoName,
+          description: '',
+          tags: [],
+          design_data: designData,
+          input_mode: playgroundStore.inputMode
+        });
+
+        designId = savedDesign.id;
+
+        // Update the store with the saved ID
+        playgroundStore.setCurrentDesignId(designId);
+        playgroundStore.setDesignName(autoName);
+
+        setIsSaving(false);
+      }
+
+      // Fetch the motif data and add to canvas
+      const motifData = await fetchMotifFromDesign(designId);
+      addMotif(
+        motifData.sourceDesignId,
+        motifData.sourceDesignName,
+        motifData.svgContent,
+        motifData.originalWidth_mm,
+        motifData.originalHeight_mm,
+        motifData.sourceThumbnailUrl,
+        {
+          solidSvgContent: motifData.solidSvgContent,
+          blendSvgContent: motifData.blendSvgContent,
+          hasBothVersions: motifData.hasBothVersions
+        }
+      );
+
+      // Show success feedback briefly, then close
+      setAddSuccess(true);
+      setTimeout(() => {
+        onClose();
+      }, 600);
+    } catch (error) {
+      console.error('[EDITOR] Failed to add to canvas:', error);
+      alert('Failed to add design to canvas: ' + error.message);
+      setIsSaving(false);
+    } finally {
+      setIsAddingToCanvas(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="design-editor-overlay">
+      <div className="design-editor-modal">
+        {/* Header */}
+        <div className="design-editor__header">
+          <div className="design-editor__title">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polygon points="12 2 2 7 12 12 22 7 12 2" />
+              <polyline points="2 17 12 22 22 17" />
+              <polyline points="2 12 12 17 22 12" />
+            </svg>
+            <h2>Design Editor</h2>
+          </div>
+          <div className="design-editor__hint">
+            Generate a design with AI or upload your own SVG
+          </div>
+          <button className="design-editor__close" onClick={onClose} title="Close (Esc)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Content - Full InspirePanelRecraft */}
+        <div className="design-editor__content">
+          <InspirePanelRecraft
+            onDesignSaved={handleDesignSaved}
+            isEmbedded={true}
+          />
+        </div>
+
+        {/* Footer with actions */}
+        <div className={`design-editor__footer ${addSuccess ? 'design-editor__footer--success' : ''}`}>
+          {addSuccess ? (
+            <div className="design-editor__success">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+              <span>Added to canvas!</span>
+            </div>
+          ) : (
+            <>
+              <div className="design-editor__status">
+                {hasDesign ? (
+                  isSaved ? (
+                    <span className="design-editor__saved-indicator">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                      Saved to library
+                    </span>
+                  ) : (
+                    <span className="design-editor__unsaved-indicator">
+                      Design ready • Will auto-save when added
+                    </span>
+                  )
+                ) : (
+                  <span className="design-editor__no-design">
+                    Generate or upload a design to continue
+                  </span>
+                )}
+              </div>
+              <div className="design-editor__actions">
+                <button
+                  className="design-editor__btn design-editor__btn--secondary"
+                  onClick={onClose}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="design-editor__btn design-editor__btn--primary"
+                  onClick={handleAddToCanvas}
+                  disabled={!hasDesign || isAddingToCanvas}
+                >
+                  {isAddingToCanvas ? (
+                    <>
+                      <span className="design-editor__spinner"></span>
+                      {isSaving ? 'Saving...' : 'Adding...'}
+                    </>
+                  ) : (
+                    <>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <line x1="12" y1="8" x2="12" y2="16" />
+                        <line x1="8" y1="12" x2="16" y2="12" />
+                      </svg>
+                      Add to Canvas
+                    </>
+                  )}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default DesignEditorModal;

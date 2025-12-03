@@ -12,6 +12,7 @@ import './components/TPVDesigner/TPVDesigner.css';
 import './components/TPVDesigner/CourtCanvas.css';
 import './components/TPVDesigner/CourtLibrary.css';
 import './components/TPVDesigner/PropertiesPanel.css';
+import './components/TPVDesigner/DesignEditorModal.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
