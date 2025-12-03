@@ -6,12 +6,7 @@ import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { generateSportsSVG, downloadSVG, downloadPNG, generateFilename } from '../../lib/sports/sportsExport.js';
 import { sliceSvgIntoTiles, downloadBlob } from '../../lib/svgTileSlicer.js';
 import { auth } from '../../lib/api/auth.js';
-import { createClient } from '@supabase/supabase-js';
-
-// Initialize Supabase client for fetching motif source designs
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import { loadDesign } from '../../lib/api/designs.js';
 
 /**
  * Collect motif data with recipes for PDF generation
@@ -24,17 +19,18 @@ async function collectMotifDataForPdf(motifs) {
   const results = await Promise.all(
     motifEntries.map(async (motif) => {
       try {
-        // Fetch source design from database
-        const { data: design, error } = await supabase
-          .from('designs')
-          .select('data, name')
-          .eq('id', motif.sourceDesignId)
-          .single();
+        // Fetch source design using authenticated API
+        const result = await loadDesign(motif.sourceDesignId);
+        const design = result?.design || result;
 
-        if (error || !design) {
-          console.warn(`[EXPORT] Could not fetch design for motif ${motif.id}:`, error);
+        if (!design) {
+          console.warn(`[EXPORT] Could not fetch design for motif ${motif.id}`);
           return null;
         }
+
+        console.log(`[EXPORT] Loaded design for motif:`, design.name);
+        console.log(`[EXPORT] Design has solid_recipes:`, !!design.solid_recipes);
+        console.log(`[EXPORT] Design has blend_recipes:`, !!design.blend_recipes);
 
         // Calculate motif area in m² (accounting for scale)
         const scale = motif.scale || 1;
@@ -43,10 +39,13 @@ async function collectMotifDataForPdf(motifs) {
         const areaM2 = widthM * heightM;
 
         // Get recipes based on current viewMode
+        // Recipes are stored at top level, not inside design.data
         const viewMode = motif.viewMode || 'solid';
         const recipes = viewMode === 'blend'
-          ? design.data?.blend_recipes
-          : design.data?.solid_recipes;
+          ? design.blend_recipes
+          : design.solid_recipes;
+
+        console.log(`[EXPORT] Using ${viewMode} recipes:`, recipes?.length || 0, 'recipes');
 
         return {
           id: motif.id,
