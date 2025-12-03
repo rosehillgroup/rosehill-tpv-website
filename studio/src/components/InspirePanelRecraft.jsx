@@ -275,15 +275,24 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     }
   }, [loadedDesign, loadDesignFromStore, setDesignName, setCurrentDesignId, setOriginalTaggedSvg]);
 
+  // Track if we've done initial regeneration for directly-loaded designs
+  const hasRegeneratedRef = useRef(false);
+
   // Regenerate SVGs when store has result but no SVG URLs (e.g., loaded via handleEditSourceDesign)
   useEffect(() => {
     // Skip if we're using the loadedDesign prop flow (that handles its own regeneration)
     if (loadedDesign) return;
 
+    // Skip if we've already regenerated for this session
+    if (hasRegeneratedRef.current) return;
+
     // Check if we have result with svg_url but no generated SVG URLs
     const needsRegeneration = result?.svg_url && !blendSvgUrl && !solidSvgUrl && (blendRecipes || solidRecipes);
 
     if (!needsRegeneration) return;
+
+    // Mark as regenerated to prevent re-triggering
+    hasRegeneratedRef.current = true;
 
     console.log('[INSPIRE] Detected design loaded directly into store, regenerating SVGs...');
 
@@ -330,6 +339,13 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
     regenerateSvgs();
   }, [result, blendSvgUrl, solidSvgUrl, blendRecipes, solidRecipes, colorMapping, solidColorMapping, loadedDesign]);
+
+  // Reset the regeneration flag when the design changes (e.g., new design loaded)
+  useEffect(() => {
+    if (!result) {
+      hasRegeneratedRef.current = false;
+    }
+  }, [result]);
 
   // Handle file selection
   const handleFileSelect = (event) => {
