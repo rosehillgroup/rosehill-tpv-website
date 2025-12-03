@@ -12,10 +12,8 @@ import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import './SportsSurfaceDesigner.css';
 
 function SportsSurfaceDesigner({ loadedDesign }) {
-  // Only show dimension modal if there's no existing work in the store
-  const [showDimensionModal, setShowDimensionModal] = useState(() => {
-    return !useSportsDesignStore.getState().hasUnsavedChanges();
-  });
+  // Dimension modal - only shown when user clicks to edit (default surface is 50m x 50m)
+  const [showDimensionModal, setShowDimensionModal] = useState(false);
   const [widthInput, setWidthInput] = useState(() => {
     const surface = useSportsDesignStore.getState().surface;
     return surface?.width_mm ? String(surface.width_mm / 1000) : '50';
@@ -97,13 +95,13 @@ function SportsSurfaceDesigner({ loadedDesign }) {
       if (!confirmed) return;
     }
 
-    // Reset all state
+    // Reset all state (surface defaults to 50m x 50m)
     resetDesign();
     setDesignId(null);
     setDesignName('');
     setWidthInput('50');
     setLengthInput('50');
-    setShowDimensionModal(true);
+    // Don't show dimension modal - user can click the dimensions button to edit
   };
 
   // Keyboard shortcuts
@@ -278,12 +276,12 @@ function SportsSurfaceDesigner({ loadedDesign }) {
 
   return (
     <div className="sports-designer">
-      {/* Dimension Setup Modal */}
+      {/* Dimension Edit Modal */}
       {showDimensionModal && (
-        <div className="sports-designer__modal-overlay">
-          <div className="sports-designer__modal">
-            <h2>Create Sports Surface</h2>
-            <p>Enter the dimensions of your sports surface</p>
+        <div className="sports-designer__modal-overlay" onClick={() => setShowDimensionModal(false)}>
+          <div className="sports-designer__modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Edit Surface Size</h2>
+            <p>Adjust the dimensions of your sports surface</p>
 
             <form onSubmit={handleSetDimensions}>
               <div className="sports-designer__dimension-inputs">
@@ -324,7 +322,7 @@ function SportsSurfaceDesigner({ loadedDesign }) {
               </p>
 
               <button type="submit" className="sports-designer__btn-primary">
-                Create Surface
+                Update Surface
               </button>
             </form>
           </div>
@@ -332,9 +330,8 @@ function SportsSurfaceDesigner({ loadedDesign }) {
       )}
 
       {/* Main Designer Interface */}
-      {!showDimensionModal && (
-        <>
-          {/* Main Content Area */}
+      <>
+        {/* Main Content Area */}
           <div className="sports-designer__content">
             {/* Court Library Sidebar */}
             {showCourtLibrary && (
@@ -388,8 +385,13 @@ function SportsSurfaceDesigner({ loadedDesign }) {
                 <div className="sports-toolbar__group">
                   <button
                     className="sports-toolbar__dimensions"
-                    onClick={() => setShowDimensionModal(true)}
-                    title="Click to resize surface"
+                    onClick={() => {
+                      // Update inputs to current values before showing modal
+                      setWidthInput(String(surface.width_mm / 1000));
+                      setLengthInput(String(surface.length_mm / 1000));
+                      setShowDimensionModal(true);
+                    }}
+                    title="Click to edit surface size"
                   >
                     {(surface.width_mm / 1000).toFixed(0)}m × {(surface.length_mm / 1000).toFixed(0)}m
                   </button>
@@ -523,7 +525,6 @@ function SportsSurfaceDesigner({ loadedDesign }) {
             onClose={() => setShowShortcutsModal(false)}
           />
         </>
-      )}
     </div>
   );
 }
