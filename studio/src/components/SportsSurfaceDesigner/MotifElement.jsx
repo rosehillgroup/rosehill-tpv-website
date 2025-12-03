@@ -25,9 +25,66 @@ function MotifElement({ motif, isSelected, onMouseDown, onDoubleClick, onScaleSt
     scale
   } = motif;
 
-  // Calculate scaled dimensions
-  const scaledWidth = originalWidth_mm * (scale || 1);
-  const scaledHeight = originalHeight_mm * (scale || 1);
+  // Extract SVG viewBox dimensions to determine actual aspect ratio
+  const svgViewBox = useMemo(() => {
+    if (!svgContent) return null;
+
+    // Try viewBox first
+    const viewBoxMatch = svgContent.match(/viewBox=["']([^"']+)["']/i);
+    if (viewBoxMatch) {
+      const parts = viewBoxMatch[1].split(/\s+/).map(Number);
+      if (parts.length >= 4) {
+        return { width: parts[2], height: parts[3] };
+      }
+    }
+
+    // Fall back to width/height attributes
+    const widthMatch = svgContent.match(/\bwidth=["']?(\d+(?:\.\d+)?)/i);
+    const heightMatch = svgContent.match(/\bheight=["']?(\d+(?:\.\d+)?)/i);
+    if (widthMatch && heightMatch) {
+      return { width: parseFloat(widthMatch[1]), height: parseFloat(heightMatch[1]) };
+    }
+
+    return null;
+  }, [svgContent]);
+
+  // Use SVG viewBox aspect ratio for rendering, scaled to physical dimensions
+  const renderDimensions = useMemo(() => {
+    if (!svgViewBox) {
+      // No viewBox found - use physical dimensions directly
+      return { width: originalWidth_mm, height: originalHeight_mm };
+    }
+
+    // Calculate aspect ratios
+    const svgAspectRatio = svgViewBox.width / svgViewBox.height;
+    const physicalAspectRatio = originalWidth_mm / originalHeight_mm;
+
+    // Check if orientations match (both landscape or both portrait)
+    const svgIsLandscape = svgAspectRatio >= 1;
+    const physicalIsLandscape = physicalAspectRatio >= 1;
+
+    if (svgIsLandscape !== physicalIsLandscape) {
+      // Orientation mismatch! Use SVG viewBox aspect ratio with physical scale
+      // This handles cases where dimensions were stored with wrong orientation
+      console.warn('[MOTIF] Orientation mismatch detected - using SVG viewBox aspect ratio');
+      console.log('[MOTIF] SVG viewBox:', svgViewBox, 'AR:', svgAspectRatio.toFixed(2));
+      console.log('[MOTIF] Physical dims:', originalWidth_mm, '×', originalHeight_mm, 'AR:', physicalAspectRatio.toFixed(2));
+
+      // Calculate dimensions using SVG aspect ratio but physical area
+      const physicalArea = originalWidth_mm * originalHeight_mm;
+      const newWidth = Math.sqrt(physicalArea * svgAspectRatio);
+      const newHeight = newWidth / svgAspectRatio;
+
+      return { width: newWidth, height: newHeight };
+    }
+
+    // Orientations match - use physical dimensions
+    return { width: originalWidth_mm, height: originalHeight_mm };
+  }, [svgViewBox, originalWidth_mm, originalHeight_mm]);
+
+  // Calculate scaled dimensions using corrected render dimensions
+  const scaledWidth = renderDimensions.width * (scale || 1);
+  const scaledHeight = renderDimensions.height * (scale || 1);
 
   // Build transform string
   // Translate to position, then rotate around the center of the motif
@@ -49,12 +106,12 @@ function MotifElement({ motif, isSelected, onMouseDown, onDoubleClick, onScaleSt
       // Remove any existing width/height attributes to let viewBox control sizing
       modifiedSvg = modifiedSvg.replace(/\s+(width|height)=["'][^"']*["']/gi, '');
 
-      // Ensure viewBox exists - if not, try to add one
+      // Ensure viewBox exists - if not, try to add one based on render dimensions
       if (!modifiedSvg.includes('viewBox')) {
-        // Add a viewBox based on original dimensions
+        // Add a viewBox based on render dimensions
         modifiedSvg = modifiedSvg.replace(
           '<svg',
-          `<svg viewBox="0 0 ${originalWidth_mm} ${originalHeight_mm}"`
+          `<svg viewBox="0 0 ${renderDimensions.width} ${renderDimensions.height}"`
         );
       }
 
@@ -63,7 +120,7 @@ function MotifElement({ motif, isSelected, onMouseDown, onDoubleClick, onScaleSt
       console.error('[MOTIF] Error processing SVG:', error);
       return svgContent;
     }
-  }, [svgContent, originalWidth_mm, originalHeight_mm]);
+  }, [svgContent, renderDimensions]);
 
   // Create a data URL for the SVG to use in an image element
   const svgDataUrl = useMemo(() => {
