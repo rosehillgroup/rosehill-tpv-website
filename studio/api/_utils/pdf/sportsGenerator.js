@@ -98,7 +98,11 @@ export async function generateSportsSurfacePDF(data) {
   }
 
   // Calculate all materials upfront
-  const courtTrackMaterials = calculateMaterials(surface, courts, tracks, totalAreaM2);
+  // First calculate motif total area so we can subtract from base surface
+  const motifTotalArea = motifs.reduce((sum, m) => sum + (m.areaM2 || 0), 0);
+  console.log('[SPORTS-PDF] Total motif area:', motifTotalArea.toFixed(2), 'm²');
+
+  const courtTrackMaterials = calculateMaterials(surface, courts, tracks, totalAreaM2, motifTotalArea);
   const motifMaterials = calculateMotifMaterials(motifs);
   const allMaterials = [...courtTrackMaterials, ...motifMaterials];
 
@@ -520,13 +524,19 @@ async function renderSvgToPng(svgString, dimensions, Resvg) {
 
 /**
  * Calculate all materials with accurate geometry
+ * @param {Object} surface - Surface configuration
+ * @param {Object} courts - Courts object
+ * @param {Object} tracks - Tracks object
+ * @param {number} totalAreaM2 - Total surface area in m²
+ * @param {number} motifTotalArea - Total area covered by motifs in m² (to subtract from base)
  */
-function calculateMaterials(surface, courts, tracks, totalAreaM2) {
+function calculateMaterials(surface, courts, tracks, totalAreaM2, motifTotalArea = 0) {
   const { densityKgPerM2, safetyMargin } = MATERIAL_CONFIG;
   const materials = [];
 
   // Track used areas to calculate remaining base surface
-  let usedArea = 0;
+  // Include motif area as "used" since motifs sit on top of the base
+  let usedArea = motifTotalArea;
 
   // Process courts
   for (const courtId of Object.keys(courts)) {
