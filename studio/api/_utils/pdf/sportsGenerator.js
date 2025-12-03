@@ -555,19 +555,38 @@ function calculateMaterials(surface, courts, tracks, totalAreaM2) {
     }
 
     // Line markings (using sport-specific percentages)
-    if (court.lineColor) {
+    // Courts use lineColorOverrides object, not a single lineColor
+    const lineColors = court.lineColorOverrides ? Object.values(court.lineColorOverrides) : [];
+    if (lineColors.length > 0) {
       const linePercent = LINE_MARKING_PERCENTAGES[courtType] || LINE_MARKING_PERCENTAGES.default;
       const lineArea = courtArea * linePercent;
-      const lineKg = lineArea * densityKgPerM2 * safetyMargin;
 
-      materials.push({
-        element: `${template.name || 'Court'} Lines`,
-        elementType: 'line-marking',
-        colour: court.lineColor,
-        area: lineArea,
-        kg: lineKg,
-        dimensions: `~${(linePercent * 100).toFixed(0)}% of court`,
-      });
+      // Group line colors by hex to aggregate same colors
+      const colorGroups = {};
+      for (const color of lineColors) {
+        const hex = color?.hex || '#FFFFFF';
+        if (!colorGroups[hex]) {
+          colorGroups[hex] = { color, count: 0 };
+        }
+        colorGroups[hex].count++;
+      }
+
+      // Calculate area per color based on proportion of markings
+      const totalMarkings = lineColors.length;
+      for (const [hex, group] of Object.entries(colorGroups)) {
+        const colorProportion = group.count / totalMarkings;
+        const colorArea = lineArea * colorProportion;
+        const lineKg = colorArea * densityKgPerM2 * safetyMargin;
+
+        materials.push({
+          element: `${template.name || 'Court'} Lines`,
+          elementType: 'line-marking',
+          colour: group.color,
+          area: colorArea,
+          kg: lineKg,
+          dimensions: `~${(linePercent * 100).toFixed(0)}% of court`,
+        });
+      }
     }
   }
 
@@ -575,26 +594,50 @@ function calculateMaterials(surface, courts, tracks, totalAreaM2) {
   for (const trackId of Object.keys(tracks)) {
     const track = tracks[trackId];
     const template = track.template || {};
+    const params = track.parameters || template.parameters || {};
 
     // Calculate track area from geometry if available
     let trackArea = 0;
 
-    if (template.lanes && template.laneWidth) {
-      // Running track: use lane geometry
-      const lanes = template.lanes || 6;
-      const laneWidthM = (template.laneWidth || 1220) / 1000;
-      const straightLengthM = (template.straightLength || 84390) / 1000;
-      const bendRadiusM = (template.bendRadius || 36500) / 1000;
+    // Get number of lanes from parameters (stored as numLanes, not lanes)
+    const numLanes = params.numLanes || template.parameters?.numLanes || 0;
+    const laneWidthMm = params.laneWidth_mm || template.parameters?.laneWidth_mm || 1220;
 
-      // Track area = (straights) + (bends)
-      // Each straight: lanes * laneWidth * straightLength * 2
-      // Each bend: pi * (outer_radius^2 - inner_radius^2) / 2 * 2
-      const straightsArea = lanes * laneWidthM * straightLengthM * 2;
-      const innerRadius = bendRadiusM;
-      const outerRadius = bendRadiusM + (lanes * laneWidthM);
-      const bendsArea = Math.PI * (outerRadius ** 2 - innerRadius ** 2);
+    if (numLanes > 0) {
+      const laneWidthM = laneWidthMm / 1000;
 
-      trackArea = straightsArea + bendsArea;
+      // Check if it's a straight or curved track
+      const isStraightTrack = template.trackType === 'straight';
+
+      if (isStraightTrack) {
+        // Straight track: width * length
+        const trackWidthM = (params.width_mm || 0) / 1000;
+        const trackLengthM = (params.height_mm || 0) / 1000;
+        trackArea = trackWidthM * trackLengthM;
+      } else {
+        // Curved track: calculate from geometry
+        const trackWidthM = (params.width_mm || 0) / 1000;
+        const trackHeightM = (params.height_mm || 0) / 1000;
+        const cornerRadius = params.cornerRadius?.topLeft || 0;
+        const cornerRadiusM = cornerRadius / 1000;
+
+        if (cornerRadiusM > 0) {
+          // Track with bends: straights + semicircular bends
+          const straightLengthM = trackWidthM - (2 * cornerRadiusM);
+          const innerRadius = cornerRadiusM;
+          const outerRadius = cornerRadiusM + (numLanes * laneWidthM);
+
+          // Two straights
+          const straightsArea = 2 * straightLengthM * numLanes * laneWidthM;
+          // Two semicircular bends = one full circle
+          const bendsArea = Math.PI * (outerRadius ** 2 - innerRadius ** 2);
+
+          trackArea = straightsArea + bendsArea;
+        } else {
+          // Fallback: use bounding box
+          trackArea = trackWidthM * trackHeightM * 0.7; // Approximate
+        }
+      }
     } else {
       // Fallback: estimate as percentage of total
       trackArea = totalAreaM2 * 0.25;
@@ -610,19 +653,19 @@ function calculateMaterials(surface, courts, tracks, totalAreaM2) {
         colour: track.trackSurfaceColor,
         area: trackArea,
         kg,
-        dimensions: template.lanes ? `${template.lanes} lanes` : '',
+        dimensions: numLanes > 0 ? `${numLanes} lanes` : '',
       });
     }
 
-    // Track lane markings if applicable
-    if (track.laneMarkingColor && template.lanes) {
+    // Track lane markings (white lines - hardcoded in renderer)
+    if (numLanes > 0) {
       const laneMarkArea = trackArea * 0.02; // ~2% for lane lines
       const laneKg = laneMarkArea * densityKgPerM2 * safetyMargin;
 
       materials.push({
-        element: 'Lane Markings',
+        element: `${template.name || 'Track'} Lane Markings`,
         elementType: 'line-marking',
-        colour: track.laneMarkingColor,
+        colour: { hex: '#FFFFFF', tpv_code: 'RH31', name: 'Cream' }, // White/cream lines
         area: laneMarkArea,
         kg: laneKg,
         dimensions: '',
