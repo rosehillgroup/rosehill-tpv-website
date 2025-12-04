@@ -11,6 +11,7 @@ import ExportMenu from './ExportMenu.jsx';
 import KeyboardShortcutsModal from './KeyboardShortcutsModal.jsx';
 import DesignEditorModal from './DesignEditorModal.jsx';
 import InSituModal from '../InSitu/InSituModal.jsx';
+import ShapeToolbar from './ShapeToolbar.jsx';
 import { generateSportsSVG } from '../../lib/sports/sportsExport.js';
 import { loadDesign } from '../../lib/api/designs.js';
 import { deserializeDesign } from '../../utils/designSerializer.js';
@@ -88,6 +89,7 @@ function TPVDesigner({ loadedDesign }) {
     selectedCourtId,
     selectedTrackId,
     selectedMotifId,
+    selectedShapeId,
     showCourtLibrary,
     showPropertiesPanel,
     toggleCourtLibrary,
@@ -231,22 +233,28 @@ function TPVDesigner({ loadedDesign }) {
         removeCourt,
         removeTrack,
         removeMotif,
+        removeShape,
         deselectCourt,
         deselectTrack,
         deselectMotif,
+        deselectShape,
         undo,
         redo,
         canUndo,
         canRedo,
         duplicateCourt,
         duplicateMotif,
+        duplicateShape,
         updateCourtPosition,
         updateTrackPosition,
         updateMotifPosition,
+        updateShapePosition,
         courts,
         tracks,
         motifs,
+        shapes,
         selectedMotifId,
+        selectedShapeId: currentSelectedShapeId,
         elementOrder,
         setElementOrder,
         toggleSnapToGrid,
@@ -254,7 +262,7 @@ function TPVDesigner({ loadedDesign }) {
         addToHistory
       } = useSportsDesignStore.getState();
 
-      const selectedId = selectedCourtId || selectedTrackId || selectedMotifId;
+      const selectedId = selectedCourtId || selectedTrackId || selectedMotifId || currentSelectedShapeId;
 
       // Delete key - remove selected element
       if (e.key === 'Delete' && selectedId) {
@@ -265,6 +273,8 @@ function TPVDesigner({ loadedDesign }) {
           removeTrack(selectedTrackId);
         } else if (selectedMotifId) {
           removeMotif(selectedMotifId);
+        } else if (currentSelectedShapeId) {
+          removeShape(currentSelectedShapeId);
         }
       }
 
@@ -276,6 +286,8 @@ function TPVDesigner({ loadedDesign }) {
           deselectTrack();
         } else if (selectedMotifId) {
           deselectMotif();
+        } else if (currentSelectedShapeId) {
+          deselectShape();
         }
       }
 
@@ -302,6 +314,8 @@ function TPVDesigner({ loadedDesign }) {
           duplicateCourt(selectedCourtId);
         } else if (selectedMotifId) {
           duplicateMotif(selectedMotifId);
+        } else if (currentSelectedShapeId) {
+          duplicateShape(currentSelectedShapeId);
         }
       }
 
@@ -342,6 +356,15 @@ function TPVDesigner({ loadedDesign }) {
             updateMotifPosition(selectedMotifId, {
               x: motif.position.x + deltaX,
               y: motif.position.y + deltaY
+            });
+            addToHistory();
+          }
+        } else if (currentSelectedShapeId) {
+          const shape = shapes[currentSelectedShapeId];
+          if (shape) {
+            updateShapePosition(currentSelectedShapeId, {
+              x: shape.position.x + deltaX,
+              y: shape.position.y + deltaY
             });
             addToHistory();
           }
@@ -386,7 +409,7 @@ function TPVDesigner({ loadedDesign }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedCourtId, selectedTrackId, selectedMotifId]);
+  }, [selectedCourtId, selectedTrackId, selectedMotifId, selectedShapeId]);
 
   return (
     <div className="sports-designer">
@@ -475,10 +498,10 @@ function TPVDesigner({ loadedDesign }) {
                     </svg>
                   </button>
                   <button
-                    className={`sports-toolbar__btn ${showPropertiesPanel && (selectedCourtId || selectedTrackId || selectedMotifId) ? 'sports-toolbar__btn--active' : ''}`}
+                    className={`sports-toolbar__btn ${showPropertiesPanel && (selectedCourtId || selectedTrackId || selectedMotifId || selectedShapeId) ? 'sports-toolbar__btn--active' : ''}`}
                     onClick={togglePropertiesPanel}
                     title="Properties"
-                    disabled={(!selectedCourtId && !selectedTrackId && !selectedMotifId) || standaloneMode}
+                    disabled={(!selectedCourtId && !selectedTrackId && !selectedMotifId && !selectedShapeId) || standaloneMode}
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="4" y1="21" x2="4" y2="14" />
@@ -625,10 +648,11 @@ function TPVDesigner({ loadedDesign }) {
               </div>
 
               <CourtCanvas ref={svgRef} />
+              <ShapeToolbar />
             </main>
 
-            {/* Properties Panel - shown when court, track, or motif is selected AND panel is not hidden AND not in standalone mode */}
-            {(selectedCourtId || selectedTrackId || selectedMotifId) && showPropertiesPanel && !standaloneMode && (
+            {/* Properties Panel - shown when court, track, motif, or shape is selected AND panel is not hidden AND not in standalone mode */}
+            {(selectedCourtId || selectedTrackId || selectedMotifId || selectedShapeId) && showPropertiesPanel && !standaloneMode && (
               <aside className="sports-designer__properties">
                 <PropertiesPanel onEditSourceDesign={handleEditSourceDesign} />
               </aside>

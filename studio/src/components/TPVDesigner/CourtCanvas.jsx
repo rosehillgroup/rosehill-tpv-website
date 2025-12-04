@@ -6,6 +6,7 @@ import { snapPositionToGrid, constrainPosition, getCourtTransformString } from '
 import TransformHandles from './TransformHandles.jsx';
 import TrackElement from './TrackRenderer.jsx';
 import MotifElement from './MotifElement.jsx';
+import ShapeElement from './ShapeElement.jsx';
 import './CourtCanvas.css';
 
 const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
@@ -18,6 +19,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const [dragCourtId, setDragCourtId] = useState(null);
   const [dragTrackId, setDragTrackId] = useState(null);
   const [dragMotifId, setDragMotifId] = useState(null);
+  const [dragShapeId, setDragShapeId] = useState(null);
 
   // Motif scaling state
   const [isScaling, setIsScaling] = useState(false);
@@ -29,15 +31,27 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const [rotateMotifId, setRotateMotifId] = useState(null);
   const [rotateStart, setRotateStart] = useState(null); // { mouseAngle, originalRotation, motifCenter }
 
+  // Shape scaling state
+  const [isScalingShape, setIsScalingShape] = useState(false);
+  const [scaleShapeId, setScaleShapeId] = useState(null);
+  const [scaleShapeStart, setScaleShapeStart] = useState(null);
+
+  // Shape rotation state
+  const [isRotatingShape, setIsRotatingShape] = useState(false);
+  const [rotateShapeId, setRotateShapeId] = useState(null);
+  const [rotateShapeStart, setRotateShapeStart] = useState(null);
+
   const {
     surface,
     courts,
     tracks,
     motifs,
+    shapes,
     elementOrder,
     selectedCourtId,
     selectedTrackId,
     selectedMotifId,
+    selectedShapeId,
     snapToGrid,
     gridSize_mm,
     selectCourt,
@@ -46,11 +60,16 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     deselectTrack,
     selectMotif,
     deselectMotif,
+    selectShape,
+    deselectShape,
     updateCourtPosition,
     updateTrackPosition,
     updateMotifPosition,
     updateMotifScale,
-    updateMotifRotation
+    updateMotifRotation,
+    updateShapePosition,
+    updateShapeDimensions,
+    updateShapeRotation
   } = useSportsDesignStore();
 
   // Convert screen coordinates to SVG coordinates
@@ -241,18 +260,125 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     setIsRotating(true);
   };
 
+  // Handle mouse down on shape (start drag)
+  const handleShapeMouseDown = (e, shapeId) => {
+    e.stopPropagation();
+
+    selectShape(shapeId);
+
+    const shape = shapes[shapeId];
+    // Don't allow dragging locked shapes
+    if (shape?.locked) return;
+
+    const svgPoint = screenToSVG(e.clientX, e.clientY);
+
+    setDragStart({
+      x: svgPoint.x - shape.position.x,
+      y: svgPoint.y - shape.position.y
+    });
+    setDragShapeId(shapeId);
+    setIsDragging(true);
+  };
+
+  // Handle double-click on shape (open properties panel)
+  const handleShapeDoubleClick = (e, shapeId) => {
+    e.stopPropagation();
+
+    selectShape(shapeId);
+
+    useSportsDesignStore.setState({
+      showPropertiesPanel: true,
+      propertiesPanelUserClosed: false
+    });
+  };
+
+  // Handle scale start on shape corner handle
+  const handleShapeScaleStart = (e, shapeId, corner) => {
+    e.stopPropagation();
+
+    const shape = shapes[shapeId];
+    if (!shape || shape.locked) return;
+
+    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    const { width_mm, height_mm } = shape;
+
+    // Calculate the anchor point (opposite corner that should stay fixed)
+    let anchorPoint;
+    switch (corner) {
+      case 'nw':
+        anchorPoint = { x: shape.position.x + width_mm, y: shape.position.y + height_mm };
+        break;
+      case 'ne':
+        anchorPoint = { x: shape.position.x, y: shape.position.y + height_mm };
+        break;
+      case 'sw':
+        anchorPoint = { x: shape.position.x + width_mm, y: shape.position.y };
+        break;
+      case 'se':
+      default:
+        anchorPoint = { x: shape.position.x, y: shape.position.y };
+        break;
+    }
+
+    const initialDistance = Math.sqrt(
+      Math.pow(svgPoint.x - anchorPoint.x, 2) +
+      Math.pow(svgPoint.y - anchorPoint.y, 2)
+    );
+
+    setScaleShapeStart({
+      initialDistance,
+      originalWidth: width_mm,
+      originalHeight: height_mm,
+      aspectLocked: shape.aspectLocked,
+      corner,
+      anchorPoint
+    });
+    setScaleShapeId(shapeId);
+    setIsScalingShape(true);
+  };
+
+  // Handle rotation start on shape rotation handle
+  const handleShapeRotateStart = (e, shapeId) => {
+    e.stopPropagation();
+
+    const shape = shapes[shapeId];
+    if (!shape || shape.locked) return;
+
+    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    const { width_mm, height_mm } = shape;
+
+    const shapeCenter = {
+      x: shape.position.x + width_mm / 2,
+      y: shape.position.y + height_mm / 2
+    };
+
+    const initialAngle = Math.atan2(
+      svgPoint.y - shapeCenter.y,
+      svgPoint.x - shapeCenter.x
+    ) * (180 / Math.PI);
+
+    setRotateShapeStart({
+      initialAngle,
+      originalRotation: shape.rotation || 0,
+      shapeCenter
+    });
+    setRotateShapeId(shapeId);
+    setIsRotatingShape(true);
+  };
+
   // Reset drag state when surface dimensions change
   useEffect(() => {
     setIsDragging(false);
     setDragCourtId(null);
     setDragTrackId(null);
     setDragMotifId(null);
+    setDragShapeId(null);
     setDragStart(null);
   }, [surface.width_mm, surface.length_mm]);
 
-  // Handle mouse move (drag court, track, or motif)
+  // Handle mouse move (drag court, track, motif, or shape)
   useEffect(() => {
-    if (!isDragging || (!dragCourtId && !dragTrackId && !dragMotifId)) return;
+    if (!isDragging || (!dragCourtId && !dragTrackId && !dragMotifId && !dragShapeId)) return;
 
     const handleMouseMove = (e) => {
       const svgPoint = screenToSVG(e.clientX, e.clientY);
@@ -288,12 +414,21 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         };
         newPosition = constrainPosition(newPosition, motifDimensions, surface);
         updateMotifPosition(dragMotifId, newPosition);
+      } else if (dragShapeId) {
+        // Shapes: constrain to surface bounds
+        const shape = shapes[dragShapeId];
+        const shapeDimensions = {
+          width_mm: shape.width_mm,
+          length_mm: shape.height_mm
+        };
+        newPosition = constrainPosition(newPosition, shapeDimensions, surface);
+        updateShapePosition(dragShapeId, newPosition);
       }
     };
 
     const handleMouseUp = () => {
       // Add to history when drag completes
-      if (dragCourtId || dragTrackId || dragMotifId) {
+      if (dragCourtId || dragTrackId || dragMotifId || dragShapeId) {
         const { addToHistory } = useSportsDesignStore.getState();
         addToHistory();
       }
@@ -302,6 +437,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       setDragCourtId(null);
       setDragTrackId(null);
       setDragMotifId(null);
+      setDragShapeId(null);
       setDragStart(null);
     };
 
@@ -312,7 +448,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragCourtId, dragTrackId, dragMotifId, dragStart, courts, tracks, motifs, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition, updateMotifPosition]);
+  }, [isDragging, dragCourtId, dragTrackId, dragMotifId, dragShapeId, dragStart, courts, tracks, motifs, shapes, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition, updateMotifPosition, updateShapePosition]);
 
   // Handle mouse move/up for motif scaling
   useEffect(() => {
@@ -444,12 +580,149 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     };
   }, [isRotating, rotateMotifId, rotateStart, updateMotifRotation]);
 
+  // Handle mouse move/up for shape scaling
+  useEffect(() => {
+    if (!isScalingShape || !scaleShapeId || !scaleShapeStart) return;
+
+    const handleMouseMove = (e) => {
+      const svgPoint = screenToSVG(e.clientX, e.clientY);
+      const shape = shapes[scaleShapeId];
+      if (!shape) return;
+
+      // Calculate current distance from anchor point to mouse
+      const currentDistance = Math.sqrt(
+        Math.pow(svgPoint.x - scaleShapeStart.anchorPoint.x, 2) +
+        Math.pow(svgPoint.y - scaleShapeStart.anchorPoint.y, 2)
+      );
+
+      // Calculate new scale based on distance ratio
+      const scaleRatio = currentDistance / scaleShapeStart.initialDistance;
+
+      let newWidth, newHeight;
+      if (scaleShapeStart.aspectLocked) {
+        // Maintain aspect ratio
+        newWidth = scaleShapeStart.originalWidth * scaleRatio;
+        newHeight = scaleShapeStart.originalHeight * scaleRatio;
+      } else {
+        // Free scaling based on mouse position relative to anchor
+        const dx = Math.abs(svgPoint.x - scaleShapeStart.anchorPoint.x);
+        const dy = Math.abs(svgPoint.y - scaleShapeStart.anchorPoint.y);
+        newWidth = Math.max(100, dx); // Minimum 100mm
+        newHeight = Math.max(100, dy);
+      }
+
+      // Round to whole mm
+      newWidth = Math.round(newWidth);
+      newHeight = Math.round(newHeight);
+
+      // Calculate new position to keep anchor point fixed
+      let newPosition;
+      switch (scaleShapeStart.corner) {
+        case 'nw':
+          newPosition = {
+            x: scaleShapeStart.anchorPoint.x - newWidth,
+            y: scaleShapeStart.anchorPoint.y - newHeight
+          };
+          break;
+        case 'ne':
+          newPosition = {
+            x: scaleShapeStart.anchorPoint.x,
+            y: scaleShapeStart.anchorPoint.y - newHeight
+          };
+          break;
+        case 'sw':
+          newPosition = {
+            x: scaleShapeStart.anchorPoint.x - newWidth,
+            y: scaleShapeStart.anchorPoint.y
+          };
+          break;
+        case 'se':
+        default:
+          newPosition = {
+            x: scaleShapeStart.anchorPoint.x,
+            y: scaleShapeStart.anchorPoint.y
+          };
+          break;
+      }
+
+      updateShapeDimensions(scaleShapeId, newWidth, newHeight);
+      updateShapePosition(scaleShapeId, newPosition);
+    };
+
+    const handleMouseUp = () => {
+      const { addToHistory } = useSportsDesignStore.getState();
+      addToHistory();
+
+      setIsScalingShape(false);
+      setScaleShapeId(null);
+      setScaleShapeStart(null);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isScalingShape, scaleShapeId, scaleShapeStart, shapes, updateShapeDimensions, updateShapePosition]);
+
+  // Handle mouse move/up for shape rotation
+  useEffect(() => {
+    if (!isRotatingShape || !rotateShapeId || !rotateShapeStart) return;
+
+    const handleMouseMove = (e) => {
+      const svgPoint = screenToSVG(e.clientX, e.clientY);
+
+      // Calculate current angle from center to mouse
+      const currentAngle = Math.atan2(
+        svgPoint.y - rotateShapeStart.shapeCenter.y,
+        svgPoint.x - rotateShapeStart.shapeCenter.x
+      ) * (180 / Math.PI);
+
+      // Calculate rotation delta
+      const angleDelta = currentAngle - rotateShapeStart.initialAngle;
+      let newRotation = rotateShapeStart.originalRotation + angleDelta;
+
+      // Normalize to 0-360 range
+      newRotation = ((newRotation % 360) + 360) % 360;
+
+      // Snap to 15-degree increments if shift is held
+      if (e.shiftKey) {
+        newRotation = Math.round(newRotation / 15) * 15;
+      }
+
+      // Round to 1 decimal place
+      newRotation = Math.round(newRotation * 10) / 10;
+
+      updateShapeRotation(rotateShapeId, newRotation);
+    };
+
+    const handleMouseUp = () => {
+      const { addToHistory } = useSportsDesignStore.getState();
+      addToHistory();
+
+      setIsRotatingShape(false);
+      setRotateShapeId(null);
+      setRotateShapeStart(null);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isRotatingShape, rotateShapeId, rotateShapeStart, updateShapeRotation]);
+
   // Handle click on canvas background (deselect)
   const handleCanvasClick = (e) => {
     if (e.target === e.currentTarget) {
       deselectCourt();
       deselectTrack();
       deselectMotif();
+      deselectShape();
     }
   };
 
@@ -531,6 +804,26 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             );
           }
 
+          // Check if it's a shape
+          if (elementId.startsWith('shape-')) {
+            const shape = shapes[elementId];
+            if (!shape) return null;
+            // Skip hidden shapes
+            if (shape.visible === false) return null;
+
+            return (
+              <ShapeElement
+                key={elementId}
+                shape={shape}
+                isSelected={elementId === selectedShapeId}
+                onMouseDown={(e) => handleShapeMouseDown(e, elementId)}
+                onDoubleClick={(e) => handleShapeDoubleClick(e, elementId)}
+                onScaleStart={(e, corner) => handleShapeScaleStart(e, elementId, corner)}
+                onRotateStart={(e) => handleShapeRotateStart(e, elementId)}
+              />
+            );
+          }
+
           return null;
         })}
       </svg>
@@ -560,9 +853,9 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
               <circle cx="20" cy="16" r="0.8" fill="currentColor" opacity="0.5"/>
             </svg>
           </div>
-          <h3 className="court-canvas__empty-title">Let's create something great</h3>
+          <h3 className="court-canvas__empty-title">Your canvas is ready</h3>
           <p className="court-canvas__empty-text">
-            Build your perfect sports surface design in minutes
+            Design your perfect TPV surface in minutes
           </p>
           <div className="court-canvas__empty-hints">
             <div className="court-canvas__hint">
@@ -572,7 +865,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                   <line x1="9" y1="3" x2="9" y2="21"/>
                 </svg>
               </span>
-              <span>Choose from <strong>Courts</strong>, <strong>Tracks</strong> or <strong>Designs</strong></span>
+              <span>Add <strong>Courts</strong>, <strong>Tracks</strong>, <strong>Shapes</strong> or <strong>Designs</strong></span>
             </div>
             <div className="court-canvas__hint">
               <span className="court-canvas__hint-icon">
@@ -580,7 +873,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                   <path d="M12 5v14M5 12h14"/>
                 </svg>
               </span>
-              <span>Click to add elements to your canvas</span>
+              <span>Click elements in the library to place them</span>
             </div>
             <div className="court-canvas__hint">
               <span className="court-canvas__hint-icon">
@@ -589,7 +882,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                   <path d="M12 4h7a2 2 0 012 2v12a2 2 0 01-2 2h-7"/>
                 </svg>
               </span>
-              <span>Drag to arrange, customise colours and export</span>
+              <span>Arrange, customise colours and export</span>
             </div>
           </div>
         </div>

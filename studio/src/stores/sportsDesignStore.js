@@ -32,9 +32,15 @@ const initialState = {
   // Selected motif for manipulation
   selectedMotifId: null,
 
-  // Unified element order for z-index (courts, tracks, and motifs combined)
+  // Shapes (basic polygons for segmentation/decoration)
+  shapes: {},  // { [shapeId]: ShapeObject }
+
+  // Selected shape for manipulation
+  selectedShapeId: null,
+
+  // Unified element order for z-index (courts, tracks, motifs, and shapes combined)
   // Elements render bottom-to-top: first = bottom layer, last = top layer
-  elementOrder: [], // ['track-123', 'court-456', 'court-789']
+  elementOrder: [], // ['track-123', 'court-456', 'shape-789', 'motif-012']
 
   // Custom markings not part of standard courts
   customMarkings: [],
@@ -309,6 +315,16 @@ export const useSportsDesignStore = create(
               }
             }
           }));
+        } else if (elementId.startsWith('shape-')) {
+          set((state) => ({
+            shapes: {
+              ...state.shapes,
+              [elementId]: {
+                ...state.shapes[elementId],
+                customName
+              }
+            }
+          }));
         }
         get().addToHistory();
       },
@@ -345,6 +361,16 @@ export const useSportsDesignStore = create(
               }
             }
           }));
+        } else if (elementId.startsWith('shape-')) {
+          set((state) => ({
+            shapes: {
+              ...state.shapes,
+              [elementId]: {
+                ...state.shapes[elementId],
+                locked: !state.shapes[elementId]?.locked
+              }
+            }
+          }));
         }
         get().addToHistory();
       },
@@ -378,6 +404,16 @@ export const useSportsDesignStore = create(
               [elementId]: {
                 ...state.motifs[elementId],
                 visible: state.motifs[elementId]?.visible === false ? true : false
+              }
+            }
+          }));
+        } else if (elementId.startsWith('shape-')) {
+          set((state) => ({
+            shapes: {
+              ...state.shapes,
+              [elementId]: {
+                ...state.shapes[elementId],
+                visible: state.shapes[elementId]?.visible === false ? true : false
               }
             }
           }));
@@ -958,6 +994,240 @@ export const useSportsDesignStore = create(
         });
       },
 
+      // ====== Shape Actions ======
+      addShape: (preset = 'rectangle') => {
+        const shapeId = `shape-${Date.now()}`;
+        const surface = get().surface;
+
+        // Define presets
+        const presets = {
+          rectangle: { sides: 4, aspectLocked: false, width: 3000, height: 2000 },
+          square: { sides: 4, aspectLocked: true, width: 2000, height: 2000 },
+          circle: { sides: 32, aspectLocked: true, width: 2000, height: 2000 },
+          triangle: { sides: 3, aspectLocked: true, width: 2000, height: 2000 },
+          pentagon: { sides: 5, aspectLocked: true, width: 2000, height: 2000 },
+          hexagon: { sides: 6, aspectLocked: true, width: 2000, height: 2000 },
+          polygon: { sides: 6, aspectLocked: true, width: 2000, height: 2000 }
+        };
+
+        const config = presets[preset] || presets.rectangle;
+
+        const shape = {
+          id: shapeId,
+          type: 'shape',
+          sides: config.sides,
+          width_mm: config.width,
+          height_mm: config.height,
+          cornerRadius: 0,
+          position: {
+            x: surface.width_mm / 2 - config.width / 2,
+            y: surface.length_mm / 2 - config.height / 2
+          },
+          rotation: 0,
+          fillColor: {
+            tpv_code: 'RH10',
+            hex: '#609B63',
+            name: 'Standard Green'
+          },
+          strokeEnabled: false,
+          strokeColor: null,
+          strokeWidth_mm: 50,
+          aspectLocked: config.aspectLocked,
+          locked: false,
+          visible: true
+        };
+
+        set((state) => ({
+          shapes: {
+            ...state.shapes,
+            [shapeId]: shape
+          },
+          elementOrder: [...state.elementOrder, shapeId],
+          selectedShapeId: shapeId,
+          selectedCourtId: null,
+          selectedTrackId: null,
+          selectedMotifId: null
+        }));
+        get().addToHistory();
+      },
+
+      removeShape: (shapeId) => {
+        const { [shapeId]: removed, ...remainingShapes } = get().shapes;
+        set((state) => ({
+          shapes: remainingShapes,
+          elementOrder: state.elementOrder.filter(id => id !== shapeId),
+          selectedShapeId: state.selectedShapeId === shapeId ? null : state.selectedShapeId
+        }));
+        get().addToHistory();
+      },
+
+      updateShapePosition: (shapeId, position) => {
+        set((state) => ({
+          shapes: {
+            ...state.shapes,
+            [shapeId]: {
+              ...state.shapes[shapeId],
+              position
+            }
+          }
+        }));
+        // Don't add to history for every drag movement
+      },
+
+      updateShapeDimensions: (shapeId, width_mm, height_mm) => {
+        set((state) => ({
+          shapes: {
+            ...state.shapes,
+            [shapeId]: {
+              ...state.shapes[shapeId],
+              width_mm,
+              height_mm
+            }
+          }
+        }));
+      },
+
+      updateShapeSides: (shapeId, sides) => {
+        set((state) => ({
+          shapes: {
+            ...state.shapes,
+            [shapeId]: {
+              ...state.shapes[shapeId],
+              sides: Math.max(3, Math.min(32, sides))
+            }
+          }
+        }));
+        get().addToHistory();
+      },
+
+      updateShapeCornerRadius: (shapeId, cornerRadius) => {
+        set((state) => ({
+          shapes: {
+            ...state.shapes,
+            [shapeId]: {
+              ...state.shapes[shapeId],
+              cornerRadius: Math.max(0, Math.min(100, cornerRadius))
+            }
+          }
+        }));
+        get().addToHistory();
+      },
+
+      updateShapeRotation: (shapeId, rotation) => {
+        set((state) => ({
+          shapes: {
+            ...state.shapes,
+            [shapeId]: {
+              ...state.shapes[shapeId],
+              rotation
+            }
+          }
+        }));
+      },
+
+      setShapeFillColor: (shapeId, color) => {
+        set((state) => ({
+          shapes: {
+            ...state.shapes,
+            [shapeId]: {
+              ...state.shapes[shapeId],
+              fillColor: color
+            }
+          }
+        }));
+        get().addToHistory();
+      },
+
+      setShapeStroke: (shapeId, enabled, color = null, width = 50) => {
+        set((state) => ({
+          shapes: {
+            ...state.shapes,
+            [shapeId]: {
+              ...state.shapes[shapeId],
+              strokeEnabled: enabled,
+              strokeColor: color,
+              strokeWidth_mm: width
+            }
+          }
+        }));
+        get().addToHistory();
+      },
+
+      setShapeAspectLock: (shapeId, locked) => {
+        set((state) => {
+          const shape = state.shapes[shapeId];
+          // If locking aspect ratio, make height match width
+          const newHeight = locked ? shape.width_mm : shape.height_mm;
+          return {
+            shapes: {
+              ...state.shapes,
+              [shapeId]: {
+                ...shape,
+                aspectLocked: locked,
+                height_mm: newHeight
+              }
+            }
+          };
+        });
+        get().addToHistory();
+      },
+
+      duplicateShape: (shapeId) => {
+        const shape = get().shapes[shapeId];
+        if (!shape) return;
+
+        const newShapeId = `shape-${Date.now()}`;
+        const newShape = {
+          ...shape,
+          id: newShapeId,
+          position: {
+            x: shape.position.x + 500,
+            y: shape.position.y + 500
+          }
+        };
+
+        set((state) => ({
+          shapes: {
+            ...state.shapes,
+            [newShapeId]: newShape
+          },
+          elementOrder: [...state.elementOrder, newShapeId],
+          selectedShapeId: newShapeId,
+          selectedCourtId: null,
+          selectedTrackId: null,
+          selectedMotifId: null
+        }));
+        get().addToHistory();
+      },
+
+      selectShape: (shapeId) => {
+        const { propertiesPanelUserClosed } = get();
+        if (!propertiesPanelUserClosed) {
+          set({
+            selectedShapeId: shapeId,
+            selectedCourtId: null,
+            selectedTrackId: null,
+            selectedMotifId: null,
+            showPropertiesPanel: true
+          });
+        } else {
+          set({
+            selectedShapeId: shapeId,
+            selectedCourtId: null,
+            selectedTrackId: null,
+            selectedMotifId: null
+          });
+        }
+      },
+
+      deselectShape: () => {
+        set({
+          selectedShapeId: null,
+          showPropertiesPanel: false,
+          propertiesPanelUserClosed: true
+        });
+      },
+
       // ====== Custom Markings Actions ======
       addCustomMarking: (marking) => {
         set((state) => ({
@@ -1009,6 +1279,7 @@ export const useSportsDesignStore = create(
           courts: currentState.courts,
           tracks: currentState.tracks,
           motifs: currentState.motifs,
+          shapes: currentState.shapes,
           elementOrder: currentState.elementOrder,
           customMarkings: currentState.customMarkings,
           backgroundZones: currentState.backgroundZones
@@ -1119,6 +1390,7 @@ export const useSportsDesignStore = create(
           courts: designData.courts || {},
           tracks: designData.tracks || {},
           motifs: designData.motifs || {},
+          shapes: designData.shapes || {},
           elementOrder: elementOrder || [],
           customMarkings: designData.customMarkings || [],
           backgroundZones: designData.backgroundZones || [],
@@ -1128,6 +1400,7 @@ export const useSportsDesignStore = create(
           selectedCourtId: null,
           selectedTrackId: null,
           selectedMotifId: null,
+          selectedShapeId: null,
           history: [],
           historyIndex: -1
         });
@@ -1142,6 +1415,7 @@ export const useSportsDesignStore = create(
           courts: state.courts,
           tracks: state.tracks,
           motifs: state.motifs,
+          shapes: state.shapes,
           elementOrder: state.elementOrder,
           customMarkings: state.customMarkings,
           backgroundZones: state.backgroundZones,
@@ -1156,13 +1430,14 @@ export const useSportsDesignStore = create(
         set(initialState);
       },
 
-      // Check if there are unsaved changes (any courts, tracks, motifs, or modifications)
+      // Check if there are unsaved changes (any courts, tracks, motifs, shapes, or modifications)
       hasUnsavedChanges: () => {
         const state = get();
-        // Has changes if any courts, tracks, or motifs have been added
+        // Has changes if any courts, tracks, motifs, or shapes have been added
         return Object.keys(state.courts).length > 0 ||
                Object.keys(state.tracks).length > 0 ||
-               Object.keys(state.motifs).length > 0;
+               Object.keys(state.motifs).length > 0 ||
+               Object.keys(state.shapes).length > 0;
       }
     }),
     { name: 'SportsDesignStore' }

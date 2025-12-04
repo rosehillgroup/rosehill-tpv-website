@@ -15,22 +15,27 @@ function LayersPanel() {
     courts,
     tracks,
     motifs,
+    shapes,
     elementOrder,
     selectedCourtId,
     selectedTrackId,
     selectedMotifId,
+    selectedShapeId,
     setElementOrder,
     selectCourt,
     selectTrack,
     selectMotif,
+    selectShape,
     bringToFront,
     sendToBack,
     duplicateCourt,
     duplicateTrack,
     duplicateMotif,
+    duplicateShape,
     removeCourt,
     removeTrack,
     removeMotif,
+    removeShape,
     renameElement,
     toggleElementLock,
     toggleElementVisibility,
@@ -92,13 +97,24 @@ function LayersPanel() {
         locked: motif?.locked || false,
         visible: motif?.visible !== false
       };
+    } else if (elementId.startsWith('shape-')) {
+      const shape = shapes[elementId];
+      const shapeName = shape?.sides >= 32 ? 'Circle' : shape?.sides === 3 ? 'Triangle' : shape?.sides === 4 ? 'Rectangle' : `${shape?.sides}-gon`;
+      return {
+        type: 'shape',
+        name: shape?.customName || shapeName || 'Unknown Shape',
+        icon: shape?.sides >= 32 ? '○' : shape?.sides === 3 ? '△' : shape?.sides === 4 ? '□' : '⬡',
+        sport: 'shape',
+        locked: shape?.locked || false,
+        visible: shape?.visible !== false
+      };
     }
     return { type: 'unknown', name: 'Unknown', icon: '❓', sport: '', locked: false, visible: true };
   };
 
   // Check if element is selected
   const isSelected = (elementId) => {
-    return elementId === selectedCourtId || elementId === selectedTrackId || elementId === selectedMotifId;
+    return elementId === selectedCourtId || elementId === selectedTrackId || elementId === selectedMotifId || elementId === selectedShapeId;
   };
 
   // Handle element selection
@@ -109,6 +125,8 @@ function LayersPanel() {
       selectTrack(elementId);
     } else if (elementId.startsWith('motif-')) {
       selectMotif(elementId);
+    } else if (elementId.startsWith('shape-')) {
+      selectShape(elementId);
     }
   };
 
@@ -208,6 +226,8 @@ function LayersPanel() {
       duplicateTrack(elementId);
     } else if (elementId.startsWith('motif-')) {
       duplicateMotif(elementId);
+    } else if (elementId.startsWith('shape-')) {
+      duplicateShape(elementId);
     }
     setMenuOpenId(null);
   };
@@ -222,6 +242,8 @@ function LayersPanel() {
         removeTrack(elementId);
       } else if (elementId.startsWith('motif-')) {
         removeMotif(elementId);
+      } else if (elementId.startsWith('shape-')) {
+        removeShape(elementId);
       }
     }
     setMenuOpenId(null);
@@ -276,7 +298,7 @@ function LayersPanel() {
           <span className="layers-panel__empty-icon">📑</span>
           <p>No elements yet</p>
           <span className="layers-panel__empty-hint">
-            Add courts, tracks, or motifs from the library
+            Add courts, tracks, motifs, or shapes
           </span>
         </div>
       </div>

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { calculateTrackGeometry, calculateStaggeredStarts } from '../../lib/sports/trackGeometry.js';
+import { getShapeDisplayName, getShapeIcon } from '../../lib/sports/shapeGeometry.js';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import './PropertiesPanel.css';
 
@@ -10,9 +11,11 @@ function PropertiesPanel({ onEditSourceDesign }) {
     courts,
     tracks,
     motifs,
+    shapes,
     selectedCourtId,
     selectedTrackId,
     selectedMotifId,
+    selectedShapeId,
     updateCourtPosition,
     updateCourtRotation,
     updateCourtScale,
@@ -32,6 +35,13 @@ function PropertiesPanel({ onEditSourceDesign }) {
 
   const [activeSection, setActiveSection] = useState('transform'); // 'transform', 'lines', 'zones'
   const [colorPickerTarget, setColorPickerTarget] = useState(null); // { type: 'line'|'zone', id: string }
+
+  // Show shape properties if shape is selected
+  if (selectedShapeId) {
+    const shape = shapes[selectedShapeId];
+    if (!shape) return null;
+    return <ShapePropertiesPanel shape={shape} shapeId={selectedShapeId} />;
+  }
 
   // Show motif properties if motif is selected
   if (selectedMotifId) {
@@ -1413,6 +1423,539 @@ function MotifPropertiesPanel({ motif, motifId, onEditSourceDesign }) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Shape Properties Panel Component
+ * Displays and allows editing of shape parameters
+ */
+function ShapePropertiesPanel({ shape, shapeId }) {
+  const {
+    updateShapePosition,
+    updateShapeDimensions,
+    updateShapeSides,
+    updateShapeCornerRadius,
+    updateShapeRotation,
+    setShapeFillColor,
+    setShapeStroke,
+    setShapeAspectLock,
+    removeShape,
+    duplicateShape
+  } = useSportsDesignStore();
+
+  const [showFillColorPicker, setShowFillColorPicker] = React.useState(false);
+  const [showStrokeColorPicker, setShowStrokeColorPicker] = React.useState(false);
+
+  const {
+    sides,
+    width_mm,
+    height_mm,
+    cornerRadius,
+    position,
+    rotation,
+    fillColor,
+    strokeEnabled,
+    strokeColor,
+    strokeWidth_mm,
+    aspectLocked
+  } = shape;
+
+  // Handle position updates
+  const handlePositionChange = (axis, value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return;
+    updateShapePosition(shapeId, {
+      ...position,
+      [axis]: numValue
+    });
+  };
+
+  // Handle dimension updates
+  const handleWidthChange = (value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue < 100) return;
+
+    if (aspectLocked) {
+      // Maintain aspect ratio
+      const ratio = height_mm / width_mm;
+      updateShapeDimensions(shapeId, numValue, numValue * ratio);
+    } else {
+      updateShapeDimensions(shapeId, numValue, height_mm);
+    }
+  };
+
+  const handleHeightChange = (value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue < 100) return;
+
+    if (aspectLocked) {
+      // Maintain aspect ratio
+      const ratio = width_mm / height_mm;
+      updateShapeDimensions(shapeId, numValue * ratio, numValue);
+    } else {
+      updateShapeDimensions(shapeId, width_mm, numValue);
+    }
+  };
+
+  // Handle sides update
+  const handleSidesChange = (value) => {
+    const numValue = parseInt(value);
+    if (isNaN(numValue) || numValue < 3) return;
+    updateShapeSides(shapeId, numValue);
+  };
+
+  // Handle corner radius update
+  const handleCornerRadiusChange = (value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue < 0 || numValue > 100) return;
+    updateShapeCornerRadius(shapeId, numValue);
+  };
+
+  // Handle rotation update
+  const handleRotationChange = (value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return;
+    updateShapeRotation(shapeId, numValue);
+  };
+
+  // Handle fill color selection
+  const handleFillColorSelect = (tpvColor) => {
+    setShapeFillColor(shapeId, {
+      tpv_code: tpvColor.code,
+      hex: tpvColor.hex,
+      name: tpvColor.name
+    });
+    setShowFillColorPicker(false);
+  };
+
+  // Handle stroke color selection
+  const handleStrokeColorSelect = (tpvColor) => {
+    setShapeStroke(shapeId, true, {
+      tpv_code: tpvColor.code,
+      hex: tpvColor.hex,
+      name: tpvColor.name
+    }, strokeWidth_mm);
+    setShowStrokeColorPicker(false);
+  };
+
+  // Handle stroke toggle
+  const handleStrokeToggle = (enabled) => {
+    if (enabled && !strokeColor) {
+      // Default to white stroke
+      setShapeStroke(shapeId, true, {
+        tpv_code: 'RH01',
+        hex: '#FFFFFF',
+        name: 'White'
+      }, strokeWidth_mm);
+    } else {
+      setShapeStroke(shapeId, enabled, strokeColor, strokeWidth_mm);
+    }
+  };
+
+  // Handle stroke width change
+  const handleStrokeWidthChange = (value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue < 10) return;
+    setShapeStroke(shapeId, strokeEnabled, strokeColor, numValue);
+  };
+
+  // Handle aspect lock toggle
+  const handleAspectLockToggle = () => {
+    setShapeAspectLock(shapeId, !aspectLocked);
+  };
+
+  // Handle delete shape
+  const handleDeleteShape = () => {
+    if (window.confirm(`Delete this shape? This action cannot be undone.`)) {
+      removeShape(shapeId);
+    }
+  };
+
+  // Handle duplicate shape
+  const handleDuplicateShape = () => {
+    duplicateShape(shapeId);
+  };
+
+  // Shape preset buttons
+  const shapePresets = [
+    { sides: 3, name: 'Triangle', icon: '△' },
+    { sides: 4, name: 'Square', icon: '□' },
+    { sides: 5, name: 'Pentagon', icon: '⬠' },
+    { sides: 6, name: 'Hexagon', icon: '⬡' },
+    { sides: 8, name: 'Octagon', icon: '⯃' },
+    { sides: 32, name: 'Circle', icon: '○' }
+  ];
+
+  return (
+    <div className="properties-panel">
+      {/* Panel Header */}
+      <div className="properties-panel__header">
+        <h3>Shape Properties</h3>
+        <div className="properties-panel__court-info">
+          <span className="court-name">{getShapeDisplayName(sides)}</span>
+          <span className="court-standard">{getShapeIcon(sides)} {sides} sides</span>
+        </div>
+      </div>
+
+      {/* Panel Content */}
+      <div className="properties-panel__content">
+        <div className="properties-section">
+          {/* Shape Type Presets */}
+          <div className="property-group">
+            <label>Shape Type</label>
+            <div className="shape-presets" style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '0.5rem',
+              marginTop: '0.5rem'
+            }}>
+              {shapePresets.map(preset => (
+                <button
+                  key={preset.sides}
+                  onClick={() => handleSidesChange(preset.sides)}
+                  title={preset.name}
+                  style={{
+                    padding: '0.5rem',
+                    border: sides === preset.sides ? '2px solid #3b82f6' : '1px solid #e4e9f0',
+                    borderRadius: '6px',
+                    background: sides === preset.sides ? '#eff6ff' : '#fff',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    fontSize: '1.25rem'
+                  }}
+                >
+                  <span>{preset.icon}</span>
+                  <span style={{ fontSize: '0.65rem', color: '#64748b' }}>{preset.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Sides Slider (for custom values) */}
+          <div className="property-group">
+            <label>Number of Sides</label>
+            <div className="property-input-row">
+              <input
+                type="range"
+                min="3"
+                max="32"
+                value={sides}
+                onChange={(e) => handleSidesChange(e.target.value)}
+                className="property-slider"
+              />
+              <div className="property-input-group property-input-group--compact">
+                <input
+                  type="number"
+                  value={sides}
+                  onChange={(e) => handleSidesChange(e.target.value)}
+                  min="3"
+                  max="32"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Corner Smoothing */}
+          <div className="property-group">
+            <label>Corner Smoothing</label>
+            <div className="property-input-row">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={cornerRadius}
+                onChange={(e) => handleCornerRadiusChange(e.target.value)}
+                className="property-slider"
+              />
+              <div className="property-input-group property-input-group--compact">
+                <input
+                  type="number"
+                  value={cornerRadius}
+                  onChange={(e) => handleCornerRadiusChange(e.target.value)}
+                  min="0"
+                  max="100"
+                />
+                <span className="property-unit">%</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="properties-section__divider" style={{ margin: '1rem 0' }}>
+            <span>Dimensions</span>
+          </div>
+
+          {/* Dimensions with Aspect Lock */}
+          <div className="property-group">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label style={{ margin: 0 }}>Size</label>
+              <button
+                onClick={handleAspectLockToggle}
+                style={{
+                  padding: '0.25rem 0.5rem',
+                  fontSize: '0.75rem',
+                  background: aspectLocked ? '#3b82f6' : '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+                title={aspectLocked ? 'Aspect ratio locked' : 'Aspect ratio unlocked'}
+              >
+                {aspectLocked ? '🔒 Locked' : '🔓 Free'}
+              </button>
+            </div>
+            <div className="property-input-row">
+              <div className="property-input-group">
+                <span className="property-label">W</span>
+                <input
+                  type="number"
+                  value={Math.round(width_mm)}
+                  onChange={(e) => handleWidthChange(e.target.value)}
+                  step="100"
+                  min="100"
+                />
+                <span className="property-unit">mm</span>
+              </div>
+              <div className="property-input-group">
+                <span className="property-label">H</span>
+                <input
+                  type="number"
+                  value={Math.round(height_mm)}
+                  onChange={(e) => handleHeightChange(e.target.value)}
+                  step="100"
+                  min="100"
+                />
+                <span className="property-unit">mm</span>
+              </div>
+            </div>
+            <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.25rem' }}>
+              {(width_mm / 1000).toFixed(2)}m × {(height_mm / 1000).toFixed(2)}m
+            </div>
+          </div>
+
+          {/* Position */}
+          <div className="property-group">
+            <label>Position</label>
+            <div className="property-input-row">
+              <div className="property-input-group">
+                <span className="property-label">X</span>
+                <input
+                  type="number"
+                  value={Math.round(position.x)}
+                  onChange={(e) => handlePositionChange('x', e.target.value)}
+                  step="100"
+                />
+                <span className="property-unit">mm</span>
+              </div>
+              <div className="property-input-group">
+                <span className="property-label">Y</span>
+                <input
+                  type="number"
+                  value={Math.round(position.y)}
+                  onChange={(e) => handlePositionChange('y', e.target.value)}
+                  step="100"
+                />
+                <span className="property-unit">mm</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Rotation */}
+          <div className="property-group">
+            <label>Rotation</label>
+            <div className="property-input-row">
+              <input
+                type="range"
+                min="0"
+                max="360"
+                value={rotation || 0}
+                onChange={(e) => handleRotationChange(e.target.value)}
+                className="property-slider"
+              />
+              <div className="property-input-group property-input-group--compact">
+                <input
+                  type="number"
+                  value={Math.round(rotation || 0)}
+                  onChange={(e) => handleRotationChange(e.target.value)}
+                  min="0"
+                  max="360"
+                />
+                <span className="property-unit">°</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="properties-section__divider" style={{ margin: '1rem 0' }}>
+            <span>Appearance</span>
+          </div>
+
+          {/* Fill Colour */}
+          <div className="property-group">
+            <label>Fill Colour</label>
+            <div className="color-item">
+              <div className="color-item__info">
+                <span className="color-item__name">{fillColor?.name || 'Select Colour'}</span>
+                {fillColor && (
+                  <span className="color-item__code">{fillColor.tpv_code}</span>
+                )}
+              </div>
+              <button
+                className="color-item__swatch"
+                style={{ backgroundColor: fillColor?.hex || '#609B63' }}
+                onClick={() => setShowFillColorPicker(true)}
+                title={fillColor?.name || 'Select colour'}
+              />
+            </div>
+          </div>
+
+          {/* Stroke/Border */}
+          <div className="property-group">
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <input
+                type="checkbox"
+                checked={strokeEnabled || false}
+                onChange={(e) => handleStrokeToggle(e.target.checked)}
+              />
+              Border
+            </label>
+
+            {strokeEnabled && (
+              <div style={{ marginTop: '0.5rem' }}>
+                {/* Stroke Colour */}
+                <div className="color-item" style={{ marginBottom: '0.5rem' }}>
+                  <div className="color-item__info">
+                    <span className="color-item__name">{strokeColor?.name || 'Select Colour'}</span>
+                    {strokeColor && (
+                      <span className="color-item__code">{strokeColor.tpv_code}</span>
+                    )}
+                  </div>
+                  <button
+                    className="color-item__swatch"
+                    style={{ backgroundColor: strokeColor?.hex || '#FFFFFF' }}
+                    onClick={() => setShowStrokeColorPicker(true)}
+                    title={strokeColor?.name || 'Select colour'}
+                  />
+                </div>
+
+                {/* Stroke Width */}
+                <div className="property-input-group">
+                  <span className="property-label" style={{ fontSize: '0.8rem' }}>Width</span>
+                  <input
+                    type="number"
+                    value={strokeWidth_mm}
+                    onChange={(e) => handleStrokeWidthChange(e.target.value)}
+                    step="10"
+                    min="10"
+                  />
+                  <span className="property-unit">mm</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Divider */}
+          <div className="properties-section__divider" style={{ margin: '1rem 0' }}>
+            <span>Actions</span>
+          </div>
+
+          {/* Duplicate Button */}
+          <div className="property-group property-group--actions">
+            <button
+              className="btn-secondary"
+              onClick={handleDuplicateShape}
+              title="Duplicate shape (Ctrl+D)"
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                background: '#f3f4f6',
+                border: '1px solid #e4e9f0',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                marginBottom: '0.5rem'
+              }}
+            >
+              📋 Duplicate Shape
+            </button>
+          </div>
+
+          {/* Delete Button */}
+          <div className="property-group property-group--actions">
+            <button
+              className="btn-delete"
+              onClick={handleDeleteShape}
+              title="Delete shape (Delete key)"
+            >
+              🗑️ Delete Shape
+            </button>
+          </div>
+
+          {/* Tip */}
+          <div className="property-group">
+            <div className="property-hint" style={{ fontStyle: 'normal', color: '#64748b', fontSize: '0.75rem', marginTop: '1rem' }}>
+              💡 Tip: Drag corners to resize, drag the rotation handle above the shape to rotate. Hold Shift to snap rotation to 15° increments.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Fill Color Picker Modal */}
+      {showFillColorPicker && (
+        <div className="color-picker-modal" onClick={() => setShowFillColorPicker(false)}>
+          <div className="color-picker-modal__content" onClick={(e) => e.stopPropagation()}>
+            <div className="color-picker-modal__header">
+              <h4>Select Fill Colour</h4>
+              <button onClick={() => setShowFillColorPicker(false)}>×</button>
+            </div>
+            <div className="color-picker-grid">
+              {tpvColours.map(color => (
+                <button
+                  key={color.code}
+                  className="color-picker-swatch"
+                  style={{ backgroundColor: color.hex }}
+                  onClick={() => handleFillColorSelect(color)}
+                  title={`${color.code} - ${color.name}`}
+                >
+                  <span className="color-picker-swatch__code">{color.code}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stroke Color Picker Modal */}
+      {showStrokeColorPicker && (
+        <div className="color-picker-modal" onClick={() => setShowStrokeColorPicker(false)}>
+          <div className="color-picker-modal__content" onClick={(e) => e.stopPropagation()}>
+            <div className="color-picker-modal__header">
+              <h4>Select Border Colour</h4>
+              <button onClick={() => setShowStrokeColorPicker(false)}>×</button>
+            </div>
+            <div className="color-picker-grid">
+              {tpvColours.map(color => (
+                <button
+                  key={color.code}
+                  className="color-picker-swatch"
+                  style={{ backgroundColor: color.hex }}
+                  onClick={() => handleStrokeColorSelect(color)}
+                  title={`${color.code} - ${color.name}`}
+                >
+                  <span className="color-picker-swatch__code">{color.code}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
