@@ -920,7 +920,7 @@ export function drawBinderSectionWithEstimates(page, fontBold, fontRegular, y, t
 
   // Contact note
   innerY -= 22;
-  page.drawText('\u2139 Contact Rosehill technical team for specific product recommendations based on site conditions.', {
+  page.drawText('Note: Contact Rosehill technical team for specific product recommendations based on site conditions.', {
     x: col1,
     y: innerY,
     size: 8,
