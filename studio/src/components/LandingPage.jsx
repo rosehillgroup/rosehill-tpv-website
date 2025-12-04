@@ -127,8 +127,8 @@ export default function LandingPage() {
             <span className="hero-line-2">TPV Surface</span>
           </h1>
           <p className="hero-subtitle">
-            From AI-powered playgrounds to professional sports facilities —
-            get production-ready TPV specifications in minutes.
+            From AI-generated playground art to professional sports courts —
+            one powerful design platform for all your TPV surfaces.
           </p>
           <div className="hero-ctas">
             <button onClick={() => setShowSignIn(true)} className="cta-primary">
@@ -166,109 +166,87 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Choose Your Designer */}
-      <section className="choose-designer">
+      {/* Unified Design Showcase */}
+      <section className="unified-showcase">
         <div className="section-header">
-          <span className="section-tag">Two Powerful Tools</span>
-          <h2>Choose Your Designer</h2>
+          <span className="section-tag">One Powerful Tool</span>
+          <h2>Design Any Surface</h2>
+          <p className="section-subtitle">Courts, tracks, playgrounds, and custom graphics — all in one canvas</p>
         </div>
 
-        <div className="designer-cards">
-          <div className="designer-card playground-card">
-            <div className="card-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/>
-              </svg>
-            </div>
-            <div className="card-badge">AI-Powered</div>
-            <h3>Playground Designer</h3>
-            <p className="card-tagline">Creative Design with AI</p>
-            <p className="card-description">
-              Describe your vision in words or upload an image. Our AI generates
-              production-ready vector designs with automatic TPV colour matching.
-            </p>
-            <ul className="card-features">
-              <li>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 6L9 17l-5-5"/>
-                </svg>
-                Text-to-vector AI generation
-              </li>
-              <li>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 6L9 17l-5-5"/>
-                </svg>
-                Image & SVG upload
-              </li>
-              <li>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 6L9 17l-5-5"/>
-                </svg>
-                Automatic colour matching
-              </li>
-              <li>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 6L9 17l-5-5"/>
-                </svg>
-                Click-to-edit regions
-              </li>
-            </ul>
-            <div className="card-visual playground-visual">
-              <div className="visual-shape v-shape-1"></div>
-              <div className="visual-shape v-shape-2"></div>
-              <div className="visual-shape v-shape-3"></div>
-            </div>
-          </div>
+        <div className="showcase-container">
+          <div className="showcase-card">
+            <div className="showcase-canvas">
+              {/* Central preview area */}
+              <div className="canvas-preview">
+                <div className="canvas-grid"></div>
+                <div className="canvas-surface">
+                  <div className="surface-court"></div>
+                  <div className="surface-motif"></div>
+                </div>
+              </div>
 
-          <div className="designer-card sports-card">
-            <div className="card-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="3" y="3" width="7" height="7"/>
-                <rect x="14" y="3" width="7" height="7"/>
-                <rect x="3" y="14" width="7" height="7"/>
-                <rect x="14" y="14" width="7" height="7"/>
-              </svg>
-            </div>
-            <div className="card-badge sports-badge">Precision Tools</div>
-            <h3>Sports Designer</h3>
-            <p className="card-tagline">Professional Sports Surfaces</p>
-            <p className="card-description">
-              Build multi-sport facilities with precision. Drag-and-drop courts,
-              running tracks, and custom layouts on any surface size.
-            </p>
-            <ul className="card-features">
-              <li>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 6L9 17l-5-5"/>
+              {/* Floating capability pills */}
+              <div className="capability-pill pill-courts">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="2" y="4" width="20" height="16" rx="2"/>
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M2 12h4M18 12h4"/>
                 </svg>
-                15+ court templates
-              </li>
-              <li>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 6L9 17l-5-5"/>
+                <span>Courts & Tracks</span>
+              </div>
+
+              <div className="capability-pill pill-ai">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/>
                 </svg>
-                Running track builder
-              </li>
-              <li>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 6L9 17l-5-5"/>
+                <span>AI Artwork</span>
+              </div>
+
+              <div className="capability-pill pill-upload">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <path d="M21 15l-5-5L5 21"/>
                 </svg>
-                Multi-sport layouts
-              </li>
-              <li>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M20 6L9 17l-5-5"/>
+                <span>Custom Images</span>
+              </div>
+
+              <div className="capability-pill pill-layers">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                  <path d="M2 17l10 5 10-5"/>
+                  <path d="M2 12l10 5 10-5"/>
                 </svg>
-                Layer management
-              </li>
-            </ul>
-            <div className="card-visual sports-visual">
-              <div className="court-outline">
-                <div className="court-line court-line-h"></div>
-                <div className="court-line court-line-v"></div>
-                <div className="court-circle"></div>
+                <span>Layer & Combine</span>
               </div>
             </div>
+
+            <div className="showcase-tagline">
+              One canvas. Unlimited possibilities.
+            </div>
+
+            <div className="showcase-features">
+              <div className="showcase-feature">
+                <div className="feature-badge ai-badge">AI-POWERED</div>
+                <span>Generate motifs from text descriptions</span>
+              </div>
+              <div className="showcase-feature">
+                <div className="feature-badge template-badge">TEMPLATES</div>
+                <span>15+ professional court layouts</span>
+              </div>
+              <div className="showcase-feature">
+                <div className="feature-badge compose-badge">COMPOSE</div>
+                <span>Mix courts, tracks & artwork freely</span>
+              </div>
+            </div>
+
+            <button onClick={() => setShowSignIn(true)} className="cta-primary showcase-cta">
+              Start Designing
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </button>
           </div>
         </div>
       </section>
@@ -289,8 +267,8 @@ export default function LandingPage() {
                 <path d="M3 9h18M9 21V9"/>
               </svg>
             </div>
-            <h3>Configure Your Canvas</h3>
-            <p>Set your surface dimensions and choose your approach — AI generation, image upload, or template-based design.</p>
+            <h3>Set Up Your Surface</h3>
+            <p>Define your dimensions and choose your base colour. Start with any size from small playgrounds to full athletic facilities.</p>
           </div>
 
           <div className="step-connector">
@@ -303,14 +281,13 @@ export default function LandingPage() {
             <div className="step-number">02</div>
             <div className="step-icon">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <circle cx="13.5" cy="6.5" r="2.5"/>
-                <circle cx="6.5" cy="12.5" r="2.5"/>
-                <circle cx="17.5" cy="17.5" r="2.5"/>
-                <path d="M13.5 9v3M9 12.5h3M15 17.5h-3"/>
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
               </svg>
             </div>
-            <h3>Design & Customise</h3>
-            <p>Refine colours, adjust regions, add elements. Real-time preview shows your exact TPV granule appearance.</p>
+            <h3>Add Elements</h3>
+            <p>Drop in courts and tracks from the library, generate AI artwork, upload your own designs — layer and combine freely.</p>
           </div>
 
           <div className="step-connector">
@@ -327,21 +304,21 @@ export default function LandingPage() {
                 <path d="M14 2v6h6M12 18v-6M9 15l3 3 3-3"/>
               </svg>
             </div>
-            <h3>Export Production Specs</h3>
-            <p>Download PDF specifications with granule recipes, blend ratios, and installation-ready tile layouts.</p>
+            <h3>Export & Build</h3>
+            <p>Generate professional PDFs with material specifications, TPV blend recipes, and exact quantities for installation.</p>
           </div>
         </div>
       </section>
 
-      {/* Features Grid */}
+      {/* Features Grid - Unified */}
       <section id="features" className="features">
         <div className="section-header">
           <span className="section-tag">Capabilities</span>
           <h2>Everything You Need to Design TPV Surfaces</h2>
         </div>
 
-        {/* Playground Features */}
-        <div className="features-grid">
+        <div className="features-grid unified-features">
+          {/* AI Feature - Hero size */}
           <div className="feature-card feature-highlight">
             <div className="feature-icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -355,6 +332,20 @@ export default function LandingPage() {
             </div>
           </div>
 
+          {/* Court Library */}
+          <div className="feature-card">
+            <div className="feature-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M2 12h4M18 12h4"/>
+              </svg>
+            </div>
+            <h3>Court & Track Library</h3>
+            <p>15+ professional templates including basketball, tennis, netball, futsal, and running tracks.</p>
+          </div>
+
+          {/* Image Vectorisation */}
           <div className="feature-card">
             <div className="feature-icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -364,9 +355,10 @@ export default function LandingPage() {
               </svg>
             </div>
             <h3>Image Vectorisation</h3>
-            <p>Upload any PNG or JPG image and convert it to clean SVG vectors optimised for TPV production.</p>
+            <p>Upload any image and convert it to clean vectors optimised for TPV production.</p>
           </div>
 
+          {/* Auto Colour Matching */}
           <div className="feature-card">
             <div className="feature-icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -376,91 +368,24 @@ export default function LandingPage() {
                 <circle cx="6.5" cy="12.5" r="2.5"/>
               </svg>
             </div>
-            <h3>Auto Colour Matching</h3>
-            <p>Automatic extraction and matching to the 21-colour TPV palette with optimal blend recipes.</p>
+            <h3>Blend Colour Matching</h3>
+            <p>Automatic TPV recipe generation with precise blend ratios for perfect colour accuracy.</p>
           </div>
 
+          {/* Layer Management */}
           <div className="feature-card">
             <div className="feature-icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-            </div>
-            <h3>Region Editor</h3>
-            <p>Click any colour region to customise. Real-time preview updates as you design.</p>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M12 3v18M3 12h18"/>
-                <circle cx="12" cy="12" r="9"/>
-              </svg>
-            </div>
-            <h3>Solid & Blend Modes</h3>
-            <p>Choose between single-colour purity or multi-granule blends for precise colour accuracy.</p>
-          </div>
-        </div>
-
-        {/* Sports Features */}
-        <div className="sports-features-header">
-          <span className="section-tag sports-tag">Sports Surface Tools</span>
-        </div>
-
-        <div className="features-grid sports-features-grid">
-          <div className="feature-card sports-feature">
-            <div className="feature-icon sports-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="2" y="4" width="20" height="16" rx="2"/>
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M2 12h4M18 12h4"/>
-              </svg>
-            </div>
-            <h3>Court Library</h3>
-            <p>15+ professional court templates including basketball, tennis, netball, futsal, and more.</p>
-          </div>
-
-          <div className="feature-card sports-feature">
-            <div className="feature-icon sports-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <ellipse cx="12" cy="12" rx="10" ry="8"/>
-                <ellipse cx="12" cy="12" rx="6" ry="4"/>
-                <path d="M12 4v2M12 18v2"/>
-              </svg>
-            </div>
-            <h3>Track Builder</h3>
-            <p>Create running tracks with configurable lanes, staggered starts, and regulation dimensions.</p>
-          </div>
-
-          <div className="feature-card sports-feature">
-            <div className="feature-icon sports-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="3" y="3" width="18" height="18" rx="2"/>
-                <path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>
-              </svg>
-            </div>
-            <h3>Multi-Sport Layouts</h3>
-            <p>Combine multiple courts and tracks on a single surface with automatic alignment.</p>
-          </div>
-
-          <div className="feature-card sports-feature">
-            <div className="feature-icon sports-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
               </svg>
             </div>
             <h3>Layer Management</h3>
-            <p>Drag, rotate, and layer courts with precision controls and snap-to-grid alignment.</p>
+            <p>Combine courts, tracks, and motifs freely. Drag, rotate, and layer with precision controls.</p>
           </div>
-        </div>
 
-        {/* Shared Features */}
-        <div className="sports-features-header">
-          <span className="section-tag">Shared Tools</span>
-        </div>
-
-        <div className="features-grid shared-features-grid">
+          {/* PDF Specifications */}
           <div className="feature-card">
             <div className="feature-icon">
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -469,31 +394,7 @@ export default function LandingPage() {
               </svg>
             </div>
             <h3>PDF Specifications</h3>
-            <p>Export professional specification sheets with design preview, dimensions, and all recipes.</p>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
-            </div>
-            <h3>In-Situ Preview</h3>
-            <p>Upload a site photo and see your design in context with realistic perspective adjustments.</p>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="3" y="3" width="7" height="7"/>
-                <rect x="14" y="3" width="7" height="7"/>
-                <rect x="3" y="14" width="7" height="7"/>
-                <rect x="14" y="14" width="7" height="7"/>
-              </svg>
-            </div>
-            <h3>Installation Tiles</h3>
-            <p>Download your design as 1m×1m tiles in a ZIP file. Named A1, B2... for easy on-site layout.</p>
+            <p>Export production-ready material specs with blend recipes and installation guides.</p>
           </div>
         </div>
       </section>
@@ -537,9 +438,9 @@ export default function LandingPage() {
             <p>Exact TPV granule specs with precise ratio specifications.</p>
           </div>
           <div className="benefit">
-            <div className="benefit-metric">15+</div>
-            <div className="benefit-label">Court Templates</div>
-            <p>Professional sports court and track templates ready to use.</p>
+            <div className="benefit-metric infinite-symbol">∞</div>
+            <div className="benefit-label">Combinations</div>
+            <p>Mix courts, tracks, and artwork in unlimited configurations.</p>
           </div>
           <div className="benefit">
             <div className="benefit-metric">21</div>
@@ -1163,249 +1064,231 @@ export default function LandingPage() {
           opacity: 0.9;
         }
 
-        /* Choose Your Designer Section */
-        .choose-designer {
+        /* Unified Showcase Section */
+        .unified-showcase {
           padding: 6rem 4rem;
           background: white;
         }
 
-        .designer-cards {
-          display: grid;
-          grid-template-columns: 1.1fr 0.9fr;
-          gap: 2rem;
-          max-width: 1100px;
+        .showcase-container {
+          max-width: 900px;
           margin: 0 auto;
         }
 
-        .designer-card {
-          background: white;
-          border-radius: 16px;
-          padding: 2.5rem;
-          border: 2px solid var(--border);
-          transition: all 0.3s ease;
+        .showcase-card {
+          background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+          border-radius: 24px;
+          padding: 3rem;
+          border: 1px solid var(--border);
+          text-align: center;
+        }
+
+        .showcase-canvas {
           position: relative;
-          overflow: hidden;
+          height: 280px;
+          margin-bottom: 2rem;
         }
 
-        .designer-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-        }
-
-        .playground-card:hover {
-          border-color: var(--accent);
-        }
-
-        .sports-card:hover {
-          border-color: #00a6a3;
-        }
-
-        .card-icon {
-          width: 56px;
-          height: 56px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: rgba(255, 107, 53, 0.1);
-          border-radius: 12px;
-          color: var(--accent);
-          margin-bottom: 1.25rem;
-        }
-
-        .sports-card .card-icon {
-          background: rgba(0, 166, 163, 0.1);
-          color: #00a6a3;
-        }
-
-        .card-badge {
-          display: inline-block;
-          padding: 0.25rem 0.75rem;
-          background: rgba(255, 107, 53, 0.1);
-          color: var(--accent);
-          font-size: 0.6875rem;
-          font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          border-radius: 50px;
-          margin-bottom: 0.75rem;
-        }
-
-        .sports-badge {
-          background: rgba(0, 166, 163, 0.1);
-          color: #00a6a3;
-        }
-
-        .designer-card h3 {
-          font-family: 'Space Grotesk', sans-serif;
-          font-size: 1.5rem;
-          font-weight: 700;
-          color: var(--text);
-          margin: 0 0 0.25rem;
-        }
-
-        .card-tagline {
-          font-size: 1rem;
-          font-weight: 500;
-          color: var(--text-secondary);
-          margin: 0 0 1rem;
-        }
-
-        .card-description {
-          font-size: 0.9375rem;
-          color: var(--text-secondary);
-          line-height: 1.6;
-          margin: 0 0 1.5rem;
-        }
-
-        .card-features {
-          list-style: none;
-          padding: 0;
-          margin: 0 0 1.5rem;
-        }
-
-        .card-features li {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          font-size: 0.875rem;
-          color: var(--text);
-          padding: 0.375rem 0;
-        }
-
-        .card-features li svg {
-          color: var(--accent);
-          flex-shrink: 0;
-        }
-
-        .sports-card .card-features li svg {
-          color: #00a6a3;
-        }
-
-        .card-visual {
-          height: 120px;
-          border-radius: 8px;
-          position: relative;
-          overflow: hidden;
-        }
-
-        .playground-visual {
-          background: linear-gradient(135deg, #fef3ef, #fff5f0);
-        }
-
-        .sports-visual {
-          background: linear-gradient(135deg, #e6f7f7, #f0fafa);
-        }
-
-        .visual-shape {
+        .canvas-preview {
           position: absolute;
-          border-radius: 50%;
-          animation: floatShape 4s ease-in-out infinite;
-        }
-
-        .v-shape-1 {
-          width: 50px;
-          height: 50px;
-          background: var(--accent);
-          opacity: 0.7;
-          top: 20%;
-          left: 10%;
-          animation-delay: 0s;
-        }
-
-        .v-shape-2 {
-          width: 35px;
-          height: 35px;
-          background: #30D5C8;
-          opacity: 0.7;
-          top: 50%;
-          left: 40%;
-          animation-delay: 0.3s;
-        }
-
-        .v-shape-3 {
-          width: 60px;
-          height: 60px;
-          background: var(--primary);
-          opacity: 0.7;
-          top: 30%;
-          right: 15%;
-          animation-delay: 0.6s;
-        }
-
-        @keyframes floatShape {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-8px) scale(1.05); }
-        }
-
-        .court-outline {
-          position: absolute;
-          inset: 15%;
-          border: 2px solid #00a6a3;
-          border-radius: 4px;
-          opacity: 0.6;
-        }
-
-        .court-line {
-          position: absolute;
-          background: #00a6a3;
-        }
-
-        .court-line-h {
-          width: 100%;
-          height: 2px;
-          top: 50%;
-          left: 0;
-        }
-
-        .court-line-v {
-          width: 2px;
-          height: 100%;
-          left: 50%;
-          top: 0;
-        }
-
-        .court-circle {
-          position: absolute;
-          width: 30px;
-          height: 30px;
-          border: 2px solid #00a6a3;
-          border-radius: 50%;
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
+          width: 240px;
+          height: 160px;
+          background: white;
+          border-radius: 12px;
+          border: 2px solid var(--border);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+          overflow: hidden;
         }
 
-        /* Sports Features Styling */
-        .sports-features-header {
-          text-align: center;
-          margin: 3rem 0 2rem;
+        .canvas-grid {
+          position: absolute;
+          inset: 0;
+          background-image:
+            linear-gradient(rgba(30, 74, 122, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(30, 74, 122, 0.05) 1px, transparent 1px);
+          background-size: 20px 20px;
         }
 
-        .sports-tag {
+        .canvas-surface {
+          position: absolute;
+          inset: 10px;
+          background: #e8f4f8;
+          border-radius: 4px;
+        }
+
+        .surface-court {
+          position: absolute;
+          top: 20%;
+          left: 15%;
+          width: 70%;
+          height: 60%;
+          border: 2px solid #00a6a3;
+          border-radius: 4px;
+          opacity: 0.8;
+        }
+
+        .surface-court::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: #00a6a3;
+        }
+
+        .surface-court::after {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 20px;
+          height: 20px;
+          border: 2px solid #00a6a3;
+          border-radius: 50%;
+        }
+
+        .surface-motif {
+          position: absolute;
+          bottom: 10%;
+          right: 10%;
+          width: 35px;
+          height: 35px;
+          background: var(--accent);
+          border-radius: 50%;
+          opacity: 0.8;
+          animation: motifPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes motifPulse {
+          0%, 100% { transform: scale(1); opacity: 0.8; }
+          50% { transform: scale(1.1); opacity: 1; }
+        }
+
+        .capability-pill {
+          position: absolute;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.625rem 1rem;
+          background: white;
+          border-radius: 50px;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+          font-size: 0.8125rem;
+          font-weight: 500;
+          color: var(--text);
+          animation: pillFloat 4s ease-in-out infinite;
+        }
+
+        .pill-courts {
+          top: 10%;
+          left: 5%;
+          animation-delay: 0s;
+        }
+
+        .pill-courts svg {
+          color: #00a6a3;
+        }
+
+        .pill-ai {
+          top: 5%;
+          right: 10%;
+          animation-delay: 0.5s;
+        }
+
+        .pill-ai svg {
+          color: var(--accent);
+        }
+
+        .pill-upload {
+          bottom: 15%;
+          left: 8%;
+          animation-delay: 1s;
+        }
+
+        .pill-upload svg {
+          color: var(--primary);
+        }
+
+        .pill-layers {
+          bottom: 10%;
+          right: 5%;
+          animation-delay: 1.5s;
+        }
+
+        .pill-layers svg {
+          color: #30D5C8;
+        }
+
+        @keyframes pillFloat {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
+        }
+
+        .showcase-tagline {
+          font-family: 'Space Grotesk', sans-serif;
+          font-size: 1.5rem;
+          font-weight: 600;
+          color: var(--text);
+          margin-bottom: 2rem;
+        }
+
+        .showcase-features {
+          display: flex;
+          justify-content: center;
+          gap: 2rem;
+          flex-wrap: wrap;
+          margin-bottom: 2rem;
+        }
+
+        .showcase-feature {
+          display: flex;
+          align-items: center;
+          gap: 0.625rem;
+          font-size: 0.875rem;
+          color: var(--text-secondary);
+        }
+
+        .feature-badge {
+          padding: 0.25rem 0.625rem;
+          border-radius: 50px;
+          font-size: 0.625rem;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+        }
+
+        .ai-badge {
+          background: rgba(255, 107, 53, 0.1);
+          color: var(--accent);
+        }
+
+        .template-badge {
           background: rgba(0, 166, 163, 0.1);
           color: #00a6a3;
         }
 
-        .sports-features-grid {
-          grid-template-columns: repeat(4, 1fr);
+        .compose-badge {
+          background: rgba(30, 74, 122, 0.1);
+          color: var(--primary);
         }
 
-        .sports-feature {
-          border-color: rgba(0, 166, 163, 0.2);
+        .showcase-cta {
+          margin: 0 auto;
         }
 
-        .sports-feature:hover {
-          border-color: #00a6a3;
-        }
-
-        .sports-icon {
-          background: rgba(0, 166, 163, 0.1);
-          color: #00a6a3;
-        }
-
-        /* Shared Features Grid 3 columns */
-        .shared-features-grid {
+        /* Unified Features Grid */
+        .unified-features {
           grid-template-columns: repeat(3, 1fr);
+        }
+
+        /* Infinite symbol styling */
+        .infinite-symbol {
+          font-size: 3.5rem;
+          line-height: 1;
         }
 
         /* Benefits Grid 4 columns */
@@ -1705,20 +1588,21 @@ export default function LandingPage() {
             display: none;
           }
 
-          .designer-cards {
-            grid-template-columns: 1fr;
+          .showcase-canvas {
+            height: 240px;
+          }
+
+          .capability-pill {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
           }
 
           .features-grid {
             grid-template-columns: repeat(2, 1fr);
           }
 
-          .sports-features-grid {
+          .unified-features {
             grid-template-columns: repeat(2, 1fr);
-          }
-
-          .shared-features-grid {
-            grid-template-columns: repeat(3, 1fr);
           }
 
           .feature-highlight {
@@ -1760,7 +1644,8 @@ export default function LandingPage() {
             display: none;
           }
 
-          .features-grid {
+          .features-grid,
+          .unified-features {
             grid-template-columns: 1fr;
           }
 
@@ -1777,13 +1662,34 @@ export default function LandingPage() {
           .palette-section,
           .benefits,
           .cta-footer,
-          .choose-designer {
+          .unified-showcase {
             padding: 4rem 1.5rem;
           }
 
-          .sports-features-grid,
-          .shared-features-grid {
-            grid-template-columns: 1fr;
+          .showcase-card {
+            padding: 2rem 1.5rem;
+          }
+
+          .showcase-canvas {
+            height: 200px;
+          }
+
+          .canvas-preview {
+            width: 180px;
+            height: 120px;
+          }
+
+          .capability-pill {
+            display: none;
+          }
+
+          .showcase-features {
+            flex-direction: column;
+            gap: 1rem;
+          }
+
+          .showcase-tagline {
+            font-size: 1.25rem;
           }
 
           .benefits-grid,
