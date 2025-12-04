@@ -42,8 +42,12 @@ export function generatePolygonPoints(sides, width, height) {
   const radiusY = height / 2;
   const angleStep = (2 * Math.PI) / sides;
 
-  // Start from top center (rotate -90 degrees)
-  const startAngle = -Math.PI / 2;
+  // For 4-sided shapes (square/rectangle), start at top-left corner
+  // so edges are horizontal/vertical (not diamond orientation)
+  // For other shapes, start from top center
+  const startAngle = sides === 4
+    ? -Math.PI / 2 + Math.PI / 4  // -45 degrees: starts at top-left corner
+    : -Math.PI / 2;               // -90 degrees: starts at top center
 
   for (let i = 0; i < sides; i++) {
     const angle = startAngle + angleStep * i;

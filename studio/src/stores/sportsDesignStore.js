@@ -1037,6 +1037,7 @@ export const useSportsDesignStore = create(
       addShape: (preset = 'rectangle') => {
         const shapeId = `shape-${Date.now()}`;
         const surface = get().surface;
+        const existingShapes = get().shapes;
 
         // Define presets
         const presets = {
@@ -1048,6 +1049,21 @@ export const useSportsDesignStore = create(
           hexagon: { sides: 6, aspectLocked: true, width: 2000, height: 2000 },
           polygon: { sides: 6, aspectLocked: true, width: 2000, height: 2000 }
         };
+
+        // Cycle through different default colors so overlapping shapes are distinguishable
+        const defaultColors = [
+          { tpv_code: 'RH20', hex: '#0075BC', name: 'Standard Blue' },
+          { tpv_code: 'RH50', hex: '#F15B32', name: 'Orange' },
+          { tpv_code: 'RH10', hex: '#609B63', name: 'Standard Green' },
+          { tpv_code: 'RH21', hex: '#493D8C', name: 'Purple' },
+          { tpv_code: 'RH41', hex: '#FFD833', name: 'Bright Yellow' },
+          { tpv_code: 'RH26', hex: '#00A6A3', name: 'Turquoise' },
+          { tpv_code: 'RH02', hex: '#E21F2F', name: 'Bright Red' },
+          { tpv_code: 'RH90', hex: '#E8457E', name: 'Funky Pink' }
+        ];
+
+        const shapeCount = Object.keys(existingShapes).length;
+        const fillColor = defaultColors[shapeCount % defaultColors.length];
 
         const config = presets[preset] || presets.rectangle;
 
@@ -1063,11 +1079,7 @@ export const useSportsDesignStore = create(
             y: surface.length_mm / 2 - config.height / 2
           },
           rotation: 0,
-          fillColor: {
-            tpv_code: 'RH10',
-            hex: '#609B63',
-            name: 'Standard Green'
-          },
+          fillColor: fillColor,
           strokeEnabled: false,
           strokeColor: null,
           strokeWidth_mm: 50,
