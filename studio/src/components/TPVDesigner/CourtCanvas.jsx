@@ -172,23 +172,38 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     const scaledWidth = motif.originalWidth_mm * (motif.scale || 1);
     const scaledHeight = motif.originalHeight_mm * (motif.scale || 1);
 
-    // Calculate motif center in SVG coordinates
-    const motifCenter = {
-      x: motif.position.x + scaledWidth / 2,
-      y: motif.position.y + scaledHeight / 2
-    };
+    // Calculate the anchor point (opposite corner that should stay fixed)
+    // nw = top-left, ne = top-right, sw = bottom-left, se = bottom-right
+    let anchorPoint;
+    switch (corner) {
+      case 'nw': // Dragging top-left, anchor bottom-right
+        anchorPoint = { x: motif.position.x + scaledWidth, y: motif.position.y + scaledHeight };
+        break;
+      case 'ne': // Dragging top-right, anchor bottom-left
+        anchorPoint = { x: motif.position.x, y: motif.position.y + scaledHeight };
+        break;
+      case 'sw': // Dragging bottom-left, anchor top-right
+        anchorPoint = { x: motif.position.x + scaledWidth, y: motif.position.y };
+        break;
+      case 'se': // Dragging bottom-right, anchor top-left
+      default:
+        anchorPoint = { x: motif.position.x, y: motif.position.y };
+        break;
+    }
 
-    // Calculate initial distance from center to mouse
+    // Calculate initial distance from anchor to mouse (for scale calculation)
     const initialDistance = Math.sqrt(
-      Math.pow(svgPoint.x - motifCenter.x, 2) +
-      Math.pow(svgPoint.y - motifCenter.y, 2)
+      Math.pow(svgPoint.x - anchorPoint.x, 2) +
+      Math.pow(svgPoint.y - anchorPoint.y, 2)
     );
 
     setScaleStart({
       initialDistance,
       originalScale: motif.scale || 1,
+      originalWidth: scaledWidth,
+      originalHeight: scaledHeight,
       corner,
-      motifCenter
+      anchorPoint
     });
     setScaleMotifId(motifId);
     setIsScaling(true);
@@ -308,10 +323,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       const motif = motifs[scaleMotifId];
       if (!motif) return;
 
-      // Calculate current distance from original center to mouse
+      // Calculate current distance from anchor point to mouse
       const currentDistance = Math.sqrt(
-        Math.pow(svgPoint.x - scaleStart.motifCenter.x, 2) +
-        Math.pow(svgPoint.y - scaleStart.motifCenter.y, 2)
+        Math.pow(svgPoint.x - scaleStart.anchorPoint.x, 2) +
+        Math.pow(svgPoint.y - scaleStart.anchorPoint.y, 2)
       );
 
       // Calculate new scale based on distance ratio
@@ -324,7 +339,42 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       // Round to 2 decimal places
       newScale = Math.round(newScale * 100) / 100;
 
+      // Calculate new dimensions
+      const newWidth = motif.originalWidth_mm * newScale;
+      const newHeight = motif.originalHeight_mm * newScale;
+
+      // Calculate new position to keep anchor point fixed
+      let newPosition;
+      switch (scaleStart.corner) {
+        case 'nw': // Anchor is bottom-right, position is top-left
+          newPosition = {
+            x: scaleStart.anchorPoint.x - newWidth,
+            y: scaleStart.anchorPoint.y - newHeight
+          };
+          break;
+        case 'ne': // Anchor is bottom-left, position.x stays, position.y adjusts
+          newPosition = {
+            x: scaleStart.anchorPoint.x,
+            y: scaleStart.anchorPoint.y - newHeight
+          };
+          break;
+        case 'sw': // Anchor is top-right, position.y stays, position.x adjusts
+          newPosition = {
+            x: scaleStart.anchorPoint.x - newWidth,
+            y: scaleStart.anchorPoint.y
+          };
+          break;
+        case 'se': // Anchor is top-left (position), no adjustment needed
+        default:
+          newPosition = {
+            x: scaleStart.anchorPoint.x,
+            y: scaleStart.anchorPoint.y
+          };
+          break;
+      }
+
       updateMotifScale(scaleMotifId, newScale);
+      updateMotifPosition(scaleMotifId, newPosition);
     };
 
     const handleMouseUp = () => {
@@ -343,7 +393,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isScaling, scaleMotifId, scaleStart, motifs, updateMotifScale]);
+  }, [isScaling, scaleMotifId, scaleStart, motifs, updateMotifScale, updateMotifPosition]);
 
   // Handle mouse move/up for motif rotation
   useEffect(() => {
