@@ -20,6 +20,10 @@ import {
   drawMaterialRow,
   drawBinderSection,
   drawInstallationNotes,
+  drawImageWithDimensions,
+  drawBinderSectionWithEstimates,
+  drawInstallationChecklist,
+  drawSectionBox,
 } from './unifiedPdfGenerator.js';
 
 const { pageWidth: PAGE_WIDTH, pageHeight: PAGE_HEIGHT, margin: MARGIN, contentWidth: CONTENT_WIDTH } = PDF_CONFIG;
@@ -140,20 +144,35 @@ export async function generateSportsSurfacePDF(data) {
     color: COLORS.textLight,
   });
 
-  // Dimensions panel
-  y -= 30;
+  // Dimensions panel (brief summary)
+  y -= 25;
   y = drawDimensionsPanel(page1, fontBold, fontRegular, widthM, lengthM, y);
 
-  // Design image
-  y -= 25;
-  const imageX = MARGIN + (CONTENT_WIDTH - imageWidth) / 2;
-  page1.drawImage(pngImage, {
-    x: imageX,
-    y: y - imageHeight,
-    width: imageWidth,
-    height: imageHeight,
-  });
-  y -= imageHeight + 20;
+  // Design image with dimension annotations
+  // Add extra left margin for vertical dimension line
+  y -= 40; // Extra space for horizontal dimension line above
+  const dimensionPadding = 50; // Space for dimension annotations
+  const availableWidth = CONTENT_WIDTH - dimensionPadding;
+  const scaledImageWidth = Math.min(imageWidth, availableWidth);
+  const scaledImageHeight = imageHeight * (scaledImageWidth / imageWidth);
+  const imageX = MARGIN + dimensionPadding + (availableWidth - scaledImageWidth) / 2;
+  const imageY = y - scaledImageHeight;
+
+  // Draw image with dimension lines and area badge
+  drawImageWithDimensions(
+    page1,
+    pngImage,
+    imageX,
+    imageY,
+    scaledImageWidth,
+    scaledImageHeight,
+    widthM,
+    lengthM,
+    fontRegular,
+    fontBold
+  );
+
+  y = imageY - 35; // Move below area badge
 
   // Element summary
   const courtCount = Object.keys(courts).length;
@@ -466,13 +485,13 @@ export async function generateSportsSurfacePDF(data) {
     color: COLORS.text,
   });
 
-  // Binder section
+  // Binder section with calculated estimates for this design
   y -= 25;
-  y = drawBinderSection(page3, fontBold, fontRegular, y);
+  y = drawBinderSectionWithEstimates(page3, fontBold, fontRegular, y, totalKg, totalAreaM2);
 
-  // Installation notes
-  y -= 30;
-  y = drawInstallationNotes(page3, fontBold, fontRegular, y, 'sports');
+  // Installation checklist
+  y -= 20;
+  y = drawInstallationChecklist(page3, fontBold, fontRegular, y, 'sports');
 
   // Footer
   drawFooter(page3, fontRegular, 3, totalPages);

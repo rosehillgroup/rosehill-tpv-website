@@ -24,6 +24,9 @@ import {
   drawBinderSection,
   drawInstallationNotes,
   calculateRowsPerPage,
+  drawImageWithDimensions,
+  drawBinderSectionWithEstimates,
+  drawInstallationChecklist,
 } from './unifiedPdfGenerator.js';
 
 // Load JSON data
@@ -225,20 +228,34 @@ async function generateExportPDF(data) {
     });
   }
 
-  // Dimensions panel
-  y -= 30;
+  // Dimensions panel (brief summary)
+  y -= 25;
   y = drawDimensionsPanel(page1, fontBold, fontRegular, widthM, lengthM, y);
 
-  // Design image
-  y -= 25;
-  const imageX = MARGIN + (CONTENT_WIDTH - imageWidth) / 2;
-  page1.drawImage(pngImage, {
-    x: imageX,
-    y: y - imageHeight,
-    width: imageWidth,
-    height: imageHeight,
-  });
-  y -= imageHeight + 15;
+  // Design image with dimension annotations
+  y -= 40; // Extra space for horizontal dimension line above
+  const dimensionPadding = 50; // Space for dimension annotations
+  const availableWidth = CONTENT_WIDTH - dimensionPadding;
+  const scaledImageWidth = Math.min(imageWidth, availableWidth);
+  const scaledImageHeight = imageHeight * (scaledImageWidth / imageWidth);
+  const imageX = MARGIN + dimensionPadding + (availableWidth - scaledImageWidth) / 2;
+  const imageY = y - scaledImageHeight;
+
+  // Draw image with dimension lines and area badge
+  drawImageWithDimensions(
+    page1,
+    pngImage,
+    imageX,
+    imageY,
+    scaledImageWidth,
+    scaledImageHeight,
+    widthM,
+    lengthM,
+    fontRegular,
+    fontBold
+  );
+
+  y = imageY - 35; // Move below area badge
 
   // Mode indicator
   const modeText = mode === 'blend'
@@ -317,13 +334,13 @@ async function generateExportPDF(data) {
   const { y: newY, totalKg } = drawMaterialTotals(finalPage, fontBold, fontRegular, recipes, mode, areaM2, y);
   y = newY;
 
-  // Binder section
+  // Binder section with calculated estimates for this design
   y -= 20;
-  y = drawBinderSection(finalPage, fontBold, fontRegular, y);
+  y = drawBinderSectionWithEstimates(finalPage, fontBold, fontRegular, y, totalKg, areaM2);
 
-  // Notes section
-  y -= 30;
-  y = drawInstallationNotes(finalPage, fontBold, fontRegular, y, 'playground');
+  // Installation checklist
+  y -= 20;
+  y = drawInstallationChecklist(finalPage, fontBold, fontRegular, y, 'playground');
 
   // Footer
   drawFooter(finalPage, fontRegular, pageNum, totalPages);

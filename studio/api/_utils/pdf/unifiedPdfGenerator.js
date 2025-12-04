@@ -29,6 +29,8 @@ export const COLORS = {
   black: rgb(0, 0, 0),
   success: rgb(0.063, 0.725, 0.506),      // #10b981 - Green
   warning: rgb(0.961, 0.620, 0.043),      // #f59e0b - Amber
+  rowAlt: rgb(0.973, 0.976, 0.984),       // #f8f9fb - Alternating row bg
+  dimensionLine: rgb(0.4, 0.4, 0.4),      // #666666 - Dimension lines
 };
 
 // Material calculation constants
@@ -465,4 +467,535 @@ export function drawInstallationNotes(page, fontBold, fontRegular, y, surfaceTyp
 export function calculateRowsPerPage(startY, rowHeight = 22, bottomMargin = 80) {
   const availableHeight = startY - bottomMargin;
   return Math.floor(availableHeight / rowHeight);
+}
+
+// ============================================================================
+// DIMENSION ANNOTATION FUNCTIONS
+// ============================================================================
+
+/**
+ * Draw an arrow head at the specified position
+ * @param {PDFPage} page - The PDF page
+ * @param {number} x - X position of arrow tip
+ * @param {number} y - Y position of arrow tip
+ * @param {'left'|'right'|'up'|'down'} direction - Direction arrow points
+ * @param {number} size - Size of arrow head (default 5)
+ */
+export function drawArrowHead(page, x, y, direction, size = 5) {
+  const points = [];
+
+  switch (direction) {
+    case 'left':
+      points.push({ x, y }); // Tip
+      points.push({ x: x + size, y: y - size / 2 });
+      points.push({ x: x + size, y: y + size / 2 });
+      break;
+    case 'right':
+      points.push({ x, y }); // Tip
+      points.push({ x: x - size, y: y - size / 2 });
+      points.push({ x: x - size, y: y + size / 2 });
+      break;
+    case 'up':
+      points.push({ x, y }); // Tip
+      points.push({ x: x - size / 2, y: y - size });
+      points.push({ x: x + size / 2, y: y - size });
+      break;
+    case 'down':
+      points.push({ x, y }); // Tip
+      points.push({ x: x - size / 2, y: y + size });
+      points.push({ x: x + size / 2, y: y + size });
+      break;
+  }
+
+  // Draw filled triangle
+  if (points.length === 3) {
+    // Draw as lines forming a triangle (pdf-lib doesn't have built-in polygon fill)
+    page.drawLine({
+      start: points[0],
+      end: points[1],
+      thickness: 1,
+      color: COLORS.dimensionLine,
+    });
+    page.drawLine({
+      start: points[1],
+      end: points[2],
+      thickness: 1,
+      color: COLORS.dimensionLine,
+    });
+    page.drawLine({
+      start: points[2],
+      end: points[0],
+      thickness: 1,
+      color: COLORS.dimensionLine,
+    });
+  }
+}
+
+/**
+ * Draw a dimension line with arrows at both ends and a label
+ * @param {PDFPage} page - The PDF page
+ * @param {number} x1 - Start X
+ * @param {number} y1 - Start Y
+ * @param {number} x2 - End X
+ * @param {number} y2 - End Y
+ * @param {string} label - Dimension text (e.g., "15.00m")
+ * @param {'horizontal'|'vertical'} orientation - Line orientation
+ * @param {PDFFont} font - Font for label
+ * @param {Object} options - Additional options
+ */
+export function drawDimensionLine(page, x1, y1, x2, y2, label, orientation, font, options = {}) {
+  const { fontSize = 9, arrowSize = 4, labelOffset = 8 } = options;
+
+  // Draw the main line
+  page.drawLine({
+    start: { x: x1, y: y1 },
+    end: { x: x2, y: y2 },
+    thickness: 0.5,
+    color: COLORS.dimensionLine,
+  });
+
+  // Draw arrow heads at both ends
+  if (orientation === 'horizontal') {
+    drawArrowHead(page, x1, y1, 'left', arrowSize);
+    drawArrowHead(page, x2, y2, 'right', arrowSize);
+
+    // Draw label centered above the line
+    const labelWidth = font.widthOfTextAtSize(label, fontSize);
+    const labelX = (x1 + x2) / 2 - labelWidth / 2;
+    const labelY = y1 + labelOffset;
+
+    // Draw white background for label
+    page.drawRectangle({
+      x: labelX - 3,
+      y: labelY - 2,
+      width: labelWidth + 6,
+      height: fontSize + 4,
+      color: COLORS.white,
+    });
+
+    page.drawText(label, {
+      x: labelX,
+      y: labelY,
+      size: fontSize,
+      font,
+      color: COLORS.dimensionLine,
+    });
+  } else {
+    // Vertical
+    drawArrowHead(page, x1, y1, 'down', arrowSize);
+    drawArrowHead(page, x2, y2, 'up', arrowSize);
+
+    // Draw label centered to the left of the line, rotated
+    // For simplicity, we'll draw it horizontally to the left
+    const labelWidth = font.widthOfTextAtSize(label, fontSize);
+    const midY = (y1 + y2) / 2;
+    const labelX = x1 - labelOffset - labelWidth;
+    const labelY = midY - fontSize / 2;
+
+    // Draw white background for label
+    page.drawRectangle({
+      x: labelX - 3,
+      y: labelY - 2,
+      width: labelWidth + 6,
+      height: fontSize + 4,
+      color: COLORS.white,
+    });
+
+    page.drawText(label, {
+      x: labelX,
+      y: labelY,
+      size: fontSize,
+      font,
+      color: COLORS.dimensionLine,
+    });
+  }
+
+  // Draw small perpendicular lines at ends (extension lines)
+  const extLength = 4;
+  if (orientation === 'horizontal') {
+    page.drawLine({
+      start: { x: x1, y: y1 - extLength },
+      end: { x: x1, y: y1 + extLength },
+      thickness: 0.5,
+      color: COLORS.dimensionLine,
+    });
+    page.drawLine({
+      start: { x: x2, y: y2 - extLength },
+      end: { x: x2, y: y2 + extLength },
+      thickness: 0.5,
+      color: COLORS.dimensionLine,
+    });
+  } else {
+    page.drawLine({
+      start: { x: x1 - extLength, y: y1 },
+      end: { x: x1 + extLength, y: y1 },
+      thickness: 0.5,
+      color: COLORS.dimensionLine,
+    });
+    page.drawLine({
+      start: { x: x2 - extLength, y: y2 },
+      end: { x: x2 + extLength, y: y2 },
+      thickness: 0.5,
+      color: COLORS.dimensionLine,
+    });
+  }
+}
+
+/**
+ * Draw design image with dimension annotations
+ * @param {PDFPage} page - The PDF page
+ * @param {Object} pngImage - Embedded PNG image
+ * @param {number} imageX - Image X position
+ * @param {number} imageY - Image Y position (bottom)
+ * @param {number} imageWidth - Image width
+ * @param {number} imageHeight - Image height
+ * @param {number} widthM - Width in metres
+ * @param {number} lengthM - Length in metres
+ * @param {PDFFont} fontRegular - Regular font for labels
+ * @param {PDFFont} fontBold - Bold font for area badge
+ */
+export function drawImageWithDimensions(page, pngImage, imageX, imageY, imageWidth, imageHeight, widthM, lengthM, fontRegular, fontBold) {
+  const padding = 20; // Space between image and dimension lines
+
+  // Draw the design image
+  page.drawImage(pngImage, {
+    x: imageX,
+    y: imageY,
+    width: imageWidth,
+    height: imageHeight,
+  });
+
+  // Width dimension (horizontal, above image)
+  drawDimensionLine(
+    page,
+    imageX,
+    imageY + imageHeight + padding,
+    imageX + imageWidth,
+    imageY + imageHeight + padding,
+    `${widthM.toFixed(2)}m`,
+    'horizontal',
+    fontRegular
+  );
+
+  // Length dimension (vertical, left of image)
+  drawDimensionLine(
+    page,
+    imageX - padding,
+    imageY,
+    imageX - padding,
+    imageY + imageHeight,
+    `${lengthM.toFixed(2)}m`,
+    'vertical',
+    fontRegular
+  );
+
+  // Area badge (below image, centred)
+  const areaM2 = widthM * lengthM;
+  const areaText = `Total Area: ${areaM2.toFixed(2)} m\u00B2`;
+  const areaWidth = fontBold.widthOfTextAtSize(areaText, 10) + 16;
+  const badgeHeight = 18;
+  const badgeX = imageX + (imageWidth - areaWidth) / 2;
+  const badgeY = imageY - 25;
+
+  // Draw badge background
+  page.drawRectangle({
+    x: badgeX,
+    y: badgeY,
+    width: areaWidth,
+    height: badgeHeight,
+    color: COLORS.primary,
+  });
+
+  // Draw badge text
+  page.drawText(areaText, {
+    x: badgeX + 8,
+    y: badgeY + 5,
+    size: 10,
+    font: fontBold,
+    color: COLORS.white,
+  });
+}
+
+/**
+ * Draw a checklist item with checkbox
+ * @param {PDFPage} page - The PDF page
+ * @param {number} x - X position
+ * @param {number} y - Y position (baseline)
+ * @param {string} text - Checkbox text
+ * @param {PDFFont} font - Font for text
+ * @param {boolean} checked - Whether checkbox is checked (visual only)
+ */
+export function drawChecklistItem(page, x, y, text, font, checked = false) {
+  const boxSize = 8;
+
+  // Draw checkbox square
+  page.drawRectangle({
+    x,
+    y: y - 6,
+    width: boxSize,
+    height: boxSize,
+    borderColor: COLORS.textLight,
+    borderWidth: 0.5,
+    color: checked ? COLORS.primary : COLORS.white,
+  });
+
+  // Draw checkmark if checked
+  if (checked) {
+    page.drawLine({
+      start: { x: x + 2, y: y - 2 },
+      end: { x: x + 4, y: y - 4 },
+      thickness: 1,
+      color: COLORS.white,
+    });
+    page.drawLine({
+      start: { x: x + 4, y: y - 4 },
+      end: { x: x + 7, y: y + 1 },
+      thickness: 1,
+      color: COLORS.white,
+    });
+  }
+
+  // Draw text
+  page.drawText(text, {
+    x: x + boxSize + 6,
+    y: y - 2,
+    size: 9,
+    font,
+    color: COLORS.text,
+  });
+
+  return y - 16;
+}
+
+/**
+ * Draw a section box with title header
+ * @param {PDFPage} page - The PDF page
+ * @param {number} x - X position
+ * @param {number} y - Y position (top)
+ * @param {number} width - Box width
+ * @param {number} height - Box height
+ * @param {string} title - Section title
+ * @param {PDFFont} fontBold - Bold font for title
+ * @returns {number} Y position inside box (for content)
+ */
+export function drawSectionBox(page, x, y, width, height, title, fontBold) {
+  const headerHeight = 22;
+
+  // Draw main box border
+  page.drawRectangle({
+    x,
+    y: y - height,
+    width,
+    height,
+    borderColor: COLORS.border,
+    borderWidth: 1,
+    color: COLORS.white,
+  });
+
+  // Draw header background
+  page.drawRectangle({
+    x: x + 0.5,
+    y: y - headerHeight,
+    width: width - 1,
+    height: headerHeight - 0.5,
+    color: COLORS.primary,
+  });
+
+  // Draw header text
+  page.drawText(title, {
+    x: x + 10,
+    y: y - headerHeight + 6,
+    size: 11,
+    font: fontBold,
+    color: COLORS.white,
+  });
+
+  // Return Y position for content (below header)
+  return y - headerHeight - 10;
+}
+
+/**
+ * Draw improved binder section with calculated estimates for the specific design
+ * @param {PDFPage} page - The PDF page
+ * @param {PDFFont} fontBold - Bold font
+ * @param {PDFFont} fontRegular - Regular font
+ * @param {number} y - Starting Y position
+ * @param {number} totalKg - Total TPV weight in kg
+ * @param {number} areaM2 - Total area in square metres
+ * @returns {number} New Y position
+ */
+export function drawBinderSectionWithEstimates(page, fontBold, fontRegular, y, totalKg, areaM2) {
+  const { margin } = PDF_CONFIG;
+  const boxWidth = 480;
+  const boxHeight = 140;
+
+  // Draw section box
+  const contentY = drawSectionBox(page, margin, y, boxWidth, boxHeight, 'BINDER & ANCILLARY REQUIREMENTS', fontBold);
+
+  let innerY = contentY;
+  const col1 = margin + 15;
+  const col2 = margin + 220;
+
+  // Wet pour section
+  page.drawText('Wet Pour Installation', {
+    x: col1,
+    y: innerY,
+    size: 10,
+    font: fontBold,
+    color: COLORS.text,
+  });
+
+  page.drawText('Binder: 12-20% of TPV weight', {
+    x: col2,
+    y: innerY,
+    size: 9,
+    font: fontRegular,
+    color: COLORS.textLight,
+  });
+
+  innerY -= 14;
+  const binderMin = Math.ceil(totalKg * 0.12);
+  const binderMax = Math.ceil(totalKg * 0.20);
+  page.drawText(`For this design:`, {
+    x: col1,
+    y: innerY,
+    size: 9,
+    font: fontRegular,
+    color: COLORS.text,
+  });
+
+  page.drawText(`Est. ${binderMin}-${binderMax} kg`, {
+    x: col2,
+    y: innerY,
+    size: 10,
+    font: fontBold,
+    color: COLORS.primary,
+  });
+
+  // Divider
+  innerY -= 18;
+  page.drawLine({
+    start: { x: col1, y: innerY + 5 },
+    end: { x: margin + boxWidth - 15, y: innerY + 5 },
+    thickness: 0.5,
+    color: COLORS.border,
+  });
+
+  // Primer section
+  innerY -= 10;
+  page.drawText('Primer (if required)', {
+    x: col1,
+    y: innerY,
+    size: 10,
+    font: fontBold,
+    color: COLORS.text,
+  });
+
+  page.drawText('Coverage: 2-3 m\u00B2/kg', {
+    x: col2,
+    y: innerY,
+    size: 9,
+    font: fontRegular,
+    color: COLORS.textLight,
+  });
+
+  innerY -= 14;
+  const primerMin = Math.ceil(areaM2 / 3);
+  const primerMax = Math.ceil(areaM2 / 2);
+  page.drawText(`For ${areaM2.toFixed(1)} m\u00B2:`, {
+    x: col1,
+    y: innerY,
+    size: 9,
+    font: fontRegular,
+    color: COLORS.text,
+  });
+
+  page.drawText(`Est. ${primerMin}-${primerMax} kg`, {
+    x: col2,
+    y: innerY,
+    size: 10,
+    font: fontBold,
+    color: COLORS.primary,
+  });
+
+  // Contact note
+  innerY -= 22;
+  page.drawText('\u2139 Contact Rosehill technical team for specific product recommendations based on site conditions.', {
+    x: col1,
+    y: innerY,
+    size: 8,
+    font: fontRegular,
+    color: COLORS.textLight,
+  });
+
+  return y - boxHeight - 10;
+}
+
+/**
+ * Draw installation notes as a visual checklist
+ * @param {PDFPage} page - The PDF page
+ * @param {PDFFont} fontBold - Bold font
+ * @param {PDFFont} fontRegular - Regular font
+ * @param {number} y - Starting Y position
+ * @param {string} surfaceType - 'playground' or 'sports'
+ * @returns {number} New Y position
+ */
+export function drawInstallationChecklist(page, fontBold, fontRegular, y, surfaceType = 'playground') {
+  const { margin } = PDF_CONFIG;
+
+  page.drawText('Installation Checklist', {
+    x: margin,
+    y,
+    size: 12,
+    font: fontBold,
+    color: COLORS.text,
+  });
+
+  y -= 20;
+
+  // Before installation
+  page.drawText('Before Installation:', {
+    x: margin,
+    y,
+    size: 9,
+    font: fontBold,
+    color: COLORS.primary,
+  });
+
+  y -= 14;
+  y = drawChecklistItem(page, margin + 10, y, 'Verify sub-base is properly prepared and meets standards', fontRegular);
+  y = drawChecklistItem(page, margin + 10, y, 'Check all materials are present and match specification', fontRegular);
+  y = drawChecklistItem(page, margin + 10, y, 'Confirm weather conditions are suitable (dry, 5-30\u00B0C)', fontRegular);
+
+  y -= 8;
+  page.drawText('During Installation:', {
+    x: margin,
+    y,
+    size: 9,
+    font: fontBold,
+    color: COLORS.primary,
+  });
+
+  y -= 14;
+  y = drawChecklistItem(page, margin + 10, y, 'Quantities include 10% safety margin for wastage', fontRegular);
+  y = drawChecklistItem(page, margin + 10, y, 'Based on 20mm depth (8 kg/m\u00B2) - adjust as needed', fontRegular);
+
+  if (surfaceType === 'sports') {
+    y = drawChecklistItem(page, margin + 10, y, 'Line marking quantities are estimates - actual may vary', fontRegular);
+  }
+
+  y -= 8;
+  page.drawText('Storage:', {
+    x: margin,
+    y,
+    size: 9,
+    font: fontBold,
+    color: COLORS.primary,
+  });
+
+  y -= 14;
+  y = drawChecklistItem(page, margin + 10, y, 'Store TPV granules in dry conditions away from sunlight', fontRegular);
+  y = drawChecklistItem(page, margin + 10, y, 'Keep binder sealed until ready for use', fontRegular);
+
+  return y;
 }
