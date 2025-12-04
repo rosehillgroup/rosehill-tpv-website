@@ -826,109 +826,83 @@ export function drawSectionBox(page, x, y, width, height, title, fontBold) {
  */
 export function drawBinderSectionWithEstimates(page, fontBold, fontRegular, y, totalKg, areaM2) {
   const { margin } = PDF_CONFIG;
-  const boxWidth = 480;
-  const boxHeight = 140;
 
-  // Draw section box
-  const contentY = drawSectionBox(page, margin, y, boxWidth, boxHeight, 'BINDER & ANCILLARY REQUIREMENTS', fontBold);
-
-  let innerY = contentY;
-  const col1 = margin + 15;
-  const col2 = margin + 220;
-
-  // Wet pour section
-  page.drawText('Wet Pour Installation', {
-    x: col1,
-    y: innerY,
-    size: 10,
+  // Section title
+  page.drawText('Binder & Ancillary Requirements', {
+    x: margin,
+    y,
+    size: 11,
     font: fontBold,
     color: COLORS.text,
   });
 
-  page.drawText('Binder: 12-20% of TPV weight', {
-    x: col2,
-    y: innerY,
-    size: 9,
-    font: fontRegular,
-    color: COLORS.textLight,
-  });
+  y -= 16;
+  const col1 = margin;
+  const col2 = margin + 180;
+  const col3 = margin + 340;
 
-  innerY -= 14;
+  // Binder row
   const binderMin = Math.ceil(totalKg * 0.12);
   const binderMax = Math.ceil(totalKg * 0.20);
-  page.drawText(`For this design:`, {
+  page.drawText('Binder (wet pour):', {
     x: col1,
-    y: innerY,
+    y,
     size: 9,
     font: fontRegular,
     color: COLORS.text,
   });
-
-  page.drawText(`Est. ${binderMin}-${binderMax} kg`, {
+  page.drawText('12-20% of TPV', {
     x: col2,
-    y: innerY,
-    size: 10,
+    y,
+    size: 9,
+    font: fontRegular,
+    color: COLORS.textLight,
+  });
+  page.drawText(`Est. ${binderMin}-${binderMax} kg`, {
+    x: col3,
+    y,
+    size: 9,
     font: fontBold,
     color: COLORS.primary,
   });
 
-  // Divider
-  innerY -= 18;
-  page.drawLine({
-    start: { x: col1, y: innerY + 5 },
-    end: { x: margin + boxWidth - 15, y: innerY + 5 },
-    thickness: 0.5,
-    color: COLORS.border,
-  });
-
-  // Primer section
-  innerY -= 10;
-  page.drawText('Primer (if required)', {
+  // Primer row
+  y -= 14;
+  const primerMin = Math.ceil(areaM2 / 3);
+  const primerMax = Math.ceil(areaM2 / 2);
+  page.drawText('Primer (if required):', {
     x: col1,
-    y: innerY,
-    size: 10,
-    font: fontBold,
+    y,
+    size: 9,
+    font: fontRegular,
     color: COLORS.text,
   });
-
-  page.drawText('Coverage: 2-3 m\u00B2/kg', {
+  page.drawText('2-3 m\u00B2/kg coverage', {
     x: col2,
-    y: innerY,
+    y,
     size: 9,
     font: fontRegular,
     color: COLORS.textLight,
   });
-
-  innerY -= 14;
-  const primerMin = Math.ceil(areaM2 / 3);
-  const primerMax = Math.ceil(areaM2 / 2);
-  page.drawText(`For ${areaM2.toFixed(1)} m\u00B2:`, {
-    x: col1,
-    y: innerY,
-    size: 9,
-    font: fontRegular,
-    color: COLORS.text,
-  });
-
   page.drawText(`Est. ${primerMin}-${primerMax} kg`, {
-    x: col2,
-    y: innerY,
-    size: 10,
+    x: col3,
+    y,
+    size: 9,
     font: fontBold,
     color: COLORS.primary,
   });
 
   // Contact note
-  innerY -= 22;
-  page.drawText('Note: Contact Rosehill technical team for specific product recommendations based on site conditions.', {
+  y -= 16;
+  page.drawText('Contact Rosehill technical team for specific product recommendations.', {
     x: col1,
-    y: innerY,
+    y,
     size: 8,
     font: fontRegular,
     color: COLORS.textLight,
   });
 
-  return y - boxHeight - 10;
+  return y - 10;
 }
 
 /**
@@ -943,59 +917,38 @@ export function drawBinderSectionWithEstimates(page, fontBold, fontRegular, y, t
 export function drawInstallationChecklist(page, fontBold, fontRegular, y, surfaceType = 'playground') {
   const { margin } = PDF_CONFIG;
 
-  page.drawText('Installation Checklist', {
+  page.drawText('Installation Notes', {
     x: margin,
     y,
-    size: 12,
+    size: 11,
     font: fontBold,
     color: COLORS.text,
   });
 
-  y -= 20;
-
-  // Before installation
-  page.drawText('Before Installation:', {
-    x: margin,
-    y,
-    size: 9,
-    font: fontBold,
-    color: COLORS.primary,
-  });
-
   y -= 14;
-  y = drawChecklistItem(page, margin + 10, y, 'Verify sub-base is properly prepared and meets standards', fontRegular);
-  y = drawChecklistItem(page, margin + 10, y, 'Check all materials are present and match specification', fontRegular);
-  y = drawChecklistItem(page, margin + 10, y, 'Confirm weather conditions are suitable (dry, 5-30\u00B0C)', fontRegular);
 
-  y -= 8;
-  page.drawText('During Installation:', {
-    x: margin,
-    y,
-    size: 9,
-    font: fontBold,
-    color: COLORS.primary,
-  });
-
-  y -= 14;
-  y = drawChecklistItem(page, margin + 10, y, 'Quantities include 10% safety margin for wastage', fontRegular);
-  y = drawChecklistItem(page, margin + 10, y, 'Based on 20mm depth (8 kg/m\u00B2) - adjust as needed', fontRegular);
+  // Compact bullet list format
+  const notes = [
+    'Quantities include 10% safety margin for wastage and trimming',
+    'Based on 20mm installation depth (8 kg/m\u00B2)',
+    'Verify sub-base is properly prepared before installation',
+    'Store TPV granules in dry conditions away from direct sunlight',
+  ];
 
   if (surfaceType === 'sports') {
-    y = drawChecklistItem(page, margin + 10, y, 'Line marking quantities are estimates - actual may vary', fontRegular);
+    notes.push('Line marking quantities are estimates based on typical layouts');
   }
 
-  y -= 8;
-  page.drawText('Storage:', {
-    x: margin,
-    y,
-    size: 9,
-    font: fontBold,
-    color: COLORS.primary,
-  });
-
-  y -= 14;
-  y = drawChecklistItem(page, margin + 10, y, 'Store TPV granules in dry conditions away from sunlight', fontRegular);
-  y = drawChecklistItem(page, margin + 10, y, 'Keep binder sealed until ready for use', fontRegular);
+  for (const note of notes) {
+    page.drawText('\u2022 ' + note, {
+      x: margin,
+      y,
+      size: 8,
+      font: fontRegular,
+      color: COLORS.textLight,
+    });
+    y -= 11;
+  }
 
   return y;
 }
