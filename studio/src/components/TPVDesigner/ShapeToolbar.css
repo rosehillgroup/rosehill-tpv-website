@@ -126,8 +126,7 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .shape-toolbar {
-    left: 0.5rem;
-    top: auto;
-    bottom: 1rem;
+    /* Hide on mobile - shapes available in bottom sheet */
+    display: none;
   }
 }

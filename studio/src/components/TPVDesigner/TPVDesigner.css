@@ -978,4 +978,23 @@
     padding-top: 48px;
     padding-bottom: 52px;
   }
+
+  /* Modal mobile styles */
+  .sports-designer__modal {
+    max-width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    margin: 1rem;
+  }
+
+  .sports-designer__color-modal {
+    max-width: 90%;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .sports-designer__color-grid {
+    max-height: 50vh;
+    overflow-y: auto;
+  }
 }
