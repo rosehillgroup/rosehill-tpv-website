@@ -16,26 +16,31 @@ function LayersPanel() {
     tracks,
     motifs,
     shapes,
+    texts,
     elementOrder,
     selectedCourtId,
     selectedTrackId,
     selectedMotifId,
     selectedShapeId,
+    selectedTextId,
     setElementOrder,
     selectCourt,
     selectTrack,
     selectMotif,
     selectShape,
+    selectText,
     bringToFront,
     sendToBack,
     duplicateCourt,
     duplicateTrack,
     duplicateMotif,
     duplicateShape,
+    duplicateText,
     removeCourt,
     removeTrack,
     removeMotif,
     removeShape,
+    removeText,
     renameElement,
     toggleElementLock,
     toggleElementVisibility,
@@ -108,13 +113,25 @@ function LayersPanel() {
         locked: shape?.locked || false,
         visible: shape?.visible !== false
       };
+    } else if (elementId.startsWith('text-')) {
+      const text = texts[elementId];
+      const displayContent = text?.content || 'Text Label';
+      const truncatedName = displayContent.length > 20 ? displayContent.substring(0, 20) + '...' : displayContent;
+      return {
+        type: 'text',
+        name: text?.customName || truncatedName,
+        icon: 'T',
+        sport: 'text',
+        locked: text?.locked || false,
+        visible: text?.visible !== false
+      };
     }
     return { type: 'unknown', name: 'Unknown', icon: '❓', sport: '', locked: false, visible: true };
   };
 
   // Check if element is selected
   const isSelected = (elementId) => {
-    return elementId === selectedCourtId || elementId === selectedTrackId || elementId === selectedMotifId || elementId === selectedShapeId;
+    return elementId === selectedCourtId || elementId === selectedTrackId || elementId === selectedMotifId || elementId === selectedShapeId || elementId === selectedTextId;
   };
 
   // Handle element selection
@@ -127,6 +144,8 @@ function LayersPanel() {
       selectMotif(elementId);
     } else if (elementId.startsWith('shape-')) {
       selectShape(elementId);
+    } else if (elementId.startsWith('text-')) {
+      selectText(elementId);
     }
   };
 
@@ -228,6 +247,8 @@ function LayersPanel() {
       duplicateMotif(elementId);
     } else if (elementId.startsWith('shape-')) {
       duplicateShape(elementId);
+    } else if (elementId.startsWith('text-')) {
+      duplicateText(elementId);
     }
     setMenuOpenId(null);
   };
@@ -244,6 +265,8 @@ function LayersPanel() {
         removeMotif(elementId);
       } else if (elementId.startsWith('shape-')) {
         removeShape(elementId);
+      } else if (elementId.startsWith('text-')) {
+        removeText(elementId);
       }
     }
     setMenuOpenId(null);
@@ -298,7 +321,7 @@ function LayersPanel() {
           <span className="layers-panel__empty-icon">📑</span>
           <p>No elements yet</p>
           <span className="layers-panel__empty-hint">
-            Add courts, tracks, motifs, or shapes
+            Add courts, tracks, motifs, shapes, or text
           </span>
         </div>
       </div>

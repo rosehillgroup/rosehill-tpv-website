@@ -38,7 +38,16 @@ const initialState = {
   // Selected shape for manipulation
   selectedShapeId: null,
 
-  // Unified element order for z-index (courts, tracks, motifs, and shapes combined)
+  // Text elements (labels, titles, etc.)
+  texts: {},  // { [textId]: TextObject }
+
+  // Selected text for manipulation
+  selectedTextId: null,
+
+  // Currently editing text (inline editing mode)
+  editingTextId: null,
+
+  // Unified element order for z-index (courts, tracks, motifs, shapes, and texts combined)
   // Elements render bottom-to-top: first = bottom layer, last = top layer
   elementOrder: [], // ['track-123', 'court-456', 'shape-789', 'motif-012']
 
@@ -325,6 +334,16 @@ export const useSportsDesignStore = create(
               }
             }
           }));
+        } else if (elementId.startsWith('text-')) {
+          set((state) => ({
+            texts: {
+              ...state.texts,
+              [elementId]: {
+                ...state.texts[elementId],
+                customName
+              }
+            }
+          }));
         }
         get().addToHistory();
       },
@@ -371,6 +390,16 @@ export const useSportsDesignStore = create(
               }
             }
           }));
+        } else if (elementId.startsWith('text-')) {
+          set((state) => ({
+            texts: {
+              ...state.texts,
+              [elementId]: {
+                ...state.texts[elementId],
+                locked: !state.texts[elementId]?.locked
+              }
+            }
+          }));
         }
         get().addToHistory();
       },
@@ -414,6 +443,16 @@ export const useSportsDesignStore = create(
               [elementId]: {
                 ...state.shapes[elementId],
                 visible: state.shapes[elementId]?.visible === false ? true : false
+              }
+            }
+          }));
+        } else if (elementId.startsWith('text-')) {
+          set((state) => ({
+            texts: {
+              ...state.texts,
+              [elementId]: {
+                ...state.texts[elementId],
+                visible: state.texts[elementId]?.visible === false ? true : false
               }
             }
           }));
@@ -486,9 +525,9 @@ export const useSportsDesignStore = create(
         const { propertiesPanelUserClosed } = get();
         // Only auto-open properties panel if user hasn't manually closed it
         if (!propertiesPanelUserClosed) {
-          set({ selectedCourtId: courtId, selectedTrackId: null, showPropertiesPanel: true });
+          set({ selectedCourtId: courtId, selectedTrackId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, editingTextId: null, showPropertiesPanel: true });
         } else {
-          set({ selectedCourtId: courtId, selectedTrackId: null });
+          set({ selectedCourtId: courtId, selectedTrackId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, editingTextId: null });
         }
       },
 
@@ -779,9 +818,9 @@ export const useSportsDesignStore = create(
       selectTrack: (trackId) => {
         const { propertiesPanelUserClosed } = get();
         if (!propertiesPanelUserClosed) {
-          set({ selectedTrackId: trackId, selectedCourtId: null, showPropertiesPanel: true });
+          set({ selectedTrackId: trackId, selectedCourtId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, editingTextId: null, showPropertiesPanel: true });
         } else {
-          set({ selectedTrackId: trackId, selectedCourtId: null });
+          set({ selectedTrackId: trackId, selectedCourtId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, editingTextId: null });
         }
       },
 
@@ -980,9 +1019,9 @@ export const useSportsDesignStore = create(
       selectMotif: (motifId) => {
         const { propertiesPanelUserClosed } = get();
         if (!propertiesPanelUserClosed) {
-          set({ selectedMotifId: motifId, selectedCourtId: null, selectedTrackId: null, showPropertiesPanel: true });
+          set({ selectedMotifId: motifId, selectedCourtId: null, selectedTrackId: null, selectedShapeId: null, selectedTextId: null, editingTextId: null, showPropertiesPanel: true });
         } else {
-          set({ selectedMotifId: motifId, selectedCourtId: null, selectedTrackId: null });
+          set({ selectedMotifId: motifId, selectedCourtId: null, selectedTrackId: null, selectedShapeId: null, selectedTextId: null, editingTextId: null });
         }
       },
 
@@ -1208,6 +1247,8 @@ export const useSportsDesignStore = create(
             selectedCourtId: null,
             selectedTrackId: null,
             selectedMotifId: null,
+            selectedTextId: null,
+            editingTextId: null,
             showPropertiesPanel: true
           });
         } else {
@@ -1215,7 +1256,9 @@ export const useSportsDesignStore = create(
             selectedShapeId: shapeId,
             selectedCourtId: null,
             selectedTrackId: null,
-            selectedMotifId: null
+            selectedMotifId: null,
+            selectedTextId: null,
+            editingTextId: null
           });
         }
       },
@@ -1226,6 +1269,225 @@ export const useSportsDesignStore = create(
           showPropertiesPanel: false,
           propertiesPanelUserClosed: true
         });
+      },
+
+      // ====== Text Actions ======
+      addText: () => {
+        const { surface } = get();
+        const textId = `text-${Date.now()}`;
+
+        const newText = {
+          id: textId,
+          type: 'text',
+          content: '',
+          fontFamily: 'Open Sans, sans-serif',
+          fontSize_mm: 500,
+          fontWeight: 'normal',
+          fontStyle: 'normal',
+          textAlign: 'left',
+          position: {
+            x: surface.width_mm / 2,
+            y: surface.length_mm / 2
+          },
+          rotation: 0,
+          fillColor: {
+            tpv_code: 'RH70',
+            hex: '#1C1C1C',
+            name: 'Black'
+          },
+          locked: false,
+          visible: true,
+          customName: null
+        };
+
+        set((state) => ({
+          texts: {
+            ...state.texts,
+            [textId]: newText
+          },
+          elementOrder: [...state.elementOrder, textId],
+          selectedTextId: textId,
+          editingTextId: textId, // Start in editing mode
+          selectedCourtId: null,
+          selectedTrackId: null,
+          selectedMotifId: null,
+          selectedShapeId: null
+        }));
+        get().addToHistory();
+      },
+
+      removeText: (textId) => {
+        set((state) => {
+          const { [textId]: removed, ...remainingTexts } = state.texts;
+          return {
+            texts: remainingTexts,
+            elementOrder: state.elementOrder.filter(id => id !== textId),
+            selectedTextId: state.selectedTextId === textId ? null : state.selectedTextId,
+            editingTextId: state.editingTextId === textId ? null : state.editingTextId
+          };
+        });
+        get().addToHistory();
+      },
+
+      selectText: (textId) => {
+        const { propertiesPanelUserClosed } = get();
+        if (!propertiesPanelUserClosed) {
+          set({
+            selectedTextId: textId,
+            selectedCourtId: null,
+            selectedTrackId: null,
+            selectedMotifId: null,
+            selectedShapeId: null,
+            showPropertiesPanel: true
+          });
+        } else {
+          set({
+            selectedTextId: textId,
+            selectedCourtId: null,
+            selectedTrackId: null,
+            selectedMotifId: null,
+            selectedShapeId: null
+          });
+        }
+      },
+
+      deselectText: () => {
+        set({
+          selectedTextId: null,
+          editingTextId: null,
+          showPropertiesPanel: false,
+          propertiesPanelUserClosed: true
+        });
+      },
+
+      startEditingText: (textId) => {
+        set({ editingTextId: textId });
+      },
+
+      stopEditingText: () => {
+        set({ editingTextId: null });
+        get().addToHistory();
+      },
+
+      updateTextContent: (textId, content) => {
+        set((state) => ({
+          texts: {
+            ...state.texts,
+            [textId]: {
+              ...state.texts[textId],
+              content
+            }
+          }
+        }));
+      },
+
+      updateTextPosition: (textId, position) => {
+        set((state) => ({
+          texts: {
+            ...state.texts,
+            [textId]: {
+              ...state.texts[textId],
+              position
+            }
+          }
+        }));
+      },
+
+      updateTextFontSize: (textId, fontSize_mm) => {
+        set((state) => ({
+          texts: {
+            ...state.texts,
+            [textId]: {
+              ...state.texts[textId],
+              fontSize_mm: Math.max(50, fontSize_mm) // Minimum 50mm
+            }
+          }
+        }));
+        get().addToHistory();
+      },
+
+      updateTextFont: (textId, fontFamily, fontWeight, fontStyle) => {
+        set((state) => ({
+          texts: {
+            ...state.texts,
+            [textId]: {
+              ...state.texts[textId],
+              fontFamily,
+              fontWeight,
+              fontStyle
+            }
+          }
+        }));
+        get().addToHistory();
+      },
+
+      updateTextAlign: (textId, textAlign) => {
+        set((state) => ({
+          texts: {
+            ...state.texts,
+            [textId]: {
+              ...state.texts[textId],
+              textAlign
+            }
+          }
+        }));
+        get().addToHistory();
+      },
+
+      updateTextRotation: (textId, rotation) => {
+        set((state) => ({
+          texts: {
+            ...state.texts,
+            [textId]: {
+              ...state.texts[textId],
+              rotation
+            }
+          }
+        }));
+      },
+
+      setTextFillColor: (textId, color) => {
+        set((state) => ({
+          texts: {
+            ...state.texts,
+            [textId]: {
+              ...state.texts[textId],
+              fillColor: color
+            }
+          }
+        }));
+        get().addToHistory();
+      },
+
+      duplicateText: (textId) => {
+        const { texts } = get();
+        const originalText = texts[textId];
+        if (!originalText) return;
+
+        const newTextId = `text-${Date.now()}`;
+        const newText = {
+          ...originalText,
+          id: newTextId,
+          position: {
+            x: originalText.position.x + 500,
+            y: originalText.position.y + 500
+          },
+          customName: originalText.customName ? `${originalText.customName} (copy)` : null
+        };
+
+        set((state) => ({
+          texts: {
+            ...state.texts,
+            [newTextId]: newText
+          },
+          elementOrder: [...state.elementOrder, newTextId],
+          selectedTextId: newTextId,
+          selectedCourtId: null,
+          selectedTrackId: null,
+          selectedMotifId: null,
+          selectedShapeId: null
+        }));
+        get().addToHistory();
       },
 
       // ====== Custom Markings Actions ======
@@ -1280,6 +1542,7 @@ export const useSportsDesignStore = create(
           tracks: currentState.tracks,
           motifs: currentState.motifs,
           shapes: currentState.shapes,
+          texts: currentState.texts,
           elementOrder: currentState.elementOrder,
           customMarkings: currentState.customMarkings,
           backgroundZones: currentState.backgroundZones
@@ -1391,6 +1654,7 @@ export const useSportsDesignStore = create(
           tracks: designData.tracks || {},
           motifs: designData.motifs || {},
           shapes: designData.shapes || {},
+          texts: designData.texts || {},
           elementOrder: elementOrder || [],
           customMarkings: designData.customMarkings || [],
           backgroundZones: designData.backgroundZones || [],
@@ -1401,6 +1665,8 @@ export const useSportsDesignStore = create(
           selectedTrackId: null,
           selectedMotifId: null,
           selectedShapeId: null,
+          selectedTextId: null,
+          editingTextId: null,
           history: [],
           historyIndex: -1
         });
@@ -1416,6 +1682,7 @@ export const useSportsDesignStore = create(
           tracks: state.tracks,
           motifs: state.motifs,
           shapes: state.shapes,
+          texts: state.texts,
           elementOrder: state.elementOrder,
           customMarkings: state.customMarkings,
           backgroundZones: state.backgroundZones,
@@ -1430,14 +1697,15 @@ export const useSportsDesignStore = create(
         set(initialState);
       },
 
-      // Check if there are unsaved changes (any courts, tracks, motifs, shapes, or modifications)
+      // Check if there are unsaved changes (any courts, tracks, motifs, shapes, texts, or modifications)
       hasUnsavedChanges: () => {
         const state = get();
-        // Has changes if any courts, tracks, motifs, or shapes have been added
+        // Has changes if any courts, tracks, motifs, shapes, or texts have been added
         return Object.keys(state.courts).length > 0 ||
                Object.keys(state.tracks).length > 0 ||
                Object.keys(state.motifs).length > 0 ||
-               Object.keys(state.shapes).length > 0;
+               Object.keys(state.shapes).length > 0 ||
+               Object.keys(state.texts).length > 0;
       }
     }),
     { name: 'SportsDesignStore' }

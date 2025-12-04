@@ -90,6 +90,7 @@ function TPVDesigner({ loadedDesign }) {
     selectedTrackId,
     selectedMotifId,
     selectedShapeId,
+    selectedTextId,
     showCourtLibrary,
     showPropertiesPanel,
     toggleCourtLibrary,
@@ -234,10 +235,13 @@ function TPVDesigner({ loadedDesign }) {
         removeTrack,
         removeMotif,
         removeShape,
+        removeText,
         deselectCourt,
         deselectTrack,
         deselectMotif,
         deselectShape,
+        deselectText,
+        stopEditingText,
         undo,
         redo,
         canUndo,
@@ -245,16 +249,21 @@ function TPVDesigner({ loadedDesign }) {
         duplicateCourt,
         duplicateMotif,
         duplicateShape,
+        duplicateText,
         updateCourtPosition,
         updateTrackPosition,
         updateMotifPosition,
         updateShapePosition,
+        updateTextPosition,
         courts,
         tracks,
         motifs,
         shapes,
+        texts,
         selectedMotifId,
         selectedShapeId: currentSelectedShapeId,
+        selectedTextId: currentSelectedTextId,
+        editingTextId,
         elementOrder,
         setElementOrder,
         toggleSnapToGrid,
@@ -262,10 +271,10 @@ function TPVDesigner({ loadedDesign }) {
         addToHistory
       } = useSportsDesignStore.getState();
 
-      const selectedId = selectedCourtId || selectedTrackId || selectedMotifId || currentSelectedShapeId;
+      const selectedId = selectedCourtId || selectedTrackId || selectedMotifId || currentSelectedShapeId || currentSelectedTextId;
 
-      // Delete key - remove selected element
-      if (e.key === 'Delete' && selectedId) {
+      // Delete key - remove selected element (skip if editing text inline)
+      if (e.key === 'Delete' && selectedId && !editingTextId) {
         e.preventDefault();
         if (selectedCourtId) {
           removeCourt(selectedCourtId);
@@ -275,19 +284,28 @@ function TPVDesigner({ loadedDesign }) {
           removeMotif(selectedMotifId);
         } else if (currentSelectedShapeId) {
           removeShape(currentSelectedShapeId);
+        } else if (currentSelectedTextId) {
+          removeText(currentSelectedTextId);
         }
       }
 
-      // Escape key - deselect element
-      if (e.key === 'Escape' && selectedId) {
-        if (selectedCourtId) {
-          deselectCourt();
-        } else if (selectedTrackId) {
-          deselectTrack();
-        } else if (selectedMotifId) {
-          deselectMotif();
-        } else if (currentSelectedShapeId) {
-          deselectShape();
+      // Escape key - deselect element or stop editing text
+      if (e.key === 'Escape') {
+        if (editingTextId) {
+          // Stop editing text first
+          stopEditingText();
+        } else if (selectedId) {
+          if (selectedCourtId) {
+            deselectCourt();
+          } else if (selectedTrackId) {
+            deselectTrack();
+          } else if (selectedMotifId) {
+            deselectMotif();
+          } else if (currentSelectedShapeId) {
+            deselectShape();
+          } else if (currentSelectedTextId) {
+            deselectText();
+          }
         }
       }
 
@@ -316,11 +334,13 @@ function TPVDesigner({ loadedDesign }) {
           duplicateMotif(selectedMotifId);
         } else if (currentSelectedShapeId) {
           duplicateShape(currentSelectedShapeId);
+        } else if (currentSelectedTextId) {
+          duplicateText(currentSelectedTextId);
         }
       }
 
-      // Arrow Keys - Nudge element position
-      if (selectedId && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      // Arrow Keys - Nudge element position (skip if editing text)
+      if (selectedId && !editingTextId && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
 
         const nudgeAmount = e.shiftKey ? 10 : 100; // Shift = fine (10mm), normal = coarse (100mm)
@@ -368,6 +388,15 @@ function TPVDesigner({ loadedDesign }) {
             });
             addToHistory();
           }
+        } else if (currentSelectedTextId) {
+          const text = texts[currentSelectedTextId];
+          if (text) {
+            updateTextPosition(currentSelectedTextId, {
+              x: text.position.x + deltaX,
+              y: text.position.y + deltaY
+            });
+            addToHistory();
+          }
         }
       }
 
@@ -409,7 +438,7 @@ function TPVDesigner({ loadedDesign }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedCourtId, selectedTrackId, selectedMotifId, selectedShapeId]);
+  }, [selectedCourtId, selectedTrackId, selectedMotifId, selectedShapeId, selectedTextId]);
 
   return (
     <div className="sports-designer">

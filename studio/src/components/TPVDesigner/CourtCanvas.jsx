@@ -7,6 +7,8 @@ import TransformHandles from './TransformHandles.jsx';
 import TrackElement from './TrackRenderer.jsx';
 import MotifElement from './MotifElement.jsx';
 import ShapeElement from './ShapeElement.jsx';
+import TextElement from './TextElement.jsx';
+import { measureText } from '../../lib/sports/textUtils.js';
 import './CourtCanvas.css';
 
 const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
@@ -20,6 +22,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const [dragTrackId, setDragTrackId] = useState(null);
   const [dragMotifId, setDragMotifId] = useState(null);
   const [dragShapeId, setDragShapeId] = useState(null);
+  const [dragTextId, setDragTextId] = useState(null);
 
   // Motif scaling state
   const [isScaling, setIsScaling] = useState(false);
@@ -41,17 +44,30 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const [rotateShapeId, setRotateShapeId] = useState(null);
   const [rotateShapeStart, setRotateShapeStart] = useState(null);
 
+  // Text scaling state (font size)
+  const [isScalingText, setIsScalingText] = useState(false);
+  const [scaleTextId, setScaleTextId] = useState(null);
+  const [scaleTextStart, setScaleTextStart] = useState(null);
+
+  // Text rotation state
+  const [isRotatingText, setIsRotatingText] = useState(false);
+  const [rotateTextId, setRotateTextId] = useState(null);
+  const [rotateTextStart, setRotateTextStart] = useState(null);
+
   const {
     surface,
     courts,
     tracks,
     motifs,
     shapes,
+    texts,
     elementOrder,
     selectedCourtId,
     selectedTrackId,
     selectedMotifId,
     selectedShapeId,
+    selectedTextId,
+    editingTextId,
     snapToGrid,
     gridSize_mm,
     selectCourt,
@@ -62,6 +78,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     deselectMotif,
     selectShape,
     deselectShape,
+    selectText,
+    deselectText,
+    startEditingText,
+    stopEditingText,
     updateCourtPosition,
     updateTrackPosition,
     updateMotifPosition,
@@ -69,7 +89,11 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     updateMotifRotation,
     updateShapePosition,
     updateShapeDimensions,
-    updateShapeRotation
+    updateShapeRotation,
+    updateTextPosition,
+    updateTextFontSize,
+    updateTextRotation,
+    updateTextContent
   } = useSportsDesignStore();
 
   // Convert screen coordinates to SVG coordinates
@@ -366,6 +390,121 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     setIsRotatingShape(true);
   };
 
+  // Handle mouse down on text (start drag)
+  const handleTextMouseDown = (e, textId) => {
+    e.stopPropagation();
+
+    // Don't start drag if already editing this text
+    if (editingTextId === textId) return;
+
+    selectText(textId);
+
+    const text = texts[textId];
+    // Don't allow dragging locked texts
+    if (text?.locked) return;
+
+    const svgPoint = screenToSVG(e.clientX, e.clientY);
+
+    setDragStart({
+      x: svgPoint.x - text.position.x,
+      y: svgPoint.y - text.position.y
+    });
+    setDragTextId(textId);
+    setIsDragging(true);
+  };
+
+  // Handle double-click on text (enter inline edit mode)
+  const handleTextDoubleClick = (e, textId) => {
+    e.stopPropagation();
+    selectText(textId);
+    startEditingText(textId);
+  };
+
+  // Handle scale start on text corner handle (changes font size)
+  const handleTextScaleStart = (e, textId, corner) => {
+    e.stopPropagation();
+
+    const text = texts[textId];
+    if (!text || text.locked) return;
+
+    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    const bounds = measureText(text.content, text.fontFamily, text.fontSize_mm, text.fontWeight, text.fontStyle);
+
+    // Calculate text bounds based on alignment
+    let boxX = text.position.x;
+    if (text.textAlign === 'center') boxX -= bounds.width / 2;
+    else if (text.textAlign === 'right') boxX -= bounds.width;
+
+    const boxY = text.position.y - text.fontSize_mm;
+
+    // Calculate anchor point (opposite corner)
+    let anchorPoint;
+    switch (corner) {
+      case 'nw':
+        anchorPoint = { x: boxX + bounds.width, y: boxY + text.fontSize_mm * 1.2 };
+        break;
+      case 'ne':
+        anchorPoint = { x: boxX, y: boxY + text.fontSize_mm * 1.2 };
+        break;
+      case 'sw':
+        anchorPoint = { x: boxX + bounds.width, y: boxY };
+        break;
+      case 'se':
+      default:
+        anchorPoint = { x: boxX, y: boxY };
+        break;
+    }
+
+    const initialDistance = Math.sqrt(
+      Math.pow(svgPoint.x - anchorPoint.x, 2) +
+      Math.pow(svgPoint.y - anchorPoint.y, 2)
+    );
+
+    setScaleTextStart({
+      initialDistance,
+      originalFontSize: text.fontSize_mm,
+      corner,
+      anchorPoint
+    });
+    setScaleTextId(textId);
+    setIsScalingText(true);
+  };
+
+  // Handle rotation start on text rotation handle
+  const handleTextRotateStart = (e, textId) => {
+    e.stopPropagation();
+
+    const text = texts[textId];
+    if (!text || text.locked) return;
+
+    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    const bounds = measureText(text.content, text.fontFamily, text.fontSize_mm, text.fontWeight, text.fontStyle);
+
+    // Calculate text center based on alignment
+    let centerX = text.position.x;
+    if (text.textAlign === 'center') centerX = text.position.x;
+    else if (text.textAlign === 'right') centerX = text.position.x - bounds.width / 2;
+    else centerX = text.position.x + bounds.width / 2;
+
+    const textCenter = {
+      x: centerX,
+      y: text.position.y - text.fontSize_mm * 0.4
+    };
+
+    const initialAngle = Math.atan2(
+      svgPoint.y - textCenter.y,
+      svgPoint.x - textCenter.x
+    ) * (180 / Math.PI);
+
+    setRotateTextStart({
+      initialAngle,
+      originalRotation: text.rotation || 0,
+      textCenter
+    });
+    setRotateTextId(textId);
+    setIsRotatingText(true);
+  };
+
   // Reset drag state when surface dimensions change
   useEffect(() => {
     setIsDragging(false);
@@ -373,12 +512,13 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     setDragTrackId(null);
     setDragMotifId(null);
     setDragShapeId(null);
+    setDragTextId(null);
     setDragStart(null);
   }, [surface.width_mm, surface.length_mm]);
 
-  // Handle mouse move (drag court, track, motif, or shape)
+  // Handle mouse move (drag court, track, motif, shape, or text)
   useEffect(() => {
-    if (!isDragging || (!dragCourtId && !dragTrackId && !dragMotifId && !dragShapeId)) return;
+    if (!isDragging || (!dragCourtId && !dragTrackId && !dragMotifId && !dragShapeId && !dragTextId)) return;
 
     const handleMouseMove = (e) => {
       const svgPoint = screenToSVG(e.clientX, e.clientY);
@@ -423,12 +563,15 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         };
         newPosition = constrainPosition(newPosition, shapeDimensions, surface);
         updateShapePosition(dragShapeId, newPosition);
+      } else if (dragTextId) {
+        // Text: just update position (no constraints needed for text)
+        updateTextPosition(dragTextId, newPosition);
       }
     };
 
     const handleMouseUp = () => {
       // Add to history when drag completes
-      if (dragCourtId || dragTrackId || dragMotifId || dragShapeId) {
+      if (dragCourtId || dragTrackId || dragMotifId || dragShapeId || dragTextId) {
         const { addToHistory } = useSportsDesignStore.getState();
         addToHistory();
       }
@@ -438,6 +581,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       setDragTrackId(null);
       setDragMotifId(null);
       setDragShapeId(null);
+      setDragTextId(null);
       setDragStart(null);
     };
 
@@ -448,7 +592,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isDragging, dragCourtId, dragTrackId, dragMotifId, dragShapeId, dragStart, courts, tracks, motifs, shapes, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition, updateMotifPosition, updateShapePosition]);
+  }, [isDragging, dragCourtId, dragTrackId, dragMotifId, dragShapeId, dragTextId, dragStart, courts, tracks, motifs, shapes, texts, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition, updateMotifPosition, updateShapePosition, updateTextPosition]);
 
   // Handle mouse move/up for motif scaling
   useEffect(() => {
@@ -716,6 +860,101 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     };
   }, [isRotatingShape, rotateShapeId, rotateShapeStart, updateShapeRotation]);
 
+  // Handle mouse move/up for text scaling (font size)
+  useEffect(() => {
+    if (!isScalingText || !scaleTextId || !scaleTextStart) return;
+
+    const handleMouseMove = (e) => {
+      const svgPoint = screenToSVG(e.clientX, e.clientY);
+      const text = texts[scaleTextId];
+      if (!text) return;
+
+      // Calculate current distance from anchor point to mouse
+      const currentDistance = Math.sqrt(
+        Math.pow(svgPoint.x - scaleTextStart.anchorPoint.x, 2) +
+        Math.pow(svgPoint.y - scaleTextStart.anchorPoint.y, 2)
+      );
+
+      // Calculate new font size based on distance ratio
+      const scaleRatio = currentDistance / scaleTextStart.initialDistance;
+      let newFontSize = scaleTextStart.originalFontSize * scaleRatio;
+
+      // Minimum font size of 50mm
+      newFontSize = Math.max(50, newFontSize);
+
+      // Round to whole mm
+      newFontSize = Math.round(newFontSize);
+
+      updateTextFontSize(scaleTextId, newFontSize);
+    };
+
+    const handleMouseUp = () => {
+      const { addToHistory } = useSportsDesignStore.getState();
+      addToHistory();
+
+      setIsScalingText(false);
+      setScaleTextId(null);
+      setScaleTextStart(null);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isScalingText, scaleTextId, scaleTextStart, texts, updateTextFontSize]);
+
+  // Handle mouse move/up for text rotation
+  useEffect(() => {
+    if (!isRotatingText || !rotateTextId || !rotateTextStart) return;
+
+    const handleMouseMove = (e) => {
+      const svgPoint = screenToSVG(e.clientX, e.clientY);
+
+      // Calculate current angle from center to mouse
+      const currentAngle = Math.atan2(
+        svgPoint.y - rotateTextStart.textCenter.y,
+        svgPoint.x - rotateTextStart.textCenter.x
+      ) * (180 / Math.PI);
+
+      // Calculate rotation delta
+      const angleDelta = currentAngle - rotateTextStart.initialAngle;
+      let newRotation = rotateTextStart.originalRotation + angleDelta;
+
+      // Normalize to 0-360 range
+      newRotation = ((newRotation % 360) + 360) % 360;
+
+      // Snap to 15-degree increments if shift is held
+      if (e.shiftKey) {
+        newRotation = Math.round(newRotation / 15) * 15;
+      }
+
+      // Round to 1 decimal place
+      newRotation = Math.round(newRotation * 10) / 10;
+
+      updateTextRotation(rotateTextId, newRotation);
+    };
+
+    const handleMouseUp = () => {
+      const { addToHistory } = useSportsDesignStore.getState();
+      addToHistory();
+
+      setIsRotatingText(false);
+      setRotateTextId(null);
+      setRotateTextStart(null);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isRotatingText, rotateTextId, rotateTextStart, updateTextRotation]);
+
   // Handle click on canvas background (deselect)
   const handleCanvasClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -723,6 +962,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       deselectTrack();
       deselectMotif();
       deselectShape();
+      deselectText();
     }
   };
 
@@ -820,6 +1060,29 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                 onDoubleClick={(e) => handleShapeDoubleClick(e, elementId)}
                 onScaleStart={(e, corner) => handleShapeScaleStart(e, elementId, corner)}
                 onRotateStart={(e) => handleShapeRotateStart(e, elementId)}
+              />
+            );
+          }
+
+          // Check if it's a text
+          if (elementId.startsWith('text-')) {
+            const text = texts[elementId];
+            if (!text) return null;
+            // Skip hidden texts
+            if (text.visible === false) return null;
+
+            return (
+              <TextElement
+                key={elementId}
+                text={text}
+                isSelected={elementId === selectedTextId}
+                isEditing={elementId === editingTextId}
+                onMouseDown={(e) => handleTextMouseDown(e, elementId)}
+                onDoubleClick={(e) => handleTextDoubleClick(e, elementId)}
+                onScaleStart={(e, corner) => handleTextScaleStart(e, elementId, corner)}
+                onRotateStart={(e) => handleTextRotateStart(e, elementId)}
+                onContentChange={(content) => updateTextContent(elementId, content)}
+                onEditComplete={() => stopEditingText()}
               />
             );
           }

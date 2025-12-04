@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { calculateTrackGeometry, calculateStaggeredStarts } from '../../lib/sports/trackGeometry.js';
 import { getShapeDisplayName, getShapeIcon } from '../../lib/sports/shapeGeometry.js';
+import { getAvailableFonts } from '../../lib/sports/textUtils.js';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import './PropertiesPanel.css';
 
@@ -12,10 +13,12 @@ function PropertiesPanel({ onEditSourceDesign }) {
     tracks,
     motifs,
     shapes,
+    texts,
     selectedCourtId,
     selectedTrackId,
     selectedMotifId,
     selectedShapeId,
+    selectedTextId,
     updateCourtPosition,
     updateCourtRotation,
     updateCourtScale,
@@ -35,6 +38,13 @@ function PropertiesPanel({ onEditSourceDesign }) {
 
   const [activeSection, setActiveSection] = useState('transform'); // 'transform', 'lines', 'zones'
   const [colorPickerTarget, setColorPickerTarget] = useState(null); // { type: 'line'|'zone', id: string }
+
+  // Show text properties if text is selected
+  if (selectedTextId) {
+    const text = texts[selectedTextId];
+    if (!text) return null;
+    return <TextPropertiesPanel text={text} textId={selectedTextId} />;
+  }
 
   // Show shape properties if shape is selected
   if (selectedShapeId) {
@@ -1947,6 +1957,439 @@ function ShapePropertiesPanel({ shape, shapeId }) {
                   className="color-picker-swatch"
                   style={{ backgroundColor: color.hex }}
                   onClick={() => handleStrokeColorSelect(color)}
+                  title={`${color.code} - ${color.name}`}
+                >
+                  <span className="color-picker-swatch__code">{color.code}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Text Properties Panel Component
+ * Displays and allows editing of text content, font, and styling
+ */
+function TextPropertiesPanel({ text, textId }) {
+  const {
+    updateTextContent,
+    updateTextPosition,
+    updateTextFontSize,
+    updateTextFont,
+    updateTextAlign,
+    updateTextRotation,
+    setTextFillColor,
+    removeText,
+    duplicateText
+  } = useSportsDesignStore();
+
+  const [showTextColorPicker, setShowTextColorPicker] = React.useState(false);
+
+  const {
+    content,
+    fontFamily,
+    fontSize_mm,
+    fontWeight,
+    fontStyle,
+    textAlign,
+    position,
+    rotation,
+    fillColor
+  } = text;
+
+  const fonts = getAvailableFonts();
+
+  // Handle content update
+  const handleContentChange = (value) => {
+    updateTextContent(textId, value);
+  };
+
+  // Handle position updates
+  const handlePositionChange = (axis, value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return;
+    updateTextPosition(textId, {
+      ...position,
+      [axis]: numValue
+    });
+  };
+
+  // Handle font size update
+  const handleFontSizeChange = (value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue < 50) return;
+    updateTextFontSize(textId, numValue);
+  };
+
+  // Handle font family change
+  const handleFontFamilyChange = (value) => {
+    updateTextFont(textId, value, fontWeight, fontStyle);
+  };
+
+  // Handle bold toggle
+  const handleBoldToggle = () => {
+    updateTextFont(textId, fontFamily, fontWeight === 'bold' ? 'normal' : 'bold', fontStyle);
+  };
+
+  // Handle italic toggle
+  const handleItalicToggle = () => {
+    updateTextFont(textId, fontFamily, fontWeight, fontStyle === 'italic' ? 'normal' : 'italic');
+  };
+
+  // Handle text alignment change
+  const handleAlignChange = (align) => {
+    updateTextAlign(textId, align);
+  };
+
+  // Handle rotation update
+  const handleRotationChange = (value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return;
+    updateTextRotation(textId, numValue);
+  };
+
+  // Handle color selection
+  const handleColorSelect = (tpvColor) => {
+    setTextFillColor(textId, {
+      tpv_code: tpvColor.code,
+      hex: tpvColor.hex,
+      name: tpvColor.name
+    });
+    setShowTextColorPicker(false);
+  };
+
+  // Handle delete text
+  const handleDeleteText = () => {
+    if (window.confirm(`Delete this text? This action cannot be undone.`)) {
+      removeText(textId);
+    }
+  };
+
+  // Handle duplicate text
+  const handleDuplicateText = () => {
+    duplicateText(textId);
+  };
+
+  return (
+    <div className="properties-panel">
+      {/* Panel Header */}
+      <div className="properties-panel__header">
+        <h3>Text Properties</h3>
+        <div className="properties-panel__court-info">
+          <span className="court-name" style={{ fontFamily }}>{content || 'Text Label'}</span>
+          <span className="court-standard">T Text Element</span>
+        </div>
+      </div>
+
+      {/* Panel Content */}
+      <div className="properties-panel__content">
+        <div className="properties-section">
+          {/* Text Content */}
+          <div className="property-group">
+            <label>Text Content</label>
+            <input
+              type="text"
+              value={content}
+              onChange={(e) => handleContentChange(e.target.value)}
+              placeholder="Enter text..."
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                border: '1px solid #e4e9f0',
+                borderRadius: '6px',
+                fontFamily,
+                fontSize: '1rem'
+              }}
+            />
+          </div>
+
+          {/* Divider */}
+          <div className="properties-section__divider" style={{ margin: '1rem 0' }}>
+            <span>Typography</span>
+          </div>
+
+          {/* Font Family */}
+          <div className="property-group">
+            <label>Font Family</label>
+            <select
+              value={fontFamily}
+              onChange={(e) => handleFontFamilyChange(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                border: '1px solid #e4e9f0',
+                borderRadius: '6px',
+                fontFamily: 'inherit',
+                fontSize: '0.875rem'
+              }}
+            >
+              {fonts.map(f => (
+                <option key={f.name} value={f.family} style={{ fontFamily: f.family }}>
+                  {f.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Font Size */}
+          <div className="property-group">
+            <label>Font Size</label>
+            <div className="property-input-row">
+              <input
+                type="range"
+                min="100"
+                max="2000"
+                step="50"
+                value={fontSize_mm}
+                onChange={(e) => handleFontSizeChange(e.target.value)}
+                className="property-slider"
+              />
+              <div className="property-input-group property-input-group--compact">
+                <input
+                  type="number"
+                  value={Math.round(fontSize_mm)}
+                  onChange={(e) => handleFontSizeChange(e.target.value)}
+                  min="50"
+                  step="50"
+                />
+                <span className="property-unit">mm</span>
+              </div>
+            </div>
+            <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.25rem' }}>
+              ≈ {(fontSize_mm / 1000).toFixed(2)}m height
+            </div>
+          </div>
+
+          {/* Bold / Italic */}
+          <div className="property-group">
+            <label>Style</label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={handleBoldToggle}
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  border: fontWeight === 'bold' ? '2px solid #3b82f6' : '1px solid #e4e9f0',
+                  borderRadius: '6px',
+                  background: fontWeight === 'bold' ? '#eff6ff' : '#fff',
+                  fontWeight: 'bold',
+                  fontSize: '1rem',
+                  cursor: 'pointer'
+                }}
+                title="Bold"
+              >
+                B
+              </button>
+              <button
+                onClick={handleItalicToggle}
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  border: fontStyle === 'italic' ? '2px solid #3b82f6' : '1px solid #e4e9f0',
+                  borderRadius: '6px',
+                  background: fontStyle === 'italic' ? '#eff6ff' : '#fff',
+                  fontStyle: 'italic',
+                  fontSize: '1rem',
+                  cursor: 'pointer'
+                }}
+                title="Italic"
+              >
+                I
+              </button>
+            </div>
+          </div>
+
+          {/* Text Alignment */}
+          <div className="property-group">
+            <label>Alignment</label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={() => handleAlignChange('left')}
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  border: textAlign === 'left' ? '2px solid #3b82f6' : '1px solid #e4e9f0',
+                  borderRadius: '6px',
+                  background: textAlign === 'left' ? '#eff6ff' : '#fff',
+                  cursor: 'pointer'
+                }}
+                title="Align Left"
+              >
+                ⫷
+              </button>
+              <button
+                onClick={() => handleAlignChange('center')}
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  border: textAlign === 'center' ? '2px solid #3b82f6' : '1px solid #e4e9f0',
+                  borderRadius: '6px',
+                  background: textAlign === 'center' ? '#eff6ff' : '#fff',
+                  cursor: 'pointer'
+                }}
+                title="Align Center"
+              >
+                ☰
+              </button>
+              <button
+                onClick={() => handleAlignChange('right')}
+                style={{
+                  flex: 1,
+                  padding: '0.5rem',
+                  border: textAlign === 'right' ? '2px solid #3b82f6' : '1px solid #e4e9f0',
+                  borderRadius: '6px',
+                  background: textAlign === 'right' ? '#eff6ff' : '#fff',
+                  cursor: 'pointer'
+                }}
+                title="Align Right"
+              >
+                ⫸
+              </button>
+            </div>
+          </div>
+
+          {/* Text Colour */}
+          <div className="property-group">
+            <label>Text Colour</label>
+            <div className="color-item">
+              <div className="color-item__info">
+                <span className="color-item__name">{fillColor?.name || 'Select Colour'}</span>
+                {fillColor && (
+                  <span className="color-item__code">{fillColor.tpv_code}</span>
+                )}
+              </div>
+              <button
+                className="color-item__swatch"
+                style={{ backgroundColor: fillColor?.hex || '#1C1C1C' }}
+                onClick={() => setShowTextColorPicker(true)}
+                title={fillColor?.name || 'Select colour'}
+              />
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="properties-section__divider" style={{ margin: '1rem 0' }}>
+            <span>Transform</span>
+          </div>
+
+          {/* Position */}
+          <div className="property-group">
+            <label>Position</label>
+            <div className="property-input-row">
+              <div className="property-input-group">
+                <span className="property-label">X</span>
+                <input
+                  type="number"
+                  value={Math.round(position.x)}
+                  onChange={(e) => handlePositionChange('x', e.target.value)}
+                  step="100"
+                />
+                <span className="property-unit">mm</span>
+              </div>
+              <div className="property-input-group">
+                <span className="property-label">Y</span>
+                <input
+                  type="number"
+                  value={Math.round(position.y)}
+                  onChange={(e) => handlePositionChange('y', e.target.value)}
+                  step="100"
+                />
+                <span className="property-unit">mm</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Rotation */}
+          <div className="property-group">
+            <label>Rotation</label>
+            <div className="property-input-row">
+              <input
+                type="range"
+                min="0"
+                max="360"
+                value={rotation || 0}
+                onChange={(e) => handleRotationChange(e.target.value)}
+                className="property-slider"
+              />
+              <div className="property-input-group property-input-group--compact">
+                <input
+                  type="number"
+                  value={Math.round(rotation || 0)}
+                  onChange={(e) => handleRotationChange(e.target.value)}
+                  min="0"
+                  max="360"
+                />
+                <span className="property-unit">°</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Divider */}
+          <div className="properties-section__divider" style={{ margin: '1rem 0' }}>
+            <span>Actions</span>
+          </div>
+
+          {/* Duplicate Button */}
+          <div className="property-group property-group--actions">
+            <button
+              className="btn-secondary"
+              onClick={handleDuplicateText}
+              title="Duplicate text (Ctrl+D)"
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                background: '#f3f4f6',
+                border: '1px solid #e4e9f0',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                marginBottom: '0.5rem'
+              }}
+            >
+              📋 Duplicate Text
+            </button>
+          </div>
+
+          {/* Delete Button */}
+          <div className="property-group property-group--actions">
+            <button
+              className="btn-delete"
+              onClick={handleDeleteText}
+              title="Delete text (Delete key)"
+            >
+              🗑️ Delete Text
+            </button>
+          </div>
+
+          {/* Tip */}
+          <div className="property-group">
+            <div className="property-hint" style={{ fontStyle: 'normal', color: '#64748b', fontSize: '0.75rem', marginTop: '1rem' }}>
+              💡 Tip: Double-click text on canvas to edit inline. Drag corners to change font size. Hold Shift while rotating to snap to 15° increments.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Color Picker Modal */}
+      {showTextColorPicker && (
+        <div className="color-picker-modal" onClick={() => setShowTextColorPicker(false)}>
+          <div className="color-picker-modal__content" onClick={(e) => e.stopPropagation()}>
+            <div className="color-picker-modal__header">
+              <h4>Select Text Colour</h4>
+              <button onClick={() => setShowTextColorPicker(false)}>×</button>
+            </div>
+            <div className="color-picker-grid">
+              {tpvColours.map(color => (
+                <button
+                  key={color.code}
+                  className="color-picker-swatch"
+                  style={{ backgroundColor: color.hex }}
+                  onClick={() => handleColorSelect(color)}
                   title={`${color.code} - ${color.name}`}
                 >
                   <span className="color-picker-swatch__code">{color.code}</span>

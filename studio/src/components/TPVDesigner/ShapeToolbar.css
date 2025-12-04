@@ -101,6 +101,28 @@
   font-weight: 500;
 }
 
+/* Text Button - highlight styling */
+.shape-toolbar__btn--text {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.shape-toolbar__btn--text:hover {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.shape-toolbar__btn--text .shape-toolbar__icon {
+  font-weight: 700;
+  font-family: Georgia, serif;
+  color: #3b82f6;
+}
+
+/* Divider between text and shapes */
+.shape-toolbar__divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .shape-toolbar {
