@@ -1,7 +1,7 @@
 // TPV Studio - Mini Mixer Widget
 // Inline blend editor for color customization in blend mode
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import VoronoiCanvas from './VoronoiCanvas';
 import {
   PALETTE,
@@ -19,11 +19,21 @@ export default function MiniMixerWidget({
   // Parts state - Map of colorIndex -> partCount
   const [parts, setParts] = useState(new Map());
 
-  // Initialize parts from recipe
+  // Track if this is the initial load to prevent infinite loops
+  const isInitialLoadRef = useRef(true);
+  const lastInitialRecipeRef = useRef(null);
+
+  // Initialize parts from recipe - only when initialRecipe actually changes
   useEffect(() => {
     if (initialRecipe) {
-      const initialParts = recipeToParts(initialRecipe);
-      setParts(initialParts);
+      // Check if this is a genuinely new recipe (not just a re-render)
+      const recipeKey = JSON.stringify(initialRecipe);
+      if (recipeKey !== lastInitialRecipeRef.current) {
+        lastInitialRecipeRef.current = recipeKey;
+        isInitialLoadRef.current = true;
+        const initialParts = recipeToParts(initialRecipe);
+        setParts(initialParts);
+      }
     }
   }, [initialRecipe]);
 
@@ -31,8 +41,14 @@ export default function MiniMixerWidget({
   const totalParts = Array.from(parts.values()).reduce((a, b) => a + b, 0);
   const blendedColor = calculateBlendedColor(parts);
 
-  // Notify parent of blend changes
+  // Notify parent of blend changes - skip on initial load to prevent infinite loop
   useEffect(() => {
+    // Skip the initial load notification to prevent infinite loop
+    if (isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      return;
+    }
+
     // Fire callback even when parts is empty (for Clear All to work)
     if (onBlendChange) {
       const recipe = parts.size > 0 ? partsToRecipe(parts) : null;
