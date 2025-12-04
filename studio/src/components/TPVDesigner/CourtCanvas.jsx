@@ -13,9 +13,17 @@ import './CourtCanvas.css';
 
 const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const canvasRef = useRef(null);
+  const containerRef = useRef(null);
 
   // Expose the SVG ref to parent
   useImperativeHandle(ref, () => canvasRef.current);
+
+  // Zoom and pan state
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
   const [dragCourtId, setDragCourtId] = useState(null);
@@ -966,14 +974,141 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     }
   };
 
+  // ====== Zoom and Pan Handlers ======
+  const handleZoomIn = () => {
+    setZoom(prevZoom => Math.min(prevZoom * 1.25, 5));
+  };
+
+  const handleZoomOut = () => {
+    setZoom(prevZoom => Math.max(prevZoom / 1.25, 0.25));
+  };
+
+  const handleZoomReset = () => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
+
+  const handleWheel = (e) => {
+    // Only zoom if ctrl/cmd is held, or if it's a pinch gesture (ctrlKey is true for pinch)
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = e.deltaY * -0.002;
+      setZoom(prevZoom => Math.min(Math.max(prevZoom + prevZoom * delta, 0.25), 5));
+    }
+  };
+
+  // Handle middle-click or space+click for panning
+  const handlePanStart = (e) => {
+    // Middle mouse button (button 1) or space key held
+    if (e.button === 1) {
+      e.preventDefault();
+      setIsPanning(true);
+      setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    }
+  };
+
+  const handlePanMove = (e) => {
+    if (!isPanning) return;
+    setPan({
+      x: e.clientX - panStart.x,
+      y: e.clientY - panStart.y
+    });
+  };
+
+  const handlePanEnd = () => {
+    setIsPanning(false);
+  };
+
+  // Set up pan event listeners
+  useEffect(() => {
+    if (isPanning) {
+      const handleMove = (e) => handlePanMove(e);
+      const handleUp = () => handlePanEnd();
+
+      window.addEventListener('mousemove', handleMove);
+      window.addEventListener('mouseup', handleUp);
+
+      return () => {
+        window.removeEventListener('mousemove', handleMove);
+        window.removeEventListener('mouseup', handleUp);
+      };
+    }
+  }, [isPanning, panStart]);
+
+  // Keyboard handler for space+drag panning
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.code === 'Space' && !e.repeat && containerRef.current) {
+        containerRef.current.style.cursor = 'grab';
+      }
+    };
+
+    const handleKeyUp = (e) => {
+      if (e.code === 'Space' && containerRef.current) {
+        containerRef.current.style.cursor = '';
+        setIsPanning(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
+
   return (
     <div className="court-canvas" onClick={handleCanvasClick}>
-      <svg
-        ref={canvasRef}
-        className="court-canvas__svg"
-        viewBox={`0 0 ${surface.width_mm} ${surface.length_mm}`}
-        preserveAspectRatio="xMidYMid meet"
+      {/* Zoom Controls */}
+      <div className="court-canvas__zoom-controls">
+        <button onClick={handleZoomIn} className="court-canvas__zoom-btn" title="Zoom In (Ctrl + Scroll)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="11" y1="8" x2="11" y2="14" />
+            <line x1="8" y1="11" x2="14" y2="11" />
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+        </button>
+        <button onClick={handleZoomOut} className="court-canvas__zoom-btn" title="Zoom Out (Ctrl + Scroll)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="8" y1="11" x2="14" y2="11" />
+            <path d="m21 21-4.35-4.35"/>
+          </svg>
+        </button>
+        <button onClick={handleZoomReset} className="court-canvas__zoom-btn" title="Reset View">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M1 4v6h6"/>
+            <path d="M23 20v-6h-6"/>
+            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+          </svg>
+        </button>
+        <span className="court-canvas__zoom-level">{Math.round(zoom * 100)}%</span>
+      </div>
+
+      {/* Zoomable/Pannable Container */}
+      <div
+        ref={containerRef}
+        className="court-canvas__viewport"
+        onWheel={handleWheel}
+        onMouseDown={handlePanStart}
+        style={{ cursor: isPanning ? 'grabbing' : undefined }}
       >
+        <div
+          className="court-canvas__transform-wrapper"
+          style={{
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            transformOrigin: 'center center'
+          }}
+        >
+          <svg
+            ref={canvasRef}
+            className="court-canvas__svg"
+            viewBox={`0 0 ${surface.width_mm} ${surface.length_mm}`}
+            preserveAspectRatio="xMidYMid meet"
+          >
         {/* Surface Background */}
         <rect
           x="0"
@@ -1089,7 +1224,9 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
 
           return null;
         })}
-      </svg>
+          </svg>
+        </div>
+      </div>
 
       {/* Canvas Info Overlay */}
       <div className="court-canvas__info">
