@@ -100,7 +100,17 @@ function TPVDesigner({ loadedDesign }) {
     resetDesign,
     hasUnsavedChanges,
     standaloneMode,
-    toggleStandaloneMode
+    toggleStandaloneMode,
+    // Mobile UI state
+    mobileLibraryOpen,
+    mobilePropertiesOpen,
+    mobileColoursOpen,
+    mobileActiveTab,
+    setMobileLibraryOpen,
+    setMobilePropertiesOpen,
+    setMobileColoursOpen,
+    setMobileActiveTab,
+    closeMobileSheets
   } = useSportsDesignStore();
 
   // Handle dimension form submit
@@ -497,6 +507,221 @@ function TPVDesigner({ loadedDesign }) {
 
       {/* Main Designer Interface */}
       <>
+        {/* Mobile Header */}
+        <header className="sports-designer__mobile-header">
+          <span className="sports-designer__mobile-header-title">TPV Designer</span>
+          <div className="sports-designer__mobile-header-actions">
+            <button
+              className="sports-designer__mobile-header-btn"
+              onClick={() => {
+                setWidthInput(String(surface.width_mm / 1000));
+                setLengthInput(String(surface.length_mm / 1000));
+                setShowDimensionModal(true);
+              }}
+              title="Surface settings"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+              </svg>
+            </button>
+            <ExportMenu svgRef={svgRef} mobileMode={true} />
+          </div>
+        </header>
+
+        {/* Mobile Action Bar */}
+        <nav className="sports-designer__mobile-action-bar">
+          <button
+            className={`sports-designer__mobile-action-btn ${mobileLibraryOpen ? 'sports-designer__mobile-action-btn--active' : ''}`}
+            onClick={() => {
+              closeMobileSheets();
+              setMobileLibraryOpen(true);
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="16" />
+              <line x1="8" y1="12" x2="16" y2="12" />
+            </svg>
+            <span>Add</span>
+          </button>
+          <button
+            className="sports-designer__mobile-action-btn"
+            onClick={() => {
+              closeMobileSheets();
+              setMobileColoursOpen(true);
+            }}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="13.5" cy="6.5" r="2.5" />
+              <circle cx="17.5" cy="10.5" r="2.5" />
+              <circle cx="8.5" cy="7.5" r="2.5" />
+              <circle cx="6.5" cy="12.5" r="2.5" />
+            </svg>
+            <span>Colours</span>
+          </button>
+          <button
+            className={`sports-designer__mobile-action-btn ${(selectedCourtId || selectedTrackId || selectedMotifId || selectedShapeId || selectedTextId) ? '' : 'sports-designer__mobile-action-btn--disabled'}`}
+            onClick={() => {
+              if (selectedCourtId || selectedTrackId || selectedMotifId || selectedShapeId || selectedTextId) {
+                closeMobileSheets();
+                setMobilePropertiesOpen(true);
+              }
+            }}
+            disabled={!selectedCourtId && !selectedTrackId && !selectedMotifId && !selectedShapeId && !selectedTextId}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="4" y1="21" x2="4" y2="14" />
+              <line x1="4" y1="10" x2="4" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="12" />
+              <line x1="12" y1="8" x2="12" y2="3" />
+              <line x1="20" y1="21" x2="20" y2="16" />
+              <line x1="20" y1="12" x2="20" y2="3" />
+              <line x1="1" y1="14" x2="7" y2="14" />
+              <line x1="9" y1="8" x2="15" y2="8" />
+              <line x1="17" y1="16" x2="23" y2="16" />
+            </svg>
+            <span>Properties</span>
+          </button>
+          <button
+            className="sports-designer__mobile-action-btn"
+            onClick={() => setShowSaveModal(true)}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+            <span>Save</span>
+          </button>
+        </nav>
+
+        {/* Mobile Bottom Sheet - Library */}
+        <div
+          className={`sports-designer__bottom-sheet-overlay ${mobileLibraryOpen ? 'sports-designer__bottom-sheet-overlay--open' : ''}`}
+          onClick={() => setMobileLibraryOpen(false)}
+        />
+        <div className={`sports-designer__bottom-sheet ${mobileLibraryOpen ? 'sports-designer__bottom-sheet--open' : ''}`}>
+          <div className="sports-designer__bottom-sheet-handle" />
+          <div className="sports-designer__bottom-sheet-header">
+            <h3>Add Element</h3>
+            <button
+              className="sports-designer__bottom-sheet-close"
+              onClick={() => setMobileLibraryOpen(false)}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <div className="sports-designer__mobile-tabs">
+            <button
+              className={`sports-designer__mobile-tab ${mobileActiveTab === 'courts' ? 'sports-designer__mobile-tab--active' : ''}`}
+              onClick={() => setMobileActiveTab('courts')}
+            >
+              Courts
+            </button>
+            <button
+              className={`sports-designer__mobile-tab ${mobileActiveTab === 'tracks' ? 'sports-designer__mobile-tab--active' : ''}`}
+              onClick={() => setMobileActiveTab('tracks')}
+            >
+              Tracks
+            </button>
+            <button
+              className={`sports-designer__mobile-tab ${mobileActiveTab === 'shapes' ? 'sports-designer__mobile-tab--active' : ''}`}
+              onClick={() => setMobileActiveTab('shapes')}
+            >
+              Shapes
+            </button>
+            <button
+              className={`sports-designer__mobile-tab ${mobileActiveTab === 'designs' ? 'sports-designer__mobile-tab--active' : ''}`}
+              onClick={() => setMobileActiveTab('designs')}
+            >
+              Designs
+            </button>
+          </div>
+          <div className="sports-designer__bottom-sheet-content">
+            <CourtLibrary
+              mobileMode={true}
+              activeTab={mobileActiveTab}
+              onItemAdded={() => setMobileLibraryOpen(false)}
+              onOpenGenerator={() => {
+                setMobileLibraryOpen(false);
+                setShowDesignEditor(true);
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Mobile Bottom Sheet - Colours */}
+        <div
+          className={`sports-designer__bottom-sheet-overlay ${mobileColoursOpen ? 'sports-designer__bottom-sheet-overlay--open' : ''}`}
+          onClick={() => setMobileColoursOpen(false)}
+        />
+        <div className={`sports-designer__bottom-sheet ${mobileColoursOpen ? 'sports-designer__bottom-sheet--open' : ''}`}>
+          <div className="sports-designer__bottom-sheet-handle" />
+          <div className="sports-designer__bottom-sheet-header">
+            <h3>Surface Colour</h3>
+            <button
+              className="sports-designer__bottom-sheet-close"
+              onClick={() => setMobileColoursOpen(false)}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <div className="sports-designer__bottom-sheet-content">
+            <div className="sports-designer__color-grid">
+              {tpvColours.map(color => (
+                <button
+                  key={color.code}
+                  className={`sports-designer__color-swatch ${surface.color.tpv_code === color.code ? 'sports-designer__color-swatch--selected' : ''}`}
+                  style={{ backgroundColor: color.hex }}
+                  onClick={() => {
+                    handleSurfaceColorSelect(color);
+                    setMobileColoursOpen(false);
+                  }}
+                  title={`${color.code} - ${color.name}`}
+                >
+                  <span className="sports-designer__color-code">{color.code}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Bottom Sheet - Properties */}
+        <div
+          className={`sports-designer__bottom-sheet-overlay ${mobilePropertiesOpen ? 'sports-designer__bottom-sheet-overlay--open' : ''}`}
+          onClick={() => setMobilePropertiesOpen(false)}
+        />
+        <div className={`sports-designer__bottom-sheet ${mobilePropertiesOpen ? 'sports-designer__bottom-sheet--open' : ''}`}>
+          <div className="sports-designer__bottom-sheet-handle" />
+          <div className="sports-designer__bottom-sheet-header">
+            <h3>Properties</h3>
+            <button
+              className="sports-designer__bottom-sheet-close"
+              onClick={() => setMobilePropertiesOpen(false)}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <div className="sports-designer__bottom-sheet-content">
+            {(selectedCourtId || selectedTrackId || selectedMotifId || selectedShapeId || selectedTextId) && (
+              <PropertiesPanel
+                mobileMode={true}
+                onEditSourceDesign={handleEditSourceDesign}
+              />
+            )}
+          </div>
+        </div>
+
         {/* Main Content Area */}
           <div className="sports-designer__content">
             {/* Court Library Sidebar - hidden in standalone mode */}

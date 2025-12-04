@@ -6,9 +6,13 @@ import { getAllTrackTemplates, getTrackTemplate } from '../../lib/sports/trackTe
 import { listPlaygroundDesigns, fetchMotifFromDesign } from '../../lib/sports/motifUtils.js';
 import './CourtLibrary.css';
 
-function CourtLibrary({ onOpenGenerator }) {
+function CourtLibrary({ onOpenGenerator, mobileMode = false, activeTab: externalActiveTab, onItemAdded }) {
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
-  const [activeTab, setActiveTab] = useState('courts'); // 'courts', 'tracks', or 'designs'
+  const [internalActiveTab, setInternalActiveTab] = useState('courts'); // 'courts', 'tracks', 'shapes', or 'designs'
+
+  // Use external tab in mobile mode, internal tab otherwise
+  const activeTab = mobileMode ? externalActiveTab : internalActiveTab;
+  const setActiveTab = mobileMode ? () => {} : setInternalActiveTab; // Only allow internal changes in desktop mode
 
   // Motifs state
   const [playgroundDesigns, setPlaygroundDesigns] = useState([]);
@@ -16,7 +20,7 @@ function CourtLibrary({ onOpenGenerator }) {
   const [motifsError, setMotifsError] = useState(null);
   const [addingMotifId, setAddingMotifId] = useState(null);
 
-  const { addCourt, addTrack, addMotif, courts, tracks, motifs } = useSportsDesignStore();
+  const { addCourt, addTrack, addMotif, addShape, courts, tracks, motifs, shapes } = useSportsDesignStore();
 
   // Count elements on canvas
   const courtCount = Object.keys(courts).length;
@@ -51,6 +55,9 @@ function CourtLibrary({ onOpenGenerator }) {
     const template = getCourtTemplate(templateId);
     if (template) {
       addCourt(templateId, template);
+      if (mobileMode && onItemAdded) {
+        onItemAdded();
+      }
     }
   };
 
@@ -58,6 +65,9 @@ function CourtLibrary({ onOpenGenerator }) {
     const template = getTrackTemplate(templateId);
     if (template) {
       addTrack(templateId, template);
+      if (mobileMode && onItemAdded) {
+        onItemAdded();
+      }
     }
   };
 
@@ -81,6 +91,9 @@ function CourtLibrary({ onOpenGenerator }) {
           hasBothVersions: motifData.hasBothVersions
         }
       );
+      if (mobileMode && onItemAdded) {
+        onItemAdded();
+      }
     } catch (error) {
       console.error('[MOTIFS] Failed to add motif:', error);
       alert(`Failed to add motif: ${error.message}`);
@@ -89,6 +102,20 @@ function CourtLibrary({ onOpenGenerator }) {
     }
   };
 
+  // Shape definitions for the shapes tab
+  const shapeDefinitions = [
+    { id: 'rectangle', name: 'Rectangle', icon: '▭' },
+    { id: 'square', name: 'Square', icon: '□' },
+    { id: 'circle', name: 'Circle', icon: '○' },
+    { id: 'triangle', name: 'Triangle', icon: '△' },
+    { id: 'diamond', name: 'Diamond', icon: '◇' },
+    { id: 'hexagon', name: 'Hexagon', icon: '⬡' },
+    { id: 'star', name: 'Star', icon: '☆' },
+    { id: 'cross', name: 'Cross', icon: '✚' },
+  ];
+
+  const shapeCount = Object.keys(shapes || {}).length;
+
   // Get tab title and count
   const getTabInfo = () => {
     switch (activeTab) {
@@ -96,6 +123,8 @@ function CourtLibrary({ onOpenGenerator }) {
         return { title: 'Courts', count: courtCount, hint: 'Select a court to add' };
       case 'tracks':
         return { title: 'Tracks', count: trackCount, hint: 'Select a track to add' };
+      case 'shapes':
+        return { title: 'Shapes', count: shapeCount, hint: 'Add basic shapes to your design' };
       case 'designs':
         return { title: 'Designs', count: motifCount, hint: 'Add your saved designs as motifs' };
       default:
@@ -106,19 +135,21 @@ function CourtLibrary({ onOpenGenerator }) {
   const tabInfo = getTabInfo();
 
   return (
-    <div className="court-library">
-      <div className="court-library__header">
-        <div className="court-library__header-row">
-          <h2>{tabInfo.title}</h2>
-          <span className="court-library__count">
-            {tabInfo.count} on canvas
-          </span>
+    <div className={`court-library ${mobileMode ? 'court-library--mobile' : ''}`}>
+      {!mobileMode && (
+        <div className="court-library__header">
+          <div className="court-library__header-row">
+            <h2>{tabInfo.title}</h2>
+            <span className="court-library__count">
+              {tabInfo.count} on canvas
+            </span>
+          </div>
+          <p>{tabInfo.hint}</p>
         </div>
-        <p>{tabInfo.hint}</p>
-      </div>
+      )}
 
-      {/* Tabs */}
-      <div className="court-library__tabs">
+      {/* Tabs - hidden in mobile mode (parent controls tabs) */}
+      {!mobileMode && <div className="court-library__tabs">
         <button
           className={`court-library__tab ${activeTab === 'courts' ? 'court-library__tab--active' : ''}`}
           onClick={() => {
@@ -138,6 +169,15 @@ function CourtLibrary({ onOpenGenerator }) {
           Tracks
         </button>
         <button
+          className={`court-library__tab ${activeTab === 'shapes' ? 'court-library__tab--active' : ''}`}
+          onClick={() => {
+            setActiveTab('shapes');
+            setSelectedTemplateId(null);
+          }}
+        >
+          Shapes
+        </button>
+        <button
           className={`court-library__tab ${activeTab === 'designs' ? 'court-library__tab--active' : ''}`}
           onClick={() => {
             setActiveTab('designs');
@@ -146,16 +186,16 @@ function CourtLibrary({ onOpenGenerator }) {
         >
           Designs
         </button>
-      </div>
+      </div>}
 
-      <div className="court-library__list">
+      <div className={`court-library__list ${mobileMode ? 'court-library__list--mobile' : ''}`}>
         {/* Courts View */}
         {activeTab === 'courts' && templates.map(template => (
           <div
             key={template.id}
             className={`court-library__item ${selectedTemplateId === template.id ? 'court-library__item--selected' : ''}`}
-            onClick={() => setSelectedTemplateId(template.id)}
-            onDoubleClick={() => handleAddCourt(template.id)}
+            onClick={() => mobileMode ? handleAddCourt(template.id) : setSelectedTemplateId(template.id)}
+            onDoubleClick={() => !mobileMode && handleAddCourt(template.id)}
           >
             {/* Preview Thumbnail */}
             <div className="court-library__preview">
@@ -191,8 +231,8 @@ function CourtLibrary({ onOpenGenerator }) {
           <div
             key={template.id}
             className={`court-library__item ${selectedTemplateId === template.id ? 'court-library__item--selected' : ''}`}
-            onClick={() => setSelectedTemplateId(template.id)}
-            onDoubleClick={() => handleAddTrack(template.id)}
+            onClick={() => mobileMode ? handleAddTrack(template.id) : setSelectedTemplateId(template.id)}
+            onDoubleClick={() => !mobileMode && handleAddTrack(template.id)}
           >
             {/* Preview Thumbnail */}
             <div className="court-library__preview">
@@ -220,6 +260,27 @@ function CourtLibrary({ onOpenGenerator }) {
             )}
           </div>
         ))}
+
+        {/* Shapes View */}
+        {activeTab === 'shapes' && (
+          <div className={`court-library__shapes-grid ${mobileMode ? 'court-library__shapes-grid--mobile' : ''}`}>
+            {shapeDefinitions.map(shape => (
+              <button
+                key={shape.id}
+                className="court-library__shape-btn"
+                onClick={() => {
+                  addShape(shape.id);
+                  if (mobileMode && onItemAdded) {
+                    onItemAdded();
+                  }
+                }}
+              >
+                <span className="court-library__shape-icon">{shape.icon}</span>
+                <span className="court-library__shape-name">{shape.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Designs View */}
         {activeTab === 'designs' && (
@@ -251,8 +312,8 @@ function CourtLibrary({ onOpenGenerator }) {
               <div
                 key={design.id}
                 className={`court-library__item ${selectedTemplateId === design.id ? 'court-library__item--selected' : ''} ${addingMotifId === design.id ? 'court-library__item--loading' : ''}`}
-                onClick={() => setSelectedTemplateId(design.id)}
-                onDoubleClick={() => handleAddMotif(design.id)}
+                onClick={() => mobileMode ? handleAddMotif(design.id) : setSelectedTemplateId(design.id)}
+                onDoubleClick={() => !mobileMode && handleAddMotif(design.id)}
               >
                 {/* Preview Thumbnail */}
                 <div className="court-library__preview">
@@ -287,26 +348,31 @@ function CourtLibrary({ onOpenGenerator }) {
         )}
       </div>
 
-      {/* Generate New Design Button */}
-      <div className="court-library__generate">
-        <button
-          className="court-library__generate-btn"
-          onClick={onOpenGenerator}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Generate New Design
-        </button>
-      </div>
+      {/* Generate New Design Button - hidden in mobile */}
+      {!mobileMode && (
+        <div className="court-library__generate">
+          <button
+            className="court-library__generate-btn"
+            onClick={onOpenGenerator}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Generate New Design
+          </button>
+        </div>
+      )}
 
-      <div className="court-library__footer">
-        <p className="court-library__hint">
-          {activeTab === 'courts' && 'Double-click a court to add it instantly'}
-          {activeTab === 'tracks' && 'Double-click a track to add it instantly'}
-          {activeTab === 'designs' && 'Double-click a design to add it as a motif'}
-        </p>
-      </div>
+      {!mobileMode && (
+        <div className="court-library__footer">
+          <p className="court-library__hint">
+            {activeTab === 'courts' && 'Double-click a court to add it instantly'}
+            {activeTab === 'tracks' && 'Double-click a track to add it instantly'}
+            {activeTab === 'shapes' && 'Tap a shape to add it to your design'}
+            {activeTab === 'designs' && 'Double-click a design to add it as a motif'}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

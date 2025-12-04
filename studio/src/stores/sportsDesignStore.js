@@ -75,6 +75,12 @@ const initialState = {
   snapToGrid: true,
   gridSize_mm: 100,
 
+  // Mobile UI state
+  mobileLibraryOpen: false,
+  mobilePropertiesOpen: false,
+  mobileColoursOpen: false,
+  mobileActiveTab: 'courts', // 'courts' | 'tracks' | 'shapes' | 'designs'
+
   // Standalone mode - full-bleed single design (no courts/tracks)
   standaloneMode: false,
   standaloneDesignId: null, // ID of the design being shown in standalone mode
@@ -1614,6 +1620,17 @@ export const useSportsDesignStore = create(
           propertiesPanelUserClosed: state.showPropertiesPanel ? true : false
         }));
       },
+
+      // ====== Mobile UI Actions ======
+      setMobileLibraryOpen: (open) => set({ mobileLibraryOpen: open }),
+      setMobilePropertiesOpen: (open) => set({ mobilePropertiesOpen: open }),
+      setMobileColoursOpen: (open) => set({ mobileColoursOpen: open }),
+      setMobileActiveTab: (tab) => set({ mobileActiveTab: tab }),
+      closeMobileSheets: () => set({
+        mobileLibraryOpen: false,
+        mobilePropertiesOpen: false,
+        mobileColoursOpen: false
+      }),
 
       toggleColorEditor: () => {
         set((state) => ({ showColorEditor: !state.showColorEditor }));

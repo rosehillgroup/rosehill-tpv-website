@@ -344,3 +344,123 @@
   cursor: not-allowed;
 }
 
+/* ====== Shapes Grid ====== */
+.court-library__shapes-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.court-library__shapes-grid--mobile {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  padding: 0.75rem;
+}
+
+.court-library__shape-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.75rem 0.5rem;
+  background: var(--color-bg-subtle, #f8fafc);
+  border: 1px solid var(--color-border, #e4e9f0);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 70px;
+}
+
+.court-library__shape-btn:hover {
+  background: white;
+  border-color: var(--color-primary, #1e4a7a);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.court-library__shape-btn:active {
+  transform: scale(0.95);
+}
+
+.court-library__shape-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  color: var(--color-primary, #1e4a7a);
+}
+
+.court-library__shape-name {
+  font-size: 0.625rem;
+  font-weight: 500;
+  color: var(--color-text-secondary, #64748b);
+  text-align: center;
+}
+
+/* ====== Mobile Mode ====== */
+.court-library--mobile {
+  height: auto;
+  max-height: none;
+}
+
+.court-library--mobile .court-library__list {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.court-library__list--mobile {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  padding: 0.75rem;
+}
+
+.court-library__list--mobile .court-library__item {
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem;
+  min-height: 120px;
+}
+
+.court-library__list--mobile .court-library__preview {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 0.5rem;
+}
+
+.court-library__list--mobile .court-library__info {
+  text-align: center;
+}
+
+.court-library__list--mobile .court-library__name {
+  font-size: 0.75rem;
+}
+
+.court-library__list--mobile .court-library__dimensions,
+.court-library__list--mobile .court-library__standard,
+.court-library__list--mobile .court-library__note {
+  font-size: 0.625rem;
+}
+
+.court-library__list--mobile .court-library__add-btn {
+  display: none; /* Hide add button, tap to add instead */
+}
+
+/* Mobile shapes grid adjustments */
+.court-library--mobile .court-library__shapes-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.court-library--mobile .court-library__shape-btn {
+  min-height: 80px;
+  padding: 1rem 0.5rem;
+}
+
+.court-library--mobile .court-library__shape-icon {
+  font-size: 2rem;
+}
+
+.court-library--mobile .court-library__shape-name {
+  font-size: 0.6875rem;
+}
+

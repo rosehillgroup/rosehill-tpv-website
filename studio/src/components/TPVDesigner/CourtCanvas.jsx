@@ -24,6 +24,15 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
 
+  // Touch gesture state
+  const [touchState, setTouchState] = useState({
+    active: false,
+    initialDistance: 0,
+    initialZoom: 1,
+    initialPan: { x: 0, y: 0 },
+    initialCenter: { x: 0, y: 0 }
+  });
+
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(null);
   const [dragCourtId, setDragCourtId] = useState(null);
@@ -1019,6 +1028,72 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     setIsPanning(false);
   };
 
+  // ====== Touch Gesture Handlers for Mobile ======
+  const getDistanceBetweenTouches = (touches) => {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const getCenterBetweenTouches = (touches) => {
+    return {
+      x: (touches[0].clientX + touches[1].clientX) / 2,
+      y: (touches[0].clientY + touches[1].clientY) / 2
+    };
+  };
+
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 2) {
+      // Two-finger gesture: pinch zoom and pan
+      e.preventDefault();
+      const distance = getDistanceBetweenTouches(e.touches);
+      const center = getCenterBetweenTouches(e.touches);
+
+      setTouchState({
+        active: true,
+        initialDistance: distance,
+        initialZoom: zoom,
+        initialPan: { ...pan },
+        initialCenter: center
+      });
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches.length === 2 && touchState.active) {
+      e.preventDefault();
+
+      // Calculate pinch zoom
+      const currentDistance = getDistanceBetweenTouches(e.touches);
+      const scaleRatio = currentDistance / touchState.initialDistance;
+      let newZoom = touchState.initialZoom * scaleRatio;
+      newZoom = Math.min(Math.max(newZoom, 0.25), 5); // Clamp between 0.25 and 5
+
+      // Calculate two-finger pan
+      const currentCenter = getCenterBetweenTouches(e.touches);
+      const panDeltaX = currentCenter.x - touchState.initialCenter.x;
+      const panDeltaY = currentCenter.y - touchState.initialCenter.y;
+
+      setZoom(newZoom);
+      setPan({
+        x: touchState.initialPan.x + panDeltaX,
+        y: touchState.initialPan.y + panDeltaY
+      });
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (e.touches.length < 2) {
+      setTouchState({
+        active: false,
+        initialDistance: 0,
+        initialZoom: 1,
+        initialPan: { x: 0, y: 0 },
+        initialCenter: { x: 0, y: 0 }
+      });
+    }
+  };
+
   // Set up pan event listeners
   useEffect(() => {
     if (isPanning) {
@@ -1094,7 +1169,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         className="court-canvas__viewport"
         onWheel={handleWheel}
         onMouseDown={handlePanStart}
-        style={{ cursor: isPanning ? 'grabbing' : undefined }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ cursor: isPanning ? 'grabbing' : undefined, touchAction: 'none' }}
       >
         <div
           className="court-canvas__transform-wrapper"
