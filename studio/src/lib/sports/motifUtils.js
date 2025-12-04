@@ -86,8 +86,33 @@ export async function fetchMotifFromDesign(designId) {
 
   // Extract dimensions from design.dimensions (JSONB field)
   const dimensions = design.dimensions || {};
-  const width_mm = dimensions.widthMM || dimensions.width_mm || 5000;
-  const height_mm = dimensions.lengthMM || dimensions.length_mm || 5000;
+  let width_mm = dimensions.widthMM || dimensions.width_mm || 5000;
+  let height_mm = dimensions.lengthMM || dimensions.length_mm || 5000;
+
+  // If dimensions are default square (5000x5000), extract from SVG viewBox for correct aspect ratio
+  const isDefaultSquare = width_mm === 5000 && height_mm === 5000;
+  const svgToCheck = solidSvgContent || blendSvgContent;
+
+  if (svgToCheck) {
+    const svgDimensions = extractSVGDimensions(svgToCheck);
+    if (svgDimensions && svgDimensions.width && svgDimensions.height) {
+      const aspectRatio = svgDimensions.width / svgDimensions.height;
+
+      // Only override if not square OR if stored as default square
+      if (isDefaultSquare || Math.abs(aspectRatio - 1) > 0.01) {
+        if (aspectRatio > 1) {
+          // Wider than tall - use width as base
+          width_mm = 5000;
+          height_mm = Math.round(5000 / aspectRatio);
+        } else if (aspectRatio < 1) {
+          // Taller than wide - use height as base
+          height_mm = 5000;
+          width_mm = Math.round(5000 * aspectRatio);
+        }
+        console.log('[MOTIF] Corrected dimensions from SVG viewBox:', width_mm, 'x', height_mm, 'mm (aspect ratio:', aspectRatio.toFixed(3), ')');
+      }
+    }
+  }
 
   // Get thumbnail URL for preview (stored at top level)
   const thumbnailUrl = design.thumbnail_url || design.original_png_url || null;
