@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import InspirePanelRecraft from '../InspirePanelRecraft.jsx';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { usePlaygroundDesignStore } from '../../stores/playgroundDesignStore.js';
-import { fetchMotifFromDesign } from '../../lib/sports/motifUtils.js';
+import { extractSVGDimensions } from '../../lib/sports/motifUtils.js';
 import { saveDesign } from '../../lib/api/designs.js';
 import { serializeDesign } from '../../utils/designSerializer.js';
 import './DesignEditorModal.css';
@@ -62,60 +62,114 @@ function DesignEditorModal({ isOpen, onClose }) {
     setAddSuccess(false);
   }, []);
 
-  // Auto-save and add to canvas
+  // Auto-save and add to canvas - uses current in-memory SVG directly
   const handleAddToCanvas = async () => {
     if (!hasDesign || isAddingToCanvas) return;
 
     setIsAddingToCanvas(true);
     try {
-      let designId = currentDesignId;
+      // Get the current SVG URLs from the store (these are blob URLs showing current edits)
+      const { blendSvgUrl: currentBlendUrl, solidSvgUrl: currentSolidUrl, widthMM, lengthMM } = playgroundStore;
 
-      // If not saved yet, auto-save first
-      if (!designId) {
-        setIsSaving(true);
+      // Fetch the actual SVG content from the blob URLs
+      let solidSvgContent = null;
+      let blendSvgContent = null;
 
-        // Generate a name if none exists
-        const autoName = designName || `Design ${new Date().toLocaleString('en-GB', {
-          day: '2-digit',
-          month: 'short',
-          hour: '2-digit',
-          minute: '2-digit'
-        })}`;
-
-        // Serialize the current design state
-        const designData = serializeDesign(playgroundStore);
-
-        // Save to database
-        const savedDesign = await saveDesign({
-          name: autoName,
-          description: '',
-          tags: [],
-          design_data: designData,
-          input_mode: playgroundStore.inputMode
-        });
-
-        designId = savedDesign.id;
-
-        // Update the store with the saved ID
-        playgroundStore.setCurrentDesignId(designId);
-        playgroundStore.setDesignName(autoName);
-
-        setIsSaving(false);
+      if (currentSolidUrl) {
+        try {
+          const response = await fetch(currentSolidUrl);
+          solidSvgContent = await response.text();
+          console.log('[EDITOR] Fetched solid SVG from blob:', solidSvgContent.length, 'chars');
+        } catch (err) {
+          console.error('[EDITOR] Failed to fetch solid SVG:', err);
+        }
       }
 
-      // Fetch the motif data and add to canvas
-      const motifData = await fetchMotifFromDesign(designId);
+      if (currentBlendUrl) {
+        try {
+          const response = await fetch(currentBlendUrl);
+          blendSvgContent = await response.text();
+          console.log('[EDITOR] Fetched blend SVG from blob:', blendSvgContent.length, 'chars');
+        } catch (err) {
+          console.error('[EDITOR] Failed to fetch blend SVG:', err);
+        }
+      }
+
+      if (!solidSvgContent && !blendSvgContent) {
+        throw new Error('No SVG content available. Please ensure a design has been generated.');
+      }
+
+      // Extract dimensions from SVG viewBox (more accurate than store dimensions)
+      const svgContent = solidSvgContent || blendSvgContent;
+      const svgDimensions = extractSVGDimensions(svgContent);
+
+      // Use SVG dimensions if available, fall back to store dimensions, then default
+      let originalWidth_mm = widthMM || 5000;
+      let originalHeight_mm = lengthMM || 5000;
+
+      if (svgDimensions) {
+        // SVG dimensions are in pixels, scale to mm (assume 1px = 1mm for designs)
+        // Maintain aspect ratio from SVG
+        const aspectRatio = svgDimensions.width / svgDimensions.height;
+        if (aspectRatio > 1) {
+          // Wider than tall
+          originalWidth_mm = Math.max(widthMM || 5000, 5000);
+          originalHeight_mm = originalWidth_mm / aspectRatio;
+        } else {
+          // Taller than wide or square
+          originalHeight_mm = Math.max(lengthMM || 5000, 5000);
+          originalWidth_mm = originalHeight_mm * aspectRatio;
+        }
+        console.log('[EDITOR] Using SVG aspect ratio:', aspectRatio, '→', originalWidth_mm, 'x', originalHeight_mm, 'mm');
+      }
+
+      // Always save to persist the current state (with edits)
+      setIsSaving(true);
+      let designId = currentDesignId;
+
+      // Generate a name if none exists
+      const autoName = designName || `Design ${new Date().toLocaleString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+      })}`;
+
+      // Serialize the current design state (includes all edits)
+      const designData = serializeDesign(playgroundStore);
+
+      // Save to database (create or update)
+      const savedDesign = await saveDesign({
+        id: designId || undefined, // Include ID to update existing design
+        name: autoName,
+        description: '',
+        tags: [],
+        design_data: designData,
+        input_mode: playgroundStore.inputMode
+      });
+
+      designId = savedDesign.id;
+
+      // Update the store with the saved ID
+      playgroundStore.setCurrentDesignId(designId);
+      playgroundStore.setDesignName(autoName);
+      setIsSaving(false);
+
+      // Get thumbnail URL
+      const thumbnailUrl = playgroundStore.result?.thumb_url || playgroundStore.result?.png_url || null;
+
+      // Add the motif using the CURRENT in-memory SVG content (not fetched from DB)
       addMotif(
-        motifData.sourceDesignId,
-        motifData.sourceDesignName,
-        motifData.svgContent,
-        motifData.originalWidth_mm,
-        motifData.originalHeight_mm,
-        motifData.sourceThumbnailUrl,
+        designId,
+        autoName,
+        solidSvgContent || blendSvgContent,
+        originalWidth_mm,
+        originalHeight_mm,
+        thumbnailUrl,
         {
-          solidSvgContent: motifData.solidSvgContent,
-          blendSvgContent: motifData.blendSvgContent,
-          hasBothVersions: motifData.hasBothVersions
+          solidSvgContent: solidSvgContent,
+          blendSvgContent: blendSvgContent,
+          hasBothVersions: !!(solidSvgContent && blendSvgContent)
         }
       );
 
