@@ -102,16 +102,14 @@ function CourtLibrary({ onOpenGenerator, mobileMode = false, activeTab: external
     }
   };
 
-  // Shape definitions for the shapes tab
+  // Shape definitions for the shapes tab (mobile only - desktop has floating elements box)
   const shapeDefinitions = [
     { id: 'rectangle', name: 'Rectangle', icon: '▭' },
     { id: 'square', name: 'Square', icon: '□' },
     { id: 'circle', name: 'Circle', icon: '○' },
     { id: 'triangle', name: 'Triangle', icon: '△' },
-    { id: 'diamond', name: 'Diamond', icon: '◇' },
+    { id: 'pentagon', name: 'Pentagon', icon: '⬠' },
     { id: 'hexagon', name: 'Hexagon', icon: '⬡' },
-    { id: 'star', name: 'Star', icon: '☆' },
-    { id: 'cross', name: 'Cross', icon: '✚' },
   ];
 
   const shapeCount = Object.keys(shapes || {}).length;
@@ -124,7 +122,8 @@ function CourtLibrary({ onOpenGenerator, mobileMode = false, activeTab: external
       case 'tracks':
         return { title: 'Tracks', count: trackCount, hint: 'Select a track to add' };
       case 'shapes':
-        return { title: 'Shapes', count: shapeCount, hint: 'Add basic shapes to your design' };
+        // Only shown in mobile mode
+        return { title: 'Shapes', count: shapeCount, hint: 'Tap a shape to add it' };
       case 'designs':
         return { title: 'Designs', count: motifCount, hint: 'Add your saved designs as motifs' };
       default:
@@ -167,15 +166,6 @@ function CourtLibrary({ onOpenGenerator, mobileMode = false, activeTab: external
           }}
         >
           Tracks
-        </button>
-        <button
-          className={`court-library__tab ${activeTab === 'shapes' ? 'court-library__tab--active' : ''}`}
-          onClick={() => {
-            setActiveTab('shapes');
-            setSelectedTemplateId(null);
-          }}
-        >
-          Shapes
         </button>
         <button
           className={`court-library__tab ${activeTab === 'designs' ? 'court-library__tab--active' : ''}`}
@@ -368,7 +358,6 @@ function CourtLibrary({ onOpenGenerator, mobileMode = false, activeTab: external
           <p className="court-library__hint">
             {activeTab === 'courts' && 'Double-click a court to add it instantly'}
             {activeTab === 'tracks' && 'Double-click a track to add it instantly'}
-            {activeTab === 'shapes' && 'Tap a shape to add it to your design'}
             {activeTab === 'designs' && 'Double-click a design to add it as a motif'}
           </p>
         </div>
