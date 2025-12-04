@@ -551,28 +551,45 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       {elementOrder.length === 0 && (
         <div className="court-canvas__empty-state">
           <div className="court-canvas__empty-icon">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <line x1="12" y1="8" x2="12" y2="16" />
-              <line x1="8" y1="12" x2="16" y2="12" />
+            {/* Sparkle/design icon */}
+            <svg width="72" height="72" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L14.4 8.4L21 9.6L16.2 14.4L17.6 21L12 17.6L6.4 21L7.8 14.4L3 9.6L9.6 8.4L12 2Z"
+                    fill="rgba(255,255,255,0.15)" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+              <circle cx="19" cy="5" r="1.5" fill="currentColor" opacity="0.6"/>
+              <circle cx="5" cy="18" r="1" fill="currentColor" opacity="0.4"/>
+              <circle cx="20" cy="16" r="0.8" fill="currentColor" opacity="0.5"/>
             </svg>
           </div>
-          <h3 className="court-canvas__empty-title">Your canvas is ready</h3>
+          <h3 className="court-canvas__empty-title">Let's create something great</h3>
           <p className="court-canvas__empty-text">
-            Add courts, tracks or designs from the sidebar to get started.
+            Build your perfect sports surface design in minutes
           </p>
           <div className="court-canvas__empty-hints">
             <div className="court-canvas__hint">
-              <span className="court-canvas__hint-icon">1</span>
-              <span>Browse <strong>Courts</strong> or <strong>Tracks</strong> in the sidebar</span>
+              <span className="court-canvas__hint-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <line x1="9" y1="3" x2="9" y2="21"/>
+                </svg>
+              </span>
+              <span>Choose from <strong>Courts</strong>, <strong>Tracks</strong> or <strong>Designs</strong></span>
             </div>
             <div className="court-canvas__hint">
-              <span className="court-canvas__hint-icon">2</span>
-              <span>Click to add elements to the canvas</span>
+              <span className="court-canvas__hint-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+              </span>
+              <span>Click to add elements to your canvas</span>
             </div>
             <div className="court-canvas__hint">
-              <span className="court-canvas__hint-icon">3</span>
-              <span>Drag to position, double-click to edit</span>
+              <span className="court-canvas__hint-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M5 9l4 4-4 4"/>
+                  <path d="M12 4h7a2 2 0 012 2v12a2 2 0 01-2 2h-7"/>
+                </svg>
+              </span>
+              <span>Drag to arrange, customise colours and export</span>
             </div>
           </div>
         </div>
