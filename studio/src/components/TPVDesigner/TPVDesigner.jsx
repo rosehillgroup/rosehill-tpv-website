@@ -527,10 +527,10 @@ function TPVDesigner({ loadedDesign }) {
                     </svg>
                   </button>
                   <button
-                    className={`sports-toolbar__btn ${showPropertiesPanel && (selectedCourtId || selectedTrackId || selectedMotifId || selectedShapeId) ? 'sports-toolbar__btn--active' : ''}`}
+                    className={`sports-toolbar__btn ${showPropertiesPanel && (selectedCourtId || selectedTrackId || selectedMotifId || selectedShapeId || selectedTextId) ? 'sports-toolbar__btn--active' : ''}`}
                     onClick={togglePropertiesPanel}
                     title="Properties"
-                    disabled={(!selectedCourtId && !selectedTrackId && !selectedMotifId && !selectedShapeId) || standaloneMode}
+                    disabled={(!selectedCourtId && !selectedTrackId && !selectedMotifId && !selectedShapeId && !selectedTextId) || standaloneMode}
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <line x1="4" y1="21" x2="4" y2="14" />
@@ -680,8 +680,8 @@ function TPVDesigner({ loadedDesign }) {
               <ShapeToolbar />
             </main>
 
-            {/* Properties Panel - shown when court, track, motif, or shape is selected AND panel is not hidden AND not in standalone mode */}
-            {(selectedCourtId || selectedTrackId || selectedMotifId || selectedShapeId) && showPropertiesPanel && !standaloneMode && (
+            {/* Properties Panel - shown when court, track, motif, shape, or text is selected AND panel is not hidden AND not in standalone mode */}
+            {(selectedCourtId || selectedTrackId || selectedMotifId || selectedShapeId || selectedTextId) && showPropertiesPanel && !standaloneMode && (
               <aside className="sports-designer__properties">
                 <PropertiesPanel onEditSourceDesign={handleEditSourceDesign} />
               </aside>
