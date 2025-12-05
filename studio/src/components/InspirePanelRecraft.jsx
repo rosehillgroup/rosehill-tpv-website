@@ -307,16 +307,22 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     console.log('[INSPIRE] Detected design loaded directly into store, regenerating SVGs...');
 
     const regenerateSvgs = async () => {
-      // First, fetch and tag the original SVG for region-based editing
-      let taggedSvg = null;
-      try {
-        const svgResponse = await fetch(result.svg_url);
-        const svgText = await svgResponse.text();
-        taggedSvg = tagSvgRegions(svgText);
-        setOriginalTaggedSvg(taggedSvg);
-        console.log('[INSPIRE] Tagged SVG with region IDs');
-      } catch (tagError) {
-        console.error('[INSPIRE] Failed to tag SVG regions:', tagError);
+      // Use saved tagged SVG if available (preserves region IDs for overrides)
+      // Otherwise, fetch and tag the original SVG for region-based editing
+      let taggedSvg = originalTaggedSvg || null;
+
+      if (taggedSvg) {
+        console.log('[INSPIRE] Using existing tagged SVG with preserved region IDs');
+      } else {
+        try {
+          const svgResponse = await fetch(result.svg_url);
+          const svgText = await svgResponse.text();
+          taggedSvg = tagSvgRegions(svgText);
+          setOriginalTaggedSvg(taggedSvg);
+          console.log('[INSPIRE] Tagged SVG with region IDs');
+        } catch (tagError) {
+          console.error('[INSPIRE] Failed to tag SVG regions:', tagError);
+        }
       }
 
       try {
@@ -350,7 +356,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     };
 
     regenerateSvgs();
-  }, [result, blendSvgUrl, solidSvgUrl, blendRecipes, solidRecipes, colorMapping, solidColorMapping, loadedDesign, regionOverrides]);
+  }, [result, blendSvgUrl, solidSvgUrl, blendRecipes, solidRecipes, colorMapping, solidColorMapping, loadedDesign, regionOverrides, originalTaggedSvg]);
 
   // Reset the regeneration flag when the design changes (e.g., new design loaded)
   useEffect(() => {
@@ -2323,7 +2329,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
             solidSvgUrl,
             arMapping,
             jobId,
-            inSituData
+            inSituData,
+            // Region overrides for transparency edits
+            regionOverrides,
+            originalTaggedSvg
           }}
           existingDesignId={currentDesignId}
           initialName={designName}

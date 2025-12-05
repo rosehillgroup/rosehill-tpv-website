@@ -1563,11 +1563,11 @@ function ShapePropertiesPanel({ shape, shapeId }) {
   // Handle stroke toggle
   const handleStrokeToggle = (enabled) => {
     if (enabled && !strokeColor) {
-      // Default to white stroke
+      // Default to RH31 Cream for border
       setShapeStroke(shapeId, true, {
-        tpv_code: 'RH01',
-        hex: '#FFFFFF',
-        name: 'White'
+        tpv_code: 'RH31',
+        hex: '#E8E3D8',
+        name: 'Cream'
       }, strokeWidth_mm);
     } else {
       setShapeStroke(shapeId, enabled, strokeColor, strokeWidth_mm);

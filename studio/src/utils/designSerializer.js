@@ -34,8 +34,9 @@ export function serializeDesign(state) {
 
   console.log('[SERIALIZE] Serializing design with result:', result);
   console.log('[SERIALIZE] result.svg_url:', result?.svg_url);
-  console.log('[SERIALIZE] result.png_url:', result?.png_url);
-  console.log('[SERIALIZE] result.thumbnail_url:', result?.thumbnail_url);
+  console.log('[SERIALIZE] regionOverrides:', regionOverrides);
+  console.log('[SERIALIZE] regionOverrides size:', regionOverrides?.size);
+  console.log('[SERIALIZE] originalTaggedSvg present:', !!originalTaggedSvg);
 
   // Convert Maps to plain objects for JSON storage
   const serializeMap = (map) => {
