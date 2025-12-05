@@ -110,6 +110,7 @@ function CourtLibrary({ onOpenGenerator, mobileMode = false, activeTab: external
     { id: 'triangle', name: 'Triangle', icon: '△' },
     { id: 'pentagon', name: 'Pentagon', icon: '⬠' },
     { id: 'hexagon', name: 'Hexagon', icon: '⬡' },
+    { id: 'blob', name: 'Blob', icon: '◐' },
   ];
 
   const shapeCount = Object.keys(shapes || {}).length;

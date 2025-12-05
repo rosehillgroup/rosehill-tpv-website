@@ -7,6 +7,7 @@ import TransformHandles from './TransformHandles.jsx';
 import TrackElement from './TrackRenderer.jsx';
 import MotifElement from './MotifElement.jsx';
 import ShapeElement from './ShapeElement.jsx';
+import BlobElement from './BlobElement.jsx';
 import TextElement from './TextElement.jsx';
 import { measureText } from '../../lib/sports/textUtils.js';
 import './CourtCanvas.css';
@@ -110,7 +111,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     updateTextPosition,
     updateTextFontSize,
     updateTextRotation,
-    updateTextContent
+    updateTextContent,
+    updateBlobControlPoint,
+    updateBlobHandle,
+    commitBlobEdit
   } = useSportsDesignStore();
 
   // Convert screen coordinates to SVG coordinates
@@ -1264,6 +1268,25 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             // Skip hidden shapes
             if (shape.visible === false) return null;
 
+            // Render blob shapes with BlobElement
+            if (shape.shapeType === 'blob') {
+              return (
+                <BlobElement
+                  key={elementId}
+                  shape={shape}
+                  isSelected={elementId === selectedShapeId}
+                  onMouseDown={(e) => handleShapeMouseDown(e, elementId)}
+                  onDoubleClick={(e) => handleShapeDoubleClick(e, elementId)}
+                  onScaleStart={(e, corner) => handleShapeScaleStart(e, elementId, corner)}
+                  onRotateStart={(e) => handleShapeRotateStart(e, elementId)}
+                  onPointDrag={(index, newX, newY) => updateBlobControlPoint(elementId, index, newX, newY)}
+                  onHandleDrag={(index, handleType, offsetX, offsetY) => updateBlobHandle(elementId, index, handleType, offsetX, offsetY)}
+                  onDragEnd={() => commitBlobEdit()}
+                />
+              );
+            }
+
+            // Render polygon shapes with ShapeElement
             return (
               <ShapeElement
                 key={elementId}

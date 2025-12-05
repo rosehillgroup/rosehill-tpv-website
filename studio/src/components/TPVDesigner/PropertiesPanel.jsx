@@ -1452,13 +1452,18 @@ function ShapePropertiesPanel({ shape, shapeId }) {
     setShapeStroke,
     setShapeAspectLock,
     removeShape,
-    duplicateShape
+    duplicateShape,
+    updateBlobPoints,
+    updateBlobiness,
+    randomizeBlob,
+    resetBlob
   } = useSportsDesignStore();
 
   const [showFillColorPicker, setShowFillColorPicker] = React.useState(false);
   const [showStrokeColorPicker, setShowStrokeColorPicker] = React.useState(false);
 
   const {
+    shapeType,
     sides,
     width_mm,
     height_mm,
@@ -1469,8 +1474,13 @@ function ShapePropertiesPanel({ shape, shapeId }) {
     strokeEnabled,
     strokeColor,
     strokeWidth_mm,
-    aspectLocked
+    aspectLocked,
+    // Blob-specific properties
+    numPoints,
+    blobiness
   } = shape;
+
+  const isBlob = shapeType === 'blob';
 
   // Handle position updates
   const handlePositionChange = (axis, value) => {
@@ -1602,98 +1612,209 @@ function ShapePropertiesPanel({ shape, shapeId }) {
     <div className="properties-panel">
       {/* Panel Header */}
       <div className="properties-panel__header">
-        <h3>Shape Properties</h3>
+        <h3>{isBlob ? 'Blob Properties' : 'Shape Properties'}</h3>
         <div className="properties-panel__court-info">
-          <span className="court-name">{getShapeDisplayName(sides)}</span>
-          <span className="court-standard">{getShapeIcon(sides)} {sides} sides</span>
+          <span className="court-name">{isBlob ? 'Organic Blob' : getShapeDisplayName(sides)}</span>
+          <span className="court-standard">{isBlob ? `◐ ${numPoints} points` : `${getShapeIcon(sides)} ${sides} sides`}</span>
         </div>
       </div>
 
       {/* Panel Content */}
       <div className="properties-panel__content">
         <div className="properties-section">
-          {/* Shape Type Presets */}
-          <div className="property-group">
-            <label>Shape Type</label>
-            <div className="shape-presets" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '0.5rem',
-              marginTop: '0.5rem'
-            }}>
-              {shapePresets.map(preset => (
-                <button
-                  key={preset.sides}
-                  onClick={() => handleSidesChange(preset.sides)}
-                  title={preset.name}
-                  style={{
-                    padding: '0.5rem',
-                    border: sides === preset.sides ? '2px solid #3b82f6' : '1px solid #e4e9f0',
-                    borderRadius: '6px',
-                    background: sides === preset.sides ? '#eff6ff' : '#fff',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '0.25rem',
-                    fontSize: '1.25rem'
-                  }}
-                >
-                  <span>{preset.icon}</span>
-                  <span style={{ fontSize: '0.65rem', color: '#64748b' }}>{preset.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Sides Slider (for custom values) */}
-          <div className="property-group">
-            <label>Number of Sides</label>
-            <div className="property-input-row">
-              <input
-                type="range"
-                min="3"
-                max="32"
-                value={sides}
-                onChange={(e) => handleSidesChange(e.target.value)}
-                className="property-slider"
-              />
-              <div className="property-input-group property-input-group--compact">
-                <input
-                  type="number"
-                  value={sides}
-                  onChange={(e) => handleSidesChange(e.target.value)}
-                  min="3"
-                  max="32"
-                />
+          {/* Blob-specific controls */}
+          {isBlob ? (
+            <>
+              {/* Points Slider */}
+              <div className="property-group">
+                <label>Control Points</label>
+                <div className="property-input-row">
+                  <input
+                    type="range"
+                    min="4"
+                    max="16"
+                    value={numPoints || 8}
+                    onChange={(e) => updateBlobPoints(shapeId, parseInt(e.target.value))}
+                    className="property-slider"
+                  />
+                  <div className="property-input-group property-input-group--compact">
+                    <input
+                      type="number"
+                      value={numPoints || 8}
+                      onChange={(e) => updateBlobPoints(shapeId, parseInt(e.target.value))}
+                      min="4"
+                      max="16"
+                    />
+                  </div>
+                </div>
+                <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.25rem' }}>
+                  More points = more complex shape
+                </div>
               </div>
-            </div>
-          </div>
 
-          {/* Corner Smoothing */}
-          <div className="property-group">
-            <label>Corner Smoothing</label>
-            <div className="property-input-row">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={cornerRadius}
-                onChange={(e) => handleCornerRadiusChange(e.target.value)}
-                className="property-slider"
-              />
-              <div className="property-input-group property-input-group--compact">
-                <input
-                  type="number"
-                  value={cornerRadius}
-                  onChange={(e) => handleCornerRadiusChange(e.target.value)}
-                  min="0"
-                  max="100"
-                />
-                <span className="property-unit">%</span>
+              {/* Organic/Blobiness Slider */}
+              <div className="property-group">
+                <label>Organic</label>
+                <div className="property-input-row">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={Math.round((blobiness || 0) * 100)}
+                    onChange={(e) => updateBlobiness(shapeId, parseInt(e.target.value) / 100)}
+                    className="property-slider"
+                  />
+                  <div className="property-input-group property-input-group--compact">
+                    <input
+                      type="number"
+                      value={Math.round((blobiness || 0) * 100)}
+                      onChange={(e) => updateBlobiness(shapeId, parseInt(e.target.value) / 100)}
+                      min="0"
+                      max="100"
+                    />
+                    <span className="property-unit">%</span>
+                  </div>
+                </div>
+                <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.25rem' }}>
+                  Low = rounder, High = more irregular
+                </div>
               </div>
-            </div>
-          </div>
+
+              {/* Randomize & Reset Buttons */}
+              <div className="property-group">
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => randomizeBlob(shapeId)}
+                    style={{
+                      flex: 1,
+                      padding: '0.625rem 1rem',
+                      background: '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.8125rem',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.375rem'
+                    }}
+                  >
+                    <span style={{ fontSize: '1rem' }}>&#x1F3B2;</span> Randomize
+                  </button>
+                  <button
+                    onClick={() => resetBlob(shapeId)}
+                    style={{
+                      flex: 1,
+                      padding: '0.625rem 1rem',
+                      background: '#f1f5f9',
+                      color: '#475569',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.8125rem',
+                      fontWeight: '500',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.375rem'
+                    }}
+                  >
+                    <span style={{ fontSize: '1rem' }}>&#x21BA;</span> Reset
+                  </button>
+                </div>
+                <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.5rem', textAlign: 'center' }}>
+                  Drag points on canvas for precise editing
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Shape Type Presets (Polygon only) */}
+              <div className="property-group">
+                <label>Shape Type</label>
+                <div className="shape-presets" style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gap: '0.5rem',
+                  marginTop: '0.5rem'
+                }}>
+                  {shapePresets.map(preset => (
+                    <button
+                      key={preset.sides}
+                      onClick={() => handleSidesChange(preset.sides)}
+                      title={preset.name}
+                      style={{
+                        padding: '0.5rem',
+                        border: sides === preset.sides ? '2px solid #3b82f6' : '1px solid #e4e9f0',
+                        borderRadius: '6px',
+                        background: sides === preset.sides ? '#eff6ff' : '#fff',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '0.25rem',
+                        fontSize: '1.25rem'
+                      }}
+                    >
+                      <span>{preset.icon}</span>
+                      <span style={{ fontSize: '0.65rem', color: '#64748b' }}>{preset.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sides Slider (for custom values) */}
+              <div className="property-group">
+                <label>Number of Sides</label>
+                <div className="property-input-row">
+                  <input
+                    type="range"
+                    min="3"
+                    max="32"
+                    value={sides}
+                    onChange={(e) => handleSidesChange(e.target.value)}
+                    className="property-slider"
+                  />
+                  <div className="property-input-group property-input-group--compact">
+                    <input
+                      type="number"
+                      value={sides}
+                      onChange={(e) => handleSidesChange(e.target.value)}
+                      min="3"
+                      max="32"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Corner Smoothing */}
+              <div className="property-group">
+                <label>Corner Smoothing</label>
+                <div className="property-input-row">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={cornerRadius}
+                    onChange={(e) => handleCornerRadiusChange(e.target.value)}
+                    className="property-slider"
+                  />
+                  <div className="property-input-group property-input-group--compact">
+                    <input
+                      type="number"
+                      value={cornerRadius}
+                      onChange={(e) => handleCornerRadiusChange(e.target.value)}
+                      min="0"
+                      max="100"
+                    />
+                    <span className="property-unit">%</span>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Divider */}
           <div className="properties-section__divider" style={{ margin: '1rem 0' }}>

@@ -1,6 +1,7 @@
 // TPV Studio - TPV Designer State Management
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { generateBlobControlPoints, generateEllipseControlPoints } from '../lib/sports/blobGeometry.js';
 
 const initialState = {
   // Surface configuration
@@ -1071,11 +1072,58 @@ export const useSportsDesignStore = create(
         const shapeCount = Object.keys(existingShapes).length;
         const fillColor = defaultColors[shapeCount % defaultColors.length];
 
+        // Handle blob preset specially
+        if (preset === 'blob') {
+          const seed = Math.floor(Math.random() * 100000);
+          const numPoints = 8;
+          const blobiness = 0.3;
+          const controlPoints = generateBlobControlPoints(numPoints, blobiness, seed);
+
+          const blobShape = {
+            id: shapeId,
+            type: 'shape',
+            shapeType: 'blob',
+            numPoints,
+            blobiness,
+            seed,
+            controlPoints,
+            width_mm: 2000,
+            height_mm: 2000,
+            position: {
+              x: surface.width_mm / 2 - 1000,
+              y: surface.length_mm / 2 - 1000
+            },
+            rotation: 0,
+            fillColor: fillColor,
+            strokeEnabled: false,
+            strokeColor: null,
+            strokeWidth_mm: 50,
+            aspectLocked: false, // Blobs support free aspect ratio
+            locked: false,
+            visible: true
+          };
+
+          set((state) => ({
+            shapes: {
+              ...state.shapes,
+              [shapeId]: blobShape
+            },
+            elementOrder: [...state.elementOrder, shapeId],
+            selectedShapeId: shapeId,
+            selectedCourtId: null,
+            selectedTrackId: null,
+            selectedMotifId: null
+          }));
+          get().addToHistory();
+          return;
+        }
+
         const config = presets[preset] || presets.rectangle;
 
         const shape = {
           id: shapeId,
           type: 'shape',
+          shapeType: 'polygon', // Explicitly mark as polygon
           sides: config.sides,
           width_mm: config.width,
           height_mm: config.height,
@@ -1226,6 +1274,169 @@ export const useSportsDesignStore = create(
             }
           };
         });
+        get().addToHistory();
+      },
+
+      // ====== Blob-Specific Actions ======
+      updateBlobPoints: (shapeId, numPoints) => {
+        set((state) => {
+          const shape = state.shapes[shapeId];
+          if (!shape || shape.shapeType !== 'blob') return state;
+
+          // Regenerate control points with new point count
+          const controlPoints = generateBlobControlPoints(
+            numPoints,
+            shape.blobiness,
+            shape.seed
+          );
+
+          return {
+            shapes: {
+              ...state.shapes,
+              [shapeId]: {
+                ...shape,
+                numPoints,
+                controlPoints
+              }
+            }
+          };
+        });
+        get().addToHistory();
+      },
+
+      updateBlobiness: (shapeId, blobiness) => {
+        set((state) => {
+          const shape = state.shapes[shapeId];
+          if (!shape || shape.shapeType !== 'blob') return state;
+
+          // Regenerate control points with new blobiness
+          const controlPoints = generateBlobControlPoints(
+            shape.numPoints,
+            blobiness,
+            shape.seed
+          );
+
+          return {
+            shapes: {
+              ...state.shapes,
+              [shapeId]: {
+                ...shape,
+                blobiness,
+                controlPoints
+              }
+            }
+          };
+        });
+        get().addToHistory();
+      },
+
+      randomizeBlob: (shapeId) => {
+        set((state) => {
+          const shape = state.shapes[shapeId];
+          if (!shape || shape.shapeType !== 'blob') return state;
+
+          // Generate new seed and recalculate control points
+          const newSeed = Math.floor(Math.random() * 100000);
+          const controlPoints = generateBlobControlPoints(
+            shape.numPoints,
+            shape.blobiness,
+            newSeed
+          );
+
+          return {
+            shapes: {
+              ...state.shapes,
+              [shapeId]: {
+                ...shape,
+                seed: newSeed,
+                controlPoints
+              }
+            }
+          };
+        });
+        get().addToHistory();
+      },
+
+      resetBlob: (shapeId) => {
+        set((state) => {
+          const shape = state.shapes[shapeId];
+          if (!shape || shape.shapeType !== 'blob') return state;
+
+          // Reset to smooth ellipse
+          const controlPoints = generateEllipseControlPoints();
+
+          return {
+            shapes: {
+              ...state.shapes,
+              [shapeId]: {
+                ...shape,
+                blobiness: 0,
+                controlPoints
+              }
+            }
+          };
+        });
+        get().addToHistory();
+      },
+
+      updateBlobControlPoint: (shapeId, pointIndex, newX, newY) => {
+        set((state) => {
+          const shape = state.shapes[shapeId];
+          if (!shape || shape.shapeType !== 'blob' || !shape.controlPoints) return state;
+
+          const updatedControlPoints = shape.controlPoints.map((point, i) => {
+            if (i !== pointIndex) return point;
+            return {
+              ...point,
+              x: Math.max(0, Math.min(1, newX)),
+              y: Math.max(0, Math.min(1, newY))
+            };
+          });
+
+          return {
+            shapes: {
+              ...state.shapes,
+              [shapeId]: {
+                ...shape,
+                controlPoints: updatedControlPoints
+              }
+            }
+          };
+        });
+        // Don't add to history for every drag movement
+      },
+
+      updateBlobHandle: (shapeId, pointIndex, handleType, offsetX, offsetY) => {
+        set((state) => {
+          const shape = state.shapes[shapeId];
+          if (!shape || shape.shapeType !== 'blob' || !shape.controlPoints) return state;
+
+          const updatedControlPoints = shape.controlPoints.map((point, i) => {
+            if (i !== pointIndex) return point;
+            return {
+              ...point,
+              [handleType]: {
+                x: offsetX,
+                y: offsetY
+              }
+            };
+          });
+
+          return {
+            shapes: {
+              ...state.shapes,
+              [shapeId]: {
+                ...shape,
+                controlPoints: updatedControlPoints
+              }
+            }
+          };
+        });
+        // Don't add to history for every drag movement
+      },
+
+      commitBlobEdit: () => {
+        // Called after finishing a drag operation to save to history
         get().addToHistory();
       },
 

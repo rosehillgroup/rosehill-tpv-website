@@ -18,7 +18,8 @@ function ShapeToolbar() {
     { preset: 'circle', icon: '○', label: 'Circle' },
     { preset: 'triangle', icon: '△', label: 'Triangle' },
     { preset: 'hexagon', icon: '⬡', label: 'Hexagon' },
-    { preset: 'pentagon', icon: '⬠', label: 'Pentagon' }
+    { preset: 'pentagon', icon: '⬠', label: 'Pentagon' },
+    { preset: 'blob', icon: '◐', label: 'Blob' }
   ];
 
   const handleAddShape = (preset) => {
