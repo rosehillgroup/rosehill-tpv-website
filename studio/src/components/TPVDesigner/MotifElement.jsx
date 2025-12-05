@@ -11,11 +11,12 @@ import React, { useMemo } from 'react';
  * @param {Object} props.motif - Motif data from store
  * @param {boolean} props.isSelected - Whether this motif is selected
  * @param {Function} props.onMouseDown - Handler for mouse down (drag start)
+ * @param {Function} props.onTouchStart - Handler for touch start (drag start on mobile)
  * @param {Function} props.onDoubleClick - Handler for double click (open properties)
  * @param {Function} props.onScaleStart - Handler for scale handle drag start
  * @param {Function} props.onRotateStart - Handler for rotation handle drag start
  */
-function MotifElement({ motif, isSelected, onMouseDown, onDoubleClick, onScaleStart, onRotateStart }) {
+function MotifElement({ motif, isSelected, onMouseDown, onTouchStart, onDoubleClick, onScaleStart, onRotateStart }) {
   const {
     svgContent,
     originalWidth_mm,
@@ -191,6 +192,7 @@ function MotifElement({ motif, isSelected, onMouseDown, onDoubleClick, onScaleSt
         fill="transparent"
         pointerEvents="all"
         onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart}
         onDoubleClick={onDoubleClick}
         style={{ cursor: 'move' }}
       />

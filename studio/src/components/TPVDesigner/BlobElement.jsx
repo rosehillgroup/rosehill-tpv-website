@@ -13,6 +13,7 @@ import BlobEditHandles from './BlobEditHandles';
  * @param {Object} props.shape - Shape data from store
  * @param {boolean} props.isSelected - Whether this shape is selected
  * @param {Function} props.onMouseDown - Handler for mouse down (drag start)
+ * @param {Function} props.onTouchStart - Handler for touch start (drag start on mobile)
  * @param {Function} props.onDoubleClick - Handler for double click (open properties)
  * @param {Function} props.onScaleStart - Handler for scale handle drag start
  * @param {Function} props.onRotateStart - Handler for rotation handle drag start
@@ -24,6 +25,7 @@ function BlobElement({
   shape,
   isSelected,
   onMouseDown,
+  onTouchStart,
   onDoubleClick,
   onScaleStart,
   onRotateStart,
@@ -71,13 +73,14 @@ function BlobElement({
         pointerEvents="none"
       />
 
-      {/* Invisible clickable area - captures mouse events for the whole blob */}
+      {/* Invisible clickable area - captures mouse/touch events for the whole blob */}
       <path
         d={blobPath}
         fill="transparent"
         stroke="transparent"
         strokeWidth={Math.max(strokeWidth_mm || 0, 100)} // Minimum hit area
         pointerEvents="all"
+        onTouchStart={onTouchStart}
         onMouseDown={onMouseDown}
         onDoubleClick={onDoubleClick}
         style={{ cursor: 'move' }}

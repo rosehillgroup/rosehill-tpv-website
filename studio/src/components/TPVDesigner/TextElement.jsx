@@ -13,6 +13,7 @@ import { measureText } from '../../lib/sports/textUtils';
  * @param {boolean} props.isSelected - Whether this text is selected
  * @param {boolean} props.isEditing - Whether text is in inline edit mode
  * @param {Function} props.onMouseDown - Handler for mouse down (drag start)
+ * @param {Function} props.onTouchStart - Handler for touch start (drag start on mobile)
  * @param {Function} props.onDoubleClick - Handler for double click (enter edit mode)
  * @param {Function} props.onScaleStart - Handler for scale handle drag start
  * @param {Function} props.onRotateStart - Handler for rotation handle drag start
@@ -24,6 +25,7 @@ function TextElement({
   isSelected,
   isEditing,
   onMouseDown,
+  onTouchStart,
   onDoubleClick,
   onScaleStart,
   onRotateStart,
@@ -144,6 +146,7 @@ function TextElement({
             height={fontSize_mm * 1.2}
             fill="transparent"
             onMouseDown={onMouseDown}
+            onTouchStart={onTouchStart}
             onDoubleClick={onDoubleClick}
             style={{ cursor: 'move' }}
           />

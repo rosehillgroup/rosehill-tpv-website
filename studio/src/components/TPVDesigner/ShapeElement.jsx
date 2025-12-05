@@ -12,11 +12,12 @@ import { generatePolygonPath } from '../../lib/sports/shapeGeometry';
  * @param {Object} props.shape - Shape data from store
  * @param {boolean} props.isSelected - Whether this shape is selected
  * @param {Function} props.onMouseDown - Handler for mouse down (drag start)
+ * @param {Function} props.onTouchStart - Handler for touch start (drag start on mobile)
  * @param {Function} props.onDoubleClick - Handler for double click (open properties)
  * @param {Function} props.onScaleStart - Handler for scale handle drag start
  * @param {Function} props.onRotateStart - Handler for rotation handle drag start
  */
-function ShapeElement({ shape, isSelected, onMouseDown, onDoubleClick, onScaleStart, onRotateStart }) {
+function ShapeElement({ shape, isSelected, onMouseDown, onTouchStart, onDoubleClick, onScaleStart, onRotateStart }) {
   const {
     sides,
     width_mm,
@@ -57,7 +58,7 @@ function ShapeElement({ shape, isSelected, onMouseDown, onDoubleClick, onScaleSt
         pointerEvents="none"
       />
 
-      {/* Invisible clickable area - captures all mouse events */}
+      {/* Invisible clickable area - captures all mouse/touch events */}
       <path
         d={shapePath}
         fill="transparent"
@@ -65,6 +66,7 @@ function ShapeElement({ shape, isSelected, onMouseDown, onDoubleClick, onScaleSt
         strokeWidth={Math.max(strokeWidth_mm, 100)} // Minimum hit area
         pointerEvents="all"
         onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart}
         onDoubleClick={onDoubleClick}
         style={{ cursor: 'move' }}
       />

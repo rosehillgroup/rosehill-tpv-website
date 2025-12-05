@@ -128,7 +128,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     return { x: svgP.x, y: svgP.y };
   };
 
-  // Handle mouse down on court (start drag)
+  // Handle mouse/touch down on court (start drag)
   const handleCourtMouseDown = (e, courtId) => {
     e.stopPropagation();
 
@@ -138,8 +138,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     // Don't allow dragging locked courts
     if (court?.locked) return;
 
-    // Convert screen coordinates to SVG coordinates
-    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
 
     setDragStart({
       x: svgPoint.x - court.position.x,
@@ -162,7 +164,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     });
   };
 
-  // Handle mouse down on track (start drag)
+  // Handle mouse/touch down on track (start drag)
   const handleTrackMouseDown = (e, trackId) => {
     e.stopPropagation();
 
@@ -172,7 +174,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     // Don't allow dragging locked tracks
     if (track?.locked) return;
 
-    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
 
     setDragStart({
       x: svgPoint.x - track.position.x,
@@ -194,7 +199,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     });
   };
 
-  // Handle mouse down on motif (start drag)
+  // Handle mouse/touch down on motif (start drag)
   const handleMotifMouseDown = (e, motifId) => {
     e.stopPropagation();
 
@@ -204,7 +209,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     // Don't allow dragging locked motifs
     if (motif?.locked) return;
 
-    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
 
     setDragStart({
       x: svgPoint.x - motif.position.x,
@@ -306,7 +314,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     setIsRotating(true);
   };
 
-  // Handle mouse down on shape (start drag)
+  // Handle mouse/touch down on shape (start drag)
   const handleShapeMouseDown = (e, shapeId) => {
     e.stopPropagation();
 
@@ -316,7 +324,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     // Don't allow dragging locked shapes
     if (shape?.locked) return;
 
-    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
 
     setDragStart({
       x: svgPoint.x - shape.position.x,
@@ -412,7 +423,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     setIsRotatingShape(true);
   };
 
-  // Handle mouse down on text (start drag)
+  // Handle mouse/touch down on text (start drag)
   const handleTextMouseDown = (e, textId) => {
     e.stopPropagation();
 
@@ -425,7 +436,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     // Don't allow dragging locked texts
     if (text?.locked) return;
 
-    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
 
     setDragStart({
       x: svgPoint.x - text.position.x,
@@ -538,12 +552,15 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     setDragStart(null);
   }, [surface.width_mm, surface.length_mm]);
 
-  // Handle mouse move (drag court, track, motif, shape, or text)
+  // Handle mouse/touch move (drag court, track, motif, shape, or text)
   useEffect(() => {
     if (!isDragging || (!dragCourtId && !dragTrackId && !dragMotifId && !dragShapeId && !dragTextId)) return;
 
-    const handleMouseMove = (e) => {
-      const svgPoint = screenToSVG(e.clientX, e.clientY);
+    const handleMove = (e) => {
+      // Handle both mouse and touch events
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const svgPoint = screenToSVG(clientX, clientY);
 
       let newPosition = {
         x: svgPoint.x - dragStart.x,
@@ -591,7 +608,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       }
     };
 
-    const handleMouseUp = () => {
+    const handleEnd = () => {
       // Add to history when drag completes
       if (dragCourtId || dragTrackId || dragMotifId || dragShapeId || dragTextId) {
         const { addToHistory } = useSportsDesignStore.getState();
@@ -607,12 +624,19 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       setDragStart(null);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    // Listen for both mouse and touch events
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchcancel', handleEnd);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+      window.removeEventListener('touchcancel', handleEnd);
     };
   }, [isDragging, dragCourtId, dragTrackId, dragMotifId, dragShapeId, dragTextId, dragStart, courts, tracks, motifs, shapes, texts, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition, updateMotifPosition, updateShapePosition, updateTextPosition]);
 
@@ -1229,6 +1253,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                 court={court}
                 isSelected={elementId === selectedCourtId}
                 onMouseDown={(e) => handleCourtMouseDown(e, elementId)}
+                onTouchStart={(e) => handleCourtMouseDown(e, elementId)}
                 onDoubleClick={(e) => handleCourtDoubleClick(e, elementId)}
                 svgRef={canvasRef}
               />
@@ -1248,6 +1273,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                 track={track}
                 isSelected={elementId === selectedTrackId}
                 onMouseDown={(e) => handleTrackMouseDown(e, elementId)}
+                onTouchStart={(e) => handleTrackMouseDown(e, elementId)}
                 onDoubleClick={(e) => handleTrackDoubleClick(e, elementId)}
                 svgRef={canvasRef}
               />
@@ -1267,6 +1293,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                 motif={motif}
                 isSelected={elementId === selectedMotifId}
                 onMouseDown={(e) => handleMotifMouseDown(e, elementId)}
+                onTouchStart={(e) => handleMotifMouseDown(e, elementId)}
                 onDoubleClick={(e) => handleMotifDoubleClick(e, elementId)}
                 onScaleStart={(e, corner) => handleMotifScaleStart(e, elementId, corner)}
                 onRotateStart={(e) => handleMotifRotateStart(e, elementId)}
@@ -1289,6 +1316,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                   shape={shape}
                   isSelected={elementId === selectedShapeId}
                   onMouseDown={(e) => handleShapeMouseDown(e, elementId)}
+                  onTouchStart={(e) => handleShapeMouseDown(e, elementId)}
                   onDoubleClick={(e) => handleShapeDoubleClick(e, elementId)}
                   onScaleStart={(e, corner) => handleShapeScaleStart(e, elementId, corner)}
                   onRotateStart={(e) => handleShapeRotateStart(e, elementId)}
@@ -1306,6 +1334,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                 shape={shape}
                 isSelected={elementId === selectedShapeId}
                 onMouseDown={(e) => handleShapeMouseDown(e, elementId)}
+                onTouchStart={(e) => handleShapeMouseDown(e, elementId)}
                 onDoubleClick={(e) => handleShapeDoubleClick(e, elementId)}
                 onScaleStart={(e, corner) => handleShapeScaleStart(e, elementId, corner)}
                 onRotateStart={(e) => handleShapeRotateStart(e, elementId)}
@@ -1327,6 +1356,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                 isSelected={elementId === selectedTextId}
                 isEditing={elementId === editingTextId}
                 onMouseDown={(e) => handleTextMouseDown(e, elementId)}
+                onTouchStart={(e) => handleTextMouseDown(e, elementId)}
                 onDoubleClick={(e) => handleTextDoubleClick(e, elementId)}
                 onScaleStart={(e, corner) => handleTextScaleStart(e, elementId, corner)}
                 onRotateStart={(e) => handleTextRotateStart(e, elementId)}
@@ -1408,7 +1438,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
 /**
  * Individual court element component
  */
-function CourtElement({ court, isSelected, onMouseDown, onDoubleClick, svgRef }) {
+function CourtElement({ court, isSelected, onMouseDown, onTouchStart, onDoubleClick, svgRef }) {
   const { markings, zones } = generateCourtSVG(court);
 
   // Get court surface color (if set) - this colors the entire court area
@@ -1432,7 +1462,7 @@ function CourtElement({ court, isSelected, onMouseDown, onDoubleClick, svgRef })
         />
       )}
 
-      {/* Invisible clickable area - captures all mouse events */}
+      {/* Invisible clickable area - captures all mouse/touch events */}
       <rect
         x="0"
         y="0"
@@ -1441,6 +1471,7 @@ function CourtElement({ court, isSelected, onMouseDown, onDoubleClick, svgRef })
         fill="none"
         pointerEvents="all"
         onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart}
         onDoubleClick={onDoubleClick}
         style={{ cursor: 'move' }}
       />

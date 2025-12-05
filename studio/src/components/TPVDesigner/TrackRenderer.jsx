@@ -8,7 +8,7 @@ import StartingBoxes from './StartingBoxes.jsx';
  * Individual track element component
  * Renders a complete running track with all lanes
  */
-function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef }) {
+function TrackElement({ track, isSelected, onMouseDown, onTouchStart, onDoubleClick, svgRef }) {
   const { parameters, position, rotation, trackSurfaceColor } = track;
 
   // Calculate track geometry
@@ -44,7 +44,7 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
       transform={transform}
       style={{ cursor: 'move' }}
     >
-      {/* Invisible clickable area - captures all mouse events */}
+      {/* Invisible clickable area - captures all mouse/touch events */}
       <rect
         x="0"
         y="0"
@@ -53,6 +53,7 @@ function TrackElement({ track, isSelected, onMouseDown, onDoubleClick, svgRef })
         fill="none"
         pointerEvents="all"
         onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart}
         onDoubleClick={onDoubleClick}
         style={{ cursor: 'move' }}
       />
