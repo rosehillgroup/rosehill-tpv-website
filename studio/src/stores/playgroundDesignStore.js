@@ -237,6 +237,13 @@ export const usePlaygroundDesignStore = create(
 
       // ====== Load Design Action ======
       loadDesign: (restoredState) => {
+        // Restore region overrides or initialize empty
+        const regionOverrides = restoredState.regionOverrides || new Map();
+        const regionOverridesHistory = regionOverrides.size > 0
+          ? [new Map(), new Map(regionOverrides)] // Initial empty state + current state
+          : [new Map()];
+        const historyIndex = regionOverrides.size > 0 ? 1 : 0;
+
         set({
           inputMode: restoredState.inputMode || 'prompt',
           prompt: restoredState.prompt || '',
@@ -258,6 +265,11 @@ export const usePlaygroundDesignStore = create(
           showFinalRecipes: restoredState.showFinalRecipes || false,
           showSolidSummary: restoredState.showSolidSummary || false,
           hasGeneratedContent: !!restoredState.result,
+          // Per-region overrides (transparency, individual color edits)
+          regionOverrides: regionOverrides,
+          originalTaggedSvg: restoredState.originalTaggedSvg || null,
+          regionOverridesHistory: regionOverridesHistory,
+          historyIndex: historyIndex,
           lastModified: Date.now()
         });
       },

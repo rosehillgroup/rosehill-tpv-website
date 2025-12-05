@@ -27,7 +27,9 @@ export function serializeDesign(state) {
     solidSvgUrl,
     arMapping,
     jobId,
-    inSituData
+    inSituData,
+    regionOverrides,
+    originalTaggedSvg
   } = state;
 
   console.log('[SERIALIZE] Serializing design with result:', result);
@@ -87,7 +89,11 @@ export function serializeDesign(state) {
       preview_url: inSituData.preview_url || null,
       blend_opacity: inSituData.blend_opacity || 20,
       perspective_corners: inSituData.perspective_corners || null
-    } : null
+    } : null,
+
+    // Per-region overrides (for individual element edits like transparency)
+    region_overrides: serializeMap(regionOverrides),
+    original_tagged_svg: originalTaggedSvg || null
   };
 }
 
@@ -151,6 +157,10 @@ export function deserializeDesign(savedData) {
 
     // In-situ preview data
     inSituData: savedData.in_situ || null,
+
+    // Per-region overrides (for individual element edits like transparency)
+    regionOverrides: deserializeMap(savedData.region_overrides),
+    originalTaggedSvg: savedData.original_tagged_svg || null,
 
     // Restore UI state
     generating: false,

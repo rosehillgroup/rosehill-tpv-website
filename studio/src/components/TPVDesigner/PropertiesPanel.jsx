@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { calculateTrackGeometry, calculateStaggeredStarts } from '../../lib/sports/trackGeometry.js';
 import { getShapeDisplayName, getShapeIcon } from '../../lib/sports/shapeGeometry.js';
-import { BLOB_PRESETS } from '../../lib/sports/blobGeometry.js';
+import { BLOB_STYLES } from '../../lib/sports/blobGeometry.js';
 import { getAvailableFonts } from '../../lib/sports/textUtils.js';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import './PropertiesPanel.css';
@@ -1454,12 +1454,9 @@ function ShapePropertiesPanel({ shape, shapeId }) {
     setShapeAspectLock,
     removeShape,
     duplicateShape,
-    updateBlobPoints,
-    updateBlobiness,
     randomizeBlob,
-    resetBlob,
-    setBlobSymmetry,
-    applyBlobPreset
+    setBlobStyle,
+    setEditPointsVisible
   } = useSportsDesignStore();
 
   const [showFillColorPicker, setShowFillColorPicker] = React.useState(false);
@@ -1479,10 +1476,8 @@ function ShapePropertiesPanel({ shape, shapeId }) {
     strokeWidth_mm,
     aspectLocked,
     // Blob-specific properties
-    numPoints,
-    blobiness,
-    symmetryMode,
-    radialSymmetryCount
+    blobStyle,
+    editPointsVisible
   } = shape;
 
   const isBlob = shapeType === 'blob';
@@ -1617,254 +1612,95 @@ function ShapePropertiesPanel({ shape, shapeId }) {
     <div className="properties-panel">
       {/* Panel Header */}
       <div className="properties-panel__header">
-        <h3>{isBlob ? 'Blob Properties' : 'Shape Properties'}</h3>
+        <h3>{isBlob ? 'Blob Shape' : 'Shape Properties'}</h3>
         <div className="properties-panel__court-info">
-          <span className="court-name">{isBlob ? 'Organic Blob' : getShapeDisplayName(sides)}</span>
-          <span className="court-standard">{isBlob ? `◐ ${numPoints} points` : `${getShapeIcon(sides)} ${sides} sides`}</span>
+          <span className="court-name">{isBlob ? (BLOB_STYLES[blobStyle || 'organic']?.name || 'Organic') : getShapeDisplayName(sides)}</span>
+          <span className="court-standard">{isBlob ? '◐ Blob' : `${getShapeIcon(sides)} ${sides} sides`}</span>
         </div>
       </div>
 
       {/* Panel Content */}
       <div className="properties-panel__content">
         <div className="properties-section">
-          {/* Blob-specific controls */}
+          {/* Blob-specific controls (Simplified) */}
           {isBlob ? (
             <>
-              {/* Points Slider */}
+              {/* Style Dropdown */}
               <div className="property-group">
-                <label>Control Points</label>
-                <div className="property-input-row">
-                  <input
-                    type="range"
-                    min="4"
-                    max="16"
-                    value={numPoints || 8}
-                    onChange={(e) => updateBlobPoints(shapeId, parseInt(e.target.value))}
-                    className="property-slider"
-                  />
-                  <div className="property-input-group property-input-group--compact">
-                    <input
-                      type="number"
-                      value={numPoints || 8}
-                      onChange={(e) => updateBlobPoints(shapeId, parseInt(e.target.value))}
-                      min="4"
-                      max="16"
-                    />
-                  </div>
-                </div>
-                <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.25rem' }}>
-                  More points = more complex shape
-                </div>
-              </div>
-
-              {/* Organic/Blobiness Slider */}
-              <div className="property-group">
-                <label>Organic</label>
-                <div className="property-input-row">
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={Math.round((blobiness || 0) * 100)}
-                    onChange={(e) => updateBlobiness(shapeId, parseInt(e.target.value) / 100)}
-                    className="property-slider"
-                  />
-                  <div className="property-input-group property-input-group--compact">
-                    <input
-                      type="number"
-                      value={Math.round((blobiness || 0) * 100)}
-                      onChange={(e) => updateBlobiness(shapeId, parseInt(e.target.value) / 100)}
-                      min="0"
-                      max="100"
-                    />
-                    <span className="property-unit">%</span>
-                  </div>
-                </div>
-                <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.25rem' }}>
-                  Low = rounder, High = more irregular
-                </div>
-              </div>
-
-              {/* Randomize & Reset Buttons */}
-              <div className="property-group">
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button
-                    onClick={() => randomizeBlob(shapeId)}
-                    style={{
-                      flex: 1,
-                      padding: '0.625rem 1rem',
-                      background: '#3b82f6',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '0.8125rem',
-                      fontWeight: '500',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.375rem'
-                    }}
-                  >
-                    <span style={{ fontSize: '1rem' }}>&#x1F3B2;</span> Randomize
-                  </button>
-                  <button
-                    onClick={() => resetBlob(shapeId)}
-                    style={{
-                      flex: 1,
-                      padding: '0.625rem 1rem',
-                      background: '#f1f5f9',
-                      color: '#475569',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                      fontSize: '0.8125rem',
-                      fontWeight: '500',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '0.375rem'
-                    }}
-                  >
-                    <span style={{ fontSize: '1rem' }}>&#x21BA;</span> Reset
-                  </button>
-                </div>
-                <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.5rem', textAlign: 'center' }}>
-                  Drag points on canvas for precise editing
-                </div>
-              </div>
-
-              {/* Shape Presets */}
-              <div className="property-group">
-                <label>Shape Preset</label>
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                  {Object.entries(BLOB_PRESETS).map(([key, preset]) => (
-                    <button
-                      key={key}
-                      onClick={() => applyBlobPreset(shapeId, key)}
-                      title={preset.description}
-                      style={{
-                        flex: 1,
-                        padding: '0.5rem',
-                        border: '1px solid #e4e9f0',
-                        borderRadius: '6px',
-                        background: '#fff',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '0.25rem'
-                      }}
-                    >
-                      <span style={{ fontSize: '1.25rem' }}>{preset.icon}</span>
-                      <span style={{ fontSize: '0.65rem', color: '#64748b' }}>{preset.name}</span>
-                    </button>
+                <label>Style</label>
+                <select
+                  value={blobStyle || 'organic'}
+                  onChange={(e) => setBlobStyle(shapeId, e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 0.75rem',
+                    border: '1px solid #e4e9f0',
+                    borderRadius: '6px',
+                    fontSize: '0.875rem',
+                    cursor: 'pointer',
+                    background: '#fff'
+                  }}
+                >
+                  {Object.entries(BLOB_STYLES).map(([key, style]) => (
+                    <option key={key} value={key}>
+                      {style.name} - {style.description}
+                    </option>
                   ))}
+                </select>
+              </div>
+
+              {/* New Shape Button */}
+              <div className="property-group">
+                <button
+                  onClick={() => randomizeBlob(shapeId)}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    background: '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <span style={{ fontSize: '1.1rem' }}>&#x1F3B2;</span> New Shape
+                </button>
+                <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.5rem', textAlign: 'center' }}>
+                  Generate a new random shape in the selected style
                 </div>
               </div>
 
-              {/* Symmetry Mode */}
+              {/* Edit Points Toggle */}
               <div className="property-group">
-                <label>Symmetry</label>
-                <div style={{ display: 'flex', gap: '0.375rem', marginTop: '0.5rem' }}>
-                  <button
-                    onClick={() => setBlobSymmetry(shapeId, 'none')}
-                    title="No symmetry - free editing"
-                    style={{
-                      flex: 1,
-                      padding: '0.5rem',
-                      border: (symmetryMode || 'none') === 'none' ? '2px solid #3b82f6' : '1px solid #e4e9f0',
-                      borderRadius: '6px',
-                      background: (symmetryMode || 'none') === 'none' ? '#eff6ff' : '#fff',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem',
-                      fontWeight: '500'
-                    }}
-                  >
-                    None
-                  </button>
-                  <button
-                    onClick={() => setBlobSymmetry(shapeId, 'horizontal')}
-                    title="Horizontal symmetry - mirror left/right"
-                    style={{
-                      flex: 1,
-                      padding: '0.5rem',
-                      border: symmetryMode === 'horizontal' ? '2px solid #3b82f6' : '1px solid #e4e9f0',
-                      borderRadius: '6px',
-                      background: symmetryMode === 'horizontal' ? '#eff6ff' : '#fff',
-                      cursor: 'pointer',
-                      fontSize: '1rem'
-                    }}
-                  >
-                    ↔
-                  </button>
-                  <button
-                    onClick={() => setBlobSymmetry(shapeId, 'vertical')}
-                    title="Vertical symmetry - mirror top/bottom"
-                    style={{
-                      flex: 1,
-                      padding: '0.5rem',
-                      border: symmetryMode === 'vertical' ? '2px solid #3b82f6' : '1px solid #e4e9f0',
-                      borderRadius: '6px',
-                      background: symmetryMode === 'vertical' ? '#eff6ff' : '#fff',
-                      cursor: 'pointer',
-                      fontSize: '1rem'
-                    }}
-                  >
-                    ↕
-                  </button>
-                  <button
-                    onClick={() => setBlobSymmetry(shapeId, 'radial', radialSymmetryCount || 4)}
-                    title="Radial symmetry - repeat around center"
-                    style={{
-                      flex: 1,
-                      padding: '0.5rem',
-                      border: symmetryMode === 'radial' ? '2px solid #3b82f6' : '1px solid #e4e9f0',
-                      borderRadius: '6px',
-                      background: symmetryMode === 'radial' ? '#eff6ff' : '#fff',
-                      cursor: 'pointer',
-                      fontSize: '1rem'
-                    }}
-                  >
-                    ✱
-                  </button>
-                </div>
-
-                {/* Radial count selector - only shown when radial mode is active */}
-                {symmetryMode === 'radial' && (
-                  <div style={{ marginTop: '0.5rem' }}>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.375rem' }}>
-                      Radial Count
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.25rem' }}>
-                      {[2, 3, 4, 6, 8].map(n => (
-                        <button
-                          key={n}
-                          onClick={() => setBlobSymmetry(shapeId, 'radial', n)}
-                          style={{
-                            flex: 1,
-                            padding: '0.375rem',
-                            border: (radialSymmetryCount || 4) === n ? '2px solid #3b82f6' : '1px solid #e4e9f0',
-                            borderRadius: '4px',
-                            background: (radialSymmetryCount || 4) === n ? '#eff6ff' : '#fff',
-                            cursor: 'pointer',
-                            fontSize: '0.75rem',
-                            fontWeight: '500'
-                          }}
-                        >
-                          {n}
-                        </button>
-                      ))}
-                    </div>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  cursor: 'pointer',
+                  padding: '0.5rem',
+                  border: '1px solid #e4e9f0',
+                  borderRadius: '6px',
+                  background: editPointsVisible ? '#eff6ff' : '#fff'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={editPointsVisible || false}
+                    onChange={(e) => setEditPointsVisible(shapeId, e.target.checked)}
+                    style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '0.875rem' }}>Edit Points</span>
+                </label>
+                {editPointsVisible && (
+                  <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.5rem' }}>
+                    Drag points and handles on canvas for precise control
                   </div>
                 )}
-
-                <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.5rem' }}>
-                  {symmetryMode === 'horizontal' && 'Points mirror across vertical axis'}
-                  {symmetryMode === 'vertical' && 'Points mirror across horizontal axis'}
-                  {symmetryMode === 'radial' && `Points repeat ${radialSymmetryCount || 4}× around center`}
-                  {(!symmetryMode || symmetryMode === 'none') && 'Edit points freely without constraints'}
-                </div>
               </div>
             </>
           ) : (

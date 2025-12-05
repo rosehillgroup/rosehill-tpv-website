@@ -24,6 +24,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [spaceHeld, setSpaceHeld] = useState(false);
 
   // Touch gesture state
   const [touchState, setTouchState] = useState({
@@ -1002,19 +1003,28 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   };
 
   const handleWheel = (e) => {
-    // Only zoom if ctrl/cmd is held, or if it's a pinch gesture (ctrlKey is true for pinch)
+    // Ctrl/Cmd + scroll = zoom (also handles trackpad pinch which sets ctrlKey)
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
       const delta = e.deltaY * -0.002;
       setZoom(prevZoom => Math.min(Math.max(prevZoom + prevZoom * delta, 0.25), 5));
+    } else {
+      // Regular scroll = pan
+      e.preventDefault();
+      const panSpeed = 1;
+      setPan(prevPan => ({
+        x: prevPan.x - e.deltaX * panSpeed,
+        y: prevPan.y - e.deltaY * panSpeed
+      }));
     }
   };
 
   // Handle middle-click or space+click for panning
   const handlePanStart = (e) => {
-    // Middle mouse button (button 1) or space key held
-    if (e.button === 1) {
+    // Middle mouse button (button 1) or space key held + left click
+    if (e.button === 1 || (e.button === 0 && spaceHeld)) {
       e.preventDefault();
+      e.stopPropagation();
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
     }
@@ -1117,14 +1127,17 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   // Keyboard handler for space+drag panning
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.code === 'Space' && !e.repeat && containerRef.current) {
-        containerRef.current.style.cursor = 'grab';
+      if (e.code === 'Space' && !e.repeat) {
+        // Don't activate if user is typing in an input
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        e.preventDefault(); // Prevent page scroll
+        setSpaceHeld(true);
       }
     };
 
     const handleKeyUp = (e) => {
-      if (e.code === 'Space' && containerRef.current) {
-        containerRef.current.style.cursor = '';
+      if (e.code === 'Space') {
+        setSpaceHeld(false);
         setIsPanning(false);
       }
     };
@@ -1164,7 +1177,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
           </svg>
         </button>
-        <span className="court-canvas__zoom-level">{Math.round(zoom * 100)}%</span>
+        <span className="court-canvas__zoom-level" title="Scroll to pan, Ctrl+Scroll to zoom, Space+Drag to pan">{Math.round(zoom * 100)}%</span>
       </div>
 
       {/* Zoomable/Pannable Container */}
@@ -1176,7 +1189,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        style={{ cursor: isPanning ? 'grabbing' : undefined, touchAction: 'none' }}
+        style={{ cursor: isPanning ? 'grabbing' : (spaceHeld ? 'grab' : undefined), touchAction: 'none' }}
       >
         <div
           className="court-canvas__transform-wrapper"

@@ -40,7 +40,8 @@ function BlobElement({
     fillColor,
     strokeEnabled,
     strokeColor,
-    strokeWidth_mm
+    strokeWidth_mm,
+    editPointsVisible
   } = shape;
 
   // Generate the SVG path from control points
@@ -108,8 +109,8 @@ function BlobElement({
         />
       )}
 
-      {/* Bezier control point handles when selected */}
-      {isSelected && controlPoints && (
+      {/* Bezier control point handles when selected and Edit Points is enabled */}
+      {isSelected && controlPoints && editPointsVisible && (
         <BlobEditHandles
           controlPoints={controlPoints}
           width={width_mm}

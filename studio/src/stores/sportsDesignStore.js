@@ -6,7 +6,8 @@ import {
   generateEllipseControlPoints,
   applySymmetryToPoint,
   applySymmetryToHandle,
-  BLOB_PRESETS
+  generateBlobFromStyle,
+  BLOB_STYLES
 } from '../lib/sports/blobGeometry.js';
 
 const initialState = {
@@ -1078,23 +1079,25 @@ export const useSportsDesignStore = create(
         const shapeCount = Object.keys(existingShapes).length;
         const fillColor = defaultColors[shapeCount % defaultColors.length];
 
-        // Handle blob preset specially
+        // Handle blob preset specially - use style-based generation
         if (preset === 'blob') {
           const seed = Math.floor(Math.random() * 100000);
-          const numPoints = 8;
-          const blobiness = 0.3;
-          const controlPoints = generateBlobControlPoints(numPoints, blobiness, seed);
+          const defaultStyle = 'organic';
+          const controlPoints = generateBlobFromStyle(defaultStyle, seed);
 
           const blobShape = {
             id: shapeId,
             type: 'shape',
             shapeType: 'blob',
-            numPoints,
-            blobiness,
+            blobStyle: defaultStyle,     // Style preset name
             seed,
             controlPoints,
-            symmetryMode: 'none',        // 'none' | 'horizontal' | 'vertical' | 'radial'
-            radialSymmetryCount: 4,      // 2, 3, 4, 6, or 8 (only used when mode='radial')
+            editPointsVisible: false,    // Hide bezier handles by default
+            // Legacy properties (kept for compatibility, not used in new UI)
+            numPoints: controlPoints.length,
+            blobiness: 0.2,              // Approximate value
+            symmetryMode: 'none',
+            radialSymmetryCount: 4,
             width_mm: 2000,
             height_mm: 2000,
             position: {
@@ -1106,7 +1109,7 @@ export const useSportsDesignStore = create(
             strokeEnabled: false,
             strokeColor: null,
             strokeWidth_mm: 50,
-            aspectLocked: false, // Blobs support free aspect ratio
+            aspectLocked: false,
             locked: false,
             visible: true
           };
@@ -1343,13 +1346,10 @@ export const useSportsDesignStore = create(
           const shape = state.shapes[shapeId];
           if (!shape || shape.shapeType !== 'blob') return state;
 
-          // Generate new seed and recalculate control points
+          // Generate new seed and recalculate using current style
           const newSeed = Math.floor(Math.random() * 100000);
-          const controlPoints = generateBlobControlPoints(
-            shape.numPoints,
-            shape.blobiness,
-            newSeed
-          );
+          const style = shape.blobStyle || 'organic';
+          const controlPoints = generateBlobFromStyle(style, newSeed);
 
           return {
             shapes: {
@@ -1357,12 +1357,55 @@ export const useSportsDesignStore = create(
               [shapeId]: {
                 ...shape,
                 seed: newSeed,
-                controlPoints
+                controlPoints,
+                numPoints: controlPoints.length // Update legacy property
               }
             }
           };
         });
         get().addToHistory();
+      },
+
+      // Set blob style and regenerate shape
+      setBlobStyle: (shapeId, style) => {
+        set((state) => {
+          const shape = state.shapes[shapeId];
+          if (!shape || shape.shapeType !== 'blob') return state;
+
+          // Regenerate with new style using existing seed
+          const controlPoints = generateBlobFromStyle(style, shape.seed);
+
+          return {
+            shapes: {
+              ...state.shapes,
+              [shapeId]: {
+                ...shape,
+                blobStyle: style,
+                controlPoints,
+                numPoints: controlPoints.length
+              }
+            }
+          };
+        });
+        get().addToHistory();
+      },
+
+      // Toggle edit points visibility
+      setEditPointsVisible: (shapeId, visible) => {
+        set((state) => {
+          const shape = state.shapes[shapeId];
+          if (!shape || shape.shapeType !== 'blob') return state;
+
+          return {
+            shapes: {
+              ...state.shapes,
+              [shapeId]: {
+                ...shape,
+                editPointsVisible: visible
+              }
+            }
+          };
+        });
       },
 
       resetBlob: (shapeId) => {

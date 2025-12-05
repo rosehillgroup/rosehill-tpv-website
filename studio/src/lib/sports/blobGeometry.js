@@ -264,9 +264,125 @@ export function getBlobBounds(controlPoints, width, height) {
   return { minX, minY, maxX, maxY };
 }
 
-// ====== Blob Presets ======
+// ====== Blob Styles (Simplified Generation) ======
 
 /**
+ * Style presets for one-click blob generation
+ * Each style defines parameters that influence the shape character
+ */
+export const BLOB_STYLES = {
+  organic: {
+    name: 'Organic',
+    description: 'Smooth, gentle curves like a pebble',
+    minPoints: 6,
+    maxPoints: 8,
+    blobinessMin: 0.15,
+    blobinessMax: 0.25,
+    handleLengthFactor: 0.4,  // Smooth curves
+    radiusVariation: 0.15
+  },
+  splashy: {
+    name: 'Splashy',
+    description: 'Irregular edges, some spikes like paint splatter',
+    minPoints: 10,
+    maxPoints: 12,
+    blobinessMin: 0.3,
+    blobinessMax: 0.5,
+    handleLengthFactor: 0.25,  // More angular
+    radiusVariation: 0.35
+  },
+  cloudy: {
+    name: 'Cloudy',
+    description: 'Soft bumps, fluffy cloud-like appearance',
+    minPoints: 8,
+    maxPoints: 10,
+    blobinessMin: 0.2,
+    blobinessMax: 0.3,
+    handleLengthFactor: 0.5,  // Very smooth
+    radiusVariation: 0.2
+  },
+  rocky: {
+    name: 'Rocky',
+    description: 'Angular variations, irregular stone-like edges',
+    minPoints: 8,
+    maxPoints: 12,
+    blobinessMin: 0.25,
+    blobinessMax: 0.4,
+    handleLengthFactor: 0.2,  // Angular
+    radiusVariation: 0.3
+  }
+};
+
+/**
+ * Generate blob control points from a style preset
+ * @param {string} style - Style name ('organic', 'splashy', 'cloudy', 'rocky')
+ * @param {number} seed - Random seed for reproducibility
+ * @returns {Array} Array of control points with bezier handles
+ */
+export function generateBlobFromStyle(style, seed) {
+  const config = BLOB_STYLES[style] || BLOB_STYLES.organic;
+  const rng = seededRandom(seed);
+
+  // Determine number of points within style's range
+  const numPoints = Math.floor(rng() * (config.maxPoints - config.minPoints + 1)) + config.minPoints;
+
+  // Calculate blobiness within style's range
+  const blobiness = config.blobinessMin + rng() * (config.blobinessMax - config.blobinessMin);
+
+  const points = [];
+  const baseRadius = 0.4;
+  const centerX = 0.5;
+  const centerY = 0.5;
+
+  for (let i = 0; i < numPoints; i++) {
+    // Base angle for this point
+    const baseAngle = (i / numPoints) * Math.PI * 2 - Math.PI / 2;
+
+    // Add angle variation based on blobiness
+    const angleVariation = (rng() - 0.5) * 0.4 * blobiness;
+    const angle = baseAngle + angleVariation;
+
+    // Perturb radius based on style's radiusVariation and blobiness
+    const radiusVariation = 1 + (rng() - 0.5) * config.radiusVariation * 2;
+    const radius = baseRadius * radiusVariation;
+
+    // Calculate point position
+    const x = centerX + radius * Math.cos(angle);
+    const y = centerY + radius * Math.sin(angle);
+
+    // Handle length based on style's handleLengthFactor
+    const baseHandleLength = config.handleLengthFactor / numPoints;
+    const handleLength = baseHandleLength * (0.8 + rng() * 0.4); // ±20% variation
+
+    // Handle directions are tangent to the curve
+    const tangentAngle = angle + Math.PI / 2;
+
+    // Add handle angle variation for more organic curves
+    const handleAngleVariation = (rng() - 0.5) * 0.3 * blobiness;
+    const inHandleAngle = tangentAngle + Math.PI + handleAngleVariation;
+    const outHandleAngle = tangentAngle + handleAngleVariation;
+
+    points.push({
+      x,
+      y,
+      handleIn: {
+        x: Math.cos(inHandleAngle) * handleLength,
+        y: Math.sin(inHandleAngle) * handleLength
+      },
+      handleOut: {
+        x: Math.cos(outHandleAngle) * handleLength,
+        y: Math.sin(outHandleAngle) * handleLength
+      }
+    });
+  }
+
+  return points;
+}
+
+// ====== Legacy Blob Presets (deprecated - use BLOB_STYLES instead) ======
+
+/**
+ * @deprecated Use BLOB_STYLES and generateBlobFromStyle() instead
  * Predefined blob shape configurations with hand-crafted control points
  * Each preset has distinct visual characteristics
  */
