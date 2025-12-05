@@ -106,12 +106,26 @@ export function serializeDesign(state) {
  * @returns {Object} State object to restore component
  */
 export function deserializeDesign(savedData) {
+  console.log('[DESERIALIZE] Incoming savedData keys:', Object.keys(savedData || {}));
+  console.log('[DESERIALIZE] savedData.region_overrides:', savedData?.region_overrides);
+  console.log('[DESERIALIZE] savedData.design_data:', savedData?.design_data);
+  console.log('[DESERIALIZE] savedData.design_data?.region_overrides:', savedData?.design_data?.region_overrides);
+  console.log('[DESERIALIZE] savedData.original_tagged_svg present:', !!savedData?.original_tagged_svg);
+  console.log('[DESERIALIZE] savedData.design_data?.original_tagged_svg present:', !!savedData?.design_data?.original_tagged_svg);
+
   // Convert plain objects back to Maps
   const deserializeMap = (obj) => {
     if (!obj) return new Map();
     if (obj instanceof Map) return obj; // Already a Map
     return new Map(Object.entries(obj));
   };
+
+  // Determine region overrides source
+  const regionOverridesData = savedData.region_overrides || savedData.design_data?.region_overrides;
+  const originalTaggedSvgData = savedData.original_tagged_svg || savedData.design_data?.original_tagged_svg;
+
+  console.log('[DESERIALIZE] Final regionOverridesData:', regionOverridesData);
+  console.log('[DESERIALIZE] Final originalTaggedSvgData present:', !!originalTaggedSvgData);
 
   return {
     inputMode: savedData.input_mode,
@@ -160,8 +174,9 @@ export function deserializeDesign(savedData) {
     inSituData: savedData.in_situ || null,
 
     // Per-region overrides (for individual element edits like transparency)
-    regionOverrides: deserializeMap(savedData.region_overrides),
-    originalTaggedSvg: savedData.original_tagged_svg || null,
+    // Check both top-level and nested design_data for backwards compatibility
+    regionOverrides: deserializeMap(regionOverridesData),
+    originalTaggedSvg: originalTaggedSvgData || null,
 
     // Restore UI state
     generating: false,

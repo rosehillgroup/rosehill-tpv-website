@@ -39,6 +39,11 @@ export default async function handler(req, res) {
     // Determine design type and validate accordingly
     const isSportsDesign = design_data.type === 'sports_surface';
 
+    // Debug logging for transparency persistence
+    console.log('[SAVE-DESIGN] Received design_data keys:', Object.keys(design_data));
+    console.log('[SAVE-DESIGN] design_data.region_overrides:', design_data.region_overrides);
+    console.log('[SAVE-DESIGN] design_data.original_tagged_svg present:', !!design_data.original_tagged_svg);
+
     if (isSportsDesign) {
       // Validate sports surface design
       if (!design_data.surface || !design_data.dimensions) {
@@ -139,8 +144,22 @@ export default async function handler(req, res) {
         // Link to job
         job_id: design_data.job_id || null,
 
+        // Store additional design data as JSONB (region overrides, tagged SVG, etc.)
+        design_data: {
+          region_overrides: design_data.region_overrides || null,
+          original_tagged_svg: design_data.original_tagged_svg || null,
+          in_situ: design_data.in_situ || null
+        },
+
         updated_at: new Date().toISOString()
       };
+
+      // Debug: Log what we're storing in design_data JSONB
+      console.log('[SAVE-DESIGN] Storing design_data JSONB:', {
+        has_region_overrides: !!designRecord.design_data.region_overrides,
+        region_overrides_keys: designRecord.design_data.region_overrides ? Object.keys(designRecord.design_data.region_overrides) : [],
+        has_original_tagged_svg: !!designRecord.design_data.original_tagged_svg
+      });
     }
 
     let result;
