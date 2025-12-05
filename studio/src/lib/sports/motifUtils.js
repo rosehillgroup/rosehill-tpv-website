@@ -4,6 +4,8 @@
 import { loadDesign, listDesigns } from '../api/designs.js';
 import { sanitizeSVG, quickValidateSVG } from '../../utils/sanitizeSVG.js';
 import { recolorSVG } from '../../utils/svgRecolor.js';
+import { tagSvgRegions } from '../../utils/svgRegionTagger.js';
+import { applyRegionOverrides } from '../../utils/svgRegionOverrides.js';
 
 /**
  * Fetch a playground design and prepare it for use as a motif
@@ -41,6 +43,16 @@ export async function fetchMotifFromDesign(designId) {
 
   console.log('[MOTIF] Fetching original SVG from:', originalUrl);
 
+  // Extract region overrides from design_data (nested JSONB field)
+  const regionOverridesObj = design.design_data?.region_overrides || design.region_overrides || null;
+  const originalTaggedSvg = design.design_data?.original_tagged_svg || design.original_tagged_svg || null;
+
+  console.log('[MOTIF] Region overrides:', regionOverridesObj ? Object.keys(regionOverridesObj).length : 0, 'regions');
+  console.log('[MOTIF] Original tagged SVG:', originalTaggedSvg ? 'present' : 'not present');
+
+  // Convert region overrides to Map if present
+  const regionOverrides = regionOverridesObj ? new Map(Object.entries(regionOverridesObj)) : null;
+
   // Fetch and sanitize the original SVG
   const originalSvg = await fetchAndSanitizeSVG(originalUrl);
   if (!originalSvg) {
@@ -61,6 +73,22 @@ export async function fetchMotifFromDesign(designId) {
       const { svgText } = await recolorSVG(null, solidMapping, originalSvg);
       solidSvgContent = svgText;
       console.log('[MOTIF] Generated solid SVG:', solidSvgContent.length, 'chars');
+
+      // Apply region overrides (transparency, etc.) if present
+      if (regionOverrides && regionOverrides.size > 0 && solidSvgContent) {
+        console.log('[MOTIF] Applying', regionOverrides.size, 'region overrides to solid SVG');
+        // Tag the SVG with region IDs if we have the original tagged SVG
+        let taggedSvg = solidSvgContent;
+        if (originalTaggedSvg) {
+          // Use stored tagged SVG structure to apply region IDs
+          taggedSvg = tagSvgRegions(solidSvgContent);
+        } else {
+          // Tag fresh
+          taggedSvg = tagSvgRegions(solidSvgContent);
+        }
+        solidSvgContent = applyRegionOverrides(taggedSvg, regionOverrides);
+        console.log('[MOTIF] Applied region overrides to solid SVG');
+      }
     } catch (error) {
       console.error('[MOTIF] Failed to generate solid SVG:', error);
     }
@@ -74,6 +102,14 @@ export async function fetchMotifFromDesign(designId) {
       const { svgText } = await recolorSVG(null, blendMapping, originalSvg);
       blendSvgContent = svgText;
       console.log('[MOTIF] Generated blend SVG:', blendSvgContent.length, 'chars');
+
+      // Apply region overrides (transparency, etc.) if present
+      if (regionOverrides && regionOverrides.size > 0 && blendSvgContent) {
+        console.log('[MOTIF] Applying', regionOverrides.size, 'region overrides to blend SVG');
+        let taggedSvg = tagSvgRegions(blendSvgContent);
+        blendSvgContent = applyRegionOverrides(taggedSvg, regionOverrides);
+        console.log('[MOTIF] Applied region overrides to blend SVG');
+      }
     } catch (error) {
       console.error('[MOTIF] Failed to generate blend SVG:', error);
     }
