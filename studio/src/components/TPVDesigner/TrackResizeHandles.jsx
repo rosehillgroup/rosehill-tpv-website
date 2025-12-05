@@ -38,24 +38,30 @@ function TrackResizeHandles({ track, svgRef }) {
     return { x: svgP.x, y: svgP.y };
   };
 
-  // Handle rotation start
+  // Handle rotation start (mouse and touch)
   const handleRotationMouseDown = (e) => {
     e.stopPropagation();
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     setIsRotating(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
+    setDragStart({ x: clientX, y: clientY });
   };
 
-  // Handle resize start
+  // Handle resize start (mouse and touch)
   const handleResizeMouseDown = (e, handleType) => {
     e.stopPropagation();
     setIsResizing(true);
     setResizeHandle(handleType);
 
-    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
 
     setDragStart({
-      screenX: e.clientX,
-      screenY: e.clientY,
+      screenX: clientX,
+      screenY: clientY,
       svgX: svgPoint.x,
       svgY: svgPoint.y,
       initialWidth: width,
@@ -65,14 +71,18 @@ function TrackResizeHandles({ track, svgRef }) {
     });
   };
 
-  // Handle mouse move for resizing and rotation
+  // Handle mouse/touch move for resizing and rotation
   useEffect(() => {
     if (!isResizing && !isRotating) return;
 
-    const handleMouseMove = (e) => {
+    const handleMove = (e) => {
+      // Handle both mouse and touch events
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
       if (isRotating) {
-        // Calculate angle from center to mouse
-        const svgPoint = screenToSVG(e.clientX, e.clientY);
+        // Calculate angle from center to mouse/touch
+        const svgPoint = screenToSVG(clientX, clientY);
         const dx = svgPoint.x - centerX;
         const dy = svgPoint.y - centerY;
         let angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90; // +90 to start from top
@@ -88,7 +98,7 @@ function TrackResizeHandles({ track, svgRef }) {
       }
 
       if (!dragStart) return;
-      const svgPoint = screenToSVG(e.clientX, e.clientY);
+      const svgPoint = screenToSVG(clientX, clientY);
 
       const deltaX = svgPoint.x - dragStart.svgX;
       const deltaY = svgPoint.y - dragStart.svgY;
@@ -226,7 +236,7 @@ function TrackResizeHandles({ track, svgRef }) {
       }
     };
 
-    const handleMouseUp = () => {
+    const handleEnd = () => {
       if (isResizing || isRotating) {
         addToHistory();
       }
@@ -236,12 +246,18 @@ function TrackResizeHandles({ track, svgRef }) {
       setDragStart(null);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchcancel', handleEnd);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+      window.removeEventListener('touchcancel', handleEnd);
     };
   }, [isResizing, dragStart, resizeHandle, track.id, position, parameters, updateTrackParameters, updateTrackPosition, addToHistory]);
 
@@ -290,6 +306,7 @@ function TrackResizeHandles({ track, svgRef }) {
             pointerEvents: 'all'
           }}
           onMouseDown={handleRotationMouseDown}
+          onTouchStart={handleRotationMouseDown}
         />
 
         {/* Rotation icon (curved arrow) */}
@@ -331,6 +348,7 @@ function TrackResizeHandles({ track, svgRef }) {
             pointerEvents: 'all'
           }}
           onMouseDown={(e) => handleResizeMouseDown(e, handle.type)}
+          onTouchStart={(e) => handleResizeMouseDown(e, handle.type)}
         />
       ))}
 

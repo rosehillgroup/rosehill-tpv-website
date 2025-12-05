@@ -169,6 +169,10 @@ function BlobResizeHandles({ width, height, onScaleStart, onRotateStart }) {
             e.stopPropagation();
             onScaleStart?.(e, handle.corner);
           }}
+          onTouchStart={(e) => {
+            e.stopPropagation();
+            onScaleStart?.(e, handle.corner);
+          }}
         />
       ))}
 
@@ -194,6 +198,10 @@ function BlobResizeHandles({ width, height, onScaleStart, onRotateStart }) {
         style={{ cursor: 'grab' }}
         pointerEvents="all"
         onMouseDown={(e) => {
+          e.stopPropagation();
+          onRotateStart?.(e);
+        }}
+        onTouchStart={(e) => {
           e.stopPropagation();
           onRotateStart?.(e);
         }}

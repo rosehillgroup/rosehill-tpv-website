@@ -232,6 +232,10 @@ function TextHandles({ bounds, fontSize, alignOffset, onScaleStart, onRotateStar
             e.stopPropagation();
             onScaleStart?.(e, handle.corner);
           }}
+          onTouchStart={(e) => {
+            e.stopPropagation();
+            onScaleStart?.(e, handle.corner);
+          }}
         />
       ))}
 
@@ -257,6 +261,10 @@ function TextHandles({ bounds, fontSize, alignOffset, onScaleStart, onRotateStar
         style={{ cursor: 'grab' }}
         pointerEvents="all"
         onMouseDown={(e) => {
+          e.stopPropagation();
+          onRotateStart?.(e);
+        }}
+        onTouchStart={(e) => {
           e.stopPropagation();
           onRotateStart?.(e);
         }}

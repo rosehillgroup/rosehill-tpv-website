@@ -241,7 +241,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     const motif = motifs[motifId];
     if (!motif || motif.locked) return;
 
-    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
     const scaledWidth = motif.originalWidth_mm * (motif.scale || 1);
     const scaledHeight = motif.originalHeight_mm * (motif.scale || 1);
 
@@ -289,7 +292,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     const motif = motifs[motifId];
     if (!motif || motif.locked) return;
 
-    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
     const scaledWidth = motif.originalWidth_mm * (motif.scale || 1);
     const scaledHeight = motif.originalHeight_mm * (motif.scale || 1);
 
@@ -356,7 +362,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     const shape = shapes[shapeId];
     if (!shape || shape.locked) return;
 
-    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
     const { width_mm, height_mm } = shape;
 
     // Calculate the anchor point (opposite corner that should stay fixed)
@@ -401,7 +410,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     const shape = shapes[shapeId];
     if (!shape || shape.locked) return;
 
-    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
     const { width_mm, height_mm } = shape;
 
     const shapeCenter = {
@@ -463,7 +475,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     const text = texts[textId];
     if (!text || text.locked) return;
 
-    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
     const bounds = measureText(text.content, text.fontFamily, text.fontSize_mm, text.fontWeight, text.fontStyle);
 
     // Calculate text bounds based on alignment
@@ -513,7 +528,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     const text = texts[textId];
     if (!text || text.locked) return;
 
-    const svgPoint = screenToSVG(e.clientX, e.clientY);
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
     const bounds = measureText(text.content, text.fontFamily, text.fontSize_mm, text.fontWeight, text.fontStyle);
 
     // Calculate text center based on alignment
