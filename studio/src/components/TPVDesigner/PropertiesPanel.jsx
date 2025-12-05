@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { calculateTrackGeometry, calculateStaggeredStarts } from '../../lib/sports/trackGeometry.js';
 import { getShapeDisplayName, getShapeIcon } from '../../lib/sports/shapeGeometry.js';
+import { BLOB_PRESETS } from '../../lib/sports/blobGeometry.js';
 import { getAvailableFonts } from '../../lib/sports/textUtils.js';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import './PropertiesPanel.css';
@@ -1456,7 +1457,9 @@ function ShapePropertiesPanel({ shape, shapeId }) {
     updateBlobPoints,
     updateBlobiness,
     randomizeBlob,
-    resetBlob
+    resetBlob,
+    setBlobSymmetry,
+    applyBlobPreset
   } = useSportsDesignStore();
 
   const [showFillColorPicker, setShowFillColorPicker] = React.useState(false);
@@ -1477,7 +1480,9 @@ function ShapePropertiesPanel({ shape, shapeId }) {
     aspectLocked,
     // Blob-specific properties
     numPoints,
-    blobiness
+    blobiness,
+    symmetryMode,
+    radialSymmetryCount
   } = shape;
 
   const isBlob = shapeType === 'blob';
@@ -1726,6 +1731,139 @@ function ShapePropertiesPanel({ shape, shapeId }) {
                 </div>
                 <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.5rem', textAlign: 'center' }}>
                   Drag points on canvas for precise editing
+                </div>
+              </div>
+
+              {/* Shape Presets */}
+              <div className="property-group">
+                <label>Shape Preset</label>
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                  {Object.entries(BLOB_PRESETS).map(([key, preset]) => (
+                    <button
+                      key={key}
+                      onClick={() => applyBlobPreset(shapeId, key)}
+                      title={preset.description}
+                      style={{
+                        flex: 1,
+                        padding: '0.5rem',
+                        border: '1px solid #e4e9f0',
+                        borderRadius: '6px',
+                        background: '#fff',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                    >
+                      <span style={{ fontSize: '1.25rem' }}>{preset.icon}</span>
+                      <span style={{ fontSize: '0.65rem', color: '#64748b' }}>{preset.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Symmetry Mode */}
+              <div className="property-group">
+                <label>Symmetry</label>
+                <div style={{ display: 'flex', gap: '0.375rem', marginTop: '0.5rem' }}>
+                  <button
+                    onClick={() => setBlobSymmetry(shapeId, 'none')}
+                    title="No symmetry - free editing"
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem',
+                      border: (symmetryMode || 'none') === 'none' ? '2px solid #3b82f6' : '1px solid #e4e9f0',
+                      borderRadius: '6px',
+                      background: (symmetryMode || 'none') === 'none' ? '#eff6ff' : '#fff',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem',
+                      fontWeight: '500'
+                    }}
+                  >
+                    None
+                  </button>
+                  <button
+                    onClick={() => setBlobSymmetry(shapeId, 'horizontal')}
+                    title="Horizontal symmetry - mirror left/right"
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem',
+                      border: symmetryMode === 'horizontal' ? '2px solid #3b82f6' : '1px solid #e4e9f0',
+                      borderRadius: '6px',
+                      background: symmetryMode === 'horizontal' ? '#eff6ff' : '#fff',
+                      cursor: 'pointer',
+                      fontSize: '1rem'
+                    }}
+                  >
+                    ↔
+                  </button>
+                  <button
+                    onClick={() => setBlobSymmetry(shapeId, 'vertical')}
+                    title="Vertical symmetry - mirror top/bottom"
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem',
+                      border: symmetryMode === 'vertical' ? '2px solid #3b82f6' : '1px solid #e4e9f0',
+                      borderRadius: '6px',
+                      background: symmetryMode === 'vertical' ? '#eff6ff' : '#fff',
+                      cursor: 'pointer',
+                      fontSize: '1rem'
+                    }}
+                  >
+                    ↕
+                  </button>
+                  <button
+                    onClick={() => setBlobSymmetry(shapeId, 'radial', radialSymmetryCount || 4)}
+                    title="Radial symmetry - repeat around center"
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem',
+                      border: symmetryMode === 'radial' ? '2px solid #3b82f6' : '1px solid #e4e9f0',
+                      borderRadius: '6px',
+                      background: symmetryMode === 'radial' ? '#eff6ff' : '#fff',
+                      cursor: 'pointer',
+                      fontSize: '1rem'
+                    }}
+                  >
+                    ✱
+                  </button>
+                </div>
+
+                {/* Radial count selector - only shown when radial mode is active */}
+                {symmetryMode === 'radial' && (
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '0.375rem' }}>
+                      Radial Count
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.25rem' }}>
+                      {[2, 3, 4, 6, 8].map(n => (
+                        <button
+                          key={n}
+                          onClick={() => setBlobSymmetry(shapeId, 'radial', n)}
+                          style={{
+                            flex: 1,
+                            padding: '0.375rem',
+                            border: (radialSymmetryCount || 4) === n ? '2px solid #3b82f6' : '1px solid #e4e9f0',
+                            borderRadius: '4px',
+                            background: (radialSymmetryCount || 4) === n ? '#eff6ff' : '#fff',
+                            cursor: 'pointer',
+                            fontSize: '0.75rem',
+                            fontWeight: '500'
+                          }}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.5rem' }}>
+                  {symmetryMode === 'horizontal' && 'Points mirror across vertical axis'}
+                  {symmetryMode === 'vertical' && 'Points mirror across horizontal axis'}
+                  {symmetryMode === 'radial' && `Points repeat ${radialSymmetryCount || 4}× around center`}
+                  {(!symmetryMode || symmetryMode === 'none') && 'Edit points freely without constraints'}
                 </div>
               </div>
             </>

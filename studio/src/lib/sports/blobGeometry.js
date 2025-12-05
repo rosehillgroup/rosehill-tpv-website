@@ -263,3 +263,232 @@ export function getBlobBounds(controlPoints, width, height) {
 
   return { minX, minY, maxX, maxY };
 }
+
+// ====== Blob Presets ======
+
+/**
+ * Predefined blob shape configurations
+ * Each preset has optimized numPoints and blobiness for a specific look
+ */
+export const BLOB_PRESETS = {
+  splat: {
+    name: 'Splat',
+    icon: '💦',
+    numPoints: 6,
+    blobiness: 0.7,
+    description: 'Irregular splatter with spiky edges'
+  },
+  cloud: {
+    name: 'Cloud',
+    icon: '☁',
+    numPoints: 12,
+    blobiness: 0.35,
+    description: 'Soft, fluffy cloud shape with gentle curves'
+  },
+  puddle: {
+    name: 'Puddle',
+    icon: '💧',
+    numPoints: 8,
+    blobiness: 0.5,
+    description: 'Watery, organic puddle shape'
+  }
+};
+
+// ====== Symmetry Functions ======
+
+/**
+ * Calculate the mirrored position for a point
+ * @param {number} x - Original x position (normalized 0-1)
+ * @param {number} y - Original y position (normalized 0-1)
+ * @param {boolean} mirrorX - Whether to mirror across Y axis (flip left/right)
+ * @param {boolean} mirrorY - Whether to mirror across X axis (flip top/bottom)
+ * @returns {{x: number, y: number}}
+ */
+export function getMirroredPosition(x, y, mirrorX, mirrorY) {
+  const centerX = 0.5;
+  const centerY = 0.5;
+
+  return {
+    x: mirrorX ? centerX - (x - centerX) : x,
+    y: mirrorY ? centerY - (y - centerY) : y
+  };
+}
+
+/**
+ * Calculate mirrored bezier handle offsets
+ * @param {number} handleX - Handle X offset
+ * @param {number} handleY - Handle Y offset
+ * @param {boolean} mirrorX - Whether to mirror across Y axis
+ * @param {boolean} mirrorY - Whether to mirror across X axis
+ * @returns {{x: number, y: number}}
+ */
+export function getMirroredHandle(handleX, handleY, mirrorX, mirrorY) {
+  return {
+    x: mirrorX ? -handleX : handleX,
+    y: mirrorY ? -handleY : handleY
+  };
+}
+
+/**
+ * Get indices of symmetric points for a given point based on symmetry mode
+ * Returns the original point plus all its symmetric counterparts
+ * @param {number} index - Index of the point being edited
+ * @param {number} numPoints - Total number of control points
+ * @param {string} mode - 'none' | 'horizontal' | 'vertical' | 'radial'
+ * @param {number} radialCount - Number of radial repetitions (for radial mode)
+ * @returns {Array<{index: number, mirrorX: boolean, mirrorY: boolean, rotationAngle: number}>}
+ */
+export function getSymmetricPointIndices(index, numPoints, mode, radialCount = 4) {
+  // Always include the original point
+  const result = [{ index, mirrorX: false, mirrorY: false, rotationAngle: 0 }];
+
+  if (mode === 'none' || !mode) {
+    return result;
+  }
+
+  if (mode === 'horizontal') {
+    // Mirror across vertical centerline (left ↔ right)
+    // Find the point on the opposite side
+    // Points are arranged radially, so the opposite point is at (numPoints - index) % numPoints
+    // But we need to account for the starting angle offset
+    const oppositeIndex = (numPoints - index) % numPoints;
+    if (oppositeIndex !== index) {
+      result.push({ index: oppositeIndex, mirrorX: true, mirrorY: false, rotationAngle: 0 });
+    }
+    return result;
+  }
+
+  if (mode === 'vertical') {
+    // Mirror across horizontal centerline (top ↔ bottom)
+    // For points arranged radially from top, the opposite is at half the circle away
+    const halfPoints = numPoints / 2;
+    // Find point that's mirrored vertically
+    // If point is at angle θ from top, mirror is at -θ
+    const mirrorIndex = (numPoints - index) % numPoints;
+    if (mirrorIndex !== index) {
+      result.push({ index: mirrorIndex, mirrorX: false, mirrorY: true, rotationAngle: 0 });
+    }
+    return result;
+  }
+
+  if (mode === 'radial') {
+    // Radial symmetry: points repeat around center
+    // Divide circle into radialCount sections
+    const sectionSize = numPoints / radialCount;
+
+    // Find which section the current point is in
+    const sectionIndex = index % Math.ceil(sectionSize);
+
+    // Add points from all other sections at the same relative position
+    for (let i = 1; i < radialCount; i++) {
+      const rotatedIndex = Math.round(sectionIndex + (i * numPoints / radialCount)) % numPoints;
+      if (rotatedIndex !== index) {
+        const rotationAngle = (i * 2 * Math.PI) / radialCount;
+        result.push({
+          index: rotatedIndex,
+          mirrorX: false,
+          mirrorY: false,
+          rotationAngle
+        });
+      }
+    }
+    return result;
+  }
+
+  return result;
+}
+
+/**
+ * Apply symmetry to control points when one point is edited
+ * @param {Array} controlPoints - Current control points array
+ * @param {number} editIndex - Index of the point being edited
+ * @param {number} newX - New X position for the edited point
+ * @param {number} newY - New Y position for the edited point
+ * @param {string} mode - Symmetry mode
+ * @param {number} radialCount - Radial symmetry count
+ * @returns {Array} Updated control points with symmetry applied
+ */
+export function applySymmetryToPoint(controlPoints, editIndex, newX, newY, mode, radialCount = 4) {
+  if (mode === 'none' || !mode) {
+    // Just update the single point
+    return controlPoints.map((point, i) => {
+      if (i !== editIndex) return point;
+      return { ...point, x: newX, y: newY };
+    });
+  }
+
+  const symmetricIndices = getSymmetricPointIndices(editIndex, controlPoints.length, mode, radialCount);
+
+  return controlPoints.map((point, i) => {
+    const symmetricInfo = symmetricIndices.find(s => s.index === i);
+    if (!symmetricInfo) return point;
+
+    if (symmetricInfo.rotationAngle !== 0) {
+      // For radial symmetry, rotate the point position around center
+      const centerX = 0.5;
+      const centerY = 0.5;
+      const dx = newX - centerX;
+      const dy = newY - centerY;
+      const cos = Math.cos(symmetricInfo.rotationAngle);
+      const sin = Math.sin(symmetricInfo.rotationAngle);
+      return {
+        ...point,
+        x: centerX + dx * cos - dy * sin,
+        y: centerY + dx * sin + dy * cos
+      };
+    }
+
+    // For horizontal/vertical symmetry, mirror the position
+    const mirrored = getMirroredPosition(newX, newY, symmetricInfo.mirrorX, symmetricInfo.mirrorY);
+    return { ...point, x: mirrored.x, y: mirrored.y };
+  });
+}
+
+/**
+ * Apply symmetry to bezier handles when one handle is edited
+ * @param {Array} controlPoints - Current control points array
+ * @param {number} editIndex - Index of the point whose handle is being edited
+ * @param {string} handleType - 'handleIn' or 'handleOut'
+ * @param {number} newOffsetX - New handle X offset
+ * @param {number} newOffsetY - New handle Y offset
+ * @param {string} mode - Symmetry mode
+ * @param {number} radialCount - Radial symmetry count
+ * @returns {Array} Updated control points with symmetry applied
+ */
+export function applySymmetryToHandle(controlPoints, editIndex, handleType, newOffsetX, newOffsetY, mode, radialCount = 4) {
+  if (mode === 'none' || !mode) {
+    // Just update the single handle
+    return controlPoints.map((point, i) => {
+      if (i !== editIndex) return point;
+      return { ...point, [handleType]: { x: newOffsetX, y: newOffsetY } };
+    });
+  }
+
+  const symmetricIndices = getSymmetricPointIndices(editIndex, controlPoints.length, mode, radialCount);
+
+  return controlPoints.map((point, i) => {
+    const symmetricInfo = symmetricIndices.find(s => s.index === i);
+    if (!symmetricInfo) return point;
+
+    // Determine which handle to update on symmetric point
+    // For mirrored points, handleIn and handleOut may need to swap
+    let targetHandle = handleType;
+    let offsetX = newOffsetX;
+    let offsetY = newOffsetY;
+
+    if (symmetricInfo.rotationAngle !== 0) {
+      // Rotate the handle offset for radial symmetry
+      const cos = Math.cos(symmetricInfo.rotationAngle);
+      const sin = Math.sin(symmetricInfo.rotationAngle);
+      offsetX = newOffsetX * cos - newOffsetY * sin;
+      offsetY = newOffsetX * sin + newOffsetY * cos;
+    } else {
+      // Mirror the handle for horizontal/vertical symmetry
+      const mirrored = getMirroredHandle(newOffsetX, newOffsetY, symmetricInfo.mirrorX, symmetricInfo.mirrorY);
+      offsetX = mirrored.x;
+      offsetY = mirrored.y;
+    }
+
+    return { ...point, [targetHandle]: { x: offsetX, y: offsetY } };
+  });
+}

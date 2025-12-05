@@ -1,7 +1,13 @@
 // TPV Studio - TPV Designer State Management
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { generateBlobControlPoints, generateEllipseControlPoints } from '../lib/sports/blobGeometry.js';
+import {
+  generateBlobControlPoints,
+  generateEllipseControlPoints,
+  applySymmetryToPoint,
+  applySymmetryToHandle,
+  BLOB_PRESETS
+} from '../lib/sports/blobGeometry.js';
 
 const initialState = {
   // Surface configuration
@@ -1087,6 +1093,8 @@ export const useSportsDesignStore = create(
             blobiness,
             seed,
             controlPoints,
+            symmetryMode: 'none',        // 'none' | 'horizontal' | 'vertical' | 'radial'
+            radialSymmetryCount: 4,      // 2, 3, 4, 6, or 8 (only used when mode='radial')
             width_mm: 2000,
             height_mm: 2000,
             position: {
@@ -1384,14 +1392,19 @@ export const useSportsDesignStore = create(
           const shape = state.shapes[shapeId];
           if (!shape || shape.shapeType !== 'blob' || !shape.controlPoints) return state;
 
-          const updatedControlPoints = shape.controlPoints.map((point, i) => {
-            if (i !== pointIndex) return point;
-            return {
-              ...point,
-              x: Math.max(0, Math.min(1, newX)),
-              y: Math.max(0, Math.min(1, newY))
-            };
-          });
+          // Clamp position to valid range
+          const clampedX = Math.max(0, Math.min(1, newX));
+          const clampedY = Math.max(0, Math.min(1, newY));
+
+          // Apply symmetry if enabled
+          const updatedControlPoints = applySymmetryToPoint(
+            shape.controlPoints,
+            pointIndex,
+            clampedX,
+            clampedY,
+            shape.symmetryMode || 'none',
+            shape.radialSymmetryCount || 4
+          );
 
           return {
             shapes: {
@@ -1411,16 +1424,16 @@ export const useSportsDesignStore = create(
           const shape = state.shapes[shapeId];
           if (!shape || shape.shapeType !== 'blob' || !shape.controlPoints) return state;
 
-          const updatedControlPoints = shape.controlPoints.map((point, i) => {
-            if (i !== pointIndex) return point;
-            return {
-              ...point,
-              [handleType]: {
-                x: offsetX,
-                y: offsetY
-              }
-            };
-          });
+          // Apply symmetry if enabled
+          const updatedControlPoints = applySymmetryToHandle(
+            shape.controlPoints,
+            pointIndex,
+            handleType,
+            offsetX,
+            offsetY,
+            shape.symmetryMode || 'none',
+            shape.radialSymmetryCount || 4
+          );
 
           return {
             shapes: {
@@ -1437,6 +1450,57 @@ export const useSportsDesignStore = create(
 
       commitBlobEdit: () => {
         // Called after finishing a drag operation to save to history
+        get().addToHistory();
+      },
+
+      setBlobSymmetry: (shapeId, mode, radialCount = 4) => {
+        set((state) => {
+          const shape = state.shapes[shapeId];
+          if (!shape || shape.shapeType !== 'blob') return state;
+
+          return {
+            shapes: {
+              ...state.shapes,
+              [shapeId]: {
+                ...shape,
+                symmetryMode: mode,
+                radialSymmetryCount: radialCount
+              }
+            }
+          };
+        });
+        get().addToHistory();
+      },
+
+      applyBlobPreset: (shapeId, presetKey) => {
+        const preset = BLOB_PRESETS[presetKey];
+        if (!preset) return;
+
+        set((state) => {
+          const shape = state.shapes[shapeId];
+          if (!shape || shape.shapeType !== 'blob') return state;
+
+          // Generate new seed and control points with preset values
+          const newSeed = Math.floor(Math.random() * 100000);
+          const controlPoints = generateBlobControlPoints(
+            preset.numPoints,
+            preset.blobiness,
+            newSeed
+          );
+
+          return {
+            shapes: {
+              ...state.shapes,
+              [shapeId]: {
+                ...shape,
+                numPoints: preset.numPoints,
+                blobiness: preset.blobiness,
+                seed: newSeed,
+                controlPoints
+              }
+            }
+          };
+        });
         get().addToHistory();
       },
 
