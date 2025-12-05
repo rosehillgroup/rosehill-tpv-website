@@ -658,12 +658,15 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     };
   }, [isDragging, dragCourtId, dragTrackId, dragMotifId, dragShapeId, dragTextId, dragStart, courts, tracks, motifs, shapes, texts, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition, updateMotifPosition, updateShapePosition, updateTextPosition]);
 
-  // Handle mouse move/up for motif scaling
+  // Handle mouse/touch move for motif scaling
   useEffect(() => {
     if (!isScaling || !scaleMotifId || !scaleStart) return;
 
-    const handleMouseMove = (e) => {
-      const svgPoint = screenToSVG(e.clientX, e.clientY);
+    const handleMove = (e) => {
+      // Handle both mouse and touch events
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const svgPoint = screenToSVG(clientX, clientY);
       const motif = motifs[scaleMotifId];
       if (!motif) return;
 
@@ -721,7 +724,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       updateMotifPosition(scaleMotifId, newPosition);
     };
 
-    const handleMouseUp = () => {
+    const handleEnd = () => {
       const { addToHistory } = useSportsDesignStore.getState();
       addToHistory();
 
@@ -730,23 +733,32 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       setScaleStart(null);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchcancel', handleEnd);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+      window.removeEventListener('touchcancel', handleEnd);
     };
   }, [isScaling, scaleMotifId, scaleStart, motifs, updateMotifScale, updateMotifPosition]);
 
-  // Handle mouse move/up for motif rotation
+  // Handle mouse/touch move for motif rotation
   useEffect(() => {
     if (!isRotating || !rotateMotifId || !rotateStart) return;
 
-    const handleMouseMove = (e) => {
-      const svgPoint = screenToSVG(e.clientX, e.clientY);
+    const handleMove = (e) => {
+      // Handle both mouse and touch events
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const svgPoint = screenToSVG(clientX, clientY);
 
-      // Calculate current angle from center to mouse
+      // Calculate current angle from center to mouse/touch
       const currentAngle = Math.atan2(
         svgPoint.y - rotateStart.motifCenter.y,
         svgPoint.x - rotateStart.motifCenter.x
@@ -759,7 +771,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       // Normalize to 0-360 range
       newRotation = ((newRotation % 360) + 360) % 360;
 
-      // Snap to 15-degree increments if shift is held
+      // Snap to 15-degree increments if shift is held (mouse only)
       if (e.shiftKey) {
         newRotation = Math.round(newRotation / 15) * 15;
       }
@@ -770,7 +782,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       updateMotifRotation(rotateMotifId, newRotation);
     };
 
-    const handleMouseUp = () => {
+    const handleEnd = () => {
       const { addToHistory } = useSportsDesignStore.getState();
       addToHistory();
 
@@ -779,21 +791,30 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       setRotateStart(null);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchcancel', handleEnd);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+      window.removeEventListener('touchcancel', handleEnd);
     };
   }, [isRotating, rotateMotifId, rotateStart, updateMotifRotation]);
 
-  // Handle mouse move/up for shape scaling
+  // Handle mouse/touch move for shape scaling
   useEffect(() => {
     if (!isScalingShape || !scaleShapeId || !scaleShapeStart) return;
 
-    const handleMouseMove = (e) => {
-      const svgPoint = screenToSVG(e.clientX, e.clientY);
+    const handleMove = (e) => {
+      // Handle both mouse and touch events
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const svgPoint = screenToSVG(clientX, clientY);
       const shape = shapes[scaleShapeId];
       if (!shape) return;
 
@@ -857,7 +878,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       updateShapePosition(scaleShapeId, newPosition);
     };
 
-    const handleMouseUp = () => {
+    const handleEnd = () => {
       const { addToHistory } = useSportsDesignStore.getState();
       addToHistory();
 
@@ -866,23 +887,32 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       setScaleShapeStart(null);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchcancel', handleEnd);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+      window.removeEventListener('touchcancel', handleEnd);
     };
   }, [isScalingShape, scaleShapeId, scaleShapeStart, shapes, updateShapeDimensions, updateShapePosition]);
 
-  // Handle mouse move/up for shape rotation
+  // Handle mouse/touch move for shape rotation
   useEffect(() => {
     if (!isRotatingShape || !rotateShapeId || !rotateShapeStart) return;
 
-    const handleMouseMove = (e) => {
-      const svgPoint = screenToSVG(e.clientX, e.clientY);
+    const handleMove = (e) => {
+      // Handle both mouse and touch events
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const svgPoint = screenToSVG(clientX, clientY);
 
-      // Calculate current angle from center to mouse
+      // Calculate current angle from center to mouse/touch
       const currentAngle = Math.atan2(
         svgPoint.y - rotateShapeStart.shapeCenter.y,
         svgPoint.x - rotateShapeStart.shapeCenter.x
@@ -895,7 +925,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       // Normalize to 0-360 range
       newRotation = ((newRotation % 360) + 360) % 360;
 
-      // Snap to 15-degree increments if shift is held
+      // Snap to 15-degree increments if shift is held (mouse only)
       if (e.shiftKey) {
         newRotation = Math.round(newRotation / 15) * 15;
       }
@@ -906,7 +936,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       updateShapeRotation(rotateShapeId, newRotation);
     };
 
-    const handleMouseUp = () => {
+    const handleEnd = () => {
       const { addToHistory } = useSportsDesignStore.getState();
       addToHistory();
 
@@ -915,25 +945,34 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       setRotateShapeStart(null);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchcancel', handleEnd);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+      window.removeEventListener('touchcancel', handleEnd);
     };
   }, [isRotatingShape, rotateShapeId, rotateShapeStart, updateShapeRotation]);
 
-  // Handle mouse move/up for text scaling (font size)
+  // Handle mouse/touch move for text scaling (font size)
   useEffect(() => {
     if (!isScalingText || !scaleTextId || !scaleTextStart) return;
 
-    const handleMouseMove = (e) => {
-      const svgPoint = screenToSVG(e.clientX, e.clientY);
+    const handleMove = (e) => {
+      // Handle both mouse and touch events
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const svgPoint = screenToSVG(clientX, clientY);
       const text = texts[scaleTextId];
       if (!text) return;
 
-      // Calculate current distance from anchor point to mouse
+      // Calculate current distance from anchor point to mouse/touch
       const currentDistance = Math.sqrt(
         Math.pow(svgPoint.x - scaleTextStart.anchorPoint.x, 2) +
         Math.pow(svgPoint.y - scaleTextStart.anchorPoint.y, 2)
@@ -952,7 +991,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       updateTextFontSize(scaleTextId, newFontSize);
     };
 
-    const handleMouseUp = () => {
+    const handleEnd = () => {
       const { addToHistory } = useSportsDesignStore.getState();
       addToHistory();
 
@@ -961,23 +1000,32 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       setScaleTextStart(null);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchcancel', handleEnd);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+      window.removeEventListener('touchcancel', handleEnd);
     };
   }, [isScalingText, scaleTextId, scaleTextStart, texts, updateTextFontSize]);
 
-  // Handle mouse move/up for text rotation
+  // Handle mouse/touch move for text rotation
   useEffect(() => {
     if (!isRotatingText || !rotateTextId || !rotateTextStart) return;
 
-    const handleMouseMove = (e) => {
-      const svgPoint = screenToSVG(e.clientX, e.clientY);
+    const handleMove = (e) => {
+      // Handle both mouse and touch events
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const svgPoint = screenToSVG(clientX, clientY);
 
-      // Calculate current angle from center to mouse
+      // Calculate current angle from center to mouse/touch
       const currentAngle = Math.atan2(
         svgPoint.y - rotateTextStart.textCenter.y,
         svgPoint.x - rotateTextStart.textCenter.x
@@ -990,7 +1038,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       // Normalize to 0-360 range
       newRotation = ((newRotation % 360) + 360) % 360;
 
-      // Snap to 15-degree increments if shift is held
+      // Snap to 15-degree increments if shift is held (mouse only)
       if (e.shiftKey) {
         newRotation = Math.round(newRotation / 15) * 15;
       }
@@ -1001,7 +1049,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       updateTextRotation(rotateTextId, newRotation);
     };
 
-    const handleMouseUp = () => {
+    const handleEnd = () => {
       const { addToHistory } = useSportsDesignStore.getState();
       addToHistory();
 
@@ -1010,12 +1058,18 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       setRotateTextStart(null);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchcancel', handleEnd);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+      window.removeEventListener('touchcancel', handleEnd);
     };
   }, [isRotatingText, rotateTextId, rotateTextStart, updateTextRotation]);
 
