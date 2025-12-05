@@ -1474,29 +1474,21 @@ export const useSportsDesignStore = create(
 
       applyBlobPreset: (shapeId, presetKey) => {
         const preset = BLOB_PRESETS[presetKey];
-        if (!preset) return;
+        if (!preset || !preset.controlPoints) return;
 
         set((state) => {
           const shape = state.shapes[shapeId];
           if (!shape || shape.shapeType !== 'blob') return state;
 
-          // Generate new seed and control points with preset values
-          const newSeed = Math.floor(Math.random() * 100000);
-          const controlPoints = generateBlobControlPoints(
-            preset.numPoints,
-            preset.blobiness,
-            newSeed
-          );
-
+          // Use hand-crafted control points from the preset (deep copy)
           return {
             shapes: {
               ...state.shapes,
               [shapeId]: {
                 ...shape,
-                numPoints: preset.numPoints,
-                blobiness: preset.blobiness,
-                seed: newSeed,
-                controlPoints
+                numPoints: preset.controlPoints.length,
+                blobiness: 0, // Hand-crafted shapes have no random variation
+                controlPoints: JSON.parse(JSON.stringify(preset.controlPoints))
               }
             }
           };

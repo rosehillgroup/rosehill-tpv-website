@@ -50,6 +50,17 @@ export default function ColorEditorPanel({
     }
   };
 
+  // Handle transparent selection
+  const handleMakeTransparent = () => {
+    setSelectedHex('transparent');
+    if (onColorChange) {
+      onColorChange('transparent');
+    }
+  };
+
+  // Check if currently transparent
+  const isTransparent = selectedHex === 'transparent' || selectedHex === 'none';
+
   if (!color) {
     return null;
   }
@@ -77,11 +88,11 @@ export default function ColorEditorPanel({
               <span className="arrow">→</span>
               <div className="swatch-group">
                 <div
-                  className="swatch current"
-                  style={{ backgroundColor: selectedHex }}
+                  className={`swatch current ${isTransparent ? 'transparent-preview' : ''}`}
+                  style={isTransparent ? {} : { backgroundColor: selectedHex }}
                   title="Current colour"
                 />
-                <span className="swatch-label">Current</span>
+                <span className="swatch-label">{isTransparent ? 'Transparent' : 'Current'}</span>
               </div>
             </div>
           </div>
@@ -96,6 +107,19 @@ export default function ColorEditorPanel({
               <span className="value">{color.areaPct?.toFixed(1) || 0}%</span>
             </div>
           </div>
+        </div>
+
+        {/* Transparent Option */}
+        <div className="transparent-section">
+          <h4>Remove Fill</h4>
+          <button
+            className={`transparent-option ${isTransparent ? 'selected' : ''}`}
+            onClick={handleMakeTransparent}
+            title="Make this area transparent (remove fill)"
+          >
+            <div className="transparent-swatch" />
+            <span>Make Transparent</span>
+          </button>
         </div>
 
         {/* TPV Colour Palette */}
@@ -252,6 +276,15 @@ export default function ColorEditorPanel({
           border-color: #ff6b35;
         }
 
+        .swatch.transparent-preview {
+          background:
+            linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%),
+            linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%);
+          background-size: 10px 10px;
+          background-position: 0 0, 5px 5px;
+          background-color: white;
+        }
+
         .swatch-label {
           font-size: 0.85rem;
           color: #666;
@@ -285,6 +318,61 @@ export default function ColorEditorPanel({
         .detail-row .value {
           font-family: 'Courier New', monospace;
           color: #333;
+        }
+
+        /* Transparent Section */
+        .transparent-section {
+          margin-bottom: 1.5rem;
+          padding: 1rem;
+          background: #f9f9f9;
+          border-radius: 6px;
+        }
+
+        .transparent-section h4 {
+          margin: 0 0 0.75rem 0;
+          color: #1a365d;
+          font-size: 1rem;
+          font-weight: 600;
+        }
+
+        .transparent-option {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          width: 100%;
+          padding: 12px 16px;
+          background: white;
+          border: 2px solid #d1d5db;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s;
+          font-size: 0.95rem;
+          font-weight: 500;
+          color: #374151;
+        }
+
+        .transparent-option:hover {
+          border-color: #6b7280;
+          background: #fafafa;
+        }
+
+        .transparent-option.selected {
+          border-color: #ff6b35;
+          background: #fff5f0;
+          box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.2);
+        }
+
+        .transparent-swatch {
+          width: 32px;
+          height: 32px;
+          border-radius: 4px;
+          border: 1px solid #999;
+          background:
+            linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%),
+            linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%);
+          background-size: 8px 8px;
+          background-position: 0 0, 4px 4px;
+          background-color: white;
         }
 
         /* TPV Palette Section */

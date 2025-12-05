@@ -1367,6 +1367,16 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     setEyedropperRegion(null);
   };
 
+  // Make selected region transparent
+  const handleMakeTransparent = () => {
+    if (!eyedropperRegion) return;
+
+    console.log('[TPV-STUDIO] Making region transparent:', eyedropperRegion.regionId);
+    applyRegionRecolor(eyedropperRegion.regionId, 'transparent');
+    setEyedropperActive(false);
+    setEyedropperRegion(null);
+  };
+
   // Undo last region override change
   const handleRegionUndo = async () => {
     if (historyIndex <= 0) return; // Can't undo past the beginning
@@ -2077,6 +2087,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
                 onColorClick={handleColorClick}
                 onRegionClick={handleRegionClick}
                 onEyedropperCancel={handleEyedropperCancel}
+                onMakeTransparent={handleMakeTransparent}
                 selectedColor={selectedColor}
                 editedColors={blendEditedColors}
                 onResetAll={handleResetAllColors}
@@ -2105,6 +2116,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
                 onColorClick={handleColorClick}
                 onRegionClick={handleRegionClick}
                 onEyedropperCancel={handleEyedropperCancel}
+                onMakeTransparent={handleMakeTransparent}
                 selectedColor={selectedColor}
                 editedColors={solidEditedColors}
                 onResetAll={handleResetAllColors}

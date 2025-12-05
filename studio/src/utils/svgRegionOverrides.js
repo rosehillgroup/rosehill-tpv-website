@@ -31,9 +31,19 @@ export function applyRegionOverrides(svgString, overrides) {
   overrides.forEach((hex, regionId) => {
     const el = doc.querySelector(`[data-region-id="${regionId}"]`);
     if (el) {
+      // Check if this is a transparency override
+      const isTransparent = hex === 'transparent' || hex === 'none';
+
       // Update fill attribute
-      if (el.hasAttribute('fill')) {
-        el.setAttribute('fill', hex);
+      if (el.hasAttribute('fill') || isTransparent) {
+        if (isTransparent) {
+          el.setAttribute('fill', 'none');
+          el.setAttribute('fill-opacity', '0');
+        } else {
+          el.setAttribute('fill', hex);
+          // Remove any transparency settings
+          el.removeAttribute('fill-opacity');
+        }
         appliedCount++;
       }
 
@@ -43,15 +53,25 @@ export function applyRegionOverrides(svgString, overrides) {
         const currentStroke = el.getAttribute('stroke');
         if (currentStroke && currentStroke !== '#000' && currentStroke !== '#000000' &&
             currentStroke !== '#fff' && currentStroke !== '#ffffff') {
-          el.setAttribute('stroke', hex);
+          if (isTransparent) {
+            el.setAttribute('stroke', 'none');
+            el.setAttribute('stroke-opacity', '0');
+          } else {
+            el.setAttribute('stroke', hex);
+          }
         }
       }
 
       // Update inline style if present
       const style = el.getAttribute('style');
       if (style && style.includes('fill:')) {
-        const newStyle = style.replace(/fill:\s*[^;]+/, `fill: ${hex}`);
-        el.setAttribute('style', newStyle);
+        if (isTransparent) {
+          const newStyle = style.replace(/fill:\s*[^;]+/, 'fill: none');
+          el.setAttribute('style', newStyle);
+        } else {
+          const newStyle = style.replace(/fill:\s*[^;]+/, `fill: ${hex}`);
+          el.setAttribute('style', newStyle);
+        }
       }
     } else {
       console.warn(`[SVG-REGION-OVERRIDES] Region not found: ${regionId}`);

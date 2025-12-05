@@ -22,6 +22,13 @@ export default function ColorLegend({
     return editedColors.has(recipe.originalColor.hex.toLowerCase());
   };
 
+  // Check if a color has been made transparent
+  const isTransparent = (recipe) => {
+    if (!editedColors || editedColors.size === 0) return false;
+    const editedValue = editedColors.get(recipe.originalColor.hex.toLowerCase());
+    return editedValue?.newHex === 'transparent' || editedValue?.newHex === 'none';
+  };
+
   // Check if any colors have been edited
   const hasAnyEdits = editedColors && editedColors.size > 0;
 
@@ -33,6 +40,11 @@ export default function ColorLegend({
 
   // Get display label for a color based on mode
   const getColorLabel = (recipe) => {
+    // Check if made transparent
+    if (isTransparent(recipe)) {
+      return 'Transparent';
+    }
+
     if (mode === 'solid') {
       // In solid mode, show TPV color code and name if available
       const tpvColor = findTpvColorByHex(recipe.blendColor.hex);
@@ -89,10 +101,18 @@ export default function ColorLegend({
           >
             <div className="color-swatch-wrapper">
               <div
-                className="color-swatch"
-                style={{ backgroundColor: recipe.blendColor.hex }}
+                className={`color-swatch ${isTransparent(recipe) ? 'transparent-swatch' : ''}`}
+                style={isTransparent(recipe) ? {} : { backgroundColor: recipe.blendColor.hex }}
               />
-              {isEdited(recipe) && (
+              {isTransparent(recipe) && (
+                <span className="transparent-indicator" title="Made transparent">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" width="14" height="14">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="4" y1="4" x2="20" y2="20"/>
+                  </svg>
+                </span>
+              )}
+              {isEdited(recipe) && !isTransparent(recipe) && (
                 <span className="edit-indicator" title="Colour has been modified">
                   <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12">
                     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
@@ -209,6 +229,36 @@ export default function ColorLegend({
           height: 40px;
           border-radius: 4px;
           border: 2px solid #ddd;
+        }
+
+        .color-swatch.transparent-swatch {
+          background:
+            linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%),
+            linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%);
+          background-size: 8px 8px;
+          background-position: 0 0, 4px 4px;
+          background-color: white;
+          border-color: #999;
+        }
+
+        .transparent-indicator {
+          position: absolute;
+          top: -4px;
+          right: -4px;
+          width: 18px;
+          height: 18px;
+          background: #6b7280;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .transparent-indicator svg {
+          width: 12px;
+          height: 12px;
         }
 
         .edit-indicator {

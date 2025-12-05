@@ -148,7 +148,7 @@ function DesignEditorModal({ isOpen, onClose }) {
         input_mode: playgroundStore.inputMode
       });
 
-      designId = savedDesign.id;
+      designId = savedDesign.design_id;
 
       // Update the store with the saved ID
       playgroundStore.setCurrentDesignId(designId);

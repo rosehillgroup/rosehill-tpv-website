@@ -267,30 +267,65 @@ export function getBlobBounds(controlPoints, width, height) {
 // ====== Blob Presets ======
 
 /**
- * Predefined blob shape configurations
- * Each preset has optimized numPoints and blobiness for a specific look
+ * Predefined blob shape configurations with hand-crafted control points
+ * Each preset has distinct visual characteristics
  */
 export const BLOB_PRESETS = {
   splat: {
     name: 'Splat',
     icon: '💦',
-    numPoints: 6,
-    blobiness: 0.7,
-    description: 'Irregular splatter with spiky edges'
+    description: 'Irregular splatter with spiky protrusions',
+    // 10 points with spiky protrusions alternating inward/outward
+    controlPoints: [
+      { x: 0.5, y: 0.08, handleIn: { x: -0.06, y: 0 }, handleOut: { x: 0.06, y: 0 } },
+      { x: 0.72, y: 0.18, handleIn: { x: -0.04, y: -0.06 }, handleOut: { x: 0.04, y: 0.06 } },
+      { x: 0.65, y: 0.38, handleIn: { x: 0.06, y: -0.04 }, handleOut: { x: -0.06, y: 0.04 } },
+      { x: 0.92, y: 0.5, handleIn: { x: 0, y: -0.06 }, handleOut: { x: 0, y: 0.06 } },
+      { x: 0.68, y: 0.65, handleIn: { x: 0.06, y: 0 }, handleOut: { x: -0.06, y: 0 } },
+      { x: 0.75, y: 0.88, handleIn: { x: 0.04, y: -0.05 }, handleOut: { x: -0.04, y: 0.05 } },
+      { x: 0.5, y: 0.75, handleIn: { x: 0.06, y: 0.02 }, handleOut: { x: -0.06, y: 0.02 } },
+      { x: 0.25, y: 0.88, handleIn: { x: 0.04, y: 0.05 }, handleOut: { x: -0.04, y: -0.05 } },
+      { x: 0.32, y: 0.65, handleIn: { x: -0.06, y: 0 }, handleOut: { x: 0.06, y: 0 } },
+      { x: 0.08, y: 0.5, handleIn: { x: 0, y: 0.06 }, handleOut: { x: 0, y: -0.06 } },
+      { x: 0.35, y: 0.38, handleIn: { x: -0.06, y: 0.04 }, handleOut: { x: 0.06, y: -0.04 } },
+      { x: 0.28, y: 0.18, handleIn: { x: 0.04, y: 0.06 }, handleOut: { x: -0.04, y: -0.06 } }
+    ]
   },
   cloud: {
     name: 'Cloud',
     icon: '☁',
-    numPoints: 12,
-    blobiness: 0.35,
-    description: 'Soft, fluffy cloud shape with gentle curves'
+    description: 'Soft, fluffy cloud with bumpy top edge',
+    // 12 points with bumpy top edge, smoother bottom
+    controlPoints: [
+      { x: 0.12, y: 0.6, handleIn: { x: -0.04, y: -0.08 }, handleOut: { x: 0.04, y: 0.08 } },
+      { x: 0.1, y: 0.42, handleIn: { x: 0, y: 0.08 }, handleOut: { x: 0, y: -0.08 } },
+      { x: 0.22, y: 0.28, handleIn: { x: -0.06, y: 0.02 }, handleOut: { x: 0.06, y: -0.02 } },
+      { x: 0.35, y: 0.18, handleIn: { x: -0.04, y: 0.04 }, handleOut: { x: 0.04, y: -0.04 } },
+      { x: 0.48, y: 0.25, handleIn: { x: -0.04, y: -0.04 }, handleOut: { x: 0.04, y: 0.04 } },
+      { x: 0.55, y: 0.12, handleIn: { x: -0.04, y: 0.04 }, handleOut: { x: 0.04, y: -0.04 } },
+      { x: 0.68, y: 0.2, handleIn: { x: -0.04, y: -0.04 }, handleOut: { x: 0.04, y: 0.04 } },
+      { x: 0.8, y: 0.28, handleIn: { x: -0.04, y: -0.02 }, handleOut: { x: 0.06, y: 0.02 } },
+      { x: 0.92, y: 0.45, handleIn: { x: 0, y: -0.08 }, handleOut: { x: 0, y: 0.08 } },
+      { x: 0.88, y: 0.62, handleIn: { x: 0.04, y: -0.06 }, handleOut: { x: -0.06, y: 0.06 } },
+      { x: 0.65, y: 0.72, handleIn: { x: 0.1, y: 0 }, handleOut: { x: -0.1, y: 0 } },
+      { x: 0.35, y: 0.72, handleIn: { x: 0.1, y: 0 }, handleOut: { x: -0.1, y: 0 } }
+    ]
   },
   puddle: {
     name: 'Puddle',
     icon: '💧',
-    numPoints: 8,
-    blobiness: 0.5,
-    description: 'Watery, organic puddle shape'
+    description: 'Flat, watery organic puddle shape',
+    // 8 points, wide and flat elliptical with organic edges
+    controlPoints: [
+      { x: 0.5, y: 0.32, handleIn: { x: -0.12, y: -0.02 }, handleOut: { x: 0.12, y: -0.02 } },
+      { x: 0.78, y: 0.38, handleIn: { x: -0.06, y: -0.04 }, handleOut: { x: 0.06, y: 0.04 } },
+      { x: 0.94, y: 0.52, handleIn: { x: 0.02, y: -0.1 }, handleOut: { x: -0.02, y: 0.1 } },
+      { x: 0.82, y: 0.68, handleIn: { x: 0.06, y: -0.02 }, handleOut: { x: -0.08, y: 0.02 } },
+      { x: 0.5, y: 0.72, handleIn: { x: 0.14, y: 0.02 }, handleOut: { x: -0.14, y: 0.02 } },
+      { x: 0.18, y: 0.68, handleIn: { x: 0.08, y: 0.02 }, handleOut: { x: -0.06, y: -0.02 } },
+      { x: 0.06, y: 0.52, handleIn: { x: 0.02, y: 0.1 }, handleOut: { x: -0.02, y: -0.1 } },
+      { x: 0.22, y: 0.38, handleIn: { x: -0.06, y: 0.04 }, handleOut: { x: 0.06, y: -0.04 } }
+    ]
   }
 };
 
@@ -360,11 +395,10 @@ export function getSymmetricPointIndices(index, numPoints, mode, radialCount = 4
 
   if (mode === 'vertical') {
     // Mirror across horizontal centerline (top ↔ bottom)
-    // For points arranged radially from top, the opposite is at half the circle away
-    const halfPoints = numPoints / 2;
-    // Find point that's mirrored vertically
-    // If point is at angle θ from top, mirror is at -θ
-    const mirrorIndex = (numPoints - index) % numPoints;
+    // Points start at top (-π/2) and go clockwise
+    // For vertical mirror, point at angle θ mirrors to -θ
+    // Formula: mirrorIndex = (numPoints/2 - index + numPoints) % numPoints
+    const mirrorIndex = (Math.floor(numPoints / 2) - index + numPoints) % numPoints;
     if (mirrorIndex !== index) {
       result.push({ index: mirrorIndex, mirrorX: false, mirrorY: true, rotationAngle: 0 });
     }
@@ -372,16 +406,11 @@ export function getSymmetricPointIndices(index, numPoints, mode, radialCount = 4
   }
 
   if (mode === 'radial') {
-    // Radial symmetry: points repeat around center
-    // Divide circle into radialCount sections
-    const sectionSize = numPoints / radialCount;
-
-    // Find which section the current point is in
-    const sectionIndex = index % Math.ceil(sectionSize);
-
-    // Add points from all other sections at the same relative position
+    // Radial symmetry: points repeat around center at equal angular intervals
+    // For each symmetric position, find the point at that rotated position
     for (let i = 1; i < radialCount; i++) {
-      const rotatedIndex = Math.round(sectionIndex + (i * numPoints / radialCount)) % numPoints;
+      // Simple formula: add i * (numPoints / radialCount) to get the rotated index
+      const rotatedIndex = Math.round(index + (i * numPoints / radialCount)) % numPoints;
       if (rotatedIndex !== index) {
         const rotationAngle = (i * 2 * Math.PI) / radialCount;
         result.push({

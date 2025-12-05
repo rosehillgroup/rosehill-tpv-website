@@ -12,6 +12,7 @@ export default function SVGPreview({
   onColorClick, // (colorData) => void - callback when user clicks a color
   onRegionClick, // (regionData) => void - callback when region clicked (eyedropper mode)
   onEyedropperCancel, // () => void - callback to cancel eyedropper mode
+  onMakeTransparent, // () => void - callback to make selected region transparent
   selectedColor, // Current color being edited (to highlight)
   editedColors, // Map of edited colors (originalHex -> {newHex})
   onResetAll, // () => void - callback to reset all color edits
@@ -647,19 +648,34 @@ export default function SVGPreview({
                     className="eyedropper-color-swatch"
                     style={{ backgroundColor: eyedropperRegion.sourceColor }}
                   />
-                  <span>Click another area to copy its colour</span>
+                  <span>Click another area to copy its colour, or:</span>
                 </div>
-                <button
-                  className="eyedropper-cancel"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onEyedropperCancel) {
-                      onEyedropperCancel();
-                    }
-                  }}
-                >
-                  Cancel (Esc)
-                </button>
+                <div className="eyedropper-actions">
+                  <button
+                    className="eyedropper-transparent"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onMakeTransparent) {
+                        onMakeTransparent();
+                      }
+                    }}
+                    title="Remove fill from this region"
+                  >
+                    <span className="transparent-icon">◼</span>
+                    Make Transparent
+                  </button>
+                  <button
+                    className="eyedropper-cancel"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (onEyedropperCancel) {
+                        onEyedropperCancel();
+                      }
+                    }}
+                  >
+                    Cancel (Esc)
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -1049,6 +1065,49 @@ export default function SVGPreview({
         .eyedropper-cancel:hover {
           background: #dc2626;
           box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
+        }
+
+        .eyedropper-actions {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+
+        .eyedropper-transparent {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 14px;
+          background: linear-gradient(135deg, #f3f4f6 25%, #d1d5db 25%, #d1d5db 50%, #f3f4f6 50%, #f3f4f6 75%, #d1d5db 75%);
+          background-size: 8px 8px;
+          color: #374151;
+          border: 2px solid #6b7280;
+          border-radius: 6px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          white-space: nowrap;
+        }
+
+        .eyedropper-transparent:hover {
+          border-color: #374151;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+          transform: translateY(-1px);
+        }
+
+        .transparent-icon {
+          width: 16px;
+          height: 16px;
+          background: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%),
+                      linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%);
+          background-size: 8px 8px;
+          background-position: 0 0, 4px 4px;
+          background-color: white;
+          border: 1px solid #999;
+          border-radius: 2px;
+          display: inline-block;
+          font-size: 0;
         }
 
         @keyframes pulse {

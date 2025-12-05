@@ -108,7 +108,13 @@ function recolorSVGElement(svgElement, colorMapping) {
     if (fill && fill !== 'none') {
       const newFill = replaceColor(fill, colorMapping, stats.colorsNotMapped);
       if (newFill !== fill) {
-        element.setAttribute('fill', newFill);
+        // Handle transparent as special case
+        if (newFill === 'transparent' || newFill === 'none') {
+          element.setAttribute('fill', 'none');
+          element.setAttribute('fill-opacity', '0');
+        } else {
+          element.setAttribute('fill', newFill);
+        }
         stats.fillsReplaced++;
       }
     }
@@ -118,7 +124,13 @@ function recolorSVGElement(svgElement, colorMapping) {
     if (stroke && stroke !== 'none') {
       const newStroke = replaceColor(stroke, colorMapping, stats.colorsNotMapped);
       if (newStroke !== stroke) {
-        element.setAttribute('stroke', newStroke);
+        // Handle transparent as special case
+        if (newStroke === 'transparent' || newStroke === 'none') {
+          element.setAttribute('stroke', 'none');
+          element.setAttribute('stroke-opacity', '0');
+        } else {
+          element.setAttribute('stroke', newStroke);
+        }
         stats.strokesReplaced++;
       }
     }
