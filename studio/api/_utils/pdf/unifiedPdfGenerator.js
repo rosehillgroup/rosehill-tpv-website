@@ -278,7 +278,9 @@ export function drawMaterialRow(page, fontBold, fontRegular, x, y, options) {
     code = '',
     name = 'Unknown',
     kg = 0,
+    area = 0,
     showBags = true,
+    showArea = false,
     isTotal = false,
   } = options;
 
@@ -295,21 +297,34 @@ export function drawMaterialRow(page, fontBold, fontRegular, x, y, options) {
     color: COLORS.text,
   });
 
-  // Quantity
+  // Area (optional - for sports layouts with area column)
+  if (showArea) {
+    page.drawText(`${area.toFixed(1)}`, {
+      x: x + 180,
+      y: y - 2,
+      size: isTotal ? 10 : 9,
+      font: isTotal ? fontBold : fontRegular,
+      color: COLORS.text,
+    });
+  }
+
+  // Quantity - position depends on whether area is shown
   const kgText = formatWeight(kg);
+  const kgX = showArea ? x + 250 : x + 220;
   page.drawText(kgText, {
-    x: x + 220,
+    x: kgX,
     y: y - 2,
     size: isTotal ? 10 : 9,
     font: isTotal ? fontBold : fontRegular,
     color: isTotal ? COLORS.primary : COLORS.text,
   });
 
-  // Bags (optional)
+  // Bags (optional) - position depends on whether area is shown
   if (showBags && kg > 0) {
     const bags = calculateBags(kg);
+    const bagsX = showArea ? x + 330 : x + 300;
     page.drawText(`${bags} bags`, {
-      x: x + 300,
+      x: bagsX,
       y: y - 2,
       size: 9,
       font: fontRegular,

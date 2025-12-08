@@ -6,6 +6,7 @@
  */
 
 import { PDFDocument, StandardFonts } from 'pdf-lib';
+import sharp from 'sharp';
 import {
   PDF_CONFIG,
   COLORS,
@@ -101,7 +102,15 @@ export async function generateSportsSurfacePDF(data) {
     imageWidth = maxImageHeight * imageAspect;
   }
 
-  // Calculate all materials upfront
+  // Extract all known colors from the design
+  const knownColors = extractKnownColors(surface, courts, tracks, motifs);
+  console.log('[SPORTS-PDF] Known colors in design:', knownColors.length);
+
+  // Calculate VISIBLE area percentages from the rendered image
+  // This accounts for overlapping elements - only visible pixels are counted
+  const visibleAreaPcts = await calculateVisibleAreaPercentages(pngBuffer, knownColors);
+
+  // Calculate all materials upfront (for element breakdown display)
   // First calculate motif total area so we can subtract from base surface
   const motifTotalArea = motifs.reduce((sum, m) => sum + (m.areaM2 || 0), 0);
   console.log('[SPORTS-PDF] Total motif area:', motifTotalArea.toFixed(2), 'm²');
@@ -109,6 +118,9 @@ export async function generateSportsSurfacePDF(data) {
   const courtTrackMaterials = calculateMaterials(surface, courts, tracks, totalAreaM2, motifTotalArea);
   const motifMaterials = calculateMotifMaterials(motifs);
   const allMaterials = [...courtTrackMaterials, ...motifMaterials];
+
+  // Calculate accurate materials based on visible area (for totals)
+  const visibleMaterials = calculateMaterialsFromVisibleArea(visibleAreaPcts, knownColors, totalAreaM2);
 
   console.log('[SPORTS-PDF] Court/Track materials:', courtTrackMaterials.length);
   console.log('[SPORTS-PDF] Motif materials:', motifMaterials.length);
@@ -420,42 +432,46 @@ export async function generateSportsSurfacePDF(data) {
 
   y -= 20;
 
-  // Group all materials (courts + tracks + motifs) by colour
-  const colourTotals = aggregateMaterialsByColour(allMaterials);
+  // Use VISIBLE materials for accurate totals (accounts for overlapping elements)
+  // This is calculated from the rasterized image, showing only what's actually visible
 
   // Table header
   page3.drawText('Colour', { x: MARGIN, y, size: 9, font: fontBold, color: COLORS.text });
-  page3.drawText('Quantity', { x: MARGIN + 220, y, size: 9, font: fontBold, color: COLORS.text });
-  page3.drawText('Bags (25kg)', { x: MARGIN + 300, y, size: 9, font: fontBold, color: COLORS.text });
+  page3.drawText('Area (m²)', { x: MARGIN + 180, y, size: 9, font: fontBold, color: COLORS.text });
+  page3.drawText('Quantity', { x: MARGIN + 250, y, size: 9, font: fontBold, color: COLORS.text });
+  page3.drawText('Bags (25kg)', { x: MARGIN + 330, y, size: 9, font: fontBold, color: COLORS.text });
 
   y -= 8;
   page3.drawLine({
     start: { x: MARGIN, y: y + 5 },
-    end: { x: MARGIN + 380, y: y + 5 },
+    end: { x: MARGIN + 400, y: y + 5 },
     thickness: 0.5,
     color: COLORS.border,
   });
 
   y -= 15;
 
-  // Sort by quantity descending
-  const sortedColours = Object.values(colourTotals).sort((a, b) => b.kg - a.kg);
-
-  for (const colour of sortedColours) {
+  // visibleMaterials is already sorted by area descending
+  for (const mat of visibleMaterials) {
     y = drawMaterialRow(page3, fontBold, fontRegular, MARGIN, y, {
-      hex: colour.hex,
-      code: colour.code,
-      name: colour.name,
-      kg: colour.kg,
+      hex: mat.colour.hex,
+      code: mat.colour.tpv_code,
+      name: mat.colour.name,
+      kg: mat.kg,
+      area: mat.area,
       showBags: true,
+      showArea: true,
     });
   }
 
-  // Total row
+  // Total row using visible materials (accurate totals)
+  const visibleTotalKg = visibleMaterials.reduce((sum, m) => sum + m.kg, 0);
+  const visibleTotalArea = visibleMaterials.reduce((sum, m) => sum + m.area, 0);
+
   y -= 5;
   page3.drawLine({
     start: { x: MARGIN, y: y + 12 },
-    end: { x: MARGIN + 380, y: y + 12 },
+    end: { x: MARGIN + 400, y: y + 12 },
     thickness: 1,
     color: COLORS.border,
   });
@@ -469,25 +485,33 @@ export async function generateSportsSurfacePDF(data) {
     color: COLORS.text,
   });
 
-  page3.drawText(formatWeight(totalKg), {
-    x: MARGIN + 220,
-    y,
-    size: 10,
-    font: fontBold,
-    color: COLORS.primary,
-  });
-
-  page3.drawText(`${calculateBags(totalKg)} bags`, {
-    x: MARGIN + 300,
+  page3.drawText(`${visibleTotalArea.toFixed(1)}`, {
+    x: MARGIN + 180,
     y,
     size: 10,
     font: fontBold,
     color: COLORS.text,
   });
 
-  // Binder section with calculated estimates for this design
+  page3.drawText(formatWeight(visibleTotalKg), {
+    x: MARGIN + 250,
+    y,
+    size: 10,
+    font: fontBold,
+    color: COLORS.primary,
+  });
+
+  page3.drawText(`${calculateBags(visibleTotalKg)} bags`, {
+    x: MARGIN + 330,
+    y,
+    size: 10,
+    font: fontBold,
+    color: COLORS.text,
+  });
+
+  // Binder section with calculated estimates for this design (using visible totals)
   y -= 25;
-  y = drawBinderSectionWithEstimates(page3, fontBold, fontRegular, y, totalKg, totalAreaM2);
+  y = drawBinderSectionWithEstimates(page3, fontBold, fontRegular, y, visibleTotalKg, totalAreaM2);
 
   // Installation checklist
   y -= 20;
@@ -539,6 +563,221 @@ async function renderSvgToPng(svgString, dimensions, Resvg) {
   const resvg = new Resvg(svgString, resvgOptions);
   const pngData = resvg.render();
   return pngData.asPng();
+}
+
+/**
+ * Calculate visible area percentages by counting pixels in the rendered PNG
+ * This accounts for overlapping elements - only visible pixels are counted
+ *
+ * @param {Buffer} pngBuffer - Rendered PNG buffer
+ * @param {Array} knownColors - Array of known TPV colors in the design [{hex, code, name}]
+ * @returns {Object} Map of hex color to percentage of visible area
+ */
+async function calculateVisibleAreaPercentages(pngBuffer, knownColors) {
+  console.log('[SPORTS-PDF] Calculating visible area from rasterized image...');
+
+  // Get raw pixel data from PNG
+  const { data, info } = await sharp(pngBuffer)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const { width, height, channels } = info;
+  const totalPixels = width * height;
+
+  console.log(`[SPORTS-PDF] Image: ${width}x${height}, ${channels} channels, ${totalPixels} pixels`);
+
+  // Count pixels by color
+  const colorCounts = new Map();
+  let transparentPixels = 0;
+
+  for (let i = 0; i < data.length; i += channels) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const a = channels === 4 ? data[i + 3] : 255;
+
+    // Skip transparent/semi-transparent pixels
+    if (a < 128) {
+      transparentPixels++;
+      continue;
+    }
+
+    // Convert to hex
+    const hex = rgbToHex(r, g, b);
+
+    // Find nearest known TPV color
+    const nearestColor = findNearestColor(hex, knownColors);
+    const key = nearestColor.hex.toLowerCase();
+
+    colorCounts.set(key, (colorCounts.get(key) || 0) + 1);
+  }
+
+  // Convert counts to percentages
+  const visiblePixels = totalPixels - transparentPixels;
+  const visiblePcts = {};
+
+  for (const [hex, count] of colorCounts) {
+    visiblePcts[hex] = (count / visiblePixels) * 100;
+  }
+
+  console.log(`[SPORTS-PDF] Visible area breakdown:`, Object.entries(visiblePcts).map(([hex, pct]) => `${hex}: ${pct.toFixed(1)}%`).join(', '));
+
+  return visiblePcts;
+}
+
+/**
+ * Convert RGB values to hex string
+ */
+function rgbToHex(r, g, b) {
+  return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+/**
+ * Find the nearest color from a list of known colors using simple RGB distance
+ * @param {string} hex - Hex color to match
+ * @param {Array} knownColors - Array of known colors [{hex, code, name}]
+ * @returns {Object} The nearest known color
+ */
+function findNearestColor(hex, knownColors) {
+  if (!knownColors || knownColors.length === 0) {
+    return { hex, code: '', name: 'Unknown' };
+  }
+
+  // Parse input hex
+  const r1 = parseInt(hex.slice(1, 3), 16);
+  const g1 = parseInt(hex.slice(3, 5), 16);
+  const b1 = parseInt(hex.slice(5, 7), 16);
+
+  let nearest = knownColors[0];
+  let minDistance = Infinity;
+
+  for (const color of knownColors) {
+    const colorHex = color.hex || '#000000';
+    const r2 = parseInt(colorHex.slice(1, 3), 16);
+    const g2 = parseInt(colorHex.slice(3, 5), 16);
+    const b2 = parseInt(colorHex.slice(5, 7), 16);
+
+    // Simple RGB Euclidean distance
+    const distance = Math.sqrt(
+      Math.pow(r1 - r2, 2) +
+      Math.pow(g1 - g2, 2) +
+      Math.pow(b1 - b2, 2)
+    );
+
+    if (distance < minDistance) {
+      minDistance = distance;
+      nearest = color;
+    }
+  }
+
+  return nearest;
+}
+
+/**
+ * Extract all unique colors used in the design
+ */
+function extractKnownColors(surface, courts, tracks, motifs) {
+  const colors = new Map();
+
+  // Surface color
+  if (surface?.color?.hex) {
+    colors.set(surface.color.hex.toLowerCase(), surface.color);
+  }
+
+  // Court colors
+  for (const court of Object.values(courts || {})) {
+    if (court.courtSurfaceColor?.hex) {
+      colors.set(court.courtSurfaceColor.hex.toLowerCase(), court.courtSurfaceColor);
+    }
+    // Line colors
+    if (court.lineColorOverrides) {
+      for (const lineColor of Object.values(court.lineColorOverrides)) {
+        if (lineColor?.hex) {
+          colors.set(lineColor.hex.toLowerCase(), lineColor);
+        }
+      }
+    }
+  }
+
+  // Track colors
+  for (const track of Object.values(tracks || {})) {
+    if (track.trackSurfaceColor?.hex) {
+      colors.set(track.trackSurfaceColor.hex.toLowerCase(), track.trackSurfaceColor);
+    }
+  }
+  // Lane markings are typically white/cream
+  colors.set('#ffffff', { hex: '#FFFFFF', tpv_code: 'RH31', name: 'Cream' });
+
+  // Motif colors (from recipes)
+  for (const motif of (motifs || [])) {
+    if (motif.recipes) {
+      for (const recipe of motif.recipes) {
+        if (recipe.blendColor?.hex) {
+          colors.set(recipe.blendColor.hex.toLowerCase(), recipe.blendColor);
+        }
+        if (recipe.targetColor?.hex) {
+          colors.set(recipe.targetColor.hex.toLowerCase(), recipe.targetColor);
+        }
+        // TPV component colors
+        const components = recipe.chosenRecipe?.components || [];
+        for (const comp of components) {
+          if (comp.hex) {
+            colors.set(comp.hex.toLowerCase(), { hex: comp.hex, tpv_code: comp.code, name: comp.name });
+          }
+        }
+      }
+    }
+  }
+
+  return Array.from(colors.values());
+}
+
+/**
+ * Calculate materials based on visible area percentages from rasterization
+ * This gives accurate totals that account for overlapping elements
+ *
+ * @param {Object} visiblePcts - Map of hex color to percentage of visible area
+ * @param {Array} knownColors - Array of known colors [{hex, code, name}]
+ * @param {number} totalAreaM2 - Total surface area in m²
+ * @returns {Array} Array of material objects
+ */
+function calculateMaterialsFromVisibleArea(visiblePcts, knownColors, totalAreaM2) {
+  const { densityKgPerM2, safetyMargin } = MATERIAL_CONFIG;
+  const materials = [];
+
+  // Create a map for quick color lookup
+  const colorMap = new Map();
+  for (const color of knownColors) {
+    colorMap.set(color.hex.toLowerCase(), color);
+  }
+
+  // Calculate materials for each visible color
+  for (const [hex, pct] of Object.entries(visiblePcts)) {
+    if (pct <= 0) continue;
+
+    const areaM2 = (pct / 100) * totalAreaM2;
+    const kg = areaM2 * densityKgPerM2 * safetyMargin;
+
+    const colorInfo = colorMap.get(hex) || { hex, tpv_code: '', name: 'Unknown' };
+
+    materials.push({
+      colour: {
+        hex: colorInfo.hex || hex,
+        tpv_code: colorInfo.tpv_code || colorInfo.code || '',
+        name: colorInfo.name || 'Unknown',
+      },
+      area: areaM2,
+      kg,
+      percentage: pct,
+    });
+  }
+
+  // Sort by area descending
+  materials.sort((a, b) => b.area - a.area);
+
+  console.log('[SPORTS-PDF] Visible materials calculated:', materials.map(m => `${m.colour.name}: ${m.area.toFixed(1)}m² (${m.percentage.toFixed(1)}%)`).join(', '));
+
+  return materials;
 }
 
 /**

@@ -132,8 +132,8 @@ export class SVGExtractor {
       }
 
       // ===== PHASE 3: Global color collapse =====
-      // Mode-specific thresholds: solid mode (ΔE≤9) preserves more distinct colors, blend mode (ΔE≤15) collapses gradients
-      const threshold = mode === 'solid' ? 9 : 15;
+      // Mode-specific thresholds: solid mode (ΔE≤5) preserves more distinct colors, blend mode (ΔE≤15) collapses gradients
+      const threshold = mode === 'solid' ? 5 : 15;
       try {
         colorCounts = this.collapseGlobalColors(colorCounts, threshold);
         warnings.push(`PHASE 3: Collapsed to ${colorCounts.size} color clusters (${mode} mode: ΔE ≤ ${threshold})`);
@@ -715,9 +715,43 @@ export class SVGExtractor {
   }
 
   /**
+   * Check if color should be forced to black (very dark, low chroma)
+   * This prevents dark colors from being incorrectly merged with brown
+   */
+  private shouldForceBlack(lab: { L: number; a: number; b: number }): boolean {
+    const chroma = this.getChroma(lab);
+    return lab.L < 20 && chroma < 15;
+  }
+
+  /**
+   * Get appropriate neutral color for very light, low-chroma colors
+   * Returns Cream for warm tints, Pale Grey for neutral/cool
+   */
+  private getNeutralForLightColor(lab: { L: number; a: number; b: number }): string | null {
+    const chroma = this.getChroma(lab);
+    if (lab.L > 85 && chroma < 10) {
+      // Warm bias (positive b) → Cream, neutral/cool → Pale Grey
+      return lab.b > 5 ? '#e8e3d8' : '#d9d9d6';
+    }
+    return null;
+  }
+
+  /**
+   * Calculate temperature penalty for color clustering
+   * Prevents mixing cool colors (blue tints) with warm colors (yellow/orange tints)
+   */
+  private getTemperaturePenalty(lab1: { L: number; a: number; b: number }, lab2: { L: number; a: number; b: number }): number {
+    // Penalize mixing cool (b < -10) with warm (b > 10)
+    if ((lab1.b < -10 && lab2.b > 10) || (lab1.b > 10 && lab2.b < -10)) {
+      return 5; // Significant penalty to prevent warm/cool mixing
+    }
+    return 0;
+  }
+
+  /**
    * Smart background detection and addition
    * Looks for dominant low-chroma colors that might be backgrounds
-   * Adds cream (not white) if coverage gaps exist
+   * SOLID MODE FIX: Theme-aware - adds appropriate background based on design lightness
    */
   private detectAndAddBackground(colours: SVGColor[], totalPixels: number): SVGColor[] {
     const totalCoverage = colours.reduce((sum, c) => sum + c.percentage, 0);
@@ -745,20 +779,40 @@ export class SVGExtractor {
     if (totalCoverage < 95) {
       const missingCoverage = 100 - totalCoverage;
 
+      // SOLID MODE FIX: Determine design theme based on weighted average lightness
+      const avgLightness = colours.reduce((sum, c) => {
+        const lab = this.rgbToLab(c.rgb);
+        return sum + (lab.L * c.percentage);
+      }, 0) / totalCoverage;
+
+      let backgroundHex: string;
+      let backgroundName: string;
+      let backgroundRgb: RGB;
+
+      if (avgLightness < 40) {
+        // Dark design → Black background (RH70)
+        backgroundHex = '#231f20';
+        backgroundName = 'Black';
+        backgroundRgb = { R: 35, G: 31, B: 32 };
+      } else if (avgLightness > 70) {
+        // Light design → Cream background (RH31)
+        backgroundHex = '#e8e3d8';
+        backgroundName = 'Cream';
+        backgroundRgb = { R: this.lightestTPVColor.R, G: this.lightestTPVColor.G, B: this.lightestTPVColor.B };
+      } else {
+        // Mid-tone → Pale Grey background (RH65)
+        backgroundHex = '#d9d9d6';
+        backgroundName = 'Pale Grey';
+        backgroundRgb = { R: 217, G: 217, B: 214 };
+      }
+
       console.warn(
-        `[SVG] No background found and coverage < 95%. ` +
-        `Adding cream background with ${missingCoverage.toFixed(1)}% coverage`
+        `[SVG] No background found. Adding ${backgroundName} background ` +
+        `(${missingCoverage.toFixed(1)}%) - design avg lightness: ${avgLightness.toFixed(1)}`
       );
 
-      // Add cream (RH31: #F2E6C8) as background, not white
-      const creamRgb: RGB = {
-        R: this.lightestTPVColor.R,
-        G: this.lightestTPVColor.G,
-        B: this.lightestTPVColor.B
-      };
-
       colours.push({
-        rgb: creamRgb,
+        rgb: backgroundRgb,
         percentage: missingCoverage,
         pixels: Math.round((missingCoverage / 100) * totalPixels)
       });
@@ -766,7 +820,7 @@ export class SVGExtractor {
       // Re-sort by percentage
       colours.sort((a, b) => b.percentage - a.percentage);
 
-      console.info(`[SVG] Added cream background: ${this.lightestTPVColor.hex} (${missingCoverage.toFixed(1)}%)`);
+      console.info(`[SVG] Added ${backgroundName} background: ${backgroundHex} (${missingCoverage.toFixed(1)}%)`);
     } else {
       console.info(`[SVG] Coverage >= 95%, no background needed`);
     }
@@ -775,8 +829,8 @@ export class SVGExtractor {
   }
 
   /**
-   * Enforce palette cap by iteratively merging closest colors if over limit
-   * Preserves high-coverage colors
+   * Enforce palette cap with hue diversity preservation
+   * SOLID MODE FIX: Prioritizes unique hues and saturated accent colors over simple coverage
    */
   private enforcePaletteCap(colours: SVGColor[], maxColors: number): SVGColor[] {
     if (colours.length <= maxColors) {
@@ -785,20 +839,56 @@ export class SVGExtractor {
 
     console.info(`[SVG] Enforcing ${maxColors}-color palette cap (currently ${colours.length} colors)...`);
 
-    // Since we already did global collapse with ΔE ≤ 5, the colors are perceptually distinct
-    // Just take the top N colors by coverage (fast, O(n log n))
-    const topColors = colours
-      .sort((a, b) => b.percentage - a.percentage)
-      .slice(0, maxColors);
+    // Calculate hue and importance for each color
+    const withHue = colours.map(c => {
+      const lab = this.rgbToLab(c.rgb);
+      const hue = Math.atan2(lab.b, lab.a) * (180 / Math.PI); // -180 to 180
+      const chroma = this.getChroma(lab);
+      return { ...c, hue, chroma, lab };
+    });
 
-    const droppedCoverage = colours
+    // Calculate hue uniqueness for each color
+    const withImportance = withHue.map(c => {
+      // Count how many other colors have similar hue (within 30°)
+      const similarHueCount = withHue.filter(other => {
+        if (other === c) return false;
+        const hueDiff = Math.abs(c.hue - other.hue);
+        return Math.min(hueDiff, 360 - hueDiff) < 30;
+      }).length;
+
+      // Unique hue = bonus, common hue = no bonus
+      const hueUniqueness = similarHueCount === 0 ? 1.5 : 1.0;
+
+      // Boost saturated colors (chroma > 20) - these are likely important accents
+      const chromaFactor = c.chroma > 20 ? 1.2 : 1.0;
+
+      // Importance = coverage * hue uniqueness * chroma factor
+      const importance = c.percentage * hueUniqueness * chromaFactor;
+
+      return { ...c, importance, hueUniqueness };
+    });
+
+    // Sort by importance descending
+    withImportance.sort((a, b) => b.importance - a.importance);
+
+    const topColors = withImportance.slice(0, maxColors).map(c => ({
+      rgb: c.rgb,
+      percentage: c.percentage,
+      pixels: c.pixels
+    }));
+
+    const droppedCount = colours.length - maxColors;
+    const droppedCoverage = withImportance
       .slice(maxColors)
       .reduce((sum, c) => sum + c.percentage, 0);
 
+    // Log which unique hues were preserved
+    const preservedHues = withImportance.slice(0, maxColors).filter(c => c.hueUniqueness > 1).length;
     console.info(
-      `[SVG] Kept top ${topColors.length} colors by coverage ` +
+      `[SVG] Kept top ${topColors.length} colors by importance ` +
       `(${topColors.reduce((sum, c) => sum + c.percentage, 0).toFixed(1)}% total), ` +
-      `dropped ${colours.length - maxColors} colors (${droppedCoverage.toFixed(1)}% coverage)`
+      `dropped ${droppedCount} colors (${droppedCoverage.toFixed(1)}% coverage). ` +
+      `Preserved ${preservedHues} unique-hue colors.`
     );
 
     return topColors;
@@ -832,13 +922,58 @@ export class SVGExtractor {
     }> = [];
 
     for (const color of colorArray) {
+      // SOLID MODE FIX: Protect blacks - force very dark colors to black cluster
+      if (this.shouldForceBlack(color.lab)) {
+        // Check if we already have a black cluster
+        const blackCluster = clusters.find(c => c.canonicalHex === '#231f20');
+        if (blackCluster) {
+          blackCluster.members.push(color);
+          blackCluster.totalWeight += color.weight;
+        } else {
+          // Create new black cluster with RH70 Black as canonical
+          clusters.push({
+            canonicalHex: '#231f20', // RH70 Black
+            canonicalLab: { L: 9.1, a: -0.3, b: -6.3 },
+            totalWeight: color.weight,
+            members: [color]
+          });
+        }
+        continue; // Skip normal cluster matching for blacks
+      }
+
+      // SOLID MODE FIX: Force very light neutrals to appropriate grey/cream
+      const neutralHex = this.getNeutralForLightColor(color.lab);
+      if (neutralHex) {
+        const neutralCluster = clusters.find(c => c.canonicalHex === neutralHex);
+        if (neutralCluster) {
+          neutralCluster.members.push(color);
+          neutralCluster.totalWeight += color.weight;
+        } else {
+          // Create new neutral cluster
+          const neutralLab = neutralHex === '#e8e3d8'
+            ? { L: 91.8, a: -0.5, b: 12.5 }  // Cream
+            : { L: 87.6, a: -0.2, b: -0.7 }; // Pale Grey
+          clusters.push({
+            canonicalHex: neutralHex,
+            canonicalLab: neutralLab,
+            totalWeight: color.weight,
+            members: [color]
+          });
+        }
+        continue; // Skip normal cluster matching for forced neutrals
+      }
+
       // Find if this color belongs to an existing cluster
       let foundCluster = false;
 
       for (const cluster of clusters) {
         const dE = this.calculateDeltaE(color.lab, cluster.canonicalLab);
 
-        if (dE <= threshold) {
+        // SOLID MODE FIX: Add temperature penalty to prevent cool→warm clustering
+        const tempPenalty = this.getTemperaturePenalty(color.lab, cluster.canonicalLab);
+        const adjustedDE = dE + tempPenalty;
+
+        if (adjustedDE <= threshold) {
           // Add to this cluster
           cluster.members.push(color);
           cluster.totalWeight += color.weight;
