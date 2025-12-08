@@ -500,7 +500,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
 
     const boxY = text.position.y - text.fontSize_mm;
 
-    // Calculate anchor point (opposite corner)
+    // Calculate anchor point (opposite corner that stays fixed)
     let anchorPoint;
     switch (corner) {
       case 'nw':
@@ -526,6 +526,9 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     setScaleTextStart({
       initialDistance,
       originalFontSize: text.fontSize_mm,
+      originalPosition: { ...text.position },
+      originalBounds: bounds,
+      textAlign: text.textAlign,
       corner,
       anchorPoint
     });
@@ -1041,7 +1044,64 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       // Round to whole mm
       newFontSize = Math.round(newFontSize);
 
+      // Calculate new bounds (width scales proportionally with font size)
+      const actualScaleRatio = newFontSize / scaleTextStart.originalFontSize;
+      const newWidth = scaleTextStart.originalBounds.width * actualScaleRatio;
+
+      // Calculate new position to keep anchor point fixed
+      // Text position is at baseline, alignment affects where the anchor is
+      const { corner, anchorPoint, textAlign, originalPosition, originalBounds, originalFontSize } = scaleTextStart;
+
+      let newPosition = { ...originalPosition };
+
+      // Calculate the offset from position to anchor based on alignment and corner
+      // Then reverse-calculate new position from fixed anchor
+      switch (corner) {
+        case 'nw': // Anchor at SE (bottom-right), text grows up-left
+          if (textAlign === 'left') {
+            newPosition.x = anchorPoint.x - newWidth;
+          } else if (textAlign === 'center') {
+            newPosition.x = anchorPoint.x - newWidth / 2;
+          } else { // right
+            newPosition.x = anchorPoint.x;
+          }
+          newPosition.y = anchorPoint.y - newFontSize * 0.2; // baseline is ~0.2 from bottom
+          break;
+        case 'ne': // Anchor at SW (bottom-left), text grows up-right
+          if (textAlign === 'left') {
+            newPosition.x = anchorPoint.x;
+          } else if (textAlign === 'center') {
+            newPosition.x = anchorPoint.x + newWidth / 2;
+          } else { // right
+            newPosition.x = anchorPoint.x + newWidth;
+          }
+          newPosition.y = anchorPoint.y - newFontSize * 0.2;
+          break;
+        case 'sw': // Anchor at NE (top-right), text grows down-left
+          if (textAlign === 'left') {
+            newPosition.x = anchorPoint.x - newWidth;
+          } else if (textAlign === 'center') {
+            newPosition.x = anchorPoint.x - newWidth / 2;
+          } else { // right
+            newPosition.x = anchorPoint.x;
+          }
+          newPosition.y = anchorPoint.y + newFontSize;
+          break;
+        case 'se': // Anchor at NW (top-left), text grows down-right
+        default:
+          if (textAlign === 'left') {
+            newPosition.x = anchorPoint.x;
+          } else if (textAlign === 'center') {
+            newPosition.x = anchorPoint.x + newWidth / 2;
+          } else { // right
+            newPosition.x = anchorPoint.x + newWidth;
+          }
+          newPosition.y = anchorPoint.y + newFontSize;
+          break;
+      }
+
       updateTextFontSize(scaleTextId, newFontSize);
+      updateTextPosition(scaleTextId, newPosition);
     };
 
     const handleEnd = () => {
@@ -1066,7 +1126,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       window.removeEventListener('touchend', handleEnd);
       window.removeEventListener('touchcancel', handleEnd);
     };
-  }, [isScalingText, scaleTextId, scaleTextStart, texts, updateTextFontSize]);
+  }, [isScalingText, scaleTextId, scaleTextStart, texts, updateTextFontSize, updateTextPosition]);
 
   // Handle mouse/touch move for text rotation
   useEffect(() => {
