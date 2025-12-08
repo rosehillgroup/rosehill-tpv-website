@@ -110,12 +110,12 @@ function ShapeHandles({ width, height, onScaleStart, onRotateStart }) {
   const maxHandleSize = 400;
   const size = Math.max(minHandleSize, Math.min(maxHandleSize, handleSize));
 
-  // Corner handles for scaling
+  // Side handles for scaling (easier to adjust width/height independently)
   const scaleHandles = [
-    { x: -size / 2, y: -size / 2, corner: 'nw', cursor: 'nwse-resize' },
-    { x: width - size / 2, y: -size / 2, corner: 'ne', cursor: 'nesw-resize' },
-    { x: -size / 2, y: height - size / 2, corner: 'sw', cursor: 'nesw-resize' },
-    { x: width - size / 2, y: height - size / 2, corner: 'se', cursor: 'nwse-resize' }
+    { x: width / 2 - size / 2, y: -size / 2, corner: 'n', cursor: 'ns-resize' },      // Top center
+    { x: width / 2 - size / 2, y: height - size / 2, corner: 's', cursor: 'ns-resize' }, // Bottom center
+    { x: width - size / 2, y: height / 2 - size / 2, corner: 'e', cursor: 'ew-resize' }, // Right center
+    { x: -size / 2, y: height / 2 - size / 2, corner: 'w', cursor: 'ew-resize' }        // Left center
   ];
 
   // Rotation handle - positioned above top center

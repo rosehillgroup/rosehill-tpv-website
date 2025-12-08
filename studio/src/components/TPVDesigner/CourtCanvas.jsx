@@ -368,9 +368,21 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     const svgPoint = screenToSVG(clientX, clientY);
     const { width_mm, height_mm } = shape;
 
-    // Calculate the anchor point (opposite corner that should stay fixed)
+    // Calculate the anchor point (opposite edge/corner that should stay fixed)
     let anchorPoint;
     switch (corner) {
+      case 'n': // Top edge - anchor to bottom
+        anchorPoint = { x: shape.position.x + width_mm / 2, y: shape.position.y + height_mm };
+        break;
+      case 's': // Bottom edge - anchor to top
+        anchorPoint = { x: shape.position.x + width_mm / 2, y: shape.position.y };
+        break;
+      case 'e': // Right edge - anchor to left
+        anchorPoint = { x: shape.position.x, y: shape.position.y + height_mm / 2 };
+        break;
+      case 'w': // Left edge - anchor to right
+        anchorPoint = { x: shape.position.x + width_mm, y: shape.position.y + height_mm / 2 };
+        break;
       case 'nw':
         anchorPoint = { x: shape.position.x + width_mm, y: shape.position.y + height_mm };
         break;
@@ -828,10 +840,27 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       const scaleRatio = currentDistance / scaleShapeStart.initialDistance;
 
       let newWidth, newHeight;
-      if (scaleShapeStart.aspectLocked) {
-        // Maintain aspect ratio
+      const corner = scaleShapeStart.corner;
+      const isEdgeHandle = ['n', 's', 'e', 'w'].includes(corner);
+
+      if (scaleShapeStart.aspectLocked && !isEdgeHandle) {
+        // Maintain aspect ratio (only for corner handles)
         newWidth = scaleShapeStart.originalWidth * scaleRatio;
         newHeight = scaleShapeStart.originalHeight * scaleRatio;
+      } else if (isEdgeHandle) {
+        // Edge handles: constrain to single axis
+        const dy = Math.abs(svgPoint.y - scaleShapeStart.anchorPoint.y);
+        const dx = Math.abs(svgPoint.x - scaleShapeStart.anchorPoint.x);
+
+        if (corner === 'n' || corner === 's') {
+          // Vertical edge - only change height
+          newWidth = scaleShapeStart.originalWidth;
+          newHeight = Math.max(100, dy);
+        } else {
+          // Horizontal edge - only change width
+          newWidth = Math.max(100, dx);
+          newHeight = scaleShapeStart.originalHeight;
+        }
       } else {
         // Free scaling based on mouse position relative to anchor
         const dx = Math.abs(svgPoint.x - scaleShapeStart.anchorPoint.x);
@@ -846,7 +875,31 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
 
       // Calculate new position to keep anchor point fixed
       let newPosition;
-      switch (scaleShapeStart.corner) {
+      switch (corner) {
+        case 'n': // Top edge - keep x centered, move y up
+          newPosition = {
+            x: scaleShapeStart.anchorPoint.x - newWidth / 2,
+            y: scaleShapeStart.anchorPoint.y - newHeight
+          };
+          break;
+        case 's': // Bottom edge - keep x centered, y stays at anchor
+          newPosition = {
+            x: scaleShapeStart.anchorPoint.x - newWidth / 2,
+            y: scaleShapeStart.anchorPoint.y
+          };
+          break;
+        case 'e': // Right edge - x stays at anchor, keep y centered
+          newPosition = {
+            x: scaleShapeStart.anchorPoint.x,
+            y: scaleShapeStart.anchorPoint.y - newHeight / 2
+          };
+          break;
+        case 'w': // Left edge - move x left, keep y centered
+          newPosition = {
+            x: scaleShapeStart.anchorPoint.x - newWidth,
+            y: scaleShapeStart.anchorPoint.y - newHeight / 2
+          };
+          break;
         case 'nw':
           newPosition = {
             x: scaleShapeStart.anchorPoint.x - newWidth,
