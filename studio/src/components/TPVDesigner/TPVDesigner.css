@@ -122,9 +122,9 @@
 .sports-toolbar {
   position: fixed;
   top: 65px; /* Aligned with sidebar tops */
-  left: 280px; /* Right of the sidebar */
-  right: 336px; /* Left of the canvas info box (320px properties + 16px margin) */
-  z-index: 50;
+  left: 50%; /* Center horizontally in canvas area */
+  transform: translateX(-50%);
+  z-index: 40; /* Below floating elements box */
 
   display: flex;
   align-items: center;
@@ -132,8 +132,10 @@
   gap: 4px;
 
   background: white;
-  border-bottom: 1px solid #e5e7eb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
   padding: 8px 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .sports-toolbar__group {
