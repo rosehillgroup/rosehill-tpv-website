@@ -132,8 +132,8 @@ export class SVGExtractor {
       }
 
       // ===== PHASE 3: Global color collapse =====
-      // Mode-specific thresholds: solid mode (ΔE≤5) preserves more distinct colors, blend mode (ΔE≤15) collapses gradients
-      const threshold = mode === 'solid' ? 5 : 15;
+      // Mode-specific thresholds: solid mode (ΔE≤9) preserves more distinct colors, blend mode (ΔE≤15) collapses gradients
+      const threshold = mode === 'solid' ? 9 : 15;
       try {
         colorCounts = this.collapseGlobalColors(colorCounts, threshold);
         warnings.push(`PHASE 3: Collapsed to ${colorCounts.size} color clusters (${mode} mode: ΔE ≤ ${threshold})`);
@@ -829,8 +829,7 @@ export class SVGExtractor {
   }
 
   /**
-   * Enforce palette cap with hue diversity preservation
-   * SOLID MODE FIX: Prioritizes unique hues and saturated accent colors over simple coverage
+   * Enforce palette cap by taking top colors by coverage
    */
   private enforcePaletteCap(colours: SVGColor[], maxColors: number): SVGColor[] {
     if (colours.length <= maxColors) {
@@ -839,56 +838,19 @@ export class SVGExtractor {
 
     console.info(`[SVG] Enforcing ${maxColors}-color palette cap (currently ${colours.length} colors)...`);
 
-    // Calculate hue and importance for each color
-    const withHue = colours.map(c => {
-      const lab = this.rgbToLab(c.rgb);
-      const hue = Math.atan2(lab.b, lab.a) * (180 / Math.PI); // -180 to 180
-      const chroma = this.getChroma(lab);
-      return { ...c, hue, chroma, lab };
-    });
-
-    // Calculate hue uniqueness for each color
-    const withImportance = withHue.map(c => {
-      // Count how many other colors have similar hue (within 30°)
-      const similarHueCount = withHue.filter(other => {
-        if (other === c) return false;
-        const hueDiff = Math.abs(c.hue - other.hue);
-        return Math.min(hueDiff, 360 - hueDiff) < 30;
-      }).length;
-
-      // Unique hue = bonus, common hue = no bonus
-      const hueUniqueness = similarHueCount === 0 ? 1.5 : 1.0;
-
-      // Boost saturated colors (chroma > 20) - these are likely important accents
-      const chromaFactor = c.chroma > 20 ? 1.2 : 1.0;
-
-      // Importance = coverage * hue uniqueness * chroma factor
-      const importance = c.percentage * hueUniqueness * chromaFactor;
-
-      return { ...c, importance, hueUniqueness };
-    });
-
-    // Sort by importance descending
-    withImportance.sort((a, b) => b.importance - a.importance);
-
-    const topColors = withImportance.slice(0, maxColors).map(c => ({
-      rgb: c.rgb,
-      percentage: c.percentage,
-      pixels: c.pixels
-    }));
+    const topColors = colours
+      .sort((a, b) => b.percentage - a.percentage)
+      .slice(0, maxColors);
 
     const droppedCount = colours.length - maxColors;
-    const droppedCoverage = withImportance
+    const droppedCoverage = colours
       .slice(maxColors)
       .reduce((sum, c) => sum + c.percentage, 0);
 
-    // Log which unique hues were preserved
-    const preservedHues = withImportance.slice(0, maxColors).filter(c => c.hueUniqueness > 1).length;
     console.info(
-      `[SVG] Kept top ${topColors.length} colors by importance ` +
+      `[SVG] Kept top ${topColors.length} colors by coverage ` +
       `(${topColors.reduce((sum, c) => sum + c.percentage, 0).toFixed(1)}% total), ` +
-      `dropped ${droppedCount} colors (${droppedCoverage.toFixed(1)}% coverage). ` +
-      `Preserved ${preservedHues} unique-hue colors.`
+      `dropped ${droppedCount} colors (${droppedCoverage.toFixed(1)}% coverage)`
     );
 
     return topColors;
