@@ -14,7 +14,7 @@
 
 /* ====== Zoom Controls ====== */
 .court-canvas__zoom-controls {
-  position: fixed;
+  position: absolute;
   bottom: 1rem;
   left: 1rem;
   display: flex;
@@ -23,7 +23,7 @@
   border-radius: 8px;
   padding: 0.375rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-  z-index: 100;
+  z-index: 20;
   align-items: center;
   backdrop-filter: blur(8px);
 }
