@@ -121,9 +121,9 @@
 /* ====== Toolbar (Fixed below header) ====== */
 .sports-toolbar {
   position: fixed;
-  top: 77px; /* Below the header */
+  top: 65px; /* Aligned with sidebar tops */
   left: 280px; /* Right of the sidebar */
-  right: 0;
+  right: 336px; /* Left of the canvas info box (320px properties + 16px margin) */
   z-index: 50;
 
   display: flex;
