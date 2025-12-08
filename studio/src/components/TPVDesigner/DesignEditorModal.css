@@ -112,13 +112,22 @@
 /* Override InspirePanelRecraft styles when inside modal */
 .design-editor__content .inspire-panel-recraft {
   height: 100%;
+  width: 100%;
   max-width: 100%;
+  margin: 0;
   border-radius: 0;
   box-shadow: none;
 }
 
 .design-editor__content .inspire-panel-recraft--embedded {
   height: 100%;
+  width: 100%;
+}
+
+/* Ensure tabs and form fill the modal width */
+.design-editor__content .input-mode-tabs,
+.design-editor__content .form-section {
+  width: 100%;
 }
 
 /* Ensure SVG preview has good space */
