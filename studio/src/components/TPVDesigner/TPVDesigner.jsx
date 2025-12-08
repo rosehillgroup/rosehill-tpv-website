@@ -41,13 +41,22 @@ function TPVDesigner({ loadedDesign }) {
 
   // Load design when loadedDesign prop changes
   useEffect(() => {
-    if (loadedDesign && loadedDesign.design_data) {
-      const designData = loadedDesign.design_data;
+    if (loadedDesign) {
+      const designData = loadedDesign.design_data || {};
 
       // Check if this is a playground design (has input_mode) vs sports design (has courts/surface)
       // Note: input_mode may be at top level (loadedDesign.input_mode) or inside design_data
       const isPlaygroundDesign = loadedDesign.input_mode || designData.input_mode || designData.blend_recipes || designData.solid_recipes;
       const isSportsDesign = designData.courts || designData.surface || designData.tracks;
+
+      console.log('[TPV] Design detection:', {
+        id: loadedDesign.id,
+        name: loadedDesign.name,
+        hasDesignData: !!loadedDesign.design_data,
+        topLevelInputMode: loadedDesign.input_mode,
+        isPlaygroundDesign,
+        isSportsDesign
+      });
 
       if (isPlaygroundDesign && !isSportsDesign) {
         // This is a playground design - open in the Design Editor Modal
@@ -66,7 +75,7 @@ function TPVDesigner({ loadedDesign }) {
 
         // Open the design editor modal
         setShowDesignEditor(true);
-      } else {
+      } else if (loadedDesign.design_data) {
         // This is a sports design - load into sports store
         console.log('[SPORTS] Loading design from prop:', loadedDesign.id, loadedDesign.name);
 
@@ -79,6 +88,8 @@ function TPVDesigner({ loadedDesign }) {
 
         // Skip the dimension modal since we're loading an existing design
         setShowDimensionModal(false);
+      } else {
+        console.warn('[TPV] Design has no design_data and is not a playground design:', loadedDesign.id, loadedDesign.name);
       }
     }
   }, [loadedDesign]);
