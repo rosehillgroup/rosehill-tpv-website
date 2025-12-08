@@ -2032,216 +2032,235 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         </div>
       )}
 
-      {/* TWO-COLUMN LAYOUT - After generation */}
+      {/* Unified TPV Blend Display */}
       {result && !generating && (
-        <div className="inspire-two-column">
-          {/* LEFT PANEL - Controls */}
-          <aside className="inspire-left-panel">
-            {/* Mode Toggle Tabs */}
-            {blendSvgUrl && blendRecipes && (
-              <div className="left-panel__section">
-                <div className="mode-tabs">
-                  <button
-                    className={`mode-tab ${viewMode === 'solid' ? 'active' : ''}`}
-                    onClick={() => setViewMode('solid')}
-                    disabled={!solidSvgUrl}
-                  >
-                    <span className="mode-title">Solid</span>
-                    <span className="mode-description">
-                      {solidSvgUrl ? 'Pure TPV colours' : 'Generating...'}
-                    </span>
-                  </button>
-                  <button
-                    className={`mode-tab ${viewMode === 'blend' ? 'active' : ''}`}
-                    onClick={() => setViewMode('blend')}
-                  >
-                    <span className="mode-title">Blend</span>
-                    <span className="mode-description">Mixed granules</span>
-                  </button>
-                </div>
+        <div className="results-section">
+          {/* Aspect Ratio Info */}
+          {arMapping && (
+            <div className={`ar-info ${arMapping.layout.mode}`}>
+              <div className="ar-info-header">
+                <strong>Layout:</strong> {arMapping.layout.reason}
               </div>
-            )}
-
-            {/* Action Bar */}
-            {blendSvgUrl && (
-              <div className="left-panel__section">
-                <div className="action-bar">
-                  <button
-                    className="action-bar__btn action-bar__btn--secondary"
-                    onClick={handleNewDesign}
-                    title="Start a new design"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 5v14M5 12h14"/>
-                    </svg>
-                    New
-                  </button>
-                  <button
-                    className="action-bar__btn action-bar__btn--primary"
-                    onClick={handleSaveClick}
-                    title="Save this design to your gallery"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
-                      <polyline points="17 21 17 13 7 13 7 21"/>
-                      <polyline points="7 3 7 8 15 8"/>
-                    </svg>
-                    Save
-                  </button>
-                  <PlaygroundExportMenu
-                    onExportSVG={handleDownloadSVG}
-                    onExportPNG={handleDownloadPNG}
-                    onExportPDF={handleDownloadPDF}
-                    onExportTiles={handleDownloadTiles}
-                    viewMode={viewMode}
-                    exporting={generatingPDF}
-                    disabled={!blendSvgUrl}
-                  />
-                </div>
+              <div className="ar-info-details">
+                <span>Requested: {arMapping.user.formatted}</span>
+                <span>•</span>
+                <span>Generated: {arMapping.canonical.name} panel</span>
+                {arMapping.layout.mode === 'framing' && (
+                  <>
+                    <span>•</span>
+                    <span className="layout-note">Panel centred with base colour surround</span>
+                  </>
+                )}
+                {arMapping.layout.mode === 'tiling' && (
+                  <>
+                    <span>•</span>
+                    <span className="layout-note">Pattern will repeat along length</span>
+                  </>
+                )}
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Mixer Widget */}
-            {mixerOpen && mixerColor && (
-              <div className="left-panel__section">
-                <div className="mixer-widget-container">
-                  <div className="mixer-widget-header">
-                    <button
-                      className="mixer-close-btn"
-                      onClick={() => {
-                        setMixerOpen(false);
-                        setMixerColor(null);
-                      }}
-                    >
-                      Close Mixer
-                    </button>
-                  </div>
-                  <MiniMixerWidget
-                    initialRecipe={
-                      blendEditedColors.get(mixerColor.originalHex.toLowerCase())?.recipe ||
-                      (mixerColor.recipe || null)
-                    }
-                    onBlendChange={handleMixerBlendChange}
-                    originalColor={mixerColor.originalHex}
-                  />
-                </div>
-              </div>
-            )}
+          {/* Mode Toggle Tabs */}
+          {blendSvgUrl && blendRecipes && (
+            <div className="mode-tabs">
+              <button
+                className={`mode-tab ${viewMode === 'solid' ? 'active' : ''}`}
+                onClick={() => setViewMode('solid')}
+                disabled={!solidSvgUrl}
+              >
+                <span className="mode-title">Solid Mode</span>
+                <span className="mode-description">
+                  {solidSvgUrl ? 'Single TPV colours only' : 'Generating...'}
+                </span>
+              </button>
+              <button
+                className={`mode-tab ${viewMode === 'blend' ? 'active' : ''}`}
+                onClick={() => setViewMode('blend')}
+              >
+                <span className="mode-title">Blend Mode</span>
+                <span className="mode-description">Advanced: Mixed granules</span>
+              </button>
+            </div>
+          )}
 
-            {/* View Recipe/Colours Button */}
-            {viewMode === 'blend' && blendSvgUrl && blendRecipes && !showFinalRecipes && (
-              <div className="left-panel__section">
+          {/* TPV Blend Preview - Blend Mode */}
+          {viewMode === 'blend' && blendSvgUrl && blendRecipes && (
+            <div ref={svgPreviewRef}>
+              <SVGPreview
+                blendSvgUrl={blendSvgUrl}
+                recipes={blendRecipes}
+                mode="blend"
+                onColorClick={handleColorClick}
+                onRegionClick={handleRegionClick}
+                onEyedropperCancel={handleEyedropperCancel}
+                onMakeTransparent={handleMakeTransparent}
+                onSelectTPVColor={handleSelectTPVColor}
+                selectedColor={selectedColor}
+                editedColors={blendEditedColors}
+                onResetAll={handleResetAllColors}
+                designName={designName}
+                onNameChange={setDesignName}
+                isNameLoading={isNameLoading}
+                onInSituClick={handleInSituClick}
+                eyedropperActive={eyedropperActive}
+                eyedropperRegion={eyedropperRegion}
+                onRegionUndo={handleRegionUndo}
+                onRegionRedo={handleRegionRedo}
+                canUndo={historyIndex > 0}
+                canRedo={historyIndex < regionOverridesHistory.length - 1}
+                regionOverridesCount={regionOverrides.size}
+              />
+            </div>
+          )}
+
+          {/* TPV Blend Preview - Solid Mode */}
+          {viewMode === 'solid' && solidSvgUrl && solidRecipes && (
+            <div ref={svgPreviewRef}>
+              <SVGPreview
+                blendSvgUrl={solidSvgUrl}
+                recipes={solidRecipes}
+                mode="solid"
+                onColorClick={handleColorClick}
+                onRegionClick={handleRegionClick}
+                onEyedropperCancel={handleEyedropperCancel}
+                onMakeTransparent={handleMakeTransparent}
+                onSelectTPVColor={handleSelectTPVColor}
+                selectedColor={selectedColor}
+                editedColors={solidEditedColors}
+                onResetAll={handleResetAllColors}
+                designName={designName}
+                onNameChange={setDesignName}
+                isNameLoading={isNameLoading}
+                onInSituClick={handleInSituClick}
+                eyedropperActive={eyedropperActive}
+                eyedropperRegion={eyedropperRegion}
+                onRegionUndo={handleRegionUndo}
+                onRegionRedo={handleRegionRedo}
+                canUndo={historyIndex > 0}
+                canRedo={historyIndex < regionOverridesHistory.length - 1}
+                regionOverridesCount={regionOverrides.size}
+              />
+            </div>
+          )}
+
+          {/* Mixer Widget (Blend Mode) */}
+          {mixerOpen && mixerColor && (
+            <div className="mixer-widget-container">
+              <div className="mixer-widget-header">
                 <button
-                  onClick={() => setShowFinalRecipes(true)}
-                  className="finalize-button"
+                  className="mixer-close-btn"
+                  onClick={() => {
+                    setMixerOpen(false);
+                    setMixerColor(null);
+                  }}
                 >
-                  View Recipe Details
+                  Close Mixer
                 </button>
               </div>
-            )}
-            {viewMode === 'solid' && solidSvgUrl && solidRecipes && !showSolidSummary && (
-              <div className="left-panel__section">
-                <button
-                  onClick={() => setShowSolidSummary(true)}
-                  className="finalize-button"
-                >
-                  View TPV Colours Used
-                </button>
-              </div>
-            )}
+              <MiniMixerWidget
+                initialRecipe={
+                  blendEditedColors.get(mixerColor.originalHex.toLowerCase())?.recipe ||
+                  (mixerColor.recipe || null)
+                }
+                onBlendChange={handleMixerBlendChange}
+                originalColor={mixerColor.originalHex}
+              />
+            </div>
+          )}
 
-            {/* Recipe Display */}
-            {showFinalRecipes && blendRecipes && (
-              <div className="left-panel__section left-panel__section--recipes">
-                <BlendRecipesDisplay
-                  recipes={blendRecipes}
-                  onClose={() => setShowFinalRecipes(false)}
-                />
-              </div>
-            )}
-            {showSolidSummary && solidRecipes && (
-              <div className="left-panel__section left-panel__section--recipes">
-                <SolidColorSummary
-                  recipes={solidRecipes}
-                  onClose={() => setShowSolidSummary(false)}
-                />
-              </div>
-            )}
+          {/* Action Bar - Clean grouped layout */}
+          {blendSvgUrl && (
+            <div className="action-bar">
+              {/* New Design */}
+              <button
+                className="action-bar__btn action-bar__btn--secondary"
+                onClick={handleNewDesign}
+                title="Start a new design"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                New
+              </button>
 
-            {/* Aspect Ratio Info (compact) */}
-            {arMapping && arMapping.layout.mode !== 'full' && (
-              <div className="left-panel__section left-panel__section--info">
-                <div className={`ar-info ar-info--compact ${arMapping.layout.mode}`}>
-                  <span className="ar-info-label">Layout:</span>
-                  <span className="ar-info-value">{arMapping.layout.reason}</span>
-                </div>
-              </div>
-            )}
-          </aside>
+              {/* Save Design */}
+              <button
+                className="action-bar__btn action-bar__btn--primary"
+                onClick={handleSaveClick}
+                title="Save this design to your gallery"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+                  <polyline points="17 21 17 13 7 13 7 21"/>
+                  <polyline points="7 3 7 8 15 8"/>
+                </svg>
+                Save
+              </button>
 
-          {/* RIGHT PANEL - SVG Preview */}
-          <main className="inspire-right-panel">
-            {/* Blend Mode Preview */}
-            {viewMode === 'blend' && blendSvgUrl && blendRecipes && (
-              <div ref={svgPreviewRef} className="svg-preview-wrapper">
-                <SVGPreview
-                  blendSvgUrl={blendSvgUrl}
-                  recipes={blendRecipes}
-                  mode="blend"
-                  onColorClick={handleColorClick}
-                  onRegionClick={handleRegionClick}
-                  onEyedropperCancel={handleEyedropperCancel}
-                  onMakeTransparent={handleMakeTransparent}
-                  onSelectTPVColor={handleSelectTPVColor}
-                  selectedColor={selectedColor}
-                  editedColors={blendEditedColors}
-                  onResetAll={handleResetAllColors}
-                  designName={designName}
-                  onNameChange={setDesignName}
-                  isNameLoading={isNameLoading}
-                  onInSituClick={handleInSituClick}
-                  eyedropperActive={eyedropperActive}
-                  eyedropperRegion={eyedropperRegion}
-                  onRegionUndo={handleRegionUndo}
-                  onRegionRedo={handleRegionRedo}
-                  canUndo={historyIndex > 0}
-                  canRedo={historyIndex < regionOverridesHistory.length - 1}
-                  regionOverridesCount={regionOverrides.size}
-                />
-              </div>
-            )}
-
-            {/* Solid Mode Preview */}
-            {viewMode === 'solid' && solidSvgUrl && solidRecipes && (
-              <div ref={svgPreviewRef} className="svg-preview-wrapper">
-                <SVGPreview
-                  blendSvgUrl={solidSvgUrl}
-                  recipes={solidRecipes}
-                  mode="solid"
-                  onColorClick={handleColorClick}
-                  onRegionClick={handleRegionClick}
-                  onEyedropperCancel={handleEyedropperCancel}
-                  onMakeTransparent={handleMakeTransparent}
-                  onSelectTPVColor={handleSelectTPVColor}
-                  selectedColor={selectedColor}
-                  editedColors={solidEditedColors}
-                  onResetAll={handleResetAllColors}
-                  designName={designName}
-                  onNameChange={setDesignName}
-                  isNameLoading={isNameLoading}
-                  onInSituClick={handleInSituClick}
-                  eyedropperActive={eyedropperActive}
-                  eyedropperRegion={eyedropperRegion}
-                  onRegionUndo={handleRegionUndo}
-                  onRegionRedo={handleRegionRedo}
-                  canUndo={historyIndex > 0}
-                  canRedo={historyIndex < regionOverridesHistory.length - 1}
-                  regionOverridesCount={regionOverrides.size}
-                />
-              </div>
-            )}
-          </main>
+              {/* Export Dropdown */}
+              <PlaygroundExportMenu
+                onExportSVG={handleDownloadSVG}
+                onExportPNG={handleDownloadPNG}
+                onExportPDF={handleDownloadPDF}
+                onExportTiles={handleDownloadTiles}
+                viewMode={viewMode}
+                exporting={generatingPDF}
+                disabled={!blendSvgUrl}
+              />
+            </div>
+          )}
         </div>
+      )}
+
+      {/* View Recipe Details Button - Blend Mode */}
+      {viewMode === 'blend' && blendSvgUrl && blendRecipes && !showFinalRecipes && (
+        <div className="finalize-section">
+          <button
+            onClick={() => setShowFinalRecipes(true)}
+            className="finalize-button"
+          >
+            View Recipe Details
+          </button>
+          <p className="finalize-hint">
+            Click to see detailed blend formulas and quality metrics
+          </p>
+        </div>
+      )}
+
+      {/* View Colours Button - Solid Mode */}
+      {viewMode === 'solid' && solidSvgUrl && solidRecipes && !showSolidSummary && (
+        <div className="finalize-section">
+          <button
+            onClick={() => setShowSolidSummary(true)}
+            className="finalize-button"
+          >
+            View TPV Colours Used
+          </button>
+          <p className="finalize-hint">
+            See which pure TPV colours are used in this design
+          </p>
+        </div>
+      )}
+
+      {/* Blend Recipes Display */}
+      {showFinalRecipes && blendRecipes && (
+        <BlendRecipesDisplay
+          recipes={blendRecipes}
+          onClose={() => {
+            setShowFinalRecipes(false);
+          }}
+        />
+      )}
+
+      {/* Solid Color Summary */}
+      {showSolidSummary && solidRecipes && (
+        <SolidColorSummary
+          recipes={solidRecipes}
+          onClose={() => {
+            setShowSolidSummary(false);
+          }}
+        />
       )}
 
       {/* Color Editor Panel (Solid Mode) */}
@@ -2744,143 +2763,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           box-shadow: var(--shadow-sm);
         }
 
-        /* ====== Two-Column Layout ====== */
-        .inspire-two-column {
-          display: flex;
-          gap: var(--space-4);
-          min-height: 60vh;
-        }
-
-        .inspire-left-panel {
-          flex: 0 0 340px;
-          max-width: 380px;
-          min-width: 280px;
-          overflow-y: auto;
-          overflow-x: hidden;
-          background: var(--color-bg-card);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-lg);
-          padding: var(--space-3);
-          scrollbar-width: thin;
-          scrollbar-color: var(--color-border) transparent;
-        }
-
-        .inspire-left-panel::-webkit-scrollbar {
-          width: 6px;
-        }
-
-        .inspire-left-panel::-webkit-scrollbar-track {
-          background: transparent;
-        }
-
-        .inspire-left-panel::-webkit-scrollbar-thumb {
-          background-color: var(--color-border);
-          border-radius: 3px;
-        }
-
-        .inspire-right-panel {
-          flex: 1;
-          min-width: 0;
-          display: flex;
-          flex-direction: column;
-          background: var(--color-bg-card);
-          border: 1px solid var(--color-border);
-          border-radius: var(--radius-lg);
-          padding: var(--space-3);
-          overflow: hidden;
-        }
-
-        .svg-preview-wrapper {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          min-height: 0;
-        }
-
-        /* Left Panel Sections */
-        .left-panel__section {
-          margin-bottom: var(--space-3);
-          padding-bottom: var(--space-3);
-          border-bottom: 1px solid var(--color-border);
-        }
-
-        .left-panel__section:last-child {
-          margin-bottom: 0;
-          padding-bottom: 0;
-          border-bottom: none;
-        }
-
-        .left-panel__section--recipes {
-          border-bottom: none;
-          padding-bottom: 0;
-        }
-
-        .left-panel__section--info {
-          margin-top: auto;
-          padding-top: var(--space-3);
-          border-top: 1px solid var(--color-border);
-          border-bottom: none;
-        }
-
-        /* Compact mode tabs in left panel */
-        .inspire-left-panel .mode-tabs {
-          margin-bottom: 0;
-        }
-
-        .inspire-left-panel .mode-tab {
-          padding: var(--space-2);
-        }
-
-        .inspire-left-panel .mode-tab .mode-title {
-          font-size: var(--text-sm);
-        }
-
-        .inspire-left-panel .mode-tab .mode-description {
-          font-size: var(--text-xs);
-        }
-
-        /* Action bar in left panel - vertical stack */
-        .inspire-left-panel .action-bar {
-          flex-direction: column;
-          gap: var(--space-2);
-        }
-
-        .inspire-left-panel .action-bar__btn {
-          width: 100%;
-          justify-content: center;
-        }
-
-        /* Compact finalize button in left panel */
-        .inspire-left-panel .finalize-button {
-          padding: var(--space-2) var(--space-3);
-          font-size: var(--text-sm);
-        }
-
-        /* Compact AR info */
-        .ar-info--compact {
-          padding: var(--space-2);
-          margin-bottom: 0;
-          display: flex;
-          gap: var(--space-2);
-          align-items: center;
-          font-size: var(--text-xs);
-        }
-
-        .ar-info-label {
-          font-weight: var(--font-semibold);
-          color: var(--color-text-secondary);
-        }
-
-        .ar-info-value {
-          color: var(--color-text-primary);
-        }
-
-        /* Mixer in left panel */
-        .inspire-left-panel .mixer-widget-container {
-          margin-top: 0;
-          padding: var(--space-2);
-        }
-
         .results-header {
           display: flex;
           justify-content: space-between;
@@ -3090,53 +2972,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           background: #2563eb;
           box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
           transform: translateY(-1px);
-        }
-
-        /* Two-Column Responsive - Stack on medium screens */
-        @media (max-width: 900px) {
-          .inspire-two-column {
-            flex-direction: column;
-            min-height: auto;
-          }
-
-          .inspire-left-panel {
-            flex: none;
-            max-width: none;
-            min-width: auto;
-            width: 100%;
-            overflow-y: visible;
-            order: 1;
-          }
-
-          .inspire-right-panel {
-            flex: none;
-            width: 100%;
-            min-height: 350px;
-            max-height: 50vh;
-            order: 0;
-          }
-
-          /* Horizontal mode tabs on tablet */
-          .inspire-left-panel .mode-tabs {
-            flex-direction: row;
-          }
-
-          .inspire-left-panel .mode-tab {
-            flex: 1;
-            flex-direction: column;
-            padding: var(--space-2);
-          }
-
-          /* Horizontal action bar on tablet */
-          .inspire-left-panel .action-bar {
-            flex-direction: row;
-            flex-wrap: wrap;
-          }
-
-          .inspire-left-panel .action-bar__btn {
-            flex: 1;
-            min-width: 80px;
-          }
         }
 
         /* Mobile Responsive Styles */
