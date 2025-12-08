@@ -28,36 +28,63 @@ export function generatePolygonPath(sides, width, height, cornerRadius = 0) {
 }
 
 /**
- * Generate vertices for a regular polygon centered in bounding box
+ * Generate vertices for a regular polygon that fills the bounding box
  * @param {number} sides - Number of sides
  * @param {number} width - Bounding box width
  * @param {number} height - Bounding box height
  * @returns {Array<{x: number, y: number}>} Array of vertex points
  */
 export function generatePolygonPoints(sides, width, height) {
+  // For 4-sided shapes (square/rectangle), just return the corners directly
+  // This ensures the shape exactly fills the bounding box
+  if (sides === 4) {
+    return [
+      { x: 0, y: 0 },           // top-left
+      { x: width, y: 0 },       // top-right
+      { x: width, y: height },  // bottom-right
+      { x: 0, y: height }       // bottom-left
+    ];
+  }
+
+  // For other polygons, generate inscribed then scale to fill bounds
   const points = [];
   const centerX = width / 2;
   const centerY = height / 2;
-  const radiusX = width / 2;
-  const radiusY = height / 2;
   const angleStep = (2 * Math.PI) / sides;
 
-  // For 4-sided shapes (square/rectangle), start at top-left corner
-  // so edges are horizontal/vertical (not diamond orientation)
-  // For other shapes, start from top center
-  const startAngle = sides === 4
-    ? -Math.PI / 2 + Math.PI / 4  // -45 degrees: starts at top-left corner
-    : -Math.PI / 2;               // -90 degrees: starts at top center
+  // Start from top center (-90 degrees)
+  const startAngle = -Math.PI / 2;
 
+  // First, generate unit circle polygon
   for (let i = 0; i < sides; i++) {
     const angle = startAngle + angleStep * i;
     points.push({
-      x: centerX + radiusX * Math.cos(angle),
-      y: centerY + radiusY * Math.sin(angle)
+      x: Math.cos(angle),
+      y: Math.sin(angle)
     });
   }
 
-  return points;
+  // Find the actual bounds of the generated polygon
+  let minX = Infinity, maxX = -Infinity;
+  let minY = Infinity, maxY = -Infinity;
+  for (const p of points) {
+    minX = Math.min(minX, p.x);
+    maxX = Math.max(maxX, p.x);
+    minY = Math.min(minY, p.y);
+    maxY = Math.max(maxY, p.y);
+  }
+
+  // Calculate scale factors to fit the bounding box exactly
+  const polyWidth = maxX - minX;
+  const polyHeight = maxY - minY;
+  const scaleX = width / polyWidth;
+  const scaleY = height / polyHeight;
+
+  // Scale and translate points to fill the bounding box
+  return points.map(p => ({
+    x: (p.x - minX) * scaleX,
+    y: (p.y - minY) * scaleY
+  }));
 }
 
 /**
