@@ -25,6 +25,26 @@ import { downloadSvgTiles } from '../lib/svgTileSlicer.js';
 import PlaygroundExportMenu from './PlaygroundExportMenu.jsx';
 import tpvColours from '../../api/_utils/data/rosehill_tpv_21_colours.json';
 
+/**
+ * Detect file type from File object (MIME type with extension fallback)
+ * @param {File} file - The file to check
+ * @returns {'svg'|'image'|null} Detected file type
+ */
+function detectFileType(file) {
+  if (!file) return null;
+
+  // Check MIME type first (most reliable)
+  if (file.type === 'image/svg+xml') return 'svg';
+  if (file.type === 'image/png' || file.type === 'image/jpeg') return 'image';
+
+  // Fallback to extension for files without proper MIME type
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  if (ext === 'svg') return 'svg';
+  if (['png', 'jpg', 'jpeg'].includes(ext)) return 'image';
+
+  return null; // Unknown type
+}
+
 export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmbedded = false }) {
   // ====== PERSISTENT STATE (from Zustand store - survives mode switches) ======
   const store = usePlaygroundDesignStore();
@@ -160,12 +180,12 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     checkForExistingDesigns();
   }, []);
 
-  // Reset dimensions when switching to image/SVG upload modes
+  // Reset dimensions when switching to upload mode
   useEffect(() => {
-    if (inputMode === 'image' || inputMode === 'svg') {
-      // Clear dimensions for upload modes - they'll be set via modal when needed
+    if (inputMode === 'upload') {
+      // Clear dimensions for upload mode - they'll be set via modal when needed
       setDimensions(null, null);
-      console.log('[DIMENSION] Reset dimensions for upload mode:', inputMode);
+      console.log('[DIMENSION] Reset dimensions for upload mode');
     } else if (inputMode === 'prompt') {
       // Restore default dimensions for prompt mode if they're null
       if (widthMM === null || lengthMM === null) {
@@ -373,14 +393,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       return;
     }
 
-    // Validate file type based on input mode
-    const allowedTypes = inputMode === 'image'
-      ? ['image/png', 'image/jpeg']
-      : ['image/svg+xml'];
-
+    // Validate file type - accept all supported types in unified upload mode
     const validation = validateFile(file, {
       maxSizeMB: 10,
-      allowedTypes
+      allowedTypes: ['image/png', 'image/jpeg', 'image/svg+xml']
     });
 
     if (!validation.valid) {
@@ -423,14 +439,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     if (files && files.length > 0) {
       const file = files[0];
 
-      // Validate file type based on input mode
-      const allowedTypes = inputMode === 'image'
-        ? ['image/png', 'image/jpeg']
-        : ['image/svg+xml'];
-
+      // Validate file type - accept all supported types in unified upload mode
       const validation = validateFile(file, {
         maxSizeMB: 10,
-        allowedTypes
+        allowedTypes: ['image/png', 'image/jpeg', 'image/svg+xml']
       });
 
       if (!validation.valid) {
@@ -452,9 +464,18 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       return;
     }
 
-    if ((inputMode === 'image' || inputMode === 'svg') && !selectedFile) {
+    if (inputMode === 'upload' && !selectedFile) {
       setError('Please select a file to upload');
       return;
+    }
+
+    // Validate file type for uploads
+    if (inputMode === 'upload' && selectedFile) {
+      const fileType = detectFileType(selectedFile);
+      if (!fileType) {
+        setError('Unsupported file type. Please upload PNG, JPG, or SVG.');
+        return;
+      }
     }
 
     setError(null);
@@ -468,73 +489,64 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     try {
       let response;
 
-      // MODE: Upload SVG (fast path - no AI generation)
-      if (inputMode === 'svg') {
-        setProgressMessage('Uploading SVG file...');
+      // MODE: Upload (auto-detect SVG vs Image)
+      if (inputMode === 'upload' && selectedFile) {
+        const fileType = detectFileType(selectedFile);
+
+        // Upload file to Supabase (same for both types)
+        setProgressMessage(fileType === 'svg' ? 'Uploading SVG file...' : 'Uploading image...');
         setUploadProgress('Uploading...');
 
-        // Upload to Supabase
         const uploadResult = await uploadFile(selectedFile);
         if (!uploadResult.success) {
           throw new Error(uploadResult.error || 'Failed to upload file');
         }
-
-        setProgressMessage('Processing SVG...');
         setUploadProgress(null);
 
-        // Call process-uploaded-svg API (dimensions not needed for SVG uploads)
-        response = await apiClient.processUploadedSVG({
-          svg_url: uploadResult.url
-        });
+        if (fileType === 'svg') {
+          // SVG: Fast path - process immediately without AI
+          setProgressMessage('Processing SVG...');
 
-        if (!response.success) {
-          throw new Error(response.error || 'Failed to process SVG');
+          response = await apiClient.processUploadedSVG({
+            svg_url: uploadResult.url
+          });
+
+          if (!response.success) {
+            throw new Error(response.error || 'Failed to process SVG');
+          }
+
+          // SVG uploads complete immediately
+          setJobId(response.jobId);
+          setProgressMessage('✓ SVG uploaded successfully!');
+          setGenerating(false);
+
+          // Fetch job status to get SVG URL
+          const finalStatus = await apiClient.getRecraftStatus(response.jobId);
+          setStatus(finalStatus);
+          setResult(finalStatus.result);
+
+          // Auto-generate TPV blend recipes
+          if (finalStatus.result?.svg_url) {
+            await handleGenerateBlends(finalStatus.result.svg_url, response.jobId);
+          }
+          return;
+        } else {
+          // Image: Vectorize with AI then process
+          setProgressMessage('Starting vectorisation...');
+
+          response = await apiClient.vectorizeImage({
+            image_url: uploadResult.url
+          });
+
+          if (!response.success) {
+            throw new Error(response.error || 'Failed to start vectorisation');
+          }
+
+          setProgressMessage('🎨 AI is vectorising your image...');
         }
-
-        // SVG uploads complete immediately
-        setJobId(response.jobId);
-        setProgressMessage('✓ SVG uploaded successfully!');
-        setGenerating(false);
-
-        // Fetch job status to get SVG URL
-        const finalStatus = await apiClient.getRecraftStatus(response.jobId);
-        setStatus(finalStatus);
-        setResult(finalStatus.result);
-
-        // Auto-generate TPV blend recipes
-        if (finalStatus.result?.svg_url) {
-          await handleGenerateBlends(finalStatus.result.svg_url, response.jobId);
-        }
-        return;
-      }
-
-      // MODE: Upload Image (vectorize then process)
-      if (inputMode === 'image') {
-        setProgressMessage('Uploading image...');
-        setUploadProgress('Uploading...');
-
-        // Upload to Supabase
-        const uploadResult = await uploadFile(selectedFile);
-        if (!uploadResult.success) {
-          throw new Error(uploadResult.error || 'Failed to upload file');
-        }
-
-        setProgressMessage('Starting vectorisation...');
-        setUploadProgress(null);
-
-        // Call recraft-vectorize API (dimensions not needed for image vectorization)
-        response = await apiClient.vectorizeImage({
-          image_url: uploadResult.url
-        });
-
-        if (!response.success) {
-          throw new Error(response.error || 'Failed to start vectorisation');
-        }
-
-        setProgressMessage('🎨 AI is vectorising your image...');
       }
       // MODE: Text Prompt (existing Recraft generation)
-      else {
+      else if (inputMode === 'prompt') {
         // Map dimensions to canonical Recraft aspect ratio
         const mapping = mapDimensionsToRecraft(lengthMM, widthMM);
         setArMapping(mapping);
@@ -753,9 +765,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   const handleInSituClick = async () => {
     const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
 
-    // Check if dimensions are set (prompt mode always has them, image/SVG uploads might not)
-    if ((inputMode === 'image' || inputMode === 'svg') && (!widthMM || !lengthMM)) {
-      console.log('[DIMENSION] No dimensions set for image/SVG upload, showing modal...');
+    // Check if dimensions are set (prompt mode always has them, uploads might not)
+    if (inputMode === 'upload' && (!widthMM || !lengthMM)) {
+      console.log('[DIMENSION] No dimensions set for upload, showing modal...');
 
       // Detect aspect ratio from SVG
       const aspectRatio = await detectSVGAspectRatio(svgUrl);
@@ -839,13 +851,13 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
 
     // Check if dimensions are valid (must be positive numbers)
-    // For image/SVG uploads, we need to prompt for dimensions if not set
+    // For uploads, we need to prompt for dimensions if not set
     // For prompt mode or loaded designs with dimensions, skip the modal
     const hasValidDimensions = widthMM > 0 && lengthMM > 0;
-    const needsDimensionPrompt = (inputMode === 'image' || inputMode === 'svg') && !hasValidDimensions;
+    const needsDimensionPrompt = inputMode === 'upload' && !hasValidDimensions;
 
     if (needsDimensionPrompt) {
-      console.log('[DIMENSION] No dimensions set for image/SVG upload, showing modal before save...');
+      console.log('[DIMENSION] No dimensions set for upload, showing modal before save...');
 
       // Detect aspect ratio from SVG
       const aspectRatio = await detectSVGAspectRatio(svgUrl);
@@ -873,9 +885,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   const handleDownloadPDF = async () => {
     const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
 
-    // Check if dimensions are set (prompt mode always has them, image/SVG uploads might not)
-    if ((inputMode === 'image' || inputMode === 'svg') && (!widthMM || !lengthMM)) {
-      console.log('[DIMENSION] No dimensions set for image/SVG upload, showing modal...');
+    // Check if dimensions are set (prompt mode always has them, uploads might not)
+    if (inputMode === 'upload' && (!widthMM || !lengthMM)) {
+      console.log('[DIMENSION] No dimensions set for upload, showing modal...');
 
       // Detect aspect ratio from SVG
       const aspectRatio = await detectSVGAspectRatio(svgUrl);
@@ -992,9 +1004,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       return;
     }
 
-    // Check if dimensions are set (prompt mode always has them, image/SVG uploads might not)
-    if ((inputMode === 'image' || inputMode === 'svg') && (!widthMM || !lengthMM)) {
-      console.log('[DIMENSION] No dimensions set for image/SVG upload, showing modal...');
+    // Check if dimensions are set (prompt mode always has them, uploads might not)
+    if (inputMode === 'upload' && (!widthMM || !lengthMM)) {
+      console.log('[DIMENSION] No dimensions set for upload, showing modal...');
 
       // Detect aspect ratio from SVG
       const aspectRatio = await detectSVGAspectRatio(svgUrl);
@@ -1846,36 +1858,21 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           <span className="mode-description">Describe your design</span>
         </button>
         <button
-          className={`input-mode-tab ${inputMode === 'image' ? 'active' : ''}`}
+          className={`input-mode-tab ${inputMode === 'upload' ? 'active' : ''}`}
           onClick={() => {
-            setInputMode('image');
+            setInputMode('upload');
             setPrompt('');
             setError(null);
           }}
           disabled={generating}
         >
           <svg className="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-            <circle cx="8.5" cy="8.5" r="1.5" />
-            <path d="M21 15l-5-5L5 21" />
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
           </svg>
-          <span className="mode-title">Upload Image</span>
-          <span className="mode-description">Vectorise PNG/JPG</span>
-        </button>
-        <button
-          className={`input-mode-tab ${inputMode === 'svg' ? 'active' : ''}`}
-          onClick={() => {
-            setInputMode('svg');
-            setPrompt('');
-            setError(null);
-          }}
-          disabled={generating}
-        >
-          <svg className="mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-          </svg>
-          <span className="mode-title">Upload SVG</span>
-          <span className="mode-description">Process existing vector</span>
+          <span className="mode-title">Upload Design</span>
+          <span className="mode-description">PNG, JPG, or SVG</span>
         </button>
       </div>
 
@@ -1900,10 +1897,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           </div>
         )}
 
-        {/* Image Upload Mode */}
-        {inputMode === 'image' && (
+        {/* Unified Upload Mode (PNG/JPG/SVG) */}
+        {inputMode === 'upload' && (
           <div className="form-group">
-            <label htmlFor="image-upload">Upload Image (PNG/JPG)</label>
+            <label htmlFor="design-upload">Upload Design File</label>
             <div
               className={`drop-zone ${isDragging ? 'dragging' : ''} ${selectedFile ? 'has-file' : ''}`}
               onDragEnter={handleDragEnter}
@@ -1912,14 +1909,14 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
               onDrop={handleDrop}
             >
               <input
-                id="image-upload"
+                id="design-upload"
                 type="file"
-                accept="image/png,image/jpeg"
+                accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
                 onChange={handleFileSelect}
                 disabled={generating}
                 className="file-input-hidden"
               />
-              <label htmlFor="image-upload" className="drop-zone-content">
+              <label htmlFor="design-upload" className="drop-zone-content">
                 {selectedFile ? (
                   <>
                     <svg className="upload-icon success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1927,6 +1924,11 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
                       <polyline points="22 4 12 14.01 9 11.01" />
                     </svg>
                     <span className="file-name">{selectedFile.name}</span>
+                    <span className="file-type-badge">
+                      {detectFileType(selectedFile) === 'svg'
+                        ? 'SVG - will process immediately'
+                        : 'Image - will vectorise with AI'}
+                    </span>
                     <span className="drop-hint">Click to change file</span>
                   </>
                 ) : (
@@ -1936,62 +1938,15 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
                       <polyline points="17 8 12 3 7 8" />
                       <line x1="12" y1="3" x2="12" y2="15" />
                     </svg>
-                    <span className="drop-text">Drag & drop your image here</span>
+                    <span className="drop-text">Drag & drop your design here</span>
                     <span className="drop-hint">or click to browse</span>
+                    <span className="supported-formats">PNG, JPG, or SVG</span>
                   </>
                 )}
               </label>
             </div>
             <p className="helper-text">
-              Upload a raster image (PNG or JPG). The AI will convert it to vector format (SVG) suitable for TPV surfacing. Best for converting photos, logos, or artwork into clean vectors that can be manufactured with TPV granules.
-            </p>
-          </div>
-        )}
-
-        {/* SVG Upload Mode */}
-        {inputMode === 'svg' && (
-          <div className="form-group">
-            <label htmlFor="svg-upload">Upload SVG File</label>
-            <div
-              className={`drop-zone ${isDragging ? 'dragging' : ''} ${selectedFile ? 'has-file' : ''}`}
-              onDragEnter={handleDragEnter}
-              onDragLeave={handleDragLeave}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-            >
-              <input
-                id="svg-upload"
-                type="file"
-                accept="image/svg+xml"
-                onChange={handleFileSelect}
-                disabled={generating}
-                className="file-input-hidden"
-              />
-              <label htmlFor="svg-upload" className="drop-zone-content">
-                {selectedFile ? (
-                  <>
-                    <svg className="upload-icon success" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                      <polyline points="22 4 12 14.01 9 11.01" />
-                    </svg>
-                    <span className="file-name">{selectedFile.name}</span>
-                    <span className="drop-hint">Click to change file</span>
-                  </>
-                ) : (
-                  <>
-                    <svg className="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
-                    <span className="drop-text">Drag & drop your SVG here</span>
-                    <span className="drop-hint">or click to browse</span>
-                  </>
-                )}
-              </label>
-            </div>
-            <p className="helper-text">
-              Upload an existing SVG vector file. It will be processed immediately for TPV colour matching - no AI generation needed. Ideal when you already have a vector design and just need to match colors to available TPV granules.
+              Upload your design file. <strong>PNG/JPG</strong> images will be vectorised with AI (~30 seconds). <strong>SVG</strong> files are processed immediately for TPV colour matching.
             </p>
           </div>
         )}
@@ -2049,17 +2004,19 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           disabled={
             generating ||
             (inputMode === 'prompt' && !prompt.trim()) ||
-            ((inputMode === 'image' || inputMode === 'svg') && !selectedFile)
+            (inputMode === 'upload' && !selectedFile)
           }
           className="generate-button"
         >
           {generating
-            ? (inputMode === 'svg' ? 'Processing...' : 'Generating...')
+            ? (inputMode === 'upload' && selectedFile && detectFileType(selectedFile) === 'svg'
+                ? 'Processing...'
+                : 'Generating...')
             : (inputMode === 'prompt'
                 ? 'Generate Vector Design'
-                : inputMode === 'image'
-                  ? 'Vectorise & Process'
-                  : 'Process SVG'
+                : selectedFile && detectFileType(selectedFile) === 'svg'
+                  ? 'Process SVG'
+                  : 'Vectorise & Process'
               )
           }
         </button>
@@ -2628,6 +2585,24 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         .drop-hint {
           font-size: var(--text-sm);
           color: var(--color-text-tertiary);
+        }
+
+        .file-type-badge {
+          display: inline-block;
+          font-size: var(--text-xs);
+          color: var(--color-text-secondary);
+          background: var(--color-bg-tertiary);
+          padding: var(--space-1) var(--space-2);
+          border-radius: var(--radius-sm);
+          margin-top: var(--space-1);
+        }
+
+        .supported-formats {
+          display: block;
+          font-size: var(--text-xs);
+          color: var(--color-text-tertiary);
+          margin-top: var(--space-2);
+          font-weight: var(--font-medium);
         }
 
         .drop-zone.dragging .drop-text,
