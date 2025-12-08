@@ -120,9 +120,9 @@
 
 /* ====== Toolbar (Fixed below header) ====== */
 .sports-toolbar {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: fixed;
+  top: 77px; /* Below the header */
+  left: 280px; /* Right of the sidebar */
   right: 0;
   z-index: 50;
 

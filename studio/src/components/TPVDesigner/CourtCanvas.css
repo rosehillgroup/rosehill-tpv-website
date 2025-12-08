@@ -14,16 +14,16 @@
 
 /* ====== Zoom Controls ====== */
 .court-canvas__zoom-controls {
-  position: absolute;
+  position: fixed;
   bottom: 1rem;
-  left: 1rem;
+  left: 296px; /* Right of the sidebar (280px + 16px margin) */
   display: flex;
   gap: 0.375rem;
   background: rgba(255, 255, 255, 0.95);
   border-radius: 8px;
   padding: 0.375rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-  z-index: 20;
+  z-index: 50;
   align-items: center;
   backdrop-filter: blur(8px);
 }
