@@ -790,14 +790,14 @@ function TPVDesigner({ loadedDesign }) {
                   <button
                     className={`sports-toolbar__mode-toggle ${standaloneMode ? 'sports-toolbar__mode-toggle--active' : ''}`}
                     onClick={toggleStandaloneMode}
-                    title={standaloneMode ? 'Switch to Multi-Element Mode' : 'Switch to Standalone Mode'}
+                    title={standaloneMode ? 'Switch to Edit Mode' : 'Switch to Focus Mode'}
                   >
                     {standaloneMode ? (
                       <>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <rect x="3" y="3" width="18" height="18" rx="2" />
                         </svg>
-                        <span>Standalone</span>
+                        <span>Focus</span>
                       </>
                     ) : (
                       <>
@@ -807,7 +807,7 @@ function TPVDesigner({ loadedDesign }) {
                           <rect x="3" y="14" width="7" height="7" />
                           <rect x="14" y="14" width="7" height="7" />
                         </svg>
-                        <span>Multi-Element</span>
+                        <span>Edit</span>
                       </>
                     )}
                   </button>
