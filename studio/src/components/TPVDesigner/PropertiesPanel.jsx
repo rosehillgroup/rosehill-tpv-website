@@ -756,10 +756,8 @@ function TrackPropertiesPanel({ track, trackId }) {
               <div className="property-input-group">
                 <input
                   type="number"
-                  defaultValue={(avgCornerRadius / 1000).toFixed(2)}
-                  key={`locked-${avgCornerRadius}`}
-                  onBlur={(e) => handleCornerRadiusChange('topLeft', e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                  value={(avgCornerRadius / 1000).toFixed(2)}
+                  onChange={(e) => handleCornerRadiusChange('topLeft', e.target.value)}
                   min="0"
                   max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(0)}
                   step="0.5"
@@ -774,10 +772,8 @@ function TrackPropertiesPanel({ track, trackId }) {
                   <div className="property-input-group">
                     <input
                       type="number"
-                      defaultValue={(parameters.cornerRadius.topLeft / 1000).toFixed(2)}
-                      key={`tl-${parameters.cornerRadius.topLeft}`}
-                      onBlur={(e) => handleCornerRadiusChange('topLeft', e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                      value={(parameters.cornerRadius.topLeft / 1000).toFixed(2)}
+                      onChange={(e) => handleCornerRadiusChange('topLeft', e.target.value)}
                       min="0"
                       max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(0)}
                       step="0.5"
@@ -790,10 +786,8 @@ function TrackPropertiesPanel({ track, trackId }) {
                   <div className="property-input-group">
                     <input
                       type="number"
-                      defaultValue={(parameters.cornerRadius.topRight / 1000).toFixed(2)}
-                      key={`tr-${parameters.cornerRadius.topRight}`}
-                      onBlur={(e) => handleCornerRadiusChange('topRight', e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                      value={(parameters.cornerRadius.topRight / 1000).toFixed(2)}
+                      onChange={(e) => handleCornerRadiusChange('topRight', e.target.value)}
                       min="0"
                       max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(0)}
                       step="0.5"
@@ -806,10 +800,8 @@ function TrackPropertiesPanel({ track, trackId }) {
                   <div className="property-input-group">
                     <input
                       type="number"
-                      defaultValue={(parameters.cornerRadius.bottomLeft / 1000).toFixed(2)}
-                      key={`bl-${parameters.cornerRadius.bottomLeft}`}
-                      onBlur={(e) => handleCornerRadiusChange('bottomLeft', e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                      value={(parameters.cornerRadius.bottomLeft / 1000).toFixed(2)}
+                      onChange={(e) => handleCornerRadiusChange('bottomLeft', e.target.value)}
                       min="0"
                       max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(0)}
                       step="0.5"
@@ -822,10 +814,8 @@ function TrackPropertiesPanel({ track, trackId }) {
                   <div className="property-input-group">
                     <input
                       type="number"
-                      defaultValue={(parameters.cornerRadius.bottomRight / 1000).toFixed(2)}
-                      key={`br-${parameters.cornerRadius.bottomRight}`}
-                      onBlur={(e) => handleCornerRadiusChange('bottomRight', e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                      value={(parameters.cornerRadius.bottomRight / 1000).toFixed(2)}
+                      onChange={(e) => handleCornerRadiusChange('bottomRight', e.target.value)}
                       min="0"
                       max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(0)}
                       step="0.5"

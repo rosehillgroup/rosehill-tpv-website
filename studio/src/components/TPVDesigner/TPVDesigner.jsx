@@ -52,8 +52,9 @@ function TPVDesigner({ loadedDesign }) {
         // This is a playground design - open in the Design Editor Modal
         console.log('[TPV] Loading playground design into editor:', loadedDesign.id, loadedDesign.name);
 
-        // Deserialize and load into playground store
-        const restoredState = deserializeDesign(loadedDesign);
+        // Flatten design_data to top level for deserializeDesign compatibility
+        const flattenedDesign = { ...loadedDesign.design_data, id: loadedDesign.id, name: loadedDesign.name };
+        const restoredState = deserializeDesign(flattenedDesign);
         const playgroundStore = usePlaygroundDesignStore.getState();
         playgroundStore.loadDesign(restoredState);
 
