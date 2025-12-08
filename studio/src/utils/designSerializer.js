@@ -120,41 +120,44 @@ export function deserializeDesign(savedData) {
     return new Map(Object.entries(obj));
   };
 
+  // Helper to get field from top-level or nested design_data (for backwards compatibility)
+  const getField = (field) => savedData[field] ?? savedData.design_data?.[field];
+
   // Determine region overrides source
-  const regionOverridesData = savedData.region_overrides || savedData.design_data?.region_overrides;
-  const originalTaggedSvgData = savedData.original_tagged_svg || savedData.design_data?.original_tagged_svg;
+  const regionOverridesData = getField('region_overrides');
+  const originalTaggedSvgData = getField('original_tagged_svg');
 
   console.log('[DESERIALIZE] Final regionOverridesData:', regionOverridesData);
   console.log('[DESERIALIZE] Final originalTaggedSvgData present:', !!originalTaggedSvgData);
 
   return {
-    inputMode: savedData.input_mode,
-    prompt: savedData.prompt || '',
-    selectedFile: savedData.uploaded_file_url ? {
-      url: savedData.uploaded_file_url,
-      name: savedData.uploaded_file_url.split('/').pop()
+    inputMode: savedData.input_mode || getField('input_mode'),
+    prompt: getField('prompt') || '',
+    selectedFile: getField('uploaded_file_url') ? {
+      url: getField('uploaded_file_url'),
+      name: getField('uploaded_file_url').split('/').pop()
     } : null,
-    lengthMM: savedData.dimensions?.lengthMM || 0,
-    widthMM: savedData.dimensions?.widthMM || 0,
+    lengthMM: getField('dimensions')?.lengthMM || 0,
+    widthMM: getField('dimensions')?.widthMM || 0,
 
     // Result object (matches job output format)
     result: {
-      svg_url: savedData.original_svg_url,
-      png_url: savedData.original_png_url,
-      thumbnail_url: savedData.thumbnail_url
+      svg_url: getField('original_svg_url'),
+      png_url: getField('original_png_url'),
+      thumbnail_url: getField('thumbnail_url')
     },
 
     // Color recipes
-    blendRecipes: savedData.blend_recipes || null,
-    solidRecipes: savedData.solid_recipes || null,
+    blendRecipes: getField('blend_recipes') || null,
+    solidRecipes: getField('solid_recipes') || null,
 
     // Color mappings (convert back to Maps)
-    colorMapping: deserializeMap(savedData.color_mapping),
-    solidColorMapping: deserializeMap(savedData.solid_color_mapping),
+    colorMapping: deserializeMap(getField('color_mapping')),
+    solidColorMapping: deserializeMap(getField('solid_color_mapping')),
 
     // User edits (convert back to Maps)
-    solidEditedColors: deserializeMap(savedData.solid_color_edits),
-    blendEditedColors: deserializeMap(savedData.blend_color_edits),
+    solidEditedColors: deserializeMap(getField('solid_color_edits')),
+    blendEditedColors: deserializeMap(getField('blend_color_edits')),
 
     // Final SVGs - Don't restore blob URLs, they need to be regenerated
     // The component will regenerate these from the original SVG + recipes + edits
@@ -162,19 +165,18 @@ export function deserializeDesign(savedData) {
     solidSvgUrl: null,
 
     // View mode
-    viewMode: savedData.preferred_view_mode || 'solid',
+    viewMode: getField('preferred_view_mode') || 'solid',
 
     // Aspect ratio
-    arMapping: savedData.aspect_ratio_mapping,
+    arMapping: getField('aspect_ratio_mapping'),
 
     // Job ID
-    jobId: savedData.job_id,
+    jobId: getField('job_id'),
 
     // In-situ preview data
-    inSituData: savedData.in_situ || null,
+    inSituData: getField('in_situ') || null,
 
     // Per-region overrides (for individual element edits like transparency)
-    // Check both top-level and nested design_data for backwards compatibility
     regionOverrides: deserializeMap(regionOverridesData),
     originalTaggedSvg: originalTaggedSvgData || null,
 

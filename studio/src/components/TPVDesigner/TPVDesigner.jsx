@@ -53,15 +53,8 @@ function TPVDesigner({ loadedDesign }) {
         // This is a playground design - open in the Design Editor Modal
         console.log('[TPV] Loading playground design into editor:', loadedDesign.id, loadedDesign.name);
 
-        // Flatten design_data to top level for deserializeDesign compatibility
-        // Include top-level input_mode if present
-        const flattenedDesign = {
-          ...loadedDesign.design_data,
-          id: loadedDesign.id,
-          name: loadedDesign.name,
-          input_mode: loadedDesign.input_mode || designData.input_mode
-        };
-        const restoredState = deserializeDesign(flattenedDesign);
+        // Pass design object directly - deserializeDesign has fallback logic for design_data
+        const restoredState = deserializeDesign(loadedDesign);
         const playgroundStore = usePlaygroundDesignStore.getState();
         playgroundStore.loadDesign(restoredState);
 
