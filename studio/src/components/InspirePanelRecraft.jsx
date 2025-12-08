@@ -1395,6 +1395,16 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     setEyedropperRegion(null);
   };
 
+  // Handle direct TPV color selection from palette
+  const handleSelectTPVColor = (hex) => {
+    if (!eyedropperRegion) return;
+
+    console.log('[TPV-STUDIO] Selecting TPV color for region:', eyedropperRegion.regionId, hex);
+    applyRegionRecolor(eyedropperRegion.regionId, hex);
+    setEyedropperActive(false);
+    setEyedropperRegion(null);
+  };
+
   // Undo last region override change
   const handleRegionUndo = async () => {
     if (historyIndex <= 0) return; // Can't undo past the beginning
@@ -2128,6 +2138,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
                 onRegionClick={handleRegionClick}
                 onEyedropperCancel={handleEyedropperCancel}
                 onMakeTransparent={handleMakeTransparent}
+                onSelectTPVColor={handleSelectTPVColor}
                 selectedColor={selectedColor}
                 editedColors={blendEditedColors}
                 onResetAll={handleResetAllColors}
@@ -2157,6 +2168,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
                 onRegionClick={handleRegionClick}
                 onEyedropperCancel={handleEyedropperCancel}
                 onMakeTransparent={handleMakeTransparent}
+                onSelectTPVColor={handleSelectTPVColor}
                 selectedColor={selectedColor}
                 editedColors={solidEditedColors}
                 onResetAll={handleResetAllColors}

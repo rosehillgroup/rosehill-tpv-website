@@ -5,6 +5,31 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import ColorLegend from './ColorLegend';
 import { sanitizeSVG } from '../utils/sanitizeSVG';
 
+// TPV color palette for manual recoloring
+const tpvColors = [
+  { code: 'RH01', name: 'Standard Red', hex: '#A5362F' },
+  { code: 'RH02', name: 'Bright Red', hex: '#E21F2F' },
+  { code: 'RH10', name: 'Standard Green', hex: '#609B63' },
+  { code: 'RH11', name: 'Bright Green', hex: '#3BB44A' },
+  { code: 'RH12', name: 'Dark Green', hex: '#006C55' },
+  { code: 'RH20', name: 'Standard Blue', hex: '#0075BC' },
+  { code: 'RH21', name: 'Purple', hex: '#493D8C' },
+  { code: 'RH22', name: 'Light Blue', hex: '#47AFE3' },
+  { code: 'RH23', name: 'Azure', hex: '#039DC4' },
+  { code: 'RH26', name: 'Turquoise', hex: '#00A6A3' },
+  { code: 'RH30', name: 'Standard Beige', hex: '#E4C4AA' },
+  { code: 'RH31', name: 'Cream', hex: '#E8E3D8' },
+  { code: 'RH32', name: 'Brown', hex: '#8B5F3C' },
+  { code: 'RH90', name: 'Funky Pink', hex: '#E8457E' },
+  { code: 'RH40', name: 'Mustard Yellow', hex: '#E5A144' },
+  { code: 'RH41', name: 'Bright Yellow', hex: '#FFD833' },
+  { code: 'RH50', name: 'Orange', hex: '#F15B32' },
+  { code: 'RH60', name: 'Dark Grey', hex: '#59595B' },
+  { code: 'RH61', name: 'Light Grey', hex: '#939598' },
+  { code: 'RH65', name: 'Pale Grey', hex: '#D9D9D6' },
+  { code: 'RH70', name: 'Black', hex: '#231F20' }
+];
+
 export default function SVGPreview({
   blendSvgUrl,
   recipes,
@@ -13,6 +38,7 @@ export default function SVGPreview({
   onRegionClick, // (regionData) => void - callback when region clicked (eyedropper mode)
   onEyedropperCancel, // () => void - callback to cancel eyedropper mode
   onMakeTransparent, // () => void - callback to make selected region transparent
+  onSelectTPVColor, // (hex) => void - callback when user selects TPV color from palette
   selectedColor, // Current color being edited (to highlight)
   editedColors, // Map of edited colors (originalHex -> {newHex})
   onResetAll, // () => void - callback to reset all color edits
@@ -643,13 +669,36 @@ export default function SVGPreview({
           {eyedropperActive && eyedropperRegion && (
             <div className="eyedropper-overlay">
               <div className="eyedropper-content">
-                <div className="eyedropper-color-indicator">
-                  <div
-                    className="eyedropper-color-swatch"
-                    style={{ backgroundColor: eyedropperRegion.sourceColor }}
-                  />
-                  <span>Click another area to copy its colour, or:</span>
+                <div className="eyedropper-header">
+                  <div className="eyedropper-color-indicator">
+                    <div
+                      className="eyedropper-color-swatch"
+                      style={{ backgroundColor: eyedropperRegion.sourceColor }}
+                    />
+                    <span>Click another area to copy its colour, or select a TPV colour:</span>
+                  </div>
                 </div>
+
+                {/* TPV Color Palette */}
+                <div className="eyedropper-palette">
+                  <div className="palette-grid">
+                    {tpvColors.map(color => (
+                      <button
+                        key={color.code}
+                        className="palette-swatch"
+                        style={{ backgroundColor: color.hex }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onSelectTPVColor) {
+                            onSelectTPVColor(color.hex);
+                          }
+                        }}
+                        title={`${color.name} (${color.code})`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
                 <div className="eyedropper-actions">
                   <button
                     className="eyedropper-transparent"
@@ -1027,26 +1076,64 @@ export default function SVGPreview({
           padding: 16px 20px;
           box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
           display: flex;
-          align-items: center;
-          gap: 16px;
+          flex-direction: column;
+          gap: 12px;
           border: 2px solid #3b82f6;
+          max-width: 320px;
+        }
+
+        .eyedropper-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
         }
 
         .eyedropper-color-indicator {
           display: flex;
           align-items: center;
           gap: 12px;
-          font-size: 0.95rem;
+          font-size: 0.9rem;
           font-weight: 500;
           color: #111827;
         }
 
         .eyedropper-color-swatch {
-          width: 32px;
-          height: 32px;
+          width: 28px;
+          height: 28px;
           border-radius: 6px;
           border: 2px solid #d1d5db;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          flex-shrink: 0;
+        }
+
+        .eyedropper-palette {
+          padding: 10px;
+          background: #f9fafb;
+          border-radius: 8px;
+          border: 1px solid #e5e7eb;
+        }
+
+        .palette-grid {
+          display: grid;
+          grid-template-columns: repeat(7, 1fr);
+          gap: 4px;
+        }
+
+        .palette-swatch {
+          width: 32px;
+          height: 32px;
+          border: 2px solid rgba(0, 0, 0, 0.15);
+          border-radius: 4px;
+          cursor: pointer;
+          padding: 0;
+          transition: all 0.15s ease;
+        }
+
+        .palette-swatch:hover {
+          transform: scale(1.15);
+          z-index: 1;
+          box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+          border-color: #3b82f6;
         }
 
         .eyedropper-cancel {
@@ -1071,6 +1158,7 @@ export default function SVGPreview({
           display: flex;
           gap: 8px;
           align-items: center;
+          justify-content: center;
         }
 
         .eyedropper-transparent {
