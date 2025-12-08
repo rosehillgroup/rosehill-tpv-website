@@ -45,7 +45,8 @@ function TPVDesigner({ loadedDesign }) {
       const designData = loadedDesign.design_data;
 
       // Check if this is a playground design (has input_mode) vs sports design (has courts/surface)
-      const isPlaygroundDesign = designData.input_mode || designData.blend_recipes || designData.solid_recipes;
+      // Note: input_mode may be at top level (loadedDesign.input_mode) or inside design_data
+      const isPlaygroundDesign = loadedDesign.input_mode || designData.input_mode || designData.blend_recipes || designData.solid_recipes;
       const isSportsDesign = designData.courts || designData.surface || designData.tracks;
 
       if (isPlaygroundDesign && !isSportsDesign) {
@@ -53,7 +54,13 @@ function TPVDesigner({ loadedDesign }) {
         console.log('[TPV] Loading playground design into editor:', loadedDesign.id, loadedDesign.name);
 
         // Flatten design_data to top level for deserializeDesign compatibility
-        const flattenedDesign = { ...loadedDesign.design_data, id: loadedDesign.id, name: loadedDesign.name };
+        // Include top-level input_mode if present
+        const flattenedDesign = {
+          ...loadedDesign.design_data,
+          id: loadedDesign.id,
+          name: loadedDesign.name,
+          input_mode: loadedDesign.input_mode || designData.input_mode
+        };
         const restoredState = deserializeDesign(flattenedDesign);
         const playgroundStore = usePlaygroundDesignStore.getState();
         playgroundStore.loadDesign(restoredState);
