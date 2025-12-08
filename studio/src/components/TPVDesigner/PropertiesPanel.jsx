@@ -1810,7 +1810,7 @@ function ShapePropertiesPanel({ shape, shapeId }) {
                 <span className="property-label">W</span>
                 <input
                   type="number"
-                  value={Math.round(width_mm)}
+                  value={width_mm.toFixed(0)}
                   onChange={(e) => handleWidthChange(e.target.value)}
                   step="100"
                   min="100"
@@ -1821,7 +1821,7 @@ function ShapePropertiesPanel({ shape, shapeId }) {
                 <span className="property-label">H</span>
                 <input
                   type="number"
-                  value={Math.round(height_mm)}
+                  value={height_mm.toFixed(0)}
                   onChange={(e) => handleHeightChange(e.target.value)}
                   step="100"
                   min="100"
@@ -2236,7 +2236,7 @@ function TextPropertiesPanel({ text, textId }) {
               <div className="property-input-group property-input-group--compact">
                 <input
                   type="number"
-                  value={Math.round(fontSize_mm)}
+                  value={fontSize_mm.toFixed(0)}
                   onChange={(e) => handleFontSizeChange(e.target.value)}
                   min="50"
                   step="50"
