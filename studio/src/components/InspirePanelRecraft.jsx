@@ -2418,7 +2418,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         .input-mode-tabs {
           display: flex;
           gap: var(--space-2);
-          margin-bottom: var(--space-4);
+          margin-bottom: var(--space-3);
           background: var(--color-bg-subtle);
           padding: var(--space-1);
           border-radius: var(--radius-lg);
@@ -2429,8 +2429,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: var(--space-2);
-          padding: var(--space-4);
+          gap: var(--space-1);
+          padding: var(--space-3);
           background: var(--color-bg-card);
           border: 1px solid var(--color-border);
           border-radius: var(--radius-md);
@@ -2456,8 +2456,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         }
 
         .mode-icon {
-          width: 32px;
-          height: 32px;
+          width: 28px;
+          height: 28px;
           color: var(--color-text-secondary);
           transition: all var(--transition-base);
         }
@@ -2473,17 +2473,14 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
         .input-mode-tab .mode-title {
           font-family: var(--font-heading);
-          font-size: var(--text-base);
+          font-size: var(--text-sm);
           font-weight: var(--font-semibold);
           color: var(--color-text-primary);
-          margin-top: var(--space-1);
+          margin-top: 0;
         }
 
         .input-mode-tab .mode-description {
-          font-size: var(--text-sm);
-          color: var(--color-text-secondary);
-          text-align: center;
-          line-height: var(--leading-snug);
+          display: none; /* Hidden to save space */
         }
 
         .input-mode-tab.active .mode-title {
@@ -2516,7 +2513,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         .drop-zone {
           position: relative;
           width: 100%;
-          min-height: 180px;
+          min-height: 120px;
           border: 2px dashed var(--color-border);
           border-radius: var(--radius-lg);
           background: var(--color-bg-subtle);
@@ -2540,15 +2537,15 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: var(--space-2);
-          padding: var(--space-6);
+          gap: var(--space-1);
+          padding: var(--space-4);
           cursor: pointer;
-          min-height: 180px;
+          min-height: 120px;
         }
 
         .upload-icon {
-          width: 48px;
-          height: 48px;
+          width: 36px;
+          height: 36px;
           color: var(--color-text-secondary);
           transition: all var(--transition-base);
         }
@@ -2623,15 +2620,15 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
         .form-section {
           background: var(--color-bg-card);
-          padding: var(--space-4);
+          padding: var(--space-3);
           border-radius: var(--radius-lg);
-          margin-bottom: var(--space-4);
+          margin-bottom: var(--space-3);
           border: 1px solid var(--color-border);
           box-shadow: var(--shadow-xs);
         }
 
         .form-group {
-          margin-bottom: var(--space-4);
+          margin-bottom: var(--space-3);
         }
 
         .form-group label {
@@ -2829,7 +2826,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         .mode-tabs {
           display: flex;
           gap: var(--space-2);
-          margin-bottom: var(--space-4);
+          margin-bottom: var(--space-3);
           background: var(--color-bg-subtle);
           padding: var(--space-1);
           border-radius: var(--radius-lg);
@@ -2838,10 +2835,11 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         .mode-tab {
           flex: 1;
           display: flex;
-          flex-direction: column;
+          flex-direction: row;
           align-items: center;
-          gap: var(--space-1);
-          padding: var(--space-3);
+          justify-content: center;
+          gap: var(--space-2);
+          padding: var(--space-2);
           background: var(--color-bg-card);
           border: 1px solid var(--color-border);
           border-radius: var(--radius-md);
@@ -2874,9 +2872,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         }
 
         .mode-description {
-          font-size: var(--text-sm);
-          color: var(--color-text-secondary);
-          text-align: center;
+          display: none; /* Hidden to save space */
         }
 
         .mode-tab.active .mode-title {
@@ -2884,16 +2880,12 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           font-weight: var(--font-bold);
         }
 
-        .mode-tab.active .mode-description {
-          color: rgba(255, 255, 255, 0.9);
-        }
-
         .svg-preview {
-          margin: var(--space-3) 0;
+          margin: var(--space-2) 0;
           border: 1px solid var(--color-border);
           border-radius: var(--radius-md);
           background: var(--color-bg-subtle);
-          padding: var(--space-3);
+          padding: var(--space-2);
         }
 
         .design-preview {
@@ -2907,20 +2899,20 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           background: var(--color-accent-light);
           border: 2px solid var(--color-accent);
           border-radius: var(--radius-lg);
-          padding: var(--space-4);
-          margin-top: var(--space-4);
+          padding: var(--space-3);
+          margin-top: var(--space-3);
           text-align: center;
         }
 
         .finalize-button {
           width: 100%;
           max-width: 400px;
-          padding: var(--space-4);
+          padding: var(--space-3);
           background: var(--color-accent);
           color: white;
           border: none;
           border-radius: var(--radius-md);
-          font-size: var(--text-lg);
+          font-size: var(--text-base);
           font-weight: var(--font-semibold);
           cursor: pointer;
           transition: all var(--transition-base);
@@ -2934,25 +2926,25 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         }
 
         .finalize-hint {
-          margin: var(--space-3) 0 0 0;
+          margin: var(--space-2) 0 0 0;
           color: var(--color-text-secondary);
-          font-size: var(--text-sm);
+          font-size: var(--text-xs);
         }
 
         /* Mixer Widget Container Styles */
         .mixer-widget-container {
-          margin-top: var(--space-4);
+          margin-top: var(--space-3);
           background: white;
           border-radius: 12px;
-          padding: var(--space-4);
+          padding: var(--space-3);
           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         }
 
         .mixer-widget-header {
           display: flex;
           justify-content: flex-end;
-          margin-bottom: var(--space-3);
-          padding-bottom: var(--space-3);
+          margin-bottom: var(--space-2);
+          padding-bottom: var(--space-2);
           border-bottom: 2px solid var(--color-border);
         }
 
