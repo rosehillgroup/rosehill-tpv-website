@@ -843,12 +843,12 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       const corner = scaleShapeStart.corner;
       const isEdgeHandle = ['n', 's', 'e', 'w'].includes(corner);
 
-      if (scaleShapeStart.aspectLocked && !isEdgeHandle) {
-        // Maintain aspect ratio (only for corner handles)
+      if (scaleShapeStart.aspectLocked) {
+        // Maintain aspect ratio - scale both dimensions proportionally
         newWidth = scaleShapeStart.originalWidth * scaleRatio;
         newHeight = scaleShapeStart.originalHeight * scaleRatio;
       } else if (isEdgeHandle) {
-        // Edge handles: constrain to single axis
+        // Edge handles: constrain to single axis (only when aspect NOT locked)
         const dy = Math.abs(svgPoint.y - scaleShapeStart.anchorPoint.y);
         const dx = Math.abs(svgPoint.x - scaleShapeStart.anchorPoint.x);
 
