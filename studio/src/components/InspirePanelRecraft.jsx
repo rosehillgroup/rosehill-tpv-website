@@ -1547,41 +1547,78 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
     // Update mode-specific edited colors map (normalize to lowercase for consistency)
     if (viewMode === 'solid') {
-      const updated = new Map(solidEditedColors);
-
-      // Find the recipe to get ALL merged original colors
-      // Search in current recipes first (includes derived colors), then fall back to original
+      // Find the recipe to determine if this is a derived/added color
       const recipesToSearch = currentSolidRecipes || solidRecipes;
       const recipe = recipesToSearch.find(r =>
         r.targetColor.hex.toLowerCase() === selectedColor.hex.toLowerCase()
       );
 
-      // For derived/added colors, they map to themselves (no merged originals)
-      // For original colors, use mergedOriginalColors if available
-      let colorsToUpdate;
       if (recipe?.isAddedFromEdit) {
-        // Derived colors: just update regions with this specific color
-        colorsToUpdate = [selectedColor.hex.toLowerCase()];
+        // DERIVED COLOR: Update regionOverrides directly
+        // Find all regions that have this color and update them
+        const oldHex = selectedColor.hex.toLowerCase();
+        const updatedOverrides = new Map(regionOverrides);
+        let updateCount = 0;
+
+        // Find TPV color info for the new color
+        const tpvInfo = tpvColours.find(c => c.hex.toLowerCase() === newHex.toLowerCase());
+
+        regionOverrides.forEach((colorData, regionId) => {
+          const regionHex = (typeof colorData === 'string' ? colorData : colorData.hex).toLowerCase();
+          if (regionHex === oldHex) {
+            updatedOverrides.set(regionId, {
+              hex: newHex,
+              tpvCode: tpvInfo?.code || null,
+              tpvName: tpvInfo?.name || null,
+              originalHex: colorData.originalHex || oldHex,
+              editType: 'solid'
+            });
+            updateCount++;
+          }
+        });
+
+        console.log('[TPV-STUDIO] Updated', updateCount, 'region overrides for derived color:', oldHex, '->', newHex);
+
+        // Add to history
+        const newHistory = regionOverridesHistory.slice(0, historyIndex + 1);
+        newHistory.push(new Map(updatedOverrides));
+        if (newHistory.length > 50) newHistory.shift();
+
+        setRegionOverrides(updatedOverrides);
+        setRegionOverridesHistory(newHistory);
+        setHistoryIndex(newHistory.length - 1);
+
+        // Update selected color
+        setSelectedColor({
+          ...selectedColor,
+          hex: newHex,
+          blendHex: newHex
+        });
+
+        // Regenerate SVG with updated overrides
+        await regenerateSolidSVG(solidEditedColors, newHex, updatedOverrides);
       } else {
-        // Original colors: update all merged colors together
-        colorsToUpdate = recipe?.mergedOriginalColors || [selectedColor.originalHex.toLowerCase()];
+        // ORIGINAL COLOR: Use solidEditedColors as before
+        const updated = new Map(solidEditedColors);
+        const colorsToUpdate = recipe?.mergedOriginalColors || [selectedColor.originalHex.toLowerCase()];
+
+        console.log('[TPV-STUDIO] Updating', colorsToUpdate.length, 'original colors:', colorsToUpdate);
+
+        colorsToUpdate.forEach(origHex => {
+          updated.set(origHex, { newHex: newHex.toLowerCase() });
+        });
+
+        setSolidEditedColors(updated);
+
+        // Update selected color with new hex and blendHex for highlighting
+        setSelectedColor({
+          ...selectedColor,
+          hex: newHex,
+          blendHex: newHex
+        });
+
+        await regenerateSolidSVG(updated, newHex);
       }
-      console.log('[TPV-STUDIO] Updating', colorsToUpdate.length, 'colors:', colorsToUpdate, 'isAddedFromEdit:', recipe?.isAddedFromEdit);
-
-      colorsToUpdate.forEach(origHex => {
-        updated.set(origHex, { newHex: newHex.toLowerCase() });
-      });
-
-      setSolidEditedColors(updated);
-
-      // Update selected color with new hex and blendHex for highlighting
-      setSelectedColor({
-        ...selectedColor,
-        hex: newHex,
-        blendHex: newHex
-      });
-
-      await regenerateSolidSVG(updated, newHex);
     } else {
       const updated = new Map(blendEditedColors);
       updated.set(selectedColor.originalHex.toLowerCase(), { newHex: newHex.toLowerCase() });
@@ -1602,27 +1639,69 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   const handleMixerBlendChange = useCallback(async ({ blendHex, parts, recipe }) => {
     if (!mixerColor) return;
 
-    console.log('[TPV-STUDIO] Mixer blend changed:', mixerColor.originalHex, '->', blendHex, 'recipe:', recipe);
+    console.log('[TPV-STUDIO] Mixer blend changed:', mixerColor.originalHex, '->', blendHex, 'recipe:', recipe, 'isAddedFromEdit:', mixerColor.isAddedFromEdit);
 
-    // Update blend edited colors with new blend hex and recipe
-    const updated = new Map(blendEditedColors);
-    updated.set(mixerColor.originalHex.toLowerCase(), {
-      newHex: blendHex.toLowerCase(),
-      recipe, // Store mixer recipe for later use
-      parts // Store parts Map for potential re-editing
-    });
-    setBlendEditedColors(updated);
+    // Check if this is a derived/added color
+    if (mixerColor.isAddedFromEdit) {
+      // DERIVED COLOR: Update regionOverrides directly
+      const oldHex = mixerColor.hex.toLowerCase();
+      const updatedOverrides = new Map(regionOverrides);
+      let updateCount = 0;
 
-    // Update mixer color with new blend for highlighting
-    setMixerColor({
-      ...mixerColor,
-      hex: blendHex,
-      blendHex: blendHex
-    });
+      regionOverrides.forEach((colorData, regionId) => {
+        const regionHex = (typeof colorData === 'string' ? colorData : colorData.hex).toLowerCase();
+        if (regionHex === oldHex) {
+          updatedOverrides.set(regionId, {
+            hex: blendHex,
+            originalHex: colorData.originalHex || oldHex,
+            editType: 'blend',
+            blendComponents: recipe?.components || null
+          });
+          updateCount++;
+        }
+      });
 
-    // Regenerate SVG with new blend color
-    await regenerateBlendSVG(updated, blendHex);
-  }, [mixerColor, blendEditedColors, result, colorMapping]);
+      console.log('[TPV-STUDIO] Updated', updateCount, 'region overrides for derived blend color:', oldHex, '->', blendHex);
+
+      // Add to history
+      const newHistory = regionOverridesHistory.slice(0, historyIndex + 1);
+      newHistory.push(new Map(updatedOverrides));
+      if (newHistory.length > 50) newHistory.shift();
+
+      setRegionOverrides(updatedOverrides);
+      setRegionOverridesHistory(newHistory);
+      setHistoryIndex(newHistory.length - 1);
+
+      // Update mixer color with new blend for highlighting
+      setMixerColor({
+        ...mixerColor,
+        hex: blendHex,
+        blendHex: blendHex
+      });
+
+      // Regenerate SVG with updated overrides
+      await regenerateBlendSVG(blendEditedColors, blendHex, updatedOverrides);
+    } else {
+      // ORIGINAL COLOR: Use blendEditedColors as before
+      const updated = new Map(blendEditedColors);
+      updated.set(mixerColor.originalHex.toLowerCase(), {
+        newHex: blendHex.toLowerCase(),
+        recipe, // Store mixer recipe for later use
+        parts // Store parts Map for potential re-editing
+      });
+      setBlendEditedColors(updated);
+
+      // Update mixer color with new blend for highlighting
+      setMixerColor({
+        ...mixerColor,
+        hex: blendHex,
+        blendHex: blendHex
+      });
+
+      // Regenerate SVG with new blend color
+      await regenerateBlendSVG(updated, blendHex);
+    }
+  }, [mixerColor, blendEditedColors, regionOverrides, regionOverridesHistory, historyIndex, result, colorMapping]);
 
   // Regenerate blend SVG with edited colors
   const regenerateBlendSVG = async (updatedEdits = null, immediateHex = null, overrides = null) => {
@@ -1825,6 +1904,37 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       console.error('[TPV-STUDIO] Failed to regenerate solid SVG:', err);
     }
   };
+
+  // Helper: Convert chosenRecipe.components to mixer { parts: {} } format
+  const convertRecipeToMixerFormat = (chosenRecipe) => {
+    if (!chosenRecipe?.components) return null;
+    const parts = {};
+    chosenRecipe.components.forEach(comp => {
+      if (comp.code && comp.parts) {
+        parts[comp.code] = comp.parts;
+      }
+    });
+    return Object.keys(parts).length > 0 ? { parts } : null;
+  };
+
+  // Helper: Get mixer initial recipe for a color (handles both original and derived)
+  const getMixerInitialRecipe = useCallback((color) => {
+    if (!color) return null;
+
+    // First check if we've already edited this color
+    const existingEdit = blendEditedColors.get(color.originalHex?.toLowerCase());
+    if (existingEdit?.recipe) {
+      return existingEdit.recipe;
+    }
+
+    // For derived colors, convert their chosenRecipe
+    if (color.isAddedFromEdit && color.chosenRecipe) {
+      return convertRecipeToMixerFormat(color.chosenRecipe);
+    }
+
+    // For original colors, use the recipe property if available
+    return color.recipe || null;
+  }, [blendEditedColors]);
 
   // Helper function to regenerate blend SVG from loaded design state
   const regenerateBlendSVGFromState = async (svgUrl, colorMapping, recipes, editedColors, taggedSvg = null, overrides = null) => {
@@ -2249,10 +2359,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
                 </button>
               </div>
               <MiniMixerWidget
-                initialRecipe={
-                  blendEditedColors.get(mixerColor.originalHex.toLowerCase())?.recipe ||
-                  (mixerColor.recipe || null)
-                }
+                initialRecipe={getMixerInitialRecipe(mixerColor)}
                 onBlendChange={handleMixerBlendChange}
                 originalColor={mixerColor.originalHex}
               />

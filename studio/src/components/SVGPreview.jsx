@@ -493,7 +493,10 @@ export default function SVGPreview({
         blendHex: matchedRecipe.blendColor.hex,
         areaPct: matchedRecipe.targetColor.areaPct,
         recipe: matchedRecipe.chosenRecipe,
-        targetColor: matchedRecipe.targetColor
+        targetColor: matchedRecipe.targetColor,
+        // Include flags for derived colors (needed for mixer and editing)
+        isAddedFromEdit: matchedRecipe.isAddedFromEdit || false,
+        chosenRecipe: matchedRecipe.chosenRecipe
       });
     } else {
       console.log('[SVGPreview] No matching recipe found for clicked color');

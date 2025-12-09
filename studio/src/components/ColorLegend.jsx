@@ -93,7 +93,10 @@ export default function ColorLegend({
                   blendHex: recipe.blendColor.hex,
                   areaPct: recipe.targetColor.areaPct,
                   recipe: recipe.chosenRecipe,
-                  targetColor: recipe.targetColor
+                  targetColor: recipe.targetColor,
+                  // Include flags for derived colors (needed for mixer and editing)
+                  isAddedFromEdit: recipe.isAddedFromEdit || false,
+                  chosenRecipe: recipe.chosenRecipe
                 }, 'palette');
               }
             }}
