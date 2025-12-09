@@ -53,10 +53,13 @@
   display: flex;
   border-bottom: 1px solid var(--color-border, #e4e9f0);
   background: var(--color-bg-subtle, #f8fafc);
+  flex-shrink: 0;
+  min-width: 0; /* Allow container to shrink */
 }
 
 .tab {
   flex: 1;
+  min-width: 0; /* Allow tab to shrink */
   padding: var(--space-2, 1rem) var(--space-1, 0.5rem);
   border: none;
   background: transparent;
@@ -67,6 +70,9 @@
   transition: all 0.2s;
   font-family: var(--font-body, 'DM Sans', sans-serif);
   border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tab:hover {

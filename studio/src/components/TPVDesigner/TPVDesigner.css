@@ -375,18 +375,21 @@
   display: flex;
   flex: 1;
   overflow: hidden;
+  min-width: 0; /* Prevent content from growing beyond viewport */
+  max-width: 100%;
 }
 
 /* ====== Sidebar ====== */
 .sports-designer__sidebar {
   position: relative;
   width: 280px;
+  flex-shrink: 0; /* Don't shrink below set width */
   background: var(--color-bg-card, white);
   border-right: 1px solid var(--color-border, #e4e9f0);
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden;
+  overflow: visible; /* Allow toggle button to extend outside */
   transition: width 0.2s ease-out;
 }
 
@@ -405,9 +408,17 @@
 .sports-designer__sidebar .sidebar-content {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
   height: 100%;
   overflow: hidden;
   transition: opacity 0.15s ease-out;
+}
+
+/* Prevent content from showing when collapsed */
+.sports-designer__sidebar--collapsed .sidebar-content {
+  width: 0;
+  min-width: 0;
 }
 
 /* Court Library takes available space */
@@ -757,28 +768,31 @@
 .sports-designer__properties {
   position: relative;
   width: 320px;
+  min-width: 0; /* Allow shrinking */
   background: var(--color-bg-card, white);
   border-left: 1px solid var(--color-border, #e4e9f0);
-  overflow-y: auto;
+  overflow: visible; /* Allow toggle button to extend outside */
   transition: width 0.2s ease-out;
+  flex-shrink: 0; /* Don't shrink below set width */
 }
 
 /* Collapsed state */
 .sports-designer__properties--collapsed {
   width: 0;
   border-left: none;
-  overflow: hidden;
 }
 
 .sports-designer__properties--collapsed .sidebar-content {
   opacity: 0;
   pointer-events: none;
+  width: 0;
 }
 
 /* Properties content wrapper */
 .sports-designer__properties .sidebar-content {
   height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   transition: opacity 0.15s ease-out;
 }
 
