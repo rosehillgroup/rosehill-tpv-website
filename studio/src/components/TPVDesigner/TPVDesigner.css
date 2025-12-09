@@ -379,6 +379,7 @@
 
 /* ====== Sidebar ====== */
 .sports-designer__sidebar {
+  position: relative;
   width: 280px;
   background: var(--color-bg-card, white);
   border-right: 1px solid var(--color-border, #e4e9f0);
@@ -386,17 +387,38 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
+  transition: width 0.2s ease-out;
+}
+
+/* Collapsed state */
+.sports-designer__sidebar--collapsed {
+  width: 0;
+  border-right: none;
+}
+
+.sports-designer__sidebar--collapsed .sidebar-content {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Sidebar content wrapper */
+.sports-designer__sidebar .sidebar-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  transition: opacity 0.15s ease-out;
 }
 
 /* Court Library takes available space */
-.sports-designer__sidebar > :first-child {
+.sports-designer__sidebar .sidebar-content > :first-child {
   flex: 1;
   overflow-y: auto;
   min-height: 0;
 }
 
 /* Layers panel at bottom with guaranteed space */
-.sports-designer__sidebar > .layers-panel {
+.sports-designer__sidebar .sidebar-content > .layers-panel {
   flex: 0 0 auto;
   min-height: 280px;
   max-height: 45%;
@@ -404,6 +426,51 @@
   overflow-y: auto;
   padding: var(--space-3, 1.25rem);
   background: var(--color-bg-subtle, #f8fafc);
+}
+
+/* ====== Sidebar Toggle Buttons ====== */
+.sidebar-toggle {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 48px;
+  background: var(--color-bg-card, white);
+  border: 1px solid var(--color-border, #e4e9f0);
+  cursor: pointer;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary, #64748b);
+  transition: all 0.2s;
+}
+
+.sidebar-toggle:hover {
+  background: var(--color-bg-subtle, #f8fafc);
+  color: var(--color-primary, #1e4a7a);
+}
+
+.sidebar-toggle--left {
+  right: -24px;
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.sports-designer__sidebar--collapsed .sidebar-toggle--left {
+  right: -24px;
+}
+
+.sidebar-toggle--right {
+  left: -24px;
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  box-shadow: -2px 0 4px rgba(0, 0, 0, 0.05);
+}
+
+.sports-designer__properties--collapsed .sidebar-toggle--right {
+  left: -24px;
 }
 
 /* ====== Canvas Container ====== */
@@ -688,10 +755,31 @@
 
 /* ====== Properties Panel ====== */
 .sports-designer__properties {
+  position: relative;
   width: 320px;
   background: var(--color-bg-card, white);
   border-left: 1px solid var(--color-border, #e4e9f0);
   overflow-y: auto;
+  transition: width 0.2s ease-out;
+}
+
+/* Collapsed state */
+.sports-designer__properties--collapsed {
+  width: 0;
+  border-left: none;
+  overflow: hidden;
+}
+
+.sports-designer__properties--collapsed .sidebar-content {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Properties content wrapper */
+.sports-designer__properties .sidebar-content {
+  height: 100%;
+  overflow-y: auto;
+  transition: opacity 0.15s ease-out;
 }
 
 /* ====== Mobile Header ====== */
@@ -824,14 +912,77 @@
   color: white;
 }
 
+/* ====== Medium Screen Responsive ====== */
+/* Slightly reduce sidebar widths on medium-large screens */
+@media (max-width: 1280px) {
+  .sports-designer__sidebar {
+    width: 260px;
+  }
+  .sports-designer__properties {
+    width: 300px;
+  }
+}
+
+/* Further reduce on medium screens */
+@media (max-width: 1100px) {
+  .sports-designer__sidebar {
+    width: 240px;
+  }
+  .sports-designer__properties {
+    width: 280px;
+  }
+}
+
+/* Compact sidebars at 1024px and below */
+@media (max-width: 1024px) {
+  .sports-designer__sidebar {
+    width: 220px;
+  }
+  .sports-designer__properties {
+    width: 260px;
+  }
+  /* Reduce layers panel on smaller screens */
+  .sports-designer__sidebar .sidebar-content > .layers-panel {
+    min-height: 200px;
+    max-height: 40%;
+  }
+}
+
+/* At 900px, collapse right sidebar by default via JS (handled by store initial state) */
+/* At this point sidebars are very narrow, toggles become important */
+@media (max-width: 900px) {
+  .sports-designer__sidebar {
+    width: 200px;
+  }
+  .sports-designer__properties {
+    width: 240px;
+  }
+  /* Make toggle buttons more prominent */
+  .sidebar-toggle {
+    width: 28px;
+    height: 56px;
+  }
+  .sidebar-toggle--left {
+    right: -28px;
+  }
+  .sidebar-toggle--right {
+    left: -28px;
+  }
+}
+
 /* ====== Mobile Responsive ====== */
 @media (max-width: 768px) {
-  /* Hide desktop sidebars */
+  /* Hide desktop sidebars and show mobile UI */
   .sports-designer__sidebar {
     display: none;
   }
 
   .sports-designer__properties {
+    display: none;
+  }
+
+  /* Hide toggle buttons on mobile */
+  .sidebar-toggle {
     display: none;
   }
 

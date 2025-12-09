@@ -736,11 +736,27 @@ function TPVDesigner({ loadedDesign }) {
 
         {/* Main Content Area */}
           <div className="sports-designer__content">
-            {/* Court Library Sidebar - hidden in standalone mode */}
-            {showCourtLibrary && !standaloneMode && (
-              <aside className="sports-designer__sidebar">
-                <CourtLibrary onOpenGenerator={() => setShowDesignEditor(true)} />
-                <LayersPanel />
+            {/* Court Library Sidebar - collapsible, hidden in standalone mode */}
+            {!standaloneMode && (
+              <aside className={`sports-designer__sidebar ${showCourtLibrary ? '' : 'sports-designer__sidebar--collapsed'}`}>
+                <div className="sidebar-content">
+                  <CourtLibrary onOpenGenerator={() => setShowDesignEditor(true)} />
+                  <LayersPanel />
+                </div>
+                {/* Collapse/Expand toggle button */}
+                <button
+                  className="sidebar-toggle sidebar-toggle--left"
+                  onClick={toggleCourtLibrary}
+                  title={showCourtLibrary ? 'Collapse library' : 'Expand library'}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    {showCourtLibrary ? (
+                      <polyline points="15 18 9 12 15 6" />
+                    ) : (
+                      <polyline points="9 18 15 12 9 6" />
+                    )}
+                  </svg>
+                </button>
               </aside>
             )}
 
@@ -917,10 +933,26 @@ function TPVDesigner({ loadedDesign }) {
               <ShapeToolbar />
             </main>
 
-            {/* Properties Panel - shown when court, track, motif, shape, or text is selected AND panel is not hidden AND not in standalone mode */}
-            {(selectedCourtId || selectedTrackId || selectedMotifId || selectedShapeId || selectedTextId) && showPropertiesPanel && !standaloneMode && (
-              <aside className="sports-designer__properties">
-                <PropertiesPanel onEditSourceDesign={handleEditSourceDesign} />
+            {/* Properties Panel - collapsible, shown when element selected and not in standalone mode */}
+            {(selectedCourtId || selectedTrackId || selectedMotifId || selectedShapeId || selectedTextId) && !standaloneMode && (
+              <aside className={`sports-designer__properties ${showPropertiesPanel ? '' : 'sports-designer__properties--collapsed'}`}>
+                {/* Collapse/Expand toggle button */}
+                <button
+                  className="sidebar-toggle sidebar-toggle--right"
+                  onClick={togglePropertiesPanel}
+                  title={showPropertiesPanel ? 'Collapse properties' : 'Expand properties'}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    {showPropertiesPanel ? (
+                      <polyline points="9 18 15 12 9 6" />
+                    ) : (
+                      <polyline points="15 18 9 12 15 6" />
+                    )}
+                  </svg>
+                </button>
+                <div className="sidebar-content">
+                  <PropertiesPanel onEditSourceDesign={handleEditSourceDesign} />
+                </div>
               </aside>
             )}
           </div>
