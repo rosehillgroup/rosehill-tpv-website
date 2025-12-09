@@ -929,30 +929,30 @@
 /* ====== Medium Screen Responsive ====== */
 /* Slightly reduce sidebar widths on medium-large screens */
 @media (max-width: 1280px) {
-  .sports-designer__sidebar {
+  .sports-designer__sidebar:not(.sports-designer__sidebar--collapsed) {
     width: 260px;
   }
-  .sports-designer__properties {
+  .sports-designer__properties:not(.sports-designer__properties--collapsed) {
     width: 300px;
   }
 }
 
 /* Further reduce on medium screens */
 @media (max-width: 1100px) {
-  .sports-designer__sidebar {
+  .sports-designer__sidebar:not(.sports-designer__sidebar--collapsed) {
     width: 240px;
   }
-  .sports-designer__properties {
+  .sports-designer__properties:not(.sports-designer__properties--collapsed) {
     width: 280px;
   }
 }
 
 /* Compact sidebars at 1024px and below */
 @media (max-width: 1024px) {
-  .sports-designer__sidebar {
+  .sports-designer__sidebar:not(.sports-designer__sidebar--collapsed) {
     width: 220px;
   }
-  .sports-designer__properties {
+  .sports-designer__properties:not(.sports-designer__properties--collapsed) {
     width: 260px;
   }
   /* Reduce layers panel on smaller screens */
@@ -962,13 +962,12 @@
   }
 }
 
-/* At 900px, collapse right sidebar by default via JS (handled by store initial state) */
-/* At this point sidebars are very narrow, toggles become important */
+/* At 900px, sidebars are narrow, toggles become important */
 @media (max-width: 900px) {
-  .sports-designer__sidebar {
+  .sports-designer__sidebar:not(.sports-designer__sidebar--collapsed) {
     width: 200px;
   }
-  .sports-designer__properties {
+  .sports-designer__properties:not(.sports-designer__properties--collapsed) {
     width: 240px;
   }
   /* Make toggle buttons more prominent */
