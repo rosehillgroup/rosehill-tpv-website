@@ -1663,15 +1663,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
       console.log('[TPV-STUDIO] Updated', updateCount, 'region overrides for derived blend color:', oldHex, '->', blendHex);
 
-      // Add to history
-      const newHistory = regionOverridesHistory.slice(0, historyIndex + 1);
-      newHistory.push(new Map(updatedOverrides));
-      if (newHistory.length > 50) newHistory.shift();
-
-      setRegionOverrides(updatedOverrides);
-      setRegionOverridesHistory(newHistory);
-      setHistoryIndex(newHistory.length - 1);
-
       // Update mixer color with new blend for highlighting
       setMixerColor({
         ...mixerColor,
@@ -1679,8 +1670,18 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         blendHex: blendHex
       });
 
-      // Regenerate SVG with updated overrides
+      // IMPORTANT: Regenerate SVG FIRST, then update state
+      // This prevents race condition where useEffect analyzes old SVG
       await regenerateBlendSVG(blendEditedColors, blendHex, updatedOverrides);
+
+      // Now update regionOverrides state and history AFTER SVG is regenerated
+      const newHistory = regionOverridesHistory.slice(0, historyIndex + 1);
+      newHistory.push(new Map(updatedOverrides));
+      if (newHistory.length > 50) newHistory.shift();
+
+      setRegionOverrides(updatedOverrides);
+      setRegionOverridesHistory(newHistory);
+      setHistoryIndex(newHistory.length - 1);
     } else {
       // ORIGINAL COLOR: Use blendEditedColors as before
       const updated = new Map(blendEditedColors);
