@@ -1550,13 +1550,23 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       const updated = new Map(solidEditedColors);
 
       // Find the recipe to get ALL merged original colors
-      const recipe = solidRecipes.find(r =>
+      // Search in current recipes first (includes derived colors), then fall back to original
+      const recipesToSearch = currentSolidRecipes || solidRecipes;
+      const recipe = recipesToSearch.find(r =>
         r.targetColor.hex.toLowerCase() === selectedColor.hex.toLowerCase()
       );
 
-      // Update ALL merged colors together (not just the one clicked)
-      const colorsToUpdate = recipe?.mergedOriginalColors || [selectedColor.originalHex.toLowerCase()];
-      console.log('[TPV-STUDIO] Updating', colorsToUpdate.length, 'merged colors:', colorsToUpdate);
+      // For derived/added colors, they map to themselves (no merged originals)
+      // For original colors, use mergedOriginalColors if available
+      let colorsToUpdate;
+      if (recipe?.isAddedFromEdit) {
+        // Derived colors: just update regions with this specific color
+        colorsToUpdate = [selectedColor.hex.toLowerCase()];
+      } else {
+        // Original colors: update all merged colors together
+        colorsToUpdate = recipe?.mergedOriginalColors || [selectedColor.originalHex.toLowerCase()];
+      }
+      console.log('[TPV-STUDIO] Updating', colorsToUpdate.length, 'colors:', colorsToUpdate, 'isAddedFromEdit:', recipe?.isAddedFromEdit);
 
       colorsToUpdate.forEach(origHex => {
         updated.set(origHex, { newHex: newHex.toLowerCase() });

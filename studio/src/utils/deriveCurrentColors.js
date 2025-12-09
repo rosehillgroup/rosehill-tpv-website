@@ -43,6 +43,61 @@ function findTpvColorByHex(hex) {
 }
 
 /**
+ * Convert hex to RGB
+ * @param {string} hex - Hex color
+ * @returns {{r: number, g: number, b: number}}
+ */
+function hexToRgb(hex) {
+  const h = hex.replace('#', '');
+  return {
+    r: parseInt(h.substring(0, 2), 16),
+    g: parseInt(h.substring(2, 4), 16),
+    b: parseInt(h.substring(4, 6), 16)
+  };
+}
+
+/**
+ * Find coverage for a color in the coverage map with fuzzy matching
+ * First tries exact match, then looks for closest color within tolerance
+ * @param {Map} coverageMap - Coverage analysis results
+ * @param {string} targetHex - Color to find
+ * @param {number} tolerance - Max distance to consider a match
+ * @returns {number} Coverage percentage (0 if not found)
+ */
+function findCoverageWithFuzzyMatch(coverageMap, targetHex, tolerance = 10) {
+  const normalized = normalizeHex(targetHex);
+  if (!normalized) return 0;
+
+  // Try exact match first
+  for (const [hex, data] of coverageMap) {
+    if (normalizeHex(hex) === normalized) {
+      return data.coverage;
+    }
+  }
+
+  // No exact match - try fuzzy match
+  const targetRgb = hexToRgb(normalized);
+  let bestMatch = null;
+  let bestDistance = Infinity;
+
+  for (const [hex, data] of coverageMap) {
+    const rgb = hexToRgb(normalizeHex(hex));
+    const distance = Math.max(
+      Math.abs(targetRgb.r - rgb.r),
+      Math.abs(targetRgb.g - rgb.g),
+      Math.abs(targetRgb.b - rgb.b)
+    );
+
+    if (distance <= tolerance && distance < bestDistance) {
+      bestDistance = distance;
+      bestMatch = data;
+    }
+  }
+
+  return bestMatch ? bestMatch.coverage : 0;
+}
+
+/**
  * Derive current colors from the edited SVG
  * Analyzes the SVG to get accurate coverage percentages for all colors
  *
@@ -66,7 +121,8 @@ export async function deriveCurrentColors(svgBlobUrl, originalRecipes, regionOve
     });
 
     // Group similar colors (anti-aliasing creates slight variations)
-    const coverageMap = groupSimilarColors(rawCoverage, 15);
+    // Use a conservative tolerance of 5 to avoid incorrectly merging distinct colors
+    const coverageMap = groupSimilarColors(rawCoverage, 5);
 
     console.log('[deriveCurrentColors] Coverage analysis:', coverageMap);
 
@@ -99,14 +155,9 @@ export async function deriveCurrentColors(svgBlobUrl, originalRecipes, regionOve
       const blendHex = normalizeHex(recipe.blendColor?.hex || recipe.targetColor?.hex);
       if (!blendHex) continue;
 
-      // Find coverage for this color
-      let coverage = 0;
-      for (const [hex, data] of coverageMap) {
-        if (normalizeHex(hex) === blendHex) {
-          coverage = data.coverage;
-          break;
-        }
-      }
+      // Find coverage for this color using fuzzy matching
+      // This handles cases where anti-aliasing merged colors under a different key
+      const coverage = findCoverageWithFuzzyMatch(coverageMap, blendHex, 10);
 
       // Skip colors with zero coverage (they've been completely replaced)
       if (coverage > 0.1) {
@@ -123,14 +174,8 @@ export async function deriveCurrentColors(svgBlobUrl, originalRecipes, regionOve
     // Add any new colors from edits that aren't in original recipes
     for (const [hex, colorInfo] of addedColors) {
       if (!resultColors.has(hex)) {
-        // Find coverage for this new color
-        let coverage = 0;
-        for (const [coverageHex, data] of coverageMap) {
-          if (normalizeHex(coverageHex) === hex) {
-            coverage = data.coverage;
-            break;
-          }
-        }
+        // Find coverage for this new color using fuzzy matching
+        const coverage = findCoverageWithFuzzyMatch(coverageMap, hex, 10);
 
         if (coverage > 0.1) {
           // Build a recipe for the new color
