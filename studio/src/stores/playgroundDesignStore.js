@@ -39,7 +39,15 @@ const initialState = {
   showSolidSummary: false,
 
   // Region-based editing
-  regionOverrides: new Map(), // regionId -> hex
+  // regionOverrides: Map<regionId, {
+  //   hex: string,           // The color hex value
+  //   originalHex?: string,  // What it was before this edit
+  //   tpvCode?: string,      // TPV color code (e.g., "RH30") if selected from palette
+  //   tpvName?: string,      // TPV color name (e.g., "Funky Pink") if selected from palette
+  //   editType?: 'solid'|'blend'|'eyedrop', // How the color was applied
+  //   blendComponents?: Array<{code, name, parts}> // For blend mode mixer edits
+  // }>
+  regionOverrides: new Map(),
   originalTaggedSvg: null, // SVG with region IDs
 
   // Undo/redo history for region overrides
@@ -157,9 +165,19 @@ export const usePlaygroundDesignStore = create(
         lastModified: Date.now()
       }),
 
-      addRegionOverride: (regionId, hex) => {
+      // Add region override with rich color data
+      // colorData can be:
+      // - string (hex only, for backward compatibility)
+      // - object { hex, originalHex?, tpvCode?, tpvName?, editType?, blendComponents? }
+      addRegionOverride: (regionId, colorData) => {
         const current = new Map(get().regionOverrides);
-        current.set(regionId, hex);
+
+        // Normalize to object format for consistency
+        const normalizedData = typeof colorData === 'string'
+          ? { hex: colorData }
+          : colorData;
+
+        current.set(regionId, normalizedData);
 
         // Add to history
         const history = get().regionOverridesHistory;

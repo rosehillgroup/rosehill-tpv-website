@@ -8,7 +8,7 @@
  * This happens AFTER global color mapping to allow per-element customization
  *
  * @param {string} svgString - SVG content as string
- * @param {Map<string, string>} overrides - Map of regionId -> hex color
+ * @param {Map<string, string|object>} overrides - Map of regionId -> hex string or { hex, tpvCode?, ... }
  * @returns {string} SVG with region overrides applied
  */
 export function applyRegionOverrides(svgString, overrides) {
@@ -28,7 +28,9 @@ export function applyRegionOverrides(svgString, overrides) {
 
   let appliedCount = 0;
 
-  overrides.forEach((hex, regionId) => {
+  overrides.forEach((colorData, regionId) => {
+    // Support both string hex and object { hex, ... } format
+    const hex = typeof colorData === 'string' ? colorData : colorData.hex;
     const el = doc.querySelector(`[data-region-id="${regionId}"]`);
     if (el) {
       // Check if this is a transparency override
@@ -113,17 +115,19 @@ export function getRegionColor(svgString, regionId) {
 /**
  * Remove all region overrides from a map for a specific color
  * Useful for "reset color" functionality
- * @param {Map<string, string>} overrides - Current overrides map
+ * @param {Map<string, string|object>} overrides - Current overrides map
  * @param {string} targetHex - Hex color to remove overrides for
- * @returns {Map<string, string>} New map with overrides removed
+ * @returns {Map<string, string|object>} New map with overrides removed
  */
 export function removeOverridesForColor(overrides, targetHex) {
   const newOverrides = new Map();
   const normalizedTarget = targetHex.toLowerCase();
 
-  for (const [regionId, hex] of overrides.entries()) {
+  for (const [regionId, colorData] of overrides.entries()) {
+    // Support both string hex and object { hex, ... } format
+    const hex = typeof colorData === 'string' ? colorData : colorData.hex;
     if (hex.toLowerCase() !== normalizedTarget) {
-      newOverrides.set(regionId, hex);
+      newOverrides.set(regionId, colorData);
     }
   }
 

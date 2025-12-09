@@ -18,6 +18,7 @@ import { buildColorMapping } from '../utils/colorMapping.js';
 import { recolorSVG } from '../utils/svgRecolor.js';
 import { tagSvgRegions } from '../utils/svgRegionTagger.js';
 import { applyRegionOverrides } from '../utils/svgRegionOverrides.js';
+import { deriveCurrentColors, hasColorEdits } from '../utils/deriveCurrentColors.js';
 import { mapDimensionsToRecraft, getLayoutDescription, needsLayoutWarning } from '../utils/aspectRatioMapping.js';
 import { uploadFile, validateFile } from '../lib/supabase/uploadFile.js';
 import { deserializeDesign } from '../utils/designSerializer.js';
@@ -143,6 +144,11 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   const [pendingDownloadAction, setPendingDownloadAction] = useState(null); // 'pdf' or 'tiles'
   const [confirmedDimensions, setConfirmedDimensions] = useState(null); // {width, height} - directly passed to modals
 
+  // Derived/current recipes (original + edits with accurate coverage)
+  const [currentBlendRecipes, setCurrentBlendRecipes] = useState(null);
+  const [currentSolidRecipes, setCurrentSolidRecipes] = useState(null);
+  const [isRecalculating, setIsRecalculating] = useState(false);
+
   // Welcome box state - check if user has any saved designs
   const [hasExistingDesigns, setHasExistingDesigns] = useState(null); // null = not checked, true/false = result
 
@@ -225,6 +231,53 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       processNextInQueue();
     }
   }, [regionRecolorQueue, isProcessingQueue]);
+
+  // Recalculate current recipes when SVG or region overrides change
+  useEffect(() => {
+    const recalculateCurrentRecipes = async () => {
+      // Skip if no SVG or recipes available
+      if (!blendSvgUrl && !solidSvgUrl) {
+        setCurrentBlendRecipes(null);
+        setCurrentSolidRecipes(null);
+        return;
+      }
+
+      // Skip if no edits have been made (use original recipes)
+      if (!hasColorEdits(regionOverrides)) {
+        setCurrentBlendRecipes(blendRecipes);
+        setCurrentSolidRecipes(solidRecipes);
+        return;
+      }
+
+      setIsRecalculating(true);
+      console.log('[INSPIRE] Recalculating current recipes from edited SVG...');
+
+      try {
+        // Recalculate blend mode recipes
+        if (blendSvgUrl && blendRecipes) {
+          const derived = await deriveCurrentColors(blendSvgUrl, blendRecipes, regionOverrides, 'blend');
+          setCurrentBlendRecipes(derived);
+          console.log('[INSPIRE] Derived blend recipes:', derived.length);
+        }
+
+        // Recalculate solid mode recipes
+        if (solidSvgUrl && solidRecipes) {
+          const derived = await deriveCurrentColors(solidSvgUrl, solidRecipes, regionOverrides, 'solid');
+          setCurrentSolidRecipes(derived);
+          console.log('[INSPIRE] Derived solid recipes:', derived.length);
+        }
+      } catch (err) {
+        console.error('[INSPIRE] Failed to recalculate recipes:', err);
+        // Fall back to original recipes on error
+        setCurrentBlendRecipes(blendRecipes);
+        setCurrentSolidRecipes(solidRecipes);
+      } finally {
+        setIsRecalculating(false);
+      }
+    };
+
+    recalculateCurrentRecipes();
+  }, [blendSvgUrl, solidSvgUrl, regionOverrides, blendRecipes, solidRecipes]);
 
   // Load design when loadedDesign prop changes
   useEffect(() => {
@@ -911,7 +964,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
   const executePDFDownload = async (widthValue, lengthValue) => {
     const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
-    const recipes = viewMode === 'solid' ? solidRecipes : blendRecipes;
+    // Use derived/current recipes (with edits) for accurate PDF export
+    const recipes = viewMode === 'solid'
+      ? (currentSolidRecipes || solidRecipes)
+      : (currentBlendRecipes || blendRecipes);
     const fileName = viewMode === 'solid' ? 'tpv-solid' : 'tpv-blend';
 
     if (!svgUrl || !recipes) {
@@ -1325,13 +1381,24 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   };
 
   // Apply color change to a specific region (per-element editing)
-  const applyRegionRecolor = (regionId, newHex) => {
-    console.log('[TPV-STUDIO] Queuing region recolor:', regionId, '->', newHex);
+  // colorData can be:
+  // - string (hex value) - for simple color picks (eyedropper from another region)
+  // - object { hex, tpvCode?, tpvName?, originalHex?, editType?, blendComponents? }
+  const applyRegionRecolor = (regionId, colorData) => {
+    // Normalize colorData to object format
+    const normalizedData = typeof colorData === 'string'
+      ? { hex: colorData, editType: 'eyedrop' }
+      : colorData;
+
+    console.log('[TPV-STUDIO] Queuing region recolor:', regionId, '->', normalizedData);
 
     // Add operation to queue instead of immediately processing
     setRegionRecolorQueue(prev => [...prev, {
       regionId,
-      newHex: newHex.toLowerCase(),
+      colorData: {
+        ...normalizedData,
+        hex: normalizedData.hex.toLowerCase()
+      },
       viewMode // Store current view mode with the operation
     }]);
   };
@@ -1344,13 +1411,15 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
     setIsProcessingQueue(true);
     const operation = regionRecolorQueue[0];
+    const colorData = operation.colorData;
 
-    console.log('[TPV-STUDIO] Processing queued region recolor:', operation.regionId, '->', operation.newHex);
+    console.log('[TPV-STUDIO] Processing queued region recolor:', operation.regionId, '->', colorData);
 
     try {
       // Build new overrides map with this operation applied
+      // Store the full colorData object for later use in deriving current colors
       const newOverrides = new Map(regionOverrides);
-      newOverrides.set(operation.regionId, operation.newHex);
+      newOverrides.set(operation.regionId, colorData);
 
       // Pass overrides directly to regeneration function (don't wait for state update)
       // This ensures immediate processing without React batching delays
@@ -1408,11 +1477,22 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   };
 
   // Handle direct TPV color selection from palette
-  const handleSelectTPVColor = (hex) => {
+  // colorData: { hex, code, name } from SVGPreview TPV palette
+  const handleSelectTPVColor = (colorData) => {
     if (!eyedropperRegion) return;
 
-    console.log('[TPV-STUDIO] Selecting TPV color for region:', eyedropperRegion.regionId, hex);
-    applyRegionRecolor(eyedropperRegion.regionId, hex);
+    console.log('[TPV-STUDIO] Selecting TPV color for region:', eyedropperRegion.regionId, colorData);
+
+    // Build rich color data for tracking
+    const richColorData = {
+      hex: colorData.hex,
+      tpvCode: colorData.code,
+      tpvName: colorData.name,
+      originalHex: eyedropperRegion.sourceColor,
+      editType: 'solid'
+    };
+
+    applyRegionRecolor(eyedropperRegion.regionId, richColorData);
     setEyedropperActive(false);
     setEyedropperRegion(null);
   };
@@ -2089,7 +2169,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
             <div ref={svgPreviewRef}>
               <SVGPreview
                 blendSvgUrl={blendSvgUrl}
-                recipes={blendRecipes}
+                recipes={currentBlendRecipes || blendRecipes}
                 mode="blend"
                 onColorClick={handleColorClick}
                 onRegionClick={handleRegionClick}
@@ -2119,7 +2199,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
             <div ref={svgPreviewRef}>
               <SVGPreview
                 blendSvgUrl={solidSvgUrl}
-                recipes={solidRecipes}
+                recipes={currentSolidRecipes || solidRecipes}
                 mode="solid"
                 onColorClick={handleColorClick}
                 onRegionClick={handleRegionClick}
@@ -2246,20 +2326,22 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       {/* Blend Recipes Display */}
       {showFinalRecipes && blendRecipes && (
         <BlendRecipesDisplay
-          recipes={blendRecipes}
+          recipes={currentBlendRecipes || blendRecipes}
           onClose={() => {
             setShowFinalRecipes(false);
           }}
+          isRecalculating={isRecalculating}
         />
       )}
 
       {/* Solid Color Summary */}
       {showSolidSummary && solidRecipes && (
         <SolidColorSummary
-          recipes={solidRecipes}
+          recipes={currentSolidRecipes || solidRecipes}
           onClose={() => {
             setShowSolidSummary(false);
           }}
+          isRecalculating={isRecalculating}
         />
       )}
 

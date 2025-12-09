@@ -38,7 +38,7 @@ export default function SVGPreview({
   onRegionClick, // (regionData) => void - callback when region clicked (eyedropper mode)
   onEyedropperCancel, // () => void - callback to cancel eyedropper mode
   onMakeTransparent, // () => void - callback to make selected region transparent
-  onSelectTPVColor, // (hex) => void - callback when user selects TPV color from palette
+  onSelectTPVColor, // (colorData) => void - callback when user selects TPV color from palette ({code, name, hex})
   selectedColor, // Current color being edited (to highlight)
   editedColors, // Map of edited colors (originalHex -> {newHex})
   onResetAll, // () => void - callback to reset all color edits
@@ -690,7 +690,12 @@ export default function SVGPreview({
                         onClick={(e) => {
                           e.stopPropagation();
                           if (onSelectTPVColor) {
-                            onSelectTPVColor(color.hex);
+                            // Pass full color object for richer tracking
+                            onSelectTPVColor({
+                              hex: color.hex,
+                              code: color.code,
+                              name: color.name
+                            });
                           }
                         }}
                         title={`${color.name} (${color.code})`}
