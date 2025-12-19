@@ -6,6 +6,7 @@ import { getShapeDisplayName, getShapeIcon } from '../../lib/sports/shapeGeometr
 import { BLOB_STYLES } from '../../lib/sports/blobGeometry.js';
 import { getAvailableFonts } from '../../lib/sports/textUtils.js';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
+import { FEATURE_FLAGS } from '../../lib/constants.js';
 import './PropertiesPanel.css';
 
 function PropertiesPanel({ onEditSourceDesign }) {
@@ -1187,8 +1188,8 @@ function MotifPropertiesPanel({ motif, motifId, onEditSourceDesign }) {
             </div>
           )}
 
-          {/* View Mode Toggle - only show if both versions available */}
-          {hasBothVersions && (
+          {/* View Mode Toggle - only show if both versions available AND blend mode enabled */}
+          {FEATURE_FLAGS.BLEND_MODE_ENABLED && hasBothVersions && (
             <div className="property-group">
               <label>Colour Style</label>
               <div className="property-toggle-buttons">

@@ -1,6 +1,8 @@
 // TPV Studio - Design Serializer
 // Converts design state to/from database format
 
+import { FEATURE_FLAGS } from '../lib/constants.js';
+
 /**
  * Serialize current design state into saveable format
  * Extracts all necessary data from InspirePanelRecraft component state
@@ -164,8 +166,10 @@ export function deserializeDesign(savedData) {
     blendSvgUrl: null,
     solidSvgUrl: null,
 
-    // View mode
-    viewMode: getField('preferred_view_mode') || 'solid',
+    // View mode - force solid mode if blend is disabled via feature flag
+    viewMode: FEATURE_FLAGS.BLEND_MODE_ENABLED
+      ? (getField('preferred_view_mode') || 'solid')
+      : 'solid',
 
     // Aspect ratio
     arMapping: getField('aspect_ratio_mapping'),

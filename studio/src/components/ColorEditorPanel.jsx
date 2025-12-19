@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { ChromePicker } from 'react-color';
 import tpvColours from '../../api/_utils/data/rosehill_tpv_21_colours.json';
+import { FEATURE_FLAGS } from '../lib/constants.js';
 
 export default function ColorEditorPanel({
   color,           // {hex, rgb, lab, areaPct, originalHex}
@@ -146,8 +147,8 @@ export default function ColorEditorPanel({
           </div>
         </div>
 
-        {/* Custom Colour Picker - Only in Blend Mode */}
-        {mode === 'blend' && (
+        {/* Custom Colour Picker - Only in Blend Mode (if enabled) */}
+        {FEATURE_FLAGS.BLEND_MODE_ENABLED && mode === 'blend' && (
           <div className="picker-section">
             <h4>Custom Colour</h4>
             <p className="picker-description">
@@ -164,13 +165,14 @@ export default function ColorEditorPanel({
           </div>
         )}
 
-        {/* Solid Mode Info */}
-        {mode === 'solid' && (
+        {/* Solid Mode Info - show if in solid mode OR if blend mode is disabled */}
+        {(mode === 'solid' || !FEATURE_FLAGS.BLEND_MODE_ENABLED) && (
           <div className="solid-mode-info">
             <h4>Solid Mode Editing</h4>
             <p className="info-description">
-              In solid mode, you can only select from the standard TPV colours above.
-              Custom colours require blending - switch to Blend Mode for full colour customisation.
+              {FEATURE_FLAGS.BLEND_MODE_ENABLED
+                ? 'In solid mode, you can only select from the standard TPV colours above. Custom colours require blending - switch to Blend Mode for full colour customisation.'
+                : 'Select from the standard TPV colours above. Only solid TPV colours are available.'}
             </p>
             <button onClick={handleReset} className="reset-button">
               Reset to Original Colour

@@ -25,6 +25,7 @@ import { deserializeDesign } from '../utils/designSerializer.js';
 import { downloadSvgTiles } from '../lib/svgTileSlicer.js';
 import PlaygroundExportMenu from './PlaygroundExportMenu.jsx';
 import tpvColours from '../../api/_utils/data/rosehill_tpv_21_colours.json';
+import { FEATURE_FLAGS } from '../lib/constants.js';
 
 /**
  * Detect file type from File object (MIME type with extension fallback)
@@ -1106,6 +1107,29 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
     if (!svg_url) {
       setError('No SVG available to analyse');
+      return;
+    }
+
+    // If blend mode is disabled, skip blend recipe generation and go directly to solid
+    if (!FEATURE_FLAGS.BLEND_MODE_ENABLED) {
+      console.log('[TPV-STUDIO] Blend mode disabled - skipping blend recipes, generating solid only');
+      setError(null);
+      setProgressMessage('🎨 Processing design colours...');
+
+      // Still need to tag SVG for region-based editing
+      let taggedSvg = null;
+      try {
+        const svgResponse = await fetch(svg_url);
+        const svgText = await svgResponse.text();
+        taggedSvg = tagSvgRegions(svgText);
+        setOriginalTaggedSvg(taggedSvg);
+        console.log('[TPV-STUDIO] Tagged SVG with region IDs');
+      } catch (tagError) {
+        console.error('[TPV-STUDIO] Failed to tag SVG regions:', tagError);
+      }
+
+      // Generate solid version directly (skip blend entirely)
+      await handleGenerateSolid(svg_url, job_id, taggedSvg);
       return;
     }
 
@@ -2262,8 +2286,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
             </div>
           )}
 
-          {/* Mode Toggle Tabs */}
-          {blendSvgUrl && blendRecipes && (
+          {/* Mode Toggle Tabs - Only show if blend mode is enabled */}
+          {FEATURE_FLAGS.BLEND_MODE_ENABLED && blendSvgUrl && blendRecipes && (
             <div className="mode-tabs">
               <button
                 className={`mode-tab ${viewMode === 'solid' ? 'active' : ''}`}
@@ -2285,8 +2309,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
             </div>
           )}
 
-          {/* TPV Blend Preview - Blend Mode */}
-          {viewMode === 'blend' && blendSvgUrl && blendRecipes && (
+          {/* TPV Blend Preview - Blend Mode (only if enabled) */}
+          {FEATURE_FLAGS.BLEND_MODE_ENABLED && viewMode === 'blend' && blendSvgUrl && blendRecipes && (
             <div ref={svgPreviewRef}>
               <SVGPreview
                 blendSvgUrl={blendSvgUrl}
@@ -2345,8 +2369,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
             </div>
           )}
 
-          {/* Mixer Widget (Blend Mode) */}
-          {mixerOpen && mixerColor && (
+          {/* Mixer Widget (Blend Mode) - only if blend mode enabled */}
+          {FEATURE_FLAGS.BLEND_MODE_ENABLED && mixerOpen && mixerColor && (
             <div className="mixer-widget-container">
               <div className="mixer-widget-header">
                 <button
@@ -2368,7 +2392,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           )}
 
           {/* Action Bar - Clean grouped layout */}
-          {blendSvgUrl && (
+          {(blendSvgUrl || solidSvgUrl) && (
             <div className="action-bar">
               {/* New Design */}
               <button
@@ -2404,15 +2428,15 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
                 onExportTiles={handleDownloadTiles}
                 viewMode={viewMode}
                 exporting={generatingPDF}
-                disabled={!blendSvgUrl}
+                disabled={!(blendSvgUrl || solidSvgUrl)}
               />
             </div>
           )}
         </div>
       )}
 
-      {/* View Recipe Details Button - Blend Mode */}
-      {viewMode === 'blend' && blendSvgUrl && blendRecipes && !showFinalRecipes && (
+      {/* View Recipe Details Button - Blend Mode (only if enabled) */}
+      {FEATURE_FLAGS.BLEND_MODE_ENABLED && viewMode === 'blend' && blendSvgUrl && blendRecipes && !showFinalRecipes && (
         <div className="finalize-section">
           <button
             onClick={() => setShowFinalRecipes(true)}
@@ -2441,8 +2465,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         </div>
       )}
 
-      {/* Blend Recipes Display */}
-      {showFinalRecipes && blendRecipes && (
+      {/* Blend Recipes Display (only if blend mode enabled) */}
+      {FEATURE_FLAGS.BLEND_MODE_ENABLED && showFinalRecipes && blendRecipes && (
         <BlendRecipesDisplay
           recipes={currentBlendRecipes || blendRecipes}
           onClose={() => {

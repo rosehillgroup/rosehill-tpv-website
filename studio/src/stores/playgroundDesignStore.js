@@ -2,6 +2,7 @@
 // Zustand store for preserving design generation state (AI prompts, SVG uploads, color editing)
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { FEATURE_FLAGS } from '../lib/constants.js';
 
 const initialState = {
   // Input configuration
@@ -151,7 +152,14 @@ export const usePlaygroundDesignStore = create(
       updateSolidSvgUrl: (url) => set({ solidSvgUrl: url }),
 
       // ====== View Mode Actions ======
-      setViewMode: (mode) => set({ viewMode: mode }),
+      setViewMode: (mode) => {
+        // If blend mode is disabled via feature flag, force solid mode
+        if (!FEATURE_FLAGS.BLEND_MODE_ENABLED && mode === 'blend') {
+          console.log('[STORE] Blend mode disabled - forcing solid mode');
+          return;
+        }
+        set({ viewMode: mode });
+      },
 
       setShowFinalRecipes: (show) => set({ showFinalRecipes: show }),
 
@@ -277,7 +285,10 @@ export const usePlaygroundDesignStore = create(
           blendEditedColors: restoredState.blendEditedColors || new Map(),
           blendSvgUrl: restoredState.blendSvgUrl || null,
           solidSvgUrl: restoredState.solidSvgUrl || null,
-          viewMode: restoredState.viewMode || 'solid',
+          // Force solid mode if blend mode is disabled via feature flag
+          viewMode: FEATURE_FLAGS.BLEND_MODE_ENABLED
+            ? (restoredState.viewMode || 'solid')
+            : 'solid',
           arMapping: restoredState.arMapping || null,
           jobId: restoredState.jobId || null,
           showFinalRecipes: restoredState.showFinalRecipes || false,

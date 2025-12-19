@@ -47,3 +47,12 @@ export const STORAGE_KEYS = {
   AUTH_SESSION: 'studio_auth_session',
   RECENT_PROJECTS: 'studio_recent_projects'
 };
+
+// Feature Flags
+// Toggle features on/off without code deletion
+export const FEATURE_FLAGS = {
+  // Set to false to disable blend mode entirely
+  // Users will only see solid TPV colors
+  // Set to true to re-enable blend mode functionality
+  BLEND_MODE_ENABLED: false
+};
