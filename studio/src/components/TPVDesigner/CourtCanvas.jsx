@@ -8,6 +8,7 @@ import TrackElement from './TrackRenderer.jsx';
 import MotifElement from './MotifElement.jsx';
 import ShapeElement from './ShapeElement.jsx';
 import BlobElement from './BlobElement.jsx';
+import PathElement from './PathElement.jsx';
 import TextElement from './TextElement.jsx';
 import { measureText } from '../../lib/sports/textUtils.js';
 import './CourtCanvas.css';
@@ -73,6 +74,9 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const [rotateTextId, setRotateTextId] = useState(null);
   const [rotateTextStart, setRotateTextStart] = useState(null);
 
+  // Path drawing state (for preview line)
+  const [drawingMousePos, setDrawingMousePos] = useState(null);
+
   const {
     surface,
     courts,
@@ -115,7 +119,16 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     updateTextContent,
     updateBlobControlPoint,
     updateBlobHandle,
-    commitBlobEdit
+    commitBlobEdit,
+    // Path drawing mode
+    pathDrawingMode,
+    activePathId,
+    addPointToPath,
+    finishPath,
+    cancelPath,
+    updatePathControlPoint,
+    updatePathHandle,
+    commitPathEdit
   } = useSportsDesignStore();
 
   // Convert screen coordinates to SVG coordinates
@@ -1186,14 +1199,54 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     };
   }, [isRotatingText, rotateTextId, rotateTextStart, updateTextRotation]);
 
-  // Handle click on canvas background (deselect)
+  // Handle click on canvas background (deselect or add path point)
   const handleCanvasClick = (e) => {
+    // In path drawing mode, add points to the active path
+    if (pathDrawingMode && activePathId) {
+      // Only handle clicks on the canvas background or SVG
+      if (e.target === e.currentTarget || e.target.tagName === 'svg' || e.target.closest('svg')) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const clientX = e.clientX;
+        const clientY = e.clientY;
+        const svgPoint = screenToSVG(clientX, clientY);
+
+        // Convert to normalized coordinates (0-1) relative to the active path shape
+        const shape = shapes[activePathId];
+        if (shape) {
+          // The path shape was created with a default position
+          // We need to add the point relative to the shape's coordinate space
+          // First click sets position, subsequent clicks add relative points
+          const normalizedX = (svgPoint.x - shape.position.x) / shape.width_mm;
+          const normalizedY = (svgPoint.y - shape.position.y) / shape.height_mm;
+
+          // Clamp to reasonable bounds but allow some overflow
+          const clampedX = Math.max(-0.5, Math.min(1.5, normalizedX));
+          const clampedY = Math.max(-0.5, Math.min(1.5, normalizedY));
+
+          addPointToPath(clampedX, clampedY);
+        }
+        return;
+      }
+    }
+
+    // Normal behavior: deselect when clicking background
     if (e.target === e.currentTarget) {
       deselectCourt();
       deselectTrack();
       deselectMotif();
       deselectShape();
       deselectText();
+    }
+  };
+
+  // Handle double-click to finish path drawing
+  const handleCanvasDoubleClick = (e) => {
+    if (pathDrawingMode && activePathId) {
+      e.preventDefault();
+      e.stopPropagation();
+      finishPath();
     }
   };
 
@@ -1333,7 +1386,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     }
   }, [isPanning, panStart]);
 
-  // Keyboard handler for space+drag panning
+  // Keyboard handler for space+drag panning and Escape for path drawing
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.code === 'Space' && !e.repeat) {
@@ -1341,6 +1394,16 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
         e.preventDefault(); // Prevent page scroll
         setSpaceHeld(true);
+      }
+
+      // Escape cancels path drawing or finishes with Enter
+      if (e.code === 'Escape' && pathDrawingMode && activePathId) {
+        e.preventDefault();
+        cancelPath();
+      }
+      if (e.code === 'Enter' && pathDrawingMode && activePathId) {
+        e.preventDefault();
+        finishPath();
       }
     };
 
@@ -1358,10 +1421,36 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [pathDrawingMode, activePathId, cancelPath, finishPath]);
+
+  // Track mouse position for path drawing preview line
+  const handleCanvasMouseMove = (e) => {
+    if (pathDrawingMode && activePathId) {
+      const svgPoint = screenToSVG(e.clientX, e.clientY);
+      setDrawingMousePos(svgPoint);
+    }
+  };
+
+  // Get active path for preview line
+  const activePath = pathDrawingMode && activePathId ? shapes[activePathId] : null;
+  const lastPoint = activePath?.controlPoints?.length > 0
+    ? activePath.controlPoints[activePath.controlPoints.length - 1]
+    : null;
 
   return (
-    <div className="court-canvas" onClick={handleCanvasClick}>
+    <div
+      className={`court-canvas ${pathDrawingMode ? 'court-canvas--drawing' : ''}`}
+      onClick={handleCanvasClick}
+      onDoubleClick={handleCanvasDoubleClick}
+      onMouseMove={handleCanvasMouseMove}
+    >
+      {/* Path Drawing Mode Indicator */}
+      {pathDrawingMode && (
+        <div className="court-canvas__drawing-indicator">
+          Click to add points • Double-click or Enter to finish • Escape to cancel
+        </div>
+      )}
+
       {/* Zoom Controls */}
       <div className="court-canvas__zoom-controls">
         <button onClick={handleZoomIn} className="court-canvas__zoom-btn" title="Zoom In (Ctrl + Scroll)">
@@ -1512,6 +1601,25 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
               );
             }
 
+            // Render path shapes with PathElement
+            if (shape.shapeType === 'path') {
+              return (
+                <PathElement
+                  key={elementId}
+                  shape={shape}
+                  isSelected={elementId === selectedShapeId}
+                  onMouseDown={(e) => handleShapeMouseDown(e, elementId)}
+                  onTouchStart={(e) => handleShapeMouseDown(e, elementId)}
+                  onDoubleClick={(e) => handleShapeDoubleClick(e, elementId)}
+                  onScaleStart={(e, corner) => handleShapeScaleStart(e, elementId, corner)}
+                  onRotateStart={(e) => handleShapeRotateStart(e, elementId)}
+                  onPointDrag={(index, newX, newY) => updatePathControlPoint(elementId, index, newX, newY)}
+                  onHandleDrag={(index, handleType, offsetX, offsetY) => updatePathHandle(elementId, index, handleType, offsetX, offsetY)}
+                  onDragEnd={() => commitPathEdit()}
+                />
+              );
+            }
+
             // Render polygon shapes with ShapeElement
             return (
               <ShapeElement
@@ -1553,6 +1661,35 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
 
           return null;
         })}
+
+        {/* Preview line while drawing path */}
+        {pathDrawingMode && activePath && lastPoint && drawingMousePos && (
+          <line
+            x1={activePath.position.x + lastPoint.x * activePath.width_mm}
+            y1={activePath.position.y + lastPoint.y * activePath.height_mm}
+            x2={drawingMousePos.x}
+            y2={drawingMousePos.y}
+            stroke="#3b82f6"
+            strokeWidth="50"
+            strokeDasharray="100 100"
+            opacity="0.6"
+            pointerEvents="none"
+          />
+        )}
+
+        {/* Preview dots for placed points while drawing */}
+        {pathDrawingMode && activePath && activePath.controlPoints?.map((point, index) => (
+          <circle
+            key={`preview-point-${index}`}
+            cx={activePath.position.x + point.x * activePath.width_mm}
+            cy={activePath.position.y + point.y * activePath.height_mm}
+            r="80"
+            fill="#3b82f6"
+            stroke="#fff"
+            strokeWidth="20"
+            pointerEvents="none"
+          />
+        ))}
           </svg>
         </div>
       </div>

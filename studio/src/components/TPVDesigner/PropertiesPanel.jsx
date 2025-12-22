@@ -1447,7 +1447,10 @@ function ShapePropertiesPanel({ shape, shapeId }) {
     duplicateShape,
     randomizeBlob,
     setBlobStyle,
-    setEditPointsVisible
+    setEditPointsVisible,
+    // Path-specific actions
+    setPathClosed,
+    setPathSmooth
   } = useSportsDesignStore();
 
   const [showFillColorPicker, setShowFillColorPicker] = React.useState(false);
@@ -1468,10 +1471,15 @@ function ShapePropertiesPanel({ shape, shapeId }) {
     aspectLocked,
     // Blob-specific properties
     blobStyle,
-    editPointsVisible
+    editPointsVisible,
+    // Path-specific properties
+    closed,
+    smooth,
+    controlPoints
   } = shape;
 
   const isBlob = shapeType === 'blob';
+  const isPath = shapeType === 'path';
 
   // Handle position updates
   const handlePositionChange = (axis, value) => {
@@ -1603,10 +1611,18 @@ function ShapePropertiesPanel({ shape, shapeId }) {
     <div className="properties-panel">
       {/* Panel Header */}
       <div className="properties-panel__header">
-        <h3>{isBlob ? 'Blob Shape' : 'Shape Properties'}</h3>
+        <h3>{isBlob ? 'Blob Shape' : isPath ? 'Pen Path' : 'Shape Properties'}</h3>
         <div className="properties-panel__court-info">
-          <span className="court-name">{isBlob ? (BLOB_STYLES[blobStyle || 'organic']?.name || 'Organic') : getShapeDisplayName(sides)}</span>
-          <span className="court-standard">{isBlob ? '◐ Blob' : `${getShapeIcon(sides)} ${sides} sides`}</span>
+          <span className="court-name">
+            {isBlob ? (BLOB_STYLES[blobStyle || 'organic']?.name || 'Organic') :
+             isPath ? (closed ? 'Closed Path' : 'Open Path') :
+             getShapeDisplayName(sides)}
+          </span>
+          <span className="court-standard">
+            {isBlob ? '◐ Blob' :
+             isPath ? `✏️ ${controlPoints?.length || 0} points` :
+             `${getShapeIcon(sides)} ${sides} sides`}
+          </span>
         </div>
       </div>
 
@@ -1692,6 +1708,93 @@ function ShapePropertiesPanel({ shape, shapeId }) {
                     Drag points and handles on canvas for precise control
                   </div>
                 )}
+              </div>
+            </>
+          ) : isPath ? (
+            <>
+              {/* Path Controls */}
+              <div className="property-group">
+                <label style={{ marginBottom: '0.5rem', display: 'block' }}>Path Options</label>
+
+                {/* Closed Path Toggle */}
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  cursor: 'pointer',
+                  padding: '0.5rem',
+                  border: '1px solid #e4e9f0',
+                  borderRadius: '6px',
+                  background: closed ? '#eff6ff' : '#fff',
+                  marginBottom: '0.5rem'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={closed || false}
+                    onChange={(e) => setPathClosed(shapeId, e.target.checked)}
+                    style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '0.875rem' }}>Closed Path</span>
+                </label>
+
+                {/* Smooth Curves Toggle */}
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  cursor: 'pointer',
+                  padding: '0.5rem',
+                  border: '1px solid #e4e9f0',
+                  borderRadius: '6px',
+                  background: smooth ? '#eff6ff' : '#fff'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={smooth || false}
+                    onChange={(e) => setPathSmooth(shapeId, e.target.checked)}
+                    style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '0.875rem' }}>Smooth Curves</span>
+                </label>
+                {smooth && (
+                  <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.5rem' }}>
+                    Uses bezier curves for smooth transitions
+                  </div>
+                )}
+              </div>
+
+              {/* Edit Points Toggle */}
+              <div className="property-group">
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  cursor: 'pointer',
+                  padding: '0.5rem',
+                  border: '1px solid #e4e9f0',
+                  borderRadius: '6px',
+                  background: editPointsVisible ? '#eff6ff' : '#fff'
+                }}>
+                  <input
+                    type="checkbox"
+                    checked={editPointsVisible || false}
+                    onChange={(e) => setEditPointsVisible(shapeId, e.target.checked)}
+                    style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '0.875rem' }}>Edit Points</span>
+                </label>
+                {editPointsVisible && (
+                  <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.5rem' }}>
+                    Drag points to reshape. {smooth ? 'Drag handles for curve control.' : 'Enable smooth curves for bezier handles.'}
+                  </div>
+                )}
+              </div>
+
+              {/* Point Count Info */}
+              <div className="property-group" style={{ background: '#f8fafc', padding: '0.75rem', borderRadius: '6px' }}>
+                <div style={{ fontSize: '0.8125rem', color: '#475569' }}>
+                  <strong>{controlPoints?.length || 0}</strong> control points
+                </div>
               </div>
             </>
           ) : (

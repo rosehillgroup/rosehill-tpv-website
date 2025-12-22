@@ -6,25 +6,28 @@ import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import './ShapeToolbar.css';
 
 function ShapeToolbar() {
-  const { addShape, addText, standaloneMode } = useSportsDesignStore();
+  const { addShape, addText, standaloneMode, startPathDrawing } = useSportsDesignStore();
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Don't show in standalone mode
   if (standaloneMode) return null;
 
+  // Condensed shape presets - individual shapes can be changed via Properties Panel
   const shapePresets = [
-    { preset: 'rectangle', icon: '▭', label: 'Rectangle' },
-    { preset: 'square', icon: '□', label: 'Square' },
-    { preset: 'circle', icon: '○', label: 'Circle' },
-    { preset: 'triangle', icon: '△', label: 'Triangle' },
-    { preset: 'hexagon', icon: '⬡', label: 'Hexagon' },
-    { preset: 'pentagon', icon: '⬠', label: 'Pentagon' },
-    { preset: 'blob', icon: '◐', label: 'Blob' }
+    { preset: 'rectangle', icon: '□', label: 'Shape' },  // Default shape, change type in Properties
+    { preset: 'blob', icon: '◐', label: 'Blob' },        // Organic blob with style options
+    { preset: 'path', icon: '✏️', label: 'Pen' }          // Pen tool for custom paths
   ];
 
   const handleAddShape = (preset) => {
-    addShape(preset);
-    // Keep toolbar open for easy multi-shape addition
+    if (preset === 'path') {
+      // Pen tool enters drawing mode
+      startPathDrawing();
+      setIsExpanded(false);  // Close toolbar when entering drawing mode
+    } else {
+      addShape(preset);
+      // Keep toolbar open for easy multi-shape addition
+    }
   };
 
   const handleAddText = () => {

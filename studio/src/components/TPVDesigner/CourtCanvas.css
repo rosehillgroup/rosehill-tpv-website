@@ -370,3 +370,47 @@
   }
 }
 
+/* ====== Path Drawing Mode ====== */
+.court-canvas--drawing {
+  cursor: crosshair;
+}
+
+.court-canvas--drawing .court-canvas__svg-container svg {
+  cursor: crosshair;
+}
+
+.court-canvas__drawing-indicator {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  padding: 0.625rem 1.25rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  animation: pulse-indicator 2s ease-in-out infinite;
+  white-space: nowrap;
+}
+
+@keyframes pulse-indicator {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.6);
+  }
+}
+
+/* Mobile adjustments for drawing indicator */
+@media (max-width: 768px) {
+  .court-canvas__drawing-indicator {
+    font-size: 0.75rem;
+    padding: 0.5rem 1rem;
+    top: 0.75rem;
+  }
+}
+

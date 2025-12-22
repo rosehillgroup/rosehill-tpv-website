@@ -9,6 +9,11 @@ import {
   generateBlobFromStyle,
   BLOB_STYLES
 } from '../lib/sports/blobGeometry.js';
+import {
+  calculateBezierHandles,
+  insertPoint as insertPathPoint,
+  removePoint as removePathPoint
+} from '../lib/sports/pathGeometry.js';
 
 const initialState = {
   // Surface configuration
@@ -92,6 +97,10 @@ const initialState = {
   // Standalone mode - full-bleed single design (no courts/tracks)
   standaloneMode: false,
   standaloneDesignId: null, // ID of the design being shown in standalone mode
+
+  // Path drawing mode (pen tool)
+  pathDrawingMode: false,
+  activePathId: null,
 
   // Export state
   isSaving: false,
@@ -1597,6 +1606,301 @@ export const useSportsDesignStore = create(
           showPropertiesPanel: false,
           propertiesPanelUserClosed: true
         });
+      },
+
+      // ====== Path Drawing Actions (Pen Tool) ======
+      startPathDrawing: () => {
+        const shapeId = `shape-path-${Date.now()}`;
+        const surface = get().surface;
+        const existingShapes = get().shapes;
+
+        // Cycle through default colors
+        const defaultColors = [
+          { tpv_code: 'RH20', hex: '#0075BC', name: 'Standard Blue' },
+          { tpv_code: 'RH50', hex: '#F15B32', name: 'Orange' },
+          { tpv_code: 'RH10', hex: '#609B63', name: 'Standard Green' },
+          { tpv_code: 'RH21', hex: '#493D8C', name: 'Purple' }
+        ];
+        const shapeCount = Object.keys(existingShapes).length;
+        const fillColor = defaultColors[shapeCount % defaultColors.length];
+
+        // Create empty path shape
+        const pathShape = {
+          id: shapeId,
+          type: 'shape',
+          shapeType: 'path',
+          controlPoints: [],
+          closed: true,
+          smooth: false,
+          editPointsVisible: false,
+          width_mm: 2000,
+          height_mm: 2000,
+          position: {
+            x: surface.width_mm / 2 - 1000,
+            y: surface.length_mm / 2 - 1000
+          },
+          rotation: 0,
+          fillColor: fillColor,
+          strokeEnabled: true,
+          strokeColor: { tpv_code: 'RH00', hex: '#1E1E1E', name: 'Black' },
+          strokeWidth_mm: 20,
+          aspectLocked: false,
+          locked: false,
+          visible: true
+        };
+
+        set({
+          pathDrawingMode: true,
+          activePathId: shapeId,
+          shapes: {
+            ...get().shapes,
+            [shapeId]: pathShape
+          },
+          elementOrder: [...get().elementOrder, shapeId],
+          selectedShapeId: shapeId,
+          selectedCourtId: null,
+          selectedTrackId: null,
+          selectedMotifId: null,
+          selectedTextId: null
+        });
+      },
+
+      addPointToPath: (normalizedX, normalizedY) => {
+        const { activePathId, shapes, pathDrawingMode } = get();
+        if (!pathDrawingMode || !activePathId) return;
+
+        const shape = shapes[activePathId];
+        if (!shape || shape.shapeType !== 'path') return;
+
+        const newPoint = {
+          x: normalizedX,
+          y: normalizedY,
+          handleIn: { x: 0, y: 0 },
+          handleOut: { x: 0, y: 0 }
+        };
+
+        set({
+          shapes: {
+            ...shapes,
+            [activePathId]: {
+              ...shape,
+              controlPoints: [...shape.controlPoints, newPoint]
+            }
+          }
+        });
+      },
+
+      finishPath: () => {
+        const { activePathId, shapes, pathDrawingMode } = get();
+        if (!pathDrawingMode || !activePathId) return;
+
+        const shape = shapes[activePathId];
+        if (!shape) return;
+
+        // Must have at least 3 points for a closed path
+        if (shape.controlPoints.length < 3) {
+          // Cancel if not enough points
+          get().cancelPath();
+          return;
+        }
+
+        // Normalize points to fit within shape bounds
+        const points = shape.controlPoints;
+        let minX = Infinity, minY = Infinity;
+        let maxX = -Infinity, maxY = -Infinity;
+
+        for (const p of points) {
+          minX = Math.min(minX, p.x);
+          minY = Math.min(minY, p.y);
+          maxX = Math.max(maxX, p.x);
+          maxY = Math.max(maxY, p.y);
+        }
+
+        const width = maxX - minX || 1;
+        const height = maxY - minY || 1;
+        const padding = 0.05;
+
+        // Normalize points to 0-1 with padding
+        const normalizedPoints = points.map(p => ({
+          ...p,
+          x: padding + ((p.x - minX) / width) * (1 - 2 * padding),
+          y: padding + ((p.y - minY) / height) * (1 - 2 * padding)
+        }));
+
+        // Calculate actual size and position based on drawn bounds
+        const surface = get().surface;
+        const actualWidth = width * surface.width_mm;
+        const actualHeight = height * surface.length_mm;
+        const actualX = minX * surface.width_mm;
+        const actualY = minY * surface.length_mm;
+
+        set({
+          pathDrawingMode: false,
+          activePathId: null,
+          shapes: {
+            ...shapes,
+            [activePathId]: {
+              ...shape,
+              controlPoints: normalizedPoints,
+              width_mm: Math.max(500, actualWidth),
+              height_mm: Math.max(500, actualHeight),
+              position: { x: actualX, y: actualY },
+              strokeEnabled: false  // Disable stroke after finishing
+            }
+          }
+        });
+        get().addToHistory();
+      },
+
+      cancelPath: () => {
+        const { activePathId, shapes, elementOrder } = get();
+        if (!activePathId) {
+          set({ pathDrawingMode: false });
+          return;
+        }
+
+        // Remove the incomplete path
+        const newShapes = { ...shapes };
+        delete newShapes[activePathId];
+
+        set({
+          pathDrawingMode: false,
+          activePathId: null,
+          shapes: newShapes,
+          elementOrder: elementOrder.filter(id => id !== activePathId),
+          selectedShapeId: null
+        });
+      },
+
+      setPathClosed: (shapeId, closed) => {
+        const shape = get().shapes[shapeId];
+        if (!shape || shape.shapeType !== 'path') return;
+
+        set({
+          shapes: {
+            ...get().shapes,
+            [shapeId]: { ...shape, closed }
+          }
+        });
+        get().addToHistory();
+      },
+
+      setPathSmooth: (shapeId, smooth) => {
+        const shape = get().shapes[shapeId];
+        if (!shape || shape.shapeType !== 'path') return;
+
+        let newPoints = shape.controlPoints;
+        if (smooth && shape.controlPoints.length >= 2) {
+          // Calculate bezier handles for smooth curves
+          newPoints = calculateBezierHandles(shape.controlPoints, shape.closed, 0.3);
+        } else {
+          // Reset handles to zero for straight lines
+          newPoints = shape.controlPoints.map(p => ({
+            ...p,
+            handleIn: { x: 0, y: 0 },
+            handleOut: { x: 0, y: 0 }
+          }));
+        }
+
+        set({
+          shapes: {
+            ...get().shapes,
+            [shapeId]: { ...shape, smooth, controlPoints: newPoints }
+          }
+        });
+        get().addToHistory();
+      },
+
+      // Update a path control point position
+      updatePathControlPoint: (shapeId, pointIndex, newX, newY) => {
+        const shape = get().shapes[shapeId];
+        if (!shape || shape.shapeType !== 'path') return;
+
+        const newPoints = [...shape.controlPoints];
+        newPoints[pointIndex] = {
+          ...newPoints[pointIndex],
+          x: newX,
+          y: newY
+        };
+
+        set({
+          shapes: {
+            ...get().shapes,
+            [shapeId]: { ...shape, controlPoints: newPoints }
+          }
+        });
+      },
+
+      // Update a path handle position
+      updatePathHandle: (shapeId, pointIndex, handleType, offsetX, offsetY) => {
+        const shape = get().shapes[shapeId];
+        if (!shape || shape.shapeType !== 'path') return;
+
+        const newPoints = [...shape.controlPoints];
+        newPoints[pointIndex] = {
+          ...newPoints[pointIndex],
+          [handleType]: { x: offsetX, y: offsetY }
+        };
+
+        set({
+          shapes: {
+            ...get().shapes,
+            [shapeId]: { ...shape, controlPoints: newPoints }
+          }
+        });
+      },
+
+      // Add a point to an existing path at a specific index
+      addPointToExistingPath: (shapeId, index, x, y) => {
+        const shape = get().shapes[shapeId];
+        if (!shape || shape.shapeType !== 'path') return;
+
+        const newPoints = insertPathPoint(shape.controlPoints, index, x, y);
+
+        // Recalculate handles if smooth mode is on
+        const finalPoints = shape.smooth
+          ? calculateBezierHandles(newPoints, shape.closed, 0.3)
+          : newPoints;
+
+        set({
+          shapes: {
+            ...get().shapes,
+            [shapeId]: { ...shape, controlPoints: finalPoints }
+          }
+        });
+        get().addToHistory();
+      },
+
+      // Remove a point from an existing path
+      removePointFromPath: (shapeId, index) => {
+        const shape = get().shapes[shapeId];
+        if (!shape || shape.shapeType !== 'path') return;
+
+        const minPoints = shape.closed ? 3 : 2;
+        const newPoints = removePathPoint(shape.controlPoints, index, minPoints);
+
+        if (!newPoints) {
+          console.log('[STORE] Cannot remove point - minimum reached');
+          return;
+        }
+
+        // Recalculate handles if smooth mode is on
+        const finalPoints = shape.smooth
+          ? calculateBezierHandles(newPoints, shape.closed, 0.3)
+          : newPoints;
+
+        set({
+          shapes: {
+            ...get().shapes,
+            [shapeId]: { ...shape, controlPoints: finalPoints }
+          }
+        });
+        get().addToHistory();
+      },
+
+      // Commit path edits to history
+      commitPathEdit: () => {
+        get().addToHistory();
       },
 
       // ====== Text Actions ======
