@@ -1213,15 +1213,35 @@ export const useSportsDesignStore = create(
       },
 
       updateShapeSides: (shapeId, sides) => {
-        set((state) => ({
-          shapes: {
-            ...state.shapes,
-            [shapeId]: {
-              ...state.shapes[shapeId],
-              sides: Math.max(3, Math.min(32, sides))
-            }
+        set((state) => {
+          const shape = state.shapes[shapeId];
+          if (!shape) return state;
+
+          const newSides = Math.max(3, Math.min(32, sides));
+          let newWidth = shape.width_mm;
+          let newHeight = shape.height_mm;
+
+          // For non-rectangles (not 4 sides), make dimensions square
+          // Use the smaller dimension to avoid expanding beyond original bounds
+          if (newSides !== 4) {
+            const size = Math.min(shape.width_mm, shape.height_mm);
+            newWidth = size;
+            newHeight = size;
           }
-        }));
+
+          return {
+            shapes: {
+              ...state.shapes,
+              [shapeId]: {
+                ...shape,
+                sides: newSides,
+                width_mm: newWidth,
+                height_mm: newHeight,
+                aspectLocked: newSides !== 4  // Lock aspect for non-rectangles
+              }
+            }
+          };
+        });
         get().addToHistory();
       },
 
@@ -1399,11 +1419,12 @@ export const useSportsDesignStore = create(
         get().addToHistory();
       },
 
-      // Toggle edit points visibility
+      // Toggle edit points visibility (for blob and path shapes)
       setEditPointsVisible: (shapeId, visible) => {
         set((state) => {
           const shape = state.shapes[shapeId];
-          if (!shape || shape.shapeType !== 'blob') return state;
+          // Allow both blob and path shapes to have edit points
+          if (!shape || (shape.shapeType !== 'blob' && shape.shapeType !== 'path')) return state;
 
           return {
             shapes: {
@@ -1624,7 +1645,7 @@ export const useSportsDesignStore = create(
         const shapeCount = Object.keys(existingShapes).length;
         const fillColor = defaultColors[shapeCount % defaultColors.length];
 
-        // Create empty path shape
+        // Create empty path shape - use full canvas size for drawing area
         const pathShape = {
           id: shapeId,
           type: 'shape',
@@ -1633,16 +1654,16 @@ export const useSportsDesignStore = create(
           closed: true,
           smooth: false,
           editPointsVisible: false,
-          width_mm: 2000,
-          height_mm: 2000,
+          width_mm: surface.width_mm,
+          height_mm: surface.length_mm,
           position: {
-            x: surface.width_mm / 2 - 1000,
-            y: surface.length_mm / 2 - 1000
+            x: 0,
+            y: 0
           },
           rotation: 0,
           fillColor: fillColor,
           strokeEnabled: true,
-          strokeColor: { tpv_code: 'RH00', hex: '#1E1E1E', name: 'Black' },
+          strokeColor: { tpv_code: 'RH70', hex: '#A8A9AD', name: 'Light Grey' },
           strokeWidth_mm: 20,
           aspectLocked: false,
           locked: false,
