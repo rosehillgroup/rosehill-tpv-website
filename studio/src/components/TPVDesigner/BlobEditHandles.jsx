@@ -14,8 +14,23 @@ import React, { useState, useCallback, useEffect } from 'react';
  * @param {Function} props.onPointDrag - Callback when control point is dragged (index, newX, newY)
  * @param {Function} props.onHandleDrag - Callback when handle is dragged (index, handleType, offsetX, offsetY)
  * @param {Function} props.onDragEnd - Callback when drag ends (to commit to history)
+ * @param {boolean} props.showHandles - Whether to show bezier handles (for smooth mode)
+ * @param {number} props.selectedPointIndex - Index of currently selected point (for deletion)
+ * @param {Function} props.onPointSelect - Callback when point is selected (index)
+ * @param {Function} props.onPointDelete - Callback when point should be deleted (index)
  */
-function BlobEditHandles({ controlPoints, width, height, onPointDrag, onHandleDrag, onDragEnd }) {
+function BlobEditHandles({
+  controlPoints,
+  width,
+  height,
+  onPointDrag,
+  onHandleDrag,
+  onDragEnd,
+  showHandles = true,
+  selectedPointIndex,
+  onPointSelect,
+  onPointDelete
+}) {
   const [dragging, setDragging] = useState(null);
   const [dragStartPos, setDragStartPos] = useState(null);
 
@@ -26,13 +41,22 @@ function BlobEditHandles({ controlPoints, width, height, onPointDrag, onHandleDr
   const pointSize = Math.max(minPointSize, Math.min(maxPointSize, controlPointSize));
   const handleCircleSize = pointSize * 0.7;
 
-  // Start dragging a control point
+  // Start dragging a control point (also selects it)
   const startPointDrag = useCallback((e, index) => {
     e.stopPropagation();
     e.preventDefault();
+    // Select the point for potential deletion
+    onPointSelect?.(index);
     setDragging({ type: 'point', index });
     setDragStartPos({ x: e.clientX, y: e.clientY });
-  }, []);
+  }, [onPointSelect]);
+
+  // Handle right-click on point to delete it
+  const handlePointContextMenu = useCallback((e, index) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onPointDelete?.(index);
+  }, [onPointDelete]);
 
   // Start dragging a bezier handle
   const startHandleDrag = useCallback((e, index, handleType) => {
@@ -114,70 +138,76 @@ function BlobEditHandles({ controlPoints, width, height, onPointDrag, onHandleDr
         const isPointDragging = dragging?.type === 'point' && dragging?.index === i;
         const isHandleInDragging = dragging?.type === 'handle' && dragging?.index === i && dragging?.handleType === 'handleIn';
         const isHandleOutDragging = dragging?.type === 'handle' && dragging?.index === i && dragging?.handleType === 'handleOut';
+        const isPointSelected = selectedPointIndex === i;
 
         return (
           <g key={i} className="blob-control-point-group">
-            {/* Handle lines (connecting point to handles) */}
-            <line
-              x1={x}
-              y1={y}
-              x2={handleInX}
-              y2={handleInY}
-              stroke="#94a3b8"
-              strokeWidth="20"
-              strokeDasharray="60 40"
-              pointerEvents="none"
-              opacity="0.8"
-            />
-            <line
-              x1={x}
-              y1={y}
-              x2={handleOutX}
-              y2={handleOutY}
-              stroke="#94a3b8"
-              strokeWidth="20"
-              strokeDasharray="60 40"
-              pointerEvents="none"
-              opacity="0.8"
-            />
+            {/* Handle lines (connecting point to handles) - only show in smooth mode */}
+            {showHandles && (
+              <>
+                <line
+                  x1={x}
+                  y1={y}
+                  x2={handleInX}
+                  y2={handleInY}
+                  stroke="#94a3b8"
+                  strokeWidth="20"
+                  strokeDasharray="60 40"
+                  pointerEvents="none"
+                  opacity="0.8"
+                />
+                <line
+                  x1={x}
+                  y1={y}
+                  x2={handleOutX}
+                  y2={handleOutY}
+                  stroke="#94a3b8"
+                  strokeWidth="20"
+                  strokeDasharray="60 40"
+                  pointerEvents="none"
+                  opacity="0.8"
+                />
 
-            {/* Bezier handle IN (small circle) */}
-            <circle
-              cx={handleInX}
-              cy={handleInY}
-              r={handleCircleSize}
-              fill={isHandleInDragging ? '#f97316' : '#ffffff'}
-              stroke="#64748b"
-              strokeWidth="15"
-              style={{ cursor: 'crosshair' }}
-              pointerEvents="all"
-              onMouseDown={(e) => startHandleDrag(e, i, 'handleIn')}
-            />
+                {/* Bezier handle IN (small circle) */}
+                <circle
+                  cx={handleInX}
+                  cy={handleInY}
+                  r={handleCircleSize}
+                  fill={isHandleInDragging ? '#f97316' : '#ffffff'}
+                  stroke="#64748b"
+                  strokeWidth="15"
+                  style={{ cursor: 'crosshair' }}
+                  pointerEvents="all"
+                  onMouseDown={(e) => startHandleDrag(e, i, 'handleIn')}
+                />
 
-            {/* Bezier handle OUT (small circle) */}
-            <circle
-              cx={handleOutX}
-              cy={handleOutY}
-              r={handleCircleSize}
-              fill={isHandleOutDragging ? '#f97316' : '#ffffff'}
-              stroke="#64748b"
-              strokeWidth="15"
-              style={{ cursor: 'crosshair' }}
-              pointerEvents="all"
-              onMouseDown={(e) => startHandleDrag(e, i, 'handleOut')}
-            />
+                {/* Bezier handle OUT (small circle) */}
+                <circle
+                  cx={handleOutX}
+                  cy={handleOutY}
+                  r={handleCircleSize}
+                  fill={isHandleOutDragging ? '#f97316' : '#ffffff'}
+                  stroke="#64748b"
+                  strokeWidth="15"
+                  style={{ cursor: 'crosshair' }}
+                  pointerEvents="all"
+                  onMouseDown={(e) => startHandleDrag(e, i, 'handleOut')}
+                />
+              </>
+            )}
 
             {/* Control point (larger circle) */}
             <circle
               cx={x}
               cy={y}
               r={pointSize}
-              fill={isPointDragging ? '#f97316' : '#3b82f6'}
+              fill={isPointSelected ? '#ef4444' : (isPointDragging ? '#f97316' : '#3b82f6')}
               stroke="#ffffff"
               strokeWidth="20"
               style={{ cursor: 'move' }}
               pointerEvents="all"
               onMouseDown={(e) => startPointDrag(e, i)}
+              onContextMenu={(e) => handlePointContextMenu(e, i)}
             />
 
             {/* Point index label (for debugging/identification) */}

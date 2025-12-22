@@ -31,7 +31,10 @@ function BlobElement({
   onRotateStart,
   onPointDrag,
   onHandleDrag,
-  onDragEnd
+  onDragEnd,
+  selectedPointIndex,
+  onPointSelect,
+  onPointDelete
 }) {
   const {
     controlPoints,
@@ -121,6 +124,10 @@ function BlobElement({
           onPointDrag={onPointDrag}
           onHandleDrag={onHandleDrag}
           onDragEnd={onDragEnd}
+          showHandles={true}
+          selectedPointIndex={selectedPointIndex}
+          onPointSelect={onPointSelect}
+          onPointDelete={onPointDelete}
         />
       )}
     </g>

@@ -31,7 +31,10 @@ function PathElement({
   onRotateStart,
   onPointDrag,
   onHandleDrag,
-  onDragEnd
+  onDragEnd,
+  selectedPointIndex,
+  onPointSelect,
+  onPointDelete
 }) {
   const {
     controlPoints,
@@ -134,6 +137,9 @@ function PathElement({
           onHandleDrag={onHandleDrag}
           onDragEnd={onDragEnd}
           showHandles={smooth} // Only show bezier handles if smooth mode is enabled
+          selectedPointIndex={selectedPointIndex}
+          onPointSelect={onPointSelect}
+          onPointDelete={onPointDelete}
         />
       )}
     </g>

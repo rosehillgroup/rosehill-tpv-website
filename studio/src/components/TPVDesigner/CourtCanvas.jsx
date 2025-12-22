@@ -76,6 +76,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
 
   // Path drawing state (for preview line)
   const [drawingMousePos, setDrawingMousePos] = useState(null);
+  // For double-click detection (manual timing since preventDefault breaks native)
+  const [lastClickTime, setLastClickTime] = useState(0);
+  // For point selection (to enable Delete key)
+  const [selectedPointIndex, setSelectedPointIndex] = useState(null);
 
   const {
     surface,
@@ -128,7 +132,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     cancelPath,
     updatePathControlPoint,
     updatePathHandle,
-    commitPathEdit
+    commitPathEdit,
+    removePointFromPath
   } = useSportsDesignStore();
 
   // Convert screen coordinates to SVG coordinates
@@ -1208,6 +1213,17 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         e.preventDefault();
         e.stopPropagation();
 
+        // Check for double-click by timing (native dblclick broken by preventDefault)
+        const now = Date.now();
+        const timeSinceLastClick = now - lastClickTime;
+        setLastClickTime(now);
+
+        // If double-click detected (< 300ms between clicks), finish the path
+        if (timeSinceLastClick < 300 && timeSinceLastClick > 0) {
+          finishPath();
+          return;
+        }
+
         const clientX = e.clientX;
         const clientY = e.clientY;
         const svgPoint = screenToSVG(clientX, clientY);
@@ -1238,15 +1254,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       deselectMotif();
       deselectShape();
       deselectText();
-    }
-  };
-
-  // Handle double-click to finish path drawing
-  const handleCanvasDoubleClick = (e) => {
-    if (pathDrawingMode && activePathId) {
-      e.preventDefault();
-      e.stopPropagation();
-      finishPath();
+      // Clear point selection when clicking background
+      setSelectedPointIndex(null);
     }
   };
 
@@ -1386,7 +1395,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     }
   }, [isPanning, panStart]);
 
-  // Keyboard handler for space+drag panning and Escape for path drawing
+  // Keyboard handler for space+drag panning, Escape for path drawing, and Delete for points
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.code === 'Space' && !e.repeat) {
@@ -1405,6 +1414,19 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         e.preventDefault();
         finishPath();
       }
+
+      // Delete/Backspace removes selected point from path or blob
+      if ((e.code === 'Delete' || e.code === 'Backspace') && selectedShapeId && selectedPointIndex !== null) {
+        // Don't activate if user is typing in an input
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        const shape = shapes[selectedShapeId];
+        if (shape && (shape.shapeType === 'path' || shape.shapeType === 'blob') && shape.editPointsVisible) {
+          e.preventDefault();
+          removePointFromPath(selectedShapeId, selectedPointIndex);
+          setSelectedPointIndex(null);
+        }
+      }
     };
 
     const handleKeyUp = (e) => {
@@ -1421,7 +1443,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [pathDrawingMode, activePathId, cancelPath, finishPath]);
+  }, [pathDrawingMode, activePathId, cancelPath, finishPath, selectedShapeId, selectedPointIndex, shapes, removePointFromPath]);
 
   // Track mouse position for path drawing preview line
   const handleCanvasMouseMove = (e) => {
@@ -1441,7 +1463,6 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     <div
       className={`court-canvas ${pathDrawingMode ? 'court-canvas--drawing' : ''}`}
       onClick={handleCanvasClick}
-      onDoubleClick={handleCanvasDoubleClick}
       onMouseMove={handleCanvasMouseMove}
     >
       {/* Path Drawing Mode Indicator */}
@@ -1597,6 +1618,9 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                   onPointDrag={(index, newX, newY) => updateBlobControlPoint(elementId, index, newX, newY)}
                   onHandleDrag={(index, handleType, offsetX, offsetY) => updateBlobHandle(elementId, index, handleType, offsetX, offsetY)}
                   onDragEnd={() => commitBlobEdit()}
+                  selectedPointIndex={elementId === selectedShapeId ? selectedPointIndex : null}
+                  onPointSelect={(index) => setSelectedPointIndex(index)}
+                  onPointDelete={(index) => removePointFromPath(elementId, index)}
                 />
               );
             }
@@ -1616,6 +1640,9 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                   onPointDrag={(index, newX, newY) => updatePathControlPoint(elementId, index, newX, newY)}
                   onHandleDrag={(index, handleType, offsetX, offsetY) => updatePathHandle(elementId, index, handleType, offsetX, offsetY)}
                   onDragEnd={() => commitPathEdit()}
+                  selectedPointIndex={elementId === selectedShapeId ? selectedPointIndex : null}
+                  onPointSelect={(index) => setSelectedPointIndex(index)}
+                  onPointDelete={(index) => removePointFromPath(elementId, index)}
                 />
               );
             }

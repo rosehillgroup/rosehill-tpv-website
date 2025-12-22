@@ -1600,7 +1600,7 @@ function ShapePropertiesPanel({ shape, shapeId }) {
   // Shape preset buttons
   const shapePresets = [
     { sides: 3, name: 'Triangle', icon: '△' },
-    { sides: 4, name: 'Square', icon: '□' },
+    { sides: 4, name: 'Rectangle', icon: '▭' },
     { sides: 5, name: 'Pentagon', icon: '⬠' },
     { sides: 6, name: 'Hexagon', icon: '⬡' },
     { sides: 8, name: 'Octagon', icon: '⯃' },
