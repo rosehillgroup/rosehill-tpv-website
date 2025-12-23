@@ -644,9 +644,10 @@ export const useSportsDesignStore = create(
         // Default starting boxes configuration
         const defaultStartingBoxes = {
           enabled: false,
-          depth_mm: 500,
-          style: 'staggered',           // 'straight' | 'staggered' | 'both'
-          direction: 'counterclockwise', // 'clockwise' | 'counterclockwise'
+          depth_mm: 800,                  // Increased for better label spacing
+          lineWidth_mm: 50,               // Match track lane line width
+          style: 'staggered',             // 'straight' | 'staggered' | 'both'
+          direction: 'counterclockwise',  // 'clockwise' | 'counterclockwise'
           startPosition: 0              // 0-100% position around track (curved tracks only)
         };
 

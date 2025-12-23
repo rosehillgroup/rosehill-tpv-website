@@ -17,13 +17,16 @@ function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor, isStraig
   if (!boxConfig || !boxConfig.enabled) return null;
 
   const {
-    depth_mm = 400,
-    lineWidth_mm = 50,
-    perLaneOffsets = [],  // For staggered starts: [0, 7660, 15330, ...] (in mm)
-    style = 'staggered',  // 'straight' | 'staggered' | 'both'
+    depth_mm = 800,         // Box depth along track
+    lineWidth_mm = 50,      // Match track lane line width (World Athletics standard)
+    perLaneOffsets = [],    // For staggered starts: [0, 7660, 15330, ...] (in mm)
+    style = 'staggered',    // 'straight' | 'staggered' | 'both'
     direction = 'counterclockwise', // 'clockwise' | 'counterclockwise'
-    startPosition = 0     // 0-100% position around track (curved tracks only)
+    startPosition = 0       // 0-100% position around track (curved tracks only)
   } = boxConfig;
+
+  // Stencil font for lane numbers - athletic track style
+  const labelFontFamily = "'Allerta Stencil', 'Stencil', 'Impact', sans-serif";
 
   // Use track surface color for boxes by default
   const boxFillColor = surfaceColor || '#A5362F';
@@ -53,6 +56,7 @@ function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor, isStraig
             lineWidth_mm,
             boxFillColor,
             lineColor,
+            labelFontFamily,
             renderStaggered,
             renderStraight,
             perLaneOffsets,
@@ -68,6 +72,7 @@ function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor, isStraig
             lineWidth_mm,
             boxFillColor,
             lineColor,
+            labelFontFamily,
             renderStaggered,
             renderStraight,
             perLaneOffsets,
@@ -92,6 +97,7 @@ function renderStraightTrackBoxes(
   lineWidth_mm,
   boxFillColor,
   lineColor,
+  labelFontFamily,
   renderStaggered,
   renderStraight,
   perLaneOffsets,
@@ -131,6 +137,7 @@ function renderStraightTrackBoxes(
         boxFillColor={boxFillColor}
         lineColor={lineColor}
         lineWidth={lineWidth_mm}
+        fontFamily={labelFontFamily}
         flipLine={isClockwise}
       />
     );
@@ -147,6 +154,7 @@ function renderStraightTrackBoxes(
         boxFillColor={boxFillColor}
         lineColor={lineColor}
         lineWidth={lineWidth_mm}
+        fontFamily={labelFontFamily}
         flipLine={isClockwise}
       />
     );
@@ -167,6 +175,7 @@ function renderStraightTrackBoxes(
         boxFillColor={boxFillColor}
         lineColor={lineColor}
         lineWidth={lineWidth_mm}
+        fontFamily={labelFontFamily}
         flipLine={isClockwise}
       />
     );
@@ -182,6 +191,7 @@ function renderStraightTrackBoxes(
         boxFillColor={boxFillColor}
         lineColor={lineColor}
         lineWidth={lineWidth_mm}
+        fontFamily={labelFontFamily}
         flipLine={!isClockwise}
       />
     );
@@ -193,7 +203,7 @@ function renderStraightTrackBoxes(
 /**
  * Single starting box component for straight tracks
  */
-function StartingBox({ x, y, width, height, laneNumber, boxFillColor, lineColor, lineWidth, flipLine }) {
+function StartingBox({ x, y, width, height, laneNumber, boxFillColor, lineColor, lineWidth, fontFamily, flipLine }) {
   // When flipLine is true, the starting line is at the bottom of the box
   const lineY = flipLine ? y + height : y;
 
@@ -226,13 +236,14 @@ function StartingBox({ x, y, width, height, laneNumber, boxFillColor, lineColor,
       <text
         x={x + width / 2}
         y={y + height / 2}
-        fontSize={Math.min(width * 0.4, width * 0.5)}
+        fontSize={Math.min(height * 0.6, width * 0.5)}
         fill={lineColor}
         textAnchor="middle"
         dominantBaseline="middle"
+        fontFamily={fontFamily}
         fontWeight="bold"
         pointerEvents="none"
-        opacity="0.8"
+        opacity="0.9"
       >
         {laneNumber}
       </text>
@@ -258,6 +269,7 @@ function renderCurvedTrackBoxes(
   lineWidth_mm,
   boxFillColor,
   lineColor,
+  labelFontFamily,
   renderStaggered,
   renderStraight,
   perLaneOffsets,
@@ -310,6 +322,7 @@ function renderCurvedTrackBoxes(
         boxFillColor={boxFillColor}
         lineColor={lineColor}
         lineWidth={lineWidth_mm}
+        fontFamily={labelFontFamily}
       />
     );
   } else if (renderStraight && !renderStaggered) {
@@ -328,6 +341,7 @@ function renderCurvedTrackBoxes(
         boxFillColor={boxFillColor}
         lineColor={lineColor}
         lineWidth={lineWidth_mm}
+        fontFamily={labelFontFamily}
       />
     );
   } else if (renderStaggered && renderStraight) {
@@ -359,6 +373,7 @@ function renderCurvedTrackBoxes(
         boxFillColor={boxFillColor}
         lineColor={lineColor}
         lineWidth={lineWidth_mm}
+        fontFamily={labelFontFamily}
       />
     );
 
@@ -373,6 +388,7 @@ function renderCurvedTrackBoxes(
         boxFillColor={boxFillColor}
         lineColor={lineColor}
         lineWidth={lineWidth_mm}
+        fontFamily={labelFontFamily}
       />
     );
   }
@@ -383,7 +399,7 @@ function renderCurvedTrackBoxes(
 /**
  * Single starting box component for curved tracks
  */
-function CurvedStartingBox({ index, laneNumber, distance, depth_mm, parameters, boxFillColor, lineColor, lineWidth }) {
+function CurvedStartingBox({ index, laneNumber, distance, depth_mm, parameters, boxFillColor, lineColor, lineWidth, fontFamily }) {
   // Get the lane center position at the start distance
   const startPoint = getLaneCenterAtDistance(index, distance, parameters);
 
@@ -443,13 +459,14 @@ function CurvedStartingBox({ index, laneNumber, distance, depth_mm, parameters, 
       <text
         x={centerPoint.x}
         y={centerPoint.y}
-        fontSize={parameters.laneWidth_mm * 0.5}
+        fontSize={Math.min(depth_mm * 0.6, parameters.laneWidth_mm * 0.5)}
         fill={lineColor}
         textAnchor="middle"
         dominantBaseline="middle"
+        fontFamily={fontFamily}
         fontWeight="bold"
         pointerEvents="none"
-        opacity="0.8"
+        opacity="0.9"
         transform={`rotate(${(centerPoint.angle * 180 / Math.PI) + 90}, ${centerPoint.x}, ${centerPoint.y})`}
       >
         {laneNumber}

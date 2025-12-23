@@ -291,8 +291,12 @@ function TrackResizeHandles({ track, svgRef }) {
     };
   }, [isResizing, dragStart, resizeHandle, track.id, position, parameters, updateTrackParameters, updateTrackPosition, addToHistory]);
 
+  // Detect straight track for simplified handles
+  const isStraightTrack = track.template?.trackType === 'straight';
+
   // Resize handles positions (corners and edges)
-  const handles = [
+  // For straight tracks, only show north/south handles since width is fixed
+  const allHandles = [
     { type: 'nw', x: 0, y: 0, cursor: 'nwse-resize' },
     { type: 'n', x: width / 2, y: 0, cursor: 'ns-resize' },
     { type: 'ne', x: width, y: 0, cursor: 'nesw-resize' },
@@ -302,6 +306,10 @@ function TrackResizeHandles({ track, svgRef }) {
     { type: 'sw', x: 0, y: height, cursor: 'nesw-resize' },
     { type: 'w', x: 0, y: height / 2, cursor: 'ew-resize' },
   ];
+
+  const handles = isStraightTrack
+    ? allHandles.filter(h => h.type === 'n' || h.type === 's')
+    : allHandles;
 
   const handleSize = 400; // 400mm handles (clearly visible)
 
