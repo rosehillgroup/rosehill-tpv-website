@@ -85,7 +85,8 @@ function serializeTracks(tracks) {
         position: track.position,
         rotation: track.rotation,
         parameters: track.parameters,
-        trackSurfaceColor: track.trackSurfaceColor
+        trackSurfaceColor: track.trackSurfaceColor,
+        trackLineColor: track.trackLineColor
       }
     ])
   );
@@ -235,9 +236,10 @@ export function calculateSportsQuantities(state) {
       addQuantity(state.surface.color.tpv_code, -trackArea.totalAreaMm2, 'Surface Base');
     }
 
-    // Lane line area (white lines)
+    // Lane line area
     if (trackArea.lineAreaMm2 > 0) {
-      addQuantity('WHITE', trackArea.lineAreaMm2, 'Track Lane Lines');
+      const lineColorCode = track.trackLineColor?.tpv_code || 'RH31';
+      addQuantity(lineColorCode, trackArea.lineAreaMm2, 'Track Lane Lines');
     }
   }
 
@@ -404,7 +406,8 @@ export function generateElementSpecs(state) {
       },
       area_m2: trackArea.totalAreaMm2 / 1_000_000,
       lineTotal_m2: trackArea.lineAreaMm2 / 1_000_000,
-      surfaceColor: track.trackSurfaceColor?.name || 'Standard Red'
+      surfaceColor: track.trackSurfaceColor?.name || 'Standard Red',
+      lineColor: track.trackLineColor?.name || 'Cream'
     };
 
     // Add stagger info if staggered start

@@ -634,6 +634,9 @@ export const useSportsDesignStore = create(
           ? getTPVColorObject(template.defaultTrackSurfaceColor)
           : getTPVColorObject('RH01');
 
+        // Set default track line color (RH31 Cream)
+        const trackLineColor = getTPVColorObject('RH31');
+
         // Detect if this is a straight track
         const isStraightTrack = template.trackType === 'straight';
 
@@ -728,7 +731,8 @@ export const useSportsDesignStore = create(
           position: trackPosition,
           rotation: trackRotation,
           parameters: trackParameters,
-          trackSurfaceColor
+          trackSurfaceColor,
+          trackLineColor
         };
 
         set((state) => ({
@@ -833,6 +837,19 @@ export const useSportsDesignStore = create(
             [trackId]: {
               ...state.tracks[trackId],
               trackSurfaceColor: color
+            }
+          }
+        }));
+        get().addToHistory();
+      },
+
+      setTrackLineColor: (trackId, color) => {
+        set((state) => ({
+          tracks: {
+            ...state.tracks,
+            [trackId]: {
+              ...state.tracks[trackId],
+              trackLineColor: color
             }
           }
         }));

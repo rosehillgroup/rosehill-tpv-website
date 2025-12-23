@@ -11,9 +11,10 @@ import { getLaneCenterAtDistance, getRadiallyAlignedDistance } from '../../lib/s
  * @param {object} parameters - Track parameters
  * @param {object} boxConfig - Starting box configuration
  * @param {string} surfaceColor - Track surface color hex value
+ * @param {string} lineColor - Track line color hex value (default: RH31 Cream #E8E3D8)
  * @param {boolean} isStraightTrack - Whether this is a straight track (parallel lanes) vs curved (concentric lanes)
  */
-function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor, isStraightTrack }) {
+function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor, lineColor: propLineColor, isStraightTrack }) {
   if (!boxConfig || !boxConfig.enabled) return null;
 
   const {
@@ -30,7 +31,8 @@ function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor, isStraig
 
   // Use track surface color for boxes by default
   const boxFillColor = surfaceColor || '#A5362F';
-  const lineColor = '#FFFFFF'; // White starting line
+  // Use passed line color or default to RH31 Cream
+  const lineColor = propLineColor || '#E8E3D8';
 
   // Determine which box sets to render based on style
   const renderStaggered = style === 'staggered' || style === 'both';
@@ -126,6 +128,10 @@ function renderStraightTrackBoxes(
       ? primaryY - staggerOffset
       : primaryY + staggerOffset;
 
+    // For straight tracks, the starting line should be on the INNER edge of the box
+    // (where runners stand behind), not at the track boundary
+    // counterclockwise: line at bottom of box (flipLine=true)
+    // clockwise: line at top of box (flipLine=false)
     boxes.push(
       <StartingBox
         key={`stagger-${laneNumber}`}
@@ -138,7 +144,7 @@ function renderStraightTrackBoxes(
         lineColor={lineColor}
         lineWidth={lineWidth_mm}
         fontFamily={labelFontFamily}
-        flipLine={isClockwise}
+        flipLine={!isClockwise}
       />
     );
   } else if (renderStraight && !renderStaggered) {
@@ -155,7 +161,7 @@ function renderStraightTrackBoxes(
         lineColor={lineColor}
         lineWidth={lineWidth_mm}
         fontFamily={labelFontFamily}
-        flipLine={isClockwise}
+        flipLine={!isClockwise}
       />
     );
   } else if (renderStaggered && renderStraight) {
@@ -176,7 +182,7 @@ function renderStraightTrackBoxes(
         lineColor={lineColor}
         lineWidth={lineWidth_mm}
         fontFamily={labelFontFamily}
-        flipLine={isClockwise}
+        flipLine={!isClockwise}
       />
     );
 
@@ -192,7 +198,7 @@ function renderStraightTrackBoxes(
         lineColor={lineColor}
         lineWidth={lineWidth_mm}
         fontFamily={labelFontFamily}
-        flipLine={!isClockwise}
+        flipLine={isClockwise}
       />
     );
   }

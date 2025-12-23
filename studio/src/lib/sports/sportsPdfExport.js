@@ -244,6 +244,12 @@ export async function generateSportsPDF(svgElement, designState, designName) {
         y = drawColourRow(page2, fontRegular, track.trackSurfaceColor, trackArea, y, 'Track Surface');
       }
 
+      if (track.trackLineColor) {
+        // Estimate line area (simplified - about 2% of track area)
+        const lineArea = totalAreaM2 * 0.02;
+        y = drawColourRow(page2, fontRegular, track.trackLineColor, lineArea, y, 'Track Lines');
+      }
+
       y -= 10;
     }
   }

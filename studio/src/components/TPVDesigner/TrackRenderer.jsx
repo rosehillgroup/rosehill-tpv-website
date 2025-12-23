@@ -9,7 +9,7 @@ import StartingBoxes from './StartingBoxes.jsx';
  * Renders a complete running track with all lanes
  */
 function TrackElement({ track, isSelected, onMouseDown, onTouchStart, onDoubleClick, svgRef }) {
-  const { parameters, position, rotation, trackSurfaceColor } = track;
+  const { parameters, position, rotation, trackSurfaceColor, trackLineColor } = track;
 
   // Calculate track geometry
   const geometry = calculateTrackGeometry(parameters);
@@ -30,7 +30,7 @@ function TrackElement({ track, isSelected, onMouseDown, onTouchStart, onDoubleCl
 
   // Track surface and line colors
   const surfaceColor = trackSurfaceColor?.hex || '#A5362F'; // Default Standard Red (RH01)
-  const lineColor = '#FFFFFF';
+  const lineColor = trackLineColor?.hex || '#E8E3D8'; // Default RH31 Cream
   const lineWidth = parameters.lineWidth_mm || 50;
 
   // Debug logging
@@ -44,40 +44,46 @@ function TrackElement({ track, isSelected, onMouseDown, onTouchStart, onDoubleCl
       transform={transform}
       style={{ cursor: 'move' }}
     >
-      {/* Invisible clickable area - captures all mouse/touch events */}
-      <rect
-        x="0"
-        y="0"
-        width={boundingWidth}
-        height={boundingLength}
-        fill="none"
-        pointerEvents="all"
-        onMouseDown={onMouseDown}
-        onTouchStart={onTouchStart}
-        onDoubleClick={onDoubleClick}
-        style={{ cursor: 'move' }}
-      />
-
-      {/* Track surface fill */}
+      {/* Track surface fill with click handling */}
       {isStraightTrack ? (
         // Straight track: render each lane as filled rectangle
-        geometry.lanes.map((lane) => (
-          <path
-            key={`lane-fill-${lane.laneNumber}`}
-            d={lane.outerPath}
-            fill={surfaceColor}
-            stroke="none"
-            pointerEvents="none"
+        // Use a single rect for hit area since it's a solid rectangular shape
+        <>
+          <rect
+            x="0"
+            y="0"
+            width={boundingWidth}
+            height={boundingLength}
+            fill="transparent"
+            pointerEvents="all"
+            onMouseDown={onMouseDown}
+            onTouchStart={onTouchStart}
+            onDoubleClick={onDoubleClick}
+            style={{ cursor: 'move' }}
           />
-        ))
+          {geometry.lanes.map((lane) => (
+            <path
+              key={`lane-fill-${lane.laneNumber}`}
+              d={lane.outerPath}
+              fill={surfaceColor}
+              stroke="none"
+              pointerEvents="none"
+            />
+          ))}
+        </>
       ) : (
         // Curved track: render donut shape (outer boundary minus inner infield)
+        // Click handlers on the track surface itself so center is click-through
         <path
           d={`${geometry.lanes[0].outerPath} ${geometry.lanes[geometry.lanes.length - 1].innerPath}`}
           fill={surfaceColor}
           fillRule="evenodd"
           stroke="none"
-          pointerEvents="none"
+          pointerEvents="all"
+          onMouseDown={onMouseDown}
+          onTouchStart={onTouchStart}
+          onDoubleClick={onDoubleClick}
+          style={{ cursor: 'move' }}
         />
       )}
 
@@ -107,6 +113,7 @@ function TrackElement({ track, isSelected, onMouseDown, onTouchStart, onDoubleCl
               : []
           }}
           surfaceColor={surfaceColor}
+          lineColor={lineColor}
           isStraightTrack={track.template?.trackType === 'straight'}
         />
       )}

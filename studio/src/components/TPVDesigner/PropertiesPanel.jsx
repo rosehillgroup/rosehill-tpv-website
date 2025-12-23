@@ -487,10 +487,11 @@ function PropertiesPanel({ onEditSourceDesign }) {
  * TODO: Add full editing capabilities for width, height, and per-corner radius
  */
 function TrackPropertiesPanel({ track, trackId }) {
-  const { updateTrackParameters, updateTrackRotation, removeTrack, setTrackSurfaceColor, addToHistory } = useSportsDesignStore();
-  const { parameters, template, trackSurfaceColor, rotation } = track;
+  const { updateTrackParameters, updateTrackRotation, removeTrack, setTrackSurfaceColor, setTrackLineColor, addToHistory } = useSportsDesignStore();
+  const { parameters, template, trackSurfaceColor, trackLineColor, rotation } = track;
   const [cornersLocked, setCornersLocked] = React.useState(true);
   const [showTrackColorPicker, setShowTrackColorPicker] = React.useState(false);
+  const [showTrackLineColorPicker, setShowTrackLineColorPicker] = React.useState(false);
 
   // Local state for dimension inputs to allow typing
   const [localWidth, setLocalWidth] = React.useState('');
@@ -652,7 +653,7 @@ function TrackPropertiesPanel({ track, trackId }) {
     }
   };
 
-  // Handle track color selection
+  // Handle track surface color selection
   const handleTrackColorSelect = (tpvColor) => {
     setTrackSurfaceColor(trackId, {
       tpv_code: tpvColor.code,
@@ -660,6 +661,16 @@ function TrackPropertiesPanel({ track, trackId }) {
       name: tpvColor.name
     });
     setShowTrackColorPicker(false);
+  };
+
+  // Handle track line color selection
+  const handleTrackLineColorSelect = (tpvColor) => {
+    setTrackLineColor(trackId, {
+      tpv_code: tpvColor.code,
+      hex: tpvColor.hex,
+      name: tpvColor.name
+    });
+    setShowTrackLineColorPicker(false);
   };
 
   // Handle starting boxes toggle
@@ -962,6 +973,25 @@ function TrackPropertiesPanel({ track, trackId }) {
             </div>
           </div>
 
+          {/* Track Line Colour */}
+          <div className="property-group">
+            <label>Line Colour</label>
+            <div className="color-item">
+              <div className="color-item__info">
+                <span className="color-item__name">{trackLineColor?.name || 'Cream'}</span>
+                {trackLineColor && (
+                  <span className="color-item__code">{trackLineColor.tpv_code}</span>
+                )}
+              </div>
+              <button
+                className="color-item__swatch"
+                style={{ backgroundColor: trackLineColor?.hex || '#E8E3D8' }}
+                onClick={() => setShowTrackLineColorPicker(true)}
+                title={trackLineColor?.name || 'Select colour'}
+              />
+            </div>
+          </div>
+
           {/* Starting Boxes Section */}
           <div className="property-group">
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -1156,6 +1186,31 @@ function TrackPropertiesPanel({ track, trackId }) {
                   className="color-picker-swatch"
                   style={{ backgroundColor: color.hex }}
                   onClick={() => handleTrackColorSelect(color)}
+                  title={`${color.code} - ${color.name}`}
+                >
+                  <span className="color-picker-swatch__code">{color.code}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Color Picker Modal for Track Lines */}
+      {showTrackLineColorPicker && (
+        <div className="color-picker-modal" onClick={() => setShowTrackLineColorPicker(false)}>
+          <div className="color-picker-modal__content" onClick={(e) => e.stopPropagation()}>
+            <div className="color-picker-modal__header">
+              <h4>Select Line Colour</h4>
+              <button onClick={() => setShowTrackLineColorPicker(false)}>×</button>
+            </div>
+            <div className="color-picker-grid">
+              {tpvColours.map(color => (
+                <button
+                  key={color.code}
+                  className="color-picker-swatch"
+                  style={{ backgroundColor: color.hex }}
+                  onClick={() => handleTrackLineColorSelect(color)}
                   title={`${color.code} - ${color.name}`}
                 >
                   <span className="color-picker-swatch__code">{color.code}</span>
