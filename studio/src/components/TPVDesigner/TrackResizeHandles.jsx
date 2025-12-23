@@ -118,12 +118,21 @@ function TrackResizeHandles({ track, svgRef }) {
         return;
       }
 
+      // For straight tracks, transform delta to track's local coordinate system
+      // The track's length axis is rotated by `rotation` degrees
+      let effectiveDeltaY = deltaY;
+      if (isStraightTrack && rotation !== 0) {
+        const rotRad = (rotation * Math.PI) / 180;
+        // Project mouse movement onto the track's length axis
+        effectiveDeltaY = deltaX * Math.sin(rotRad) + deltaY * Math.cos(rotRad);
+      }
+
       // Calculate new dimensions based on which handle is being dragged
       switch (resizeHandle) {
         case 'se': // Southeast corner - proportional resize (height only for straight tracks)
           if (isStraightTrack) {
-            // Only adjust height for straight tracks
-            newHeight = Math.max(minSize, dragStart.initialHeight + deltaY);
+            // Only adjust height for straight tracks - center stays fixed
+            newHeight = Math.max(minSize, dragStart.initialHeight + effectiveDeltaY * 2);
           } else {
             newWidth = Math.max(minSize, dragStart.initialWidth + deltaX);
             newHeight = Math.max(minSize, dragStart.initialHeight + deltaY);
@@ -140,9 +149,8 @@ function TrackResizeHandles({ track, svgRef }) {
 
         case 'nw': // Northwest corner - proportional resize (height only for straight tracks)
           if (isStraightTrack) {
-            // Only adjust height for straight tracks
-            newHeight = Math.max(minSize, dragStart.initialHeight - deltaY);
-            newPosition.y = dragStart.initialPosition.y + (dragStart.initialHeight - newHeight);
+            // Only adjust height for straight tracks - center stays fixed
+            newHeight = Math.max(minSize, dragStart.initialHeight - effectiveDeltaY * 2);
           } else {
             newWidth = Math.max(minSize, dragStart.initialWidth - deltaX);
             newHeight = Math.max(minSize, dragStart.initialHeight - deltaY);
@@ -161,9 +169,8 @@ function TrackResizeHandles({ track, svgRef }) {
 
         case 'ne': // Northeast corner - proportional resize (height only for straight tracks)
           if (isStraightTrack) {
-            // Only adjust height for straight tracks
-            newHeight = Math.max(minSize, dragStart.initialHeight - deltaY);
-            newPosition.y = dragStart.initialPosition.y + (dragStart.initialHeight - newHeight);
+            // Only adjust height for straight tracks - center stays fixed
+            newHeight = Math.max(minSize, dragStart.initialHeight - effectiveDeltaY * 2);
           } else {
             newWidth = Math.max(minSize, dragStart.initialWidth + deltaX);
             newHeight = Math.max(minSize, dragStart.initialHeight - deltaY);
@@ -180,8 +187,8 @@ function TrackResizeHandles({ track, svgRef }) {
 
         case 'sw': // Southwest corner - proportional resize (height only for straight tracks)
           if (isStraightTrack) {
-            // Only adjust height for straight tracks
-            newHeight = Math.max(minSize, dragStart.initialHeight + deltaY);
+            // Only adjust height for straight tracks - center stays fixed
+            newHeight = Math.max(minSize, dragStart.initialHeight + effectiveDeltaY * 2);
           } else {
             newWidth = Math.max(minSize, dragStart.initialWidth - deltaX);
             newHeight = Math.max(minSize, dragStart.initialHeight + deltaY);
@@ -221,26 +228,38 @@ function TrackResizeHandles({ track, svgRef }) {
           break;
 
         case 'n': // North edge - height only
-          newHeight = Math.max(minSize, dragStart.initialHeight - deltaY);
-          newPosition.y = dragStart.initialPosition.y + (dragStart.initialHeight - newHeight);
-          const nScale = newHeight / dragStart.initialHeight;
-          newCornerRadius = {
-            topLeft: dragStart.initialCornerRadius.topLeft * nScale,
-            topRight: dragStart.initialCornerRadius.topRight * nScale,
-            bottomLeft: dragStart.initialCornerRadius.bottomLeft * nScale,
-            bottomRight: dragStart.initialCornerRadius.bottomRight * nScale
-          };
+          if (isStraightTrack) {
+            // Straight track: use rotation-aware delta, resize from center (×2 because both ends move)
+            newHeight = Math.max(minSize, dragStart.initialHeight - effectiveDeltaY * 2);
+            // No position adjustment - center stays fixed
+          } else {
+            newHeight = Math.max(minSize, dragStart.initialHeight - deltaY);
+            newPosition.y = dragStart.initialPosition.y + (dragStart.initialHeight - newHeight);
+            const nScale = newHeight / dragStart.initialHeight;
+            newCornerRadius = {
+              topLeft: dragStart.initialCornerRadius.topLeft * nScale,
+              topRight: dragStart.initialCornerRadius.topRight * nScale,
+              bottomLeft: dragStart.initialCornerRadius.bottomLeft * nScale,
+              bottomRight: dragStart.initialCornerRadius.bottomRight * nScale
+            };
+          }
           break;
 
         case 's': // South edge - height only
-          newHeight = Math.max(minSize, dragStart.initialHeight + deltaY);
-          const sScale = newHeight / dragStart.initialHeight;
-          newCornerRadius = {
-            topLeft: dragStart.initialCornerRadius.topLeft * sScale,
-            topRight: dragStart.initialCornerRadius.topRight * sScale,
-            bottomLeft: dragStart.initialCornerRadius.bottomLeft * sScale,
-            bottomRight: dragStart.initialCornerRadius.bottomRight * sScale
-          };
+          if (isStraightTrack) {
+            // Straight track: use rotation-aware delta, resize from center (×2 because both ends move)
+            newHeight = Math.max(minSize, dragStart.initialHeight + effectiveDeltaY * 2);
+            // No position adjustment - center stays fixed
+          } else {
+            newHeight = Math.max(minSize, dragStart.initialHeight + deltaY);
+            const sScale = newHeight / dragStart.initialHeight;
+            newCornerRadius = {
+              topLeft: dragStart.initialCornerRadius.topLeft * sScale,
+              topRight: dragStart.initialCornerRadius.topRight * sScale,
+              bottomLeft: dragStart.initialCornerRadius.bottomLeft * sScale,
+              bottomRight: dragStart.initialCornerRadius.bottomRight * sScale
+            };
+          }
           break;
       }
 

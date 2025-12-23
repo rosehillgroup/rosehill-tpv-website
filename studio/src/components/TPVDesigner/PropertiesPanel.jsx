@@ -2388,11 +2388,14 @@ function TextPropertiesPanel({ text, textId }) {
     updateTextAlign,
     updateTextRotation,
     setTextFillColor,
+    setTextStrokeColor,
+    updateTextStrokeWidth,
     removeText,
     duplicateText
   } = useSportsDesignStore();
 
   const [showTextColorPicker, setShowTextColorPicker] = React.useState(false);
+  const [showStrokeColorPicker, setShowStrokeColorPicker] = React.useState(false);
 
   const {
     content,
@@ -2403,7 +2406,9 @@ function TextPropertiesPanel({ text, textId }) {
     textAlign,
     position,
     rotation,
-    fillColor
+    fillColor,
+    strokeColor,
+    strokeWidth_mm
   } = text;
 
   const fonts = getAvailableFonts();
@@ -2465,6 +2470,33 @@ function TextPropertiesPanel({ text, textId }) {
       name: tpvColor.name
     });
     setShowTextColorPicker(false);
+  };
+
+  // Handle stroke color selection
+  const handleStrokeColorSelect = (tpvColor) => {
+    setTextStrokeColor(textId, {
+      tpv_code: tpvColor.code,
+      hex: tpvColor.hex,
+      name: tpvColor.name
+    });
+    // Set a default width if none exists
+    if (!strokeWidth_mm || strokeWidth_mm === 0) {
+      updateTextStrokeWidth(textId, Math.round(fontSize_mm * 0.05)); // 5% of font size
+    }
+    setShowStrokeColorPicker(false);
+  };
+
+  // Handle stroke width change
+  const handleStrokeWidthChange = (value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue < 0) return;
+    updateTextStrokeWidth(textId, numValue);
+  };
+
+  // Handle remove stroke
+  const handleRemoveStroke = () => {
+    setTextStrokeColor(textId, null);
+    updateTextStrokeWidth(textId, 0);
   };
 
   // Handle delete text
@@ -2676,6 +2708,80 @@ function TextPropertiesPanel({ text, textId }) {
             </div>
           </div>
 
+          {/* Text Outline/Stroke */}
+          <div className="property-group">
+            <label>Outline</label>
+            {strokeColor ? (
+              <>
+                <div className="color-item">
+                  <div className="color-item__info">
+                    <span className="color-item__name">{strokeColor.name}</span>
+                    <span className="color-item__code">{strokeColor.tpv_code}</span>
+                  </div>
+                  <button
+                    className="color-item__swatch"
+                    style={{ backgroundColor: strokeColor.hex }}
+                    onClick={() => setShowStrokeColorPicker(true)}
+                    title={strokeColor.name}
+                  />
+                </div>
+                {/* Stroke Width */}
+                <div className="property-input-row" style={{ marginTop: '0.5rem' }}>
+                  <input
+                    type="range"
+                    min="1"
+                    max={Math.round(fontSize_mm * 0.2)}
+                    step="1"
+                    value={strokeWidth_mm || 0}
+                    onChange={(e) => handleStrokeWidthChange(e.target.value)}
+                    className="property-slider"
+                  />
+                  <div className="property-input-group property-input-group--compact">
+                    <input
+                      type="number"
+                      value={Math.round(strokeWidth_mm || 0)}
+                      onChange={(e) => handleStrokeWidthChange(e.target.value)}
+                      min="0"
+                      step="1"
+                    />
+                    <span className="property-unit">mm</span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleRemoveStroke}
+                  style={{
+                    marginTop: '0.5rem',
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '0.75rem',
+                    background: '#fee2e2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '4px',
+                    color: '#dc2626',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Remove Outline
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setShowStrokeColorPicker(true)}
+                style={{
+                  width: '100%',
+                  padding: '0.5rem',
+                  background: '#f3f4f6',
+                  border: '1px dashed #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '0.875rem',
+                  color: '#6b7280',
+                  cursor: 'pointer'
+                }}
+              >
+                + Add Outline
+              </button>
+            )}
+          </div>
+
           {/* Divider */}
           <div className="properties-section__divider" style={{ margin: '1rem 0' }}>
             <span>Transform</span>
@@ -2795,6 +2901,31 @@ function TextPropertiesPanel({ text, textId }) {
                   className="color-picker-swatch"
                   style={{ backgroundColor: color.hex }}
                   onClick={() => handleColorSelect(color)}
+                  title={`${color.code} - ${color.name}`}
+                >
+                  <span className="color-picker-swatch__code">{color.code}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stroke Color Picker Modal */}
+      {showStrokeColorPicker && (
+        <div className="color-picker-modal" onClick={() => setShowStrokeColorPicker(false)}>
+          <div className="color-picker-modal__content" onClick={(e) => e.stopPropagation()}>
+            <div className="color-picker-modal__header">
+              <h4>Select Outline Colour</h4>
+              <button onClick={() => setShowStrokeColorPicker(false)}>×</button>
+            </div>
+            <div className="color-picker-grid">
+              {tpvColours.map(color => (
+                <button
+                  key={color.code}
+                  className="color-picker-swatch"
+                  style={{ backgroundColor: color.hex }}
+                  onClick={() => handleStrokeColorSelect(color)}
                   title={`${color.code} - ${color.name}`}
                 >
                   <span className="color-picker-swatch__code">{color.code}</span>

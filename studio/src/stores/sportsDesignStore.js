@@ -1964,6 +1964,8 @@ export const useSportsDesignStore = create(
             hex: '#1C1C1C',
             name: 'Black'
           },
+          strokeColor: null,  // No outline by default
+          strokeWidth_mm: 0,  // Outline width in mm
           locked: false,
           visible: true,
           customName: null
@@ -2126,6 +2128,31 @@ export const useSportsDesignStore = create(
           }
         }));
         get().addToHistory();
+      },
+
+      setTextStrokeColor: (textId, color) => {
+        set((state) => ({
+          texts: {
+            ...state.texts,
+            [textId]: {
+              ...state.texts[textId],
+              strokeColor: color
+            }
+          }
+        }));
+        get().addToHistory();
+      },
+
+      updateTextStrokeWidth: (textId, strokeWidth_mm) => {
+        set((state) => ({
+          texts: {
+            ...state.texts,
+            [textId]: {
+              ...state.texts[textId],
+              strokeWidth_mm
+            }
+          }
+        }));
       },
 
       duplicateText: (textId) => {

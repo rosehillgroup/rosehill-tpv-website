@@ -43,7 +43,9 @@ function TextElement({
     textAlign,
     position,
     rotation,
-    fillColor
+    fillColor,
+    strokeColor,
+    strokeWidth_mm
   } = text;
 
   // Calculate text bounding box for handles and hit area
@@ -122,7 +124,7 @@ function TextElement({
         </foreignObject>
       ) : (
         <>
-          {/* Display mode - SVG text */}
+          {/* Display mode - SVG text with optional stroke */}
           <text
             x="0"
             y="0"
@@ -132,6 +134,11 @@ function TextElement({
             fontStyle={fontStyle}
             textAnchor={textAlign === 'center' ? 'middle' : textAlign === 'right' ? 'end' : 'start'}
             fill={fillColor?.hex || '#1C1C1C'}
+            stroke={strokeColor?.hex || 'none'}
+            strokeWidth={strokeWidth_mm || 0}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            paintOrder="stroke fill"
             style={{ cursor: 'move', userSelect: 'none' }}
             pointerEvents="none"
           >
