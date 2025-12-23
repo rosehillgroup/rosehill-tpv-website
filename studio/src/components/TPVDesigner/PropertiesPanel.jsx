@@ -487,16 +487,18 @@ function PropertiesPanel({ onEditSourceDesign }) {
  * TODO: Add full editing capabilities for width, height, and per-corner radius
  */
 function TrackPropertiesPanel({ track, trackId }) {
-  const { updateTrackParameters, removeTrack, setTrackSurfaceColor } = useSportsDesignStore();
-  const { parameters, template, trackSurfaceColor } = track;
+  const { updateTrackParameters, updateTrackRotation, removeTrack, setTrackSurfaceColor, addToHistory } = useSportsDesignStore();
+  const { parameters, template, trackSurfaceColor, rotation } = track;
   const [cornersLocked, setCornersLocked] = React.useState(true);
   const [showTrackColorPicker, setShowTrackColorPicker] = React.useState(false);
 
   // Local state for dimension inputs to allow typing
   const [localWidth, setLocalWidth] = React.useState('');
   const [localHeight, setLocalHeight] = React.useState('');
+  const [localRotation, setLocalRotation] = React.useState('');
   const [isEditingWidth, setIsEditingWidth] = React.useState(false);
   const [isEditingHeight, setIsEditingHeight] = React.useState(false);
+  const [isEditingRotation, setIsEditingRotation] = React.useState(false);
 
   // Detect track type
   const isStraightTrack = template.trackType === 'straight';
@@ -581,6 +583,36 @@ function TrackPropertiesPanel({ track, trackId }) {
     } else if (e.key === 'Escape') {
       setIsEditingHeight(false);
       setLocalHeight((parameters.height_mm / 1000).toFixed(1));
+    }
+  };
+
+  // Rotation input handlers
+  const applyRotation = (value) => {
+    let numValue = parseFloat(value);
+    if (isNaN(numValue)) return false;
+    // Normalize to 0-360 range
+    numValue = ((numValue % 360) + 360) % 360;
+    updateTrackRotation(trackId, numValue);
+    addToHistory();
+    return true;
+  };
+
+  const handleRotationFocus = () => {
+    setIsEditingRotation(true);
+    setLocalRotation(rotation.toFixed(0));
+  };
+
+  const handleRotationBlur = () => {
+    setIsEditingRotation(false);
+    applyRotation(localRotation);
+  };
+
+  const handleRotationKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.target.blur();
+    } else if (e.key === 'Escape') {
+      setIsEditingRotation(false);
+      setLocalRotation(rotation.toFixed(0));
     }
   };
 
@@ -781,6 +813,25 @@ function TrackPropertiesPanel({ track, trackId }) {
                 step="0.5"
               />
               <span className="property-unit">m</span>
+            </div>
+          </div>
+
+          {/* Rotation (Editable) */}
+          <div className="property-group">
+            <label>Rotation</label>
+            <div className="property-input-group">
+              <input
+                type="number"
+                value={isEditingRotation ? localRotation : rotation.toFixed(0)}
+                onChange={(e) => setLocalRotation(e.target.value)}
+                onFocus={handleRotationFocus}
+                onBlur={handleRotationBlur}
+                onKeyDown={handleRotationKeyDown}
+                min="0"
+                max="360"
+                step="15"
+              />
+              <span className="property-unit">°</span>
             </div>
           </div>
 
@@ -1060,7 +1111,8 @@ function TrackPropertiesPanel({ track, trackId }) {
             </div>
           </div>
 
-          {parameters.numLanes > 1 && (
+          {/* Only show last lane perimeter for curved tracks - straight tracks have identical lane perimeters */}
+          {parameters.numLanes > 1 && !isStraightTrack && (
             <div className="property-group property-group--info">
               <label>Lane {parameters.numLanes} Perimeter</label>
               <div className="property-info">
