@@ -25,8 +25,8 @@ function StartingBoxes({ geometry, parameters, boxConfig, surfaceColor, isStraig
     startPosition = 0       // 0-100% position around track (curved tracks only)
   } = boxConfig;
 
-  // Stencil font for lane numbers - athletic track style
-  const labelFontFamily = "'Allerta Stencil', 'Stencil', 'Impact', sans-serif";
+  // Military stencil font for lane numbers - athletic track style
+  const labelFontFamily = "'Black Ops One', 'Impact', sans-serif";
 
   // Use track surface color for boxes by default
   const boxFillColor = surfaceColor || '#A5362F';

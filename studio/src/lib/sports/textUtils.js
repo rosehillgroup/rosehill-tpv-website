@@ -40,6 +40,7 @@ export function getAvailableFonts() {
     { name: 'Roboto', family: 'Roboto, sans-serif' },
     { name: 'Montserrat', family: 'Montserrat, sans-serif' },
     { name: 'Oswald', family: 'Oswald, sans-serif' },
+    { name: 'Black Ops One', family: 'Black Ops One, sans-serif' },
     { name: 'Playfair Display', family: 'Playfair Display, serif' },
     { name: 'Arial', family: 'Arial, sans-serif' },
     { name: 'Georgia', family: 'Georgia, serif' },
