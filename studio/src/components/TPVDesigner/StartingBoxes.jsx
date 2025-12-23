@@ -202,6 +202,7 @@ function renderStraightTrackBoxes(
 
 /**
  * Single starting box component for straight tracks
+ * No background fill - just the starting line and lane number
  */
 function StartingBox({ x, y, width, height, laneNumber, boxFillColor, lineColor, lineWidth, fontFamily, flipLine }) {
   // When flipLine is true, the starting line is at the bottom of the box
@@ -209,17 +210,6 @@ function StartingBox({ x, y, width, height, laneNumber, boxFillColor, lineColor,
 
   return (
     <g>
-      {/* Starting box fill */}
-      <rect
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        fill={boxFillColor}
-        stroke="none"
-        pointerEvents="none"
-      />
-
       {/* Starting line */}
       <line
         x1={x}
@@ -398,6 +388,7 @@ function renderCurvedTrackBoxes(
 
 /**
  * Single starting box component for curved tracks
+ * No background fill - just the starting line and lane number
  */
 function CurvedStartingBox({ index, laneNumber, distance, depth_mm, parameters, boxFillColor, lineColor, lineWidth, fontFamily }) {
   // Get the lane center position at the start distance
@@ -413,36 +404,11 @@ function CurvedStartingBox({ index, laneNumber, distance, depth_mm, parameters, 
   const x2 = startPoint.x - Math.cos(perpAngle) * halfLaneWidth;
   const y2 = startPoint.y - Math.sin(perpAngle) * halfLaneWidth;
 
-  // Calculate box end points (depth_mm further along the track)
-  const endPoint = getLaneCenterAtDistance(index, distance + depth_mm, parameters);
-  const endPerpAngle = endPoint.angle + Math.PI / 2;
-  const ex1 = endPoint.x + Math.cos(endPerpAngle) * halfLaneWidth;
-  const ey1 = endPoint.y + Math.sin(endPerpAngle) * halfLaneWidth;
-  const ex2 = endPoint.x - Math.cos(endPerpAngle) * halfLaneWidth;
-  const ey2 = endPoint.y - Math.sin(endPerpAngle) * halfLaneWidth;
-
-  // Calculate center point of box for label (midway between start and end)
+  // Calculate center point for label (midway between start line and depth)
   const centerPoint = getLaneCenterAtDistance(index, distance + depth_mm / 2, parameters);
-
-  // Create path for box fill
-  const boxPath = `
-    M ${x1} ${y1}
-    L ${x2} ${y2}
-    L ${ex2} ${ey2}
-    L ${ex1} ${ey1}
-    Z
-  `.trim().replace(/\s+/g, ' ');
 
   return (
     <g>
-      {/* Starting box fill */}
-      <path
-        d={boxPath}
-        fill={boxFillColor}
-        stroke="none"
-        pointerEvents="none"
-      />
-
       {/* Starting line */}
       <line
         x1={x1}
@@ -455,7 +421,7 @@ function CurvedStartingBox({ index, laneNumber, distance, depth_mm, parameters, 
         pointerEvents="none"
       />
 
-      {/* Lane number label - positioned in center of box */}
+      {/* Lane number label - positioned in center of box area */}
       <text
         x={centerPoint.x}
         y={centerPoint.y}
