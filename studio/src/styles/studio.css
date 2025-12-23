@@ -1,6 +1,6 @@
 /* TPV Studio - Main Stylesheet (Modern Minimal Redesign) */
 /* All styles namespaced under .tpv-studio */
-/* Fonts loaded in index.html: Space Grotesk (headings) & DM Sans (body) */
+/* Fonts loaded in index.html: Overpass (headings) & Source Sans Pro (body) */
 
 .tpv-studio {
   /* ===== Colors (Refined Palette) ===== */
@@ -36,8 +36,8 @@
   --color-info-light: #dbeafe;
 
   /* ===== Typography ===== */
-  --font-heading: 'Space Grotesk', sans-serif;
-  --font-body: 'DM Sans', sans-serif;
+  --font-heading: 'Overpass', sans-serif;
+  --font-body: 'Source Sans Pro', sans-serif;
   --font-mono: 'SF Mono', 'Monaco', 'Courier New', monospace;
 
   /* Font Sizes (Improved scale) */

@@ -90,8 +90,11 @@ export default function LandingPage() {
       {/* Navigation */}
       <nav className="landing-nav">
         <div className="nav-logo">
-          <span className="logo-text">TPV</span>
-          <span className="logo-accent">Studio</span>
+          <div className="logo-main">
+            <span className="logo-text">Rosehill TPV<sup>®</sup></span>
+            <span className="logo-accent">Studio</span>
+          </div>
+          <span className="logo-byline">by Rosehill Sports & Play</span>
         </div>
         <div className="nav-links">
           <button onClick={() => scrollToSection('features')}>Features</button>
@@ -121,14 +124,14 @@ export default function LandingPage() {
         </div>
 
         <div className="hero-content">
-          <div className="hero-badge">TPV Surface Design Platform</div>
+          <div className="hero-badge">Rosehill TPV<sup>®</sup> Surface Design Platform</div>
           <h1>
             <span className="hero-line-1">Design Any</span>
-            <span className="hero-line-2">TPV Surface</span>
+            <span className="hero-line-2">Rosehill TPV<sup>®</sup> Surface</span>
           </h1>
           <p className="hero-subtitle">
             From AI-generated playground art to professional sports courts —
-            one powerful design platform for all your TPV surfaces.
+            one powerful design platform for all your Rosehill TPV<sup>®</sup> surfaces.
           </p>
           <div className="hero-ctas">
             <button onClick={() => setShowSignIn(true)} className="cta-primary">
@@ -305,7 +308,7 @@ export default function LandingPage() {
               </svg>
             </div>
             <h3>Export & Build</h3>
-            <p>Generate professional PDFs with material specifications, TPV blend recipes, and exact quantities for installation.</p>
+            <p>Generate professional PDFs with material specifications, colour recipes, and exact quantities for installation.</p>
           </div>
         </div>
       </section>
@@ -314,7 +317,7 @@ export default function LandingPage() {
       <section id="features" className="features">
         <div className="section-header">
           <span className="section-tag">Capabilities</span>
-          <h2>Everything You Need to Design TPV Surfaces</h2>
+          <h2>Everything You Need to Design Rosehill TPV<sup>®</sup> Surfaces</h2>
         </div>
 
         <div className="features-grid unified-features">
@@ -326,7 +329,7 @@ export default function LandingPage() {
               </svg>
             </div>
             <h3>AI Text-to-Vector</h3>
-            <p>Describe any concept in natural language. Our AI transforms your words into production-ready vector designs optimised for TPV surfaces.</p>
+            <p>Describe any concept in natural language. Our AI transforms your words into production-ready vector designs optimised for Rosehill TPV<sup>®</sup> surfaces.</p>
             <div className="feature-example">
               "vibrant underwater scene with coral reef"
             </div>
@@ -355,7 +358,7 @@ export default function LandingPage() {
               </svg>
             </div>
             <h3>Image Vectorisation</h3>
-            <p>Upload any image and convert it to clean vectors optimised for TPV production.</p>
+            <p>Upload any image and convert it to clean vectors optimised for Rosehill TPV<sup>®</sup> production.</p>
           </div>
 
           {/* Auto Colour Matching */}
@@ -368,8 +371,8 @@ export default function LandingPage() {
                 <circle cx="6.5" cy="12.5" r="2.5"/>
               </svg>
             </div>
-            <h3>Blend Colour Matching</h3>
-            <p>Automatic TPV recipe generation with precise blend ratios for perfect colour accuracy.</p>
+            <h3>Colour Matching</h3>
+            <p>Automatic colour matching to the Rosehill TPV<sup>®</sup> palette with precise specifications.</p>
           </div>
 
           {/* Layer Management */}
@@ -394,7 +397,7 @@ export default function LandingPage() {
               </svg>
             </div>
             <h3>PDF Specifications</h3>
-            <p>Export production-ready material specs with blend recipes and installation guides.</p>
+            <p>Export production-ready material specs with colour specifications and installation guides.</p>
           </div>
         </div>
       </section>
@@ -403,8 +406,8 @@ export default function LandingPage() {
       <section id="palette" className="palette-section">
         <div className="section-header light">
           <span className="section-tag">Palette</span>
-          <h2>21 Standard TPV Colours</h2>
-          <p className="section-subtitle">The complete Rosehill TPV granule palette at your fingertips</p>
+          <h2>21 Standard Rosehill TPV<sup>®</sup> Colours</h2>
+          <p className="section-subtitle">The complete Rosehill TPV<sup>®</sup> granule palette at your fingertips</p>
         </div>
 
         <div className="palette-grid">
@@ -435,7 +438,7 @@ export default function LandingPage() {
           <div className="benefit">
             <div className="benefit-metric">100%</div>
             <div className="benefit-label">Production Accurate</div>
-            <p>Exact TPV granule specs with precise ratio specifications.</p>
+            <p>Exact Rosehill TPV<sup>®</sup> granule specs with precise specifications.</p>
           </div>
           <div className="benefit">
             <div className="benefit-metric infinite-symbol">∞</div>
@@ -445,18 +448,33 @@ export default function LandingPage() {
           <div className="benefit">
             <div className="benefit-metric">21</div>
             <div className="benefit-label">Standard Colours</div>
-            <p>Complete Rosehill TPV palette with blend combinations.</p>
+            <p>Complete Rosehill TPV<sup>®</sup> standard colour palette.</p>
           </div>
         </div>
       </section>
+
+      {/* Company Footer */}
+      <footer className="landing-footer">
+        <div className="footer-content">
+          <div className="footer-brand">
+            <span className="footer-logo">Rosehill TPV<sup>®</sup> Studio</span>
+            <span className="footer-tagline">A web app by Rosehill Sports & Play</span>
+            <span className="footer-division">A Division of Rosehill Group</span>
+          </div>
+          <div className="footer-links">
+            <a href="https://rosehilltpv.com" target="_blank" rel="noopener noreferrer">rosehilltpv.com</a>
+            <a href="mailto:info@rosehill.group">info@rosehill.group</a>
+          </div>
+        </div>
+      </footer>
 
       {/* CTA Footer */}
       <section className="cta-footer">
         <div className="cta-content">
           <h2>Ready to Design Your Surface?</h2>
-          <p>Create playgrounds or sports facilities with production-ready TPV specifications.</p>
+          <p>Create playgrounds or sports facilities with production-ready Rosehill TPV<sup>®</sup> specifications.</p>
           <button onClick={() => setShowSignIn(true)} className="cta-primary large">
-            Sign In to TPV Studio
+            Sign In to Rosehill TPV<sup>®</sup> Studio
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
@@ -479,7 +497,7 @@ export default function LandingPage() {
 
             <div className="modal-header">
               <h2>Sign In</h2>
-              <p>Access your TPV Studio account</p>
+              <p>Access your Rosehill TPV<sup>®</sup> Studio account</p>
             </div>
 
             {error && (
@@ -528,11 +546,11 @@ export default function LandingPage() {
            Aesthetic: Sophisticated Industrial-Creative
            ============================================ */
 
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;500;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap');
 
         .landing-page {
-          --primary: #1e4a7a;
-          --primary-light: #2a5a8e;
+          --primary: #1a365d;
+          --primary-light: #2a4a73;
           --accent: #ff6b35;
           --accent-hover: #e55a2a;
           --text: #1a202c;
@@ -543,7 +561,7 @@ export default function LandingPage() {
           --card: #ffffff;
           --border: #e2e8f0;
 
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Source Sans Pro', sans-serif;
           background: var(--bg);
           color: var(--text);
           overflow-x: hidden;
@@ -566,7 +584,7 @@ export default function LandingPage() {
         }
 
         .nav-logo {
-          font-family: 'Space Grotesk', sans-serif;
+          font-family: 'Overpass', sans-serif;
           font-size: 1.5rem;
           font-weight: 700;
         }
@@ -609,6 +627,27 @@ export default function LandingPage() {
 
         .nav-cta:hover {
           background: var(--primary-light) !important;
+        }
+
+        .logo-main {
+          display: flex;
+          align-items: baseline;
+          gap: 0.25rem;
+        }
+
+        .logo-byline {
+          display: block;
+          font-size: 0.625rem;
+          font-weight: 400;
+          color: var(--text-light);
+          margin-top: 2px;
+          letter-spacing: 0.02em;
+        }
+
+        .landing-page sup {
+          font-size: 0.6em;
+          vertical-align: super;
+          line-height: 0;
         }
 
         /* Hero Section */
@@ -670,7 +709,7 @@ export default function LandingPage() {
         }
 
         .hero h1 {
-          font-family: 'Space Grotesk', sans-serif;
+          font-family: 'Overpass', sans-serif;
           font-size: 3.5rem;
           font-weight: 700;
           line-height: 1.1;
@@ -907,7 +946,7 @@ export default function LandingPage() {
         }
 
         .section-header h2 {
-          font-family: 'Space Grotesk', sans-serif;
+          font-family: 'Overpass', sans-serif;
           font-size: 2.5rem;
           font-weight: 700;
           color: var(--text);
@@ -941,7 +980,7 @@ export default function LandingPage() {
         }
 
         .step-number {
-          font-family: 'Space Grotesk', sans-serif;
+          font-family: 'Overpass', sans-serif;
           font-size: 3rem;
           font-weight: 700;
           color: rgba(30, 74, 122, 0.1);
@@ -961,7 +1000,7 @@ export default function LandingPage() {
         }
 
         .step h3 {
-          font-family: 'Space Grotesk', sans-serif;
+          font-family: 'Overpass', sans-serif;
           font-size: 1.25rem;
           font-weight: 600;
           margin: 0 0 0.75rem;
@@ -1041,7 +1080,7 @@ export default function LandingPage() {
         }
 
         .feature-card h3 {
-          font-family: 'Space Grotesk', sans-serif;
+          font-family: 'Overpass', sans-serif;
           font-size: 1.125rem;
           font-weight: 600;
           margin: 0 0 0.5rem;
@@ -1230,7 +1269,7 @@ export default function LandingPage() {
         }
 
         .showcase-tagline {
-          font-family: 'Space Grotesk', sans-serif;
+          font-family: 'Overpass', sans-serif;
           font-size: 1.5rem;
           font-weight: 600;
           color: var(--text);
@@ -1369,7 +1408,7 @@ export default function LandingPage() {
         }
 
         .benefit-metric {
-          font-family: 'Space Grotesk', sans-serif;
+          font-family: 'Overpass', sans-serif;
           font-size: 4rem;
           font-weight: 700;
           color: var(--accent);
@@ -1377,7 +1416,7 @@ export default function LandingPage() {
         }
 
         .benefit-label {
-          font-family: 'Space Grotesk', sans-serif;
+          font-family: 'Overpass', sans-serif;
           font-size: 1.125rem;
           font-weight: 600;
           color: var(--text);
@@ -1391,6 +1430,62 @@ export default function LandingPage() {
           margin: 0;
         }
 
+        /* Company Footer */
+        .landing-footer {
+          padding: 3rem 4rem;
+          background: var(--bg-dark);
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-content {
+          max-width: 1200px;
+          margin: 0 auto;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 2rem;
+        }
+
+        .footer-brand {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+
+        .footer-logo {
+          font-family: 'Overpass', sans-serif;
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: white;
+        }
+
+        .footer-tagline {
+          font-size: 0.875rem;
+          color: rgba(255, 255, 255, 0.8);
+        }
+
+        .footer-division {
+          font-size: 0.75rem;
+          color: rgba(255, 255, 255, 0.5);
+        }
+
+        .footer-links {
+          display: flex;
+          gap: 2rem;
+        }
+
+        .footer-links a {
+          font-size: 0.875rem;
+          color: rgba(255, 255, 255, 0.7);
+          text-decoration: none;
+          transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+          color: var(--accent);
+        }
+
         /* CTA Footer */
         .cta-footer {
           padding: 6rem 4rem;
@@ -1399,7 +1494,7 @@ export default function LandingPage() {
         }
 
         .cta-content h2 {
-          font-family: 'Space Grotesk', sans-serif;
+          font-family: 'Overpass', sans-serif;
           font-size: 2.5rem;
           font-weight: 700;
           color: var(--text);
@@ -1485,7 +1580,7 @@ export default function LandingPage() {
         }
 
         .modal-header h2 {
-          font-family: 'Space Grotesk', sans-serif;
+          font-family: 'Overpass', sans-serif;
           font-size: 1.5rem;
           font-weight: 600;
           margin: 0 0 0.25rem;
@@ -1662,8 +1757,23 @@ export default function LandingPage() {
           .palette-section,
           .benefits,
           .cta-footer,
-          .unified-showcase {
+          .unified-showcase,
+          .landing-footer {
             padding: 4rem 1.5rem;
+          }
+
+          .footer-content {
+            flex-direction: column;
+            text-align: center;
+          }
+
+          .footer-links {
+            flex-direction: column;
+            gap: 1rem;
+          }
+
+          .logo-byline {
+            display: none;
           }
 
           .showcase-card {

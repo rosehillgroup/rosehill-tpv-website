@@ -784,7 +784,7 @@ export default function SVGPreview({
         }
 
         .design-name-input {
-          font-family: var(--font-heading), 'Space Grotesk', sans-serif;
+          font-family: var(--font-heading), 'Overpass', sans-serif;
           font-size: 1.5rem;
           font-weight: 600;
           color: #1a365d;

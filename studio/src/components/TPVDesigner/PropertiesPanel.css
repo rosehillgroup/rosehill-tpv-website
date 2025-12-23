@@ -8,7 +8,7 @@
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body, 'Source Sans Pro', sans-serif);
 }
 
 .properties-panel--empty {
@@ -26,7 +26,7 @@
 .properties-panel__header h3 {
   margin: 0 0 var(--space-1, 0.5rem) 0;
   font-size: var(--text-lg, 1.25rem);
-  font-family: var(--font-heading, 'Space Grotesk', sans-serif);
+  font-family: var(--font-heading, 'Overpass', sans-serif);
   font-weight: var(--font-bold, 700);
   color: var(--color-primary, #1e4a7a);
 }
@@ -68,7 +68,7 @@
   color: var(--color-text-secondary, #64748b);
   cursor: pointer;
   transition: all 0.2s;
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body, 'Source Sans Pro', sans-serif);
   border-bottom: 2px solid transparent;
   white-space: nowrap;
   overflow: hidden;
@@ -111,7 +111,7 @@
 .properties-section__header h4 {
   margin: 0;
   font-size: var(--text-base, 1.0625rem);
-  font-family: var(--font-heading, 'Space Grotesk', sans-serif);
+  font-family: var(--font-heading, 'Overpass', sans-serif);
   font-weight: var(--font-semibold, 600);
   color: var(--color-text-primary, #1a202c);
 }
@@ -126,7 +126,7 @@
   color: var(--color-text-secondary, #64748b);
   cursor: pointer;
   transition: all 0.2s;
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body, 'Source Sans Pro', sans-serif);
 }
 
 .btn-reset:hover {
@@ -186,7 +186,7 @@
   border: 1px solid var(--color-border, #e4e9f0);
   border-radius: var(--radius-sm, 6px);
   font-size: var(--text-sm, 0.875rem);
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body, 'Source Sans Pro', sans-serif);
   color: var(--color-text-primary, #1a202c);
   background: var(--color-bg-card, white);
   min-width: 0;
@@ -391,7 +391,7 @@
 .color-picker-modal__header h4 {
   margin: 0;
   font-size: var(--text-lg, 1.25rem);
-  font-family: var(--font-heading, 'Space Grotesk', sans-serif);
+  font-family: var(--font-heading, 'Overpass', sans-serif);
   font-weight: var(--font-bold, 700);
   color: var(--color-primary, #1e4a7a);
 }
@@ -470,7 +470,7 @@
   border: none;
   border-radius: var(--radius-sm, 6px);
   font-size: var(--text-sm, 0.875rem);
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body, 'Source Sans Pro', sans-serif);
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
@@ -614,7 +614,7 @@
 .layers-panel__header h4 {
   margin: 0;
   font-size: var(--text-base, 1.0625rem);
-  font-family: var(--font-heading, 'Space Grotesk', sans-serif);
+  font-family: var(--font-heading, 'Overpass', sans-serif);
   font-weight: var(--font-semibold, 600);
   color: var(--color-text-primary, #1a202c);
 }
@@ -882,7 +882,7 @@
   border: 1px solid var(--color-primary, #1a365d);
   border-radius: var(--radius-sm, 4px);
   font-size: var(--text-sm, 0.875rem);
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body, 'Source Sans Pro', sans-serif);
   background: white;
   outline: none;
 }
@@ -916,7 +916,7 @@
   background: var(--color-bg-card, white);
   font-size: var(--text-sm, 0.875rem);
   font-weight: var(--font-medium, 500);
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body, 'Source Sans Pro', sans-serif);
   color: var(--color-text-secondary, #64748b);
   cursor: pointer;
   transition: all 0.15s ease;

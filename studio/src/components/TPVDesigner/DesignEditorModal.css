@@ -68,7 +68,7 @@
 .design-editor__title h2 {
   margin: 0;
   font-size: 1.25rem;
-  font-family: var(--font-heading, 'Space Grotesk', sans-serif);
+  font-family: var(--font-heading, 'Overpass', sans-serif);
   font-weight: 700;
   color: var(--color-primary, #1e4a7a);
 }
@@ -184,7 +184,7 @@
   gap: 0.5rem;
   padding: 0.625rem 1.25rem;
   font-size: 0.9375rem;
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body, 'Source Sans Pro', sans-serif);
   font-weight: 600;
   border-radius: 8px;
   cursor: pointer;

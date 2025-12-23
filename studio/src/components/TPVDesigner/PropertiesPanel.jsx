@@ -492,6 +492,12 @@ function TrackPropertiesPanel({ track, trackId }) {
   const [cornersLocked, setCornersLocked] = React.useState(true);
   const [showTrackColorPicker, setShowTrackColorPicker] = React.useState(false);
 
+  // Local state for dimension inputs to allow typing
+  const [localWidth, setLocalWidth] = React.useState('');
+  const [localHeight, setLocalHeight] = React.useState('');
+  const [isEditingWidth, setIsEditingWidth] = React.useState(false);
+  const [isEditingHeight, setIsEditingHeight] = React.useState(false);
+
   // Detect track type
   const isStraightTrack = template.trackType === 'straight';
 
@@ -523,16 +529,59 @@ function TrackPropertiesPanel({ track, trackId }) {
     }
   };
 
-  const handleWidthChange = (value) => {
+  // Apply dimension values
+  const applyWidth = (value) => {
     const numValue = parseFloat(value) * 1000; // Convert meters to mm
-    if (isNaN(numValue) || numValue < 3000) return;
+    if (isNaN(numValue) || numValue < 3000) return false;
     updateTrackParameters(trackId, { width_mm: numValue });
+    return true;
   };
 
-  const handleHeightChange = (value) => {
+  const applyHeight = (value) => {
     const numValue = parseFloat(value) * 1000; // Convert meters to mm
-    if (isNaN(numValue) || numValue < 3000) return;
+    if (isNaN(numValue) || numValue < 3000) return false;
     updateTrackParameters(trackId, { height_mm: numValue });
+    return true;
+  };
+
+  // Width input handlers
+  const handleWidthFocus = () => {
+    setIsEditingWidth(true);
+    setLocalWidth((parameters.width_mm / 1000).toFixed(1));
+  };
+
+  const handleWidthBlur = () => {
+    setIsEditingWidth(false);
+    applyWidth(localWidth);
+  };
+
+  const handleWidthKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.target.blur();
+    } else if (e.key === 'Escape') {
+      setIsEditingWidth(false);
+      setLocalWidth((parameters.width_mm / 1000).toFixed(1));
+    }
+  };
+
+  // Height input handlers
+  const handleHeightFocus = () => {
+    setIsEditingHeight(true);
+    setLocalHeight((parameters.height_mm / 1000).toFixed(1));
+  };
+
+  const handleHeightBlur = () => {
+    setIsEditingHeight(false);
+    applyHeight(localHeight);
+  };
+
+  const handleHeightKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.target.blur();
+    } else if (e.key === 'Escape') {
+      setIsEditingHeight(false);
+      setLocalHeight((parameters.height_mm / 1000).toFixed(1));
+    }
   };
 
   const handleCornerRadiusChange = (corner, value) => {
@@ -702,8 +751,11 @@ function TrackPropertiesPanel({ track, trackId }) {
               <div className="property-input-group">
                 <input
                   type="number"
-                  value={(parameters.width_mm / 1000).toFixed(1)}
-                  onChange={(e) => handleWidthChange(e.target.value)}
+                  value={isEditingWidth ? localWidth : (parameters.width_mm / 1000).toFixed(1)}
+                  onChange={(e) => setLocalWidth(e.target.value)}
+                  onFocus={handleWidthFocus}
+                  onBlur={handleWidthBlur}
+                  onKeyDown={handleWidthKeyDown}
                   min="3"
                   max="100"
                   step="0.5"
@@ -719,8 +771,11 @@ function TrackPropertiesPanel({ track, trackId }) {
             <div className="property-input-group">
               <input
                 type="number"
-                value={(parameters.height_mm / 1000).toFixed(1)}
-                onChange={(e) => handleHeightChange(e.target.value)}
+                value={isEditingHeight ? localHeight : (parameters.height_mm / 1000).toFixed(1)}
+                onChange={(e) => setLocalHeight(e.target.value)}
+                onFocus={handleHeightFocus}
+                onBlur={handleHeightBlur}
+                onKeyDown={handleHeightKeyDown}
                 min="3"
                 max="100"
                 step="0.5"
@@ -1456,6 +1511,12 @@ function ShapePropertiesPanel({ shape, shapeId }) {
   const [showFillColorPicker, setShowFillColorPicker] = React.useState(false);
   const [showStrokeColorPicker, setShowStrokeColorPicker] = React.useState(false);
 
+  // Local state for dimension inputs to allow typing
+  const [localWidth, setLocalWidth] = React.useState('');
+  const [localHeight, setLocalHeight] = React.useState('');
+  const [isEditingWidth, setIsEditingWidth] = React.useState(false);
+  const [isEditingHeight, setIsEditingHeight] = React.useState(false);
+
   const {
     shapeType,
     sides,
@@ -1491,10 +1552,10 @@ function ShapePropertiesPanel({ shape, shapeId }) {
     });
   };
 
-  // Handle dimension updates
-  const handleWidthChange = (value) => {
+  // Handle dimension updates - apply the value
+  const applyWidth = (value) => {
     const numValue = parseFloat(value);
-    if (isNaN(numValue) || numValue < 100) return;
+    if (isNaN(numValue) || numValue < 100) return false;
 
     if (aspectLocked) {
       // Maintain aspect ratio
@@ -1503,11 +1564,12 @@ function ShapePropertiesPanel({ shape, shapeId }) {
     } else {
       updateShapeDimensions(shapeId, numValue, height_mm);
     }
+    return true;
   };
 
-  const handleHeightChange = (value) => {
+  const applyHeight = (value) => {
     const numValue = parseFloat(value);
-    if (isNaN(numValue) || numValue < 100) return;
+    if (isNaN(numValue) || numValue < 100) return false;
 
     if (aspectLocked) {
       // Maintain aspect ratio
@@ -1515,6 +1577,47 @@ function ShapePropertiesPanel({ shape, shapeId }) {
       updateShapeDimensions(shapeId, numValue * ratio, numValue);
     } else {
       updateShapeDimensions(shapeId, width_mm, numValue);
+    }
+    return true;
+  };
+
+  // Width input handlers
+  const handleWidthFocus = () => {
+    setIsEditingWidth(true);
+    setLocalWidth(width_mm.toFixed(0));
+  };
+
+  const handleWidthBlur = () => {
+    setIsEditingWidth(false);
+    applyWidth(localWidth);
+  };
+
+  const handleWidthKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.target.blur();
+    } else if (e.key === 'Escape') {
+      setIsEditingWidth(false);
+      setLocalWidth(width_mm.toFixed(0));
+    }
+  };
+
+  // Height input handlers
+  const handleHeightFocus = () => {
+    setIsEditingHeight(true);
+    setLocalHeight(height_mm.toFixed(0));
+  };
+
+  const handleHeightBlur = () => {
+    setIsEditingHeight(false);
+    applyHeight(localHeight);
+  };
+
+  const handleHeightKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.target.blur();
+    } else if (e.key === 'Escape') {
+      setIsEditingHeight(false);
+      setLocalHeight(height_mm.toFixed(0));
     }
   };
 
@@ -1914,8 +2017,11 @@ function ShapePropertiesPanel({ shape, shapeId }) {
                 <span className="property-label">W</span>
                 <input
                   type="number"
-                  value={width_mm.toFixed(0)}
-                  onChange={(e) => handleWidthChange(e.target.value)}
+                  value={isEditingWidth ? localWidth : width_mm.toFixed(0)}
+                  onChange={(e) => setLocalWidth(e.target.value)}
+                  onFocus={handleWidthFocus}
+                  onBlur={handleWidthBlur}
+                  onKeyDown={handleWidthKeyDown}
                   step="100"
                   min="100"
                 />
@@ -1925,8 +2031,11 @@ function ShapePropertiesPanel({ shape, shapeId }) {
                 <span className="property-label">H</span>
                 <input
                   type="number"
-                  value={height_mm.toFixed(0)}
-                  onChange={(e) => handleHeightChange(e.target.value)}
+                  value={isEditingHeight ? localHeight : height_mm.toFixed(0)}
+                  onChange={(e) => setLocalHeight(e.target.value)}
+                  onFocus={handleHeightFocus}
+                  onBlur={handleHeightBlur}
+                  onKeyDown={handleHeightKeyDown}
                   step="100"
                   min="100"
                 />

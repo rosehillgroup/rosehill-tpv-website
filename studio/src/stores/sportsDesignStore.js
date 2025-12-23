@@ -1301,15 +1301,13 @@ export const useSportsDesignStore = create(
       setShapeAspectLock: (shapeId, locked) => {
         set((state) => {
           const shape = state.shapes[shapeId];
-          // If locking aspect ratio, make height match width
-          const newHeight = locked ? shape.width_mm : shape.height_mm;
+          // Just toggle the lock - keep current dimensions as the locked ratio
           return {
             shapes: {
               ...state.shapes,
               [shapeId]: {
                 ...shape,
-                aspectLocked: locked,
-                height_mm: newHeight
+                aspectLocked: locked
               }
             }
           };
