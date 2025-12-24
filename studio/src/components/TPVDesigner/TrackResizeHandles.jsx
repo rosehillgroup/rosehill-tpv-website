@@ -59,6 +59,38 @@ function TrackResizeHandles({ track, svgRef }) {
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     const svgPoint = screenToSVG(clientX, clientY);
 
+    const isStraightTrack = track.template?.trackType === 'straight';
+    let straightTrackData = {};
+
+    if (isStraightTrack) {
+      // Calculate the fixed edge center position for endpoint-based resize
+      const rotRad = (rotation * Math.PI) / 180;
+      const sinR = Math.sin(rotRad);
+      const cosR = Math.cos(rotRad);
+
+      // Center of the track
+      const trackCenterX = position.x + width / 2;
+      const trackCenterY = position.y + height / 2;
+
+      // Determine which edge is FIXED (opposite to the handle being dragged)
+      const isDraggingNorth = handleType === 'n' || handleType === 'nw' || handleType === 'ne';
+
+      // Fixed edge center position
+      // Track axis: (sinR, cosR) points from N to S
+      // South edge = center + (height/2) * axis
+      // North edge = center - (height/2) * axis
+      const fixedEdgeCenter = isDraggingNorth
+        ? { x: trackCenterX + (height / 2) * sinR, y: trackCenterY + (height / 2) * cosR }  // South fixed
+        : { x: trackCenterX - (height / 2) * sinR, y: trackCenterY - (height / 2) * cosR }; // North fixed
+
+      straightTrackData = {
+        fixedEdgeCenter,
+        fixedEdgeIsSouth: isDraggingNorth,
+        sinR,
+        cosR
+      };
+    }
+
     setDragStart({
       screenX: clientX,
       screenY: clientY,
@@ -67,7 +99,8 @@ function TrackResizeHandles({ track, svgRef }) {
       initialWidth: width,
       initialHeight: height,
       initialPosition: { ...position },
-      initialCornerRadius: { ...parameters.cornerRadius }
+      initialCornerRadius: { ...parameters.cornerRadius },
+      ...straightTrackData
     });
   };
 
@@ -118,30 +151,49 @@ function TrackResizeHandles({ track, svgRef }) {
         return;
       }
 
-      // For straight tracks, transform delta to track's local coordinate system
-      // The track's length axis is rotated by `rotation` degrees
-      let effectiveDeltaY = deltaY;
-      if (isStraightTrack && rotation !== 0) {
-        const rotRad = (rotation * Math.PI) / 180;
-        // Project mouse movement onto the track's length axis
-        effectiveDeltaY = deltaX * Math.sin(rotRad) + deltaY * Math.cos(rotRad);
-      }
+      // STRAIGHT TRACK: Use endpoint-based approach
+      // The fixed edge stays fixed, we calculate everything from there
+      if (isStraightTrack && dragStart.fixedEdgeCenter) {
+        const { fixedEdgeCenter, fixedEdgeIsSouth, sinR, cosR } = dragStart;
 
-      // Calculate new dimensions based on which handle is being dragged
-      switch (resizeHandle) {
-        case 'se': // Southeast corner - proportional resize (height only for straight tracks)
-          if (isStraightTrack) {
-            // Straight track: extend/shorten from bottom (S), top stays fixed
-            newHeight = Math.max(minSize, dragStart.initialHeight + effectiveDeltaY);
-            const deltaH_se = newHeight - dragStart.initialHeight; // positive when extending
-            const rotRad_se = (rotation * Math.PI) / 180;
-            // Keep 'n' edge fixed: move center toward 's' (positive length direction)
-            newPosition.x = dragStart.initialPosition.x + (deltaH_se / 2) * Math.sin(rotRad_se);
-            newPosition.y = dragStart.initialPosition.y + (deltaH_se / 2) * Math.cos(rotRad_se);
-          } else {
+        // Vector from fixed edge center to current mouse position
+        const dx = svgPoint.x - fixedEdgeCenter.x;
+        const dy = svgPoint.y - fixedEdgeCenter.y;
+
+        // Project onto track axis to get signed distance
+        // Track axis direction is (sinR, cosR) pointing from N to S
+        const projection = dx * sinR + dy * cosR;
+
+        // Calculate new height based on projection
+        // If South edge is fixed: mouse moving toward North (negative projection) = extending
+        // If North edge is fixed: mouse moving toward South (positive projection) = extending
+        const signedDistance = fixedEdgeIsSouth ? -projection : projection;
+        newHeight = Math.max(minSize, signedDistance);
+
+        // Calculate new center position
+        // Center is at: fixedEdgeCenter ± (newHeight/2) * axis
+        // If South fixed: center is toward North (negative direction)
+        // If North fixed: center is toward South (positive direction)
+        const newCenterX = fixedEdgeIsSouth
+          ? fixedEdgeCenter.x - (newHeight / 2) * sinR
+          : fixedEdgeCenter.x + (newHeight / 2) * sinR;
+        const newCenterY = fixedEdgeIsSouth
+          ? fixedEdgeCenter.y - (newHeight / 2) * cosR
+          : fixedEdgeCenter.y + (newHeight / 2) * cosR;
+
+        // Position is top-left of bounding box = center - (width/2, height/2)
+        newPosition = {
+          x: newCenterX - newWidth / 2,
+          y: newCenterY - newHeight / 2
+        };
+
+        // Width and corner radius stay the same for straight tracks
+      } else {
+        // CURVED TRACKS: Use original switch-based logic
+        switch (resizeHandle) {
+          case 'se': // Southeast corner - proportional resize
             newWidth = Math.max(minSize, dragStart.initialWidth + deltaX);
             newHeight = Math.max(minSize, dragStart.initialHeight + deltaY);
-            // Scale corner radii proportionally
             const seScale = Math.min(newWidth / dragStart.initialWidth, newHeight / dragStart.initialHeight);
             newCornerRadius = {
               topLeft: dragStart.initialCornerRadius.topLeft * seScale,
@@ -149,24 +201,13 @@ function TrackResizeHandles({ track, svgRef }) {
               bottomLeft: dragStart.initialCornerRadius.bottomLeft * seScale,
               bottomRight: dragStart.initialCornerRadius.bottomRight * seScale
             };
-          }
-          break;
+            break;
 
-        case 'nw': // Northwest corner - proportional resize (height only for straight tracks)
-          if (isStraightTrack) {
-            // Straight track: extend/shorten from top (N), bottom stays fixed
-            newHeight = Math.max(minSize, dragStart.initialHeight - effectiveDeltaY);
-            const deltaH_nw = newHeight - dragStart.initialHeight; // positive when extending
-            const rotRad_nw = (rotation * Math.PI) / 180;
-            // Keep 's' edge fixed: move center toward 'n' (negative length direction)
-            newPosition.x = dragStart.initialPosition.x - (deltaH_nw / 2) * Math.sin(rotRad_nw);
-            newPosition.y = dragStart.initialPosition.y - (deltaH_nw / 2) * Math.cos(rotRad_nw);
-          } else {
+          case 'nw': // Northwest corner - proportional resize
             newWidth = Math.max(minSize, dragStart.initialWidth - deltaX);
             newHeight = Math.max(minSize, dragStart.initialHeight - deltaY);
             newPosition.x = dragStart.initialPosition.x + (dragStart.initialWidth - newWidth);
             newPosition.y = dragStart.initialPosition.y + (dragStart.initialHeight - newHeight);
-            // Scale corner radii proportionally
             const nwScale = Math.min(newWidth / dragStart.initialWidth, newHeight / dragStart.initialHeight);
             newCornerRadius = {
               topLeft: dragStart.initialCornerRadius.topLeft * nwScale,
@@ -174,19 +215,9 @@ function TrackResizeHandles({ track, svgRef }) {
               bottomLeft: dragStart.initialCornerRadius.bottomLeft * nwScale,
               bottomRight: dragStart.initialCornerRadius.bottomRight * nwScale
             };
-          }
-          break;
+            break;
 
-        case 'ne': // Northeast corner - proportional resize (height only for straight tracks)
-          if (isStraightTrack) {
-            // Straight track: extend/shorten from top (N), bottom stays fixed
-            newHeight = Math.max(minSize, dragStart.initialHeight - effectiveDeltaY);
-            const deltaH_ne = newHeight - dragStart.initialHeight; // positive when extending
-            const rotRad_ne = (rotation * Math.PI) / 180;
-            // Keep 's' edge fixed: move center toward 'n' (negative length direction)
-            newPosition.x = dragStart.initialPosition.x - (deltaH_ne / 2) * Math.sin(rotRad_ne);
-            newPosition.y = dragStart.initialPosition.y - (deltaH_ne / 2) * Math.cos(rotRad_ne);
-          } else {
+          case 'ne': // Northeast corner - proportional resize
             newWidth = Math.max(minSize, dragStart.initialWidth + deltaX);
             newHeight = Math.max(minSize, dragStart.initialHeight - deltaY);
             newPosition.y = dragStart.initialPosition.y + (dragStart.initialHeight - newHeight);
@@ -197,19 +228,9 @@ function TrackResizeHandles({ track, svgRef }) {
               bottomLeft: dragStart.initialCornerRadius.bottomLeft * neScale,
               bottomRight: dragStart.initialCornerRadius.bottomRight * neScale
             };
-          }
-          break;
+            break;
 
-        case 'sw': // Southwest corner - proportional resize (height only for straight tracks)
-          if (isStraightTrack) {
-            // Straight track: extend/shorten from bottom (S), top stays fixed
-            newHeight = Math.max(minSize, dragStart.initialHeight + effectiveDeltaY);
-            const deltaH_sw = newHeight - dragStart.initialHeight; // positive when extending
-            const rotRad_sw = (rotation * Math.PI) / 180;
-            // Keep 'n' edge fixed: move center toward 's' (positive length direction)
-            newPosition.x = dragStart.initialPosition.x + (deltaH_sw / 2) * Math.sin(rotRad_sw);
-            newPosition.y = dragStart.initialPosition.y + (deltaH_sw / 2) * Math.cos(rotRad_sw);
-          } else {
+          case 'sw': // Southwest corner - proportional resize
             newWidth = Math.max(minSize, dragStart.initialWidth - deltaX);
             newHeight = Math.max(minSize, dragStart.initialHeight + deltaY);
             newPosition.x = dragStart.initialPosition.x + (dragStart.initialWidth - newWidth);
@@ -220,43 +241,32 @@ function TrackResizeHandles({ track, svgRef }) {
               bottomLeft: dragStart.initialCornerRadius.bottomLeft * swScale,
               bottomRight: dragStart.initialCornerRadius.bottomRight * swScale
             };
-          }
-          break;
+            break;
 
-        case 'e': // East edge - width only (disabled for straight tracks above)
-          newWidth = Math.max(minSize, dragStart.initialWidth + deltaX);
-          // Scale corner radii horizontally
-          const eScale = newWidth / dragStart.initialWidth;
-          newCornerRadius = {
-            topLeft: dragStart.initialCornerRadius.topLeft * eScale,
-            topRight: dragStart.initialCornerRadius.topRight * eScale,
-            bottomLeft: dragStart.initialCornerRadius.bottomLeft * eScale,
-            bottomRight: dragStart.initialCornerRadius.bottomRight * eScale
-          };
-          break;
+          case 'e': // East edge - width only
+            newWidth = Math.max(minSize, dragStart.initialWidth + deltaX);
+            const eScale = newWidth / dragStart.initialWidth;
+            newCornerRadius = {
+              topLeft: dragStart.initialCornerRadius.topLeft * eScale,
+              topRight: dragStart.initialCornerRadius.topRight * eScale,
+              bottomLeft: dragStart.initialCornerRadius.bottomLeft * eScale,
+              bottomRight: dragStart.initialCornerRadius.bottomRight * eScale
+            };
+            break;
 
-        case 'w': // West edge - width only (disabled for straight tracks above)
-          newWidth = Math.max(minSize, dragStart.initialWidth - deltaX);
-          newPosition.x = dragStart.initialPosition.x + (dragStart.initialWidth - newWidth);
-          const wScale = newWidth / dragStart.initialWidth;
-          newCornerRadius = {
-            topLeft: dragStart.initialCornerRadius.topLeft * wScale,
-            topRight: dragStart.initialCornerRadius.topRight * wScale,
-            bottomLeft: dragStart.initialCornerRadius.bottomLeft * wScale,
-            bottomRight: dragStart.initialCornerRadius.bottomRight * wScale
-          };
-          break;
+          case 'w': // West edge - width only
+            newWidth = Math.max(minSize, dragStart.initialWidth - deltaX);
+            newPosition.x = dragStart.initialPosition.x + (dragStart.initialWidth - newWidth);
+            const wScale = newWidth / dragStart.initialWidth;
+            newCornerRadius = {
+              topLeft: dragStart.initialCornerRadius.topLeft * wScale,
+              topRight: dragStart.initialCornerRadius.topRight * wScale,
+              bottomLeft: dragStart.initialCornerRadius.bottomLeft * wScale,
+              bottomRight: dragStart.initialCornerRadius.bottomRight * wScale
+            };
+            break;
 
-        case 'n': // North edge - height only
-          if (isStraightTrack) {
-            // Straight track: extend/shorten from top edge, bottom edge stays fixed
-            newHeight = Math.max(minSize, dragStart.initialHeight - effectiveDeltaY);
-            const deltaH_n = newHeight - dragStart.initialHeight; // positive when extending
-            const rotRad_n = (rotation * Math.PI) / 180;
-            // Keep 's' edge fixed: move center toward 'n' (negative length direction)
-            newPosition.x = dragStart.initialPosition.x - (deltaH_n / 2) * Math.sin(rotRad_n);
-            newPosition.y = dragStart.initialPosition.y - (deltaH_n / 2) * Math.cos(rotRad_n);
-          } else {
+          case 'n': // North edge - height only
             newHeight = Math.max(minSize, dragStart.initialHeight - deltaY);
             newPosition.y = dragStart.initialPosition.y + (dragStart.initialHeight - newHeight);
             const nScale = newHeight / dragStart.initialHeight;
@@ -266,19 +276,9 @@ function TrackResizeHandles({ track, svgRef }) {
               bottomLeft: dragStart.initialCornerRadius.bottomLeft * nScale,
               bottomRight: dragStart.initialCornerRadius.bottomRight * nScale
             };
-          }
-          break;
+            break;
 
-        case 's': // South edge - height only
-          if (isStraightTrack) {
-            // Straight track: extend/shorten from bottom edge, top edge stays fixed
-            newHeight = Math.max(minSize, dragStart.initialHeight + effectiveDeltaY);
-            const deltaH_s = newHeight - dragStart.initialHeight; // positive when extending
-            const rotRad_s = (rotation * Math.PI) / 180;
-            // Keep 'n' edge fixed: move center toward 's' (positive length direction)
-            newPosition.x = dragStart.initialPosition.x + (deltaH_s / 2) * Math.sin(rotRad_s);
-            newPosition.y = dragStart.initialPosition.y + (deltaH_s / 2) * Math.cos(rotRad_s);
-          } else {
+          case 's': // South edge - height only
             newHeight = Math.max(minSize, dragStart.initialHeight + deltaY);
             const sScale = newHeight / dragStart.initialHeight;
             newCornerRadius = {
@@ -287,8 +287,8 @@ function TrackResizeHandles({ track, svgRef }) {
               bottomLeft: dragStart.initialCornerRadius.bottomLeft * sScale,
               bottomRight: dragStart.initialCornerRadius.bottomRight * sScale
             };
-          }
-          break;
+            break;
+        }
       }
 
       // Ensure corner radii don't exceed half of smallest dimension
