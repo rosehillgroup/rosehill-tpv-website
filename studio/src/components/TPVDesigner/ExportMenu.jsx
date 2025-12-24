@@ -76,6 +76,9 @@ export default function ExportMenu({ svgRef }) {
   const surface = useSportsDesignStore((state) => state.surface);
   const designName = useSportsDesignStore((state) => state.designName);
   const motifs = useSportsDesignStore((state) => state.motifs);
+  const shapes = useSportsDesignStore((state) => state.shapes);
+  const texts = useSportsDesignStore((state) => state.texts);
+  const exclusionZones = useSportsDesignStore((state) => state.exclusionZones);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -194,7 +197,10 @@ export default function ExportMenu({ svgRef }) {
           surface: state.surface,
           courts: state.courts,
           tracks: state.tracks,
+          shapes: shapes,
+          texts: texts,
           motifs: motifDataForPdf,
+          exclusionZones: exclusionZones,
           dimensions: {
             widthMM: state.surface.width_mm,
             lengthMM: state.surface.length_mm,

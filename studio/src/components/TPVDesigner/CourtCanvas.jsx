@@ -10,7 +10,9 @@ import ShapeElement from './ShapeElement.jsx';
 import BlobElement from './BlobElement.jsx';
 import PathElement from './PathElement.jsx';
 import TextElement from './TextElement.jsx';
+import ExclusionZoneElement from './ExclusionZoneElement.jsx';
 import { measureText } from '../../lib/sports/textUtils.js';
+import { generateSurfaceBoundaryPath } from '../../lib/sports/surfaceGeometry.js';
 import './CourtCanvas.css';
 
 const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
@@ -43,6 +45,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const [dragMotifId, setDragMotifId] = useState(null);
   const [dragShapeId, setDragShapeId] = useState(null);
   const [dragTextId, setDragTextId] = useState(null);
+  const [dragExclusionZoneId, setDragExclusionZoneId] = useState(null);
 
   // Motif scaling state
   const [isScaling, setIsScaling] = useState(false);
@@ -74,6 +77,16 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const [rotateTextId, setRotateTextId] = useState(null);
   const [rotateTextStart, setRotateTextStart] = useState(null);
 
+  // Exclusion zone scaling state
+  const [isScalingExclusionZone, setIsScalingExclusionZone] = useState(false);
+  const [scaleExclusionZoneId, setScaleExclusionZoneId] = useState(null);
+  const [scaleExclusionZoneStart, setScaleExclusionZoneStart] = useState(null);
+
+  // Exclusion zone rotation state
+  const [isRotatingExclusionZone, setIsRotatingExclusionZone] = useState(false);
+  const [rotateExclusionZoneId, setRotateExclusionZoneId] = useState(null);
+  const [rotateExclusionZoneStart, setRotateExclusionZoneStart] = useState(null);
+
   // Path drawing state (for preview line)
   const [drawingMousePos, setDrawingMousePos] = useState(null);
   // For double-click detection (manual timing since preventDefault breaks native)
@@ -88,12 +101,14 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     motifs,
     shapes,
     texts,
+    exclusionZones,
     elementOrder,
     selectedCourtId,
     selectedTrackId,
     selectedMotifId,
     selectedShapeId,
     selectedTextId,
+    selectedExclusionZoneId,
     editingTextId,
     snapToGrid,
     gridSize_mm,
@@ -107,6 +122,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     deselectShape,
     selectText,
     deselectText,
+    selectExclusionZone,
+    deselectExclusionZone,
     startEditingText,
     stopEditingText,
     updateCourtPosition,
@@ -121,6 +138,9 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     updateTextFontSize,
     updateTextRotation,
     updateTextContent,
+    updateExclusionZonePosition,
+    updateExclusionZoneDimensions,
+    updateExclusionZoneRotation,
     updateBlobControlPoint,
     updateBlobHandle,
     commitBlobEdit,
@@ -592,6 +612,122 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     setIsRotatingText(true);
   };
 
+  // Handle mouse/touch down on exclusion zone (start drag)
+  const handleExclusionZoneMouseDown = (e, zoneId) => {
+    e.stopPropagation();
+
+    selectExclusionZone(zoneId);
+
+    const zone = exclusionZones[zoneId];
+    // Don't allow dragging locked zones
+    if (zone?.locked) return;
+
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
+
+    setDragStart({
+      x: svgPoint.x - zone.position.x,
+      y: svgPoint.y - zone.position.y
+    });
+    setDragExclusionZoneId(zoneId);
+    setIsDragging(true);
+  };
+
+  // Handle double-click on exclusion zone (open properties panel)
+  const handleExclusionZoneDoubleClick = (e, zoneId) => {
+    e.stopPropagation();
+
+    selectExclusionZone(zoneId);
+
+    useSportsDesignStore.setState({
+      showPropertiesPanel: true,
+      propertiesPanelUserClosed: false
+    });
+  };
+
+  // Handle scale start on exclusion zone corner handle
+  const handleExclusionZoneScaleStart = (e, zoneId, corner) => {
+    e.stopPropagation();
+
+    const zone = exclusionZones[zoneId];
+    if (!zone || zone.locked) return;
+
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
+    const { width_mm, height_mm } = zone;
+
+    // Calculate the anchor point (opposite edge/corner that should stay fixed)
+    let anchorPoint;
+    switch (corner) {
+      case 'n':
+        anchorPoint = { x: zone.position.x + width_mm / 2, y: zone.position.y + height_mm };
+        break;
+      case 's':
+        anchorPoint = { x: zone.position.x + width_mm / 2, y: zone.position.y };
+        break;
+      case 'e':
+        anchorPoint = { x: zone.position.x, y: zone.position.y + height_mm / 2 };
+        break;
+      case 'w':
+        anchorPoint = { x: zone.position.x + width_mm, y: zone.position.y + height_mm / 2 };
+        break;
+      default:
+        anchorPoint = { x: zone.position.x, y: zone.position.y };
+        break;
+    }
+
+    const initialDistance = Math.sqrt(
+      Math.pow(svgPoint.x - anchorPoint.x, 2) +
+      Math.pow(svgPoint.y - anchorPoint.y, 2)
+    );
+
+    setScaleExclusionZoneStart({
+      initialDistance,
+      originalWidth: width_mm,
+      originalHeight: height_mm,
+      corner,
+      anchorPoint
+    });
+    setScaleExclusionZoneId(zoneId);
+    setIsScalingExclusionZone(true);
+  };
+
+  // Handle rotation start on exclusion zone rotation handle
+  const handleExclusionZoneRotateStart = (e, zoneId) => {
+    e.stopPropagation();
+
+    const zone = exclusionZones[zoneId];
+    if (!zone || zone.locked) return;
+
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
+    const { width_mm, height_mm } = zone;
+
+    const zoneCenter = {
+      x: zone.position.x + width_mm / 2,
+      y: zone.position.y + height_mm / 2
+    };
+
+    const initialAngle = Math.atan2(
+      svgPoint.y - zoneCenter.y,
+      svgPoint.x - zoneCenter.x
+    ) * (180 / Math.PI);
+
+    setRotateExclusionZoneStart({
+      initialAngle,
+      originalRotation: zone.rotation || 0,
+      zoneCenter
+    });
+    setRotateExclusionZoneId(zoneId);
+    setIsRotatingExclusionZone(true);
+  };
+
   // Reset drag state when surface dimensions change
   useEffect(() => {
     setIsDragging(false);
@@ -600,12 +736,13 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     setDragMotifId(null);
     setDragShapeId(null);
     setDragTextId(null);
+    setDragExclusionZoneId(null);
     setDragStart(null);
   }, [surface.width_mm, surface.length_mm]);
 
-  // Handle mouse/touch move (drag court, track, motif, shape, or text)
+  // Handle mouse/touch move (drag court, track, motif, shape, text, or exclusion zone)
   useEffect(() => {
-    if (!isDragging || (!dragCourtId && !dragTrackId && !dragMotifId && !dragShapeId && !dragTextId)) return;
+    if (!isDragging || (!dragCourtId && !dragTrackId && !dragMotifId && !dragShapeId && !dragTextId && !dragExclusionZoneId)) return;
 
     const handleMove = (e) => {
       // Handle both mouse and touch events
@@ -656,12 +793,21 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       } else if (dragTextId) {
         // Text: just update position (no constraints needed for text)
         updateTextPosition(dragTextId, newPosition);
+      } else if (dragExclusionZoneId) {
+        // Exclusion zones: constrain to surface bounds
+        const zone = exclusionZones[dragExclusionZoneId];
+        const zoneDimensions = {
+          width_mm: zone.width_mm,
+          length_mm: zone.height_mm
+        };
+        newPosition = constrainPosition(newPosition, zoneDimensions, surface);
+        updateExclusionZonePosition(dragExclusionZoneId, newPosition);
       }
     };
 
     const handleEnd = () => {
       // Add to history when drag completes
-      if (dragCourtId || dragTrackId || dragMotifId || dragShapeId || dragTextId) {
+      if (dragCourtId || dragTrackId || dragMotifId || dragShapeId || dragTextId || dragExclusionZoneId) {
         const { addToHistory } = useSportsDesignStore.getState();
         addToHistory();
       }
@@ -672,6 +818,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       setDragMotifId(null);
       setDragShapeId(null);
       setDragTextId(null);
+      setDragExclusionZoneId(null);
       setDragStart(null);
     };
 
@@ -689,7 +836,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       window.removeEventListener('touchend', handleEnd);
       window.removeEventListener('touchcancel', handleEnd);
     };
-  }, [isDragging, dragCourtId, dragTrackId, dragMotifId, dragShapeId, dragTextId, dragStart, courts, tracks, motifs, shapes, texts, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition, updateMotifPosition, updateShapePosition, updateTextPosition]);
+  }, [isDragging, dragCourtId, dragTrackId, dragMotifId, dragShapeId, dragTextId, dragExclusionZoneId, dragStart, courts, tracks, motifs, shapes, texts, exclusionZones, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition, updateMotifPosition, updateShapePosition, updateTextPosition, updateExclusionZonePosition]);
 
   // Handle mouse/touch move for motif scaling
   useEffect(() => {
@@ -1204,6 +1351,154 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     };
   }, [isRotatingText, rotateTextId, rotateTextStart, updateTextRotation]);
 
+  // Handle mouse/touch move for exclusion zone scaling
+  useEffect(() => {
+    if (!isScalingExclusionZone || !scaleExclusionZoneId || !scaleExclusionZoneStart) return;
+
+    const handleMove = (e) => {
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const svgPoint = screenToSVG(clientX, clientY);
+      const zone = exclusionZones[scaleExclusionZoneId];
+      if (!zone) return;
+
+      const corner = scaleExclusionZoneStart.corner;
+      const dy = Math.abs(svgPoint.y - scaleExclusionZoneStart.anchorPoint.y);
+      const dx = Math.abs(svgPoint.x - scaleExclusionZoneStart.anchorPoint.x);
+
+      let newWidth, newHeight;
+
+      if (corner === 'n' || corner === 's') {
+        newWidth = scaleExclusionZoneStart.originalWidth;
+        newHeight = Math.max(500, dy);
+      } else if (corner === 'e' || corner === 'w') {
+        newWidth = Math.max(500, dx);
+        newHeight = scaleExclusionZoneStart.originalHeight;
+      } else {
+        newWidth = Math.max(500, dx);
+        newHeight = Math.max(500, dy);
+      }
+
+      newWidth = Math.round(newWidth);
+      newHeight = Math.round(newHeight);
+
+      // Calculate new position to keep anchor point fixed
+      let newPosition;
+      switch (corner) {
+        case 'n':
+          newPosition = {
+            x: scaleExclusionZoneStart.anchorPoint.x - newWidth / 2,
+            y: scaleExclusionZoneStart.anchorPoint.y - newHeight
+          };
+          break;
+        case 's':
+          newPosition = {
+            x: scaleExclusionZoneStart.anchorPoint.x - newWidth / 2,
+            y: scaleExclusionZoneStart.anchorPoint.y
+          };
+          break;
+        case 'e':
+          newPosition = {
+            x: scaleExclusionZoneStart.anchorPoint.x,
+            y: scaleExclusionZoneStart.anchorPoint.y - newHeight / 2
+          };
+          break;
+        case 'w':
+          newPosition = {
+            x: scaleExclusionZoneStart.anchorPoint.x - newWidth,
+            y: scaleExclusionZoneStart.anchorPoint.y - newHeight / 2
+          };
+          break;
+        default:
+          newPosition = {
+            x: scaleExclusionZoneStart.anchorPoint.x,
+            y: scaleExclusionZoneStart.anchorPoint.y
+          };
+          break;
+      }
+
+      updateExclusionZoneDimensions(scaleExclusionZoneId, newWidth, newHeight);
+      updateExclusionZonePosition(scaleExclusionZoneId, newPosition);
+    };
+
+    const handleEnd = () => {
+      const { addToHistory } = useSportsDesignStore.getState();
+      addToHistory();
+
+      setIsScalingExclusionZone(false);
+      setScaleExclusionZoneId(null);
+      setScaleExclusionZoneStart(null);
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchcancel', handleEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+      window.removeEventListener('touchcancel', handleEnd);
+    };
+  }, [isScalingExclusionZone, scaleExclusionZoneId, scaleExclusionZoneStart, exclusionZones, updateExclusionZoneDimensions, updateExclusionZonePosition]);
+
+  // Handle mouse/touch move for exclusion zone rotation
+  useEffect(() => {
+    if (!isRotatingExclusionZone || !rotateExclusionZoneId || !rotateExclusionZoneStart) return;
+
+    const handleMove = (e) => {
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const svgPoint = screenToSVG(clientX, clientY);
+
+      const currentAngle = Math.atan2(
+        svgPoint.y - rotateExclusionZoneStart.zoneCenter.y,
+        svgPoint.x - rotateExclusionZoneStart.zoneCenter.x
+      ) * (180 / Math.PI);
+
+      const angleDelta = currentAngle - rotateExclusionZoneStart.initialAngle;
+      let newRotation = rotateExclusionZoneStart.originalRotation + angleDelta;
+
+      // Normalize to 0-360 range
+      newRotation = ((newRotation % 360) + 360) % 360;
+
+      // Snap to 15-degree increments if shift is held
+      if (e.shiftKey) {
+        newRotation = Math.round(newRotation / 15) * 15;
+      }
+
+      newRotation = Math.round(newRotation * 10) / 10;
+
+      updateExclusionZoneRotation(rotateExclusionZoneId, newRotation);
+    };
+
+    const handleEnd = () => {
+      const { addToHistory } = useSportsDesignStore.getState();
+      addToHistory();
+
+      setIsRotatingExclusionZone(false);
+      setRotateExclusionZoneId(null);
+      setRotateExclusionZoneStart(null);
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchcancel', handleEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+      window.removeEventListener('touchcancel', handleEnd);
+    };
+  }, [isRotatingExclusionZone, rotateExclusionZoneId, rotateExclusionZoneStart, updateExclusionZoneRotation]);
+
   // Handle click on canvas background (deselect or add path point)
   const handleCanvasClick = (e) => {
     // In path drawing mode, add points to the active path
@@ -1254,6 +1549,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       deselectMotif();
       deselectShape();
       deselectText();
+      deselectExclusionZone();
       // Clear point selection when clicking background
       setSelectedPointIndex(null);
     }
@@ -1523,15 +1819,56 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             viewBox={`0 0 ${surface.width_mm} ${surface.length_mm}`}
             preserveAspectRatio="xMidYMid meet"
           >
-        {/* Surface Background */}
-        <rect
-          x="0"
-          y="0"
-          width={surface.width_mm}
-          height={surface.length_mm}
-          fill={surface.color.hex}
-          className="court-canvas__surface"
-        />
+        {/* Defs section for clipPath and patterns */}
+        <defs>
+          {/* Custom surface boundary clipPath */}
+          {surface.boundary && surface.boundary.type !== 'rectangle' && surface.boundary.controlPoints && (
+            <clipPath id="surface-boundary-clip">
+              <path d={generateSurfaceBoundaryPath(surface.boundary, surface.width_mm, surface.length_mm)} />
+            </clipPath>
+          )}
+        </defs>
+
+        {/* Surface Background - clipped if custom boundary */}
+        <g clipPath={surface.boundary && surface.boundary.type !== 'rectangle' && surface.boundary.controlPoints ? 'url(#surface-boundary-clip)' : undefined}>
+          <rect
+            x="0"
+            y="0"
+            width={surface.width_mm}
+            height={surface.length_mm}
+            fill={surface.color.hex}
+            className="court-canvas__surface"
+          />
+        </g>
+
+        {/* Boundary outline for non-rectangular surfaces */}
+        {surface.boundary && surface.boundary.type !== 'rectangle' && surface.boundary.controlPoints && (
+          <path
+            d={generateSurfaceBoundaryPath(surface.boundary, surface.width_mm, surface.length_mm)}
+            fill="none"
+            stroke="#94a3b8"
+            strokeWidth="60"
+            strokeDasharray="300 200"
+            pointerEvents="none"
+          />
+        )}
+
+        {/* Exclusion Zones - rendered on top of surface, below elements */}
+        {Object.values(exclusionZones).map(zone => {
+          if (zone.visible === false) return null;
+          return (
+            <ExclusionZoneElement
+              key={zone.id}
+              zone={zone}
+              isSelected={zone.id === selectedExclusionZoneId}
+              onMouseDown={(e) => handleExclusionZoneMouseDown(e, zone.id)}
+              onTouchStart={(e) => handleExclusionZoneMouseDown(e, zone.id)}
+              onDoubleClick={(e) => handleExclusionZoneDoubleClick(e, zone.id)}
+              onScaleStart={(e, corner) => handleExclusionZoneScaleStart(e, zone.id, corner)}
+              onRotateStart={(e) => handleExclusionZoneRotateStart(e, zone.id)}
+            />
+          );
+        })}
 
         {/* Render Elements in Unified Layer Order */}
         {elementOrder.map(elementId => {

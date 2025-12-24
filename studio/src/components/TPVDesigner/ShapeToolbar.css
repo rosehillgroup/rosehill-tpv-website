@@ -123,6 +123,19 @@
   margin: 4px 0;
 }
 
+/* Exclusion Zone Button - highlight styling */
+.shape-toolbar__btn--exclusion {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.shape-toolbar__btn--exclusion:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.shape-toolbar__btn--exclusion .shape-toolbar__icon {
+  color: #ef4444;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .shape-toolbar {

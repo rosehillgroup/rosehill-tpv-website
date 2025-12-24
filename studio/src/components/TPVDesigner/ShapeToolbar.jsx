@@ -6,7 +6,7 @@ import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import './ShapeToolbar.css';
 
 function ShapeToolbar() {
-  const { addShape, addText, standaloneMode, startPathDrawing } = useSportsDesignStore();
+  const { addShape, addText, addExclusionZone, standaloneMode, startPathDrawing } = useSportsDesignStore();
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Don't show in standalone mode
@@ -34,6 +34,11 @@ function ShapeToolbar() {
     addText();
     // Text is added in editing mode, so close toolbar
     setIsExpanded(false);
+  };
+
+  const handleAddExclusionZone = () => {
+    addExclusionZone('rectangle');
+    // Keep toolbar open
   };
 
   return (
@@ -80,6 +85,19 @@ function ShapeToolbar() {
               <span className="shape-toolbar__name">{shape.label}</span>
             </button>
           ))}
+
+          {/* Divider */}
+          <div className="shape-toolbar__divider" />
+
+          {/* Exclusion Zone Button */}
+          <button
+            className="shape-toolbar__btn shape-toolbar__btn--exclusion"
+            onClick={handleAddExclusionZone}
+            title="Add Exclusion Zone (building, planter, obstacle)"
+          >
+            <span className="shape-toolbar__icon" style={{ fontSize: '1rem' }}>⊘</span>
+            <span className="shape-toolbar__name">Exclusion</span>
+          </button>
         </div>
       )}
     </div>

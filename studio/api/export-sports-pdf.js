@@ -59,7 +59,10 @@ export default async function handler(req, res) {
       surface,
       courts,
       tracks,
+      shapes,
+      texts,
       motifs,
+      exclusionZones,
       dimensions,
     } = req.body;
 
@@ -77,7 +80,10 @@ export default async function handler(req, res) {
     console.log('[SPORTS-PDF] Surface:', surface.width_mm, 'x', surface.length_mm);
     console.log('[SPORTS-PDF] Courts:', Object.keys(courts || {}).length);
     console.log('[SPORTS-PDF] Tracks:', Object.keys(tracks || {}).length);
+    console.log('[SPORTS-PDF] Shapes:', Object.keys(shapes || {}).length);
+    console.log('[SPORTS-PDF] Texts:', Object.keys(texts || {}).length);
     console.log('[SPORTS-PDF] Motifs:', (motifs || []).length);
+    console.log('[SPORTS-PDF] Exclusion Zones:', Object.keys(exclusionZones || {}).length);
 
     // Import generator dynamically (for edge runtime compatibility)
     const { generateSportsSurfacePDF } = await import('./_utils/pdf/sportsGenerator.js');
@@ -88,7 +94,10 @@ export default async function handler(req, res) {
       surface,
       courts: courts || {},
       tracks: tracks || {},
+      shapes: shapes || {},
+      texts: texts || {},
       motifs: motifs || [],
+      exclusionZones: exclusionZones || {},
       dimensions,
     });
 

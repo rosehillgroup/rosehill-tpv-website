@@ -17,18 +17,21 @@ function LayersPanel() {
     motifs,
     shapes,
     texts,
+    exclusionZones,
     elementOrder,
     selectedCourtId,
     selectedTrackId,
     selectedMotifId,
     selectedShapeId,
     selectedTextId,
+    selectedExclusionZoneId,
     setElementOrder,
     selectCourt,
     selectTrack,
     selectMotif,
     selectShape,
     selectText,
+    selectExclusionZone,
     bringToFront,
     sendToBack,
     duplicateCourt,
@@ -41,6 +44,7 @@ function LayersPanel() {
     removeMotif,
     removeShape,
     removeText,
+    removeExclusionZone,
     renameElement,
     toggleElementLock,
     toggleElementVisibility,
@@ -125,13 +129,23 @@ function LayersPanel() {
         locked: text?.locked || false,
         visible: text?.visible !== false
       };
+    } else if (elementId.startsWith('exclusion-')) {
+      const zone = exclusionZones[elementId];
+      return {
+        type: 'exclusion',
+        name: zone?.customName || 'Exclusion Zone',
+        icon: '⊘',
+        sport: 'exclusion',
+        locked: zone?.locked || false,
+        visible: zone?.visible !== false
+      };
     }
     return { type: 'unknown', name: 'Unknown', icon: '❓', sport: '', locked: false, visible: true };
   };
 
   // Check if element is selected
   const isSelected = (elementId) => {
-    return elementId === selectedCourtId || elementId === selectedTrackId || elementId === selectedMotifId || elementId === selectedShapeId || elementId === selectedTextId;
+    return elementId === selectedCourtId || elementId === selectedTrackId || elementId === selectedMotifId || elementId === selectedShapeId || elementId === selectedTextId || elementId === selectedExclusionZoneId;
   };
 
   // Handle element selection
@@ -146,6 +160,8 @@ function LayersPanel() {
       selectShape(elementId);
     } else if (elementId.startsWith('text-')) {
       selectText(elementId);
+    } else if (elementId.startsWith('exclusion-')) {
+      selectExclusionZone(elementId);
     }
   };
 
@@ -267,6 +283,8 @@ function LayersPanel() {
         removeShape(elementId);
       } else if (elementId.startsWith('text-')) {
         removeText(elementId);
+      } else if (elementId.startsWith('exclusion-')) {
+        removeExclusionZone(elementId);
       }
     }
     setMenuOpenId(null);
@@ -443,6 +461,70 @@ function LayersPanel() {
           );
         })}
       </div>
+
+      {/* Exclusion Zones Section (separate from layer order) */}
+      {Object.keys(exclusionZones).length > 0 && (
+        <>
+          <div className="layers-panel__section-divider">
+            <span>Exclusion Zones</span>
+          </div>
+          <div className="layers-panel__list layers-panel__list--exclusions">
+            {Object.keys(exclusionZones).map((zoneId) => {
+              const info = getElementInfo(zoneId);
+              const selected = isSelected(zoneId);
+
+              return (
+                <div
+                  key={zoneId}
+                  className={`layer-item layer-item--exclusion ${selected ? 'layer-item--selected' : ''} ${info.locked ? 'layer-item--locked' : ''} ${!info.visible ? 'layer-item--hidden' : ''}`}
+                  onClick={() => handleSelect(zoneId)}
+                >
+                  <span className="layer-item__handle layer-item__handle--disabled">
+                    {info.icon}
+                  </span>
+                  <span className={`layer-item__name ${!info.visible ? 'layer-item__name--hidden' : ''}`}>
+                    {info.name}
+                  </span>
+                  <div className="layer-item__indicators">
+                    {!info.visible && <span className="layer-item__indicator" title="Hidden">👁‍🗨</span>}
+                  </div>
+                  <div className="layer-item__actions">
+                    <button
+                      className="layer-item__menu-btn"
+                      onClick={(e) => handleMenuToggle(e, zoneId)}
+                      title="More actions"
+                    >
+                      ⋮
+                    </button>
+
+                    {menuOpenId === zoneId && (
+                      <div className="layer-item__menu">
+                        <button onClick={(e) => handleStartRename(e, zoneId)}>
+                          ✏️ Rename
+                        </button>
+                        <div className="layer-item__menu-divider" />
+                        <button onClick={(e) => handleToggleLock(e, zoneId)}>
+                          {info.locked ? '🔓 Unlock' : '🔒 Lock'}
+                        </button>
+                        <button onClick={(e) => handleToggleVisibility(e, zoneId)}>
+                          {info.visible ? '👁‍🗨 Hide' : '👁 Show'}
+                        </button>
+                        <div className="layer-item__menu-divider" />
+                        <button
+                          onClick={(e) => handleDelete(e, zoneId)}
+                          className="layer-item__menu-delete"
+                        >
+                          🗑️ Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
 
       <div className="layers-panel__footer">
         <span className="layers-panel__shortcut-hint">

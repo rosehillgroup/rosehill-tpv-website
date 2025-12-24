@@ -109,6 +109,8 @@ function TPVDesigner({ loadedDesign }) {
     togglePropertiesPanel,
     setSurfaceDimensions,
     setSurfaceColor,
+    setSurfaceBoundaryPreset,
+    resetSurfaceBoundary,
     resetDesign,
     hasUnsavedChanges,
     standaloneMode,
@@ -508,6 +510,44 @@ function TPVDesigner({ loadedDesign }) {
               <p className="sports-designer__dimension-hint">
                 Common sizes: 37m × 34m (tennis), 40m × 20m (futsal), 50m × 50m (multi-sport)
               </p>
+
+              {/* Surface Boundary Shape */}
+              <div className="sports-designer__boundary-section">
+                <label htmlFor="boundary-shape">Surface Shape</label>
+                <div className="sports-designer__boundary-options">
+                  <select
+                    id="boundary-shape"
+                    value={surface.boundary?.type === 'polygon' ? (surface.boundary.preset || 'custom') : 'rectangle'}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === 'rectangle') {
+                        resetSurfaceBoundary();
+                      } else {
+                        setSurfaceBoundaryPreset(value);
+                      }
+                    }}
+                    className="sports-designer__select"
+                  >
+                    <option value="rectangle">Rectangle (default)</option>
+                    <option value="l-shape">L-Shape</option>
+                    <option value="u-shape">U-Shape</option>
+                    <option value="t-shape">T-Shape</option>
+                  </select>
+                  {surface.boundary?.type === 'polygon' && (
+                    <button
+                      type="button"
+                      className="sports-designer__btn-secondary"
+                      onClick={resetSurfaceBoundary}
+                      title="Reset to rectangle"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+                <p className="sports-designer__boundary-hint">
+                  Non-rectangular shapes are useful for L-shaped buildings or irregular sites
+                </p>
+              </div>
 
               <button type="submit" className="sports-designer__btn-primary">
                 Update Surface

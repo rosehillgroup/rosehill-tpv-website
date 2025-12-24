@@ -93,6 +93,74 @@
   font-style: italic;
 }
 
+/* ====== Surface Boundary Section ====== */
+.sports-designer__boundary-section {
+  margin-bottom: var(--space-3, 1.5rem);
+  padding-top: var(--space-2, 1rem);
+  border-top: 1px solid var(--color-border, #e4e9f0);
+}
+
+.sports-designer__boundary-section > label {
+  display: block;
+  margin-bottom: var(--space-1, 0.5rem);
+  font-weight: var(--font-medium, 500);
+  font-size: var(--text-sm, 0.875rem);
+  color: var(--color-text-primary, #1a202c);
+}
+
+.sports-designer__boundary-options {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sports-designer__select {
+  flex: 1;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--color-border, #e4e9f0);
+  border-radius: var(--radius-sm, 6px);
+  font-size: var(--text-sm, 0.875rem);
+  font-family: var(--font-body, 'Source Sans Pro', sans-serif);
+  background: white;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+}
+
+.sports-designer__select:focus {
+  outline: none;
+  border-color: var(--color-primary, #1e4a7a);
+  box-shadow: 0 0 0 3px rgba(30, 78, 122, 0.1);
+}
+
+.sports-designer__btn-secondary {
+  padding: 0.625rem 1rem;
+  background: transparent;
+  color: var(--color-text-secondary, #64748b);
+  border: 1px solid var(--color-border, #e4e9f0);
+  border-radius: var(--radius-sm, 6px);
+  font-size: var(--text-sm, 0.875rem);
+  font-weight: var(--font-medium, 500);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-body, 'Source Sans Pro', sans-serif);
+}
+
+.sports-designer__btn-secondary:hover {
+  background: var(--color-bg-muted, #f5f7fa);
+  border-color: var(--color-text-tertiary, #94a3b8);
+  color: var(--color-text-primary, #1a202c);
+}
+
+.sports-designer__boundary-hint {
+  margin: var(--space-1, 0.5rem) 0 0 0;
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--color-text-tertiary, #94a3b8);
+}
+
 /* ====== Buttons ====== */
 .sports-designer__btn-primary {
   width: 100%;

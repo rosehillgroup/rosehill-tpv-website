@@ -30,6 +30,9 @@ export function serializeSportsDesign(state, metadata = {}) {
     // Motifs (playground designs placed on canvas)
     motifs: serializeMotifs(state.motifs),
 
+    // Exclusion zones (buildings, obstacles)
+    exclusionZones: serializeExclusionZones(state.exclusionZones),
+
     // Unified element render order
     elementOrder: state.elementOrder || [],
 
@@ -119,6 +122,34 @@ function serializeMotifs(motifs) {
 }
 
 /**
+ * Serialize exclusion zones (buildings, obstacles)
+ */
+function serializeExclusionZones(zones) {
+  if (!zones) return {};
+
+  return Object.fromEntries(
+    Object.entries(zones).map(([id, zone]) => [
+      id,
+      {
+        id: zone.id,
+        type: 'exclusion',
+        shapeType: zone.shapeType,
+        sides: zone.sides,
+        width_mm: zone.width_mm,
+        height_mm: zone.height_mm,
+        position: zone.position,
+        rotation: zone.rotation,
+        cornerRadius: zone.cornerRadius,
+        locked: zone.locked,
+        visible: zone.visible,
+        customName: zone.customName,
+        controlPoints: zone.controlPoints
+      }
+    ])
+  );
+}
+
+/**
  * Deserialize saved design data back into store format
  * @param {Object} savedData - Design data from database
  * @returns {Object} State object to load into store
@@ -136,6 +167,7 @@ export function deserializeSportsDesign(savedData) {
     courts: data.courts || {},
     tracks: data.tracks || {},
     motifs: data.motifs || {},
+    exclusionZones: data.exclusionZones || {},
     elementOrder: data.elementOrder || [],
     customMarkings: data.customMarkings || [],
     backgroundZones: data.backgroundZones || [],
@@ -176,14 +208,42 @@ export function validateSportsDesign(state) {
   };
 }
 
+import { calculateMaterials as _calculateMaterials } from '../lib/sports/materialCalculator.js';
+
 /**
- * Calculate total quantities for all elements
- * Returns breakdown by TPV color code
+ * Calculate total quantities for all elements using canvas rasterization.
+ * This properly handles overlapping elements - only visible areas are counted.
+ * Exclusion zones (buildings, obstacles) are not counted as material.
  *
- * @param {Object} state - Design state
- * @returns {Object} Quantities breakdown
+ * Returns breakdown by TPV color code.
+ *
+ * @param {Object} state - Design state from store.exportDesignData()
+ * @returns {Array} Array of { tpv_code, area_m2, quantity_kg, usages }
  */
 export function calculateSportsQuantities(state) {
+  const result = _calculateMaterials(state);
+  // For backward compatibility, return just the materials array
+  return result.materials || result;
+}
+
+/**
+ * Calculate total quantities including exclusion zone information.
+ * This is the full version that also reports excluded area.
+ *
+ * @param {Object} state - Design state from store.exportDesignData()
+ * @returns {Object} { materials: Array, exclusionArea_m2: number }
+ */
+export function calculateSportsQuantitiesWithExclusions(state) {
+  return _calculateMaterials(state);
+}
+
+/**
+ * @deprecated Use calculateSportsQuantities (now using canvas rasterization)
+ *
+ * Legacy calculation that doesn't account for overlapping elements.
+ * Kept for reference but not recommended for use.
+ */
+export function calculateSportsQuantitiesLegacy(state) {
   const DENSITY_KG_PER_M2 = 8;    // TPV at 20mm depth
   const SAFETY_FACTOR = 1.1;       // 10% wastage
 
@@ -207,6 +267,7 @@ export function calculateSportsQuantities(state) {
 
   // 2. Court areas
   for (const court of Object.values(state.courts || {})) {
+    if (court.visible === false) continue;
     const courtArea = calculateCourtArea(court);
 
     // Court surface color (if different from base)
@@ -228,6 +289,7 @@ export function calculateSportsQuantities(state) {
 
   // 3. Track areas
   for (const track of Object.values(state.tracks || {})) {
+    if (track.visible === false) continue;
     const trackArea = calculateTrackArea(track);
 
     if (track.trackSurfaceColor) {

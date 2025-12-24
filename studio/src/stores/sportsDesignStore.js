@@ -15,6 +15,74 @@ import {
   removePoint as removePathPoint
 } from '../lib/sports/pathGeometry.js';
 
+// Helper function to generate control points for exclusion zone path presets
+function generateExclusionPathPoints(preset) {
+  switch (preset) {
+    case 'l-shape':
+      // L-shape: 6 points normalized to 0-1
+      return [
+        { x: 0, y: 0, handleIn: { x: 0, y: 0 }, handleOut: { x: 0, y: 0 } },
+        { x: 0.5, y: 0, handleIn: { x: 0, y: 0 }, handleOut: { x: 0, y: 0 } },
+        { x: 0.5, y: 0.5, handleIn: { x: 0, y: 0 }, handleOut: { x: 0, y: 0 } },
+        { x: 1, y: 0.5, handleIn: { x: 0, y: 0 }, handleOut: { x: 0, y: 0 } },
+        { x: 1, y: 1, handleIn: { x: 0, y: 0 }, handleOut: { x: 0, y: 0 } },
+        { x: 0, y: 1, handleIn: { x: 0, y: 0 }, handleOut: { x: 0, y: 0 } }
+      ];
+    case 'custom':
+    default:
+      // Simple square as starting point for custom shapes
+      return [
+        { x: 0, y: 0, handleIn: { x: 0, y: 0 }, handleOut: { x: 0, y: 0 } },
+        { x: 1, y: 0, handleIn: { x: 0, y: 0 }, handleOut: { x: 0, y: 0 } },
+        { x: 1, y: 1, handleIn: { x: 0, y: 0 }, handleOut: { x: 0, y: 0 } },
+        { x: 0, y: 1, handleIn: { x: 0, y: 0 }, handleOut: { x: 0, y: 0 } }
+      ];
+  }
+}
+
+// Helper function to generate control points for surface boundary presets
+function generateBoundaryPoints(preset) {
+  switch (preset) {
+    case 'l-shape':
+      // L-shape: top-right corner cut out
+      return [
+        { x: 0, y: 0 },
+        { x: 0.6, y: 0 },
+        { x: 0.6, y: 0.4 },
+        { x: 1, y: 0.4 },
+        { x: 1, y: 1 },
+        { x: 0, y: 1 }
+      ];
+    case 'u-shape':
+      // U-shape: top-center cut out
+      return [
+        { x: 0, y: 0 },
+        { x: 0.35, y: 0 },
+        { x: 0.35, y: 0.4 },
+        { x: 0.65, y: 0.4 },
+        { x: 0.65, y: 0 },
+        { x: 1, y: 0 },
+        { x: 1, y: 1 },
+        { x: 0, y: 1 }
+      ];
+    case 't-shape':
+      // T-shape: bottom corners cut out
+      return [
+        { x: 0, y: 0 },
+        { x: 1, y: 0 },
+        { x: 1, y: 0.4 },
+        { x: 0.7, y: 0.4 },
+        { x: 0.7, y: 1 },
+        { x: 0.3, y: 1 },
+        { x: 0.3, y: 0.4 },
+        { x: 0, y: 0.4 }
+      ];
+    case 'rectangle':
+    default:
+      return null; // No custom boundary, use full rectangle
+  }
+}
+
 const initialState = {
   // Surface configuration
   surface: {
@@ -24,6 +92,11 @@ const initialState = {
       tpv_code: 'RH12',
       hex: '#006C55',
       name: 'Dark Green'
+    },
+    // Custom boundary shape (null = full rectangle)
+    boundary: {
+      type: 'rectangle',  // 'rectangle' | 'l-shape' | 'u-shape' | 't-shape' | 'custom'
+      controlPoints: null  // Array of {x, y} normalized 0-1, or null for rectangle
     }
   },
 
@@ -59,6 +132,12 @@ const initialState = {
 
   // Currently editing text (inline editing mode)
   editingTextId: null,
+
+  // Exclusion zones (buildings, planters, obstacles that subtract from surface)
+  exclusionZones: {},  // { [zoneId]: ExclusionZoneObject }
+
+  // Selected exclusion zone for manipulation
+  selectedExclusionZoneId: null,
 
   // Unified element order for z-index (courts, tracks, motifs, shapes, and texts combined)
   // Elements render bottom-to-top: first = bottom layer, last = top layer
@@ -129,6 +208,49 @@ export const useSportsDesignStore = create(
           surface: {
             ...state.surface,
             color
+          }
+        }));
+        get().addToHistory();
+      },
+
+      // Set surface boundary preset (rectangle, l-shape, u-shape, t-shape)
+      setSurfaceBoundaryPreset: (preset) => {
+        const controlPoints = generateBoundaryPoints(preset);
+        set((state) => ({
+          surface: {
+            ...state.surface,
+            boundary: {
+              type: preset,
+              controlPoints
+            }
+          }
+        }));
+        get().addToHistory();
+      },
+
+      // Set custom surface boundary points
+      setSurfaceBoundaryPoints: (controlPoints) => {
+        set((state) => ({
+          surface: {
+            ...state.surface,
+            boundary: {
+              type: 'custom',
+              controlPoints
+            }
+          }
+        }));
+        get().addToHistory();
+      },
+
+      // Reset surface boundary to full rectangle
+      resetSurfaceBoundary: () => {
+        set((state) => ({
+          surface: {
+            ...state.surface,
+            boundary: {
+              type: 'rectangle',
+              controlPoints: null
+            }
           }
         }));
         get().addToHistory();
@@ -367,6 +489,16 @@ export const useSportsDesignStore = create(
               }
             }
           }));
+        } else if (elementId.startsWith('exclusion-')) {
+          set((state) => ({
+            exclusionZones: {
+              ...state.exclusionZones,
+              [elementId]: {
+                ...state.exclusionZones[elementId],
+                customName
+              }
+            }
+          }));
         }
         get().addToHistory();
       },
@@ -423,6 +555,16 @@ export const useSportsDesignStore = create(
               }
             }
           }));
+        } else if (elementId.startsWith('exclusion-')) {
+          set((state) => ({
+            exclusionZones: {
+              ...state.exclusionZones,
+              [elementId]: {
+                ...state.exclusionZones[elementId],
+                locked: !state.exclusionZones[elementId]?.locked
+              }
+            }
+          }));
         }
         get().addToHistory();
       },
@@ -476,6 +618,16 @@ export const useSportsDesignStore = create(
               [elementId]: {
                 ...state.texts[elementId],
                 visible: state.texts[elementId]?.visible === false ? true : false
+              }
+            }
+          }));
+        } else if (elementId.startsWith('exclusion-')) {
+          set((state) => ({
+            exclusionZones: {
+              ...state.exclusionZones,
+              [elementId]: {
+                ...state.exclusionZones[elementId],
+                visible: state.exclusionZones[elementId]?.visible === false ? true : false
               }
             }
           }));
@@ -548,9 +700,9 @@ export const useSportsDesignStore = create(
         const { propertiesPanelUserClosed } = get();
         // Only auto-open properties panel if user hasn't manually closed it
         if (!propertiesPanelUserClosed) {
-          set({ selectedCourtId: courtId, selectedTrackId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, editingTextId: null, showPropertiesPanel: true });
+          set({ selectedCourtId: courtId, selectedTrackId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null, editingTextId: null, showPropertiesPanel: true });
         } else {
-          set({ selectedCourtId: courtId, selectedTrackId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, editingTextId: null });
+          set({ selectedCourtId: courtId, selectedTrackId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null, editingTextId: null });
         }
       },
 
@@ -859,9 +1011,9 @@ export const useSportsDesignStore = create(
       selectTrack: (trackId) => {
         const { propertiesPanelUserClosed } = get();
         if (!propertiesPanelUserClosed) {
-          set({ selectedTrackId: trackId, selectedCourtId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, editingTextId: null, showPropertiesPanel: true });
+          set({ selectedTrackId: trackId, selectedCourtId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null, editingTextId: null, showPropertiesPanel: true });
         } else {
-          set({ selectedTrackId: trackId, selectedCourtId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, editingTextId: null });
+          set({ selectedTrackId: trackId, selectedCourtId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null, editingTextId: null });
         }
       },
 
@@ -1060,9 +1212,9 @@ export const useSportsDesignStore = create(
       selectMotif: (motifId) => {
         const { propertiesPanelUserClosed } = get();
         if (!propertiesPanelUserClosed) {
-          set({ selectedMotifId: motifId, selectedCourtId: null, selectedTrackId: null, selectedShapeId: null, selectedTextId: null, editingTextId: null, showPropertiesPanel: true });
+          set({ selectedMotifId: motifId, selectedCourtId: null, selectedTrackId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null, editingTextId: null, showPropertiesPanel: true });
         } else {
-          set({ selectedMotifId: motifId, selectedCourtId: null, selectedTrackId: null, selectedShapeId: null, selectedTextId: null, editingTextId: null });
+          set({ selectedMotifId: motifId, selectedCourtId: null, selectedTrackId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null, editingTextId: null });
         }
       },
 
@@ -1622,6 +1774,7 @@ export const useSportsDesignStore = create(
             selectedTrackId: null,
             selectedMotifId: null,
             selectedTextId: null,
+            selectedExclusionZoneId: null,
             editingTextId: null,
             showPropertiesPanel: true
           });
@@ -1632,6 +1785,7 @@ export const useSportsDesignStore = create(
             selectedTrackId: null,
             selectedMotifId: null,
             selectedTextId: null,
+            selectedExclusionZoneId: null,
             editingTextId: null
           });
         }
@@ -2009,6 +2163,7 @@ export const useSportsDesignStore = create(
             selectedTrackId: null,
             selectedMotifId: null,
             selectedShapeId: null,
+            selectedExclusionZoneId: null,
             showPropertiesPanel: true
           });
         } else {
@@ -2017,7 +2172,8 @@ export const useSportsDesignStore = create(
             selectedCourtId: null,
             selectedTrackId: null,
             selectedMotifId: null,
-            selectedShapeId: null
+            selectedShapeId: null,
+            selectedExclusionZoneId: null
           });
         }
       },
@@ -2186,6 +2342,183 @@ export const useSportsDesignStore = create(
         get().addToHistory();
       },
 
+      // ====== Exclusion Zone Actions ======
+      addExclusionZone: (preset = 'rectangle') => {
+        const zoneId = `exclusion-${Date.now()}`;
+        const surface = get().surface;
+
+        // Define presets for exclusion zone shapes
+        const presets = {
+          rectangle: { shapeType: 'polygon', sides: 4, width: 3000, height: 2000 },
+          square: { shapeType: 'polygon', sides: 4, width: 2000, height: 2000 },
+          circle: { shapeType: 'polygon', sides: 32, width: 2000, height: 2000 },
+          'l-shape': { shapeType: 'path', width: 4000, height: 3000 },
+          custom: { shapeType: 'path', width: 3000, height: 3000 }
+        };
+
+        const config = presets[preset] || presets.rectangle;
+
+        // Create the exclusion zone object
+        const zone = {
+          id: zoneId,
+          type: 'exclusion',
+          shapeType: config.shapeType,
+          sides: config.sides || 4,
+          width_mm: config.width,
+          height_mm: config.height,
+          position: {
+            x: surface.width_mm / 2 - config.width / 2,
+            y: surface.length_mm / 2 - config.height / 2
+          },
+          rotation: 0,
+          cornerRadius: 0,
+          locked: false,
+          visible: true,
+          customName: null,
+          // For path-based shapes (L-shape, custom)
+          controlPoints: config.shapeType === 'path' ? generateExclusionPathPoints(preset) : null
+        };
+
+        set((state) => ({
+          exclusionZones: {
+            ...state.exclusionZones,
+            [zoneId]: zone
+          },
+          selectedExclusionZoneId: zoneId,
+          selectedCourtId: null,
+          selectedTrackId: null,
+          selectedMotifId: null,
+          selectedShapeId: null,
+          selectedTextId: null,
+          editingTextId: null
+        }));
+        get().addToHistory();
+      },
+
+      removeExclusionZone: (zoneId) => {
+        const { [zoneId]: removed, ...remainingZones } = get().exclusionZones;
+        set((state) => ({
+          exclusionZones: remainingZones,
+          selectedExclusionZoneId: state.selectedExclusionZoneId === zoneId ? null : state.selectedExclusionZoneId
+        }));
+        get().addToHistory();
+      },
+
+      updateExclusionZonePosition: (zoneId, position) => {
+        set((state) => ({
+          exclusionZones: {
+            ...state.exclusionZones,
+            [zoneId]: {
+              ...state.exclusionZones[zoneId],
+              position
+            }
+          }
+        }));
+        // Don't add to history for every drag movement
+      },
+
+      updateExclusionZoneDimensions: (zoneId, width_mm, height_mm) => {
+        set((state) => ({
+          exclusionZones: {
+            ...state.exclusionZones,
+            [zoneId]: {
+              ...state.exclusionZones[zoneId],
+              width_mm,
+              height_mm
+            }
+          }
+        }));
+      },
+
+      updateExclusionZoneRotation: (zoneId, rotation) => {
+        set((state) => ({
+          exclusionZones: {
+            ...state.exclusionZones,
+            [zoneId]: {
+              ...state.exclusionZones[zoneId],
+              rotation
+            }
+          }
+        }));
+      },
+
+      updateExclusionZoneCornerRadius: (zoneId, cornerRadius) => {
+        set((state) => ({
+          exclusionZones: {
+            ...state.exclusionZones,
+            [zoneId]: {
+              ...state.exclusionZones[zoneId],
+              cornerRadius: Math.max(0, Math.min(100, cornerRadius))
+            }
+          }
+        }));
+        get().addToHistory();
+      },
+
+      selectExclusionZone: (zoneId) => {
+        const { propertiesPanelUserClosed } = get();
+        if (!propertiesPanelUserClosed) {
+          set({
+            selectedExclusionZoneId: zoneId,
+            selectedCourtId: null,
+            selectedTrackId: null,
+            selectedMotifId: null,
+            selectedShapeId: null,
+            selectedTextId: null,
+            editingTextId: null,
+            showPropertiesPanel: true
+          });
+        } else {
+          set({
+            selectedExclusionZoneId: zoneId,
+            selectedCourtId: null,
+            selectedTrackId: null,
+            selectedMotifId: null,
+            selectedShapeId: null,
+            selectedTextId: null,
+            editingTextId: null
+          });
+        }
+      },
+
+      deselectExclusionZone: () => {
+        set({
+          selectedExclusionZoneId: null,
+          showPropertiesPanel: false,
+          propertiesPanelUserClosed: true
+        });
+      },
+
+      duplicateExclusionZone: (zoneId) => {
+        const zone = get().exclusionZones[zoneId];
+        if (!zone) return;
+
+        const newZoneId = `exclusion-${Date.now()}`;
+        const newZone = {
+          ...zone,
+          id: newZoneId,
+          position: {
+            x: zone.position.x + 500,
+            y: zone.position.y + 500
+          },
+          customName: zone.customName ? `${zone.customName} (copy)` : null
+        };
+
+        set((state) => ({
+          exclusionZones: {
+            ...state.exclusionZones,
+            [newZoneId]: newZone
+          },
+          selectedExclusionZoneId: newZoneId,
+          selectedCourtId: null,
+          selectedTrackId: null,
+          selectedMotifId: null,
+          selectedShapeId: null,
+          selectedTextId: null
+        }));
+        get().addToHistory();
+      },
+
       // ====== Custom Markings Actions ======
       addCustomMarking: (marking) => {
         set((state) => ({
@@ -2239,6 +2572,7 @@ export const useSportsDesignStore = create(
           motifs: currentState.motifs,
           shapes: currentState.shapes,
           texts: currentState.texts,
+          exclusionZones: currentState.exclusionZones,
           elementOrder: currentState.elementOrder,
           customMarkings: currentState.customMarkings,
           backgroundZones: currentState.backgroundZones
@@ -2362,6 +2696,7 @@ export const useSportsDesignStore = create(
           motifs: designData.motifs || {},
           shapes: designData.shapes || {},
           texts: designData.texts || {},
+          exclusionZones: designData.exclusionZones || {},
           elementOrder: elementOrder || [],
           customMarkings: designData.customMarkings || [],
           backgroundZones: designData.backgroundZones || [],
@@ -2373,6 +2708,7 @@ export const useSportsDesignStore = create(
           selectedMotifId: null,
           selectedShapeId: null,
           selectedTextId: null,
+          selectedExclusionZoneId: null,
           editingTextId: null,
           history: [],
           historyIndex: -1
@@ -2390,6 +2726,7 @@ export const useSportsDesignStore = create(
           motifs: state.motifs,
           shapes: state.shapes,
           texts: state.texts,
+          exclusionZones: state.exclusionZones,
           elementOrder: state.elementOrder,
           customMarkings: state.customMarkings,
           backgroundZones: state.backgroundZones,
@@ -2404,15 +2741,16 @@ export const useSportsDesignStore = create(
         set(initialState);
       },
 
-      // Check if there are unsaved changes (any courts, tracks, motifs, shapes, texts, or modifications)
+      // Check if there are unsaved changes (any courts, tracks, motifs, shapes, texts, exclusionZones, or modifications)
       hasUnsavedChanges: () => {
         const state = get();
-        // Has changes if any courts, tracks, motifs, shapes, or texts have been added
+        // Has changes if any courts, tracks, motifs, shapes, texts, or exclusionZones have been added
         return Object.keys(state.courts).length > 0 ||
                Object.keys(state.tracks).length > 0 ||
                Object.keys(state.motifs).length > 0 ||
                Object.keys(state.shapes).length > 0 ||
-               Object.keys(state.texts).length > 0;
+               Object.keys(state.texts).length > 0 ||
+               Object.keys(state.exclusionZones).length > 0;
       }
     }),
     { name: 'SportsDesignStore' }

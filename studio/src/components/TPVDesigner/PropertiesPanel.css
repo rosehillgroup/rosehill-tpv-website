@@ -900,6 +900,46 @@
   background: #fef2f2 !important;
 }
 
+/* ====== Exclusion Zones Section ====== */
+.layers-panel__section-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #ef4444;
+  border-top: 1px solid #e5e7eb;
+}
+
+.layers-panel__section-divider::before,
+.layers-panel__section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #fecaca, transparent);
+}
+
+.layers-panel__list--exclusions {
+  background: rgba(239, 68, 68, 0.03);
+}
+
+.layer-item--exclusion {
+  border-left: 3px solid #ef4444;
+}
+
+.layer-item--exclusion:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.layer-item--exclusion.layer-item--selected {
+  background: rgba(239, 68, 68, 0.12);
+  border-left-color: #dc2626;
+}
+
 /* ====== Toggle Buttons ====== */
 .property-toggle-buttons {
   display: flex;

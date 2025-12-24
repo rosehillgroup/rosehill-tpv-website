@@ -58,14 +58,54 @@ export async function generateSportsSurfacePDF(data) {
     surface,
     courts = {},
     tracks = {},
+    shapes = {},
+    texts = {},
     motifs = [],
+    exclusionZones = {},
     dimensions,
   } = data;
 
   // Calculate dimensions
   const widthM = surface.width_mm / 1000;
   const lengthM = surface.length_mm / 1000;
-  const totalAreaM2 = widthM * lengthM;
+  const boundingAreaM2 = widthM * lengthM;
+
+  // Calculate effective surface area (accounting for custom boundary)
+  let totalAreaM2 = boundingAreaM2;
+  let hasCustomBoundary = false;
+
+  if (surface.boundary && surface.boundary.type !== 'rectangle' && surface.boundary.controlPoints) {
+    hasCustomBoundary = true;
+    // Calculate polygon area using shoelace formula
+    const points = surface.boundary.controlPoints;
+    let area = 0;
+    for (let i = 0; i < points.length; i++) {
+      const j = (i + 1) % points.length;
+      area += points[i].x * points[j].y;
+      area -= points[j].x * points[i].y;
+    }
+    totalAreaM2 = Math.abs(area) / 2 * boundingAreaM2; // Normalized coords, scale by bounding area
+  }
+
+  // Calculate exclusion zone total area
+  let exclusionAreaM2 = 0;
+  const exclusionZoneCount = Object.keys(exclusionZones).length;
+  for (const zone of Object.values(exclusionZones)) {
+    if (zone.visible === false) continue;
+    const zoneWidthM = (zone.width_mm || 0) / 1000;
+    const zoneHeightM = (zone.height_mm || 0) / 1000;
+    exclusionAreaM2 += zoneWidthM * zoneHeightM;
+  }
+
+  // Effective area after exclusions
+  const effectiveAreaM2 = Math.max(0, totalAreaM2 - exclusionAreaM2);
+
+  console.log('[SPORTS-PDF] Area breakdown:', {
+    bounding: boundingAreaM2.toFixed(1),
+    boundary: totalAreaM2.toFixed(1),
+    exclusions: exclusionAreaM2.toFixed(1),
+    effective: effectiveAreaM2.toFixed(1)
+  });
 
   // Create PDF document
   const pdfDoc = await PDFDocument.create();
@@ -102,8 +142,8 @@ export async function generateSportsSurfacePDF(data) {
     imageWidth = maxImageHeight * imageAspect;
   }
 
-  // Extract all known colors from the design
-  const knownColors = extractKnownColors(surface, courts, tracks, motifs);
+  // Extract all known colors from the design (including shapes and texts)
+  const knownColors = extractKnownColors(surface, courts, tracks, shapes, texts, motifs);
   console.log('[SPORTS-PDF] Known colors in design:', knownColors.length);
 
   // Calculate VISIBLE area percentages from the rendered image
@@ -202,6 +242,31 @@ export async function generateSportsSurfacePDF(data) {
     font: fontRegular,
     color: COLORS.textLight,
   });
+
+  // Show exclusion zone info if any exist
+  if (exclusionZoneCount > 0) {
+    y -= 15;
+    page1.drawText(`Exclusion Zones: ${exclusionZoneCount} (${exclusionAreaM2.toFixed(1)} m² excluded)`, {
+      x: MARGIN,
+      y,
+      size: 10,
+      font: fontRegular,
+      color: COLORS.textLight,
+    });
+  }
+
+  // Show custom boundary info if applicable
+  if (hasCustomBoundary) {
+    y -= 15;
+    const boundaryType = surface.boundary.preset || 'Custom';
+    page1.drawText(`Surface Shape: ${boundaryType.charAt(0).toUpperCase() + boundaryType.slice(1).replace('-', ' ')}`, {
+      x: MARGIN,
+      y,
+      size: 10,
+      font: fontRegular,
+      color: COLORS.textLight,
+    });
+  }
 
   // Footer
   drawFooter(page1, fontRegular, 1, totalPages);
@@ -412,13 +477,24 @@ export async function generateSportsSurfacePDF(data) {
   });
 
   y -= 10;
-  page3.drawText(`Total Surface Area: ${totalAreaM2.toFixed(1)} m\u00B2`, {
-    x: MARGIN,
-    y,
-    size: 11,
-    font: fontRegular,
-    color: COLORS.textLight,
-  });
+  if (exclusionZoneCount > 0) {
+    // Show both total and effective area when there are exclusions
+    page3.drawText(`Surface Area: ${totalAreaM2.toFixed(1)} m\u00B2  |  Exclusions: ${exclusionAreaM2.toFixed(1)} m\u00B2  |  Effective: ${effectiveAreaM2.toFixed(1)} m\u00B2`, {
+      x: MARGIN,
+      y,
+      size: 10,
+      font: fontRegular,
+      color: COLORS.textLight,
+    });
+  } else {
+    page3.drawText(`Total Surface Area: ${totalAreaM2.toFixed(1)} m\u00B2`, {
+      x: MARGIN,
+      y,
+      size: 11,
+      font: fontRegular,
+      color: COLORS.textLight,
+    });
+  }
 
   // Aggregate by colour
   y -= 30;
@@ -676,7 +752,7 @@ function findNearestColor(hex, knownColors) {
 /**
  * Extract all unique colors used in the design
  */
-function extractKnownColors(surface, courts, tracks, motifs) {
+function extractKnownColors(surface, courts, tracks, shapes, texts, motifs) {
   const colors = new Map();
 
   // Surface color
@@ -704,9 +780,39 @@ function extractKnownColors(surface, courts, tracks, motifs) {
     if (track.trackSurfaceColor?.hex) {
       colors.set(track.trackSurfaceColor.hex.toLowerCase(), track.trackSurfaceColor);
     }
+    // Track line color
+    if (track.trackLineColor?.hex) {
+      colors.set(track.trackLineColor.hex.toLowerCase(), track.trackLineColor);
+    }
   }
-  // Lane markings are typically white/cream
-  colors.set('#ffffff', { hex: '#FFFFFF', tpv_code: 'RH31', name: 'Cream' });
+  // Lane markings default color (cream)
+  colors.set('#f5f0dc', { hex: '#F5F0DC', tpv_code: 'RH31', name: 'Cream' });
+
+  // Shape colors (polygon, blob, path)
+  for (const shape of Object.values(shapes || {})) {
+    // Skip hidden shapes
+    if (shape.visible === false) continue;
+
+    if (shape.fillColor?.hex) {
+      colors.set(shape.fillColor.hex.toLowerCase(), shape.fillColor);
+    }
+    if (shape.strokeEnabled && shape.strokeColor?.hex) {
+      colors.set(shape.strokeColor.hex.toLowerCase(), shape.strokeColor);
+    }
+  }
+
+  // Text colors
+  for (const text of Object.values(texts || {})) {
+    // Skip hidden texts
+    if (text.visible === false) continue;
+
+    if (text.fillColor?.hex) {
+      colors.set(text.fillColor.hex.toLowerCase(), text.fillColor);
+    }
+    if (text.strokeColor?.hex && text.strokeWidth_mm > 0) {
+      colors.set(text.strokeColor.hex.toLowerCase(), text.strokeColor);
+    }
+  }
 
   // Motif colors (from recipes)
   for (const motif of (motifs || [])) {

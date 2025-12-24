@@ -16,11 +16,13 @@ function PropertiesPanel({ onEditSourceDesign }) {
     motifs,
     shapes,
     texts,
+    exclusionZones,
     selectedCourtId,
     selectedTrackId,
     selectedMotifId,
     selectedShapeId,
     selectedTextId,
+    selectedExclusionZoneId,
     updateCourtPosition,
     updateCourtRotation,
     updateCourtScale,
@@ -40,6 +42,13 @@ function PropertiesPanel({ onEditSourceDesign }) {
 
   const [activeSection, setActiveSection] = useState('transform'); // 'transform', 'lines', 'zones'
   const [colorPickerTarget, setColorPickerTarget] = useState(null); // { type: 'line'|'zone', id: string }
+
+  // Show exclusion zone properties if exclusion zone is selected
+  if (selectedExclusionZoneId) {
+    const zone = exclusionZones[selectedExclusionZoneId];
+    if (!zone) return null;
+    return <ExclusionZonePropertiesPanel zone={zone} zoneId={selectedExclusionZoneId} />;
+  }
 
   // Show text properties if text is selected
   if (selectedTextId) {
@@ -2935,6 +2944,297 @@ function TextPropertiesPanel({ text, textId }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Exclusion Zone Properties Panel Component
+ * Displays and allows editing of exclusion zone properties (buildings, obstacles)
+ */
+function ExclusionZonePropertiesPanel({ zone, zoneId }) {
+  const {
+    updateExclusionZonePosition,
+    updateExclusionZoneDimensions,
+    updateExclusionZoneRotation,
+    updateExclusionZoneCornerRadius,
+    removeExclusionZone,
+    duplicateExclusionZone,
+    addToHistory
+  } = useSportsDesignStore();
+
+  const {
+    position,
+    rotation,
+    width_mm,
+    height_mm,
+    sides,
+    cornerRadius,
+    customName
+  } = zone;
+
+  // Handle position updates
+  const handlePositionChange = (axis, value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return;
+    updateExclusionZonePosition(zoneId, {
+      ...position,
+      [axis]: numValue
+    });
+  };
+
+  // Handle dimension updates
+  const handleDimensionChange = (dimension, value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue < 500) return;
+
+    if (dimension === 'width') {
+      updateExclusionZoneDimensions(zoneId, numValue, height_mm);
+    } else {
+      updateExclusionZoneDimensions(zoneId, width_mm, numValue);
+    }
+    addToHistory();
+  };
+
+  // Handle rotation update
+  const handleRotationChange = (value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return;
+    updateExclusionZoneRotation(zoneId, numValue);
+    addToHistory();
+  };
+
+  // Handle corner radius update
+  const handleCornerRadiusChange = (value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue)) return;
+    updateExclusionZoneCornerRadius(zoneId, numValue);
+  };
+
+  // Handle delete zone
+  const handleDeleteZone = () => {
+    if (window.confirm(`Delete this exclusion zone? This action cannot be undone.`)) {
+      removeExclusionZone(zoneId);
+    }
+  };
+
+  // Handle duplicate zone
+  const handleDuplicateZone = () => {
+    duplicateExclusionZone(zoneId);
+  };
+
+  // Calculate area for display
+  const areaM2 = (width_mm * height_mm) / 1_000_000;
+
+  // Get display name
+  const displayName = customName || 'Exclusion Zone';
+  const shapeLabel = sides === 4 ? 'Rectangle' : sides >= 32 ? 'Circle' : `${sides}-sided`;
+
+  return (
+    <div className="properties-panel">
+      {/* Panel Header */}
+      <div className="properties-panel__header">
+        <h3>Exclusion Zone</h3>
+        <div className="properties-panel__court-info">
+          <span className="court-name">{displayName}</span>
+          <span className="court-standard" style={{ background: '#f87171', color: 'white' }}>
+            Excluded Area
+          </span>
+        </div>
+      </div>
+
+      {/* Panel Content */}
+      <div className="properties-panel__content">
+        <div className="properties-section">
+          {/* Info Box */}
+          <div className="property-group" style={{
+            background: '#fef2f2',
+            padding: '0.75rem',
+            borderRadius: '6px',
+            marginBottom: '1rem',
+            border: '1px solid #fecaca'
+          }}>
+            <p style={{ fontSize: '0.75rem', color: '#991b1b', margin: 0 }}>
+              This area represents a building, planter, or other obstacle.
+              It is excluded from material calculations.
+            </p>
+          </div>
+
+          {/* Dimensions */}
+          <div className="property-group">
+            <label>Dimensions</label>
+            <div className="property-input-row">
+              <div className="property-input-group">
+                <span className="property-label">W</span>
+                <input
+                  type="number"
+                  value={Math.round(width_mm)}
+                  onChange={(e) => handleDimensionChange('width', e.target.value)}
+                  step="100"
+                  min="500"
+                />
+                <span className="property-unit">mm</span>
+              </div>
+              <div className="property-input-group">
+                <span className="property-label">H</span>
+                <input
+                  type="number"
+                  value={Math.round(height_mm)}
+                  onChange={(e) => handleDimensionChange('height', e.target.value)}
+                  step="100"
+                  min="500"
+                />
+                <span className="property-unit">mm</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Position */}
+          <div className="property-group">
+            <label>Position</label>
+            <div className="property-input-row">
+              <div className="property-input-group">
+                <span className="property-label">X</span>
+                <input
+                  type="number"
+                  value={Math.round(position.x)}
+                  onChange={(e) => handlePositionChange('x', e.target.value)}
+                  step="100"
+                />
+                <span className="property-unit">mm</span>
+              </div>
+              <div className="property-input-group">
+                <span className="property-label">Y</span>
+                <input
+                  type="number"
+                  value={Math.round(position.y)}
+                  onChange={(e) => handlePositionChange('y', e.target.value)}
+                  step="100"
+                />
+                <span className="property-unit">mm</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Rotation */}
+          <div className="property-group">
+            <label>Rotation</label>
+            <div className="property-input-row">
+              <input
+                type="range"
+                min="0"
+                max="360"
+                value={rotation || 0}
+                onChange={(e) => handleRotationChange(e.target.value)}
+                className="property-slider"
+              />
+              <div className="property-input-group property-input-group--compact">
+                <input
+                  type="number"
+                  value={Math.round(rotation || 0)}
+                  onChange={(e) => handleRotationChange(e.target.value)}
+                  min="0"
+                  max="360"
+                />
+                <span className="property-unit">°</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Corner Radius (only for rectangles) */}
+          {sides === 4 && (
+            <div className="property-group">
+              <label>Corner Radius</label>
+              <div className="property-input-row">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={cornerRadius || 0}
+                  onChange={(e) => handleCornerRadiusChange(e.target.value)}
+                  className="property-slider"
+                />
+                <div className="property-input-group property-input-group--compact">
+                  <input
+                    type="number"
+                    value={Math.round(cornerRadius || 0)}
+                    onChange={(e) => handleCornerRadiusChange(e.target.value)}
+                    min="0"
+                    max="100"
+                  />
+                  <span className="property-unit">%</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Info Section */}
+          <div className="properties-section__divider" style={{ margin: '1rem 0' }}>
+            <span>Exclusion Info</span>
+          </div>
+
+          {/* Shape Type */}
+          <div className="property-group property-group--info">
+            <label>Shape</label>
+            <div className="property-info">
+              <span>{shapeLabel}</span>
+            </div>
+          </div>
+
+          {/* Excluded Area */}
+          <div className="property-group property-group--info">
+            <label>Excluded Area</label>
+            <div className="property-info" style={{ color: '#dc2626' }}>
+              <span>{areaM2.toFixed(2)} m²</span>
+            </div>
+          </div>
+
+          {/* Actions Section */}
+          <div className="properties-section__divider" style={{ margin: '1rem 0' }}>
+            <span>Actions</span>
+          </div>
+
+          {/* Duplicate Button */}
+          <div className="property-group property-group--actions">
+            <button
+              className="btn-secondary"
+              onClick={handleDuplicateZone}
+              title="Duplicate exclusion zone"
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                background: '#f3f4f6',
+                border: '1px solid #e4e9f0',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                marginBottom: '0.5rem'
+              }}
+            >
+              Duplicate Zone
+            </button>
+          </div>
+
+          {/* Delete Button */}
+          <div className="property-group property-group--actions">
+            <button
+              className="btn-delete"
+              onClick={handleDeleteZone}
+              title="Delete exclusion zone"
+            >
+              Delete Zone
+            </button>
+          </div>
+
+          {/* Tip */}
+          <div className="property-group">
+            <div className="property-hint" style={{ fontStyle: 'normal', color: '#64748b', fontSize: '0.75rem', marginTop: '1rem' }}>
+              Drag the zone on the canvas to reposition. Use handles to resize.
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
