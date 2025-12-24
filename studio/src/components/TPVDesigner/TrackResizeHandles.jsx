@@ -133,10 +133,11 @@ function TrackResizeHandles({ track, svgRef }) {
           if (isStraightTrack) {
             // Straight track: extend/shorten from bottom (S), top stays fixed
             newHeight = Math.max(minSize, dragStart.initialHeight + effectiveDeltaY);
-            const deltaH_se = newHeight - dragStart.initialHeight;
+            const deltaH_se = newHeight - dragStart.initialHeight; // positive when extending
             const rotRad_se = (rotation * Math.PI) / 180;
+            // Keep 'n' edge fixed: move center toward 's' (positive length direction)
             newPosition.x = dragStart.initialPosition.x + (deltaH_se / 2) * Math.sin(rotRad_se);
-            newPosition.y = dragStart.initialPosition.y - (deltaH_se / 2) * (1 - Math.cos(rotRad_se));
+            newPosition.y = dragStart.initialPosition.y + (deltaH_se / 2) * Math.cos(rotRad_se);
           } else {
             newWidth = Math.max(minSize, dragStart.initialWidth + deltaX);
             newHeight = Math.max(minSize, dragStart.initialHeight + deltaY);
@@ -155,10 +156,11 @@ function TrackResizeHandles({ track, svgRef }) {
           if (isStraightTrack) {
             // Straight track: extend/shorten from top (N), bottom stays fixed
             newHeight = Math.max(minSize, dragStart.initialHeight - effectiveDeltaY);
-            const deltaH_nw = dragStart.initialHeight - newHeight;
+            const deltaH_nw = newHeight - dragStart.initialHeight; // positive when extending
             const rotRad_nw = (rotation * Math.PI) / 180;
-            newPosition.x = dragStart.initialPosition.x + (deltaH_nw / 2) * Math.sin(rotRad_nw);
-            newPosition.y = dragStart.initialPosition.y + (deltaH_nw / 2) * (1 + Math.cos(rotRad_nw));
+            // Keep 's' edge fixed: move center toward 'n' (negative length direction)
+            newPosition.x = dragStart.initialPosition.x - (deltaH_nw / 2) * Math.sin(rotRad_nw);
+            newPosition.y = dragStart.initialPosition.y - (deltaH_nw / 2) * Math.cos(rotRad_nw);
           } else {
             newWidth = Math.max(minSize, dragStart.initialWidth - deltaX);
             newHeight = Math.max(minSize, dragStart.initialHeight - deltaY);
@@ -179,10 +181,11 @@ function TrackResizeHandles({ track, svgRef }) {
           if (isStraightTrack) {
             // Straight track: extend/shorten from top (N), bottom stays fixed
             newHeight = Math.max(minSize, dragStart.initialHeight - effectiveDeltaY);
-            const deltaH_ne = dragStart.initialHeight - newHeight;
+            const deltaH_ne = newHeight - dragStart.initialHeight; // positive when extending
             const rotRad_ne = (rotation * Math.PI) / 180;
-            newPosition.x = dragStart.initialPosition.x + (deltaH_ne / 2) * Math.sin(rotRad_ne);
-            newPosition.y = dragStart.initialPosition.y + (deltaH_ne / 2) * (1 + Math.cos(rotRad_ne));
+            // Keep 's' edge fixed: move center toward 'n' (negative length direction)
+            newPosition.x = dragStart.initialPosition.x - (deltaH_ne / 2) * Math.sin(rotRad_ne);
+            newPosition.y = dragStart.initialPosition.y - (deltaH_ne / 2) * Math.cos(rotRad_ne);
           } else {
             newWidth = Math.max(minSize, dragStart.initialWidth + deltaX);
             newHeight = Math.max(minSize, dragStart.initialHeight - deltaY);
@@ -201,10 +204,11 @@ function TrackResizeHandles({ track, svgRef }) {
           if (isStraightTrack) {
             // Straight track: extend/shorten from bottom (S), top stays fixed
             newHeight = Math.max(minSize, dragStart.initialHeight + effectiveDeltaY);
-            const deltaH_sw = newHeight - dragStart.initialHeight;
+            const deltaH_sw = newHeight - dragStart.initialHeight; // positive when extending
             const rotRad_sw = (rotation * Math.PI) / 180;
+            // Keep 'n' edge fixed: move center toward 's' (positive length direction)
             newPosition.x = dragStart.initialPosition.x + (deltaH_sw / 2) * Math.sin(rotRad_sw);
-            newPosition.y = dragStart.initialPosition.y - (deltaH_sw / 2) * (1 - Math.cos(rotRad_sw));
+            newPosition.y = dragStart.initialPosition.y + (deltaH_sw / 2) * Math.cos(rotRad_sw);
           } else {
             newWidth = Math.max(minSize, dragStart.initialWidth - deltaX);
             newHeight = Math.max(minSize, dragStart.initialHeight + deltaY);
@@ -247,11 +251,11 @@ function TrackResizeHandles({ track, svgRef }) {
           if (isStraightTrack) {
             // Straight track: extend/shorten from top edge, bottom edge stays fixed
             newHeight = Math.max(minSize, dragStart.initialHeight - effectiveDeltaY);
-            // Adjust position to keep bottom edge fixed (accounting for rotation)
-            const deltaH_n = dragStart.initialHeight - newHeight; // positive when shrinking
+            const deltaH_n = newHeight - dragStart.initialHeight; // positive when extending
             const rotRad_n = (rotation * Math.PI) / 180;
-            newPosition.x = dragStart.initialPosition.x + (deltaH_n / 2) * Math.sin(rotRad_n);
-            newPosition.y = dragStart.initialPosition.y + (deltaH_n / 2) * (1 + Math.cos(rotRad_n));
+            // Keep 's' edge fixed: move center toward 'n' (negative length direction)
+            newPosition.x = dragStart.initialPosition.x - (deltaH_n / 2) * Math.sin(rotRad_n);
+            newPosition.y = dragStart.initialPosition.y - (deltaH_n / 2) * Math.cos(rotRad_n);
           } else {
             newHeight = Math.max(minSize, dragStart.initialHeight - deltaY);
             newPosition.y = dragStart.initialPosition.y + (dragStart.initialHeight - newHeight);
@@ -269,11 +273,11 @@ function TrackResizeHandles({ track, svgRef }) {
           if (isStraightTrack) {
             // Straight track: extend/shorten from bottom edge, top edge stays fixed
             newHeight = Math.max(minSize, dragStart.initialHeight + effectiveDeltaY);
-            // Adjust position to keep top edge fixed (accounting for rotation)
-            const deltaH_s = newHeight - dragStart.initialHeight; // positive when growing
+            const deltaH_s = newHeight - dragStart.initialHeight; // positive when extending
             const rotRad_s = (rotation * Math.PI) / 180;
+            // Keep 'n' edge fixed: move center toward 's' (positive length direction)
             newPosition.x = dragStart.initialPosition.x + (deltaH_s / 2) * Math.sin(rotRad_s);
-            newPosition.y = dragStart.initialPosition.y - (deltaH_s / 2) * (1 - Math.cos(rotRad_s));
+            newPosition.y = dragStart.initialPosition.y + (deltaH_s / 2) * Math.cos(rotRad_s);
           } else {
             newHeight = Math.max(minSize, dragStart.initialHeight + deltaY);
             const sScale = newHeight / dragStart.initialHeight;
