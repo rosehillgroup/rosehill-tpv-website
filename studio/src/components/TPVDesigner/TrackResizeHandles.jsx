@@ -75,13 +75,14 @@ function TrackResizeHandles({ track, svgRef }) {
       // Determine which edge is FIXED (opposite to the handle being dragged)
       const isDraggingNorth = handleType === 'n' || handleType === 'nw' || handleType === 'ne';
 
-      // Fixed edge center position
-      // Track axis: (sinR, cosR) points from N to S
-      // South edge = center + (height/2) * axis
-      // North edge = center - (height/2) * axis
+      // Fixed edge center position using rotation matrix
+      // Local coords: North = (0, -height/2), South = (0, +height/2)
+      // World = center + rotate(local) where rotate(x,y) = (x*cos - y*sin, x*sin + y*cos)
+      // North world: (centerX + height/2*sinR, centerY - height/2*cosR)
+      // South world: (centerX - height/2*sinR, centerY + height/2*cosR)
       const fixedEdgeCenter = isDraggingNorth
-        ? { x: trackCenterX + (height / 2) * sinR, y: trackCenterY + (height / 2) * cosR }  // South fixed
-        : { x: trackCenterX - (height / 2) * sinR, y: trackCenterY - (height / 2) * cosR }; // North fixed
+        ? { x: trackCenterX - (height / 2) * sinR, y: trackCenterY + (height / 2) * cosR }  // South fixed
+        : { x: trackCenterX + (height / 2) * sinR, y: trackCenterY - (height / 2) * cosR }; // North fixed
 
       straightTrackData = {
         fixedEdgeCenter,
@@ -160,26 +161,20 @@ function TrackResizeHandles({ track, svgRef }) {
         const dx = svgPoint.x - fixedEdgeCenter.x;
         const dy = svgPoint.y - fixedEdgeCenter.y;
 
-        // Project onto track axis to get signed distance
-        // Track axis direction is (sinR, cosR) pointing from N to S
-        const projection = dx * sinR + dy * cosR;
+        // Axis pointing FROM fixed edge TOWARD the dragged edge
+        // When South is fixed (dragging N): axis is (sinR, -cosR) = S to N direction
+        // When North is fixed (dragging S): axis is (-sinR, cosR) = N to S direction
+        const axisX = fixedEdgeIsSouth ? sinR : -sinR;
+        const axisY = fixedEdgeIsSouth ? -cosR : cosR;
 
-        // Calculate new height based on projection
-        // If South edge is fixed: mouse moving toward North (negative projection) = extending
-        // If North edge is fixed: mouse moving toward South (positive projection) = extending
-        const signedDistance = fixedEdgeIsSouth ? -projection : projection;
-        newHeight = Math.max(minSize, signedDistance);
+        // Project mouse offset onto this axis - gives positive value when extending
+        const projection = dx * axisX + dy * axisY;
+        newHeight = Math.max(minSize, projection);
 
         // Calculate new center position
-        // Center is at: fixedEdgeCenter ± (newHeight/2) * axis
-        // If South fixed: center is toward North (negative direction)
-        // If North fixed: center is toward South (positive direction)
-        const newCenterX = fixedEdgeIsSouth
-          ? fixedEdgeCenter.x - (newHeight / 2) * sinR
-          : fixedEdgeCenter.x + (newHeight / 2) * sinR;
-        const newCenterY = fixedEdgeIsSouth
-          ? fixedEdgeCenter.y - (newHeight / 2) * cosR
-          : fixedEdgeCenter.y + (newHeight / 2) * cosR;
+        // Center is at: fixedEdgeCenter + (newHeight/2) * axis
+        const newCenterX = fixedEdgeCenter.x + (newHeight / 2) * axisX;
+        const newCenterY = fixedEdgeCenter.y + (newHeight / 2) * axisY;
 
         // Position is top-left of bounding box = center - (width/2, height/2)
         newPosition = {
