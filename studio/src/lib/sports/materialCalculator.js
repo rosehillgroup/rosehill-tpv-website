@@ -5,7 +5,7 @@
 import { calculateTrackGeometry } from './trackGeometry.js';
 import { generatePolygonPath, generatePolygonPoints } from './shapeGeometry.js';
 import { controlPointsToSVGPath as blobControlPointsToSVGPath } from './blobGeometry.js';
-import { controlPointsToSVGPath as pathControlPointsToSVGPath, generateBezierPathFromPoints } from './pathGeometry.js';
+import { controlPointsToSVGPath as pathControlPointsToSVGPath } from './pathGeometry.js';
 import { generateSurfaceBoundaryPath } from './surfaceGeometry.js';
 
 // Resolution: 10mm per pixel gives reasonable accuracy for large surfaces
@@ -153,7 +153,7 @@ function renderExclusionZone(ctx, zone, fillColor, scale) {
   // Generate path based on shape type
   let svgPath;
   if (zone.shapeType === 'path' && zone.controlPoints && zone.controlPoints.length >= 3) {
-    svgPath = generateBezierPathFromPoints(zone.controlPoints, zone.width_mm * scale, zone.height_mm * scale, true);
+    svgPath = pathControlPointsToSVGPath(zone.controlPoints, zone.width_mm * scale, zone.height_mm * scale, true);
   } else {
     svgPath = generatePolygonPath(zone.sides || 4, zone.width_mm * scale, zone.height_mm * scale, zone.cornerRadius || 0);
   }

@@ -3,7 +3,7 @@
 
 import React, { useMemo } from 'react';
 import { generatePolygonPath } from '../../lib/sports/shapeGeometry';
-import { generateBezierPathFromPoints } from '../../lib/sports/pathGeometry';
+import { controlPointsToSVGPath } from '../../lib/sports/pathGeometry';
 
 /**
  * Exclusion Zone Element
@@ -38,7 +38,7 @@ function ExclusionZoneElement({
   const zonePath = useMemo(() => {
     if (shapeType === 'path' && controlPoints) {
       // Use path/bezier geometry
-      return generateBezierPathFromPoints(controlPoints, width_mm, height_mm, true);
+      return controlPointsToSVGPath(controlPoints, width_mm, height_mm, true);
     }
     // Use polygon geometry
     return generatePolygonPath(sides || 4, width_mm, height_mm, cornerRadius || 0);
