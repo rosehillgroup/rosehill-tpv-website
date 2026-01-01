@@ -374,8 +374,44 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   };
 
   // Handle mouse/touch down on shape (start drag)
+  // Helper to find which group a shape belongs to
+  const findGroupForShape = (shapeId) => {
+    for (const [groupId, group] of Object.entries(groups)) {
+      if (group.childIds.includes(shapeId)) {
+        return groupId;
+      }
+    }
+    return null;
+  };
+
   const handleShapeMouseDown = (e, shapeId) => {
     e.stopPropagation();
+
+    // Check if this shape belongs to a group
+    const parentGroupId = findGroupForShape(shapeId);
+
+    // If shape is in a group and we're NOT editing that group, select the group instead
+    if (parentGroupId && editingGroupId !== parentGroupId) {
+      // Select the group, not the individual shape
+      selectGroup(parentGroupId);
+
+      const group = groups[parentGroupId];
+      if (group?.locked) return;
+
+      // Handle both mouse and touch events
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const svgPoint = screenToSVG(clientX, clientY);
+
+      // Start dragging the group
+      setDragStart({
+        x: svgPoint.x - group.bounds.x,
+        y: svgPoint.y - group.bounds.y
+      });
+      setDragGroupId(parentGroupId);
+      setIsDragging(true);
+      return;
+    }
 
     // Check if Shift is held for multi-selection
     const isShiftHeld = e.shiftKey;
@@ -770,9 +806,9 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     setDragStart(null);
   }, [surface.width_mm, surface.length_mm]);
 
-  // Handle mouse/touch move (drag court, track, motif, shape, text, or exclusion zone)
+  // Handle mouse/touch move (drag court, track, motif, shape, text, exclusion zone, or group)
   useEffect(() => {
-    if (!isDragging || (!dragCourtId && !dragTrackId && !dragMotifId && !dragShapeId && !dragTextId && !dragExclusionZoneId)) return;
+    if (!isDragging || (!dragCourtId && !dragTrackId && !dragMotifId && !dragShapeId && !dragTextId && !dragExclusionZoneId && !dragGroupId)) return;
 
     const handleMove = (e) => {
       // Handle both mouse and touch events
@@ -832,13 +868,24 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         };
         newPosition = constrainPosition(newPosition, zoneDimensions, surface);
         updateExclusionZonePosition(dragExclusionZoneId, newPosition);
+      } else if (dragGroupId) {
+        // Groups: calculate delta and move all child shapes
+        const group = groups[dragGroupId];
+        if (group) {
+          const deltaX = newPosition.x - group.bounds.x;
+          const deltaY = newPosition.y - group.bounds.y;
+          updateGroupPosition(dragGroupId, deltaX, deltaY);
+        }
       }
     };
 
     const handleEnd = () => {
       // Add to history when drag completes
-      if (dragCourtId || dragTrackId || dragMotifId || dragShapeId || dragTextId || dragExclusionZoneId) {
-        const { addToHistory } = useSportsDesignStore.getState();
+      if (dragCourtId || dragTrackId || dragMotifId || dragShapeId || dragTextId || dragExclusionZoneId || dragGroupId) {
+        const { addToHistory, commitGroupMove } = useSportsDesignStore.getState();
+        if (dragGroupId) {
+          commitGroupMove(dragGroupId);
+        }
         addToHistory();
       }
 
@@ -849,6 +896,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       setDragShapeId(null);
       setDragTextId(null);
       setDragExclusionZoneId(null);
+      setDragGroupId(null);
       setDragStart(null);
     };
 
@@ -866,7 +914,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       window.removeEventListener('touchend', handleEnd);
       window.removeEventListener('touchcancel', handleEnd);
     };
-  }, [isDragging, dragCourtId, dragTrackId, dragMotifId, dragShapeId, dragTextId, dragExclusionZoneId, dragStart, courts, tracks, motifs, shapes, texts, exclusionZones, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition, updateMotifPosition, updateShapePosition, updateTextPosition, updateExclusionZonePosition]);
+  }, [isDragging, dragCourtId, dragTrackId, dragMotifId, dragShapeId, dragTextId, dragExclusionZoneId, dragGroupId, dragStart, courts, tracks, motifs, shapes, texts, exclusionZones, groups, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition, updateMotifPosition, updateShapePosition, updateTextPosition, updateExclusionZonePosition, updateGroupPosition]);
 
   // Handle mouse/touch move for motif scaling
   useEffect(() => {
