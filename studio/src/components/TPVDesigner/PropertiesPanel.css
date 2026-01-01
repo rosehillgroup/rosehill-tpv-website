@@ -940,6 +940,133 @@
   border-left-color: #dc2626;
 }
 
+/* ====== Groups Section ====== */
+.layers-panel__list--groups {
+  background: rgba(147, 51, 234, 0.03);
+}
+
+.layers-panel__section-divider span {
+  color: inherit;
+}
+
+.layers-panel__list--groups + .layers-panel__section-divider,
+.layers-panel__list--groups ~ .layers-panel__section-divider {
+  color: #9333ea;
+}
+
+.layers-panel__list--groups .layers-panel__section-divider::before,
+.layers-panel__list--groups .layers-panel__section-divider::after {
+  background: linear-gradient(to right, transparent, #c4b5fd, transparent);
+}
+
+.layer-group {
+  border-left: 3px solid #9333ea;
+}
+
+.layer-item--group {
+  cursor: pointer;
+  background: transparent;
+}
+
+.layer-item--group:hover {
+  background: rgba(147, 51, 234, 0.08);
+}
+
+.layer-item--group.layer-item--selected {
+  background: rgba(147, 51, 234, 0.12);
+}
+
+.layer-item--group.layer-item--editing {
+  background: rgba(147, 51, 234, 0.15);
+  border-left: 3px solid #7c3aed;
+}
+
+.layer-item__expand-btn {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 0.625rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.layer-item__expand-btn:hover {
+  color: #9333ea;
+}
+
+.layer-item__handle--group {
+  color: #9333ea;
+}
+
+.layer-item__child-count {
+  margin-left: 0.25rem;
+  font-size: 0.7rem;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.layer-item__edit-indicator {
+  margin-left: 0.25rem;
+  font-size: 0.75rem;
+}
+
+.layer-group__children {
+  padding-left: 0.5rem;
+  border-left: 2px solid rgba(147, 51, 234, 0.2);
+  margin-left: 0.75rem;
+}
+
+.layer-item--child {
+  padding: 0.375rem 0.5rem;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.layer-item--child:hover {
+  background: rgba(147, 51, 234, 0.05);
+}
+
+.layer-item--child.layer-item--selected {
+  background: rgba(147, 51, 234, 0.1);
+  opacity: 1;
+}
+
+.layer-item__indent {
+  width: 1rem;
+  display: inline-block;
+}
+
+.layers-panel__exit-group {
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid rgba(147, 51, 234, 0.2);
+  background: rgba(147, 51, 234, 0.05);
+}
+
+.layers-panel__exit-group-btn {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #9333ea;
+  border-radius: 6px;
+  background: transparent;
+  color: #9333ea;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.layers-panel__exit-group-btn:hover {
+  background: #9333ea;
+  color: white;
+}
+
 /* ====== Toggle Buttons ====== */
 .property-toggle-buttons {
   display: flex;
@@ -975,4 +1102,65 @@
   background: var(--color-primary, #1e4a7a);
   color: white;
   font-weight: var(--font-semibold, 600);
+}
+
+/* ====== Lane Color Grid ====== */
+.lane-color-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.lane-color-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem;
+  background: var(--color-bg-subtle, #f8fafc);
+  border-radius: var(--radius-sm, 6px);
+}
+
+.lane-color-item .lane-number {
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: var(--font-medium, 500);
+  color: var(--color-text-secondary, #64748b);
+  min-width: 50px;
+}
+
+.lane-color-item .lane-swatch {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border-radius: 4px;
+}
+
+.lane-color-item .lane-swatch--override {
+  border-color: var(--color-primary, #0066CC);
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
+}
+
+.lane-reset-btn {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  padding: 0;
+  border: none;
+  background: #e74c3c;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.lane-reset-btn:hover {
+  background: #c0392b;
+}
+
+/* Default option in lane color picker */
+.color-picker-swatch--default {
+  border: 2px dashed var(--color-border, #cbd5e1);
 }

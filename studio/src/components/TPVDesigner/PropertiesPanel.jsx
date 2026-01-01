@@ -4,6 +4,7 @@ import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { calculateTrackGeometry, calculateStaggeredStarts } from '../../lib/sports/trackGeometry.js';
 import { getShapeDisplayName, getShapeIcon } from '../../lib/sports/shapeGeometry.js';
 import { BLOB_STYLES } from '../../lib/sports/blobGeometry.js';
+import { COMPOUND_BLOB_STYLES } from '../../lib/sports/compoundBlobGenerators.js';
 import { getAvailableFonts } from '../../lib/sports/textUtils.js';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import { FEATURE_FLAGS } from '../../lib/constants.js';
@@ -17,12 +18,15 @@ function PropertiesPanel({ onEditSourceDesign }) {
     shapes,
     texts,
     exclusionZones,
+    groups,
     selectedCourtId,
     selectedTrackId,
     selectedMotifId,
     selectedShapeId,
     selectedTextId,
     selectedExclusionZoneId,
+    selectedGroupId,
+    editingGroupId,
     updateCourtPosition,
     updateCourtRotation,
     updateCourtScale,
@@ -37,11 +41,35 @@ function PropertiesPanel({ onEditSourceDesign }) {
     updateMotifRotation,
     updateMotifScale,
     updateTrackParameters,
+    enterGroup,
+    exitGroup,
+    ungroup,
+    regenerateCompound,
+    deleteGroupWithChildren,
     addToHistory
   } = useSportsDesignStore();
 
   const [activeSection, setActiveSection] = useState('transform'); // 'transform', 'lines', 'zones'
   const [colorPickerTarget, setColorPickerTarget] = useState(null); // { type: 'line'|'zone', id: string }
+
+  // Show group properties if group is selected
+  if (selectedGroupId) {
+    const group = groups[selectedGroupId];
+    if (!group) return null;
+    return (
+      <GroupPropertiesPanel
+        group={group}
+        groupId={selectedGroupId}
+        shapes={shapes}
+        isEditing={editingGroupId === selectedGroupId}
+        onEnterGroup={() => enterGroup(selectedGroupId)}
+        onExitGroup={() => exitGroup()}
+        onUngroup={() => ungroup(selectedGroupId)}
+        onRegenerate={() => regenerateCompound(selectedGroupId)}
+        onDelete={() => deleteGroupWithChildren(selectedGroupId)}
+      />
+    );
+  }
 
   // Show exclusion zone properties if exclusion zone is selected
   if (selectedExclusionZoneId) {
@@ -496,11 +524,12 @@ function PropertiesPanel({ onEditSourceDesign }) {
  * TODO: Add full editing capabilities for width, height, and per-corner radius
  */
 function TrackPropertiesPanel({ track, trackId }) {
-  const { updateTrackParameters, updateTrackRotation, removeTrack, setTrackSurfaceColor, setTrackLineColor, addToHistory } = useSportsDesignStore();
-  const { parameters, template, trackSurfaceColor, trackLineColor, rotation } = track;
+  const { updateTrackParameters, updateTrackRotation, removeTrack, setTrackSurfaceColor, setTrackLineColor, setLaneSurfaceColor, resetLaneSurfaceColors, addToHistory } = useSportsDesignStore();
+  const { parameters, template, trackSurfaceColor, trackLineColor, laneSurfaceColors, rotation } = track;
   const [cornersLocked, setCornersLocked] = React.useState(true);
   const [showTrackColorPicker, setShowTrackColorPicker] = React.useState(false);
   const [showTrackLineColorPicker, setShowTrackLineColorPicker] = React.useState(false);
+  const [activeLaneColorPicker, setActiveLaneColorPicker] = React.useState(null); // { laneNumber: 1 } or null
 
   // Local state for dimension inputs to allow typing
   const [localWidth, setLocalWidth] = React.useState('');
@@ -982,6 +1011,60 @@ function TrackPropertiesPanel({ track, trackId }) {
             </div>
           </div>
 
+          {/* Per-Lane Surface Colours */}
+          <div className="property-group">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label style={{ margin: 0 }}>Lane Colours</label>
+              {laneSurfaceColors?.some(c => c != null) && (
+                <button
+                  onClick={() => resetLaneSurfaceColors(trackId)}
+                  title="Reset all lanes to track surface colour"
+                  style={{
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '0.7rem',
+                    background: '#f1f5f9',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    color: '#64748b'
+                  }}
+                >
+                  Reset All
+                </button>
+              )}
+            </div>
+            <div className="lane-color-grid">
+              {geometry.lanes.map((lane) => {
+                const laneColor = laneSurfaceColors?.[lane.laneNumber - 1] || trackSurfaceColor;
+                const isOverridden = laneSurfaceColors?.[lane.laneNumber - 1] != null;
+
+                return (
+                  <div key={lane.laneNumber} className="lane-color-item">
+                    <span className="lane-number">Lane {lane.laneNumber}</span>
+                    <button
+                      className={`color-item__swatch lane-swatch ${isOverridden ? 'lane-swatch--override' : ''}`}
+                      style={{ backgroundColor: laneColor?.hex || '#A5362F' }}
+                      onClick={() => setActiveLaneColorPicker({ laneNumber: lane.laneNumber })}
+                      title={`${laneColor?.name || 'Standard Red'}${isOverridden ? ' (custom)' : ' (default)'}`}
+                    />
+                    {isOverridden && (
+                      <button
+                        className="lane-reset-btn"
+                        onClick={() => setLaneSurfaceColor(trackId, lane.laneNumber, null)}
+                        title="Reset to track default"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.5rem' }}>
+              Click a swatch to change lane colour
+            </div>
+          </div>
+
           {/* Track Line Colour */}
           <div className="property-group">
             <label>Line Colour</label>
@@ -1220,6 +1303,50 @@ function TrackPropertiesPanel({ track, trackId }) {
                   className="color-picker-swatch"
                   style={{ backgroundColor: color.hex }}
                   onClick={() => handleTrackLineColorSelect(color)}
+                  title={`${color.code} - ${color.name}`}
+                >
+                  <span className="color-picker-swatch__code">{color.code}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Color Picker Modal for Lane Surface */}
+      {activeLaneColorPicker && (
+        <div className="color-picker-modal" onClick={() => setActiveLaneColorPicker(null)}>
+          <div className="color-picker-modal__content" onClick={(e) => e.stopPropagation()}>
+            <div className="color-picker-modal__header">
+              <h4>Lane {activeLaneColorPicker.laneNumber} Surface Colour</h4>
+              <button onClick={() => setActiveLaneColorPicker(null)}>×</button>
+            </div>
+            <div className="color-picker-grid">
+              {/* "Use Default" option */}
+              <button
+                className="color-picker-swatch color-picker-swatch--default"
+                onClick={() => {
+                  setLaneSurfaceColor(trackId, activeLaneColorPicker.laneNumber, null);
+                  setActiveLaneColorPicker(null);
+                }}
+                title="Use track default colour"
+                style={{ backgroundColor: trackSurfaceColor?.hex || '#A5362F' }}
+              >
+                <span className="color-picker-swatch__code">Default</span>
+              </button>
+              {tpvColours.map(color => (
+                <button
+                  key={color.code}
+                  className="color-picker-swatch"
+                  style={{ backgroundColor: color.hex }}
+                  onClick={() => {
+                    setLaneSurfaceColor(trackId, activeLaneColorPicker.laneNumber, {
+                      tpv_code: color.code,
+                      hex: color.hex,
+                      name: color.name
+                    });
+                    setActiveLaneColorPicker(null);
+                  }}
                   title={`${color.code} - ${color.name}`}
                 >
                   <span className="color-picker-swatch__code">{color.code}</span>
@@ -1610,6 +1737,8 @@ function ShapePropertiesPanel({ shape, shapeId }) {
     updateShapeDimensions,
     updateShapeSides,
     updateShapeCornerRadius,
+    setShapeStarMode,
+    setShapeInnerRadius,
     updateShapeRotation,
     setShapeFillColor,
     setShapeStroke,
@@ -1639,6 +1768,8 @@ function ShapePropertiesPanel({ shape, shapeId }) {
     width_mm,
     height_mm,
     cornerRadius,
+    starMode,
+    innerRadius,
     position,
     rotation,
     fillColor,
@@ -1823,8 +1954,40 @@ function ShapePropertiesPanel({ shape, shapeId }) {
     { sides: 5, name: 'Pentagon', icon: '⬠' },
     { sides: 6, name: 'Hexagon', icon: '⬡' },
     { sides: 8, name: 'Octagon', icon: '⯃' },
-    { sides: 32, name: 'Circle', icon: '○' }
+    { sides: 32, name: 'Circle', icon: '○' },
+    { sides: 5, name: 'Star', icon: '★', starMode: true }
   ];
+
+  // Handle star preset selection
+  const handlePresetClick = (preset) => {
+    if (preset.starMode) {
+      // Enable star mode with 5 points
+      setShapeStarMode(shapeId, true);
+      if (sides !== preset.sides) {
+        handleSidesChange(preset.sides);
+      }
+    } else {
+      // Disable star mode for regular polygon presets
+      if (starMode) {
+        setShapeStarMode(shapeId, false);
+      }
+      handleSidesChange(preset.sides);
+    }
+  };
+
+  // Handle inner radius change for stars
+  const handleInnerRadiusChange = (value) => {
+    const numValue = parseFloat(value) / 100; // Convert percentage to 0-1 range
+    setShapeInnerRadius(shapeId, numValue);
+  };
+
+  // Check if current shape matches a preset
+  const isPresetActive = (preset) => {
+    if (preset.starMode) {
+      return starMode && sides === preset.sides;
+    }
+    return !starMode && sides === preset.sides;
+  };
 
   return (
     <div className="properties-panel">
@@ -1835,12 +1998,12 @@ function ShapePropertiesPanel({ shape, shapeId }) {
           <span className="court-name">
             {isBlob ? (BLOB_STYLES[blobStyle || 'organic']?.name || 'Organic') :
              isPath ? (closed ? 'Closed Path' : 'Open Path') :
-             getShapeDisplayName(sides)}
+             getShapeDisplayName(sides, starMode)}
           </span>
           <span className="court-standard">
             {isBlob ? '◐ Blob' :
              isPath ? `✏️ ${controlPoints?.length || 0} points` :
-             `${getShapeIcon(sides)} ${sides} sides`}
+             `${getShapeIcon(sides, starMode)} ${sides} ${starMode ? 'points' : 'sides'}`}
           </span>
         </div>
       </div>
@@ -2023,43 +2186,46 @@ function ShapePropertiesPanel({ shape, shapeId }) {
                 <label>Shape Type</label>
                 <div className="shape-presets" style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
+                  gridTemplateColumns: 'repeat(4, 1fr)',
                   gap: '0.5rem',
                   marginTop: '0.5rem'
                 }}>
-                  {shapePresets.map(preset => (
-                    <button
-                      key={preset.sides}
-                      onClick={() => handleSidesChange(preset.sides)}
-                      title={preset.name}
-                      style={{
-                        padding: '0.5rem',
-                        border: sides === preset.sides ? '2px solid #3b82f6' : '1px solid #e4e9f0',
-                        borderRadius: '6px',
-                        background: sides === preset.sides ? '#eff6ff' : '#fff',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        fontSize: '1.25rem'
-                      }}
-                    >
-                      <span>{preset.icon}</span>
-                      <span style={{ fontSize: '0.65rem', color: '#64748b' }}>{preset.name}</span>
-                    </button>
-                  ))}
+                  {shapePresets.map(preset => {
+                    const isActive = isPresetActive(preset);
+                    return (
+                      <button
+                        key={`${preset.name}-${preset.sides}`}
+                        onClick={() => handlePresetClick(preset)}
+                        title={preset.name}
+                        style={{
+                          padding: '0.5rem',
+                          border: isActive ? '2px solid #3b82f6' : '1px solid #e4e9f0',
+                          borderRadius: '6px',
+                          background: isActive ? '#eff6ff' : '#fff',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          fontSize: '1.25rem'
+                        }}
+                      >
+                        <span>{preset.icon}</span>
+                        <span style={{ fontSize: '0.65rem', color: '#64748b' }}>{preset.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Sides Slider (for custom values) */}
+              {/* Sides/Points Slider (for custom values) */}
               <div className="property-group">
-                <label>Number of Sides</label>
+                <label>{starMode ? 'Number of Points' : 'Number of Sides'}</label>
                 <div className="property-input-row">
                   <input
                     type="range"
                     min="3"
-                    max="32"
+                    max={starMode ? 12 : 32}
                     value={sides}
                     onChange={(e) => handleSidesChange(e.target.value)}
                     className="property-slider"
@@ -2070,11 +2236,41 @@ function ShapePropertiesPanel({ shape, shapeId }) {
                       value={sides}
                       onChange={(e) => handleSidesChange(e.target.value)}
                       min="3"
-                      max="32"
+                      max={starMode ? 12 : 32}
                     />
                   </div>
                 </div>
               </div>
+
+              {/* Star Depth (only shown for star mode) */}
+              {starMode && (
+                <div className="property-group">
+                  <label>Star Depth</label>
+                  <div className="property-input-row">
+                    <input
+                      type="range"
+                      min="10"
+                      max="90"
+                      value={Math.round((innerRadius || 0.5) * 100)}
+                      onChange={(e) => handleInnerRadiusChange(e.target.value)}
+                      className="property-slider"
+                    />
+                    <div className="property-input-group property-input-group--compact">
+                      <input
+                        type="number"
+                        value={Math.round((innerRadius || 0.5) * 100)}
+                        onChange={(e) => handleInnerRadiusChange(e.target.value)}
+                        min="10"
+                        max="90"
+                      />
+                      <span className="property-unit">%</span>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.25rem' }}>
+                    Lower values = deeper points, higher = shallower
+                  </div>
+                </div>
+              )}
 
               {/* Corner Smoothing */}
               <div className="property-group">
@@ -3231,6 +3427,195 @@ function ExclusionZonePropertiesPanel({ zone, zoneId }) {
           <div className="property-group">
             <div className="property-hint" style={{ fontStyle: 'normal', color: '#64748b', fontSize: '0.75rem', marginTop: '1rem' }}>
               Drag the zone on the canvas to reposition. Use handles to resize.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Group Properties Panel Component
+ * Displays properties for grouped shapes (compound blobs, etc.)
+ */
+function GroupPropertiesPanel({ group, groupId, shapes, isEditing, onEnterGroup, onExitGroup, onUngroup, onRegenerate, onDelete }) {
+  const compoundInfo = group.compoundType ? COMPOUND_BLOB_STYLES[group.compoundType] : null;
+  const groupName = group.customName ||
+    (compoundInfo ? compoundInfo.name : 'Group');
+
+  // Get child shapes info
+  const childShapes = group.childIds
+    .map(id => shapes[id])
+    .filter(Boolean);
+
+  const bounds = group.bounds || { x: 0, y: 0, width: 0, height: 0 };
+
+  return (
+    <div className="properties-panel properties-panel--group">
+      <div className="properties-panel__scroll-container">
+        {/* Header */}
+        <div className="properties-panel__header">
+          <div className="properties-panel__title-row">
+            <span className="properties-panel__icon" style={{ color: '#9333ea' }}>
+              {compoundInfo?.icon || '✦'}
+            </span>
+            <h3 className="properties-panel__title">{groupName}</h3>
+          </div>
+          <span className="properties-panel__subtitle">
+            {group.childIds.length} element{group.childIds.length !== 1 ? 's' : ''}
+          </span>
+        </div>
+
+        <div className="properties-panel__content">
+          {/* Edit Mode Section */}
+          <div className="property-section">
+            <div className="property-group" style={{ marginBottom: '1rem' }}>
+              {isEditing ? (
+                <button
+                  className="property-btn property-btn--secondary property-btn--full"
+                  onClick={onExitGroup}
+                  style={{ borderColor: '#9333ea', color: '#9333ea' }}
+                >
+                  ← Exit Group Editing
+                </button>
+              ) : (
+                <button
+                  className="property-btn property-btn--primary property-btn--full"
+                  onClick={onEnterGroup}
+                  style={{ background: '#9333ea' }}
+                >
+                  Edit Group Elements
+                </button>
+              )}
+            </div>
+
+            {isEditing && (
+              <div className="property-hint" style={{ fontSize: '0.75rem', color: '#9333ea', marginBottom: '1rem' }}>
+                Click on individual elements to select and edit them
+              </div>
+            )}
+          </div>
+
+          {/* Compound Type Section */}
+          {compoundInfo && (
+            <div className="property-section">
+              <h4 className="property-section__title">Compound Type</h4>
+              <div className="property-group">
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  padding: '0.75rem',
+                  background: 'rgba(147, 51, 234, 0.08)',
+                  borderRadius: '8px'
+                }}>
+                  <span style={{ fontSize: '1.5rem' }}>{compoundInfo.icon}</span>
+                  <div>
+                    <div style={{ fontWeight: '600', color: '#1e293b' }}>{compoundInfo.name}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{compoundInfo.description}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Regenerate button */}
+              <div className="property-group">
+                <button
+                  className="property-btn property-btn--secondary property-btn--full"
+                  onClick={onRegenerate}
+                  title="Generate a new random variation"
+                >
+                  🎲 Generate New Shape
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Bounds Info */}
+          <div className="property-section">
+            <h4 className="property-section__title">Dimensions</h4>
+            <div className="property-group">
+              <div className="property-row">
+                <label className="property-label">Width</label>
+                <span className="property-value">{(bounds.width / 1000).toFixed(2)}m</span>
+              </div>
+              <div className="property-row">
+                <label className="property-label">Height</label>
+                <span className="property-value">{(bounds.height / 1000).toFixed(2)}m</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Child Elements */}
+          <div className="property-section">
+            <h4 className="property-section__title">Elements ({childShapes.length})</h4>
+            <div className="property-group">
+              <div style={{
+                maxHeight: '150px',
+                overflowY: 'auto',
+                borderRadius: '6px',
+                border: '1px solid #e5e7eb'
+              }}>
+                {childShapes.map((shape, index) => (
+                  <div
+                    key={shape.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.5rem 0.75rem',
+                      borderBottom: index < childShapes.length - 1 ? '1px solid #f1f5f9' : 'none',
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    <span style={{ color: '#9333ea' }}>
+                      {shape.shapeType === 'blob' ? '◐' : '□'}
+                    </span>
+                    <span style={{ color: '#475569' }}>
+                      {shape.customName || `${shape.blobStyle || shape.shapeType} ${index + 1}`}
+                    </span>
+                    <span style={{
+                      marginLeft: 'auto',
+                      fontSize: '0.7rem',
+                      color: '#9ca3af'
+                    }}>
+                      {(shape.width_mm / 1000).toFixed(1)}m
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="property-section">
+            <h4 className="property-section__title">Actions</h4>
+            <div className="property-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <button
+                className="property-btn property-btn--secondary property-btn--full"
+                onClick={onUngroup}
+                title="Dissolve the group and make elements independent"
+              >
+                📤 Ungroup Elements
+              </button>
+              <button
+                className="property-btn property-btn--danger property-btn--full"
+                onClick={() => {
+                  if (confirm(`Delete "${groupName}" and all its elements?`)) {
+                    onDelete();
+                  }
+                }}
+                title="Delete group and all its elements"
+              >
+                🗑️ Delete Group
+              </button>
+            </div>
+          </div>
+
+          {/* Tip */}
+          <div className="property-group">
+            <div className="property-hint" style={{ fontStyle: 'normal', color: '#64748b', fontSize: '0.75rem', marginTop: '1rem' }}>
+              Double-click a group on the canvas to enter edit mode. Press Escape to exit.
             </div>
           </div>
         </div>

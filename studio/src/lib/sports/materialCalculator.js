@@ -111,6 +111,10 @@ export function calculateMaterials(state) {
 
     const area_m2 = Math.round(pixelCount * adjustedM2PerPixel * 100) / 100;
 
+    // Skip colors with trivial area (likely anti-aliasing artifacts)
+    const MIN_AREA_M2 = 0.01; // 100 cm² minimum
+    if (area_m2 < MIN_AREA_M2 && tpvCode !== EXCLUSION_COLOR_CODE) continue;
+
     // Track exclusion area separately (not counted as material)
     if (tpvCode === EXCLUSION_COLOR_CODE) {
       exclusionArea_m2 = area_m2;
@@ -179,8 +183,9 @@ function buildColorMap(state) {
     tpvCodes.add(state.surface.color.tpv_code);
   }
 
-  // Courts
+  // Courts - only include visible elements
   for (const court of Object.values(state.courts || {})) {
+    if (court.visible === false) continue;
     if (court.courtSurfaceColor?.tpv_code) {
       tpvCodes.add(court.courtSurfaceColor.tpv_code);
     }
@@ -189,18 +194,26 @@ function buildColorMap(state) {
     }
   }
 
-  // Tracks
+  // Tracks - only include visible elements
   for (const track of Object.values(state.tracks || {})) {
+    if (track.visible === false) continue;
     if (track.trackSurfaceColor?.tpv_code) {
       tpvCodes.add(track.trackSurfaceColor.tpv_code);
     }
     if (track.trackLineColor?.tpv_code) {
       tpvCodes.add(track.trackLineColor.tpv_code);
     }
+    // Per-lane surface colors
+    for (const laneColor of track.laneSurfaceColors || []) {
+      if (laneColor?.tpv_code) {
+        tpvCodes.add(laneColor.tpv_code);
+      }
+    }
   }
 
-  // Shapes
+  // Shapes - only include visible elements
   for (const shape of Object.values(state.shapes || {})) {
+    if (shape.visible === false) continue;
     if (shape.fillColor?.tpv_code) {
       tpvCodes.add(shape.fillColor.tpv_code);
     }
@@ -209,8 +222,9 @@ function buildColorMap(state) {
     }
   }
 
-  // Texts
+  // Texts - only include visible elements
   for (const text of Object.values(state.texts || {})) {
+    if (text.visible === false) continue;
     if (text.fillColor?.tpv_code) {
       tpvCodes.add(text.fillColor.tpv_code);
     }
@@ -400,21 +414,34 @@ function renderTrack(ctx, track, colorMap, scale) {
 
   const geometry = calculateTrackGeometry(params);
 
-  // Track surface color
-  const surfaceColor = colorMap[track.trackSurfaceColor?.tpv_code] || colorMap['UNKNOWN'];
+  // Default track surface color
+  const defaultSurfaceColor = colorMap[track.trackSurfaceColor?.tpv_code] || colorMap['UNKNOWN'];
+
+  // Helper to get lane-specific surface color
+  const getLaneSurfaceColor = (laneNumber) => {
+    const override = track.laneSurfaceColors?.[laneNumber - 1];
+    if (override?.tpv_code) {
+      return colorMap[override.tpv_code] || defaultSurfaceColor;
+    }
+    return defaultSurfaceColor;
+  };
 
   // Lane line color
   const lineColor = colorMap[track.trackLineColor?.tpv_code || 'RH31'] || colorMap['UNKNOWN'];
   const lineWidth = (params.lineWidth_mm || 50) * scale;
 
-  // For curved tracks, render as donut shape
+  // For curved tracks, render each lane as individual ring
   if (!geometry.isStraightTrack) {
-    // Fill the track surface (area between outer and inner paths)
-    const outerPath = geometry.lanes[0].outerPath;
-    const innerPath = geometry.lanes[geometry.lanes.length - 1].innerPath;
+    // Fill each lane as a separate ring
+    for (let i = 0; i < geometry.lanes.length; i++) {
+      const lane = geometry.lanes[i];
+      const nextLane = geometry.lanes[i + 1];
+      const outerPath = lane.outerPath;
+      const innerPath = nextLane ? nextLane.outerPath : lane.innerPath;
 
-    ctx.fillStyle = surfaceColor;
-    fillDonutPath(ctx, outerPath, innerPath, scale);
+      ctx.fillStyle = getLaneSurfaceColor(lane.laneNumber);
+      fillDonutPath(ctx, outerPath, innerPath, scale);
+    }
 
     // Draw lane lines
     ctx.strokeStyle = lineColor;
@@ -431,14 +458,14 @@ function renderTrack(ctx, track, colorMap, scale) {
       strokeSVGPath(ctx, lastLane.innerPath, scale);
     }
   } else {
-    // Straight track - parallel lanes
+    // Straight track - parallel lanes with per-lane colors
     for (const lane of geometry.lanes) {
       const laneX = lane.laneX * scale;
       const laneWidth = lane.laneWidth * scale;
       const trackHeight = params.height_mm * scale;
 
-      // Fill lane surface
-      ctx.fillStyle = surfaceColor;
+      // Fill lane surface with per-lane color
+      ctx.fillStyle = getLaneSurfaceColor(lane.laneNumber);
       ctx.fillRect(laneX, 0, laneWidth, trackHeight);
 
       // Draw lane lines
@@ -470,10 +497,17 @@ function renderShape(ctx, shape, colorMap, scale) {
 
   switch (shape.shapeType) {
     case 'polygon':
-      // Generate polygon path
+      // Generate polygon path (supports stars via starMode)
       const width = (shape.width_mm || 2000) * scale;
       const height = (shape.height_mm || 2000) * scale;
-      svgPath = generatePolygonPath(shape.sides || 4, width, height, shape.cornerRadius || 0);
+      svgPath = generatePolygonPath(
+        shape.sides || 4,
+        width,
+        height,
+        shape.cornerRadius || 0,
+        shape.starMode || false,
+        shape.innerRadius || 0.5
+      );
       break;
 
     case 'blob':
@@ -780,7 +814,8 @@ function findClosestColor(r, g, b, reverseMap) {
   }
 
   // Only match if close enough (threshold for anti-aliasing)
-  return minDist <= 30 ? closestCode : 'UNKNOWN';
+  // Reduced from 30 to 15 to prevent false matches from anti-aliased edge pixels
+  return minDist <= 15 ? closestCode : 'UNKNOWN';
 }
 
 /**
@@ -813,6 +848,13 @@ function getUsagesForColor(tpvCode, state) {
     }
     if (track.trackLineColor?.tpv_code === tpvCode) {
       usages.add('Track Lane Lines');
+    }
+    // Check per-lane colors
+    for (let i = 0; i < (track.laneSurfaceColors || []).length; i++) {
+      const laneColor = track.laneSurfaceColors[i];
+      if (laneColor?.tpv_code === tpvCode) {
+        usages.add(`Track Lane ${i + 1}`);
+      }
     }
   }
 

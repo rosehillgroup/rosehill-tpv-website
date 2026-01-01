@@ -18,6 +18,7 @@ function LayersPanel() {
     shapes,
     texts,
     exclusionZones,
+    groups,
     elementOrder,
     selectedCourtId,
     selectedTrackId,
@@ -25,6 +26,8 @@ function LayersPanel() {
     selectedShapeId,
     selectedTextId,
     selectedExclusionZoneId,
+    selectedGroupId,
+    editingGroupId,
     setElementOrder,
     selectCourt,
     selectTrack,
@@ -32,6 +35,12 @@ function LayersPanel() {
     selectShape,
     selectText,
     selectExclusionZone,
+    selectGroup,
+    deselectGroup,
+    enterGroup,
+    exitGroup,
+    ungroup,
+    deleteGroupWithChildren,
     bringToFront,
     sendToBack,
     duplicateCourt,
@@ -61,6 +70,9 @@ function LayersPanel() {
   // Rename state
   const [renamingId, setRenamingId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
+
+  // Expanded groups state
+  const [expandedGroups, setExpandedGroups] = useState(new Set());
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -108,11 +120,60 @@ function LayersPanel() {
       };
     } else if (elementId.startsWith('shape-')) {
       const shape = shapes[elementId];
-      const shapeName = shape?.sides >= 32 ? 'Circle' : shape?.sides === 3 ? 'Triangle' : shape?.sides === 4 ? 'Rectangle' : `${shape?.sides}-gon`;
+
+      // Determine name and icon based on shape type
+      let shapeName = 'Shape';
+      let icon = '□';
+
+      if (shape?.shapeType === 'blob') {
+        // Blob shapes - use style name
+        const styleNames = {
+          organic: 'Organic Blob',
+          splashy: 'Splashy Blob',
+          cloudy: 'Cloudy Blob',
+          rocky: 'Rocky Blob'
+        };
+        shapeName = styleNames[shape.blobStyle] || 'Blob';
+        icon = '◐';
+      } else if (shape?.shapeType === 'path') {
+        // Path shapes
+        shapeName = shape.closed ? 'Custom Shape' : 'Path';
+        icon = '✏️';
+      } else if (shape?.starMode) {
+        // Star shapes
+        shapeName = `${shape.sides || 5}-Point Star`;
+        icon = '★';
+      } else if (shape?.sides) {
+        // Regular polygons
+        const sides = shape.sides;
+        if (sides >= 32) {
+          shapeName = 'Circle';
+          icon = '○';
+        } else if (sides === 3) {
+          shapeName = 'Triangle';
+          icon = '△';
+        } else if (sides === 4) {
+          shapeName = 'Rectangle';
+          icon = '□';
+        } else if (sides === 5) {
+          shapeName = 'Pentagon';
+          icon = '⬠';
+        } else if (sides === 6) {
+          shapeName = 'Hexagon';
+          icon = '⬡';
+        } else if (sides === 8) {
+          shapeName = 'Octagon';
+          icon = '⯃';
+        } else {
+          shapeName = `${sides}-gon`;
+          icon = '⬡';
+        }
+      }
+
       return {
         type: 'shape',
-        name: shape?.customName || shapeName || 'Unknown Shape',
-        icon: shape?.sides >= 32 ? '○' : shape?.sides === 3 ? '△' : shape?.sides === 4 ? '□' : '⬡',
+        name: shape?.customName || shapeName,
+        icon: icon,
         sport: 'shape',
         locked: shape?.locked || false,
         visible: shape?.visible !== false
@@ -461,6 +522,161 @@ function LayersPanel() {
           );
         })}
       </div>
+
+      {/* Groups Section */}
+      {Object.keys(groups).length > 0 && (
+        <>
+          <div className="layers-panel__section-divider">
+            <span>Groups</span>
+          </div>
+          <div className="layers-panel__list layers-panel__list--groups">
+            {Object.entries(groups).map(([groupId, group]) => {
+              const isExpanded = expandedGroups.has(groupId);
+              const isGroupSelected = selectedGroupId === groupId;
+              const isEditing = editingGroupId === groupId;
+              const groupName = group.customName ||
+                (group.compoundType ? `${group.compoundType.charAt(0).toUpperCase() + group.compoundType.slice(1)} Group` : 'Group');
+
+              return (
+                <div key={groupId} className="layer-group">
+                  {/* Group header */}
+                  <div
+                    className={`layer-item layer-item--group ${isGroupSelected ? 'layer-item--selected' : ''} ${isEditing ? 'layer-item--editing' : ''}`}
+                    onClick={() => selectGroup(groupId)}
+                    onDoubleClick={() => enterGroup(groupId)}
+                  >
+                    {/* Expand/Collapse toggle */}
+                    <button
+                      className="layer-item__expand-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedGroups(prev => {
+                          const next = new Set(prev);
+                          if (next.has(groupId)) {
+                            next.delete(groupId);
+                          } else {
+                            next.add(groupId);
+                          }
+                          return next;
+                        });
+                      }}
+                      title={isExpanded ? 'Collapse' : 'Expand'}
+                    >
+                      {isExpanded ? '▼' : '▶'}
+                    </button>
+
+                    {/* Group icon */}
+                    <span className="layer-item__handle layer-item__handle--group">
+                      {group.compoundType === 'splash' ? '💦' :
+                       group.compoundType === 'cloud' ? '☁️' :
+                       group.compoundType === 'flower' ? '🌸' :
+                       group.compoundType === 'abstract' ? '🎨' : '✦'}
+                    </span>
+
+                    {/* Group name */}
+                    <span className="layer-item__name">
+                      {groupName}
+                      <span className="layer-item__child-count">({group.childIds.length})</span>
+                    </span>
+
+                    {/* Editing indicator */}
+                    {isEditing && (
+                      <span className="layer-item__edit-indicator" title="Editing group">✏️</span>
+                    )}
+
+                    {/* Group actions */}
+                    <div className="layer-item__actions">
+                      <button
+                        className="layer-item__menu-btn"
+                        onClick={(e) => handleMenuToggle(e, groupId)}
+                        title="More actions"
+                      >
+                        ⋮
+                      </button>
+
+                      {menuOpenId === groupId && (
+                        <div className="layer-item__menu">
+                          <button onClick={(e) => {
+                            e.stopPropagation();
+                            enterGroup(groupId);
+                            setMenuOpenId(null);
+                          }}>
+                            ✏️ Edit Group
+                          </button>
+                          <button onClick={(e) => {
+                            e.stopPropagation();
+                            ungroup(groupId);
+                            setMenuOpenId(null);
+                          }}>
+                            📤 Ungroup
+                          </button>
+                          <div className="layer-item__menu-divider" />
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Delete group "${groupName}" and all its contents?`)) {
+                                deleteGroupWithChildren(groupId);
+                              }
+                              setMenuOpenId(null);
+                            }}
+                            className="layer-item__menu-delete"
+                          >
+                            🗑️ Delete Group
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Child elements (when expanded) */}
+                  {isExpanded && (
+                    <div className="layer-group__children">
+                      {group.childIds.map(childId => {
+                        const childInfo = getElementInfo(childId);
+                        const isChildSelected = childId === selectedShapeId || childId === selectedMotifId;
+
+                        return (
+                          <div
+                            key={childId}
+                            className={`layer-item layer-item--child ${isChildSelected ? 'layer-item--selected' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Only allow selecting child if editing the group
+                              if (isEditing) {
+                                handleSelect(childId);
+                              }
+                            }}
+                          >
+                            <span className="layer-item__indent" />
+                            <span className="layer-item__handle layer-item__handle--disabled">
+                              {childInfo.icon}
+                            </span>
+                            <span className={`layer-item__name ${!childInfo.visible ? 'layer-item__name--hidden' : ''}`}>
+                              {childInfo.name}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Exit group editing button */}
+          {editingGroupId && (
+            <div className="layers-panel__exit-group">
+              <button
+                className="layers-panel__exit-group-btn"
+                onClick={() => exitGroup()}
+              >
+                ← Exit Group Editing
+              </button>
+            </div>
+          )}
+        </>
+      )}
 
       {/* Exclusion Zones Section (separate from layer order) */}
       {Object.keys(exclusionZones).length > 0 && (

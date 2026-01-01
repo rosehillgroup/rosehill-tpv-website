@@ -9,6 +9,8 @@ export default function PlaygroundExportMenu({
   onExportPNG,
   onExportPDF,
   onExportTiles,
+  onExportDXF,
+  onExportCanvasPDF,
   viewMode,
   exporting,
   disabled
@@ -109,6 +111,35 @@ export default function PlaygroundExportMenu({
               <span className="playground-export-menu__desc">TPV quantities & specifications</span>
             </div>
           </button>
+
+          {onExportCanvasPDF && (
+            <button
+              className="playground-export-menu__item"
+              onClick={() => handleExport(onExportCanvasPDF)}
+            >
+              <span className="playground-export-menu__icon">📐</span>
+              <div className="playground-export-menu__content">
+                <span className="playground-export-menu__title">Canvas PDF (1:100)</span>
+                <span className="playground-export-menu__desc">Scaled design with dimensions</span>
+              </div>
+            </button>
+          )}
+
+          {onExportDXF && (
+            <>
+              <div className="playground-export-menu__divider" />
+              <button
+                className="playground-export-menu__item"
+                onClick={() => handleExport(onExportDXF)}
+              >
+                <span className="playground-export-menu__icon">🔧</span>
+                <div className="playground-export-menu__content">
+                  <span className="playground-export-menu__title">Download DXF</span>
+                  <span className="playground-export-menu__desc">CAD format for AutoCAD/Rhino</span>
+                </div>
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>

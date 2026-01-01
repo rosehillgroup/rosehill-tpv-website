@@ -11,6 +11,7 @@ import BlobElement from './BlobElement.jsx';
 import PathElement from './PathElement.jsx';
 import TextElement from './TextElement.jsx';
 import ExclusionZoneElement from './ExclusionZoneElement.jsx';
+import GroupElement from './GroupElement.jsx';
 import { measureText } from '../../lib/sports/textUtils.js';
 import { generateSurfaceBoundaryPath } from '../../lib/sports/surfaceGeometry.js';
 import './CourtCanvas.css';
@@ -46,6 +47,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const [dragShapeId, setDragShapeId] = useState(null);
   const [dragTextId, setDragTextId] = useState(null);
   const [dragExclusionZoneId, setDragExclusionZoneId] = useState(null);
+  const [dragGroupId, setDragGroupId] = useState(null);
 
   // Motif scaling state
   const [isScaling, setIsScaling] = useState(false);
@@ -153,7 +155,20 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     updatePathControlPoint,
     updatePathHandle,
     commitPathEdit,
-    removePointFromPath
+    removePointFromPath,
+    // Group and multi-selection
+    groups,
+    selectedGroupId,
+    selectedElementIds,
+    editingGroupId,
+    selectGroup,
+    deselectGroup,
+    enterGroup,
+    exitGroup,
+    addToSelection,
+    clearMultiSelection,
+    updateGroupPosition,
+    commitGroupMove
   } = useSportsDesignStore();
 
   // Convert screen coordinates to SVG coordinates
@@ -362,6 +377,21 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const handleShapeMouseDown = (e, shapeId) => {
     e.stopPropagation();
 
+    // Check if Shift is held for multi-selection
+    const isShiftHeld = e.shiftKey;
+
+    if (isShiftHeld) {
+      // Multi-select mode: add/remove from selection
+      addToSelection(shapeId);
+      // Don't start drag when multi-selecting
+      return;
+    }
+
+    // Single selection mode
+    // Clear any multi-selection first
+    if (selectedElementIds.length > 0) {
+      clearMultiSelection();
+    }
     selectShape(shapeId);
 
     const shape = shapes[shapeId];
@@ -1550,6 +1580,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       deselectShape();
       deselectText();
       deselectExclusionZone();
+      deselectGroup();
+      clearMultiSelection();
       // Clear point selection when clicking background
       setSelectedPointIndex(null);
     }
@@ -1711,6 +1743,12 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         finishPath();
       }
 
+      // Escape exits group editing mode
+      if (e.code === 'Escape' && editingGroupId) {
+        e.preventDefault();
+        exitGroup();
+      }
+
       // Delete/Backspace removes selected point from path or blob
       if ((e.code === 'Delete' || e.code === 'Backspace') && selectedShapeId && selectedPointIndex !== null) {
         // Don't activate if user is typing in an input
@@ -1721,6 +1759,24 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
           e.preventDefault();
           removePointFromPath(selectedShapeId, selectedPointIndex);
           setSelectedPointIndex(null);
+        }
+      }
+
+      // Cmd/Ctrl+G = Group selected elements
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'g' && !e.shiftKey) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (selectedElementIds.length >= 2) {
+          e.preventDefault();
+          useSportsDesignStore.getState().groupSelected();
+        }
+      }
+
+      // Cmd/Ctrl+Shift+G = Ungroup selected group
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'g') {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (selectedGroupId) {
+          e.preventDefault();
+          useSportsDesignStore.getState().ungroup(selectedGroupId);
         }
       }
     };
@@ -1739,7 +1795,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [pathDrawingMode, activePathId, cancelPath, finishPath, selectedShapeId, selectedPointIndex, shapes, removePointFromPath]);
+  }, [pathDrawingMode, activePathId, cancelPath, finishPath, selectedShapeId, selectedPointIndex, shapes, removePointFromPath, selectedElementIds, selectedGroupId, editingGroupId, exitGroup]);
 
   // Track mouse position for path drawing preview line
   const handleCanvasMouseMove = (e) => {
@@ -1940,13 +1996,16 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             // Skip hidden shapes
             if (shape.visible === false) return null;
 
+            // Check if this shape is selected (single or multi-selection)
+            const isShapeSelected = elementId === selectedShapeId || selectedElementIds.includes(elementId);
+
             // Render blob shapes with BlobElement
             if (shape.shapeType === 'blob') {
               return (
                 <BlobElement
                   key={elementId}
                   shape={shape}
-                  isSelected={elementId === selectedShapeId}
+                  isSelected={isShapeSelected}
                   onMouseDown={(e) => handleShapeMouseDown(e, elementId)}
                   onTouchStart={(e) => handleShapeMouseDown(e, elementId)}
                   onDoubleClick={(e) => handleShapeDoubleClick(e, elementId)}
@@ -1968,7 +2027,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                 <PathElement
                   key={elementId}
                   shape={shape}
-                  isSelected={elementId === selectedShapeId}
+                  isSelected={isShapeSelected}
                   onMouseDown={(e) => handleShapeMouseDown(e, elementId)}
                   onTouchStart={(e) => handleShapeMouseDown(e, elementId)}
                   onDoubleClick={(e) => handleShapeDoubleClick(e, elementId)}
@@ -1989,7 +2048,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
               <ShapeElement
                 key={elementId}
                 shape={shape}
-                isSelected={elementId === selectedShapeId}
+                isSelected={isShapeSelected}
                 onMouseDown={(e) => handleShapeMouseDown(e, elementId)}
                 onTouchStart={(e) => handleShapeMouseDown(e, elementId)}
                 onDoubleClick={(e) => handleShapeDoubleClick(e, elementId)}
@@ -2025,6 +2084,15 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
 
           return null;
         })}
+
+        {/* Render Group Bounding Boxes */}
+        {Object.keys(groups).map(groupId => (
+          <GroupElement
+            key={groupId}
+            groupId={groupId}
+            scale={zoom}
+          />
+        ))}
 
         {/* Preview line while drawing path */}
         {pathDrawingMode && activePath && lastPoint && drawingMousePos && (

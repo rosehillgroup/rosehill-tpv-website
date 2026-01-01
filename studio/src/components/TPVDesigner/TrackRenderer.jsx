@@ -9,7 +9,7 @@ import StartingBoxes from './StartingBoxes.jsx';
  * Renders a complete running track with all lanes
  */
 function TrackElement({ track, isSelected, onMouseDown, onTouchStart, onDoubleClick, svgRef }) {
-  const { parameters, position, rotation, trackSurfaceColor, trackLineColor } = track;
+  const { parameters, position, rotation, trackSurfaceColor, trackLineColor, laneSurfaceColors } = track;
 
   // Calculate track geometry
   const geometry = calculateTrackGeometry(parameters);
@@ -29,13 +29,19 @@ function TrackElement({ track, isSelected, onMouseDown, onTouchStart, onDoubleCl
   const transform = `translate(${position.x}, ${position.y}) rotate(${rotation}, ${centerX}, ${centerY})`;
 
   // Track surface and line colors
-  const surfaceColor = trackSurfaceColor?.hex || '#A5362F'; // Default Standard Red (RH01)
+  const defaultSurfaceColor = trackSurfaceColor?.hex || '#A5362F'; // Default Standard Red (RH01)
   const lineColor = trackLineColor?.hex || '#E8E3D8'; // Default RH31 Cream
   const lineWidth = parameters.lineWidth_mm || 50;
 
+  // Helper to get lane-specific color
+  const getLaneColor = (laneNumber) => {
+    const override = laneSurfaceColors?.[laneNumber - 1];
+    return override?.hex || defaultSurfaceColor;
+  };
+
   // Debug logging
   console.log('TrackRenderer - trackSurfaceColor:', trackSurfaceColor);
-  console.log('TrackRenderer - surfaceColor:', surfaceColor);
+  console.log('TrackRenderer - defaultSurfaceColor:', defaultSurfaceColor);
   console.log('TrackRenderer - geometry.lanes.length:', geometry.lanes.length);
 
   return (
@@ -65,26 +71,37 @@ function TrackElement({ track, isSelected, onMouseDown, onTouchStart, onDoubleCl
             <path
               key={`lane-fill-${lane.laneNumber}`}
               d={lane.outerPath}
-              fill={surfaceColor}
+              fill={getLaneColor(lane.laneNumber)}
               stroke="none"
               pointerEvents="none"
             />
           ))}
         </>
       ) : (
-        // Curved track: render donut shape (outer boundary minus inner infield)
-        // Click handlers on the track surface itself so center is click-through
-        <path
-          d={`${geometry.lanes[0].outerPath} ${geometry.lanes[geometry.lanes.length - 1].innerPath}`}
-          fill={surfaceColor}
-          fillRule="evenodd"
-          stroke="none"
-          pointerEvents="all"
-          onMouseDown={onMouseDown}
-          onTouchStart={onTouchStart}
-          onDoubleClick={onDoubleClick}
-          style={{ cursor: 'move' }}
-        />
+        // Curved track: render each lane as individual ring for per-lane colors
+        <>
+          {geometry.lanes.map((lane, index) => {
+            // Use next lane's outer path as this lane's inner boundary
+            const nextLane = geometry.lanes[index + 1];
+            const innerPath = nextLane ? nextLane.outerPath : lane.innerPath;
+            const isFirstLane = index === 0;
+
+            return (
+              <path
+                key={`lane-fill-${lane.laneNumber}`}
+                d={`${lane.outerPath} ${innerPath}`}
+                fill={getLaneColor(lane.laneNumber)}
+                fillRule="evenodd"
+                stroke="none"
+                pointerEvents={isFirstLane ? 'all' : 'none'}
+                onMouseDown={isFirstLane ? onMouseDown : undefined}
+                onTouchStart={isFirstLane ? onTouchStart : undefined}
+                onDoubleClick={isFirstLane ? onDoubleClick : undefined}
+                style={isFirstLane ? { cursor: 'move' } : undefined}
+              />
+            );
+          })}
+        </>
       )}
 
       {/* Render all strokes second (line layer on top) */}
@@ -112,7 +129,7 @@ function TrackElement({ track, isSelected, onMouseDown, onTouchStart, onDoubleCl
               ? calculateStaggeredStarts(geometry)
               : []
           }}
-          surfaceColor={surfaceColor}
+          surfaceColor={defaultSurfaceColor}
           lineColor={lineColor}
           isStraightTrack={track.template?.trackType === 'straight'}
         />

@@ -23,6 +23,8 @@ function ShapeElement({ shape, isSelected, onMouseDown, onTouchStart, onDoubleCl
     width_mm,
     height_mm,
     cornerRadius,
+    starMode,
+    innerRadius,
     position,
     rotation,
     fillColor,
@@ -33,8 +35,8 @@ function ShapeElement({ shape, isSelected, onMouseDown, onTouchStart, onDoubleCl
 
   // Generate the SVG path for this shape
   const shapePath = useMemo(() => {
-    return generatePolygonPath(sides, width_mm, height_mm, cornerRadius);
-  }, [sides, width_mm, height_mm, cornerRadius]);
+    return generatePolygonPath(sides, width_mm, height_mm, cornerRadius, starMode, innerRadius);
+  }, [sides, width_mm, height_mm, cornerRadius, starMode, innerRadius]);
 
   // Calculate center for rotation
   const centerX = width_mm / 2;

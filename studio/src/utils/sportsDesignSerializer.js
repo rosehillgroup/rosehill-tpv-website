@@ -33,6 +33,12 @@ export function serializeSportsDesign(state, metadata = {}) {
     // Exclusion zones (buildings, obstacles)
     exclusionZones: serializeExclusionZones(state.exclusionZones),
 
+    // Shapes (blobs, paths, polygons)
+    shapes: serializeShapes(state.shapes),
+
+    // Text elements
+    texts: serializeTexts(state.texts),
+
     // Unified element render order
     elementOrder: state.elementOrder || [],
 
@@ -89,6 +95,7 @@ function serializeTracks(tracks) {
         rotation: track.rotation,
         parameters: track.parameters,
         trackSurfaceColor: track.trackSurfaceColor,
+        laneSurfaceColors: track.laneSurfaceColors || [], // Per-lane color overrides
         trackLineColor: track.trackLineColor
       }
     ])
@@ -150,6 +157,64 @@ function serializeExclusionZones(zones) {
 }
 
 /**
+ * Serialize shapes (blobs, paths, polygons)
+ */
+function serializeShapes(shapes) {
+  if (!shapes) return {};
+
+  return Object.fromEntries(
+    Object.entries(shapes).map(([id, shape]) => [
+      id,
+      {
+        id: shape.id,
+        shapeType: shape.shapeType,
+        controlPoints: shape.controlPoints,
+        width_mm: shape.width_mm,
+        height_mm: shape.height_mm,
+        position: shape.position,
+        rotation: shape.rotation,
+        fillColor: shape.fillColor,
+        strokeEnabled: shape.strokeEnabled,
+        strokeColor: shape.strokeColor,
+        strokeWidth_mm: shape.strokeWidth_mm,
+        sides: shape.sides,
+        cornerRadius: shape.cornerRadius,
+        closed: shape.closed,
+        smooth: shape.smooth,
+        editPointsVisible: shape.editPointsVisible
+      }
+    ])
+  );
+}
+
+/**
+ * Serialize text elements
+ */
+function serializeTexts(texts) {
+  if (!texts) return {};
+
+  return Object.fromEntries(
+    Object.entries(texts).map(([id, text]) => [
+      id,
+      {
+        id: text.id,
+        content: text.content,
+        fontFamily: text.fontFamily,
+        fontSize_mm: text.fontSize_mm,
+        fontWeight: text.fontWeight,
+        fontStyle: text.fontStyle,
+        textAlign: text.textAlign,
+        position: text.position,
+        rotation: text.rotation,
+        fillColor: text.fillColor,
+        strokeColor: text.strokeColor,
+        strokeWidth_mm: text.strokeWidth_mm
+      }
+    ])
+  );
+}
+
+/**
  * Deserialize saved design data back into store format
  * @param {Object} savedData - Design data from database
  * @returns {Object} State object to load into store
@@ -168,6 +233,8 @@ export function deserializeSportsDesign(savedData) {
     tracks: data.tracks || {},
     motifs: data.motifs || {},
     exclusionZones: data.exclusionZones || {},
+    shapes: data.shapes || {},
+    texts: data.texts || {},
     elementOrder: data.elementOrder || [],
     customMarkings: data.customMarkings || [],
     backgroundZones: data.backgroundZones || [],

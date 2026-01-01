@@ -5,6 +5,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { generateSportsSVG, downloadSVG, downloadPNG, generateFilename } from '../../lib/sports/sportsExport.js';
 import { sliceSvgIntoTiles, downloadBlob } from '../../lib/svgTileSlicer.js';
+import { generateDXF, downloadDXF, cleanSvgForDxf } from '../../lib/dxf/dxfExport.js';
 import { auth } from '../../lib/api/auth.js';
 import { loadDesign } from '../../lib/api/designs.js';
 
@@ -271,6 +272,114 @@ export default function ExportMenu({ svgRef }) {
     }
   };
 
+  const handleExportDXF = async () => {
+    setExporting('dxf');
+    setIsOpen(false);
+
+    try {
+      const svgElement = getSvgElement();
+      if (!svgElement) {
+        throw new Error('Canvas not found');
+      }
+
+      const state = exportDesignData();
+
+      // Clean SVG for DXF export
+      const cleanedSvg = cleanSvgForDxf(svgElement);
+
+      // Generate DXF content
+      const dxfContent = generateDXF(cleanedSvg, {
+        widthMm: state.surface.width_mm,
+        lengthMm: state.surface.length_mm,
+        designName: state.name || 'Sports Surface',
+        seed: state.seed
+      });
+
+      // Download DXF file
+      const filename = generateFilename(state.name, 'dxf');
+      downloadDXF(dxfContent, filename);
+
+      console.log('[EXPORT] DXF downloaded:', filename);
+    } catch (error) {
+      console.error('DXF export failed:', error);
+      alert('Failed to export DXF: ' + error.message);
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  const handleExportCanvasPDF = async () => {
+    setExporting('canvas-pdf');
+    setIsOpen(false);
+
+    try {
+      const svgElement = getSvgElement();
+      if (!svgElement) {
+        throw new Error('Canvas not found');
+      }
+
+      // Get auth token
+      const session = await auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Authentication required for PDF export');
+      }
+
+      const state = exportDesignData();
+      const name = state.name || 'TPV Design';
+
+      // Clean SVG for export
+      const svgClone = svgElement.cloneNode(true);
+      svgClone.querySelectorAll(
+        '[class*="selected"], .transform-handles, .track-resize-handles, ' +
+        '.court-canvas__selection-outline, [class*="selection"], [class*="handle"], ' +
+        '[stroke-dasharray]'
+      ).forEach(el => el.remove());
+      svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+      const svgString = new XMLSerializer().serializeToString(svgClone);
+
+      // Call server-side API
+      const response = await fetch('/api/export-canvas-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          svgString,
+          designName: name,
+          widthMm: state.surface.width_mm,
+          lengthMm: state.surface.length_mm,
+          designType: 'sports'
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(error.error || `Server error: ${response.status}`);
+      }
+
+      // Download the PDF
+      const pdfBlob = await response.blob();
+      const filename = generateFilename(name, 'pdf').replace('.pdf', '-canvas.pdf');
+
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(pdfBlob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+
+      console.log('[EXPORT] Canvas PDF downloaded:', filename);
+    } catch (error) {
+      console.error('Canvas PDF export failed:', error);
+      alert('Failed to export Canvas PDF: ' + error.message);
+    } finally {
+      setExporting(null);
+    }
+  };
+
   return (
     <div className="export-menu" ref={menuRef}>
       <button
@@ -341,6 +450,36 @@ export default function ExportMenu({ svgRef }) {
                 {exporting === 'pdf' ? 'Generating...' : 'Materials Report (PDF)'}
               </span>
               <span className="export-menu__item-desc">TPV quantities & specifications</span>
+            </div>
+          </button>
+
+          <button
+            className="export-menu__item"
+            onClick={handleExportCanvasPDF}
+            disabled={exporting !== null}
+          >
+            <span className="export-menu__icon">📐</span>
+            <div className="export-menu__item-content">
+              <span className="export-menu__item-title">
+                {exporting === 'canvas-pdf' ? 'Generating...' : 'Canvas PDF (1:100)'}
+              </span>
+              <span className="export-menu__item-desc">Scaled design with dimensions</span>
+            </div>
+          </button>
+
+          <div className="export-menu__divider" />
+
+          <button
+            className="export-menu__item"
+            onClick={handleExportDXF}
+            disabled={exporting !== null}
+          >
+            <span className="export-menu__icon">🔧</span>
+            <div className="export-menu__item-content">
+              <span className="export-menu__item-title">
+                {exporting === 'dxf' ? 'Exporting...' : 'Download DXF'}
+              </span>
+              <span className="export-menu__item-desc">CAD format for AutoCAD/Rhino</span>
             </div>
           </button>
         </div>
