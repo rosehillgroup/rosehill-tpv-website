@@ -1573,7 +1573,14 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     }
 
     // Normal behavior: deselect when clicking background
-    if (e.target === e.currentTarget) {
+    // Check if clicked on container, SVG, or surface background elements
+    const isBackground =
+      e.target === e.currentTarget || // Container div
+      e.target.tagName === 'svg' || // SVG element itself
+      e.target.classList?.contains('court-canvas__surface') || // Surface background rect
+      e.target.closest('.court-canvas__scroll-container') === e.target; // Scroll container
+
+    if (isBackground) {
       deselectCourt();
       deselectTrack();
       deselectMotif();
