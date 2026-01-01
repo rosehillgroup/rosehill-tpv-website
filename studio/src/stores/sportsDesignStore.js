@@ -3031,7 +3031,7 @@ export const useSportsDesignStore = create(
         set((state) => ({
           shapes: { ...state.shapes, ...newShapes },
           groups: { ...state.groups, [groupId]: group },
-          elementOrder: [...state.elementOrder, groupId],
+          elementOrder: [...state.elementOrder, ...shapeIds], // Add individual shapes to render order
           selectedGroupId: groupId,
           selectedShapeId: null,
           selectedCourtId: null,
@@ -3120,7 +3120,7 @@ export const useSportsDesignStore = create(
         });
 
         set((state) => {
-          // Remove old shapes
+          // Remove old shapes from shapes object
           const updatedShapes = { ...state.shapes };
           for (const oldId of oldShapeIds) {
             delete updatedShapes[oldId];
@@ -3128,8 +3128,21 @@ export const useSportsDesignStore = create(
           // Add new shapes
           Object.assign(updatedShapes, newShapes);
 
+          // Update elementOrder: replace old shape IDs with new ones
+          // Find position of first old shape to maintain layer order
+          const firstOldIndex = state.elementOrder.findIndex(id => oldShapeIds.includes(id));
+          let updatedElementOrder = state.elementOrder.filter(id => !oldShapeIds.includes(id));
+          if (firstOldIndex >= 0) {
+            // Insert new shapes at the same position
+            updatedElementOrder.splice(firstOldIndex, 0, ...newShapeIds);
+          } else {
+            // Fallback: append to end
+            updatedElementOrder = [...updatedElementOrder, ...newShapeIds];
+          }
+
           return {
             shapes: updatedShapes,
+            elementOrder: updatedElementOrder,
             groups: {
               ...state.groups,
               [groupId]: {
