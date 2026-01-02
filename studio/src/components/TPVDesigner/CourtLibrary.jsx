@@ -6,7 +6,7 @@ import { getAllTrackTemplates, getTrackTemplate } from '../../lib/sports/trackTe
 import { listPlaygroundDesigns, fetchMotifFromDesign } from '../../lib/sports/motifUtils.js';
 import './CourtLibrary.css';
 
-function CourtLibrary({ onOpenGenerator, mobileMode = false, activeTab: externalActiveTab, onItemAdded }) {
+function CourtLibrary({ onOpenGenerator, mobileMode = false, modalMode = false, activeTab: externalActiveTab, onItemAdded }) {
   const [selectedTemplateId, setSelectedTemplateId] = useState(null);
   const [internalActiveTab, setInternalActiveTab] = useState('courts'); // 'courts', 'tracks', 'shapes', or 'designs'
 
@@ -51,11 +51,14 @@ function CourtLibrary({ onOpenGenerator, mobileMode = false, activeTab: external
     }
   };
 
+  // Whether to use single-click to add (mobile or modal mode)
+  const singleClickAdd = mobileMode || modalMode;
+
   const handleAddCourt = (templateId) => {
     const template = getCourtTemplate(templateId);
     if (template) {
       addCourt(templateId, template);
-      if (mobileMode && onItemAdded) {
+      if (singleClickAdd && onItemAdded) {
         onItemAdded();
       }
     }
@@ -65,7 +68,7 @@ function CourtLibrary({ onOpenGenerator, mobileMode = false, activeTab: external
     const template = getTrackTemplate(templateId);
     if (template) {
       addTrack(templateId, template);
-      if (mobileMode && onItemAdded) {
+      if (singleClickAdd && onItemAdded) {
         onItemAdded();
       }
     }
@@ -91,7 +94,7 @@ function CourtLibrary({ onOpenGenerator, mobileMode = false, activeTab: external
           hasBothVersions: motifData.hasBothVersions
         }
       );
-      if (mobileMode && onItemAdded) {
+      if (singleClickAdd && onItemAdded) {
         onItemAdded();
       }
     } catch (error) {
@@ -185,8 +188,8 @@ function CourtLibrary({ onOpenGenerator, mobileMode = false, activeTab: external
           <div
             key={template.id}
             className={`court-library__item ${selectedTemplateId === template.id ? 'court-library__item--selected' : ''}`}
-            onClick={() => mobileMode ? handleAddCourt(template.id) : setSelectedTemplateId(template.id)}
-            onDoubleClick={() => !mobileMode && handleAddCourt(template.id)}
+            onClick={() => singleClickAdd ? handleAddCourt(template.id) : setSelectedTemplateId(template.id)}
+            onDoubleClick={() => !singleClickAdd && handleAddCourt(template.id)}
           >
             {/* Preview Thumbnail */}
             <div className="court-library__preview">
@@ -222,8 +225,8 @@ function CourtLibrary({ onOpenGenerator, mobileMode = false, activeTab: external
           <div
             key={template.id}
             className={`court-library__item ${selectedTemplateId === template.id ? 'court-library__item--selected' : ''}`}
-            onClick={() => mobileMode ? handleAddTrack(template.id) : setSelectedTemplateId(template.id)}
-            onDoubleClick={() => !mobileMode && handleAddTrack(template.id)}
+            onClick={() => singleClickAdd ? handleAddTrack(template.id) : setSelectedTemplateId(template.id)}
+            onDoubleClick={() => !singleClickAdd && handleAddTrack(template.id)}
           >
             {/* Preview Thumbnail */}
             <div className="court-library__preview">
@@ -303,8 +306,8 @@ function CourtLibrary({ onOpenGenerator, mobileMode = false, activeTab: external
               <div
                 key={design.id}
                 className={`court-library__item ${selectedTemplateId === design.id ? 'court-library__item--selected' : ''} ${addingMotifId === design.id ? 'court-library__item--loading' : ''}`}
-                onClick={() => mobileMode ? handleAddMotif(design.id) : setSelectedTemplateId(design.id)}
-                onDoubleClick={() => !mobileMode && handleAddMotif(design.id)}
+                onClick={() => singleClickAdd ? handleAddMotif(design.id) : setSelectedTemplateId(design.id)}
+                onDoubleClick={() => !singleClickAdd && handleAddMotif(design.id)}
               >
                 {/* Preview Thumbnail */}
                 <div className="court-library__preview">
@@ -354,7 +357,7 @@ function CourtLibrary({ onOpenGenerator, mobileMode = false, activeTab: external
         </div>
       )}
 
-      {!mobileMode && (
+      {!mobileMode && !modalMode && (
         <div className="court-library__footer">
           <p className="court-library__hint">
             {activeTab === 'courts' && 'Double-click a court to add it instantly'}

@@ -1,0 +1,251 @@
+/* TPV Studio - Court Library Modal Styles */
+
+.court-library-modal__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: courtModalFadeIn 0.2s ease-out;
+}
+
+@keyframes courtModalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.court-library-modal__container {
+  background: var(--color-bg-card, white);
+  border-radius: var(--radius-lg, 16px);
+  box-shadow: var(--shadow-xl, 0 20px 40px rgba(0, 0, 0, 0.2));
+  width: 90%;
+  max-width: 900px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: courtModalSlideIn 0.25s ease-out;
+}
+
+@keyframes courtModalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.court-library-modal__header {
+  position: relative;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--color-border, #e4e9f0);
+  background: var(--color-bg-subtle, #f8fafc);
+}
+
+.court-library-modal__header h2 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.5rem;
+  font-family: var(--font-heading, 'Overpass', sans-serif);
+  font-weight: 700;
+  color: var(--color-primary, #1e4a7a);
+}
+
+.court-library-modal__header p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary, #64748b);
+}
+
+.court-library-modal__close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: white;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary, #64748b);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.15s;
+}
+
+.court-library-modal__close:hover {
+  background: var(--color-bg-subtle, #f8fafc);
+  color: var(--color-text-primary, #1a202c);
+  transform: scale(1.05);
+}
+
+.court-library-modal__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* Override CourtLibrary styles when in modal */
+.court-library-modal__content .court-library {
+  height: 100%;
+  max-height: none;
+  border: none;
+  background: transparent;
+}
+
+.court-library-modal__content .court-library__header {
+  padding: 1rem 1.5rem;
+  background: white;
+  border-bottom: 1px solid var(--color-border, #e4e9f0);
+}
+
+.court-library-modal__content .court-library__tabs {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border-bottom: 1px solid var(--color-border, #e4e9f0);
+  gap: 0.5rem;
+}
+
+.court-library-modal__content .court-library__tab {
+  padding: 0.5rem 1rem;
+  font-size: 0.9375rem;
+}
+
+.court-library-modal__content .court-library__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.court-library-modal__content .court-library__item {
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--color-border, #e4e9f0);
+  background: white;
+  transition: all 0.2s;
+}
+
+.court-library-modal__content .court-library__item:hover {
+  border-color: var(--color-primary, #1e4a7a);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.court-library-modal__content .court-library__item--selected {
+  border-color: var(--color-primary, #1e4a7a);
+  box-shadow: 0 0 0 3px rgba(30, 78, 122, 0.15);
+}
+
+.court-library-modal__content .court-library__preview {
+  width: 100%;
+  height: 120px;
+  padding: 1rem;
+  background: var(--color-bg-subtle, #f8fafc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.court-library-modal__content .court-library__preview svg {
+  width: 100%;
+  height: 100%;
+  max-width: 100px;
+  max-height: 100px;
+}
+
+.court-library-modal__content .court-library__info {
+  padding: 0.75rem 1rem;
+  flex: none;
+}
+
+.court-library-modal__content .court-library__name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.court-library-modal__content .court-library__dimensions,
+.court-library-modal__content .court-library__standard,
+.court-library-modal__content .court-library__note {
+  font-size: 0.8125rem;
+}
+
+.court-library-modal__content .court-library__add-btn {
+  width: 100%;
+  border-radius: 0;
+  border-top: 1px solid var(--color-border, #e4e9f0);
+  padding: 0.625rem;
+}
+
+.court-library-modal__content .court-library__generate {
+  padding: 0.75rem 1.5rem 1.5rem;
+  border-top: 1px solid var(--color-border, #e4e9f0);
+  background: var(--color-bg-subtle, #f8fafc);
+}
+
+.court-library-modal__content .court-library__generate-btn {
+  width: 100%;
+  padding: 0.875rem;
+}
+
+.court-library-modal__content .court-library__footer {
+  display: none;
+}
+
+/* Mobile adjustments for modal */
+@media (max-width: 768px) {
+  .court-library-modal__container {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+  }
+
+  .court-library-modal__header {
+    padding: 1rem 1.25rem;
+  }
+
+  .court-library-modal__header h2 {
+    font-size: 1.25rem;
+  }
+
+  .court-library-modal__content .court-library__list {
+    grid-template-columns: repeat(2, 1fr);
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+
+  .court-library-modal__content .court-library__preview {
+    height: 80px;
+    padding: 0.75rem;
+  }
+
+  .court-library-modal__content .court-library__info {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .court-library-modal__content .court-library__name {
+    font-size: 0.8125rem;
+  }
+
+  .court-library-modal__content .court-library__dimensions,
+  .court-library-modal__content .court-library__standard {
+    font-size: 0.75rem;
+  }
+}

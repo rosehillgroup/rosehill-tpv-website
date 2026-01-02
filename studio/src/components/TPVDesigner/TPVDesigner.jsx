@@ -4,6 +4,7 @@ import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { usePlaygroundDesignStore } from '../../stores/playgroundDesignStore.js';
 import CourtCanvas from './CourtCanvas.jsx';
 import CourtLibrary from './CourtLibrary.jsx';
+import CourtLibraryModal from './CourtLibraryModal.jsx';
 import PropertiesPanel from './PropertiesPanel.jsx';
 import LayersPanel from './LayersPanel.jsx';
 import SaveDesignModal from './SaveDesignModal.jsx';
@@ -35,6 +36,7 @@ function TPVDesigner({ loadedDesign }) {
   const [showDesignEditor, setShowDesignEditor] = useState(false);
   const [showInSituModal, setShowInSituModal] = useState(false);
   const [inSituSvgUrl, setInSituSvgUrl] = useState(null);
+  const [showCourtModal, setShowCourtModal] = useState(false);
   const [designId, setDesignId] = useState(null);
   const [designName, setDesignName] = useState('');
   const svgRef = useRef(null);
@@ -776,18 +778,31 @@ function TPVDesigner({ loadedDesign }) {
 
         {/* Main Content Area */}
           <div className="sports-designer__content">
-            {/* Court Library Sidebar - collapsible, hidden in standalone mode */}
+            {/* Layers Sidebar - collapsible, hidden in standalone mode */}
             {!standaloneMode && (
               <aside className={`sports-designer__sidebar ${showCourtLibrary ? '' : 'sports-designer__sidebar--collapsed'}`}>
                 <div className="sidebar-content">
-                  <CourtLibrary onOpenGenerator={() => setShowDesignEditor(true)} />
+                  {/* Add Element Button */}
+                  <div className="sidebar-add-element">
+                    <button
+                      className="sidebar-add-element__btn"
+                      onClick={() => setShowCourtModal(true)}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="16" />
+                        <line x1="8" y1="12" x2="16" y2="12" />
+                      </svg>
+                      Add Courts & Designs
+                    </button>
+                  </div>
                   <LayersPanel />
                 </div>
                 {/* Collapse/Expand toggle button */}
                 <button
                   className="sidebar-toggle sidebar-toggle--left"
                   onClick={toggleCourtLibrary}
-                  title={showCourtLibrary ? 'Collapse library' : 'Expand library'}
+                  title={showCourtLibrary ? 'Collapse panel' : 'Expand panel'}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     {showCourtLibrary ? (
@@ -1041,6 +1056,13 @@ function TPVDesigner({ loadedDesign }) {
           <KeyboardShortcutsModal
             isOpen={showShortcutsModal}
             onClose={() => setShowShortcutsModal(false)}
+          />
+
+          {/* Court Library Modal */}
+          <CourtLibraryModal
+            isOpen={showCourtModal}
+            onClose={() => setShowCourtModal(false)}
+            onOpenGenerator={() => setShowDesignEditor(true)}
           />
 
           {/* Full-Screen Design Editor Modal */}

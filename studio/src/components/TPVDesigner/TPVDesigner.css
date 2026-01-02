@@ -489,19 +489,49 @@
   min-width: 0;
 }
 
-/* Court Library takes available space */
-.sports-designer__sidebar .sidebar-content > :first-child {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 0;
+/* Add Element button at top */
+.sidebar-add-element {
+  flex-shrink: 0;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--color-border, #e4e9f0);
 }
 
-/* Layers panel at bottom with guaranteed space */
+.sidebar-add-element__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--color-primary, #1e4a7a);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-body, 'Source Sans Pro', sans-serif);
+}
+
+.sidebar-add-element__btn:hover {
+  background: var(--color-primary-hover, #2a5a8e);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(30, 78, 122, 0.25);
+}
+
+.sidebar-add-element__btn:active {
+  transform: scale(0.98);
+}
+
+.sidebar-add-element__btn svg {
+  flex-shrink: 0;
+}
+
+/* Layers panel takes remaining space */
 .sports-designer__sidebar .sidebar-content > .layers-panel {
-  flex: 0 0 auto;
-  min-height: 280px;
-  max-height: 45%;
-  border-top: 1px solid var(--color-border, #e4e9f0);
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: var(--space-3, 1.25rem);
   background: var(--color-bg-subtle, #f8fafc);
@@ -1023,11 +1053,6 @@
   .sports-designer__properties:not(.sports-designer__properties--collapsed) {
     width: 260px;
   }
-  /* Reduce layers panel on smaller screens */
-  .sports-designer__sidebar .sidebar-content > .layers-panel {
-    min-height: 200px;
-    max-height: 40%;
-  }
 }
 
 /* At 900px, sidebars are narrow, toggles become important */
@@ -1064,6 +1089,11 @@
 
   /* Hide toggle buttons on mobile */
   .sidebar-toggle {
+    display: none;
+  }
+
+  /* Hide add element button on mobile (uses bottom sheet instead) */
+  .sidebar-add-element {
     display: none;
   }
 
