@@ -2146,6 +2146,12 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             key={groupId}
             groupId={groupId}
             scale={zoom}
+            screenToSVG={screenToSVG}
+            onDragStart={(gId, offset) => {
+              setDragStart(offset);
+              setDragGroupId(gId);
+              setIsDragging(true);
+            }}
           />
         ))}
 

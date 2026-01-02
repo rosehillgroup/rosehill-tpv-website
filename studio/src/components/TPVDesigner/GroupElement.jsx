@@ -8,7 +8,7 @@ import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
  * GroupElement renders a bounding box around grouped shapes
  * with handles for moving, scaling, and rotating the group
  */
-function GroupElement({ groupId, scale = 1 }) {
+function GroupElement({ groupId, scale = 1, onDragStart, screenToSVG }) {
   const {
     groups,
     selectedGroupId,
@@ -37,6 +37,18 @@ function GroupElement({ groupId, scale = 1 }) {
   const handleMouseDown = (e) => {
     e.stopPropagation();
     selectGroup(groupId);
+
+    // Start dragging if not locked and we have drag handlers
+    if (group.locked) return;
+    if (onDragStart && screenToSVG) {
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const svgPoint = screenToSVG(clientX, clientY);
+      onDragStart(groupId, {
+        x: svgPoint.x - group.bounds.x,
+        y: svgPoint.y - group.bounds.y
+      });
+    }
   };
 
   const handleDoubleClick = (e) => {
@@ -65,6 +77,7 @@ function GroupElement({ groupId, scale = 1 }) {
         ry={4 / scale}
         style={{ cursor: 'move' }}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleMouseDown}
         onDoubleClick={handleDoubleClick}
       />
 
