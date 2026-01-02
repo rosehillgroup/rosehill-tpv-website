@@ -89,6 +89,11 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const [rotateExclusionZoneId, setRotateExclusionZoneId] = useState(null);
   const [rotateExclusionZoneStart, setRotateExclusionZoneStart] = useState(null);
 
+  // Group scaling state
+  const [isScalingGroup, setIsScalingGroup] = useState(false);
+  const [scaleGroupId, setScaleGroupId] = useState(null);
+  const [scaleGroupStart, setScaleGroupStart] = useState(null);
+
   // Path drawing state (for preview line)
   const [drawingMousePos, setDrawingMousePos] = useState(null);
   // For double-click detection (manual timing since preventDefault breaks native)
@@ -168,6 +173,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     addToSelection,
     clearMultiSelection,
     updateGroupPosition,
+    updateGroupScale,
     commitGroupMove
   } = useSportsDesignStore();
 
@@ -792,6 +798,64 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     });
     setRotateExclusionZoneId(zoneId);
     setIsRotatingExclusionZone(true);
+  };
+
+  // Handle scale start on group corner/edge handle
+  const handleGroupScaleStart = (e, groupId, corner) => {
+    e.stopPropagation();
+
+    const group = groups[groupId];
+    if (!group || group.locked) return;
+
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
+    const { x, y, width, height } = group.bounds;
+
+    // Calculate the anchor point (opposite edge/corner that should stay fixed)
+    let anchorPoint;
+    switch (corner) {
+      case 'n':
+        anchorPoint = { x: x + width / 2, y: y + height };
+        break;
+      case 's':
+        anchorPoint = { x: x + width / 2, y: y };
+        break;
+      case 'e':
+        anchorPoint = { x: x, y: y + height / 2 };
+        break;
+      case 'w':
+        anchorPoint = { x: x + width, y: y + height / 2 };
+        break;
+      case 'nw':
+        anchorPoint = { x: x + width, y: y + height };
+        break;
+      case 'ne':
+        anchorPoint = { x: x, y: y + height };
+        break;
+      case 'sw':
+        anchorPoint = { x: x + width, y: y };
+        break;
+      case 'se':
+      default:
+        anchorPoint = { x: x, y: y };
+        break;
+    }
+
+    const initialDistance = Math.sqrt(
+      Math.pow(svgPoint.x - anchorPoint.x, 2) +
+      Math.pow(svgPoint.y - anchorPoint.y, 2)
+    );
+
+    setScaleGroupStart({
+      initialDistance,
+      originalBounds: { ...group.bounds },
+      corner,
+      anchorPoint
+    });
+    setScaleGroupId(groupId);
+    setIsScalingGroup(true);
   };
 
   // Reset drag state when surface dimensions change
@@ -1577,6 +1641,68 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     };
   }, [isRotatingExclusionZone, rotateExclusionZoneId, rotateExclusionZoneStart, updateExclusionZoneRotation]);
 
+  // Handle mouse/touch move for group scaling
+  useEffect(() => {
+    if (!isScalingGroup || !scaleGroupId || !scaleGroupStart) return;
+
+    const handleMove = (e) => {
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const svgPoint = screenToSVG(clientX, clientY);
+
+      const { initialDistance, originalBounds, corner, anchorPoint } = scaleGroupStart;
+
+      // Calculate current distance from anchor point
+      const currentDistance = Math.sqrt(
+        Math.pow(svgPoint.x - anchorPoint.x, 2) +
+        Math.pow(svgPoint.y - anchorPoint.y, 2)
+      );
+
+      // Calculate scale factor
+      let scaleFactor = currentDistance / initialDistance;
+      if (scaleFactor < 0.1) scaleFactor = 0.1; // Minimum scale
+      if (scaleFactor > 10) scaleFactor = 10; // Maximum scale
+
+      // Calculate scale for each axis based on corner type
+      let scaleX = scaleFactor;
+      let scaleY = scaleFactor;
+
+      // For edge handles, only scale in one direction
+      if (corner === 'n' || corner === 's') {
+        scaleX = 1;
+      } else if (corner === 'e' || corner === 'w') {
+        scaleY = 1;
+      }
+
+      // Use updateGroupScale action from store
+      updateGroupScale(scaleGroupId, scaleX, scaleY, anchorPoint);
+    };
+
+    const handleEnd = () => {
+      const { addToHistory, refreshGroupBounds } = useSportsDesignStore.getState();
+      refreshGroupBounds(scaleGroupId);
+      addToHistory();
+
+      setIsScalingGroup(false);
+      setScaleGroupId(null);
+      setScaleGroupStart(null);
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchcancel', handleEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+      window.removeEventListener('touchcancel', handleEnd);
+    };
+  }, [isScalingGroup, scaleGroupId, scaleGroupStart, groups, updateGroupScale]);
+
   // Handle click on canvas background (deselect or add path point)
   const handleCanvasClick = (e) => {
     // In path drawing mode, add points to the active path
@@ -2152,6 +2278,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
               setDragGroupId(gId);
               setIsDragging(true);
             }}
+            onScaleStart={(e, gId, corner) => handleGroupScaleStart(e, gId, corner)}
           />
         ))}
 

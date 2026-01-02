@@ -8,7 +8,7 @@ import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
  * GroupElement renders a bounding box around grouped shapes
  * with handles for moving, scaling, and rotating the group
  */
-function GroupElement({ groupId, scale = 1, onDragStart, screenToSVG }) {
+function GroupElement({ groupId, scale = 1, onDragStart, onScaleStart, screenToSVG }) {
   const {
     groups,
     selectedGroupId,
@@ -54,6 +54,13 @@ function GroupElement({ groupId, scale = 1, onDragStart, screenToSVG }) {
   const handleDoubleClick = (e) => {
     e.stopPropagation();
     enterGroup(groupId);
+  };
+
+  const handleScaleStart = (e, corner) => {
+    e.stopPropagation();
+    if (onScaleStart) {
+      onScaleStart(e, groupId, corner);
+    }
   };
 
   // Calculate child shape positions to render overlay
@@ -113,6 +120,8 @@ function GroupElement({ groupId, scale = 1, onDragStart, screenToSVG }) {
             strokeWidth={1.5 / scale}
             rx={2 / scale}
             style={{ cursor: 'nwse-resize' }}
+            onMouseDown={(e) => handleScaleStart(e, 'nw')}
+            onTouchStart={(e) => handleScaleStart(e, 'nw')}
           />
           {/* Top-right */}
           <rect
@@ -125,6 +134,8 @@ function GroupElement({ groupId, scale = 1, onDragStart, screenToSVG }) {
             strokeWidth={1.5 / scale}
             rx={2 / scale}
             style={{ cursor: 'nesw-resize' }}
+            onMouseDown={(e) => handleScaleStart(e, 'ne')}
+            onTouchStart={(e) => handleScaleStart(e, 'ne')}
           />
           {/* Bottom-left */}
           <rect
@@ -137,6 +148,8 @@ function GroupElement({ groupId, scale = 1, onDragStart, screenToSVG }) {
             strokeWidth={1.5 / scale}
             rx={2 / scale}
             style={{ cursor: 'nesw-resize' }}
+            onMouseDown={(e) => handleScaleStart(e, 'sw')}
+            onTouchStart={(e) => handleScaleStart(e, 'sw')}
           />
           {/* Bottom-right */}
           <rect
@@ -149,6 +162,8 @@ function GroupElement({ groupId, scale = 1, onDragStart, screenToSVG }) {
             strokeWidth={1.5 / scale}
             rx={2 / scale}
             style={{ cursor: 'nwse-resize' }}
+            onMouseDown={(e) => handleScaleStart(e, 'se')}
+            onTouchStart={(e) => handleScaleStart(e, 'se')}
           />
 
           {/* Edge handles */}
@@ -163,6 +178,8 @@ function GroupElement({ groupId, scale = 1, onDragStart, screenToSVG }) {
             strokeWidth={1.5 / scale}
             rx={2 / scale}
             style={{ cursor: 'ns-resize' }}
+            onMouseDown={(e) => handleScaleStart(e, 'n')}
+            onTouchStart={(e) => handleScaleStart(e, 'n')}
           />
           {/* Bottom */}
           <rect
@@ -175,6 +192,8 @@ function GroupElement({ groupId, scale = 1, onDragStart, screenToSVG }) {
             strokeWidth={1.5 / scale}
             rx={2 / scale}
             style={{ cursor: 'ns-resize' }}
+            onMouseDown={(e) => handleScaleStart(e, 's')}
+            onTouchStart={(e) => handleScaleStart(e, 's')}
           />
           {/* Left */}
           <rect
@@ -187,6 +206,8 @@ function GroupElement({ groupId, scale = 1, onDragStart, screenToSVG }) {
             strokeWidth={1.5 / scale}
             rx={2 / scale}
             style={{ cursor: 'ew-resize' }}
+            onMouseDown={(e) => handleScaleStart(e, 'w')}
+            onTouchStart={(e) => handleScaleStart(e, 'w')}
           />
           {/* Right */}
           <rect
@@ -199,6 +220,8 @@ function GroupElement({ groupId, scale = 1, onDragStart, screenToSVG }) {
             strokeWidth={1.5 / scale}
             rx={2 / scale}
             style={{ cursor: 'ew-resize' }}
+            onMouseDown={(e) => handleScaleStart(e, 'e')}
+            onTouchStart={(e) => handleScaleStart(e, 'e')}
           />
 
           {/* Rotation handle */}
