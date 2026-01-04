@@ -29,6 +29,9 @@ function GroupElement({ groupId, scale = 1, onDragStart, onScaleStart, screenToS
   const isSelected = selectedGroupId === groupId;
   const { x, y, width, height } = group.bounds;
 
+  // Debug logging - remove after fixing
+  console.log('GroupElement render:', { groupId, selectedGroupId, isSelected, bounds: group.bounds });
+
   // Handle size based on scale (keep consistent visual size)
   const handleSize = 8 / scale;
   const halfHandle = handleSize / 2;

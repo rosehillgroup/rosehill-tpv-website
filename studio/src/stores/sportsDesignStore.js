@@ -2804,6 +2804,7 @@ export const useSportsDesignStore = create(
 
       // Select a group
       selectGroup: (groupId) => {
+        console.log('selectGroup called:', groupId);
         const { propertiesPanelUserClosed } = get();
         set({
           selectedGroupId: groupId,
