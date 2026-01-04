@@ -191,6 +191,21 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const handleCourtMouseDown = (e, courtId) => {
     e.stopPropagation();
 
+    // Check if Shift is held for multi-selection
+    const isShiftHeld = e.shiftKey;
+
+    if (isShiftHeld) {
+      // Multi-select mode: add/remove from selection
+      addToSelection(courtId);
+      // Don't start drag when multi-selecting
+      return;
+    }
+
+    // Single selection mode
+    // Clear any multi-selection first
+    if (selectedElementIds.length > 0) {
+      clearMultiSelection();
+    }
     selectCourt(courtId);
 
     const court = courts[courtId];
@@ -227,6 +242,21 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const handleTrackMouseDown = (e, trackId) => {
     e.stopPropagation();
 
+    // Check if Shift is held for multi-selection
+    const isShiftHeld = e.shiftKey;
+
+    if (isShiftHeld) {
+      // Multi-select mode: add/remove from selection
+      addToSelection(trackId);
+      // Don't start drag when multi-selecting
+      return;
+    }
+
+    // Single selection mode
+    // Clear any multi-selection first
+    if (selectedElementIds.length > 0) {
+      clearMultiSelection();
+    }
     selectTrack(trackId);
 
     const track = tracks[trackId];
@@ -262,6 +292,21 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const handleMotifMouseDown = (e, motifId) => {
     e.stopPropagation();
 
+    // Check if Shift is held for multi-selection
+    const isShiftHeld = e.shiftKey;
+
+    if (isShiftHeld) {
+      // Multi-select mode: add/remove from selection
+      addToSelection(motifId);
+      // Don't start drag when multi-selecting
+      return;
+    }
+
+    // Single selection mode
+    // Clear any multi-selection first
+    if (selectedElementIds.length > 0) {
+      clearMultiSelection();
+    }
     selectMotif(motifId);
 
     const motif = motifs[motifId];
@@ -2405,6 +2450,64 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                         onRotateStart={(e) => handleTextRotateStart(e, childId)}
                         onContentChange={(content) => updateTextContent(childId, content)}
                         onEditComplete={() => stopEditingText()}
+                      />
+                    );
+                  }
+
+                  // Render court children
+                  if (childId.startsWith('court-')) {
+                    const court = courts[childId];
+                    if (!court) return null;
+                    if (court.visible === false) return null;
+
+                    return (
+                      <CourtElement
+                        key={childId}
+                        court={court}
+                        isSelected={childId === selectedCourtId}
+                        onMouseDown={(e) => handleCourtMouseDown(e, childId)}
+                        onTouchStart={(e) => handleCourtMouseDown(e, childId)}
+                        onDoubleClick={(e) => handleCourtDoubleClick(e, childId)}
+                        svgRef={canvasRef}
+                      />
+                    );
+                  }
+
+                  // Render track children
+                  if (childId.startsWith('track-')) {
+                    const track = tracks[childId];
+                    if (!track) return null;
+                    if (track.visible === false) return null;
+
+                    return (
+                      <TrackElement
+                        key={childId}
+                        track={track}
+                        isSelected={childId === selectedTrackId}
+                        onMouseDown={(e) => handleTrackMouseDown(e, childId)}
+                        onTouchStart={(e) => handleTrackMouseDown(e, childId)}
+                        onDoubleClick={(e) => handleTrackDoubleClick(e, childId)}
+                        svgRef={canvasRef}
+                      />
+                    );
+                  }
+
+                  // Render motif children
+                  if (childId.startsWith('motif-')) {
+                    const motif = motifs[childId];
+                    if (!motif) return null;
+                    if (motif.visible === false) return null;
+
+                    return (
+                      <MotifElement
+                        key={childId}
+                        motif={motif}
+                        isSelected={childId === selectedMotifId}
+                        onMouseDown={(e) => handleMotifMouseDown(e, childId)}
+                        onTouchStart={(e) => handleMotifMouseDown(e, childId)}
+                        onDoubleClick={(e) => handleMotifDoubleClick(e, childId)}
+                        onScaleStart={(e, corner) => handleMotifScaleStart(e, childId, corner)}
+                        onRotateStart={(e) => handleMotifRotateStart(e, childId)}
                       />
                     );
                   }

@@ -1193,6 +1193,24 @@ function TPVDesigner({ loadedDesign }) {
                                 >
                                   ⇕ Vertical
                                 </button>
+                                <div style={{ height: '1px', background: '#e5e7eb', margin: '4px 0' }} />
+                                <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px', textTransform: 'uppercase', fontWeight: 600 }}>Distribute Centres</div>
+                                <button
+                                  style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 8px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '4px', fontSize: '12px' }}
+                                  onClick={() => { distributeElements('center-horizontal'); setShowAlignMenu(false); }}
+                                  onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                                  onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                                >
+                                  ⊕ Centres H
+                                </button>
+                                <button
+                                  style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 8px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '4px', fontSize: '12px' }}
+                                  onClick={() => { distributeElements('center-vertical'); setShowAlignMenu(false); }}
+                                  onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                                  onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                                >
+                                  ⊕ Centres V
+                                </button>
                               </>
                             )}
                           </div>

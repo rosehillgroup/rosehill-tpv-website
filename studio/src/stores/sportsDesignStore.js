@@ -2729,6 +2729,48 @@ export const useSportsDesignStore = create(
               maxY = Math.max(maxY, y + height);
             }
           }
+          // Check courts
+          else if (childId.startsWith('court-')) {
+            const court = state.courts[childId];
+            if (court) {
+              const x = court.position.x;
+              const y = court.position.y;
+              const width = court.template?.dimensions?.width_mm || 0;
+              const height = court.template?.dimensions?.length_mm || 0;
+              minX = Math.min(minX, x);
+              minY = Math.min(minY, y);
+              maxX = Math.max(maxX, x + width);
+              maxY = Math.max(maxY, y + height);
+            }
+          }
+          // Check tracks
+          else if (childId.startsWith('track-')) {
+            const track = state.tracks[childId];
+            if (track) {
+              const x = track.position.x;
+              const y = track.position.y;
+              const width = track.trackParameters?.width_mm || 5000;
+              const height = track.trackParameters?.height_mm || 10000;
+              minX = Math.min(minX, x);
+              minY = Math.min(minY, y);
+              maxX = Math.max(maxX, x + width);
+              maxY = Math.max(maxY, y + height);
+            }
+          }
+          // Check motifs
+          else if (childId.startsWith('motif-')) {
+            const motif = state.motifs[childId];
+            if (motif) {
+              const x = motif.position.x;
+              const y = motif.position.y;
+              const width = (motif.originalWidth_mm || 1000) * (motif.scale || 1);
+              const height = (motif.originalHeight_mm || 1000) * (motif.scale || 1);
+              minX = Math.min(minX, x);
+              minY = Math.min(minY, y);
+              maxX = Math.max(maxX, x + width);
+              maxY = Math.max(maxY, y + height);
+            }
+          }
         }
 
         if (minX === Infinity) return { x: 0, y: 0, width: 0, height: 0 };
@@ -2858,6 +2900,9 @@ export const useSportsDesignStore = create(
         set((state) => {
           const updatedShapes = { ...state.shapes };
           const updatedTexts = { ...state.texts };
+          const updatedCourts = { ...state.courts };
+          const updatedTracks = { ...state.tracks };
+          const updatedMotifs = { ...state.motifs };
 
           for (const childId of group.childIds) {
             // Move shape children
@@ -2880,6 +2925,36 @@ export const useSportsDesignStore = create(
                 }
               };
             }
+            // Move court children
+            else if (childId.startsWith('court-') && updatedCourts[childId]) {
+              updatedCourts[childId] = {
+                ...updatedCourts[childId],
+                position: {
+                  x: updatedCourts[childId].position.x + deltaX,
+                  y: updatedCourts[childId].position.y + deltaY
+                }
+              };
+            }
+            // Move track children
+            else if (childId.startsWith('track-') && updatedTracks[childId]) {
+              updatedTracks[childId] = {
+                ...updatedTracks[childId],
+                position: {
+                  x: updatedTracks[childId].position.x + deltaX,
+                  y: updatedTracks[childId].position.y + deltaY
+                }
+              };
+            }
+            // Move motif children
+            else if (childId.startsWith('motif-') && updatedMotifs[childId]) {
+              updatedMotifs[childId] = {
+                ...updatedMotifs[childId],
+                position: {
+                  x: updatedMotifs[childId].position.x + deltaX,
+                  y: updatedMotifs[childId].position.y + deltaY
+                }
+              };
+            }
           }
 
           // Update group bounds
@@ -2892,6 +2967,9 @@ export const useSportsDesignStore = create(
           return {
             shapes: updatedShapes,
             texts: updatedTexts,
+            courts: updatedCourts,
+            tracks: updatedTracks,
+            motifs: updatedMotifs,
             groups: {
               ...state.groups,
               [groupId]: { ...group, bounds: newBounds }
@@ -2913,6 +2991,9 @@ export const useSportsDesignStore = create(
         set((state) => {
           const updatedShapes = { ...state.shapes };
           const updatedTexts = { ...state.texts };
+          const updatedCourts = { ...state.courts };
+          const updatedTracks = { ...state.tracks };
+          const updatedMotifs = { ...state.motifs };
 
           for (const childId of group.childIds) {
             // Scale shape children
@@ -2954,6 +3035,60 @@ export const useSportsDesignStore = create(
                 };
               }
             }
+            // Scale court children (position only - courts have fixed dimensions)
+            else if (childId.startsWith('court-')) {
+              const court = updatedCourts[childId];
+              if (court) {
+                // Scale position relative to origin (but don't resize the court)
+                const relX = court.position.x - origin.x;
+                const relY = court.position.y - origin.y;
+
+                updatedCourts[childId] = {
+                  ...court,
+                  position: {
+                    x: origin.x + relX * scaleX,
+                    y: origin.y + relY * scaleY
+                  }
+                };
+              }
+            }
+            // Scale track children (position only - tracks have fixed dimensions)
+            else if (childId.startsWith('track-')) {
+              const track = updatedTracks[childId];
+              if (track) {
+                // Scale position relative to origin (but don't resize the track)
+                const relX = track.position.x - origin.x;
+                const relY = track.position.y - origin.y;
+
+                updatedTracks[childId] = {
+                  ...track,
+                  position: {
+                    x: origin.x + relX * scaleX,
+                    y: origin.y + relY * scaleY
+                  }
+                };
+              }
+            }
+            // Scale motif children
+            else if (childId.startsWith('motif-')) {
+              const motif = updatedMotifs[childId];
+              if (motif) {
+                // Scale position relative to origin
+                const relX = motif.position.x - origin.x;
+                const relY = motif.position.y - origin.y;
+                // Use uniform scale for motifs to maintain aspect ratio
+                const uniformScale = Math.min(scaleX, scaleY);
+
+                updatedMotifs[childId] = {
+                  ...motif,
+                  position: {
+                    x: origin.x + relX * scaleX,
+                    y: origin.y + relY * scaleY
+                  },
+                  scale: (motif.scale || 1) * uniformScale
+                };
+              }
+            }
           }
 
           // Recalculate bounds
@@ -2962,6 +3097,9 @@ export const useSportsDesignStore = create(
           return {
             shapes: updatedShapes,
             texts: updatedTexts,
+            courts: updatedCourts,
+            tracks: updatedTracks,
+            motifs: updatedMotifs,
             groups: {
               ...state.groups,
               [groupId]: { ...group, bounds: newBounds }
@@ -3006,32 +3144,80 @@ export const useSportsDesignStore = create(
 
       // Alignment tools - align selected elements
       alignElements: (alignment) => {
-        const { selectedElementIds, shapes, texts } = get();
+        const { selectedElementIds, shapes, texts, courts, tracks, motifs } = get();
         if (selectedElementIds.length < 2) return;
 
         // Get bounds for all selected elements
         const elementBounds = selectedElementIds.map(id => {
-          const shape = shapes[id];
-          if (shape) {
-            return {
-              id,
-              type: 'shape',
-              x: shape.position.x,
-              y: shape.position.y,
-              width: shape.width_mm || 0,
-              height: shape.height_mm || 0
-            };
+          // Shapes
+          if (id.startsWith('shape-')) {
+            const shape = shapes[id];
+            if (shape) {
+              return {
+                id,
+                type: 'shape',
+                x: shape.position.x,
+                y: shape.position.y,
+                width: shape.width_mm || 0,
+                height: shape.height_mm || 0
+              };
+            }
           }
-          const text = texts[id];
-          if (text) {
-            return {
-              id,
-              type: 'text',
-              x: text.position.x,
-              y: text.position.y,
-              width: text.width || 100,
-              height: text.height || 50
-            };
+          // Text
+          if (id.startsWith('text-')) {
+            const text = texts[id];
+            if (text) {
+              return {
+                id,
+                type: 'text',
+                x: text.position.x,
+                y: text.position.y,
+                width: text.width_mm || text.width || 1000,
+                height: text.height_mm || text.height || 500
+              };
+            }
+          }
+          // Courts
+          if (id.startsWith('court-')) {
+            const court = courts[id];
+            if (court) {
+              return {
+                id,
+                type: 'court',
+                x: court.position.x,
+                y: court.position.y,
+                width: court.template?.dimensions?.width_mm || 0,
+                height: court.template?.dimensions?.length_mm || 0
+              };
+            }
+          }
+          // Tracks
+          if (id.startsWith('track-')) {
+            const track = tracks[id];
+            if (track) {
+              return {
+                id,
+                type: 'track',
+                x: track.position.x,
+                y: track.position.y,
+                width: track.trackParameters?.width_mm || 5000,
+                height: track.trackParameters?.height_mm || 10000
+              };
+            }
+          }
+          // Motifs
+          if (id.startsWith('motif-')) {
+            const motif = motifs[id];
+            if (motif) {
+              return {
+                id,
+                type: 'motif',
+                x: motif.position.x,
+                y: motif.position.y,
+                width: (motif.originalWidth_mm || 1000) * (motif.scale || 1),
+                height: (motif.originalHeight_mm || 1000) * (motif.scale || 1)
+              };
+            }
           }
           return null;
         }).filter(Boolean);
@@ -3082,6 +3268,9 @@ export const useSportsDesignStore = create(
         set((state) => {
           const updatedShapes = { ...state.shapes };
           const updatedTexts = { ...state.texts };
+          const updatedCourts = { ...state.courts };
+          const updatedTracks = { ...state.tracks };
+          const updatedMotifs = { ...state.motifs };
 
           for (const [id, update] of Object.entries(updates)) {
             if (update.type === 'shape' && updatedShapes[id]) {
@@ -3094,91 +3283,197 @@ export const useSportsDesignStore = create(
                 ...updatedTexts[id],
                 position: { x: update.x, y: update.y }
               };
+            } else if (update.type === 'court' && updatedCourts[id]) {
+              updatedCourts[id] = {
+                ...updatedCourts[id],
+                position: { x: update.x, y: update.y }
+              };
+            } else if (update.type === 'track' && updatedTracks[id]) {
+              updatedTracks[id] = {
+                ...updatedTracks[id],
+                position: { x: update.x, y: update.y }
+              };
+            } else if (update.type === 'motif' && updatedMotifs[id]) {
+              updatedMotifs[id] = {
+                ...updatedMotifs[id],
+                position: { x: update.x, y: update.y }
+              };
             }
           }
 
-          return { shapes: updatedShapes, texts: updatedTexts };
+          return {
+            shapes: updatedShapes,
+            texts: updatedTexts,
+            courts: updatedCourts,
+            tracks: updatedTracks,
+            motifs: updatedMotifs
+          };
         });
         get().addToHistory();
       },
 
       // Distribute elements evenly
       distributeElements: (direction) => {
-        const { selectedElementIds, shapes, texts } = get();
+        const { selectedElementIds, shapes, texts, courts, tracks, motifs } = get();
         if (selectedElementIds.length < 3) return;
 
         // Get bounds for all selected elements
         const elementBounds = selectedElementIds.map(id => {
-          const shape = shapes[id];
-          if (shape) {
-            return {
-              id,
-              type: 'shape',
-              x: shape.position.x,
-              y: shape.position.y,
-              width: shape.width_mm || 0,
-              height: shape.height_mm || 0
-            };
+          // Shapes
+          if (id.startsWith('shape-')) {
+            const shape = shapes[id];
+            if (shape) {
+              return {
+                id,
+                type: 'shape',
+                x: shape.position.x,
+                y: shape.position.y,
+                width: shape.width_mm || 0,
+                height: shape.height_mm || 0
+              };
+            }
           }
-          const text = texts[id];
-          if (text) {
-            return {
-              id,
-              type: 'text',
-              x: text.position.x,
-              y: text.position.y,
-              width: text.width || 100,
-              height: text.height || 50
-            };
+          // Text
+          if (id.startsWith('text-')) {
+            const text = texts[id];
+            if (text) {
+              return {
+                id,
+                type: 'text',
+                x: text.position.x,
+                y: text.position.y,
+                width: text.width_mm || text.width || 1000,
+                height: text.height_mm || text.height || 500
+              };
+            }
+          }
+          // Courts
+          if (id.startsWith('court-')) {
+            const court = courts[id];
+            if (court) {
+              return {
+                id,
+                type: 'court',
+                x: court.position.x,
+                y: court.position.y,
+                width: court.template?.dimensions?.width_mm || 0,
+                height: court.template?.dimensions?.length_mm || 0
+              };
+            }
+          }
+          // Tracks
+          if (id.startsWith('track-')) {
+            const track = tracks[id];
+            if (track) {
+              return {
+                id,
+                type: 'track',
+                x: track.position.x,
+                y: track.position.y,
+                width: track.trackParameters?.width_mm || 5000,
+                height: track.trackParameters?.height_mm || 10000
+              };
+            }
+          }
+          // Motifs
+          if (id.startsWith('motif-')) {
+            const motif = motifs[id];
+            if (motif) {
+              return {
+                id,
+                type: 'motif',
+                x: motif.position.x,
+                y: motif.position.y,
+                width: (motif.originalWidth_mm || 1000) * (motif.scale || 1),
+                height: (motif.originalHeight_mm || 1000) * (motif.scale || 1)
+              };
+            }
           }
           return null;
         }).filter(Boolean);
 
         if (elementBounds.length < 3) return;
 
-        // Sort by position
+        const updates = {};
+        const isHorizontal = direction === 'horizontal' || direction === 'center-horizontal';
+        const isCenterDistribution = direction === 'center-horizontal' || direction === 'center-vertical';
+
+        // Sort by position (by center for center distribution)
         const sorted = [...elementBounds].sort((a, b) => {
-          if (direction === 'horizontal') {
-            return a.x - b.x;
+          if (isHorizontal) {
+            return isCenterDistribution
+              ? (a.x + a.width / 2) - (b.x + b.width / 2)
+              : a.x - b.x;
           } else {
-            return a.y - b.y;
+            return isCenterDistribution
+              ? (a.y + a.height / 2) - (b.y + b.height / 2)
+              : a.y - b.y;
           }
         });
 
-        // Calculate total space and gaps
         const first = sorted[0];
         const last = sorted[sorted.length - 1];
         const totalElements = sorted.length;
 
-        let totalSpace, totalElementSize;
-        if (direction === 'horizontal') {
-          totalSpace = (last.x + last.width) - first.x;
-          totalElementSize = sorted.reduce((sum, el) => sum + el.width, 0);
-        } else {
-          totalSpace = (last.y + last.height) - first.y;
-          totalElementSize = sorted.reduce((sum, el) => sum + el.height, 0);
-        }
-
-        const gap = (totalSpace - totalElementSize) / (totalElements - 1);
-
-        // Calculate new positions
-        const updates = {};
-        let currentPos = direction === 'horizontal' ? first.x : first.y;
-
-        for (const elem of sorted) {
-          let newX = elem.x;
-          let newY = elem.y;
-
-          if (direction === 'horizontal') {
-            newX = currentPos;
-            currentPos += elem.width + gap;
+        if (isCenterDistribution) {
+          // Distribute centers evenly
+          let firstCenter, lastCenter;
+          if (isHorizontal) {
+            firstCenter = first.x + first.width / 2;
+            lastCenter = last.x + last.width / 2;
           } else {
-            newY = currentPos;
-            currentPos += elem.height + gap;
+            firstCenter = first.y + first.height / 2;
+            lastCenter = last.y + last.height / 2;
           }
 
-          if (newX !== elem.x || newY !== elem.y) {
-            updates[elem.id] = { x: newX, y: newY, type: elem.type };
+          const spacing = (lastCenter - firstCenter) / (totalElements - 1);
+
+          for (let i = 0; i < sorted.length; i++) {
+            const elem = sorted[i];
+            let newX = elem.x;
+            let newY = elem.y;
+
+            if (isHorizontal) {
+              const targetCenterX = firstCenter + i * spacing;
+              newX = targetCenterX - elem.width / 2;
+            } else {
+              const targetCenterY = firstCenter + i * spacing;
+              newY = targetCenterY - elem.height / 2;
+            }
+
+            if (newX !== elem.x || newY !== elem.y) {
+              updates[elem.id] = { x: newX, y: newY, type: elem.type };
+            }
+          }
+        } else {
+          // Original edge-to-edge distribution
+          let totalSpace, totalElementSize;
+          if (isHorizontal) {
+            totalSpace = (last.x + last.width) - first.x;
+            totalElementSize = sorted.reduce((sum, el) => sum + el.width, 0);
+          } else {
+            totalSpace = (last.y + last.height) - first.y;
+            totalElementSize = sorted.reduce((sum, el) => sum + el.height, 0);
+          }
+
+          const gap = (totalSpace - totalElementSize) / (totalElements - 1);
+          let currentPos = isHorizontal ? first.x : first.y;
+
+          for (const elem of sorted) {
+            let newX = elem.x;
+            let newY = elem.y;
+
+            if (isHorizontal) {
+              newX = currentPos;
+              currentPos += elem.width + gap;
+            } else {
+              newY = currentPos;
+              currentPos += elem.height + gap;
+            }
+
+            if (newX !== elem.x || newY !== elem.y) {
+              updates[elem.id] = { x: newX, y: newY, type: elem.type };
+            }
           }
         }
 
@@ -3186,6 +3481,9 @@ export const useSportsDesignStore = create(
         set((state) => {
           const updatedShapes = { ...state.shapes };
           const updatedTexts = { ...state.texts };
+          const updatedCourts = { ...state.courts };
+          const updatedTracks = { ...state.tracks };
+          const updatedMotifs = { ...state.motifs };
 
           for (const [id, update] of Object.entries(updates)) {
             if (update.type === 'shape' && updatedShapes[id]) {
@@ -3198,10 +3496,31 @@ export const useSportsDesignStore = create(
                 ...updatedTexts[id],
                 position: { x: update.x, y: update.y }
               };
+            } else if (update.type === 'court' && updatedCourts[id]) {
+              updatedCourts[id] = {
+                ...updatedCourts[id],
+                position: { x: update.x, y: update.y }
+              };
+            } else if (update.type === 'track' && updatedTracks[id]) {
+              updatedTracks[id] = {
+                ...updatedTracks[id],
+                position: { x: update.x, y: update.y }
+              };
+            } else if (update.type === 'motif' && updatedMotifs[id]) {
+              updatedMotifs[id] = {
+                ...updatedMotifs[id],
+                position: { x: update.x, y: update.y }
+              };
             }
           }
 
-          return { shapes: updatedShapes, texts: updatedTexts };
+          return {
+            shapes: updatedShapes,
+            texts: updatedTexts,
+            courts: updatedCourts,
+            tracks: updatedTracks,
+            motifs: updatedMotifs
+          };
         });
         get().addToHistory();
       },
