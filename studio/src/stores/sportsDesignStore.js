@@ -3065,7 +3065,8 @@ export const useSportsDesignStore = create(
                 const relX = origPos.x - origin.x;
                 const relY = origPos.y - origin.y;
                 // Use uniform scale for courts to maintain aspect ratio
-                const uniformScale = Math.min(scaleX, scaleY);
+                // For edge handles (one axis = 1), use the other axis scale
+                const uniformScale = scaleX === 1 ? scaleY : scaleY === 1 ? scaleX : Math.min(scaleX, scaleY);
 
                 updatedCourts[childId] = {
                   ...court,
@@ -3086,7 +3087,8 @@ export const useSportsDesignStore = create(
                 const relX = origPos.x - origin.x;
                 const relY = origPos.y - origin.y;
                 // Use uniform scale for tracks to maintain aspect ratio
-                const uniformScale = Math.min(scaleX, scaleY);
+                // For edge handles (one axis = 1), use the other axis scale
+                const uniformScale = scaleX === 1 ? scaleY : scaleY === 1 ? scaleX : Math.min(scaleX, scaleY);
 
                 updatedTracks[childId] = {
                   ...track,
@@ -3107,7 +3109,8 @@ export const useSportsDesignStore = create(
 
                 const relX = origPos.x - origin.x;
                 const relY = origPos.y - origin.y;
-                const uniformScale = Math.min(scaleX, scaleY);
+                // For edge handles (one axis = 1), use the other axis scale
+                const uniformScale = scaleX === 1 ? scaleY : scaleY === 1 ? scaleX : Math.min(scaleX, scaleY);
 
                 updatedMotifs[childId] = {
                   ...motif,
@@ -3122,6 +3125,161 @@ export const useSportsDesignStore = create(
           }
 
           // Recalculate bounds
+          const newBounds = get().calculateGroupBounds(group.childIds);
+
+          return {
+            shapes: updatedShapes,
+            texts: updatedTexts,
+            courts: updatedCourts,
+            tracks: updatedTracks,
+            motifs: updatedMotifs,
+            groups: {
+              ...state.groups,
+              [groupId]: { ...group, bounds: newBounds }
+            }
+          };
+        });
+      },
+
+      // Rotate all children in a group around the group center
+      updateGroupRotation: (groupId, rotationDelta, center, originalChildren = null) => {
+        const group = get().groups[groupId];
+        if (!group) return;
+
+        // Helper to rotate a point around a center
+        const rotatePoint = (px, py, cx, cy, angleDeg) => {
+          const rad = (angleDeg * Math.PI) / 180;
+          const cos = Math.cos(rad);
+          const sin = Math.sin(rad);
+          const dx = px - cx;
+          const dy = py - cy;
+          return {
+            x: cx + dx * cos - dy * sin,
+            y: cy + dx * sin + dy * cos
+          };
+        };
+
+        set((state) => {
+          const updatedShapes = { ...state.shapes };
+          const updatedTexts = { ...state.texts };
+          const updatedCourts = { ...state.courts };
+          const updatedTracks = { ...state.tracks };
+          const updatedMotifs = { ...state.motifs };
+
+          for (const childId of group.childIds) {
+            const original = originalChildren?.[childId];
+
+            // Rotate shape children
+            if (childId.startsWith('shape-')) {
+              const shape = updatedShapes[childId];
+              if (shape) {
+                const origPos = original?.position || shape.position;
+                const origRotation = original?.rotation || shape.rotation || 0;
+                // Get element center (position is top-left)
+                const elemCenterX = origPos.x + (shape.width_mm || 0) / 2;
+                const elemCenterY = origPos.y + (shape.height_mm || 0) / 2;
+                // Rotate element center around group center
+                const newCenter = rotatePoint(elemCenterX, elemCenterY, center.x, center.y, rotationDelta);
+                // Convert back to top-left position
+                updatedShapes[childId] = {
+                  ...shape,
+                  position: {
+                    x: newCenter.x - (shape.width_mm || 0) / 2,
+                    y: newCenter.y - (shape.height_mm || 0) / 2
+                  },
+                  rotation: (origRotation + rotationDelta) % 360
+                };
+              }
+            }
+            // Rotate text children
+            else if (childId.startsWith('text-')) {
+              const text = updatedTexts[childId];
+              if (text) {
+                const origPos = original?.position || text.position;
+                const origRotation = original?.rotation || text.rotation || 0;
+                const elemCenterX = origPos.x + (text.width_mm || 0) / 2;
+                const elemCenterY = origPos.y + (text.height_mm || 0) / 2;
+                const newCenter = rotatePoint(elemCenterX, elemCenterY, center.x, center.y, rotationDelta);
+                updatedTexts[childId] = {
+                  ...text,
+                  position: {
+                    x: newCenter.x - (text.width_mm || 0) / 2,
+                    y: newCenter.y - (text.height_mm || 0) / 2
+                  },
+                  rotation: (origRotation + rotationDelta) % 360
+                };
+              }
+            }
+            // Rotate court children
+            else if (childId.startsWith('court-')) {
+              const court = updatedCourts[childId];
+              if (court) {
+                const origPos = original?.position || court.position;
+                const origRotation = original?.rotation || court.rotation || 0;
+                const scale = court.scale || 1;
+                const w = (court.template?.dimensions?.width_mm || 0) * scale;
+                const h = (court.template?.dimensions?.length_mm || 0) * scale;
+                const elemCenterX = origPos.x + w / 2;
+                const elemCenterY = origPos.y + h / 2;
+                const newCenter = rotatePoint(elemCenterX, elemCenterY, center.x, center.y, rotationDelta);
+                updatedCourts[childId] = {
+                  ...court,
+                  position: {
+                    x: newCenter.x - w / 2,
+                    y: newCenter.y - h / 2
+                  },
+                  rotation: (origRotation + rotationDelta) % 360
+                };
+              }
+            }
+            // Rotate track children
+            else if (childId.startsWith('track-')) {
+              const track = updatedTracks[childId];
+              if (track) {
+                const origPos = original?.position || track.position;
+                const origRotation = original?.rotation || track.rotation || 0;
+                // Tracks may have different dimension sources
+                const scale = track.scale || 1;
+                const w = (track.trackParameters?.width_mm || 5000) * scale;
+                const h = (track.trackParameters?.height_mm || 10000) * scale;
+                const elemCenterX = origPos.x + w / 2;
+                const elemCenterY = origPos.y + h / 2;
+                const newCenter = rotatePoint(elemCenterX, elemCenterY, center.x, center.y, rotationDelta);
+                updatedTracks[childId] = {
+                  ...track,
+                  position: {
+                    x: newCenter.x - w / 2,
+                    y: newCenter.y - h / 2
+                  },
+                  rotation: (origRotation + rotationDelta) % 360
+                };
+              }
+            }
+            // Rotate motif children
+            else if (childId.startsWith('motif-')) {
+              const motif = updatedMotifs[childId];
+              if (motif) {
+                const origPos = original?.position || motif.position;
+                const origRotation = original?.rotation || motif.rotation || 0;
+                const scale = motif.scale || 1;
+                const w = (motif.originalWidth_mm || 0) * scale;
+                const h = (motif.originalHeight_mm || 0) * scale;
+                const elemCenterX = origPos.x + w / 2;
+                const elemCenterY = origPos.y + h / 2;
+                const newCenter = rotatePoint(elemCenterX, elemCenterY, center.x, center.y, rotationDelta);
+                updatedMotifs[childId] = {
+                  ...motif,
+                  position: {
+                    x: newCenter.x - w / 2,
+                    y: newCenter.y - h / 2
+                  },
+                  rotation: (origRotation + rotationDelta) % 360
+                };
+              }
+            }
+          }
+
+          // Recalculate bounds after rotation
           const newBounds = get().calculateGroupBounds(group.childIds);
 
           return {

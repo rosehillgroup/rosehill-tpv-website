@@ -94,6 +94,11 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const [scaleGroupId, setScaleGroupId] = useState(null);
   const [scaleGroupStart, setScaleGroupStart] = useState(null);
 
+  // Group rotation state
+  const [isRotatingGroup, setIsRotatingGroup] = useState(false);
+  const [rotateGroupId, setRotateGroupId] = useState(null);
+  const [rotateGroupStart, setRotateGroupStart] = useState(null);
+
   // Path drawing state (for preview line)
   const [drawingMousePos, setDrawingMousePos] = useState(null);
   // For double-click detection (manual timing since preventDefault breaks native)
@@ -174,6 +179,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     clearMultiSelection,
     updateGroupPosition,
     updateGroupScale,
+    updateGroupRotation,
     commitGroupMove
   } = useSportsDesignStore();
 
@@ -964,6 +970,69 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     });
     setScaleGroupId(groupId);
     setIsScalingGroup(true);
+  };
+
+  // Handle rotation start on group rotation handle
+  const handleGroupRotateStart = (e, groupId) => {
+    e.stopPropagation();
+
+    const group = groups[groupId];
+    if (!group || group.locked) return;
+
+    // Handle both mouse and touch events
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const svgPoint = screenToSVG(clientX, clientY);
+    const { x, y, width, height } = group.bounds;
+
+    // Group center is the pivot point for rotation
+    const center = {
+      x: x + width / 2,
+      y: y + height / 2
+    };
+
+    // Calculate initial angle from center to mouse position
+    const initialAngle = Math.atan2(svgPoint.y - center.y, svgPoint.x - center.x) * (180 / Math.PI);
+
+    // Store original positions and rotations of all child elements
+    const originalChildren = {};
+    for (const childId of group.childIds) {
+      if (childId.startsWith('shape-') && shapes[childId]) {
+        originalChildren[childId] = {
+          position: { ...shapes[childId].position },
+          rotation: shapes[childId].rotation || 0
+        };
+      } else if (childId.startsWith('text-') && texts[childId]) {
+        originalChildren[childId] = {
+          position: { ...texts[childId].position },
+          rotation: texts[childId].rotation || 0
+        };
+      } else if (childId.startsWith('court-') && courts[childId]) {
+        originalChildren[childId] = {
+          position: { ...courts[childId].position },
+          rotation: courts[childId].rotation || 0
+        };
+      } else if (childId.startsWith('track-') && tracks[childId]) {
+        originalChildren[childId] = {
+          position: { ...tracks[childId].position },
+          rotation: tracks[childId].rotation || 0
+        };
+      } else if (childId.startsWith('motif-') && motifs[childId]) {
+        originalChildren[childId] = {
+          position: { ...motifs[childId].position },
+          rotation: motifs[childId].rotation || 0
+        };
+      }
+    }
+
+    setRotateGroupStart({
+      initialAngle,
+      center,
+      originalBounds: { ...group.bounds },
+      originalChildren
+    });
+    setRotateGroupId(groupId);
+    setIsRotatingGroup(true);
   };
 
   // Reset drag state when surface dimensions change
@@ -1811,6 +1880,58 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     };
   }, [isScalingGroup, scaleGroupId, scaleGroupStart, groups, updateGroupScale]);
 
+  // Handle mouse/touch move for group rotation
+  useEffect(() => {
+    if (!isRotatingGroup || !rotateGroupId || !rotateGroupStart) return;
+
+    const handleMove = (e) => {
+      e.preventDefault();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const svgPoint = screenToSVG(clientX, clientY);
+
+      const { initialAngle, center, originalChildren } = rotateGroupStart;
+
+      // Calculate current angle from center to mouse position
+      const currentAngle = Math.atan2(svgPoint.y - center.y, svgPoint.x - center.x) * (180 / Math.PI);
+
+      // Calculate rotation delta (how much we've rotated from start)
+      let rotationDelta = currentAngle - initialAngle;
+
+      // Snap to 15-degree increments if Shift is held
+      if (e.shiftKey) {
+        rotationDelta = Math.round(rotationDelta / 15) * 15;
+      }
+
+      // Apply rotation to all children
+      updateGroupRotation(rotateGroupId, rotationDelta, center, originalChildren);
+    };
+
+    const handleEnd = () => {
+      const { addToHistory, refreshGroupBounds } = useSportsDesignStore.getState();
+      refreshGroupBounds(rotateGroupId);
+      addToHistory();
+
+      setIsRotatingGroup(false);
+      setRotateGroupId(null);
+      setRotateGroupStart(null);
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+    window.addEventListener('touchcancel', handleEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleMove);
+      window.removeEventListener('touchend', handleEnd);
+      window.removeEventListener('touchcancel', handleEnd);
+    };
+  }, [isRotatingGroup, rotateGroupId, rotateGroupStart, groups, updateGroupRotation]);
+
   // Handle click on canvas background (deselect or add path point)
   const handleCanvasClick = (e) => {
     // In path drawing mode, add points to the active path
@@ -2575,6 +2696,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
               setIsDragging(true);
             }}
             onScaleStart={(e, gId, corner) => handleGroupScaleStart(e, gId, corner)}
+            onRotateStart={(e, gId) => handleGroupRotateStart(e, gId)}
           />
         ))}
 
