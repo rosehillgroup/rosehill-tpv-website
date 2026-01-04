@@ -2751,8 +2751,8 @@ export const useSportsDesignStore = create(
               const x = track.position.x;
               const y = track.position.y;
               const scale = track.scale || 1;
-              const width = (track.trackParameters?.width_mm || 5000) * scale;
-              const height = (track.trackParameters?.height_mm || 10000) * scale;
+              const width = (track.parameters?.width_mm || 5000) * scale;
+              const height = (track.parameters?.height_mm || 10000) * scale;
               minX = Math.min(minX, x);
               minY = Math.min(minY, y);
               maxX = Math.max(maxX, x + width);
@@ -3240,8 +3240,8 @@ export const useSportsDesignStore = create(
                 const origRotation = original?.rotation || track.rotation || 0;
                 // Tracks may have different dimension sources
                 const scale = track.scale || 1;
-                const w = (track.trackParameters?.width_mm || 5000) * scale;
-                const h = (track.trackParameters?.height_mm || 10000) * scale;
+                const w = (track.parameters?.width_mm || 5000) * scale;
+                const h = (track.parameters?.height_mm || 10000) * scale;
                 const elemCenterX = origPos.x + w / 2;
                 const elemCenterY = origPos.y + h / 2;
                 const newCenter = rotatePoint(elemCenterX, elemCenterY, center.x, center.y, rotationDelta);
@@ -3279,19 +3279,14 @@ export const useSportsDesignStore = create(
             }
           }
 
-          // Recalculate bounds after rotation
-          const newBounds = get().calculateGroupBounds(group.childIds);
-
+          // Don't recalculate bounds during rotation - this causes the box to "scale"
+          // Bounds will be recalculated when rotation ends (in refreshGroupBounds)
           return {
             shapes: updatedShapes,
             texts: updatedTexts,
             courts: updatedCourts,
             tracks: updatedTracks,
-            motifs: updatedMotifs,
-            groups: {
-              ...state.groups,
-              [groupId]: { ...group, bounds: newBounds }
-            }
+            motifs: updatedMotifs
           };
         });
       },
@@ -3390,8 +3385,8 @@ export const useSportsDesignStore = create(
                 type: 'track',
                 x: track.position.x,
                 y: track.position.y,
-                width: (track.trackParameters?.width_mm || 5000) * scale,
-                height: (track.trackParameters?.height_mm || 10000) * scale
+                width: (track.parameters?.width_mm || 5000) * scale,
+                height: (track.parameters?.height_mm || 10000) * scale
               };
             }
           }
@@ -3562,8 +3557,8 @@ export const useSportsDesignStore = create(
                 type: 'track',
                 x: track.position.x,
                 y: track.position.y,
-                width: (track.trackParameters?.width_mm || 5000) * scale,
-                height: (track.trackParameters?.height_mm || 10000) * scale
+                width: (track.parameters?.width_mm || 5000) * scale,
+                height: (track.parameters?.height_mm || 10000) * scale
               };
             }
           }
