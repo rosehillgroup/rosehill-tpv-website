@@ -401,7 +401,6 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     // If shape is in a group and we're NOT editing that group, select the group instead
     if (parentGroupId && editingGroupId !== parentGroupId) {
       // Select the group, not the individual shape
-      console.log('handleShapeMouseDown: selecting group', parentGroupId);
       selectGroup(parentGroupId);
 
       const group = groups[parentGroupId];

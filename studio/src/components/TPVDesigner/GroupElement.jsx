@@ -29,12 +29,19 @@ function GroupElement({ groupId, scale = 1, onDragStart, onScaleStart, screenToS
   const isSelected = selectedGroupId === groupId;
   const { x, y, width, height } = group.bounds;
 
-  // Debug logging - remove after fixing
-  console.log(`GroupElement render: groupId=${groupId}, selectedGroupId=${selectedGroupId}, isSelected=${isSelected}`);
-
-  // Handle size based on scale (keep consistent visual size)
-  const handleSize = 8 / scale;
+  // Handle size based on group bounds (similar to other elements)
+  // All sizes in mm to match canvas coordinate system
+  const baseHandleSize = Math.min(width, height) * 0.06;
+  const minHandleSize = 200; // 200mm minimum
+  const maxHandleSize = 500; // 500mm maximum
+  const handleSize = Math.max(minHandleSize, Math.min(maxHandleSize, baseHandleSize));
   const halfHandle = handleSize / 2;
+
+  // Stroke and other UI element sizes (in mm)
+  const strokeWidth = handleSize * 0.15;
+  const cornerRadius = handleSize * 0.2;
+  const fontSize = handleSize * 0.8;
+  const rotationLineLength = handleSize * 1.5;
 
   // Event handlers
   const handleMouseDown = (e) => {
@@ -81,10 +88,10 @@ function GroupElement({ groupId, scale = 1, onDragStart, onScaleStart, screenToS
         height={height}
         fill="transparent"
         stroke={isSelected ? '#9333ea' : '#a855f7'}
-        strokeWidth={isSelected ? 2 / scale : 1 / scale}
-        strokeDasharray={isSelected ? 'none' : `${4 / scale} ${4 / scale}`}
-        rx={4 / scale}
-        ry={4 / scale}
+        strokeWidth={isSelected ? strokeWidth : strokeWidth * 0.5}
+        strokeDasharray={isSelected ? 'none' : `${strokeWidth * 3} ${strokeWidth * 3}`}
+        rx={cornerRadius}
+        ry={cornerRadius}
         style={{ cursor: 'move' }}
         onMouseDown={handleMouseDown}
         onTouchStart={handleMouseDown}
@@ -94,9 +101,9 @@ function GroupElement({ groupId, scale = 1, onDragStart, onScaleStart, screenToS
       {/* Group label */}
       {!isSelected && (
         <text
-          x={x + 4 / scale}
-          y={y - 4 / scale}
-          fontSize={10 / scale}
+          x={x + strokeWidth}
+          y={y - strokeWidth}
+          fontSize={fontSize}
           fill="#9333ea"
           fontFamily="system-ui, -apple-system, sans-serif"
           fontWeight="500"
@@ -120,8 +127,8 @@ function GroupElement({ groupId, scale = 1, onDragStart, onScaleStart, screenToS
             height={handleSize}
             fill="white"
             stroke="#9333ea"
-            strokeWidth={1.5 / scale}
-            rx={2 / scale}
+            strokeWidth={strokeWidth}
+            rx={cornerRadius}
             style={{ cursor: 'nwse-resize' }}
             onMouseDown={(e) => handleScaleStart(e, 'nw')}
             onTouchStart={(e) => handleScaleStart(e, 'nw')}
@@ -134,8 +141,8 @@ function GroupElement({ groupId, scale = 1, onDragStart, onScaleStart, screenToS
             height={handleSize}
             fill="white"
             stroke="#9333ea"
-            strokeWidth={1.5 / scale}
-            rx={2 / scale}
+            strokeWidth={strokeWidth}
+            rx={cornerRadius}
             style={{ cursor: 'nesw-resize' }}
             onMouseDown={(e) => handleScaleStart(e, 'ne')}
             onTouchStart={(e) => handleScaleStart(e, 'ne')}
@@ -148,8 +155,8 @@ function GroupElement({ groupId, scale = 1, onDragStart, onScaleStart, screenToS
             height={handleSize}
             fill="white"
             stroke="#9333ea"
-            strokeWidth={1.5 / scale}
-            rx={2 / scale}
+            strokeWidth={strokeWidth}
+            rx={cornerRadius}
             style={{ cursor: 'nesw-resize' }}
             onMouseDown={(e) => handleScaleStart(e, 'sw')}
             onTouchStart={(e) => handleScaleStart(e, 'sw')}
@@ -162,8 +169,8 @@ function GroupElement({ groupId, scale = 1, onDragStart, onScaleStart, screenToS
             height={handleSize}
             fill="white"
             stroke="#9333ea"
-            strokeWidth={1.5 / scale}
-            rx={2 / scale}
+            strokeWidth={strokeWidth}
+            rx={cornerRadius}
             style={{ cursor: 'nwse-resize' }}
             onMouseDown={(e) => handleScaleStart(e, 'se')}
             onTouchStart={(e) => handleScaleStart(e, 'se')}
@@ -178,8 +185,8 @@ function GroupElement({ groupId, scale = 1, onDragStart, onScaleStart, screenToS
             height={handleSize}
             fill="white"
             stroke="#9333ea"
-            strokeWidth={1.5 / scale}
-            rx={2 / scale}
+            strokeWidth={strokeWidth}
+            rx={cornerRadius}
             style={{ cursor: 'ns-resize' }}
             onMouseDown={(e) => handleScaleStart(e, 'n')}
             onTouchStart={(e) => handleScaleStart(e, 'n')}
@@ -192,8 +199,8 @@ function GroupElement({ groupId, scale = 1, onDragStart, onScaleStart, screenToS
             height={handleSize}
             fill="white"
             stroke="#9333ea"
-            strokeWidth={1.5 / scale}
-            rx={2 / scale}
+            strokeWidth={strokeWidth}
+            rx={cornerRadius}
             style={{ cursor: 'ns-resize' }}
             onMouseDown={(e) => handleScaleStart(e, 's')}
             onTouchStart={(e) => handleScaleStart(e, 's')}
@@ -206,8 +213,8 @@ function GroupElement({ groupId, scale = 1, onDragStart, onScaleStart, screenToS
             height={handleSize}
             fill="white"
             stroke="#9333ea"
-            strokeWidth={1.5 / scale}
-            rx={2 / scale}
+            strokeWidth={strokeWidth}
+            rx={cornerRadius}
             style={{ cursor: 'ew-resize' }}
             onMouseDown={(e) => handleScaleStart(e, 'w')}
             onTouchStart={(e) => handleScaleStart(e, 'w')}
@@ -220,8 +227,8 @@ function GroupElement({ groupId, scale = 1, onDragStart, onScaleStart, screenToS
             height={handleSize}
             fill="white"
             stroke="#9333ea"
-            strokeWidth={1.5 / scale}
-            rx={2 / scale}
+            strokeWidth={strokeWidth}
+            rx={cornerRadius}
             style={{ cursor: 'ew-resize' }}
             onMouseDown={(e) => handleScaleStart(e, 'e')}
             onTouchStart={(e) => handleScaleStart(e, 'e')}
@@ -232,25 +239,25 @@ function GroupElement({ groupId, scale = 1, onDragStart, onScaleStart, screenToS
             x1={x + width / 2}
             y1={y}
             x2={x + width / 2}
-            y2={y - 20 / scale}
+            y2={y - rotationLineLength}
             stroke="#9333ea"
-            strokeWidth={1.5 / scale}
+            strokeWidth={strokeWidth}
           />
           <circle
             cx={x + width / 2}
-            cy={y - 24 / scale}
-            r={handleSize / 2}
+            cy={y - rotationLineLength - halfHandle}
+            r={halfHandle}
             fill="white"
             stroke="#9333ea"
-            strokeWidth={1.5 / scale}
+            strokeWidth={strokeWidth}
             style={{ cursor: 'grab' }}
           />
 
           {/* Selected label */}
           <text
             x={x + width / 2}
-            y={y - 32 / scale}
-            fontSize={10 / scale}
+            y={y - rotationLineLength - handleSize - fontSize * 0.5}
+            fontSize={fontSize}
             fill="#9333ea"
             fontFamily="system-ui, -apple-system, sans-serif"
             fontWeight="600"
@@ -263,17 +270,17 @@ function GroupElement({ groupId, scale = 1, onDragStart, onScaleStart, screenToS
           </text>
 
           {/* Child count badge */}
-          <g transform={`translate(${x + width - 8 / scale}, ${y - 8 / scale})`}>
+          <g transform={`translate(${x + width + halfHandle}, ${y - halfHandle})`}>
             <circle
               cx={0}
               cy={0}
-              r={8 / scale}
+              r={halfHandle}
               fill="#9333ea"
             />
             <text
               x={0}
               y={0}
-              fontSize={8 / scale}
+              fontSize={fontSize * 0.7}
               fill="white"
               fontFamily="system-ui, -apple-system, sans-serif"
               fontWeight="600"
