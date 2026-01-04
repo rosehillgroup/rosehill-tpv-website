@@ -534,16 +534,15 @@ function LayersPanel() {
               const isExpanded = expandedGroups.has(groupId);
               const isGroupSelected = selectedGroupId === groupId;
               const isEditing = editingGroupId === groupId;
-              const groupName = group.customName ||
-                (group.compoundType ? `${group.compoundType.charAt(0).toUpperCase() + group.compoundType.slice(1)} Group` : 'Group');
+              const groupName = group.customName || 'Group';
 
               return (
                 <div key={groupId} className="layer-group">
                   {/* Group header */}
                   <div
-                    className={`layer-item layer-item--group ${isGroupSelected ? 'layer-item--selected' : ''} ${isEditing ? 'layer-item--editing' : ''}`}
-                    onClick={() => selectGroup(groupId)}
-                    onDoubleClick={() => enterGroup(groupId)}
+                    className={`layer-item layer-item--group ${isGroupSelected ? 'layer-item--selected' : ''} ${isEditing ? 'layer-item--editing' : ''} ${group.locked ? 'layer-item--locked' : ''}`}
+                    onClick={() => !group.locked && selectGroup(groupId)}
+                    onDoubleClick={() => !group.locked && enterGroup(groupId)}
                   >
                     {/* Expand/Collapse toggle */}
                     <button
@@ -565,12 +564,9 @@ function LayersPanel() {
                       {isExpanded ? '▼' : '▶'}
                     </button>
 
-                    {/* Group icon */}
+                    {/* Group icon (shows lock if locked) */}
                     <span className="layer-item__handle layer-item__handle--group">
-                      {group.compoundType === 'splash' ? '💦' :
-                       group.compoundType === 'cloud' ? '☁️' :
-                       group.compoundType === 'flower' ? '🌸' :
-                       group.compoundType === 'abstract' ? '🎨' : '✦'}
+                      {group.locked ? '🔒' : '📁'}
                     </span>
 
                     {/* Group name */}
@@ -609,6 +605,14 @@ function LayersPanel() {
                             setMenuOpenId(null);
                           }}>
                             📤 Ungroup
+                          </button>
+                          <div className="layer-item__menu-divider" />
+                          <button onClick={(e) => {
+                            e.stopPropagation();
+                            toggleElementLock(groupId);
+                            setMenuOpenId(null);
+                          }}>
+                            {group.locked ? '🔓 Unlock' : '🔒 Lock'}
                           </button>
                           <div className="layer-item__menu-divider" />
                           <button
@@ -744,7 +748,7 @@ function LayersPanel() {
 
       <div className="layers-panel__footer">
         <span className="layers-panel__shortcut-hint">
-          Tip: Use [ and ] keys to reorder selected element
+          [ ] to reorder • ⌘G to group • ⌘⇧G to ungroup
         </span>
       </div>
     </div>

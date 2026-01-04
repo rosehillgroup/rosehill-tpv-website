@@ -3,13 +3,11 @@
 
 import React, { useState } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
-import { COMPOUND_BLOB_STYLES } from '../../lib/sports/compoundBlobGenerators.js';
 import './ShapeToolbar.css';
 
 function ShapeToolbar() {
-  const { addShape, addText, addExclusionZone, addCompoundBlob, standaloneMode, startPathDrawing } = useSportsDesignStore();
+  const { addShape, addText, addExclusionZone, standaloneMode, startPathDrawing } = useSportsDesignStore();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [showCompoundPicker, setShowCompoundPicker] = useState(false);
 
   // Don't show in standalone mode
   if (standaloneMode) return null;
@@ -21,14 +19,6 @@ function ShapeToolbar() {
     { preset: 'path', icon: '✏️', label: 'Pen' }          // Pen tool for custom paths
   ];
 
-  // Compound blob styles for the picker
-  const compoundPresets = Object.entries(COMPOUND_BLOB_STYLES).map(([key, style]) => ({
-    type: key,
-    icon: style.icon,
-    name: style.name,
-    description: style.description
-  }));
-
   const handleAddShape = (preset) => {
     if (preset === 'path') {
       // Pen tool enters drawing mode
@@ -38,12 +28,6 @@ function ShapeToolbar() {
       addShape(preset);
       // Keep toolbar open for easy multi-shape addition
     }
-  };
-
-  const handleAddCompound = (compoundType) => {
-    addCompoundBlob(compoundType);
-    setShowCompoundPicker(false);
-    // Keep toolbar open
   };
 
   const handleAddText = () => {
@@ -101,35 +85,6 @@ function ShapeToolbar() {
               <span className="shape-toolbar__name">{shape.label}</span>
             </button>
           ))}
-
-          {/* Compound Blob Button */}
-          <div className="shape-toolbar__compound-wrapper">
-            <button
-              className={`shape-toolbar__btn shape-toolbar__btn--compound ${showCompoundPicker ? 'active' : ''}`}
-              onClick={() => setShowCompoundPicker(!showCompoundPicker)}
-              title="Add Compound Shape (multi-element blobs)"
-            >
-              <span className="shape-toolbar__icon">✦</span>
-              <span className="shape-toolbar__name">Compound</span>
-            </button>
-
-            {/* Compound Picker Dropdown */}
-            {showCompoundPicker && (
-              <div className="shape-toolbar__compound-picker">
-                {compoundPresets.map((compound) => (
-                  <button
-                    key={compound.type}
-                    className="shape-toolbar__compound-option"
-                    onClick={() => handleAddCompound(compound.type)}
-                    title={compound.description}
-                  >
-                    <span className="shape-toolbar__compound-icon">{compound.icon}</span>
-                    <span className="shape-toolbar__compound-name">{compound.name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
 
           {/* Divider */}
           <div className="shape-toolbar__divider" />

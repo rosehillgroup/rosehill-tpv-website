@@ -39,6 +39,7 @@ function TPVDesigner({ loadedDesign }) {
   const [showCourtModal, setShowCourtModal] = useState(false);
   const [designId, setDesignId] = useState(null);
   const [designName, setDesignName] = useState('');
+  const [showAlignMenu, setShowAlignMenu] = useState(false);
   const svgRef = useRef(null);
 
   // Load design when loadedDesign prop changes
@@ -105,6 +106,8 @@ function TPVDesigner({ loadedDesign }) {
     selectedMotifId,
     selectedShapeId,
     selectedTextId,
+    selectedGroupId,
+    selectedElementIds,
     showCourtLibrary,
     showPropertiesPanel,
     toggleCourtLibrary,
@@ -113,10 +116,15 @@ function TPVDesigner({ loadedDesign }) {
     setSurfaceColor,
     setSurfaceBoundaryPreset,
     resetSurfaceBoundary,
+    updateBoundaryParams,
     resetDesign,
     hasUnsavedChanges,
     standaloneMode,
     toggleStandaloneMode,
+    groupSelected,
+    ungroup,
+    alignElements,
+    distributeElements,
     // Mobile UI state
     mobileLibraryOpen,
     mobilePropertiesOpen,
@@ -246,6 +254,14 @@ function TPVDesigner({ loadedDesign }) {
       alert('Failed to load design: ' + error.message);
     }
   };
+
+  // Close alignment menu when clicking outside
+  useEffect(() => {
+    if (!showAlignMenu) return;
+    const handleClickOutside = () => setShowAlignMenu(false);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showAlignMenu]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -519,7 +535,7 @@ function TPVDesigner({ loadedDesign }) {
                 <div className="sports-designer__boundary-options">
                   <select
                     id="boundary-shape"
-                    value={surface.boundary?.type === 'polygon' ? (surface.boundary.preset || 'custom') : 'rectangle'}
+                    value={surface.boundary?.type || 'rectangle'}
                     onChange={(e) => {
                       const value = e.target.value;
                       if (value === 'rectangle') {
@@ -535,7 +551,7 @@ function TPVDesigner({ loadedDesign }) {
                     <option value="u-shape">U-Shape</option>
                     <option value="t-shape">T-Shape</option>
                   </select>
-                  {surface.boundary?.type === 'polygon' && (
+                  {surface.boundary?.type && surface.boundary.type !== 'rectangle' && (
                     <button
                       type="button"
                       className="sports-designer__btn-secondary"
@@ -546,6 +562,105 @@ function TPVDesigner({ loadedDesign }) {
                     </button>
                   )}
                 </div>
+
+                {/* L-Shape dimension controls */}
+                {surface.boundary?.type === 'l-shape' && (
+                  <div className="sports-designer__boundary-params">
+                    <div className="sports-designer__param-row">
+                      <label>Cut Width: {Math.round((surface.boundary.params?.cutWidth || 0.6) * 100)}%</label>
+                      <input
+                        type="range"
+                        min="20"
+                        max="80"
+                        value={(surface.boundary.params?.cutWidth || 0.6) * 100}
+                        onChange={(e) => updateBoundaryParams({ cutWidth: parseInt(e.target.value) / 100 })}
+                      />
+                    </div>
+                    <div className="sports-designer__param-row">
+                      <label>Cut Height: {Math.round((surface.boundary.params?.cutHeight || 0.4) * 100)}%</label>
+                      <input
+                        type="range"
+                        min="20"
+                        max="80"
+                        value={(surface.boundary.params?.cutHeight || 0.4) * 100}
+                        onChange={(e) => updateBoundaryParams({ cutHeight: parseInt(e.target.value) / 100 })}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* U-Shape dimension controls */}
+                {surface.boundary?.type === 'u-shape' && (
+                  <div className="sports-designer__boundary-params">
+                    <div className="sports-designer__param-row">
+                      <label>Cut Start: {Math.round((surface.boundary.params?.cutStart || 0.35) * 100)}%</label>
+                      <input
+                        type="range"
+                        min="10"
+                        max="45"
+                        value={(surface.boundary.params?.cutStart || 0.35) * 100}
+                        onChange={(e) => updateBoundaryParams({ cutStart: parseInt(e.target.value) / 100 })}
+                      />
+                    </div>
+                    <div className="sports-designer__param-row">
+                      <label>Cut End: {Math.round((surface.boundary.params?.cutEnd || 0.65) * 100)}%</label>
+                      <input
+                        type="range"
+                        min="55"
+                        max="90"
+                        value={(surface.boundary.params?.cutEnd || 0.65) * 100}
+                        onChange={(e) => updateBoundaryParams({ cutEnd: parseInt(e.target.value) / 100 })}
+                      />
+                    </div>
+                    <div className="sports-designer__param-row">
+                      <label>Cut Height: {Math.round((surface.boundary.params?.cutHeight || 0.4) * 100)}%</label>
+                      <input
+                        type="range"
+                        min="20"
+                        max="80"
+                        value={(surface.boundary.params?.cutHeight || 0.4) * 100}
+                        onChange={(e) => updateBoundaryParams({ cutHeight: parseInt(e.target.value) / 100 })}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* T-Shape dimension controls */}
+                {surface.boundary?.type === 't-shape' && (
+                  <div className="sports-designer__boundary-params">
+                    <div className="sports-designer__param-row">
+                      <label>Stem Start: {Math.round((surface.boundary.params?.stemStart || 0.3) * 100)}%</label>
+                      <input
+                        type="range"
+                        min="10"
+                        max="45"
+                        value={(surface.boundary.params?.stemStart || 0.3) * 100}
+                        onChange={(e) => updateBoundaryParams({ stemStart: parseInt(e.target.value) / 100 })}
+                      />
+                    </div>
+                    <div className="sports-designer__param-row">
+                      <label>Stem End: {Math.round((surface.boundary.params?.stemEnd || 0.7) * 100)}%</label>
+                      <input
+                        type="range"
+                        min="55"
+                        max="90"
+                        value={(surface.boundary.params?.stemEnd || 0.7) * 100}
+                        onChange={(e) => updateBoundaryParams({ stemEnd: parseInt(e.target.value) / 100 })}
+                      />
+                    </div>
+                    <div className="sports-designer__param-row">
+                      <label>Bar Height: {Math.round((surface.boundary.params?.stemHeight || 0.4) * 100)}%</label>
+                      <input
+                        type="range"
+                        min="20"
+                        max="80"
+                        value={(surface.boundary.params?.stemHeight || 0.4) * 100}
+                        onChange={(e) => updateBoundaryParams({ stemHeight: parseInt(e.target.value) / 100 })}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 <p className="sports-designer__boundary-hint">
                   Non-rectangular shapes are useful for L-shaped buildings or irregular sites
                 </p>
@@ -935,6 +1050,157 @@ function TPVDesigner({ loadedDesign }) {
                     </svg>
                   </button>
                 </div>
+
+                {/* Group/Ungroup - only show when relevant */}
+                {(selectedElementIds.length >= 2 || selectedGroupId) && (
+                  <>
+                    <div className="sports-toolbar__divider" />
+                    <div className="sports-toolbar__group">
+                      {selectedElementIds.length >= 2 && (
+                        <button
+                          className="sports-toolbar__btn"
+                          onClick={groupSelected}
+                          title="Group selected elements (Cmd+G)"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="7" height="7" rx="1" />
+                            <rect x="14" y="14" width="7" height="7" rx="1" />
+                            <path d="M10 7h4" />
+                            <path d="M10 17h4" />
+                            <path d="M7 10v4" />
+                            <path d="M17 10v4" />
+                          </svg>
+                        </button>
+                      )}
+                      {selectedGroupId && (
+                        <button
+                          className="sports-toolbar__btn"
+                          onClick={() => ungroup(selectedGroupId)}
+                          title="Ungroup (Cmd+Shift+G)"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="7" height="7" rx="1" />
+                            <rect x="14" y="14" width="7" height="7" rx="1" />
+                            <path d="M10 7h4" strokeDasharray="2 2" />
+                            <path d="M10 17h4" strokeDasharray="2 2" />
+                            <path d="M7 10v4" strokeDasharray="2 2" />
+                            <path d="M17 10v4" strokeDasharray="2 2" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Alignment dropdown - only when 2+ elements selected */}
+                    {selectedElementIds.length >= 2 && (
+                      <div className="sports-toolbar__align-dropdown" style={{ position: 'relative' }}>
+                        <button
+                          className={`sports-toolbar__btn ${showAlignMenu ? 'sports-toolbar__btn--active' : ''}`}
+                          onClick={() => setShowAlignMenu(!showAlignMenu)}
+                          title="Align elements"
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="21" y1="10" x2="3" y2="10" />
+                            <line x1="21" y1="6" x2="3" y2="6" />
+                            <line x1="21" y1="14" x2="3" y2="14" />
+                            <line x1="21" y1="18" x2="3" y2="18" />
+                          </svg>
+                        </button>
+                        {showAlignMenu && (
+                          <div
+                            className="sports-toolbar__align-menu"
+                            style={{
+                              position: 'absolute',
+                              top: '100%',
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              marginTop: '4px',
+                              background: 'white',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                              padding: '8px',
+                              zIndex: 100,
+                              minWidth: '120px'
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px', textTransform: 'uppercase', fontWeight: 600 }}>Align</div>
+                            <button
+                              style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 8px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '4px', fontSize: '12px' }}
+                              onClick={() => { alignElements('left'); setShowAlignMenu(false); }}
+                              onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                              onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                              ⬅ Left
+                            </button>
+                            <button
+                              style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 8px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '4px', fontSize: '12px' }}
+                              onClick={() => { alignElements('center'); setShowAlignMenu(false); }}
+                              onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                              onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                              ↔ Center
+                            </button>
+                            <button
+                              style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 8px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '4px', fontSize: '12px' }}
+                              onClick={() => { alignElements('right'); setShowAlignMenu(false); }}
+                              onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                              onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                              ➡ Right
+                            </button>
+                            <div style={{ height: '1px', background: '#e5e7eb', margin: '4px 0' }} />
+                            <button
+                              style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 8px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '4px', fontSize: '12px' }}
+                              onClick={() => { alignElements('top'); setShowAlignMenu(false); }}
+                              onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                              onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                              ⬆ Top
+                            </button>
+                            <button
+                              style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 8px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '4px', fontSize: '12px' }}
+                              onClick={() => { alignElements('middle'); setShowAlignMenu(false); }}
+                              onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                              onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                              ↕ Middle
+                            </button>
+                            <button
+                              style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 8px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '4px', fontSize: '12px' }}
+                              onClick={() => { alignElements('bottom'); setShowAlignMenu(false); }}
+                              onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                              onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                              ⬇ Bottom
+                            </button>
+                            {selectedElementIds.length >= 3 && (
+                              <>
+                                <div style={{ height: '1px', background: '#e5e7eb', margin: '4px 0' }} />
+                                <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px', textTransform: 'uppercase', fontWeight: 600 }}>Distribute</div>
+                                <button
+                                  style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 8px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '4px', fontSize: '12px' }}
+                                  onClick={() => { distributeElements('horizontal'); setShowAlignMenu(false); }}
+                                  onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                                  onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                                >
+                                  ⇔ Horizontal
+                                </button>
+                                <button
+                                  style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 8px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '4px', fontSize: '12px' }}
+                                  onClick={() => { distributeElements('vertical'); setShowAlignMenu(false); }}
+                                  onMouseOver={(e) => e.currentTarget.style.background = '#f1f5f9'}
+                                  onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                                >
+                                  ⇕ Vertical
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
 
                 <div className="sports-toolbar__divider" />
 

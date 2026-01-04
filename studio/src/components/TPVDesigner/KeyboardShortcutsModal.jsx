@@ -10,12 +10,18 @@ function KeyboardShortcutsModal({ isOpen, onClose }) {
   const shortcuts = [
     { category: 'Selection', items: [
       { keys: ['Delete'], description: 'Remove selected element' },
-      { keys: ['Escape'], description: 'Deselect element' },
+      { keys: ['Escape'], description: 'Deselect / exit group edit' },
     ]},
     { category: 'Edit', items: [
       { keys: ['Ctrl', 'Z'], description: 'Undo' },
       { keys: ['Ctrl', 'Shift', 'Z'], description: 'Redo' },
       { keys: ['Ctrl', 'D'], description: 'Duplicate selected' },
+      { keys: ['Ctrl', 'C'], description: 'Copy selection' },
+      { keys: ['Ctrl', 'V'], description: 'Paste' },
+    ]},
+    { category: 'Groups', items: [
+      { keys: ['Ctrl', 'G'], description: 'Group selected elements' },
+      { keys: ['Ctrl', 'Shift', 'G'], description: 'Ungroup selected group' },
     ]},
     { category: 'Move', items: [
       { keys: ['Arrow Keys'], description: 'Nudge element (10mm)' },

@@ -4,7 +4,6 @@ import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { calculateTrackGeometry, calculateStaggeredStarts } from '../../lib/sports/trackGeometry.js';
 import { getShapeDisplayName, getShapeIcon } from '../../lib/sports/shapeGeometry.js';
 import { BLOB_STYLES } from '../../lib/sports/blobGeometry.js';
-import { COMPOUND_BLOB_STYLES } from '../../lib/sports/compoundBlobGenerators.js';
 import { getAvailableFonts } from '../../lib/sports/textUtils.js';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import { FEATURE_FLAGS } from '../../lib/constants.js';
@@ -44,7 +43,6 @@ function PropertiesPanel({ onEditSourceDesign }) {
     enterGroup,
     exitGroup,
     ungroup,
-    regenerateCompound,
     deleteGroupWithChildren,
     addToHistory
   } = useSportsDesignStore();
@@ -65,7 +63,6 @@ function PropertiesPanel({ onEditSourceDesign }) {
         onEnterGroup={() => enterGroup(selectedGroupId)}
         onExitGroup={() => exitGroup()}
         onUngroup={() => ungroup(selectedGroupId)}
-        onRegenerate={() => regenerateCompound(selectedGroupId)}
         onDelete={() => deleteGroupWithChildren(selectedGroupId)}
       />
     );
@@ -3437,12 +3434,10 @@ function ExclusionZonePropertiesPanel({ zone, zoneId }) {
 
 /**
  * Group Properties Panel Component
- * Displays properties for grouped shapes (compound blobs, etc.)
+ * Displays properties for grouped shapes
  */
-function GroupPropertiesPanel({ group, groupId, shapes, isEditing, onEnterGroup, onExitGroup, onUngroup, onRegenerate, onDelete }) {
-  const compoundInfo = group.compoundType ? COMPOUND_BLOB_STYLES[group.compoundType] : null;
-  const groupName = group.customName ||
-    (compoundInfo ? compoundInfo.name : 'Group');
+function GroupPropertiesPanel({ group, groupId, shapes, isEditing, onEnterGroup, onExitGroup, onUngroup, onDelete }) {
+  const groupName = group.customName || 'Group';
 
   // Get child shapes info
   const childShapes = group.childIds
@@ -3458,7 +3453,7 @@ function GroupPropertiesPanel({ group, groupId, shapes, isEditing, onEnterGroup,
         <div className="properties-panel__header">
           <div className="properties-panel__title-row">
             <span className="properties-panel__icon" style={{ color: '#9333ea' }}>
-              {compoundInfo?.icon || '✦'}
+              📁
             </span>
             <h3 className="properties-panel__title">{groupName}</h3>
           </div>
@@ -3496,40 +3491,6 @@ function GroupPropertiesPanel({ group, groupId, shapes, isEditing, onEnterGroup,
               </div>
             )}
           </div>
-
-          {/* Compound Type Section */}
-          {compoundInfo && (
-            <div className="property-section">
-              <h4 className="property-section__title">Compound Type</h4>
-              <div className="property-group">
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.75rem',
-                  background: 'rgba(147, 51, 234, 0.08)',
-                  borderRadius: '8px'
-                }}>
-                  <span style={{ fontSize: '1.5rem' }}>{compoundInfo.icon}</span>
-                  <div>
-                    <div style={{ fontWeight: '600', color: '#1e293b' }}>{compoundInfo.name}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{compoundInfo.description}</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Regenerate button */}
-              <div className="property-group">
-                <button
-                  className="property-btn property-btn--secondary property-btn--full"
-                  onClick={onRegenerate}
-                  title="Generate a new random variation"
-                >
-                  🎲 Generate New Shape
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Bounds Info */}
           <div className="property-section">
@@ -3615,7 +3576,8 @@ function GroupPropertiesPanel({ group, groupId, shapes, isEditing, onEnterGroup,
           {/* Tip */}
           <div className="property-group">
             <div className="property-hint" style={{ fontStyle: 'normal', color: '#64748b', fontSize: '0.75rem', marginTop: '1rem' }}>
-              Double-click a group on the canvas to enter edit mode. Press Escape to exit.
+              <strong>Tip:</strong> Double-click a group to edit its contents. Press Escape to exit.<br />
+              <strong>Shortcuts:</strong> ⌘G to group, ⌘⇧G to ungroup.
             </div>
           </div>
         </div>

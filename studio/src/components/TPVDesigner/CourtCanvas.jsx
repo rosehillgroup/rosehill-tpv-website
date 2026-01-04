@@ -1960,6 +1960,26 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
           useSportsDesignStore.getState().ungroup(selectedGroupId);
         }
       }
+
+      // Cmd/Ctrl+C = Copy selection
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'c' && !e.shiftKey) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        const state = useSportsDesignStore.getState();
+        if (state.selectedGroupId || state.selectedElementIds.length > 0 || state.selectedShapeId || state.selectedTextId) {
+          e.preventDefault();
+          state.copySelection();
+        }
+      }
+
+      // Cmd/Ctrl+V = Paste from clipboard
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'v' && !e.shiftKey) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        const state = useSportsDesignStore.getState();
+        if (state.clipboard) {
+          e.preventDefault();
+          state.pasteClipboard();
+        }
+      }
     };
 
     const handleKeyUp = (e) => {

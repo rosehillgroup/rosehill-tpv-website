@@ -14,10 +14,6 @@ import {
   insertPoint as insertPathPoint,
   removePoint as removePathPoint
 } from '../lib/sports/pathGeometry.js';
-import {
-  generateCompoundBlob,
-  COMPOUND_BLOB_STYLES
-} from '../lib/sports/compoundBlobGenerators.js';
 
 // Helper function to generate control points for exclusion zone path presets
 function generateExclusionPathPoints(preset) {
@@ -45,45 +41,79 @@ function generateExclusionPathPoints(preset) {
 }
 
 // Helper function to generate control points for surface boundary presets
-function generateBoundaryPoints(preset) {
+// params allows customizing the cutout dimensions for each shape type
+function generateBoundaryPoints(preset, params = {}) {
   switch (preset) {
-    case 'l-shape':
+    case 'l-shape': {
       // L-shape: top-right corner cut out
+      // cutWidth: how far right the cutout extends (0-1), default 0.6
+      // cutHeight: how far down the cutout extends (0-1), default 0.4
+      const cutWidth = params.cutWidth ?? 0.6;
+      const cutHeight = params.cutHeight ?? 0.4;
       return [
         { x: 0, y: 0 },
-        { x: 0.6, y: 0 },
-        { x: 0.6, y: 0.4 },
-        { x: 1, y: 0.4 },
+        { x: cutWidth, y: 0 },
+        { x: cutWidth, y: cutHeight },
+        { x: 1, y: cutHeight },
         { x: 1, y: 1 },
         { x: 0, y: 1 }
       ];
-    case 'u-shape':
+    }
+    case 'u-shape': {
       // U-shape: top-center cut out
+      // cutStart: where the cutout starts from left (0-1), default 0.35
+      // cutEnd: where the cutout ends (0-1), default 0.65
+      // cutHeight: how far down the cutout extends (0-1), default 0.4
+      const cutStart = params.cutStart ?? 0.35;
+      const cutEnd = params.cutEnd ?? 0.65;
+      const cutHeight = params.cutHeight ?? 0.4;
       return [
         { x: 0, y: 0 },
-        { x: 0.35, y: 0 },
-        { x: 0.35, y: 0.4 },
-        { x: 0.65, y: 0.4 },
-        { x: 0.65, y: 0 },
+        { x: cutStart, y: 0 },
+        { x: cutStart, y: cutHeight },
+        { x: cutEnd, y: cutHeight },
+        { x: cutEnd, y: 0 },
         { x: 1, y: 0 },
         { x: 1, y: 1 },
         { x: 0, y: 1 }
       ];
-    case 't-shape':
-      // T-shape: bottom corners cut out
+    }
+    case 't-shape': {
+      // T-shape: bottom corners cut out (stem extends down)
+      // stemStart: where the stem starts from left (0-1), default 0.3
+      // stemEnd: where the stem ends (0-1), default 0.7
+      // stemHeight: how tall the top bar is (0-1), default 0.4
+      const stemStart = params.stemStart ?? 0.3;
+      const stemEnd = params.stemEnd ?? 0.7;
+      const stemHeight = params.stemHeight ?? 0.4;
       return [
         { x: 0, y: 0 },
         { x: 1, y: 0 },
-        { x: 1, y: 0.4 },
-        { x: 0.7, y: 0.4 },
-        { x: 0.7, y: 1 },
-        { x: 0.3, y: 1 },
-        { x: 0.3, y: 0.4 },
-        { x: 0, y: 0.4 }
+        { x: 1, y: stemHeight },
+        { x: stemEnd, y: stemHeight },
+        { x: stemEnd, y: 1 },
+        { x: stemStart, y: 1 },
+        { x: stemStart, y: stemHeight },
+        { x: 0, y: stemHeight }
       ];
+    }
     case 'rectangle':
     default:
       return null; // No custom boundary, use full rectangle
+  }
+}
+
+// Get default params for a boundary preset
+function getDefaultBoundaryParams(preset) {
+  switch (preset) {
+    case 'l-shape':
+      return { cutWidth: 0.6, cutHeight: 0.4 };
+    case 'u-shape':
+      return { cutStart: 0.35, cutEnd: 0.65, cutHeight: 0.4 };
+    case 't-shape':
+      return { stemStart: 0.3, stemEnd: 0.7, stemHeight: 0.4 };
+    default:
+      return {};
   }
 }
 
@@ -151,6 +181,9 @@ const initialState = {
 
   // Multi-selection support (for creating groups manually)
   selectedElementIds: [],  // ['shape-123', 'shape-456'] - replaces singular selects when active
+
+  // Clipboard for copy/paste
+  clipboard: null,  // { type: 'elements'|'group', data: [...] }
 
   // Currently editing inside a group (allows individual child selection)
   editingGroupId: null,
@@ -231,13 +264,37 @@ export const useSportsDesignStore = create(
 
       // Set surface boundary preset (rectangle, l-shape, u-shape, t-shape)
       setSurfaceBoundaryPreset: (preset) => {
-        const controlPoints = generateBoundaryPoints(preset);
+        const params = getDefaultBoundaryParams(preset);
+        const controlPoints = generateBoundaryPoints(preset, params);
         set((state) => ({
           surface: {
             ...state.surface,
             boundary: {
               type: preset,
-              controlPoints
+              controlPoints,
+              params
+            }
+          }
+        }));
+        get().addToHistory();
+      },
+
+      // Update boundary dimension parameters (for L/U/T shapes)
+      updateBoundaryParams: (newParams) => {
+        const state = get();
+        const currentType = state.surface.boundary?.type;
+        if (!currentType || currentType === 'rectangle' || currentType === 'custom') return;
+
+        const mergedParams = { ...state.surface.boundary.params, ...newParams };
+        const controlPoints = generateBoundaryPoints(currentType, mergedParams);
+
+        set((state) => ({
+          surface: {
+            ...state.surface,
+            boundary: {
+              ...state.surface.boundary,
+              controlPoints,
+              params: mergedParams
             }
           }
         }));
@@ -578,6 +635,16 @@ export const useSportsDesignStore = create(
               [elementId]: {
                 ...state.exclusionZones[elementId],
                 locked: !state.exclusionZones[elementId]?.locked
+              }
+            }
+          }));
+        } else if (elementId.startsWith('group-')) {
+          set((state) => ({
+            groups: {
+              ...state.groups,
+              [elementId]: {
+                ...state.groups[elementId],
+                locked: !state.groups[elementId]?.locked
               }
             }
           }));
@@ -2883,6 +2950,400 @@ export const useSportsDesignStore = create(
         get().createGroup(selectedElementIds);
       },
 
+      // Alignment tools - align selected elements
+      alignElements: (alignment) => {
+        const { selectedElementIds, shapes, texts } = get();
+        if (selectedElementIds.length < 2) return;
+
+        // Get bounds for all selected elements
+        const elementBounds = selectedElementIds.map(id => {
+          const shape = shapes[id];
+          if (shape) {
+            return {
+              id,
+              type: 'shape',
+              x: shape.position.x,
+              y: shape.position.y,
+              width: shape.width_mm || 0,
+              height: shape.height_mm || 0
+            };
+          }
+          const text = texts[id];
+          if (text) {
+            return {
+              id,
+              type: 'text',
+              x: text.position.x,
+              y: text.position.y,
+              width: text.width || 100,
+              height: text.height || 50
+            };
+          }
+          return null;
+        }).filter(Boolean);
+
+        if (elementBounds.length < 2) return;
+
+        // Calculate overall bounds
+        const minX = Math.min(...elementBounds.map(b => b.x));
+        const maxX = Math.max(...elementBounds.map(b => b.x + b.width));
+        const minY = Math.min(...elementBounds.map(b => b.y));
+        const maxY = Math.max(...elementBounds.map(b => b.y + b.height));
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+
+        // Calculate new positions based on alignment type
+        const updates = {};
+        for (const elem of elementBounds) {
+          let newX = elem.x;
+          let newY = elem.y;
+
+          switch (alignment) {
+            case 'left':
+              newX = minX;
+              break;
+            case 'center':
+              newX = centerX - elem.width / 2;
+              break;
+            case 'right':
+              newX = maxX - elem.width;
+              break;
+            case 'top':
+              newY = minY;
+              break;
+            case 'middle':
+              newY = centerY - elem.height / 2;
+              break;
+            case 'bottom':
+              newY = maxY - elem.height;
+              break;
+          }
+
+          if (newX !== elem.x || newY !== elem.y) {
+            updates[elem.id] = { x: newX, y: newY, type: elem.type };
+          }
+        }
+
+        // Apply updates
+        set((state) => {
+          const updatedShapes = { ...state.shapes };
+          const updatedTexts = { ...state.texts };
+
+          for (const [id, update] of Object.entries(updates)) {
+            if (update.type === 'shape' && updatedShapes[id]) {
+              updatedShapes[id] = {
+                ...updatedShapes[id],
+                position: { x: update.x, y: update.y }
+              };
+            } else if (update.type === 'text' && updatedTexts[id]) {
+              updatedTexts[id] = {
+                ...updatedTexts[id],
+                position: { x: update.x, y: update.y }
+              };
+            }
+          }
+
+          return { shapes: updatedShapes, texts: updatedTexts };
+        });
+        get().addToHistory();
+      },
+
+      // Distribute elements evenly
+      distributeElements: (direction) => {
+        const { selectedElementIds, shapes, texts } = get();
+        if (selectedElementIds.length < 3) return;
+
+        // Get bounds for all selected elements
+        const elementBounds = selectedElementIds.map(id => {
+          const shape = shapes[id];
+          if (shape) {
+            return {
+              id,
+              type: 'shape',
+              x: shape.position.x,
+              y: shape.position.y,
+              width: shape.width_mm || 0,
+              height: shape.height_mm || 0
+            };
+          }
+          const text = texts[id];
+          if (text) {
+            return {
+              id,
+              type: 'text',
+              x: text.position.x,
+              y: text.position.y,
+              width: text.width || 100,
+              height: text.height || 50
+            };
+          }
+          return null;
+        }).filter(Boolean);
+
+        if (elementBounds.length < 3) return;
+
+        // Sort by position
+        const sorted = [...elementBounds].sort((a, b) => {
+          if (direction === 'horizontal') {
+            return a.x - b.x;
+          } else {
+            return a.y - b.y;
+          }
+        });
+
+        // Calculate total space and gaps
+        const first = sorted[0];
+        const last = sorted[sorted.length - 1];
+        const totalElements = sorted.length;
+
+        let totalSpace, totalElementSize;
+        if (direction === 'horizontal') {
+          totalSpace = (last.x + last.width) - first.x;
+          totalElementSize = sorted.reduce((sum, el) => sum + el.width, 0);
+        } else {
+          totalSpace = (last.y + last.height) - first.y;
+          totalElementSize = sorted.reduce((sum, el) => sum + el.height, 0);
+        }
+
+        const gap = (totalSpace - totalElementSize) / (totalElements - 1);
+
+        // Calculate new positions
+        const updates = {};
+        let currentPos = direction === 'horizontal' ? first.x : first.y;
+
+        for (const elem of sorted) {
+          let newX = elem.x;
+          let newY = elem.y;
+
+          if (direction === 'horizontal') {
+            newX = currentPos;
+            currentPos += elem.width + gap;
+          } else {
+            newY = currentPos;
+            currentPos += elem.height + gap;
+          }
+
+          if (newX !== elem.x || newY !== elem.y) {
+            updates[elem.id] = { x: newX, y: newY, type: elem.type };
+          }
+        }
+
+        // Apply updates
+        set((state) => {
+          const updatedShapes = { ...state.shapes };
+          const updatedTexts = { ...state.texts };
+
+          for (const [id, update] of Object.entries(updates)) {
+            if (update.type === 'shape' && updatedShapes[id]) {
+              updatedShapes[id] = {
+                ...updatedShapes[id],
+                position: { x: update.x, y: update.y }
+              };
+            } else if (update.type === 'text' && updatedTexts[id]) {
+              updatedTexts[id] = {
+                ...updatedTexts[id],
+                position: { x: update.x, y: update.y }
+              };
+            }
+          }
+
+          return { shapes: updatedShapes, texts: updatedTexts };
+        });
+        get().addToHistory();
+      },
+
+      // Copy selection to clipboard
+      copySelection: () => {
+        const { selectedElementIds, selectedGroupId, groups, shapes, texts } = get();
+
+        // Copy a group
+        if (selectedGroupId) {
+          const group = groups[selectedGroupId];
+          if (!group) return;
+
+          // Collect group data and all children
+          const childData = group.childIds.map(id => {
+            if (shapes[id]) {
+              return { type: 'shape', data: JSON.parse(JSON.stringify(shapes[id])) };
+            }
+            if (texts[id]) {
+              return { type: 'text', data: JSON.parse(JSON.stringify(texts[id])) };
+            }
+            return null;
+          }).filter(Boolean);
+
+          set({
+            clipboard: {
+              type: 'group',
+              groupData: JSON.parse(JSON.stringify(group)),
+              children: childData
+            }
+          });
+          return;
+        }
+
+        // Copy multi-selection
+        if (selectedElementIds.length > 0) {
+          const elements = selectedElementIds.map(id => {
+            if (shapes[id]) {
+              return { type: 'shape', data: JSON.parse(JSON.stringify(shapes[id])) };
+            }
+            if (texts[id]) {
+              return { type: 'text', data: JSON.parse(JSON.stringify(texts[id])) };
+            }
+            return null;
+          }).filter(Boolean);
+
+          set({
+            clipboard: {
+              type: 'elements',
+              data: elements
+            }
+          });
+          return;
+        }
+
+        // Copy single selection
+        const { selectedShapeId, selectedTextId } = get();
+        if (selectedShapeId && shapes[selectedShapeId]) {
+          set({
+            clipboard: {
+              type: 'elements',
+              data: [{ type: 'shape', data: JSON.parse(JSON.stringify(shapes[selectedShapeId])) }]
+            }
+          });
+        } else if (selectedTextId && texts[selectedTextId]) {
+          set({
+            clipboard: {
+              type: 'elements',
+              data: [{ type: 'text', data: JSON.parse(JSON.stringify(texts[selectedTextId])) }]
+            }
+          });
+        }
+      },
+
+      // Paste from clipboard
+      pasteClipboard: () => {
+        const { clipboard } = get();
+        if (!clipboard) return;
+
+        const offset = 500; // 500mm offset for pasted elements
+
+        if (clipboard.type === 'group') {
+          // Paste a group with all its children
+          const newGroupId = `group-${Date.now()}`;
+          const newChildIds = [];
+          const timestamp = Date.now();
+
+          set((state) => {
+            const updatedShapes = { ...state.shapes };
+            const updatedTexts = { ...state.texts };
+            let newElementOrder = [...state.elementOrder];
+
+            // Create new children with offset positions
+            clipboard.children.forEach((child, index) => {
+              const newId = `${child.type}-${timestamp}-${index}`;
+              newChildIds.push(newId);
+
+              if (child.type === 'shape') {
+                updatedShapes[newId] = {
+                  ...child.data,
+                  id: newId,
+                  position: {
+                    x: child.data.position.x + offset,
+                    y: child.data.position.y + offset
+                  }
+                };
+              } else if (child.type === 'text') {
+                updatedTexts[newId] = {
+                  ...child.data,
+                  id: newId,
+                  position: {
+                    x: child.data.position.x + offset,
+                    y: child.data.position.y + offset
+                  }
+                };
+              }
+            });
+
+            // Create new group
+            const newGroup = {
+              ...clipboard.groupData,
+              id: newGroupId,
+              childIds: newChildIds,
+              customName: clipboard.groupData.customName ? `${clipboard.groupData.customName} (copy)` : 'Group (copy)',
+              bounds: {
+                ...clipboard.groupData.bounds,
+                x: clipboard.groupData.bounds.x + offset,
+                y: clipboard.groupData.bounds.y + offset
+              }
+            };
+
+            // Add group to elementOrder (at end = top)
+            newElementOrder.push(newGroupId);
+
+            return {
+              shapes: updatedShapes,
+              texts: updatedTexts,
+              groups: { ...state.groups, [newGroupId]: newGroup },
+              elementOrder: newElementOrder,
+              selectedGroupId: newGroupId,
+              selectedShapeId: null,
+              selectedTextId: null,
+              selectedElementIds: []
+            };
+          });
+        } else {
+          // Paste individual elements
+          const timestamp = Date.now();
+          const newIds = [];
+
+          set((state) => {
+            const updatedShapes = { ...state.shapes };
+            const updatedTexts = { ...state.texts };
+            let newElementOrder = [...state.elementOrder];
+
+            clipboard.data.forEach((item, index) => {
+              const newId = `${item.type}-${timestamp}-${index}`;
+              newIds.push(newId);
+
+              if (item.type === 'shape') {
+                updatedShapes[newId] = {
+                  ...item.data,
+                  id: newId,
+                  position: {
+                    x: item.data.position.x + offset,
+                    y: item.data.position.y + offset
+                  }
+                };
+                newElementOrder.push(newId);
+              } else if (item.type === 'text') {
+                updatedTexts[newId] = {
+                  ...item.data,
+                  id: newId,
+                  position: {
+                    x: item.data.position.x + offset,
+                    y: item.data.position.y + offset
+                  }
+                };
+                newElementOrder.push(newId);
+              }
+            });
+
+            return {
+              shapes: updatedShapes,
+              texts: updatedTexts,
+              elementOrder: newElementOrder,
+              selectedElementIds: newIds.length > 1 ? newIds : [],
+              selectedShapeId: newIds.length === 1 && clipboard.data[0].type === 'shape' ? newIds[0] : null,
+              selectedTextId: newIds.length === 1 && clipboard.data[0].type === 'text' ? newIds[0] : null,
+              selectedGroupId: null
+            };
+          });
+        }
+        get().addToHistory();
+      },
+
       // Remove a group (delete the group entity only, keep children)
       removeGroup: (groupId) => {
         get().ungroup(groupId);
@@ -2931,229 +3392,6 @@ export const useSportsDesignStore = create(
             [groupId]: { ...group, bounds: newBounds }
           }
         }));
-      },
-
-      // Add compound blob (creates multiple shapes + groups them)
-      addCompoundBlob: (compoundType = 'splash') => {
-        const surface = get().surface;
-        const seed = Math.floor(Math.random() * 100000);
-
-        // Get default size for this compound type
-        const styleConfig = COMPOUND_BLOB_STYLES[compoundType] || COMPOUND_BLOB_STYLES.splash;
-        const { width: totalWidth, height: totalHeight } = styleConfig.defaultSize;
-
-        // Center position
-        const centerX = surface.width_mm / 2;
-        const centerY = surface.length_mm / 2;
-
-        // Default colors
-        const defaultColors = [
-          { tpv_code: 'RH20', hex: '#0075BC', name: 'Standard Blue' },
-          { tpv_code: 'RH10', hex: '#609B63', name: 'Standard Green' },
-          { tpv_code: 'RH50', hex: '#F15B32', name: 'Orange' },
-          { tpv_code: 'RH21', hex: '#493D8C', name: 'Purple' }
-        ];
-        const existingShapes = Object.keys(get().shapes).length;
-        const primaryColor = defaultColors[existingShapes % defaultColors.length];
-        const secondaryColor = defaultColors[(existingShapes + 1) % defaultColors.length];
-
-        // Generate shape configs using compound generator
-        const shapeConfigs = generateCompoundBlob(compoundType, {
-          centerX,
-          centerY,
-          totalWidth,
-          totalHeight,
-          seed,
-          primaryColor,
-          secondaryColor
-        });
-
-        // Create actual shapes from configs
-        const timestamp = Date.now();
-        const newShapes = {};
-        const shapeIds = [];
-
-        shapeConfigs.forEach((config, index) => {
-          const shapeId = `shape-${timestamp}-${index}`;
-          shapeIds.push(shapeId);
-
-          // Generate control points for blob
-          const controlPoints = generateBlobFromStyle(config.blobStyle || 'organic', config.seed);
-
-          newShapes[shapeId] = {
-            id: shapeId,
-            type: 'shape',
-            shapeType: 'blob',
-            blobStyle: config.blobStyle || 'organic',
-            seed: config.seed,
-            controlPoints,
-            numPoints: controlPoints.length,
-            blobiness: BLOB_STYLES[config.blobStyle || 'organic']?.blobinessMax || 0.25,
-            symmetryMode: 'none',
-            radialSymmetryCount: 4,
-            editPointsVisible: false,
-            width_mm: config.width_mm,
-            height_mm: config.height_mm,
-            position: config.position,
-            rotation: config.rotation || 0,
-            fillColor: config.fillColor,
-            strokeEnabled: false,
-            strokeColor: null,
-            strokeWidth_mm: 50,
-            aspectLocked: true,
-            locked: false,
-            visible: true,
-            customName: null
-          };
-        });
-
-        // Create group for the compound
-        const groupId = `group-${timestamp}`;
-        const bounds = {
-          x: centerX - totalWidth / 2,
-          y: centerY - totalHeight / 2,
-          width: totalWidth,
-          height: totalHeight
-        };
-
-        const group = {
-          id: groupId,
-          type: 'group',
-          childIds: shapeIds,
-          compoundType,
-          generatorSeed: seed,
-          customName: styleConfig.name,
-          locked: false,
-          visible: true,
-          bounds
-        };
-
-        set((state) => ({
-          shapes: { ...state.shapes, ...newShapes },
-          groups: { ...state.groups, [groupId]: group },
-          elementOrder: [...state.elementOrder, ...shapeIds], // Add individual shapes to render order
-          selectedGroupId: groupId,
-          selectedShapeId: null,
-          selectedCourtId: null,
-          selectedTrackId: null,
-          selectedMotifId: null,
-          selectedTextId: null,
-          selectedExclusionZoneId: null,
-          selectedElementIds: []
-        }));
-        get().addToHistory();
-        return groupId;
-      },
-
-      // Regenerate compound blob with new seed
-      regenerateCompound: (groupId) => {
-        const group = get().groups[groupId];
-        if (!group || !group.compoundType) return;
-
-        const newSeed = Math.floor(Math.random() * 100000);
-
-        // Get current bounds to maintain position
-        const { bounds } = group;
-        const centerX = bounds.x + bounds.width / 2;
-        const centerY = bounds.y + bounds.height / 2;
-
-        // Get colors from first child shape
-        const firstChildId = group.childIds[0];
-        const firstChild = get().shapes[firstChildId];
-        const primaryColor = firstChild?.fillColor || { tpv_code: 'RH20', hex: '#0075BC', name: 'Standard Blue' };
-
-        // Get secondary color from second child if available
-        const secondChildId = group.childIds[1];
-        const secondChild = get().shapes[secondChildId];
-        const secondaryColor = secondChild?.fillColor || primaryColor;
-
-        // Generate new shape configs
-        const shapeConfigs = generateCompoundBlob(group.compoundType, {
-          centerX,
-          centerY,
-          totalWidth: bounds.width,
-          totalHeight: bounds.height,
-          seed: newSeed,
-          primaryColor,
-          secondaryColor
-        });
-
-        // Remove old shapes
-        const oldShapeIds = group.childIds;
-
-        // Create new shapes
-        const timestamp = Date.now();
-        const newShapes = {};
-        const newShapeIds = [];
-
-        shapeConfigs.forEach((config, index) => {
-          const shapeId = `shape-${timestamp}-${index}`;
-          newShapeIds.push(shapeId);
-
-          const controlPoints = generateBlobFromStyle(config.blobStyle || 'organic', config.seed);
-
-          newShapes[shapeId] = {
-            id: shapeId,
-            type: 'shape',
-            shapeType: 'blob',
-            blobStyle: config.blobStyle || 'organic',
-            seed: config.seed,
-            controlPoints,
-            numPoints: controlPoints.length,
-            blobiness: BLOB_STYLES[config.blobStyle || 'organic']?.blobinessMax || 0.25,
-            symmetryMode: 'none',
-            radialSymmetryCount: 4,
-            editPointsVisible: false,
-            width_mm: config.width_mm,
-            height_mm: config.height_mm,
-            position: config.position,
-            rotation: config.rotation || 0,
-            fillColor: config.fillColor,
-            strokeEnabled: false,
-            strokeColor: null,
-            strokeWidth_mm: 50,
-            aspectLocked: true,
-            locked: false,
-            visible: true,
-            customName: null
-          };
-        });
-
-        set((state) => {
-          // Remove old shapes from shapes object
-          const updatedShapes = { ...state.shapes };
-          for (const oldId of oldShapeIds) {
-            delete updatedShapes[oldId];
-          }
-          // Add new shapes
-          Object.assign(updatedShapes, newShapes);
-
-          // Update elementOrder: replace old shape IDs with new ones
-          // Find position of first old shape to maintain layer order
-          const firstOldIndex = state.elementOrder.findIndex(id => oldShapeIds.includes(id));
-          let updatedElementOrder = state.elementOrder.filter(id => !oldShapeIds.includes(id));
-          if (firstOldIndex >= 0) {
-            // Insert new shapes at the same position
-            updatedElementOrder.splice(firstOldIndex, 0, ...newShapeIds);
-          } else {
-            // Fallback: append to end
-            updatedElementOrder = [...updatedElementOrder, ...newShapeIds];
-          }
-
-          return {
-            shapes: updatedShapes,
-            elementOrder: updatedElementOrder,
-            groups: {
-              ...state.groups,
-              [groupId]: {
-                ...group,
-                childIds: newShapeIds,
-                generatorSeed: newSeed
-              }
-            }
-          };
-        });
-        get().addToHistory();
       },
 
       // ====== Custom Markings Actions ======
