@@ -2735,8 +2735,9 @@ export const useSportsDesignStore = create(
             if (court) {
               const x = court.position.x;
               const y = court.position.y;
-              const width = court.template?.dimensions?.width_mm || 0;
-              const height = court.template?.dimensions?.length_mm || 0;
+              const scale = court.scale || 1;
+              const width = (court.template?.dimensions?.width_mm || 0) * scale;
+              const height = (court.template?.dimensions?.length_mm || 0) * scale;
               minX = Math.min(minX, x);
               minY = Math.min(minY, y);
               maxX = Math.max(maxX, x + width);
@@ -2749,8 +2750,9 @@ export const useSportsDesignStore = create(
             if (track) {
               const x = track.position.x;
               const y = track.position.y;
-              const width = track.trackParameters?.width_mm || 5000;
-              const height = track.trackParameters?.height_mm || 10000;
+              const scale = track.scale || 1;
+              const width = (track.trackParameters?.width_mm || 5000) * scale;
+              const height = (track.trackParameters?.height_mm || 10000) * scale;
               minX = Math.min(minX, x);
               minY = Math.min(minY, y);
               maxX = Math.max(maxX, x + width);
@@ -3054,37 +3056,45 @@ export const useSportsDesignStore = create(
                 };
               }
             }
-            // Scale court children (position only - courts have fixed dimensions)
+            // Scale court children (position and scale)
             else if (childId.startsWith('court-')) {
               const court = updatedCourts[childId];
               if (court) {
                 const origPos = original?.position || court.position;
+                const origScale = original?.scale || court.scale || 1;
                 const relX = origPos.x - origin.x;
                 const relY = origPos.y - origin.y;
+                // Use uniform scale for courts to maintain aspect ratio
+                const uniformScale = Math.min(scaleX, scaleY);
 
                 updatedCourts[childId] = {
                   ...court,
                   position: {
                     x: origin.x + relX * scaleX,
                     y: origin.y + relY * scaleY
-                  }
+                  },
+                  scale: origScale * uniformScale
                 };
               }
             }
-            // Scale track children (position only - tracks have fixed dimensions)
+            // Scale track children (position and scale)
             else if (childId.startsWith('track-')) {
               const track = updatedTracks[childId];
               if (track) {
                 const origPos = original?.position || track.position;
+                const origScale = original?.scale || track.scale || 1;
                 const relX = origPos.x - origin.x;
                 const relY = origPos.y - origin.y;
+                // Use uniform scale for tracks to maintain aspect ratio
+                const uniformScale = Math.min(scaleX, scaleY);
 
                 updatedTracks[childId] = {
                   ...track,
                   position: {
                     x: origin.x + relX * scaleX,
                     y: origin.y + relY * scaleY
-                  }
+                  },
+                  scale: origScale * uniformScale
                 };
               }
             }
@@ -3201,13 +3211,14 @@ export const useSportsDesignStore = create(
           if (id.startsWith('court-')) {
             const court = courts[id];
             if (court) {
+              const scale = court.scale || 1;
               return {
                 id,
                 type: 'court',
                 x: court.position.x,
                 y: court.position.y,
-                width: court.template?.dimensions?.width_mm || 0,
-                height: court.template?.dimensions?.length_mm || 0
+                width: (court.template?.dimensions?.width_mm || 0) * scale,
+                height: (court.template?.dimensions?.length_mm || 0) * scale
               };
             }
           }
@@ -3215,13 +3226,14 @@ export const useSportsDesignStore = create(
           if (id.startsWith('track-')) {
             const track = tracks[id];
             if (track) {
+              const scale = track.scale || 1;
               return {
                 id,
                 type: 'track',
                 x: track.position.x,
                 y: track.position.y,
-                width: track.trackParameters?.width_mm || 5000,
-                height: track.trackParameters?.height_mm || 10000
+                width: (track.trackParameters?.width_mm || 5000) * scale,
+                height: (track.trackParameters?.height_mm || 10000) * scale
               };
             }
           }
@@ -3371,13 +3383,14 @@ export const useSportsDesignStore = create(
           if (id.startsWith('court-')) {
             const court = courts[id];
             if (court) {
+              const scale = court.scale || 1;
               return {
                 id,
                 type: 'court',
                 x: court.position.x,
                 y: court.position.y,
-                width: court.template?.dimensions?.width_mm || 0,
-                height: court.template?.dimensions?.length_mm || 0
+                width: (court.template?.dimensions?.width_mm || 0) * scale,
+                height: (court.template?.dimensions?.length_mm || 0) * scale
               };
             }
           }
@@ -3385,13 +3398,14 @@ export const useSportsDesignStore = create(
           if (id.startsWith('track-')) {
             const track = tracks[id];
             if (track) {
+              const scale = track.scale || 1;
               return {
                 id,
                 type: 'track',
                 x: track.position.x,
                 y: track.position.y,
-                width: track.trackParameters?.width_mm || 5000,
-                height: track.trackParameters?.height_mm || 10000
+                width: (track.trackParameters?.width_mm || 5000) * scale,
+                height: (track.trackParameters?.height_mm || 10000) * scale
               };
             }
           }

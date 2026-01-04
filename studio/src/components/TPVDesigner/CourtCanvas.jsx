@@ -939,11 +939,13 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         };
       } else if (childId.startsWith('court-') && courts[childId]) {
         originalChildren[childId] = {
-          position: { ...courts[childId].position }
+          position: { ...courts[childId].position },
+          scale: courts[childId].scale || 1
         };
       } else if (childId.startsWith('track-') && tracks[childId]) {
         originalChildren[childId] = {
-          position: { ...tracks[childId].position }
+          position: { ...tracks[childId].position },
+          scale: tracks[childId].scale || 1
         };
       } else if (childId.startsWith('motif-') && motifs[childId]) {
         originalChildren[childId] = {

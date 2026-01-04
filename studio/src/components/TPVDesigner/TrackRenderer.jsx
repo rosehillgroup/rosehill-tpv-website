@@ -9,7 +9,7 @@ import StartingBoxes from './StartingBoxes.jsx';
  * Renders a complete running track with all lanes
  */
 function TrackElement({ track, isSelected, onMouseDown, onTouchStart, onDoubleClick, svgRef }) {
-  const { parameters, position, rotation, trackSurfaceColor, trackLineColor, laneSurfaceColors } = track;
+  const { parameters, position, rotation, scale = 1, trackSurfaceColor, trackLineColor, laneSurfaceColors } = track;
 
   // Calculate track geometry
   const geometry = calculateTrackGeometry(parameters);
@@ -23,10 +23,10 @@ function TrackElement({ track, isSelected, onMouseDown, onTouchStart, onDoubleCl
   const boundingWidth = geometry.totalWidth;
   const boundingLength = geometry.totalLength;
 
-  // Build transform string - rotate around center point
+  // Build transform string - translate, scale, then rotate around center point
   const centerX = boundingWidth / 2;
   const centerY = boundingLength / 2;
-  const transform = `translate(${position.x}, ${position.y}) rotate(${rotation}, ${centerX}, ${centerY})`;
+  const transform = `translate(${position.x}, ${position.y}) scale(${scale}) rotate(${rotation}, ${centerX}, ${centerY})`;
 
   // Track surface and line colors
   const defaultSurfaceColor = trackSurfaceColor?.hex || '#A5362F'; // Default Standard Red (RH01)
