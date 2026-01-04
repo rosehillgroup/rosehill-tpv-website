@@ -921,11 +921,44 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       Math.pow(svgPoint.y - anchorPoint.y, 2)
     );
 
+    // Store original positions and sizes of all child elements
+    const originalChildren = {};
+    for (const childId of group.childIds) {
+      if (childId.startsWith('shape-') && shapes[childId]) {
+        originalChildren[childId] = {
+          position: { ...shapes[childId].position },
+          width_mm: shapes[childId].width_mm,
+          height_mm: shapes[childId].height_mm
+        };
+      } else if (childId.startsWith('text-') && texts[childId]) {
+        originalChildren[childId] = {
+          position: { ...texts[childId].position },
+          width_mm: texts[childId].width_mm || 1000,
+          height_mm: texts[childId].height_mm || 500,
+          fontSize: texts[childId].fontSize || 200
+        };
+      } else if (childId.startsWith('court-') && courts[childId]) {
+        originalChildren[childId] = {
+          position: { ...courts[childId].position }
+        };
+      } else if (childId.startsWith('track-') && tracks[childId]) {
+        originalChildren[childId] = {
+          position: { ...tracks[childId].position }
+        };
+      } else if (childId.startsWith('motif-') && motifs[childId]) {
+        originalChildren[childId] = {
+          position: { ...motifs[childId].position },
+          scale: motifs[childId].scale || 1
+        };
+      }
+    }
+
     setScaleGroupStart({
       initialDistance,
       originalBounds: { ...group.bounds },
       corner,
-      anchorPoint
+      anchorPoint,
+      originalChildren
     });
     setScaleGroupId(groupId);
     setIsScalingGroup(true);
@@ -1723,7 +1756,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
       const svgPoint = screenToSVG(clientX, clientY);
 
-      const { initialDistance, originalBounds, corner, anchorPoint } = scaleGroupStart;
+      const { initialDistance, originalBounds, corner, anchorPoint, originalChildren } = scaleGroupStart;
 
       // Calculate current distance from anchor point
       const currentDistance = Math.sqrt(
@@ -1747,8 +1780,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         scaleY = 1;
       }
 
-      // Use updateGroupScale action from store
-      updateGroupScale(scaleGroupId, scaleX, scaleY, anchorPoint);
+      // Use updateGroupScale action from store with original children positions
+      updateGroupScale(scaleGroupId, scaleX, scaleY, anchorPoint, originalChildren);
     };
 
     const handleEnd = () => {
@@ -2209,11 +2242,12 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             // Skip hidden courts
             if (court.visible === false) return null;
 
+            const isCourtSelected = elementId === selectedCourtId || selectedElementIds.includes(elementId);
             return (
               <CourtElement
                 key={elementId}
                 court={court}
-                isSelected={elementId === selectedCourtId}
+                isSelected={isCourtSelected}
                 onMouseDown={(e) => handleCourtMouseDown(e, elementId)}
                 onTouchStart={(e) => handleCourtMouseDown(e, elementId)}
                 onDoubleClick={(e) => handleCourtDoubleClick(e, elementId)}
@@ -2229,11 +2263,12 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             // Skip hidden tracks
             if (track.visible === false) return null;
 
+            const isTrackSelected = elementId === selectedTrackId || selectedElementIds.includes(elementId);
             return (
               <TrackElement
                 key={elementId}
                 track={track}
-                isSelected={elementId === selectedTrackId}
+                isSelected={isTrackSelected}
                 onMouseDown={(e) => handleTrackMouseDown(e, elementId)}
                 onTouchStart={(e) => handleTrackMouseDown(e, elementId)}
                 onDoubleClick={(e) => handleTrackDoubleClick(e, elementId)}
@@ -2249,11 +2284,12 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             // Skip hidden motifs
             if (motif.visible === false) return null;
 
+            const isMotifSelected = elementId === selectedMotifId || selectedElementIds.includes(elementId);
             return (
               <MotifElement
                 key={elementId}
                 motif={motif}
-                isSelected={elementId === selectedMotifId}
+                isSelected={isMotifSelected}
                 onMouseDown={(e) => handleMotifMouseDown(e, elementId)}
                 onTouchStart={(e) => handleMotifMouseDown(e, elementId)}
                 onDoubleClick={(e) => handleMotifDoubleClick(e, elementId)}
@@ -2460,11 +2496,12 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                     if (!court) return null;
                     if (court.visible === false) return null;
 
+                    const isCourtSelected = childId === selectedCourtId || selectedElementIds.includes(childId);
                     return (
                       <CourtElement
                         key={childId}
                         court={court}
-                        isSelected={childId === selectedCourtId}
+                        isSelected={isCourtSelected}
                         onMouseDown={(e) => handleCourtMouseDown(e, childId)}
                         onTouchStart={(e) => handleCourtMouseDown(e, childId)}
                         onDoubleClick={(e) => handleCourtDoubleClick(e, childId)}
@@ -2479,11 +2516,12 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                     if (!track) return null;
                     if (track.visible === false) return null;
 
+                    const isTrackSelected = childId === selectedTrackId || selectedElementIds.includes(childId);
                     return (
                       <TrackElement
                         key={childId}
                         track={track}
-                        isSelected={childId === selectedTrackId}
+                        isSelected={isTrackSelected}
                         onMouseDown={(e) => handleTrackMouseDown(e, childId)}
                         onTouchStart={(e) => handleTrackMouseDown(e, childId)}
                         onDoubleClick={(e) => handleTrackDoubleClick(e, childId)}
@@ -2498,11 +2536,12 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                     if (!motif) return null;
                     if (motif.visible === false) return null;
 
+                    const isMotifSelected = childId === selectedMotifId || selectedElementIds.includes(childId);
                     return (
                       <MotifElement
                         key={childId}
                         motif={motif}
-                        isSelected={childId === selectedMotifId}
+                        isSelected={isMotifSelected}
                         onMouseDown={(e) => handleMotifMouseDown(e, childId)}
                         onTouchStart={(e) => handleMotifMouseDown(e, childId)}
                         onDoubleClick={(e) => handleMotifDoubleClick(e, childId)}

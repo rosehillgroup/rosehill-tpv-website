@@ -2864,6 +2864,11 @@ export const useSportsDesignStore = create(
 
       // Deselect group
       deselectGroup: () => {
+        // Refresh bounds if we were editing a group (elements may have moved)
+        const editingGroupId = get().editingGroupId;
+        if (editingGroupId) {
+          get().refreshGroupBounds(editingGroupId);
+        }
         set({
           selectedGroupId: null,
           editingGroupId: null,
@@ -2884,6 +2889,8 @@ export const useSportsDesignStore = create(
       exitGroup: () => {
         const editingGroupId = get().editingGroupId;
         if (editingGroupId) {
+          // Refresh bounds after editing (elements may have moved)
+          get().refreshGroupBounds(editingGroupId);
           set({
             editingGroupId: null,
             selectedGroupId: editingGroupId,
@@ -2983,8 +2990,9 @@ export const useSportsDesignStore = create(
         get().addToHistory();
       },
 
-      // Update group scale (scales all children from center)
-      updateGroupScale: (groupId, scaleX, scaleY, origin) => {
+      // Update group scale (scales all children from original positions)
+      // originalChildren: object with childId -> { position, width_mm, height_mm, scale, fontSize } for each child
+      updateGroupScale: (groupId, scaleX, scaleY, origin, originalChildren = null) => {
         const group = get().groups[groupId];
         if (!group) return;
 
@@ -2996,13 +3004,20 @@ export const useSportsDesignStore = create(
           const updatedMotifs = { ...state.motifs };
 
           for (const childId of group.childIds) {
+            const original = originalChildren?.[childId];
+
             // Scale shape children
             if (childId.startsWith('shape-')) {
               const shape = updatedShapes[childId];
               if (shape) {
-                // Scale position relative to origin
-                const relX = shape.position.x - origin.x;
-                const relY = shape.position.y - origin.y;
+                // Use original position if available, otherwise current
+                const origPos = original?.position || shape.position;
+                const origWidth = original?.width_mm || shape.width_mm;
+                const origHeight = original?.height_mm || shape.height_mm;
+
+                // Scale position relative to origin from ORIGINAL position
+                const relX = origPos.x - origin.x;
+                const relY = origPos.y - origin.y;
 
                 updatedShapes[childId] = {
                   ...shape,
@@ -3010,8 +3025,8 @@ export const useSportsDesignStore = create(
                     x: origin.x + relX * scaleX,
                     y: origin.y + relY * scaleY
                   },
-                  width_mm: shape.width_mm * scaleX,
-                  height_mm: shape.height_mm * scaleY
+                  width_mm: origWidth * scaleX,
+                  height_mm: origHeight * scaleY
                 };
               }
             }
@@ -3019,9 +3034,13 @@ export const useSportsDesignStore = create(
             else if (childId.startsWith('text-')) {
               const text = updatedTexts[childId];
               if (text) {
-                // Scale position relative to origin
-                const relX = text.position.x - origin.x;
-                const relY = text.position.y - origin.y;
+                const origPos = original?.position || text.position;
+                const origWidth = original?.width_mm || text.width_mm || 1000;
+                const origHeight = original?.height_mm || text.height_mm || 500;
+                const origFontSize = original?.fontSize || text.fontSize || 200;
+
+                const relX = origPos.x - origin.x;
+                const relY = origPos.y - origin.y;
 
                 updatedTexts[childId] = {
                   ...text,
@@ -3029,9 +3048,9 @@ export const useSportsDesignStore = create(
                     x: origin.x + relX * scaleX,
                     y: origin.y + relY * scaleY
                   },
-                  width_mm: (text.width_mm || 1000) * scaleX,
-                  height_mm: (text.height_mm || 500) * scaleY,
-                  fontSize: (text.fontSize || 200) * Math.min(scaleX, scaleY)
+                  width_mm: origWidth * scaleX,
+                  height_mm: origHeight * scaleY,
+                  fontSize: origFontSize * Math.min(scaleX, scaleY)
                 };
               }
             }
@@ -3039,9 +3058,9 @@ export const useSportsDesignStore = create(
             else if (childId.startsWith('court-')) {
               const court = updatedCourts[childId];
               if (court) {
-                // Scale position relative to origin (but don't resize the court)
-                const relX = court.position.x - origin.x;
-                const relY = court.position.y - origin.y;
+                const origPos = original?.position || court.position;
+                const relX = origPos.x - origin.x;
+                const relY = origPos.y - origin.y;
 
                 updatedCourts[childId] = {
                   ...court,
@@ -3056,9 +3075,9 @@ export const useSportsDesignStore = create(
             else if (childId.startsWith('track-')) {
               const track = updatedTracks[childId];
               if (track) {
-                // Scale position relative to origin (but don't resize the track)
-                const relX = track.position.x - origin.x;
-                const relY = track.position.y - origin.y;
+                const origPos = original?.position || track.position;
+                const relX = origPos.x - origin.x;
+                const relY = origPos.y - origin.y;
 
                 updatedTracks[childId] = {
                   ...track,
@@ -3073,10 +3092,11 @@ export const useSportsDesignStore = create(
             else if (childId.startsWith('motif-')) {
               const motif = updatedMotifs[childId];
               if (motif) {
-                // Scale position relative to origin
-                const relX = motif.position.x - origin.x;
-                const relY = motif.position.y - origin.y;
-                // Use uniform scale for motifs to maintain aspect ratio
+                const origPos = original?.position || motif.position;
+                const origScale = original?.scale || motif.scale || 1;
+
+                const relX = origPos.x - origin.x;
+                const relY = origPos.y - origin.y;
                 const uniformScale = Math.min(scaleX, scaleY);
 
                 updatedMotifs[childId] = {
@@ -3085,7 +3105,7 @@ export const useSportsDesignStore = create(
                     x: origin.x + relX * scaleX,
                     y: origin.y + relY * scaleY
                   },
-                  scale: (motif.scale || 1) * uniformScale
+                  scale: origScale * uniformScale
                 };
               }
             }
