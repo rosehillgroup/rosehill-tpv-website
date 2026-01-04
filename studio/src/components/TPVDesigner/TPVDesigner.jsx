@@ -1095,7 +1095,7 @@ function TPVDesigner({ loadedDesign }) {
                       <div className="sports-toolbar__align-dropdown" style={{ position: 'relative' }}>
                         <button
                           className={`sports-toolbar__btn ${showAlignMenu ? 'sports-toolbar__btn--active' : ''}`}
-                          onClick={() => setShowAlignMenu(!showAlignMenu)}
+                          onClick={(e) => { e.stopPropagation(); setShowAlignMenu(!showAlignMenu); }}
                           title="Align elements"
                         >
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

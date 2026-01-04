@@ -3007,11 +3007,7 @@ export const useSportsDesignStore = create(
       // Alignment tools - align selected elements
       alignElements: (alignment) => {
         const { selectedElementIds, shapes, texts } = get();
-        console.log('alignElements called:', alignment, 'selectedElementIds:', selectedElementIds);
-        if (selectedElementIds.length < 2) {
-          console.log('Not enough elements selected (need 2+)');
-          return;
-        }
+        if (selectedElementIds.length < 2) return;
 
         // Get bounds for all selected elements
         const elementBounds = selectedElementIds.map(id => {
