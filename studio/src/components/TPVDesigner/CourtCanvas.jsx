@@ -2283,6 +2283,110 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             );
           }
 
+          // Check if it's a group - render all child elements
+          if (elementId.startsWith('group-')) {
+            const group = groups[elementId];
+            if (!group) return null;
+            // Skip hidden groups
+            if (group.visible === false) return null;
+
+            // Render all child elements of the group
+            return (
+              <g key={elementId}>
+                {group.childIds.map(childId => {
+                  // Render shape children
+                  if (childId.startsWith('shape-')) {
+                    const shape = shapes[childId];
+                    if (!shape) return null;
+                    if (shape.visible === false) return null;
+
+                    const isShapeSelected = childId === selectedShapeId || selectedElementIds.includes(childId);
+
+                    if (shape.shapeType === 'blob') {
+                      return (
+                        <BlobElement
+                          key={childId}
+                          shape={shape}
+                          isSelected={isShapeSelected}
+                          onMouseDown={(e) => handleShapeMouseDown(e, childId)}
+                          onTouchStart={(e) => handleShapeMouseDown(e, childId)}
+                          onDoubleClick={(e) => handleShapeDoubleClick(e, childId)}
+                          onScaleStart={(e, corner) => handleShapeScaleStart(e, childId, corner)}
+                          onRotateStart={(e) => handleShapeRotateStart(e, childId)}
+                          onPointDrag={(index, newX, newY) => updateBlobControlPoint(childId, index, newX, newY)}
+                          onHandleDrag={(index, handleType, offsetX, offsetY) => updateBlobHandle(childId, index, handleType, offsetX, offsetY)}
+                          onDragEnd={() => commitBlobEdit()}
+                          selectedPointIndex={childId === selectedShapeId ? selectedPointIndex : null}
+                          onPointSelect={(index) => setSelectedPointIndex(index)}
+                          onPointDelete={(index) => removePointFromPath(childId, index)}
+                        />
+                      );
+                    }
+
+                    if (shape.shapeType === 'path') {
+                      return (
+                        <PathElement
+                          key={childId}
+                          shape={shape}
+                          isSelected={isShapeSelected}
+                          onMouseDown={(e) => handleShapeMouseDown(e, childId)}
+                          onTouchStart={(e) => handleShapeMouseDown(e, childId)}
+                          onDoubleClick={(e) => handleShapeDoubleClick(e, childId)}
+                          onScaleStart={(e, corner) => handleShapeScaleStart(e, childId, corner)}
+                          onRotateStart={(e) => handleShapeRotateStart(e, childId)}
+                          onPointDrag={(index, newX, newY) => updatePathControlPoint(childId, index, newX, newY)}
+                          onHandleDrag={(index, handleType, offsetX, offsetY) => updatePathHandle(childId, index, handleType, offsetX, offsetY)}
+                          onDragEnd={() => commitPathEdit()}
+                          selectedPointIndex={childId === selectedShapeId ? selectedPointIndex : null}
+                          onPointSelect={(index) => setSelectedPointIndex(index)}
+                          onPointDelete={(index) => removePointFromPath(childId, index)}
+                        />
+                      );
+                    }
+
+                    return (
+                      <ShapeElement
+                        key={childId}
+                        shape={shape}
+                        isSelected={isShapeSelected}
+                        onMouseDown={(e) => handleShapeMouseDown(e, childId)}
+                        onTouchStart={(e) => handleShapeMouseDown(e, childId)}
+                        onDoubleClick={(e) => handleShapeDoubleClick(e, childId)}
+                        onScaleStart={(e, corner) => handleShapeScaleStart(e, childId, corner)}
+                        onRotateStart={(e) => handleShapeRotateStart(e, childId)}
+                      />
+                    );
+                  }
+
+                  // Render text children
+                  if (childId.startsWith('text-')) {
+                    const text = texts[childId];
+                    if (!text) return null;
+                    if (text.visible === false) return null;
+
+                    return (
+                      <TextElement
+                        key={childId}
+                        text={text}
+                        isSelected={childId === selectedTextId}
+                        isEditing={childId === editingTextId}
+                        onMouseDown={(e) => handleTextMouseDown(e, childId)}
+                        onTouchStart={(e) => handleTextMouseDown(e, childId)}
+                        onDoubleClick={(e) => handleTextDoubleClick(e, childId)}
+                        onScaleStart={(e, corner) => handleTextScaleStart(e, childId, corner)}
+                        onRotateStart={(e) => handleTextRotateStart(e, childId)}
+                        onContentChange={(content) => updateTextContent(childId, content)}
+                        onEditComplete={() => stopEditingText()}
+                      />
+                    );
+                  }
+
+                  return null;
+                })}
+              </g>
+            );
+          }
+
           return null;
         })}
 
