@@ -84,7 +84,8 @@ function LayersPanel() {
   }, [menuOpenId]);
 
   // Display order is reversed (top layer appears first in UI)
-  const displayOrder = [...elementOrder].reverse();
+  // Filter out groups since they have their own section
+  const displayOrder = [...elementOrder].filter(id => !id.startsWith('group-')).reverse();
 
   // Get element details
   const getElementInfo = (elementId) => {
@@ -393,7 +394,8 @@ function LayersPanel() {
     setMenuOpenId(menuOpenId === elementId ? null : elementId);
   };
 
-  if (elementOrder.length === 0) {
+  // Show empty state only if there are no elements at all (not counting groups)
+  if (displayOrder.length === 0 && Object.keys(groups).length === 0) {
     return (
       <div className="layers-panel layers-panel--empty">
         <div className="layers-panel__empty-state">
@@ -411,7 +413,7 @@ function LayersPanel() {
     <div className="layers-panel">
       <div className="layers-panel__header">
         <h4>Layers</h4>
-        <span className="layers-panel__count">{elementOrder.length}</span>
+        <span className="layers-panel__count">{displayOrder.length}</span>
       </div>
 
       <div className="layers-panel__hint">

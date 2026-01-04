@@ -380,15 +380,17 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   };
 
   // Handle mouse/touch down on shape (start drag)
-  // Helper to find which group a shape belongs to
-  const findGroupForShape = (shapeId) => {
+  // Helper to find which group an element belongs to
+  const findGroupForElement = (elementId) => {
     for (const [groupId, group] of Object.entries(groups)) {
-      if (group.childIds.includes(shapeId)) {
+      if (group.childIds.includes(elementId)) {
         return groupId;
       }
     }
     return null;
   };
+  // Alias for backward compatibility
+  const findGroupForShape = findGroupForElement;
 
   const handleShapeMouseDown = (e, shapeId) => {
     e.stopPropagation();
@@ -563,6 +565,32 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
 
     // Don't start drag if already editing this text
     if (editingTextId === textId) return;
+
+    // Check if this text belongs to a group
+    const parentGroupId = findGroupForElement(textId);
+
+    // If text is in a group and we're NOT editing that group, select the group instead
+    if (parentGroupId && editingGroupId !== parentGroupId) {
+      // Select the group, not the individual text
+      selectGroup(parentGroupId);
+
+      const group = groups[parentGroupId];
+      if (group?.locked) return;
+
+      // Handle both mouse and touch events
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const svgPoint = screenToSVG(clientX, clientY);
+
+      // Start dragging the group
+      setDragStart({
+        x: svgPoint.x - group.bounds.x,
+        y: svgPoint.y - group.bounds.y
+      });
+      setDragGroupId(parentGroupId);
+      setIsDragging(true);
+      return;
+    }
 
     selectText(textId);
 

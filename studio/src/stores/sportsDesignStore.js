@@ -2703,16 +2703,32 @@ export const useSportsDesignStore = create(
 
         for (const childId of childIds) {
           // Check shapes
-          const shape = state.shapes[childId];
-          if (shape) {
-            const x = shape.position.x;
-            const y = shape.position.y;
-            minX = Math.min(minX, x);
-            minY = Math.min(minY, y);
-            maxX = Math.max(maxX, x + shape.width_mm);
-            maxY = Math.max(maxY, y + shape.height_mm);
+          if (childId.startsWith('shape-')) {
+            const shape = state.shapes[childId];
+            if (shape) {
+              const x = shape.position.x;
+              const y = shape.position.y;
+              minX = Math.min(minX, x);
+              minY = Math.min(minY, y);
+              maxX = Math.max(maxX, x + shape.width_mm);
+              maxY = Math.max(maxY, y + shape.height_mm);
+            }
           }
-          // Could add other element types (texts, motifs) here
+          // Check text elements
+          else if (childId.startsWith('text-')) {
+            const text = state.texts[childId];
+            if (text) {
+              const x = text.position.x;
+              const y = text.position.y;
+              // Text elements have width_mm and height_mm
+              const width = text.width_mm || 1000; // Default width if not set
+              const height = text.height_mm || 500; // Default height if not set
+              minX = Math.min(minX, x);
+              minY = Math.min(minY, y);
+              maxX = Math.max(maxX, x + width);
+              maxY = Math.max(maxY, y + height);
+            }
+          }
         }
 
         if (minX === Infinity) return { x: 0, y: 0, width: 0, height: 0 };
@@ -2841,14 +2857,26 @@ export const useSportsDesignStore = create(
 
         set((state) => {
           const updatedShapes = { ...state.shapes };
+          const updatedTexts = { ...state.texts };
 
           for (const childId of group.childIds) {
-            if (updatedShapes[childId]) {
+            // Move shape children
+            if (childId.startsWith('shape-') && updatedShapes[childId]) {
               updatedShapes[childId] = {
                 ...updatedShapes[childId],
                 position: {
                   x: updatedShapes[childId].position.x + deltaX,
                   y: updatedShapes[childId].position.y + deltaY
+                }
+              };
+            }
+            // Move text children
+            else if (childId.startsWith('text-') && updatedTexts[childId]) {
+              updatedTexts[childId] = {
+                ...updatedTexts[childId],
+                position: {
+                  x: updatedTexts[childId].position.x + deltaX,
+                  y: updatedTexts[childId].position.y + deltaY
                 }
               };
             }
@@ -2863,6 +2891,7 @@ export const useSportsDesignStore = create(
 
           return {
             shapes: updatedShapes,
+            texts: updatedTexts,
             groups: {
               ...state.groups,
               [groupId]: { ...group, bounds: newBounds }
@@ -2883,23 +2912,47 @@ export const useSportsDesignStore = create(
 
         set((state) => {
           const updatedShapes = { ...state.shapes };
+          const updatedTexts = { ...state.texts };
 
           for (const childId of group.childIds) {
-            const shape = updatedShapes[childId];
-            if (shape) {
-              // Scale position relative to origin
-              const relX = shape.position.x - origin.x;
-              const relY = shape.position.y - origin.y;
+            // Scale shape children
+            if (childId.startsWith('shape-')) {
+              const shape = updatedShapes[childId];
+              if (shape) {
+                // Scale position relative to origin
+                const relX = shape.position.x - origin.x;
+                const relY = shape.position.y - origin.y;
 
-              updatedShapes[childId] = {
-                ...shape,
-                position: {
-                  x: origin.x + relX * scaleX,
-                  y: origin.y + relY * scaleY
-                },
-                width_mm: shape.width_mm * scaleX,
-                height_mm: shape.height_mm * scaleY
-              };
+                updatedShapes[childId] = {
+                  ...shape,
+                  position: {
+                    x: origin.x + relX * scaleX,
+                    y: origin.y + relY * scaleY
+                  },
+                  width_mm: shape.width_mm * scaleX,
+                  height_mm: shape.height_mm * scaleY
+                };
+              }
+            }
+            // Scale text children
+            else if (childId.startsWith('text-')) {
+              const text = updatedTexts[childId];
+              if (text) {
+                // Scale position relative to origin
+                const relX = text.position.x - origin.x;
+                const relY = text.position.y - origin.y;
+
+                updatedTexts[childId] = {
+                  ...text,
+                  position: {
+                    x: origin.x + relX * scaleX,
+                    y: origin.y + relY * scaleY
+                  },
+                  width_mm: (text.width_mm || 1000) * scaleX,
+                  height_mm: (text.height_mm || 500) * scaleY,
+                  fontSize: (text.fontSize || 200) * Math.min(scaleX, scaleY)
+                };
+              }
             }
           }
 
@@ -2908,6 +2961,7 @@ export const useSportsDesignStore = create(
 
           return {
             shapes: updatedShapes,
+            texts: updatedTexts,
             groups: {
               ...state.groups,
               [groupId]: { ...group, bounds: newBounds }
