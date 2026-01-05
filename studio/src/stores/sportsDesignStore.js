@@ -164,9 +164,6 @@ const initialState = {
   // Selected text for manipulation
   selectedTextId: null,
 
-  // Currently editing text (inline editing mode)
-  editingTextId: null,
-
   // Exclusion zones (buildings, planters, obstacles that subtract from surface)
   exclusionZones: {},  // { [zoneId]: ExclusionZoneObject }
 
@@ -783,9 +780,9 @@ export const useSportsDesignStore = create(
         const { propertiesPanelUserClosed } = get();
         // Only auto-open properties panel if user hasn't manually closed it
         if (!propertiesPanelUserClosed) {
-          set({ selectedCourtId: courtId, selectedTrackId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null, editingTextId: null, showPropertiesPanel: true });
+          set({ selectedCourtId: courtId, selectedTrackId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null, showPropertiesPanel: true });
         } else {
-          set({ selectedCourtId: courtId, selectedTrackId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null, editingTextId: null });
+          set({ selectedCourtId: courtId, selectedTrackId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null });
         }
       },
 
@@ -1150,9 +1147,9 @@ export const useSportsDesignStore = create(
       selectTrack: (trackId) => {
         const { propertiesPanelUserClosed } = get();
         if (!propertiesPanelUserClosed) {
-          set({ selectedTrackId: trackId, selectedCourtId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null, editingTextId: null, showPropertiesPanel: true });
+          set({ selectedTrackId: trackId, selectedCourtId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null, showPropertiesPanel: true });
         } else {
-          set({ selectedTrackId: trackId, selectedCourtId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null, editingTextId: null });
+          set({ selectedTrackId: trackId, selectedCourtId: null, selectedMotifId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null });
         }
       },
 
@@ -1351,9 +1348,9 @@ export const useSportsDesignStore = create(
       selectMotif: (motifId) => {
         const { propertiesPanelUserClosed } = get();
         if (!propertiesPanelUserClosed) {
-          set({ selectedMotifId: motifId, selectedCourtId: null, selectedTrackId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null, editingTextId: null, showPropertiesPanel: true });
+          set({ selectedMotifId: motifId, selectedCourtId: null, selectedTrackId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null, showPropertiesPanel: true });
         } else {
-          set({ selectedMotifId: motifId, selectedCourtId: null, selectedTrackId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null, editingTextId: null });
+          set({ selectedMotifId: motifId, selectedCourtId: null, selectedTrackId: null, selectedShapeId: null, selectedTextId: null, selectedExclusionZoneId: null });
         }
       },
 
@@ -1950,7 +1947,6 @@ export const useSportsDesignStore = create(
             selectedMotifId: null,
             selectedTextId: null,
             selectedExclusionZoneId: null,
-            editingTextId: null,
             showPropertiesPanel: true
           });
         } else {
@@ -1960,8 +1956,7 @@ export const useSportsDesignStore = create(
             selectedTrackId: null,
             selectedMotifId: null,
             selectedTextId: null,
-            selectedExclusionZoneId: null,
-            editingTextId: null
+            selectedExclusionZoneId: null
           });
         }
       },
@@ -2277,9 +2272,11 @@ export const useSportsDesignStore = create(
         const newText = {
           id: textId,
           type: 'text',
-          content: '',
+          content: 'Text',  // Default content instead of empty
           fontFamily: 'Open Sans, sans-serif',
-          fontSize_mm: 500,
+          fontSize_mm: 500,  // Base font size for rendering
+          scale_x: 1,        // Scale factors for sizing (like motifs)
+          scale_y: 1,
           fontWeight: 'normal',
           fontStyle: 'normal',
           textAlign: 'left',
@@ -2307,11 +2304,11 @@ export const useSportsDesignStore = create(
           },
           elementOrder: [...state.elementOrder, textId],
           selectedTextId: textId,
-          editingTextId: textId, // Start in editing mode
           selectedCourtId: null,
           selectedTrackId: null,
           selectedMotifId: null,
-          selectedShapeId: null
+          selectedShapeId: null,
+          showPropertiesPanel: true  // Open properties panel for editing
         }));
         get().addToHistory();
       },
@@ -2322,8 +2319,7 @@ export const useSportsDesignStore = create(
           return {
             texts: remainingTexts,
             elementOrder: state.elementOrder.filter(id => id !== textId),
-            selectedTextId: state.selectedTextId === textId ? null : state.selectedTextId,
-            editingTextId: state.editingTextId === textId ? null : state.editingTextId
+            selectedTextId: state.selectedTextId === textId ? null : state.selectedTextId
           };
         });
         get().addToHistory();
@@ -2356,19 +2352,9 @@ export const useSportsDesignStore = create(
       deselectText: () => {
         set({
           selectedTextId: null,
-          editingTextId: null,
           showPropertiesPanel: false,
           propertiesPanelUserClosed: true
         });
-      },
-
-      startEditingText: (textId) => {
-        set({ editingTextId: textId });
-      },
-
-      stopEditingText: () => {
-        set({ editingTextId: null });
-        get().addToHistory();
       },
 
       updateTextContent: (textId, content) => {
@@ -2395,13 +2381,33 @@ export const useSportsDesignStore = create(
         }));
       },
 
-      updateTextFontSize: (textId, fontSize_mm) => {
+      updateTextScale: (textId, scale_x, scale_y) => {
         set((state) => ({
           texts: {
             ...state.texts,
             [textId]: {
               ...state.texts[textId],
-              fontSize_mm: Math.max(50, fontSize_mm) // Minimum 50mm
+              scale_x: Math.max(0.01, scale_x),  // Minimum scale 1%
+              scale_y: Math.max(0.01, scale_y)
+            }
+          }
+        }));
+      },
+
+      // Keep updateTextFontSize for backward compatibility, converts to scale
+      updateTextFontSize: (textId, fontSize_mm) => {
+        const text = get().texts[textId];
+        if (!text) return;
+        // Convert font size change to scale change
+        const baseSize = 500;  // Base font size
+        const scale = fontSize_mm / baseSize;
+        set((state) => ({
+          texts: {
+            ...state.texts,
+            [textId]: {
+              ...state.texts[textId],
+              scale_x: Math.max(0.01, scale),
+              scale_y: Math.max(0.01, scale)
             }
           }
         }));
@@ -2564,8 +2570,7 @@ export const useSportsDesignStore = create(
           selectedTrackId: null,
           selectedMotifId: null,
           selectedShapeId: null,
-          selectedTextId: null,
-          editingTextId: null
+          selectedTextId: null
         }));
         get().addToHistory();
       },
@@ -2640,7 +2645,6 @@ export const useSportsDesignStore = create(
             selectedMotifId: null,
             selectedShapeId: null,
             selectedTextId: null,
-            editingTextId: null,
             showPropertiesPanel: true
           });
         } else {
@@ -2650,8 +2654,7 @@ export const useSportsDesignStore = create(
             selectedTrackId: null,
             selectedMotifId: null,
             selectedShapeId: null,
-            selectedTextId: null,
-            editingTextId: null
+            selectedTextId: null
           });
         }
       },
@@ -2857,7 +2860,6 @@ export const useSportsDesignStore = create(
           selectedMotifId: null,
           selectedTextId: null,
           selectedExclusionZoneId: null,
-          editingTextId: null,
           editingGroupId: null,
           selectedElementIds: [],
           showPropertiesPanel: !propertiesPanelUserClosed
@@ -4187,7 +4189,6 @@ export const useSportsDesignStore = create(
           selectedExclusionZoneId: null,
           selectedGroupId: null,
           editingGroupId: null,
-          editingTextId: null,
           history: [],
           historyIndex: -1
         });

@@ -1,43 +1,40 @@
 // TPV Studio - Text Element Component
-// Renders a text label on the canvas with inline editing support
+// Renders a text label on the canvas with scale-based sizing
 
-import React, { useMemo, useRef, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { measureText } from '../../lib/sports/textUtils';
+
+// Base font size for text rendering (scale is applied on top)
+const BASE_FONT_SIZE = 500;
 
 /**
  * Individual text element component
- * Renders text with inline editing on double-click
+ * Renders text with scale transform for sizing (no inline editing)
  *
  * @param {Object} props - Component props
  * @param {Object} props.text - Text data from store
  * @param {boolean} props.isSelected - Whether this text is selected
- * @param {boolean} props.isEditing - Whether text is in inline edit mode
  * @param {Function} props.onMouseDown - Handler for mouse down (drag start)
  * @param {Function} props.onTouchStart - Handler for touch start (drag start on mobile)
- * @param {Function} props.onDoubleClick - Handler for double click (enter edit mode)
+ * @param {Function} props.onDoubleClick - Handler for double click (opens properties panel)
  * @param {Function} props.onScaleStart - Handler for scale handle drag start
  * @param {Function} props.onRotateStart - Handler for rotation handle drag start
- * @param {Function} props.onContentChange - Handler for text content changes
- * @param {Function} props.onEditComplete - Handler when editing is complete
  */
 function TextElement({
   text,
   isSelected,
-  isEditing,
   onMouseDown,
   onTouchStart,
   onDoubleClick,
   onScaleStart,
-  onRotateStart,
-  onContentChange,
-  onEditComplete
+  onRotateStart
 }) {
-  const inputRef = useRef(null);
-
   const {
     content,
     fontFamily,
     fontSize_mm,
+    scale_x = 1,
+    scale_y = 1,
     fontWeight,
     fontStyle,
     textAlign,
@@ -48,12 +45,21 @@ function TextElement({
     strokeWidth_mm
   } = text;
 
-  // Calculate text bounding box for handles and hit area
-  const textBounds = useMemo(() => {
-    return measureText(content, fontFamily, fontSize_mm, fontWeight, fontStyle);
-  }, [content, fontFamily, fontSize_mm, fontWeight, fontStyle]);
+  // Use base font size for measurement, then apply scale
+  const baseFontSize = fontSize_mm || BASE_FONT_SIZE;
 
-  // Calculate offset based on text alignment
+  // Calculate text bounding box for handles and hit area (at base size)
+  const textBounds = useMemo(() => {
+    return measureText(content || 'Text', fontFamily, baseFontSize, fontWeight, fontStyle);
+  }, [content, fontFamily, baseFontSize, fontWeight, fontStyle]);
+
+  // Scaled bounds (after applying scale transform)
+  const scaledBounds = useMemo(() => ({
+    width: textBounds.width * scale_x,
+    height: baseFontSize * 1.2 * scale_y
+  }), [textBounds.width, baseFontSize, scale_x, scale_y]);
+
+  // Calculate offset based on text alignment (at base size, scale applied in transform)
   const alignOffset = useMemo(() => {
     switch (textAlign) {
       case 'center': return -textBounds.width / 2;
@@ -62,126 +68,75 @@ function TextElement({
     }
   }, [textAlign, textBounds.width]);
 
-  // Build transform string - rotate around text position
-  const transform = `translate(${position.x}, ${position.y}) rotate(${rotation || 0})`;
+  // Build transform string - translate, rotate, then scale
+  const transform = `translate(${position.x}, ${position.y}) rotate(${rotation || 0}) scale(${scale_x}, ${scale_y})`;
 
-  // Focus input when entering edit mode
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [isEditing]);
-
-  // Handle key down in input
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' || e.key === 'Escape') {
-      e.preventDefault();
-      onEditComplete?.();
-    }
-  };
-
-  // Display text (placeholder if empty)
-  const displayContent = content || 'Double-click to edit';
+  // Display text (show 'Text' if empty for visibility)
+  const displayContent = content || 'Text';
 
   return (
     <g
-      className={`text-element ${isSelected ? 'text-element--selected' : ''} ${isEditing ? 'text-element--editing' : ''}`}
+      className={`text-element ${isSelected ? 'text-element--selected' : ''}`}
       transform={transform}
     >
-      {isEditing ? (
-        // Inline edit mode - foreignObject with input
-        <foreignObject
-          x={alignOffset - 10}
-          y={-fontSize_mm * 0.85}
-          width={Math.max(textBounds.width + 200, 500)}
-          height={fontSize_mm * 1.5}
-          style={{ overflow: 'visible' }}
-        >
-          <input
-            ref={inputRef}
-            type="text"
-            value={content}
-            onChange={(e) => onContentChange?.(e.target.value)}
-            onBlur={onEditComplete}
-            onKeyDown={handleKeyDown}
-            style={{
-              fontFamily,
-              fontSize: `${fontSize_mm}px`,
-              fontWeight,
-              fontStyle,
-              color: fillColor?.hex || '#1C1C1C',
-              background: 'rgba(255,255,255,0.95)',
-              border: '4px solid #3b82f6',
-              borderRadius: '4px',
-              outline: 'none',
-              padding: '4px 8px',
-              width: '100%',
-              boxSizing: 'border-box',
-              lineHeight: 1
-            }}
-          />
-        </foreignObject>
-      ) : (
-        <>
-          {/* Display mode - SVG text with optional stroke */}
-          <text
-            x="0"
-            y="0"
-            fontFamily={fontFamily}
-            fontSize={fontSize_mm}
-            fontWeight={fontWeight}
-            fontStyle={fontStyle}
-            textAnchor={textAlign === 'center' ? 'middle' : textAlign === 'right' ? 'end' : 'start'}
-            fill={fillColor?.hex || '#1C1C1C'}
-            stroke={strokeColor?.hex || 'none'}
-            strokeWidth={strokeWidth_mm || 0}
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            paintOrder="stroke fill"
-            style={{ cursor: 'move', userSelect: 'none' }}
-            pointerEvents="none"
-          >
-            {displayContent}
-          </text>
+      {/* Display mode - SVG text with optional stroke */}
+      <text
+        x="0"
+        y="0"
+        fontFamily={fontFamily}
+        fontSize={baseFontSize}
+        fontWeight={fontWeight}
+        fontStyle={fontStyle}
+        textAnchor={textAlign === 'center' ? 'middle' : textAlign === 'right' ? 'end' : 'start'}
+        fill={fillColor?.hex || '#1C1C1C'}
+        stroke={strokeColor?.hex || 'none'}
+        strokeWidth={strokeWidth_mm || 0}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        paintOrder="stroke fill"
+        style={{ cursor: 'move', userSelect: 'none' }}
+        pointerEvents="none"
+      >
+        {displayContent}
+      </text>
 
-          {/* Invisible hit area for interaction */}
-          <rect
-            x={alignOffset - 20}
-            y={-fontSize_mm * 0.85}
-            width={textBounds.width + 40}
-            height={fontSize_mm * 1.2}
-            fill="transparent"
-            onMouseDown={onMouseDown}
-            onTouchStart={onTouchStart}
-            onDoubleClick={onDoubleClick}
-            style={{ cursor: 'move' }}
-          />
-        </>
-      )}
+      {/* Invisible hit area for interaction (at base size, scaled by transform) */}
+      <rect
+        x={alignOffset - 20}
+        y={-baseFontSize * 0.85}
+        width={textBounds.width + 40}
+        height={baseFontSize * 1.2}
+        fill="transparent"
+        onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart}
+        onDoubleClick={onDoubleClick}
+        style={{ cursor: 'move' }}
+      />
 
-      {/* Selection indicator */}
-      {isSelected && !isEditing && (
+      {/* Selection indicator (at base size, scaled by transform) */}
+      {isSelected && (
         <rect
           x={alignOffset - 40}
-          y={-fontSize_mm - 40}
+          y={-baseFontSize - 40}
           width={textBounds.width + 80}
-          height={fontSize_mm * 1.2 + 80}
+          height={baseFontSize * 1.2 + 80}
           fill="none"
           stroke="#3b82f6"
-          strokeWidth="60"
-          strokeDasharray="300 300"
+          strokeWidth={60 / Math.max(scale_x, scale_y)}
+          strokeDasharray={`${300 / Math.max(scale_x, scale_y)} ${300 / Math.max(scale_x, scale_y)}`}
           opacity="0.7"
           pointerEvents="none"
         />
       )}
 
       {/* Resize/rotate handles when selected */}
-      {isSelected && !isEditing && (
+      {isSelected && (
         <TextHandles
           bounds={textBounds}
-          fontSize={fontSize_mm}
+          fontSize={baseFontSize}
           alignOffset={alignOffset}
+          scale_x={scale_x}
+          scale_y={scale_y}
           onScaleStart={onScaleStart}
           onRotateStart={onRotateStart}
         />
@@ -192,21 +147,25 @@ function TextElement({
 
 /**
  * Resize and rotation handles for selected text
- * Corner handles for font size scaling, top-center handle for rotation
+ * Corner handles for scaling, top-center handle for rotation
  */
-function TextHandles({ bounds, fontSize, alignOffset, onScaleStart, onRotateStart }) {
+function TextHandles({ bounds, fontSize, alignOffset, scale_x, scale_y, onScaleStart, onRotateStart }) {
   const handleSize = Math.min(bounds.width, fontSize) * 0.15;
   const minHandleSize = 100;
   const maxHandleSize = 300;
-  const size = Math.max(minHandleSize, Math.min(maxHandleSize, handleSize));
+  const baseSize = Math.max(minHandleSize, Math.min(maxHandleSize, handleSize));
 
-  // Bounding box dimensions for text
+  // Adjust handle size inversely to scale so handles stay consistent screen size
+  const size = baseSize / Math.max(scale_x, scale_y);
+  const strokeWidth = 15 / Math.max(scale_x, scale_y);
+
+  // Bounding box dimensions for text (at base size)
   const boxX = alignOffset - 20;
   const boxY = -fontSize - 20;
   const boxWidth = bounds.width + 40;
   const boxHeight = fontSize * 1.2 + 40;
 
-  // Corner handles for scaling (affects font size)
+  // Corner handles for scaling
   const scaleHandles = [
     { x: boxX - size / 2, y: boxY - size / 2, corner: 'nw', cursor: 'nwse-resize' },
     { x: boxX + boxWidth - size / 2, y: boxY - size / 2, corner: 'ne', cursor: 'nesw-resize' },
@@ -231,7 +190,7 @@ function TextHandles({ bounds, fontSize, alignOffset, onScaleStart, onRotateStar
           height={size}
           fill="#3b82f6"
           stroke="#fff"
-          strokeWidth="15"
+          strokeWidth={strokeWidth}
           rx={size / 4}
           style={{ cursor: handle.cursor }}
           pointerEvents="all"
@@ -253,7 +212,7 @@ function TextHandles({ bounds, fontSize, alignOffset, onScaleStart, onRotateStar
         x2={centerX}
         y2={boxY - rotateHandleDistance + rotateHandleSize / 2}
         stroke="#3b82f6"
-        strokeWidth="25"
+        strokeWidth={25 / Math.max(scale_x, scale_y)}
         pointerEvents="none"
       />
 
@@ -264,7 +223,7 @@ function TextHandles({ bounds, fontSize, alignOffset, onScaleStart, onRotateStar
         r={rotateHandleSize}
         fill="#3b82f6"
         stroke="#fff"
-        strokeWidth="15"
+        strokeWidth={strokeWidth}
         style={{ cursor: 'grab' }}
         pointerEvents="all"
         onMouseDown={(e) => {
@@ -284,7 +243,7 @@ function TextHandles({ bounds, fontSize, alignOffset, onScaleStart, onRotateStar
             ${centerX + rotateHandleSize * 0.4} ${boxY - rotateHandleDistance}`}
         fill="none"
         stroke="#fff"
-        strokeWidth="20"
+        strokeWidth={20 / Math.max(scale_x, scale_y)}
         strokeLinecap="round"
         pointerEvents="none"
       />

@@ -4,7 +4,7 @@ import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { calculateTrackGeometry, calculateStaggeredStarts } from '../../lib/sports/trackGeometry.js';
 import { getShapeDisplayName, getShapeIcon } from '../../lib/sports/shapeGeometry.js';
 import { BLOB_STYLES } from '../../lib/sports/blobGeometry.js';
-import { getAvailableFonts } from '../../lib/sports/textUtils.js';
+import { getAvailableFonts, measureText } from '../../lib/sports/textUtils.js';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import { FEATURE_FLAGS } from '../../lib/constants.js';
 import './PropertiesPanel.css';
@@ -2585,7 +2585,7 @@ function TextPropertiesPanel({ text, textId }) {
   const {
     updateTextContent,
     updateTextPosition,
-    updateTextFontSize,
+    updateTextScale,
     updateTextFont,
     updateTextAlign,
     updateTextRotation,
@@ -2603,6 +2603,8 @@ function TextPropertiesPanel({ text, textId }) {
     content,
     fontFamily,
     fontSize_mm,
+    scale_x = 1,
+    scale_y = 1,
     fontWeight,
     fontStyle,
     textAlign,
@@ -2612,6 +2614,12 @@ function TextPropertiesPanel({ text, textId }) {
     strokeColor,
     strokeWidth_mm
   } = text;
+
+  // Calculate actual dimensions from base font size and scale
+  const baseFontSize = fontSize_mm || 500;
+  const baseBounds = measureText(content || 'Text', fontFamily, baseFontSize, fontWeight, fontStyle);
+  const actualWidth = Math.round(baseBounds.width * scale_x);
+  const actualHeight = Math.round(baseFontSize * 1.2 * scale_y);
 
   const fonts = getAvailableFonts();
 
@@ -2630,11 +2638,25 @@ function TextPropertiesPanel({ text, textId }) {
     });
   };
 
-  // Handle font size update
-  const handleFontSizeChange = (value) => {
+  // Handle width update (changes scale_x while keeping aspect ratio)
+  const handleWidthChange = (value) => {
     const numValue = parseFloat(value);
-    if (isNaN(numValue) || numValue < 50) return;
-    updateTextFontSize(textId, numValue);
+    if (isNaN(numValue) || numValue < 10) return;
+    // Calculate new scale_x from desired width
+    const newScale_x = numValue / baseBounds.width;
+    // Keep aspect ratio (scale both uniformly)
+    updateTextScale(textId, newScale_x, newScale_x);
+  };
+
+  // Handle height update (changes scale_y while keeping aspect ratio)
+  const handleHeightChange = (value) => {
+    const numValue = parseFloat(value);
+    if (isNaN(numValue) || numValue < 10) return;
+    // Calculate new scale_y from desired height
+    const baseHeight = baseFontSize * 1.2;
+    const newScale_y = numValue / baseHeight;
+    // Keep aspect ratio (scale both uniformly)
+    updateTextScale(textId, newScale_y, newScale_y);
   };
 
   // Handle font family change
@@ -2681,9 +2703,9 @@ function TextPropertiesPanel({ text, textId }) {
       hex: tpvColor.hex,
       name: tpvColor.name
     });
-    // Set a default width if none exists
+    // Set a default width if none exists (5% of visual font size)
     if (!strokeWidth_mm || strokeWidth_mm === 0) {
-      updateTextStrokeWidth(textId, Math.round(fontSize_mm * 0.05)); // 5% of font size
+      updateTextStrokeWidth(textId, Math.round(baseFontSize * scale_y * 0.05));
     }
     setShowStrokeColorPicker(false);
   };
@@ -2774,32 +2796,37 @@ function TextPropertiesPanel({ text, textId }) {
             </select>
           </div>
 
-          {/* Font Size */}
+          {/* Size - Width and Height */}
           <div className="property-group">
-            <label>Font Size</label>
-            <div className="property-input-row">
-              <input
-                type="range"
-                min="100"
-                max="2000"
-                step="50"
-                value={fontSize_mm}
-                onChange={(e) => handleFontSizeChange(e.target.value)}
-                className="property-slider"
-              />
-              <div className="property-input-group property-input-group--compact">
+            <label>Size</label>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+              <div className="property-input-group property-input-group--compact" style={{ flex: 1 }}>
+                <span className="property-unit" style={{ marginRight: '0.25rem' }}>W</span>
                 <input
                   type="number"
-                  value={fontSize_mm.toFixed(0)}
-                  onChange={(e) => handleFontSizeChange(e.target.value)}
-                  min="50"
-                  step="50"
+                  value={actualWidth}
+                  onChange={(e) => handleWidthChange(e.target.value)}
+                  min="10"
+                  step="10"
+                  style={{ width: '70px' }}
+                />
+                <span className="property-unit">mm</span>
+              </div>
+              <div className="property-input-group property-input-group--compact" style={{ flex: 1 }}>
+                <span className="property-unit" style={{ marginRight: '0.25rem' }}>H</span>
+                <input
+                  type="number"
+                  value={actualHeight}
+                  onChange={(e) => handleHeightChange(e.target.value)}
+                  min="10"
+                  step="10"
+                  style={{ width: '70px' }}
                 />
                 <span className="property-unit">mm</span>
               </div>
             </div>
             <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '0.25rem' }}>
-              ≈ {(fontSize_mm / 1000).toFixed(2)}m height
+              ≈ {(actualWidth / 1000).toFixed(2)}m × {(actualHeight / 1000).toFixed(2)}m
             </div>
           </div>
 
@@ -3082,7 +3109,7 @@ function TextPropertiesPanel({ text, textId }) {
           {/* Tip */}
           <div className="property-group">
             <div className="property-hint" style={{ fontStyle: 'normal', color: '#64748b', fontSize: '0.75rem', marginTop: '1rem' }}>
-              💡 Tip: Double-click text on canvas to edit inline. Drag corners to change font size. Hold Shift while rotating to snap to 15° increments.
+              💡 Tip: Drag corners to resize text. Hold Shift while rotating to snap to 15° increments.
             </div>
           </div>
         </div>

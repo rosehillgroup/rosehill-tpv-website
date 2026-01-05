@@ -201,6 +201,8 @@ function serializeTexts(texts) {
         content: text.content,
         fontFamily: text.fontFamily,
         fontSize_mm: text.fontSize_mm,
+        scale_x: text.scale_x ?? 1,
+        scale_y: text.scale_y ?? 1,
         fontWeight: text.fontWeight,
         fontStyle: text.fontStyle,
         textAlign: text.textAlign,
@@ -223,6 +225,9 @@ export function deserializeSportsDesign(savedData) {
   // Handle both wrapped (from API) and unwrapped formats
   const data = savedData.design_data || savedData;
 
+  // Migrate texts to include scale_x/scale_y if missing
+  const migratedTexts = migrateTexts(data.texts || {});
+
   return {
     surface: data.surface || {
       width_mm: data.dimensions?.width_mm || 50000,
@@ -234,7 +239,7 @@ export function deserializeSportsDesign(savedData) {
     motifs: data.motifs || {},
     exclusionZones: data.exclusionZones || {},
     shapes: data.shapes || {},
-    texts: data.texts || {},
+    texts: migratedTexts,
     elementOrder: data.elementOrder || [],
     customMarkings: data.customMarkings || [],
     backgroundZones: data.backgroundZones || [],
@@ -242,6 +247,41 @@ export function deserializeSportsDesign(savedData) {
     description: data.description || savedData.description || '',
     tags: data.tags || savedData.tags || []
   };
+}
+
+/**
+ * Migrate text elements from older format (fontSize-based) to new format (scale-based)
+ * Preserves visual appearance by converting fontSize_mm to scale factors
+ */
+function migrateTexts(texts) {
+  if (!texts) return {};
+
+  const BASE_FONT_SIZE = 500; // Default base font size
+
+  return Object.fromEntries(
+    Object.entries(texts).map(([id, text]) => {
+      // If scale_x and scale_y already exist, use them as-is
+      if (text.scale_x !== undefined && text.scale_y !== undefined) {
+        return [id, text];
+      }
+
+      // Migration: convert fontSize_mm to scale factors
+      // Old designs used fontSize_mm directly for sizing
+      // New approach uses base font size (500mm) with scale transform
+      const oldFontSize = text.fontSize_mm || BASE_FONT_SIZE;
+      const scale = oldFontSize / BASE_FONT_SIZE;
+
+      return [
+        id,
+        {
+          ...text,
+          fontSize_mm: BASE_FONT_SIZE, // Reset to base font size
+          scale_x: scale,
+          scale_y: scale
+        }
+      ];
+    })
+  );
 }
 
 /**

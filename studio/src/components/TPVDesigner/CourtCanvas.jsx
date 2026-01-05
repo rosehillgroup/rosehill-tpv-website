@@ -121,7 +121,6 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     selectedShapeId,
     selectedTextId,
     selectedExclusionZoneId,
-    editingTextId,
     snapToGrid,
     gridSize_mm,
     selectCourt,
@@ -136,8 +135,6 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     deselectText,
     selectExclusionZone,
     deselectExclusionZone,
-    startEditingText,
-    stopEditingText,
     updateCourtPosition,
     updateTrackPosition,
     updateMotifPosition,
@@ -147,9 +144,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     updateShapeDimensions,
     updateShapeRotation,
     updateTextPosition,
-    updateTextFontSize,
+    updateTextScale,
     updateTextRotation,
-    updateTextContent,
+    showPropertiesPanel,
+    setShowPropertiesPanel,
     updateExclusionZonePosition,
     updateExclusionZoneDimensions,
     updateExclusionZoneRotation,
@@ -621,9 +619,6 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const handleTextMouseDown = (e, textId) => {
     e.stopPropagation();
 
-    // Don't start drag if already editing this text
-    if (editingTextId === textId) return;
-
     // Check if this text belongs to a group
     const parentGroupId = findGroupForElement(textId);
 
@@ -669,14 +664,14 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     setIsDragging(true);
   };
 
-  // Handle double-click on text (enter inline edit mode)
+  // Handle double-click on text (open properties panel for editing)
   const handleTextDoubleClick = (e, textId) => {
     e.stopPropagation();
     selectText(textId);
-    startEditingText(textId);
+    setShowPropertiesPanel(true);
   };
 
-  // Handle scale start on text corner handle (changes font size)
+  // Handle scale start on text corner handle (changes scale transform)
   const handleTextScaleStart = (e, textId, corner) => {
     e.stopPropagation();
 
@@ -687,26 +682,38 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
     const svgPoint = screenToSVG(clientX, clientY);
-    const bounds = measureText(text.content, text.fontFamily, text.fontSize_mm, text.fontWeight, text.fontStyle);
 
-    // Calculate text bounds based on alignment
+    // Get base bounds at the base font size (before scale transform)
+    const baseFontSize = text.fontSize_mm || 500;
+    const baseBounds = measureText(text.content || 'Text', text.fontFamily, baseFontSize, text.fontWeight, text.fontStyle);
+
+    // Current scale factors
+    const scale_x = text.scale_x || 1;
+    const scale_y = text.scale_y || 1;
+
+    // Scaled bounds (actual visual size)
+    const scaledWidth = baseBounds.width * scale_x;
+    const scaledHeight = baseFontSize * 1.2 * scale_y;
+
+    // Calculate text box position based on alignment (at scaled size)
+    // The position is the text baseline anchor, box is calculated from there
     let boxX = text.position.x;
-    if (text.textAlign === 'center') boxX -= bounds.width / 2;
-    else if (text.textAlign === 'right') boxX -= bounds.width;
+    if (text.textAlign === 'center') boxX -= scaledWidth / 2;
+    else if (text.textAlign === 'right') boxX -= scaledWidth;
 
-    const boxY = text.position.y - text.fontSize_mm;
+    const boxY = text.position.y - baseFontSize * scale_y;
 
     // Calculate anchor point (opposite corner that stays fixed)
     let anchorPoint;
     switch (corner) {
       case 'nw':
-        anchorPoint = { x: boxX + bounds.width, y: boxY + text.fontSize_mm * 1.2 };
+        anchorPoint = { x: boxX + scaledWidth, y: boxY + scaledHeight };
         break;
       case 'ne':
-        anchorPoint = { x: boxX, y: boxY + text.fontSize_mm * 1.2 };
+        anchorPoint = { x: boxX, y: boxY + scaledHeight };
         break;
       case 'sw':
-        anchorPoint = { x: boxX + bounds.width, y: boxY };
+        anchorPoint = { x: boxX + scaledWidth, y: boxY };
         break;
       case 'se':
       default:
@@ -721,9 +728,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
 
     setScaleTextStart({
       initialDistance,
-      originalFontSize: text.fontSize_mm,
+      originalScale: { x: scale_x, y: scale_y },
       originalPosition: { ...text.position },
-      originalBounds: bounds,
+      baseBounds,
+      baseFontSize,
       textAlign: text.textAlign,
       corner,
       anchorPoint
@@ -1507,7 +1515,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     };
   }, [isRotatingShape, rotateShapeId, rotateShapeStart, updateShapeRotation]);
 
-  // Handle mouse/touch move for text scaling (font size)
+  // Handle mouse/touch move for text scaling (scale transform)
   useEffect(() => {
     if (!isScalingText || !scaleTextId || !scaleTextStart) return;
 
@@ -1525,28 +1533,22 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         Math.pow(svgPoint.y - scaleTextStart.anchorPoint.y, 2)
       );
 
-      // Calculate new font size based on distance ratio
+      // Calculate scale ratio from distance change
       const scaleRatio = currentDistance / scaleTextStart.initialDistance;
-      let newFontSize = scaleTextStart.originalFontSize * scaleRatio;
 
-      // Minimum font size of 50mm
-      newFontSize = Math.max(50, newFontSize);
+      // Apply ratio to original scale (uniform scaling)
+      const newScale_x = Math.max(0.01, scaleTextStart.originalScale.x * scaleRatio);
+      const newScale_y = Math.max(0.01, scaleTextStart.originalScale.y * scaleRatio);
 
-      // Round to whole mm
-      newFontSize = Math.round(newFontSize);
-
-      // Calculate new bounds (width scales proportionally with font size)
-      const actualScaleRatio = newFontSize / scaleTextStart.originalFontSize;
-      const newWidth = scaleTextStart.originalBounds.width * actualScaleRatio;
+      // Calculate new scaled dimensions
+      const { baseBounds, baseFontSize, corner, anchorPoint, textAlign } = scaleTextStart;
+      const newWidth = baseBounds.width * newScale_x;
+      const newHeight = baseFontSize * 1.2 * newScale_y;
 
       // Calculate new position to keep anchor point fixed
-      // Text position is at baseline, alignment affects where the anchor is
-      const { corner, anchorPoint, textAlign, originalPosition, originalBounds, originalFontSize } = scaleTextStart;
+      let newPosition = { ...scaleTextStart.originalPosition };
 
-      let newPosition = { ...originalPosition };
-
-      // Calculate the offset from position to anchor based on alignment and corner
-      // Then reverse-calculate new position from fixed anchor
+      // Calculate new position from fixed anchor based on corner and alignment
       switch (corner) {
         case 'nw': // Anchor at SE (bottom-right), text grows up-left
           if (textAlign === 'left') {
@@ -1556,7 +1558,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
           } else { // right
             newPosition.x = anchorPoint.x;
           }
-          newPosition.y = anchorPoint.y - newFontSize * 0.2; // baseline is ~0.2 from bottom
+          newPosition.y = anchorPoint.y - newHeight * 0.17; // baseline offset
           break;
         case 'ne': // Anchor at SW (bottom-left), text grows up-right
           if (textAlign === 'left') {
@@ -1566,7 +1568,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
           } else { // right
             newPosition.x = anchorPoint.x + newWidth;
           }
-          newPosition.y = anchorPoint.y - newFontSize * 0.2;
+          newPosition.y = anchorPoint.y - newHeight * 0.17;
           break;
         case 'sw': // Anchor at NE (top-right), text grows down-left
           if (textAlign === 'left') {
@@ -1576,7 +1578,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
           } else { // right
             newPosition.x = anchorPoint.x;
           }
-          newPosition.y = anchorPoint.y + newFontSize;
+          newPosition.y = anchorPoint.y + baseFontSize * newScale_y;
           break;
         case 'se': // Anchor at NW (top-left), text grows down-right
         default:
@@ -1587,11 +1589,11 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
           } else { // right
             newPosition.x = anchorPoint.x + newWidth;
           }
-          newPosition.y = anchorPoint.y + newFontSize;
+          newPosition.y = anchorPoint.y + baseFontSize * newScale_y;
           break;
       }
 
-      updateTextFontSize(scaleTextId, newFontSize);
+      updateTextScale(scaleTextId, newScale_x, newScale_y);
       updateTextPosition(scaleTextId, newPosition);
     };
 
@@ -1617,7 +1619,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       window.removeEventListener('touchend', handleEnd);
       window.removeEventListener('touchcancel', handleEnd);
     };
-  }, [isScalingText, scaleTextId, scaleTextStart, texts, updateTextFontSize, updateTextPosition]);
+  }, [isScalingText, scaleTextId, scaleTextStart, texts, updateTextScale, updateTextPosition]);
 
   // Handle mouse/touch move for text rotation
   useEffect(() => {
@@ -2519,14 +2521,11 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                 key={elementId}
                 text={text}
                 isSelected={elementId === selectedTextId}
-                isEditing={elementId === editingTextId}
                 onMouseDown={(e) => handleTextMouseDown(e, elementId)}
                 onTouchStart={(e) => handleTextMouseDown(e, elementId)}
                 onDoubleClick={(e) => handleTextDoubleClick(e, elementId)}
                 onScaleStart={(e, corner) => handleTextScaleStart(e, elementId, corner)}
                 onRotateStart={(e) => handleTextRotateStart(e, elementId)}
-                onContentChange={(content) => updateTextContent(elementId, content)}
-                onEditComplete={() => stopEditingText()}
               />
             );
           }
@@ -2617,14 +2616,11 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                         key={childId}
                         text={text}
                         isSelected={childId === selectedTextId}
-                        isEditing={childId === editingTextId}
                         onMouseDown={(e) => handleTextMouseDown(e, childId)}
                         onTouchStart={(e) => handleTextMouseDown(e, childId)}
                         onDoubleClick={(e) => handleTextDoubleClick(e, childId)}
                         onScaleStart={(e, corner) => handleTextScaleStart(e, childId, corner)}
                         onRotateStart={(e) => handleTextRotateStart(e, childId)}
-                        onContentChange={(content) => updateTextContent(childId, content)}
-                        onEditComplete={() => stopEditingText()}
                       />
                     );
                   }
