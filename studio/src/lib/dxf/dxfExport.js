@@ -78,10 +78,11 @@ const LAYER_COLORS = {
  * @param {number} options.lengthMm - Physical length in mm
  * @param {string} options.designName - Design name for metadata
  * @param {string} options.seed - Generation seed (optional)
+ * @param {Object} options.motifs - Motif data from store (optional)
  * @returns {Object} { dxfContent: string, warnings: string[] }
  */
 export function generateDXF(svgElement, options) {
-  const { widthMm, lengthMm, designName = 'TPV Design', seed } = options;
+  const { widthMm, lengthMm, designName = 'TPV Design', seed, motifs } = options;
 
   // Reset warnings for this export
   exportWarnings = [];
@@ -192,10 +193,40 @@ export function generateDXF(svgElement, options) {
     }
   }
 
-  // Check for image elements (motifs) and warn user
-  const imageElements = svgElement.querySelectorAll('image');
-  if (imageElements.length > 0) {
-    exportWarnings.push(`${imageElements.length} motif(s)/image(s) could not be exported. Motifs are complex designs that require manual CAD import.`);
+  // Process motifs if provided
+  if (motifs && Object.keys(motifs).length > 0) {
+    let motifCount = 0;
+    let motifErrors = 0;
+
+    for (const [motifId, motif] of Object.entries(motifs)) {
+      if (!motif.svgContent) {
+        motifErrors++;
+        continue;
+      }
+
+      try {
+        const motifElements = parseMotifSvg(motif, scaleX, scaleY, lengthMm);
+
+        for (const { layerName, vertices } of motifElements) {
+          if (!layerEntities.has(layerName)) {
+            layerEntities.set(layerName, []);
+          }
+          layerEntities.get(layerName).push(vertices);
+          processedCount++;
+        }
+        motifCount++;
+      } catch (err) {
+        console.warn(`[DXF] Error processing motif ${motifId}:`, err);
+        motifErrors++;
+      }
+    }
+
+    if (motifCount > 0) {
+      console.log(`[DXF] Processed ${motifCount} motif(s)`);
+    }
+    if (motifErrors > 0) {
+      exportWarnings.push(`${motifErrors} motif(s) could not be fully exported due to missing or invalid SVG content.`);
+    }
   }
 
   // Add layers to drawing
@@ -336,6 +367,111 @@ function getTextBounds(textEl, scaleX, scaleY, lengthMm) {
   }
 
   return null;
+}
+
+/**
+ * Parse motif SVG content and convert to DXF polylines
+ * @param {Object} motif - Motif data from store
+ * @param {number} scaleX - X scale factor for coordinate conversion
+ * @param {number} scaleY - Y scale factor for coordinate conversion
+ * @param {number} lengthMm - Surface length for Y flip
+ * @returns {Array<{layerName: string, vertices: Array}>} Array of layer/vertices pairs
+ */
+function parseMotifSvg(motif, scaleX, scaleY, lengthMm) {
+  const results = [];
+  const { svgContent, position, rotation, scale: motifScale, originalWidth_mm, originalHeight_mm } = motif;
+
+  // Parse SVG string into DOM
+  const parser = new DOMParser();
+  const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
+  const svgRoot = svgDoc.querySelector('svg');
+
+  if (!svgRoot) {
+    console.warn('[DXF] Could not parse motif SVG');
+    return results;
+  }
+
+  // Get motif's internal viewBox for scaling
+  const viewBoxAttr = svgRoot.getAttribute('viewBox');
+  let motifViewBox = { width: 100, height: 100 };
+  if (viewBoxAttr) {
+    const parts = viewBoxAttr.split(/\s+/).map(Number);
+    if (parts.length >= 4) {
+      motifViewBox = { width: parts[2], height: parts[3] };
+    }
+  }
+
+  // Calculate motif's physical dimensions
+  const physicalWidth = (originalWidth_mm || 1000) * (motifScale || 1);
+  const physicalHeight = (originalHeight_mm || 1000) * (motifScale || 1);
+
+  // Scale from motif's internal coordinates to physical mm
+  const motifScaleX = physicalWidth / motifViewBox.width;
+  const motifScaleY = physicalHeight / motifViewBox.height;
+
+  // Build transform for motif positioning
+  const centerX = physicalWidth / 2;
+  const centerY = physicalHeight / 2;
+  const motifTransform = `translate(${position.x}, ${position.y}) rotate(${rotation || 0}, ${centerX}, ${centerY})`;
+
+  // Find all geometric elements in motif
+  const elements = svgRoot.querySelectorAll('path, rect, circle, ellipse, polygon, polyline');
+
+  for (const el of elements) {
+    // Skip invisible elements
+    const display = el.getAttribute('display');
+    const visibility = el.getAttribute('visibility');
+    if (display === 'none' || visibility === 'hidden') continue;
+
+    // Get fill color
+    const fill = getElementFill(el);
+    if (!fill || fill === 'none' || fill === 'transparent') continue;
+
+    const tpvCode = mapHexToTPVCode(fill);
+    const layerName = tpvCode || 'OTHER_COLORS';
+
+    // Convert element to vertices
+    let vertices;
+    try {
+      vertices = convertElementToVertices(el);
+    } catch (err) {
+      continue;
+    }
+
+    if (!vertices || vertices.length === 0) continue;
+
+    // Apply element's internal transform (within the motif SVG)
+    const elTransform = el.getAttribute('transform');
+    if (elTransform) {
+      vertices = transformVertices(vertices, elTransform);
+    }
+
+    // Scale from motif viewBox coordinates to physical mm
+    vertices = vertices.map(v => ({
+      x: v.x * motifScaleX,
+      y: v.y * motifScaleY
+    }));
+
+    // Apply motif's position/rotation transform
+    vertices = transformVertices(vertices, motifTransform);
+
+    // Validate and filter invalid vertices
+    const validVertices = vertices.filter(v =>
+      isFinite(v.x) && isFinite(v.y) && !isNaN(v.x) && !isNaN(v.y)
+    );
+
+    if (validVertices.length < 2) continue;
+
+    // Convert to DXF coordinates (scale and flip Y)
+    const dxfVertices = validVertices.map(v => ({
+      x: v.x * scaleX,
+      y: lengthMm - (v.y * scaleY)
+    }));
+
+    results.push({ layerName, vertices: dxfVertices });
+  }
+
+  return results;
 }
 
 /**

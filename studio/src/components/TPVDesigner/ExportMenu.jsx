@@ -292,7 +292,8 @@ export default function ExportMenu({ svgRef }) {
         widthMm: state.surface.width_mm,
         lengthMm: state.surface.length_mm,
         designName: state.name || 'Sports Surface',
-        seed: state.seed
+        seed: state.seed,
+        motifs: motifs  // Pass motif data for SVG parsing
       });
 
       // Download DXF file
