@@ -4111,6 +4111,14 @@ export const useSportsDesignStore = create(
         }));
       },
 
+      setShowPropertiesPanel: (show) => {
+        set({
+          showPropertiesPanel: show,
+          // If explicitly showing, reset the user closed flag
+          propertiesPanelUserClosed: show ? false : true
+        });
+      },
+
       // ====== Mobile UI Actions ======
       setMobileLibraryOpen: (open) => set({ mobileLibraryOpen: open }),
       setMobilePropertiesOpen: (open) => set({ mobilePropertiesOpen: open }),
