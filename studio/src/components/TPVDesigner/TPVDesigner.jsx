@@ -125,6 +125,12 @@ function TPVDesigner({ loadedDesign }) {
     ungroup,
     alignElements,
     distributeElements,
+    // Element creation
+    addShape,
+    addText,
+    addExclusionZone,
+    startPathDrawing,
+    pathDrawingMode,
     // Mobile UI state
     mobileLibraryOpen,
     mobilePropertiesOpen,
@@ -971,31 +977,62 @@ function TPVDesigner({ loadedDesign }) {
 
                 <div className="sports-toolbar__divider" />
 
-                {/* Mode Toggle */}
-                <div className="sports-toolbar__group">
+                {/* Element Creation */}
+                <div className="sports-toolbar__group sports-toolbar__elements">
                   <button
-                    className={`sports-toolbar__mode-toggle ${standaloneMode ? 'sports-toolbar__mode-toggle--active' : ''}`}
-                    onClick={toggleStandaloneMode}
-                    title={standaloneMode ? 'Switch to Edit Mode' : 'Switch to Focus Mode'}
+                    className="sports-toolbar__btn sports-toolbar__btn--labeled"
+                    onClick={() => addText()}
+                    title="Add Text (T)"
                   >
-                    {standaloneMode ? (
-                      <>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <rect x="3" y="3" width="18" height="18" rx="2" />
-                        </svg>
-                        <span>Focus</span>
-                      </>
-                    ) : (
-                      <>
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <rect x="3" y="3" width="7" height="7" />
-                          <rect x="14" y="3" width="7" height="7" />
-                          <rect x="3" y="14" width="7" height="7" />
-                          <rect x="14" y="14" width="7" height="7" />
-                        </svg>
-                        <span>Edit</span>
-                      </>
-                    )}
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 7V4h16v3" />
+                      <path d="M12 4v16" />
+                      <path d="M8 20h8" />
+                    </svg>
+                    <span>Text</span>
+                  </button>
+                  <button
+                    className="sports-toolbar__btn sports-toolbar__btn--labeled"
+                    onClick={() => addShape('rectangle')}
+                    title="Add Shape (S)"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                    </svg>
+                    <span>Shape</span>
+                  </button>
+                  <button
+                    className="sports-toolbar__btn sports-toolbar__btn--labeled"
+                    onClick={() => addShape('blob')}
+                    title="Add Blob (B)"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 3c-4 0-7 3-8 6s0 6 2 8c2 2 5 3 8 2s5-3 6-6-1-6-3-8c-1-1-3-2-5-2z" />
+                    </svg>
+                    <span>Blob</span>
+                  </button>
+                  <button
+                    className={`sports-toolbar__btn sports-toolbar__btn--labeled ${pathDrawingMode ? 'sports-toolbar__btn--active' : ''}`}
+                    onClick={() => startPathDrawing()}
+                    title="Draw Path (P)"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 19l7-7 3 3-7 7-3-3z" />
+                      <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+                      <path d="M2 2l7.586 7.586" />
+                    </svg>
+                    <span>Pen</span>
+                  </button>
+                  <button
+                    className="sports-toolbar__btn sports-toolbar__btn--labeled sports-toolbar__btn--exclusion"
+                    onClick={() => addExclusionZone('rectangle')}
+                    title="Add Exclusion Zone (E)"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                    </svg>
+                    <span>Exclusion</span>
                   </button>
                 </div>
 

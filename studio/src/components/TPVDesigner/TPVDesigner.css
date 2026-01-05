@@ -315,6 +315,43 @@
   height: 18px;
 }
 
+/* Element creation group */
+.sports-toolbar__elements {
+  gap: 2px;
+}
+
+/* Labeled buttons with icon + text */
+.sports-toolbar__btn--labeled {
+  width: auto;
+  height: auto;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 8px;
+  min-width: 44px;
+}
+
+.sports-toolbar__btn--labeled svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sports-toolbar__btn--labeled span {
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
+  font-family: var(--font-body, 'Source Sans Pro', sans-serif);
+}
+
+/* Exclusion zone button - red tint */
+.sports-toolbar__btn--exclusion {
+  color: #dc2626;
+}
+
+.sports-toolbar__btn--exclusion:hover:not(:disabled) {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
 .sports-toolbar__dimensions {
   padding: 6px 10px;
   background: #f9fafb;
