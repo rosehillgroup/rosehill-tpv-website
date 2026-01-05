@@ -2722,15 +2722,47 @@ export const useSportsDesignStore = create(
           else if (childId.startsWith('text-')) {
             const text = state.texts[childId];
             if (text) {
-              const x = text.position.x;
-              const y = text.position.y;
-              // Text elements have width_mm and height_mm
-              const width = text.width_mm || 1000; // Default width if not set
-              const height = text.height_mm || 500; // Default height if not set
-              minX = Math.min(minX, x);
-              minY = Math.min(minY, y);
-              maxX = Math.max(maxX, x + width);
-              maxY = Math.max(maxY, y + height);
+              // Text position is at the BASELINE, not top-left
+              // Text extends UP from the baseline
+              const fontSize = text.fontSize_mm || 500;
+              const scaleX = text.scale_x || 1;
+              const scaleY = text.scale_y || 1;
+
+              // Estimate text width based on content length (rough approximation)
+              // Average character width is about 0.5x font size for most fonts
+              const content = text.content || 'Text';
+              const charWidth = fontSize * 0.5;
+              const measuredWidth = content.length * charWidth;
+              const scaledWidth = measuredWidth * scaleX;
+
+              // Text height (visual bounds above and below baseline)
+              const scaledHeight = fontSize * 1.2 * scaleY;
+              const topOffset = fontSize * scaleY;  // Distance from baseline to top
+
+              // Calculate horizontal bounds based on text alignment
+              let textLeft, textRight;
+              const textAlign = text.textAlign || 'left';
+              if (textAlign === 'center') {
+                textLeft = text.position.x - scaledWidth / 2;
+                textRight = text.position.x + scaledWidth / 2;
+              } else if (textAlign === 'right') {
+                textLeft = text.position.x - scaledWidth;
+                textRight = text.position.x;
+              } else {
+                // left alignment (default)
+                textLeft = text.position.x;
+                textRight = text.position.x + scaledWidth;
+              }
+
+              // Calculate vertical bounds
+              // Top is above baseline, bottom is below baseline (for descenders)
+              const textTop = text.position.y - topOffset;
+              const textBottom = text.position.y + fontSize * 0.2 * scaleY;
+
+              minX = Math.min(minX, textLeft);
+              minY = Math.min(minY, textTop);
+              maxX = Math.max(maxX, textRight);
+              maxY = Math.max(maxY, textBottom);
             }
           }
           // Check courts
@@ -3353,6 +3385,35 @@ export const useSportsDesignStore = create(
         const { selectedElementIds, shapes, texts, courts, tracks, motifs } = get();
         if (selectedElementIds.length < 2) return;
 
+        // Helper to get text bounds (text uses baseline positioning)
+        const getTextBounds = (text) => {
+          const fontSize = text.fontSize_mm || 500;
+          const scaleX = text.scale_x || 1;
+          const scaleY = text.scale_y || 1;
+          const content = text.content || 'Text';
+          const charWidth = fontSize * 0.5;
+          const measuredWidth = content.length * charWidth * scaleX;
+          const topOffset = fontSize * scaleY;
+          const height = fontSize * 1.2 * scaleY;
+
+          let x = text.position.x;
+          const textAlign = text.textAlign || 'left';
+          if (textAlign === 'center') {
+            x = text.position.x - measuredWidth / 2;
+          } else if (textAlign === 'right') {
+            x = text.position.x - measuredWidth;
+          }
+
+          return {
+            x: x,
+            y: text.position.y - topOffset,
+            width: measuredWidth,
+            height: height,
+            baselineOffset: topOffset,
+            alignOffset: text.position.x - x  // Offset to convert back to position.x
+          };
+        };
+
         // Get bounds for all selected elements
         const elementBounds = selectedElementIds.map(id => {
           // Shapes
@@ -3369,17 +3430,15 @@ export const useSportsDesignStore = create(
               };
             }
           }
-          // Text
+          // Text - uses baseline positioning
           if (id.startsWith('text-')) {
             const text = texts[id];
             if (text) {
+              const bounds = getTextBounds(text);
               return {
                 id,
                 type: 'text',
-                x: text.position.x,
-                y: text.position.y,
-                width: text.width_mm || text.width || 1000,
-                height: text.height_mm || text.height || 500
+                ...bounds
               };
             }
           }
@@ -3468,7 +3527,13 @@ export const useSportsDesignStore = create(
           }
 
           if (newX !== elem.x || newY !== elem.y) {
-            updates[elem.id] = { x: newX, y: newY, type: elem.type };
+            updates[elem.id] = {
+              x: newX,
+              y: newY,
+              type: elem.type,
+              baselineOffset: elem.baselineOffset,
+              alignOffset: elem.alignOffset
+            };
           }
         }
 
@@ -3487,9 +3552,13 @@ export const useSportsDesignStore = create(
                 position: { x: update.x, y: update.y }
               };
             } else if (update.type === 'text' && updatedTexts[id]) {
+              // Convert from visual top-left back to baseline position
               updatedTexts[id] = {
                 ...updatedTexts[id],
-                position: { x: update.x, y: update.y }
+                position: {
+                  x: update.x + (update.alignOffset || 0),
+                  y: update.y + (update.baselineOffset || 0)
+                }
               };
             } else if (update.type === 'court' && updatedCourts[id]) {
               updatedCourts[id] = {
@@ -3541,17 +3610,51 @@ export const useSportsDesignStore = create(
               };
             }
           }
-          // Text
+          // Text - needs special handling for baseline positioning
           if (id.startsWith('text-')) {
             const text = texts[id];
             if (text) {
+              const fontSize = text.fontSize_mm || 500;
+              const scaleX = text.scale_x || 1;
+              const scaleY = text.scale_y || 1;
+              const content = text.content || 'Text';
+              const textAlign = text.textAlign || 'left';
+
+              // Calculate text width (approximate)
+              const charWidth = fontSize * 0.5;
+              const measuredWidth = content.length * charWidth;
+              const scaledWidth = measuredWidth * scaleX;
+
+              // Text height from baseline
+              const topOffset = fontSize * scaleY;
+              const scaledHeight = fontSize * 1.2 * scaleY;
+
+              // Calculate visual left position based on alignment
+              let visualX;
+              let alignOffset = 0; // How much to add back when setting position
+              if (textAlign === 'center') {
+                visualX = text.position.x - scaledWidth / 2;
+                alignOffset = scaledWidth / 2;
+              } else if (textAlign === 'right') {
+                visualX = text.position.x - scaledWidth;
+                alignOffset = scaledWidth;
+              } else {
+                visualX = text.position.x;
+                alignOffset = 0;
+              }
+
+              // Visual top is above the baseline
+              const visualY = text.position.y - topOffset;
+
               return {
                 id,
                 type: 'text',
-                x: text.position.x,
-                y: text.position.y,
-                width: text.width_mm || text.width || 1000,
-                height: text.height_mm || text.height || 500
+                x: visualX,
+                y: visualY,
+                width: scaledWidth,
+                height: scaledHeight,
+                alignOffset: alignOffset,
+                baselineOffset: topOffset
               };
             }
           }
@@ -3652,7 +3755,13 @@ export const useSportsDesignStore = create(
             }
 
             if (newX !== elem.x || newY !== elem.y) {
-              updates[elem.id] = { x: newX, y: newY, type: elem.type };
+              updates[elem.id] = {
+                x: newX,
+                y: newY,
+                type: elem.type,
+                alignOffset: elem.alignOffset,
+                baselineOffset: elem.baselineOffset
+              };
             }
           }
         } else {
@@ -3682,7 +3791,13 @@ export const useSportsDesignStore = create(
             }
 
             if (newX !== elem.x || newY !== elem.y) {
-              updates[elem.id] = { x: newX, y: newY, type: elem.type };
+              updates[elem.id] = {
+                x: newX,
+                y: newY,
+                type: elem.type,
+                alignOffset: elem.alignOffset,
+                baselineOffset: elem.baselineOffset
+              };
             }
           }
         }
@@ -3702,9 +3817,13 @@ export const useSportsDesignStore = create(
                 position: { x: update.x, y: update.y }
               };
             } else if (update.type === 'text' && updatedTexts[id]) {
+              // Convert from visual top-left back to baseline position
               updatedTexts[id] = {
                 ...updatedTexts[id],
-                position: { x: update.x, y: update.y }
+                position: {
+                  x: update.x + (update.alignOffset || 0),
+                  y: update.y + (update.baselineOffset || 0)
+                }
               };
             } else if (update.type === 'court' && updatedCourts[id]) {
               updatedCourts[id] = {
