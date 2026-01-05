@@ -651,6 +651,21 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       return;
     }
 
+    // Check if Shift is held for multi-selection
+    const isShiftHeld = e.shiftKey;
+
+    if (isShiftHeld) {
+      // Multi-select mode: add/remove from selection
+      addToSelection(textId);
+      // Don't start drag when multi-selecting
+      return;
+    }
+
+    // Single selection mode
+    // Clear any multi-selection first
+    if (selectedElementIds.length > 0) {
+      clearMultiSelection();
+    }
     selectText(textId);
 
     const text = texts[textId];
@@ -2531,7 +2546,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
               <TextElement
                 key={elementId}
                 text={text}
-                isSelected={elementId === selectedTextId}
+                isSelected={elementId === selectedTextId || selectedElementIds.includes(elementId)}
                 zoom={zoom}
                 onMouseDown={(e) => handleTextMouseDown(e, elementId)}
                 onTouchStart={(e) => handleTextMouseDown(e, elementId)}
@@ -2630,7 +2645,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                       <TextElement
                         key={childId}
                         text={text}
-                        isSelected={childId === selectedTextId}
+                        isSelected={childId === selectedTextId || selectedElementIds.includes(childId)}
                         zoom={zoom}
                         onMouseDown={(e) => handleTextMouseDown(e, childId)}
                         onTouchStart={(e) => handleTextMouseDown(e, childId)}
