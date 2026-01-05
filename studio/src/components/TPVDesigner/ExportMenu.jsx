@@ -287,8 +287,8 @@ export default function ExportMenu({ svgRef }) {
       // Clean SVG for DXF export
       const cleanedSvg = cleanSvgForDxf(svgElement);
 
-      // Generate DXF content
-      const dxfContent = generateDXF(cleanedSvg, {
+      // Generate DXF content (returns { dxfContent, warnings })
+      const result = generateDXF(cleanedSvg, {
         widthMm: state.surface.width_mm,
         lengthMm: state.surface.length_mm,
         designName: state.name || 'Sports Surface',
@@ -297,9 +297,15 @@ export default function ExportMenu({ svgRef }) {
 
       // Download DXF file
       const filename = generateFilename(state.name, 'dxf');
-      downloadDXF(dxfContent, filename);
+      downloadDXF(result.dxfContent, filename);
 
       console.log('[EXPORT] DXF downloaded:', filename);
+
+      // Show warnings if any
+      if (result.warnings && result.warnings.length > 0) {
+        const warningMessage = 'DXF Export Notes:\n\n' + result.warnings.join('\n\n');
+        alert(warningMessage);
+      }
     } catch (error) {
       console.error('DXF export failed:', error);
       alert('Failed to export DXF: ' + error.message);
