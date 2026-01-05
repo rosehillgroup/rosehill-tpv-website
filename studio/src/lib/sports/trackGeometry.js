@@ -43,7 +43,7 @@ export function calculateTrackGeometry(params) {
         laneNumber: i + 1,
         innerPath: null,  // Not used for parallel lanes
         outerPath: generateParallelLanePath(laneWidth_mm, height_mm, i),
-        perimeter: (2 * height_mm) / 1000,  // Convert to meters (length * 2)
+        perimeter: (2 * (laneWidth_mm + height_mm)) / 1000,  // Rectangle perimeter in meters
         // Additional metadata for rendering
         isParallel: true,
         laneX: laneX,

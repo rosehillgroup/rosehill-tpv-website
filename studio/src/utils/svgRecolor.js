@@ -21,21 +21,17 @@ export async function recolorSVG(svgUrlOrText, colorMapping, providedSvgText = n
     if (providedSvgText) {
       // Use provided SVG text (e.g., pre-tagged SVG)
       svgText = providedSvgText;
-      console.log(`[SVG-RECOLOR] Using provided SVG text (${svgText.length} chars)`);
     } else {
       // Fetch SVG content from URL
-      console.log('[SVG-RECOLOR] Fetching SVG from:', svgUrlOrText);
       const response = await fetch(svgUrlOrText);
       if (!response.ok) {
         throw new Error(`Failed to fetch SVG: ${response.status} ${response.statusText}`);
       }
 
       svgText = await response.text();
-      console.log(`[SVG-RECOLOR] Fetched SVG (${svgText.length} chars)`);
     }
 
     // Sanitize SVG content before parsing (XSS protection)
-    console.log('[SVG-RECOLOR] Sanitizing SVG...');
     const sanitizedSvgText = sanitizeSVG(svgText);
 
     if (!sanitizedSvgText) {
@@ -59,7 +55,6 @@ export async function recolorSVG(svgUrlOrText, colorMapping, providedSvgText = n
 
     // Recolor the SVG
     const stats = recolorSVGElement(svgElement, colorMapping);
-    console.log('[SVG-RECOLOR] Recoloring complete:', stats);
 
     // Serialize back to string
     const serializer = new XMLSerializer();
@@ -238,14 +233,12 @@ function replaceColor(color, colorMapping, notMappedSet) {
 
     // If within tolerance (ΔE ≤ 9), return immediately
     if (deltaE <= 9) {
-      console.log(`[SVG-RECOLOR] Tolerance match: ${mappingKey} → ${key} (ΔE=${deltaE.toFixed(2)})`);
       return mapping.blendHex;
     }
   }
 
   // 3. Guaranteed fallback: Use nearest color by ΔE (ensures no uneditable areas)
   if (bestMatch) {
-    console.log(`[SVG-RECOLOR] Fallback to nearest: ${mappingKey} → ${bestMatch.blendHex} (ΔE=${smallestDeltaE.toFixed(2)})`);
     if (notMappedSet) {
       notMappedSet.add(color);
     }
@@ -418,7 +411,6 @@ function recolorCSS(css, colorMapping, stats) {
     const newColor = replaceColor(trimmedColor, colorMapping, stats.colorsNotMapped);
     if (newColor !== trimmedColor) {
       replacementCount++;
-      console.log(`[SVG-RECOLOR-CSS] Replaced fill: ${trimmedColor} → ${newColor}`);
     }
     return `fill: ${newColor}`;
   });
@@ -429,7 +421,6 @@ function recolorCSS(css, colorMapping, stats) {
     const newColor = replaceColor(trimmedColor, colorMapping, stats.colorsNotMapped);
     if (newColor !== trimmedColor) {
       replacementCount++;
-      console.log(`[SVG-RECOLOR-CSS] Replaced stroke: ${trimmedColor} → ${newColor}`);
     }
     return `stroke: ${newColor}`;
   });
@@ -440,13 +431,11 @@ function recolorCSS(css, colorMapping, stats) {
     const newColor = replaceColor(trimmedColor, colorMapping, stats.colorsNotMapped);
     if (newColor !== trimmedColor) {
       replacementCount++;
-      console.log(`[SVG-RECOLOR-CSS] Replaced stop-color: ${trimmedColor} → ${newColor}`);
     }
     return `stop-color: ${newColor}`;
   });
 
   if (replacementCount > 0) {
-    console.log(`[SVG-RECOLOR-CSS] Total CSS color replacements: ${replacementCount}`);
   }
 
   return newCSS;

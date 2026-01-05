@@ -62,6 +62,10 @@ export function calculateMaterials(state) {
     ctx = canvas.getContext('2d');
   }
 
+  // Disable anti-aliasing to get clean pixel-perfect color counts
+  // This prevents edge blending that causes color misidentification
+  ctx.imageSmoothingEnabled = false;
+
   const renderScale = PIXELS_PER_MM * scale;
 
   // 1. Fill with surface base color (respecting custom boundary if set)
@@ -133,6 +137,14 @@ export function calculateMaterials(state) {
 
   // Sort by area descending
   results.sort((a, b) => b.area_m2 - a.area_m2);
+
+  // Clean up canvas to prevent memory leaks
+  // For DOM canvas, remove references; for OffscreenCanvas, let GC handle it
+  if (canvas && typeof canvas.remove === 'function') {
+    canvas.remove();
+  }
+  // Clear context reference
+  ctx = null;
 
   return { materials: results, exclusionArea_m2 };
 }
@@ -242,18 +254,36 @@ function buildColorMap(state) {
   colorMap[EXCLUSION_COLOR_CODE] = 'rgb(255,255,255)';
   reverseMap['255,255,255'] = EXCLUSION_COLOR_CODE;
 
+  // Generate distinct colors with guaranteed minimum distance between them
+  // Use a Set to track used colors and ensure no collisions
+  const usedColors = new Set(['0,0,0', '255,255,255']); // Reserved for UNKNOWN and EXCLUSION
+
   let index = 1;
   for (const code of tpvCodes) {
-    // Generate distinct colors using index
-    // Use values 1-254 to avoid 0 (UNKNOWN) and 255 (might alias)
-    const r = Math.min(254, (index * 17) % 255);
-    const g = Math.min(254, (index * 31) % 255);
-    const b = Math.min(254, (index * 47) % 255);
+    // Generate distinct colors with larger spacing to avoid anti-aliasing confusion
+    // Each color component steps by at least 32 to maintain distance
+    let r, g, b;
+    let attempts = 0;
 
-    // Ensure minimum difference from other colors
+    do {
+      // Use index to generate well-spaced colors
+      // Start from 32 to stay away from black (UNKNOWN)
+      // End at 224 to stay away from white (EXCLUSION)
+      r = 32 + ((index * 41) % 193);
+      g = 32 + ((index * 67 + 64) % 193);
+      b = 32 + ((index * 97 + 128) % 193);
+
+      // If collision, adjust by incrementing
+      if (usedColors.has(`${r},${g},${b}`)) {
+        index++;
+        attempts++;
+      }
+    } while (usedColors.has(`${r},${g},${b}`) && attempts < 100);
+
     const color = `rgb(${r},${g},${b})`;
     colorMap[code] = color;
     reverseMap[`${r},${g},${b}`] = code;
+    usedColors.add(`${r},${g},${b}`);
     index++;
   }
 

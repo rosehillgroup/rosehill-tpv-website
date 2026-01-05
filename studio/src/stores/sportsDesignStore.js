@@ -3915,10 +3915,21 @@ export const useSportsDesignStore = create(
         if (!group) return;
 
         set((state) => {
-          // Remove all child shapes
+          // Remove all child elements of all types
           const updatedShapes = { ...state.shapes };
+          const updatedTexts = { ...state.texts };
+          const updatedCourts = { ...state.courts };
+          const updatedTracks = { ...state.tracks };
+          const updatedMotifs = { ...state.motifs };
+          const updatedExclusionZones = { ...state.exclusionZones };
+
           for (const childId of group.childIds) {
-            delete updatedShapes[childId];
+            if (childId.startsWith('shape-')) delete updatedShapes[childId];
+            else if (childId.startsWith('text-')) delete updatedTexts[childId];
+            else if (childId.startsWith('court-')) delete updatedCourts[childId];
+            else if (childId.startsWith('track-')) delete updatedTracks[childId];
+            else if (childId.startsWith('motif-')) delete updatedMotifs[childId];
+            else if (childId.startsWith('exclusion-')) delete updatedExclusionZones[childId];
           }
 
           // Remove group from groups
@@ -3931,6 +3942,11 @@ export const useSportsDesignStore = create(
 
           return {
             shapes: updatedShapes,
+            texts: updatedTexts,
+            courts: updatedCourts,
+            tracks: updatedTracks,
+            motifs: updatedMotifs,
+            exclusionZones: updatedExclusionZones,
             groups: remainingGroups,
             elementOrder: newElementOrder,
             selectedGroupId: null,
@@ -4000,7 +4016,8 @@ export const useSportsDesignStore = create(
       // ====== History Actions (Undo/Redo) ======
       addToHistory: () => {
         const currentState = get();
-        const snapshot = {
+        // Deep clone the snapshot to prevent mutations affecting history
+        const snapshot = JSON.parse(JSON.stringify({
           surface: currentState.surface,
           courts: currentState.courts,
           tracks: currentState.tracks,
@@ -4008,10 +4025,11 @@ export const useSportsDesignStore = create(
           shapes: currentState.shapes,
           texts: currentState.texts,
           exclusionZones: currentState.exclusionZones,
+          groups: currentState.groups, // Include groups in history
           elementOrder: currentState.elementOrder,
           customMarkings: currentState.customMarkings,
           backgroundZones: currentState.backgroundZones
-        };
+        }));
 
         set((state) => {
           // If we're not at the end of history, truncate future states
@@ -4034,8 +4052,19 @@ export const useSportsDesignStore = create(
         const { history, historyIndex } = get();
         if (historyIndex > 0) {
           const previousState = history[historyIndex - 1];
+          // Only restore data properties, NOT history/historyIndex
           set({
-            ...previousState,
+            surface: previousState.surface,
+            courts: previousState.courts,
+            tracks: previousState.tracks,
+            motifs: previousState.motifs,
+            shapes: previousState.shapes,
+            texts: previousState.texts,
+            exclusionZones: previousState.exclusionZones,
+            groups: previousState.groups,
+            elementOrder: previousState.elementOrder,
+            customMarkings: previousState.customMarkings,
+            backgroundZones: previousState.backgroundZones,
             historyIndex: historyIndex - 1
           });
         }
@@ -4045,8 +4074,19 @@ export const useSportsDesignStore = create(
         const { history, historyIndex } = get();
         if (historyIndex < history.length - 1) {
           const nextState = history[historyIndex + 1];
+          // Only restore data properties, NOT history/historyIndex
           set({
-            ...nextState,
+            surface: nextState.surface,
+            courts: nextState.courts,
+            tracks: nextState.tracks,
+            motifs: nextState.motifs,
+            shapes: nextState.shapes,
+            texts: nextState.texts,
+            exclusionZones: nextState.exclusionZones,
+            groups: nextState.groups,
+            elementOrder: nextState.elementOrder,
+            customMarkings: nextState.customMarkings,
+            backgroundZones: nextState.backgroundZones,
             historyIndex: historyIndex + 1
           });
         }

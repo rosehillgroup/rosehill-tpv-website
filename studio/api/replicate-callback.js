@@ -88,8 +88,27 @@ export default async function handler(req, res) {
 
     console.log('[WEBHOOK] Authentication successful');
 
-    const payload = JSON.parse(rawBody || '{}');
+    // Parse and validate webhook payload
+    let payload;
+    try {
+      payload = JSON.parse(rawBody || '{}');
+    } catch (parseError) {
+      console.error('[WEBHOOK] Invalid JSON payload:', parseError.message);
+      return res.status(400).send('Invalid JSON payload');
+    }
+
+    // Validate required fields
+    if (!payload || typeof payload !== 'object') {
+      console.error('[WEBHOOK] Payload is not an object');
+      return res.status(400).send('Invalid payload format');
+    }
+
     const { id: prediction_id, status, output, error: predictionError } = payload;
+
+    if (!prediction_id || typeof prediction_id !== 'string') {
+      console.error('[WEBHOOK] Missing or invalid prediction_id');
+      return res.status(400).send('Missing prediction_id');
+    }
 
     console.log(`[WEBHOOK] Received: ${prediction_id}, status: ${status}`);
 
@@ -108,30 +127,38 @@ export default async function handler(req, res) {
     }
 
     // 3. Check if already processed (idempotency layer 3: prediction_id + job_id guard)
+    // Note: studio_webhooks table is optional - if not available, skip idempotency check
     const processedKey = `${prediction_id}_${job.id}`;
-    const { data: existing } = await supabase
-      .from('studio_webhooks')
-      .select('*')
-      .eq('prediction_id', prediction_id)
-      .eq('job_id', job.id)
-      .eq('status', status)
-      .maybeSingle();
+    try {
+      const { data: existing, error: checkError } = await supabase
+        .from('studio_webhooks')
+        .select('id')
+        .eq('prediction_id', prediction_id)
+        .eq('job_id', job.id)
+        .eq('status', status)
+        .maybeSingle();
 
-    if (existing) {
-      console.log(`[WEBHOOK] Already processed: ${processedKey} (status: ${status})`);
-      return res.status(200).send('Already processed');
+      if (!checkError && existing) {
+        console.log(`[WEBHOOK] Already processed: ${processedKey} (status: ${status})`);
+        return res.status(200).send('Already processed');
+      }
+
+      // Log webhook receipt (non-blocking, failures don't stop processing)
+      if (!checkError) {
+        await supabase
+          .from('studio_webhooks')
+          .insert({
+            prediction_id,
+            job_id: job.id,
+            status,
+            payload,
+            received_at: new Date().toISOString()
+          });
+      }
+    } catch (webhookTableError) {
+      // studio_webhooks table might not exist - log and continue
+      console.warn('[WEBHOOK] Idempotency check skipped (table unavailable):', webhookTableError.message);
     }
-
-    // Log webhook receipt
-    await supabase
-      .from('studio_webhooks')
-      .insert({
-        prediction_id,
-        job_id: job.id,
-        status,
-        payload,
-        received_at: new Date().toISOString()
-      });
 
     // 4. Handle status transitions via state machine
     if (status === 'starting') {

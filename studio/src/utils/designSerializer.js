@@ -34,11 +34,6 @@ export function serializeDesign(state) {
     originalTaggedSvg
   } = state;
 
-  console.log('[SERIALIZE] Serializing design with result:', result);
-  console.log('[SERIALIZE] result.svg_url:', result?.svg_url);
-  console.log('[SERIALIZE] regionOverrides:', regionOverrides);
-  console.log('[SERIALIZE] regionOverrides size:', regionOverrides?.size);
-  console.log('[SERIALIZE] originalTaggedSvg present:', !!originalTaggedSvg);
 
   // Convert Maps to plain objects for JSON storage
   const serializeMap = (map) => {
@@ -108,12 +103,6 @@ export function serializeDesign(state) {
  * @returns {Object} State object to restore component
  */
 export function deserializeDesign(savedData) {
-  console.log('[DESERIALIZE] Incoming savedData keys:', Object.keys(savedData || {}));
-  console.log('[DESERIALIZE] savedData.region_overrides:', savedData?.region_overrides);
-  console.log('[DESERIALIZE] savedData.design_data:', savedData?.design_data);
-  console.log('[DESERIALIZE] savedData.design_data?.region_overrides:', savedData?.design_data?.region_overrides);
-  console.log('[DESERIALIZE] savedData.original_tagged_svg present:', !!savedData?.original_tagged_svg);
-  console.log('[DESERIALIZE] savedData.design_data?.original_tagged_svg present:', !!savedData?.design_data?.original_tagged_svg);
 
   // Convert plain objects back to Maps
   const deserializeMap = (obj) => {
@@ -129,8 +118,6 @@ export function deserializeDesign(savedData) {
   const regionOverridesData = getField('region_overrides');
   const originalTaggedSvgData = getField('original_tagged_svg');
 
-  console.log('[DESERIALIZE] Final regionOverridesData:', regionOverridesData);
-  console.log('[DESERIALIZE] Final originalTaggedSvgData present:', !!originalTaggedSvgData);
 
   return {
     inputMode: savedData.input_mode || getField('input_mode'),

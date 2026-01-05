@@ -156,6 +156,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   // Ref for SVG preview section (for auto-scroll)
   const svgPreviewRef = useRef(null);
 
+  // Ref for polling abort controller (cancels polling on unmount)
+  const pollingAbortRef = useRef(null);
+
   // Auto-scroll to SVG preview when it becomes available
   useEffect(() => {
     // Don't auto-scroll if user is actively editing colors (prevents infinite scroll loop)
@@ -176,7 +179,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       try {
         const result = await listDesigns({ limit: 1, offset: 0 });
         setHasExistingDesigns(result.designs.length > 0);
-        console.log('[INSPIRE] Existing designs check:', result.designs.length > 0 ? 'User has designs' : 'No designs found');
       } catch (err) {
         console.error('[INSPIRE] Failed to check for existing designs:', err);
         // On error, assume user has designs (fail-safe to not annoy users)
@@ -192,19 +194,22 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     if (inputMode === 'upload') {
       // Clear dimensions for upload mode - they'll be set via modal when needed
       setDimensions(null, null);
-      console.log('[DIMENSION] Reset dimensions for upload mode');
     } else if (inputMode === 'prompt') {
       // Restore default dimensions for prompt mode if they're null
       if (widthMM === null || lengthMM === null) {
         setDimensions(5000, 5000);
-        console.log('[DIMENSION] Restored default dimensions for prompt mode');
       }
     }
   }, [inputMode, setDimensions]);
 
-  // Cleanup blob URLs on unmount to prevent memory leaks
+  // Cleanup blob URLs and abort polling on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
+      // Abort any ongoing polling
+      if (pollingAbortRef.current) {
+        pollingAbortRef.current.abort();
+      }
+      // Revoke blob URLs
       if (blendSvgUrl && blendSvgUrl.startsWith('blob:')) {
         URL.revokeObjectURL(blendSvgUrl);
       }
@@ -251,21 +256,18 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       }
 
       setIsRecalculating(true);
-      console.log('[INSPIRE] Recalculating current recipes from edited SVG...');
 
       try {
         // Recalculate blend mode recipes
         if (blendSvgUrl && blendRecipes) {
           const derived = await deriveCurrentColors(blendSvgUrl, blendRecipes, regionOverrides, 'blend');
           setCurrentBlendRecipes(derived);
-          console.log('[INSPIRE] Derived blend recipes:', derived.length);
         }
 
         // Recalculate solid mode recipes
         if (solidSvgUrl && solidRecipes) {
           const derived = await deriveCurrentColors(solidSvgUrl, solidRecipes, regionOverrides, 'solid');
           setCurrentSolidRecipes(derived);
-          console.log('[INSPIRE] Derived solid recipes:', derived.length);
         }
       } catch (err) {
         console.error('[INSPIRE] Failed to recalculate recipes:', err);
@@ -283,9 +285,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   // Load design when loadedDesign prop changes
   useEffect(() => {
     if (loadedDesign) {
-      console.log('[INSPIRE] Loading design data:', loadedDesign);
       const restoredState = deserializeDesign(loadedDesign);
-      console.log('[INSPIRE] Restored state:', restoredState);
 
       // Load state into the Zustand store
       loadDesignFromStore(restoredState);
@@ -298,20 +298,17 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         setCurrentDesignId(loadedDesign.id);
       }
 
-      console.log('[INSPIRE] Loaded design:', loadedDesign.name);
 
       // Regenerate SVGs from saved state (blob URLs don't survive page reload)
       // This needs to happen after state is set, so we use a timeout
       setTimeout(async () => {
         if (restoredState.result?.svg_url) {
-          console.log('[INSPIRE] Regenerating SVGs from loaded design');
 
           // Use saved tagged SVG if available (preserves region IDs for overrides)
           // Otherwise, fetch and tag the original SVG for region-based editing
           let taggedSvg = restoredState.originalTaggedSvg || null;
 
           if (taggedSvg) {
-            console.log('[INSPIRE] Using saved tagged SVG with preserved region IDs');
             setOriginalTaggedSvg(taggedSvg);
           } else {
             // No saved tagged SVG - fetch and tag fresh
@@ -320,7 +317,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
               const svgText = await svgResponse.text();
               taggedSvg = tagSvgRegions(svgText);
               setOriginalTaggedSvg(taggedSvg);
-              console.log('[INSPIRE] Tagged SVG with region IDs for loaded design');
             } catch (tagError) {
               console.error('[INSPIRE] Failed to tag SVG regions:', tagError);
             }
@@ -378,7 +374,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     // Mark as regenerated to prevent re-triggering
     hasRegeneratedRef.current = true;
 
-    console.log('[INSPIRE] Detected design loaded directly into store, regenerating SVGs...');
 
     const regenerateSvgs = async () => {
       // Use saved tagged SVG if available (preserves region IDs for overrides)
@@ -386,14 +381,12 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       let taggedSvg = originalTaggedSvg || null;
 
       if (taggedSvg) {
-        console.log('[INSPIRE] Using existing tagged SVG with preserved region IDs');
       } else {
         try {
           const svgResponse = await fetch(result.svg_url);
           const svgText = await svgResponse.text();
           taggedSvg = tagSvgRegions(svgText);
           setOriginalTaggedSvg(taggedSvg);
-          console.log('[INSPIRE] Tagged SVG with region IDs');
         } catch (tagError) {
           console.error('[INSPIRE] Failed to tag SVG regions:', tagError);
         }
@@ -605,8 +598,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         const mapping = mapDimensionsToRecraft(lengthMM, widthMM);
         setArMapping(mapping);
 
-        console.log('[TPV-STUDIO] AR Mapping:', mapping);
-        console.log('[TPV-STUDIO] Layout:', getLayoutDescription(mapping));
 
         // Update progress message with layout info
         if (needsLayoutWarning(mapping)) {
@@ -634,6 +625,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
       let lastStatus = null;
       let startTime = Date.now();
+
+      // Create abort controller for polling (allows cleanup on unmount)
+      pollingAbortRef.current = new AbortController();
 
       // Poll for completion
       await apiClient.waitForRecraftCompletion(
@@ -678,7 +672,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
             const maxAttempts = progressStatus.recraft?.attempt_max || 3;
             setProgressMessage(`⚡ Retrying generation (attempt ${attempt}/${maxAttempts})...`);
           }
-        }
+        },
+        2000, // pollInterval
+        pollingAbortRef.current.signal
       );
 
       // Completed - final status update
@@ -696,6 +692,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         }
       }
     } catch (err) {
+      // Ignore abort errors (expected during component unmount)
+      if (err.name === 'AbortError') {
+        return;
+      }
       console.error('Generation failed:', err);
       setError(err.message);
       setProgressMessage('');
@@ -780,7 +780,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       }
 
       const aspectRatio = width / height;
-      console.log(`[DIMENSION] Detected aspect ratio: ${aspectRatio.toFixed(2)} (${width}×${height})`);
       return aspectRatio;
     } catch (err) {
       console.error('[DIMENSION] Failed to detect aspect ratio:', err);
@@ -790,7 +789,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
   // Helper: Update dimensions and execute pending download action
   const handleDimensionConfirm = (width, height) => {
-    console.log(`[DIMENSION] User confirmed dimensions: ${width}mm × ${height}mm`);
     setWidthMM(width);
     setLengthMM(height);
 
@@ -821,7 +819,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
     // Check if dimensions are set (prompt mode always has them, uploads might not)
     if (inputMode === 'upload' && (!widthMM || !lengthMM)) {
-      console.log('[DIMENSION] No dimensions set for upload, showing modal...');
 
       // Detect aspect ratio from SVG
       const aspectRatio = await detectSVGAspectRatio(svgUrl);
@@ -911,7 +908,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     const needsDimensionPrompt = inputMode === 'upload' && !hasValidDimensions;
 
     if (needsDimensionPrompt) {
-      console.log('[DIMENSION] No dimensions set for upload, showing modal before save...');
 
       // Detect aspect ratio from SVG
       const aspectRatio = await detectSVGAspectRatio(svgUrl);
@@ -941,7 +937,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
     // Check if dimensions are set (prompt mode always has them, uploads might not)
     if (inputMode === 'upload' && (!widthMM || !lengthMM)) {
-      console.log('[DIMENSION] No dimensions set for upload, showing modal...');
 
       // Detect aspect ratio from SVG
       const aspectRatio = await detectSVGAspectRatio(svgUrl);
@@ -1063,7 +1058,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
     // Check if dimensions are set (prompt mode always has them, uploads might not)
     if (inputMode === 'upload' && (!widthMM || !lengthMM)) {
-      console.log('[DIMENSION] No dimensions set for upload, showing modal...');
 
       // Detect aspect ratio from SVG
       const aspectRatio = await detectSVGAspectRatio(svgUrl);
@@ -1112,7 +1106,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
     // If blend mode is disabled, skip blend recipe generation and go directly to solid
     if (!FEATURE_FLAGS.BLEND_MODE_ENABLED) {
-      console.log('[TPV-STUDIO] Blend mode disabled - skipping blend recipes, generating solid only');
       setError(null);
       setProgressMessage('🎨 Processing design colours...');
 
@@ -1123,7 +1116,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         const svgText = await svgResponse.text();
         taggedSvg = tagSvgRegions(svgText);
         setOriginalTaggedSvg(taggedSvg);
-        console.log('[TPV-STUDIO] Tagged SVG with region IDs');
       } catch (tagError) {
         console.error('[TPV-STUDIO] Failed to tag SVG regions:', tagError);
       }
@@ -1137,7 +1129,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     setBlendSvgUrl(null);
     setBlendRecipes(null);
     setColorMapping(null);
-    console.log('[TPV-STUDIO] Cleared old blend state, starting new blend generation');
 
     setError(null);
     setProgressMessage('🎨 Extracting colours from design...');
@@ -1171,9 +1162,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
         // Build colour mapping
         const mapping = buildColorMapping(data.recipes);
-        console.log('[TPV-STUDIO] Color mapping built with', mapping.size, 'entries:');
         Array.from(mapping.entries()).forEach(([orig, target]) => {
-          console.log(`  ${orig} -> ${target.blendHex}`);
         });
         setColorMapping(mapping);
 
@@ -1184,7 +1173,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           const svgText = await svgResponse.text();
           taggedSvg = tagSvgRegions(svgText);
           setOriginalTaggedSvg(taggedSvg);
-          console.log('[TPV-STUDIO] Tagged SVG with region IDs for per-element editing');
         } catch (tagError) {
           console.error('[TPV-STUDIO] Failed to tag SVG regions:', tagError);
           // Non-fatal - continue without region tagging
@@ -1195,16 +1183,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           setProgressMessage('✨ Generating TPV blend preview...');
           await new Promise(resolve => setTimeout(resolve, 200));
 
-          console.log('[TPV-STUDIO] Generating recoloured SVG from:', svg_url);
-          console.log('[TPV-STUDIO] Using mapping with', mapping.size, 'colors');
           const { dataUrl, stats } = await recolorSVG(svg_url, mapping, taggedSvg);
           setBlendSvgUrl(dataUrl);
           setProgressMessage('✓ TPV blend ready!');
-          console.log('[TPV-STUDIO] Recolour stats:', {
-            totalColors: stats.totalColors,
-            colorsReplaced: stats.colorsReplaced,
-            colorsNotMapped: Array.from(stats.colorsNotMapped)
-          });
+
           if (stats.colorsNotMapped.size > 0) {
             console.warn('[TPV-STUDIO] Some colors were not mapped:', Array.from(stats.colorsNotMapped));
           }
@@ -1311,7 +1293,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     if (!svg_url) return;
 
     try {
-      console.log('[TPV-STUDIO] Generating solid color version...');
 
       const response = await fetch('/api/solid-recipes', {
         method: 'POST',
@@ -1335,14 +1316,12 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         // Use pre-built color mapping from API (preserves all original colors)
         // Convert object to Map for recolorSVG
         const mapping = new Map(Object.entries(data.colorMapping || {}));
-        console.log('[TPV-STUDIO] Using API colorMapping with', mapping.size, 'entries');
         setSolidColorMapping(mapping);
 
         // Generate recoloured SVG with solid colors
         try {
           const { dataUrl, stats } = await recolorSVG(svg_url, mapping, taggedSvg);
           setSolidSvgUrl(dataUrl);
-          console.log('[TPV-STUDIO] Solid color SVG generated:', stats);
           if (stats.colorsNotMapped && stats.colorsNotMapped.size > 0) {
             console.warn('[TPV-STUDIO] Unmapped colors in solid mode:', Array.from(stats.colorsNotMapped));
           }
@@ -1361,7 +1340,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
   // Handle color click from SVGPreview or palette
   const handleColorClick = (colorData, clickSource = 'palette') => {
-    console.log('[TPV-STUDIO] Color clicked:', colorData, 'source:', clickSource, 'in mode:', viewMode);
 
     // If eyedropper is active and a palette color is clicked, apply it to the selected region
     if (eyedropperActive && eyedropperRegion && clickSource === 'palette') {
@@ -1390,7 +1368,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
   // Handle region click from SVGPreview (for eyedropper mode)
   const handleRegionClick = (regionData) => {
-    console.log('[TPV-STUDIO] Region clicked:', regionData);
 
     if (!eyedropperActive) {
       // First click - activate eyedropper for this region
@@ -1414,7 +1391,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       ? { hex: colorData, editType: 'eyedrop' }
       : colorData;
 
-    console.log('[TPV-STUDIO] Queuing region recolor:', regionId, '->', normalizedData);
 
     // Add operation to queue instead of immediately processing
     setRegionRecolorQueue(prev => [...prev, {
@@ -1437,7 +1413,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     const operation = regionRecolorQueue[0];
     const colorData = operation.colorData;
 
-    console.log('[TPV-STUDIO] Processing queued region recolor:', operation.regionId, '->', colorData);
 
     try {
       // Build new overrides map with this operation applied
@@ -1473,7 +1448,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       setRegionOverridesHistory(newHistory);
       setHistoryIndex(newHistory.length - 1);
 
-      console.log('[TPV-STUDIO] Completed region recolor for:', operation.regionId);
     } catch (err) {
       console.error('[TPV-STUDIO] Failed to process region recolor:', err);
     } finally {
@@ -1485,7 +1459,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
   // Cancel eyedropper mode
   const handleEyedropperCancel = () => {
-    console.log('[TPV-STUDIO] Eyedropper cancelled');
     setEyedropperActive(false);
     setEyedropperRegion(null);
   };
@@ -1494,7 +1467,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   const handleMakeTransparent = () => {
     if (!eyedropperRegion) return;
 
-    console.log('[TPV-STUDIO] Making region transparent:', eyedropperRegion.regionId);
     applyRegionRecolor(eyedropperRegion.regionId, 'transparent');
     setEyedropperActive(false);
     setEyedropperRegion(null);
@@ -1505,7 +1477,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   const handleSelectTPVColor = (colorData) => {
     if (!eyedropperRegion) return;
 
-    console.log('[TPV-STUDIO] Selecting TPV color for region:', eyedropperRegion.regionId, colorData);
 
     // Build rich color data for tracking
     const richColorData = {
@@ -1528,7 +1499,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     const newIndex = historyIndex - 1;
     const previousOverrides = regionOverridesHistory[newIndex];
 
-    console.log('[TPV-STUDIO] Undoing region override to index:', newIndex);
 
     // Apply previous state
     setRegionOverrides(new Map(previousOverrides));
@@ -1549,7 +1519,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     const newIndex = historyIndex + 1;
     const nextOverrides = regionOverridesHistory[newIndex];
 
-    console.log('[TPV-STUDIO] Redoing region override to index:', newIndex);
 
     // Apply next state
     setRegionOverrides(new Map(nextOverrides));
@@ -1567,7 +1536,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   const handleColorChange = async (newHex) => {
     if (!selectedColor) return;
 
-    console.log('[TPV-STUDIO] Color changed:', selectedColor.hex, '->', newHex, 'in mode:', viewMode);
 
     // Update mode-specific edited colors map (normalize to lowercase for consistency)
     if (viewMode === 'solid') {
@@ -1601,7 +1569,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           }
         });
 
-        console.log('[TPV-STUDIO] Updated', updateCount, 'region overrides for derived color:', oldHex, '->', newHex);
 
         // Add to history
         const newHistory = regionOverridesHistory.slice(0, historyIndex + 1);
@@ -1626,7 +1593,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         const updated = new Map(solidEditedColors);
         const colorsToUpdate = recipe?.mergedOriginalColors || [selectedColor.originalHex.toLowerCase()];
 
-        console.log('[TPV-STUDIO] Updating', colorsToUpdate.length, 'original colors:', colorsToUpdate);
 
         colorsToUpdate.forEach(origHex => {
           updated.set(origHex, { newHex: newHex.toLowerCase() });
@@ -1663,7 +1629,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   const handleMixerBlendChange = useCallback(async ({ blendHex, parts, recipe }) => {
     if (!mixerColor) return;
 
-    console.log('[TPV-STUDIO] Mixer blend changed:', mixerColor.originalHex, '->', blendHex, 'recipe:', recipe, 'isAddedFromEdit:', mixerColor.isAddedFromEdit);
 
     // Check if this is a derived/added color
     if (mixerColor.isAddedFromEdit) {
@@ -1685,7 +1650,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         }
       });
 
-      console.log('[TPV-STUDIO] Updated', updateCount, 'region overrides for derived blend color:', oldHex, '->', blendHex);
 
       // Update mixer color with new blend for highlighting
       setMixerColor({
@@ -1796,20 +1760,16 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       // Clean up old blob URL before creating new one
       if (blendSvgUrl && blendSvgUrl.startsWith('blob:')) {
         URL.revokeObjectURL(blendSvgUrl);
-        console.log('[TPV-STUDIO] Revoked old blend blob URL');
       }
 
       // Convert to data URL for display
       const blob = new Blob([finalSvg], { type: 'image/svg+xml' });
       const dataUrl = URL.createObjectURL(blob);
-      console.log('[TPV-STUDIO] Created new blend blob URL, SVG length:', finalSvg.length);
 
       setBlendSvgUrl(dataUrl);
       setColorMapping(updatedMapping);
       setBlendRecipes(updatedRecipes); // Update recipes to show new colors in legend
-      console.log('[TPV-STUDIO] Blend SVG regenerated with edits:', stats);
       if (appliedOverrides.size > 0) {
-        console.log('[TPV-STUDIO] Applied', appliedOverrides.size, 'region overrides');
       }
     } catch (err) {
       console.error('[TPV-STUDIO] Failed to regenerate blend SVG:', err);
@@ -1910,20 +1870,16 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       // Clean up old blob URL before creating new one
       if (solidSvgUrl && solidSvgUrl.startsWith('blob:')) {
         URL.revokeObjectURL(solidSvgUrl);
-        console.log('[TPV-STUDIO] Revoked old solid blob URL');
       }
 
       // Convert to data URL for display
       const blob = new Blob([finalSvg], { type: 'image/svg+xml' });
       const dataUrl = URL.createObjectURL(blob);
-      console.log('[TPV-STUDIO] Created new solid blob URL, SVG length:', finalSvg.length);
 
       setSolidSvgUrl(dataUrl);
       setSolidColorMapping(updatedMapping);
       setSolidRecipes(updatedRecipes); // Update recipes to show new colors in legend
-      console.log('[TPV-STUDIO] Solid SVG regenerated with edits:', stats);
       if (appliedOverrides.size > 0) {
-        console.log('[TPV-STUDIO] Applied', appliedOverrides.size, 'region overrides');
       }
     } catch (err) {
       console.error('[TPV-STUDIO] Failed to regenerate solid SVG:', err);
@@ -1964,7 +1920,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   // Helper function to regenerate blend SVG from loaded design state
   const regenerateBlendSVGFromState = async (svgUrl, colorMapping, recipes, editedColors, taggedSvg = null, overrides = null) => {
     try {
-      console.log('[INSPIRE] Regenerating blend SVG from state');
 
       // Build updated color mapping with any saved edits
       const updatedMapping = new Map(colorMapping);
@@ -1986,7 +1941,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       // Apply region overrides (including transparency) if provided
       let finalSvgText = svgText;
       if (overrides && overrides.size > 0) {
-        console.log('[INSPIRE] Applying', overrides.size, 'region overrides to blend SVG');
         finalSvgText = applyRegionOverrides(svgText, overrides);
       }
 
@@ -1995,7 +1949,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       const finalUrl = URL.createObjectURL(finalBlob);
 
       setBlendSvgUrl(finalUrl);
-      console.log('[INSPIRE] Blend SVG regenerated');
     } catch (err) {
       console.error('[INSPIRE] Failed to regenerate blend SVG:', err);
     }
@@ -2004,7 +1957,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   // Helper function to regenerate solid SVG from loaded design state
   const regenerateSolidSVGFromState = async (svgUrl, colorMapping, recipes, editedColors, taggedSvg = null, overrides = null) => {
     try {
-      console.log('[INSPIRE] Regenerating solid SVG from state');
 
       // Build updated color mapping with any saved edits
       const updatedMapping = new Map(colorMapping);
@@ -2026,7 +1978,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       // Apply region overrides (including transparency) if provided
       let finalSvgText = svgText;
       if (overrides && overrides.size > 0) {
-        console.log('[INSPIRE] Applying', overrides.size, 'region overrides to solid SVG');
         finalSvgText = applyRegionOverrides(svgText, overrides);
       }
 
@@ -2035,7 +1986,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       const finalUrl = URL.createObjectURL(finalBlob);
 
       setSolidSvgUrl(finalUrl);
-      console.log('[INSPIRE] Solid SVG regenerated');
     } catch (err) {
       console.error('[INSPIRE] Failed to regenerate solid SVG:', err);
     }
@@ -2545,7 +2495,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
             if (onDesignSaved) {
               onDesignSaved(savedName);
             }
-            console.log('[INSPIRE] Design saved:', savedDesign);
           }}
         />
       )}
@@ -2560,7 +2509,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           }}
           onClose={() => setShowInSituModal(false)}
           onSaved={(inSituResult) => {
-            console.log('[INSPIRE] In-situ preview saved:', inSituResult);
             setInSituData(inSituResult);
             setShowInSituModal(false);
           }}

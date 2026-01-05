@@ -146,11 +146,30 @@ class APIClient {
    * @param {string} jobId - Job ID
    * @param {function} onProgress - Progress callback (receives status object)
    * @param {number} pollInterval - Polling interval in ms (default: 2000)
+   * @param {AbortSignal} signal - Optional AbortSignal to cancel polling
    * @returns {Promise} Final status object
    */
-  async waitForRecraftCompletion(jobId, onProgress = null, pollInterval = 2000) {
+  async waitForRecraftCompletion(jobId, onProgress = null, pollInterval = 2000, signal = null) {
     return new Promise((resolve, reject) => {
+      let timeoutId = null;
+
+      // Handle abort signal
+      if (signal) {
+        signal.addEventListener('abort', () => {
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+          reject(new DOMException('Polling aborted', 'AbortError'));
+        });
+      }
+
       const poll = async () => {
+        // Check if aborted before each poll
+        if (signal?.aborted) {
+          reject(new DOMException('Polling aborted', 'AbortError'));
+          return;
+        }
+
         try {
           const status = await this.getRecraftStatus(jobId);
 
@@ -163,27 +182,23 @@ class APIClient {
             const hasSvgOutput = status.result?.svg_url;
 
             if (hasSvgOutput) {
-              console.log('[API] Recraft job complete with SVG output');
               resolve(status);
             } else {
-              console.error('[API] Recraft job completed but no SVG output');
               reject(new Error('Job completed but no output received'));
             }
           } else if (status.status === 'failed') {
             // Failed jobs may still have output (non-compliant designs)
             if (status.result?.svg_url) {
-              console.warn('[API] Job failed compliance but has output (non-compliant)');
-              resolve(status); // Resolve with warning
+              resolve(status); // Resolve with warning - has output despite failure
             } else {
               reject(new Error(status.error || 'Job failed'));
             }
-          } else if (status.status === 'retrying') {
-            // Still retrying, continue polling
-            console.log(`[API] Retrying: ${status.recraft?.attempt_current}/${status.recraft?.attempt_max}`);
-            setTimeout(poll, pollInterval);
+          } else if (status.status === 'retrying' || status.status === 'pending' || status.status === 'queued' || status.status === 'running') {
+            // Still in progress, continue polling
+            timeoutId = setTimeout(poll, pollInterval);
           } else {
-            // Still pending, queued, or running
-            setTimeout(poll, pollInterval);
+            // Unknown status, continue polling
+            timeoutId = setTimeout(poll, pollInterval);
           }
         } catch (error) {
           reject(error);

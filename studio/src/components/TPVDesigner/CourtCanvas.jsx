@@ -1,5 +1,5 @@
 // TPV Studio - Court Canvas Component
-import React, { useRef, useState, useEffect, forwardRef, useImperativeHandle } from 'react';
+import React, { useRef, useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { generateCourtSVG } from '../../lib/sports/courtTemplates.js';
 import { snapPositionToGrid, constrainPosition, getCourtTransformString } from '../../lib/sports/geometryUtils.js';
@@ -184,14 +184,21 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   } = useSportsDesignStore();
 
   // Convert screen coordinates to SVG coordinates
-  const screenToSVG = (screenX, screenY) => {
+  // Uses useCallback to ensure stable reference for useEffect dependencies
+  const screenToSVG = useCallback((screenX, screenY) => {
     const svg = canvasRef.current;
+    // Guard against null ref during unmount or before mount
+    if (!svg || !svg.getScreenCTM()) {
+      return { x: 0, y: 0 };
+    }
     const pt = svg.createSVGPoint();
     pt.x = screenX;
     pt.y = screenY;
-    const svgP = pt.matrixTransform(svg.getScreenCTM().inverse());
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    const svgP = pt.matrixTransform(ctm.inverse());
     return { x: svgP.x, y: svgP.y };
-  };
+  }, []); // Empty deps since it only uses refs
 
   // Handle mouse/touch down on court (start drag)
   const handleCourtMouseDown = (e, courtId) => {
@@ -2118,19 +2125,28 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   };
 
   // Set up pan event listeners
+  // Handlers defined inline to avoid stale closure issues with panStart state
   useEffect(() => {
-    if (isPanning) {
-      const handleMove = (e) => handlePanMove(e);
-      const handleUp = () => handlePanEnd();
+    if (!isPanning) return;
 
-      window.addEventListener('mousemove', handleMove);
-      window.addEventListener('mouseup', handleUp);
+    const handleMove = (e) => {
+      setPan({
+        x: e.clientX - panStart.x,
+        y: e.clientY - panStart.y
+      });
+    };
 
-      return () => {
-        window.removeEventListener('mousemove', handleMove);
-        window.removeEventListener('mouseup', handleUp);
-      };
-    }
+    const handleUp = () => {
+      setIsPanning(false);
+    };
+
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleUp);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleUp);
+    };
   }, [isPanning, panStart]);
 
   // Keyboard handler for space+drag panning, Escape for path drawing, and Delete for points
