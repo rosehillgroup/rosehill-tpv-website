@@ -3303,9 +3303,29 @@ export const useSportsDesignStore = create(
               selectedElementIds: state.selectedElementIds.filter(id => id !== elementId)
             };
           }
-          // Add to selection
+
+          // Build the new selection array, starting with existing multi-selection
+          let newSelection = [...state.selectedElementIds];
+
+          // If there's a single selection that's not yet in multi-selection, include it
+          const currentSingleSelection =
+            state.selectedShapeId ||
+            state.selectedTextId ||
+            state.selectedCourtId ||
+            state.selectedTrackId ||
+            state.selectedMotifId ||
+            state.selectedExclusionZoneId;
+
+          if (currentSingleSelection && !newSelection.includes(currentSingleSelection)) {
+            newSelection.push(currentSingleSelection);
+          }
+
+          // Add the new element
+          newSelection.push(elementId);
+
+          // Clear individual selections and set multi-selection
           return {
-            selectedElementIds: [...state.selectedElementIds, elementId],
+            selectedElementIds: newSelection,
             selectedShapeId: null,
             selectedGroupId: null,
             selectedCourtId: null,
