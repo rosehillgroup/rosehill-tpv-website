@@ -116,6 +116,7 @@ function TextElement({
         width={textBounds.width + BOX_PADDING}
         height={baseFontSize * 1.2}
         fill="transparent"
+        pointerEvents="all"
         onMouseDown={onMouseDown}
         onTouchStart={onTouchStart}
         onDoubleClick={onDoubleClick}
