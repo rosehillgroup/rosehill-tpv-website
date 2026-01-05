@@ -2,6 +2,7 @@
 // Renders draggable control points and bezier handles for blob shape editing
 
 import React, { useState, useCallback, useEffect } from 'react';
+import { getEditHandleSize } from '../../lib/sports/handleUtils';
 
 /**
  * Bezier control points and handles for blob editing
@@ -23,6 +24,7 @@ function BlobEditHandles({
   controlPoints,
   width,
   height,
+  zoom = 1,
   onPointDrag,
   onHandleDrag,
   onDragEnd,
@@ -34,12 +36,8 @@ function BlobEditHandles({
   const [dragging, setDragging] = useState(null);
   const [dragStartPos, setDragStartPos] = useState(null);
 
-  // Handle size based on shape dimensions
-  const controlPointSize = Math.min(width, height) * 0.03;
-  const minPointSize = 60;
-  const maxPointSize = 120;
-  const pointSize = Math.max(minPointSize, Math.min(maxPointSize, controlPointSize));
-  const handleCircleSize = pointSize * 0.7;
+  // Get handle sizes that stay fixed on screen regardless of zoom
+  const { pointSize, handleSize: handleCircleSize, strokeWidth } = getEditHandleSize(zoom);
 
   // Start dragging a control point (also selects it)
   const startPointDrag = useCallback((e, index) => {
@@ -151,8 +149,8 @@ function BlobEditHandles({
                   x2={handleInX}
                   y2={handleInY}
                   stroke="#94a3b8"
-                  strokeWidth="20"
-                  strokeDasharray="60 40"
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={`${strokeWidth * 3} ${strokeWidth * 2}`}
                   pointerEvents="none"
                   opacity="0.8"
                 />
@@ -162,8 +160,8 @@ function BlobEditHandles({
                   x2={handleOutX}
                   y2={handleOutY}
                   stroke="#94a3b8"
-                  strokeWidth="20"
-                  strokeDasharray="60 40"
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={`${strokeWidth * 3} ${strokeWidth * 2}`}
                   pointerEvents="none"
                   opacity="0.8"
                 />
@@ -175,7 +173,7 @@ function BlobEditHandles({
                   r={handleCircleSize}
                   fill={isHandleInDragging ? '#f97316' : '#ffffff'}
                   stroke="#64748b"
-                  strokeWidth="15"
+                  strokeWidth={strokeWidth}
                   style={{ cursor: 'crosshair' }}
                   pointerEvents="all"
                   onMouseDown={(e) => startHandleDrag(e, i, 'handleIn')}
@@ -188,7 +186,7 @@ function BlobEditHandles({
                   r={handleCircleSize}
                   fill={isHandleOutDragging ? '#f97316' : '#ffffff'}
                   stroke="#64748b"
-                  strokeWidth="15"
+                  strokeWidth={strokeWidth}
                   style={{ cursor: 'crosshair' }}
                   pointerEvents="all"
                   onMouseDown={(e) => startHandleDrag(e, i, 'handleOut')}
@@ -203,7 +201,7 @@ function BlobEditHandles({
               r={pointSize}
               fill={isPointSelected ? '#ef4444' : (isPointDragging ? '#f97316' : '#3b82f6')}
               stroke="#ffffff"
-              strokeWidth="20"
+              strokeWidth={strokeWidth * 1.3}
               style={{ cursor: 'move' }}
               pointerEvents="all"
               onMouseDown={(e) => startPointDrag(e, i)}

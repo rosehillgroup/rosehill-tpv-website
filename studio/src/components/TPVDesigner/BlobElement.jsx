@@ -3,6 +3,7 @@
 
 import React, { useMemo } from 'react';
 import { controlPointsToSVGPath } from '../../lib/sports/blobGeometry';
+import { getHandleSize, getRotationHandle, getSelectionStyle } from '../../lib/sports/handleUtils';
 import BlobEditHandles from './BlobEditHandles';
 
 /**
@@ -24,6 +25,7 @@ import BlobEditHandles from './BlobEditHandles';
 function BlobElement({
   shape,
   isSelected,
+  zoom = 1,
   onMouseDown,
   onTouchStart,
   onDoubleClick,
@@ -90,26 +92,30 @@ function BlobElement({
       />
 
       {/* Selection indicator */}
-      {isSelected && (
-        <rect
-          x="-10"
-          y="-10"
-          width={width_mm + 20}
-          height={height_mm + 20}
-          fill="none"
-          stroke="#3b82f6"
-          strokeWidth="80"
-          strokeDasharray="400 400"
-          opacity="0.7"
-          pointerEvents="none"
-        />
-      )}
+      {isSelected && (() => {
+        const selectionStyle = getSelectionStyle(zoom);
+        return (
+          <rect
+            x="-10"
+            y="-10"
+            width={width_mm + 20}
+            height={height_mm + 20}
+            fill="none"
+            stroke="#3b82f6"
+            strokeWidth={selectionStyle.strokeWidth}
+            strokeDasharray={selectionStyle.dashArray}
+            opacity="0.7"
+            pointerEvents="none"
+          />
+        );
+      })()}
 
       {/* Corner resize handles and rotation handle when selected */}
       {isSelected && (
         <BlobResizeHandles
           width={width_mm}
           height={height_mm}
+          zoom={zoom}
           onScaleStart={onScaleStart}
           onRotateStart={onRotateStart}
         />
@@ -121,6 +127,7 @@ function BlobElement({
           controlPoints={controlPoints}
           width={width_mm}
           height={height_mm}
+          zoom={zoom}
           onPointDrag={onPointDrag}
           onHandleDrag={onHandleDrag}
           onDragEnd={onDragEnd}
@@ -138,11 +145,10 @@ function BlobElement({
  * Resize and rotation handles for selected blob
  * Corner handles for scaling, top-center handle for rotation
  */
-function BlobResizeHandles({ width, height, onScaleStart, onRotateStart }) {
-  const handleSize = Math.min(width, height) * 0.08;
-  const minHandleSize = 150;
-  const maxHandleSize = 400;
-  const size = Math.max(minHandleSize, Math.min(maxHandleSize, handleSize));
+function BlobResizeHandles({ width, height, zoom, onScaleStart, onRotateStart }) {
+  // Get handle size that stays fixed on screen regardless of zoom
+  const { size, strokeWidth, cornerRadius } = getHandleSize(zoom);
+  const rotation = getRotationHandle(size);
 
   // Corner handles for scaling
   const scaleHandles = [
@@ -151,10 +157,6 @@ function BlobResizeHandles({ width, height, onScaleStart, onRotateStart }) {
     { x: -size / 2, y: height - size / 2, corner: 'sw', cursor: 'nesw-resize' },
     { x: width - size / 2, y: height - size / 2, corner: 'se', cursor: 'nwse-resize' }
   ];
-
-  // Rotation handle - positioned above top center
-  const rotateHandleDistance = size * 2.5;
-  const rotateHandleSize = size * 0.8;
 
   return (
     <g className="blob-resize-handles">
@@ -168,8 +170,8 @@ function BlobResizeHandles({ width, height, onScaleStart, onRotateStart }) {
           height={size}
           fill="#3b82f6"
           stroke="#fff"
-          strokeWidth="20"
-          rx={size / 4}
+          strokeWidth={strokeWidth}
+          rx={cornerRadius}
           style={{ cursor: handle.cursor }}
           pointerEvents="all"
           onMouseDown={(e) => {
@@ -188,20 +190,20 @@ function BlobResizeHandles({ width, height, onScaleStart, onRotateStart }) {
         x1={width / 2}
         y1={0}
         x2={width / 2}
-        y2={-rotateHandleDistance + rotateHandleSize / 2}
+        y2={-rotation.distance + rotation.size / 2}
         stroke="#3b82f6"
-        strokeWidth="30"
+        strokeWidth={rotation.stemWidth}
         pointerEvents="none"
       />
 
       {/* Rotation handle circle */}
       <circle
         cx={width / 2}
-        cy={-rotateHandleDistance}
-        r={rotateHandleSize}
+        cy={-rotation.distance}
+        r={rotation.size}
         fill="#3b82f6"
         stroke="#fff"
-        strokeWidth="20"
+        strokeWidth={strokeWidth}
         style={{ cursor: 'grab' }}
         pointerEvents="all"
         onMouseDown={(e) => {
@@ -216,19 +218,19 @@ function BlobResizeHandles({ width, height, onScaleStart, onRotateStart }) {
 
       {/* Rotation icon inside handle */}
       <path
-        d={`M ${width / 2 - rotateHandleSize * 0.4} ${-rotateHandleDistance}
-            A ${rotateHandleSize * 0.4} ${rotateHandleSize * 0.4} 0 1 1
-            ${width / 2 + rotateHandleSize * 0.4} ${-rotateHandleDistance}`}
+        d={`M ${width / 2 - rotation.size * 0.4} ${-rotation.distance}
+            A ${rotation.size * 0.4} ${rotation.size * 0.4} 0 1 1
+            ${width / 2 + rotation.size * 0.4} ${-rotation.distance}`}
         fill="none"
         stroke="#fff"
-        strokeWidth="25"
+        strokeWidth={strokeWidth * 0.7}
         strokeLinecap="round"
         pointerEvents="none"
       />
       <polygon
-        points={`${width / 2 + rotateHandleSize * 0.4},${-rotateHandleDistance - rotateHandleSize * 0.25}
-                 ${width / 2 + rotateHandleSize * 0.4},${-rotateHandleDistance + rotateHandleSize * 0.25}
-                 ${width / 2 + rotateHandleSize * 0.65},${-rotateHandleDistance}`}
+        points={`${width / 2 + rotation.size * 0.4},${-rotation.distance - rotation.size * 0.25}
+                 ${width / 2 + rotation.size * 0.4},${-rotation.distance + rotation.size * 0.25}
+                 ${width / 2 + rotation.size * 0.65},${-rotation.distance}`}
         fill="#fff"
         pointerEvents="none"
       />

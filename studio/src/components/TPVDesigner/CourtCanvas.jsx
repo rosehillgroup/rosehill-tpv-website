@@ -178,8 +178,14 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     updateGroupPosition,
     updateGroupScale,
     updateGroupRotation,
-    commitGroupMove
+    commitGroupMove,
+    setZoom: setStoreZoom
   } = useSportsDesignStore();
+
+  // Sync local zoom state to store for element components to access
+  useEffect(() => {
+    setStoreZoom(zoom);
+  }, [zoom, setStoreZoom]);
 
   // Convert screen coordinates to SVG coordinates
   // Uses useCallback to ensure stable reference for useEffect dependencies
@@ -2365,6 +2371,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
               key={zone.id}
               zone={zone}
               isSelected={zone.id === selectedExclusionZoneId}
+              zoom={zoom}
               onMouseDown={(e) => handleExclusionZoneMouseDown(e, zone.id)}
               onTouchStart={(e) => handleExclusionZoneMouseDown(e, zone.id)}
               onDoubleClick={(e) => handleExclusionZoneDoubleClick(e, zone.id)}
@@ -2431,6 +2438,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                 key={elementId}
                 motif={motif}
                 isSelected={isMotifSelected}
+                zoom={zoom}
                 onMouseDown={(e) => handleMotifMouseDown(e, elementId)}
                 onTouchStart={(e) => handleMotifMouseDown(e, elementId)}
                 onDoubleClick={(e) => handleMotifDoubleClick(e, elementId)}
@@ -2457,6 +2465,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                   key={elementId}
                   shape={shape}
                   isSelected={isShapeSelected}
+                  zoom={zoom}
                   onMouseDown={(e) => handleShapeMouseDown(e, elementId)}
                   onTouchStart={(e) => handleShapeMouseDown(e, elementId)}
                   onDoubleClick={(e) => handleShapeDoubleClick(e, elementId)}
@@ -2479,6 +2488,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                   key={elementId}
                   shape={shape}
                   isSelected={isShapeSelected}
+                  zoom={zoom}
                   onMouseDown={(e) => handleShapeMouseDown(e, elementId)}
                   onTouchStart={(e) => handleShapeMouseDown(e, elementId)}
                   onDoubleClick={(e) => handleShapeDoubleClick(e, elementId)}
@@ -2500,6 +2510,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                 key={elementId}
                 shape={shape}
                 isSelected={isShapeSelected}
+                zoom={zoom}
                 onMouseDown={(e) => handleShapeMouseDown(e, elementId)}
                 onTouchStart={(e) => handleShapeMouseDown(e, elementId)}
                 onDoubleClick={(e) => handleShapeDoubleClick(e, elementId)}
@@ -2521,6 +2532,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                 key={elementId}
                 text={text}
                 isSelected={elementId === selectedTextId}
+                zoom={zoom}
                 onMouseDown={(e) => handleTextMouseDown(e, elementId)}
                 onTouchStart={(e) => handleTextMouseDown(e, elementId)}
                 onDoubleClick={(e) => handleTextDoubleClick(e, elementId)}
@@ -2555,6 +2567,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                           key={childId}
                           shape={shape}
                           isSelected={isShapeSelected}
+                          zoom={zoom}
                           onMouseDown={(e) => handleShapeMouseDown(e, childId)}
                           onTouchStart={(e) => handleShapeMouseDown(e, childId)}
                           onDoubleClick={(e) => handleShapeDoubleClick(e, childId)}
@@ -2576,6 +2589,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                           key={childId}
                           shape={shape}
                           isSelected={isShapeSelected}
+                          zoom={zoom}
                           onMouseDown={(e) => handleShapeMouseDown(e, childId)}
                           onTouchStart={(e) => handleShapeMouseDown(e, childId)}
                           onDoubleClick={(e) => handleShapeDoubleClick(e, childId)}
@@ -2596,6 +2610,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                         key={childId}
                         shape={shape}
                         isSelected={isShapeSelected}
+                        zoom={zoom}
                         onMouseDown={(e) => handleShapeMouseDown(e, childId)}
                         onTouchStart={(e) => handleShapeMouseDown(e, childId)}
                         onDoubleClick={(e) => handleShapeDoubleClick(e, childId)}
@@ -2616,6 +2631,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                         key={childId}
                         text={text}
                         isSelected={childId === selectedTextId}
+                        zoom={zoom}
                         onMouseDown={(e) => handleTextMouseDown(e, childId)}
                         onTouchStart={(e) => handleTextMouseDown(e, childId)}
                         onDoubleClick={(e) => handleTextDoubleClick(e, childId)}
@@ -2677,6 +2693,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                         key={childId}
                         motif={motif}
                         isSelected={isMotifSelected}
+                        zoom={zoom}
                         onMouseDown={(e) => handleMotifMouseDown(e, childId)}
                         onTouchStart={(e) => handleMotifMouseDown(e, childId)}
                         onDoubleClick={(e) => handleMotifDoubleClick(e, childId)}
@@ -2700,7 +2717,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
           <GroupElement
             key={groupId}
             groupId={groupId}
-            scale={zoom}
+            zoom={zoom}
             screenToSVG={screenToSVG}
             onDragStart={(gId, offset) => {
               setDragStart(offset);

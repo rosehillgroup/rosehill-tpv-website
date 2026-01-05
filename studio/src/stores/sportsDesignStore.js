@@ -212,6 +212,7 @@ const initialState = {
   showColorEditor: false,
   snapToGrid: true,
   gridSize_mm: 100,
+  zoom: 1, // Canvas zoom level (0.25 to 5.0)
 
   // Mobile UI state
   mobileLibraryOpen: false,
@@ -4131,6 +4132,10 @@ export const useSportsDesignStore = create(
 
       setGridSize: (gridSize_mm) => {
         set({ gridSize_mm });
+      },
+
+      setZoom: (zoom) => {
+        set({ zoom: Math.max(0.25, Math.min(5, zoom)) });
       },
 
       // ====== Standalone Mode Actions ======

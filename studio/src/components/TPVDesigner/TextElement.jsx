@@ -3,9 +3,13 @@
 
 import React, { useMemo } from 'react';
 import { measureText } from '../../lib/sports/textUtils';
+import { getHandleSize, getRotationHandle, getSelectionStyle } from '../../lib/sports/handleUtils';
 
 // Base font size for text rendering (scale is applied on top)
 const BASE_FONT_SIZE = 500;
+
+// Fixed padding for selection box and handles (in base coordinate space)
+const BOX_PADDING = 40;
 
 /**
  * Individual text element component
@@ -14,6 +18,7 @@ const BASE_FONT_SIZE = 500;
  * @param {Object} props - Component props
  * @param {Object} props.text - Text data from store
  * @param {boolean} props.isSelected - Whether this text is selected
+ * @param {number} props.zoom - Current canvas zoom level
  * @param {Function} props.onMouseDown - Handler for mouse down (drag start)
  * @param {Function} props.onTouchStart - Handler for touch start (drag start on mobile)
  * @param {Function} props.onDoubleClick - Handler for double click (opens properties panel)
@@ -23,6 +28,7 @@ const BASE_FONT_SIZE = 500;
 function TextElement({
   text,
   isSelected,
+  zoom = 1,
   onMouseDown,
   onTouchStart,
   onDoubleClick,
@@ -74,6 +80,9 @@ function TextElement({
   // Display text (show 'Text' if empty for visibility)
   const displayContent = content || 'Text';
 
+  // Get selection styling that accounts for zoom and scale
+  const selectionStyle = getSelectionStyle(zoom, Math.max(scale_x, scale_y));
+
   return (
     <g
       className={`text-element ${isSelected ? 'text-element--selected' : ''}`}
@@ -102,9 +111,9 @@ function TextElement({
 
       {/* Invisible hit area for interaction (at base size, scaled by transform) */}
       <rect
-        x={alignOffset - 20}
+        x={alignOffset - BOX_PADDING / 2}
         y={-baseFontSize * 0.85}
-        width={textBounds.width + 40}
+        width={textBounds.width + BOX_PADDING}
         height={baseFontSize * 1.2}
         fill="transparent"
         onMouseDown={onMouseDown}
@@ -116,14 +125,14 @@ function TextElement({
       {/* Selection indicator (at base size, scaled by transform) */}
       {isSelected && (
         <rect
-          x={alignOffset - 40}
-          y={-baseFontSize - 40}
-          width={textBounds.width + 80}
-          height={baseFontSize * 1.2 + 80}
+          x={alignOffset - BOX_PADDING}
+          y={-baseFontSize - BOX_PADDING}
+          width={textBounds.width + BOX_PADDING * 2}
+          height={baseFontSize * 1.2 + BOX_PADDING * 2}
           fill="none"
           stroke="#3b82f6"
-          strokeWidth={60 / Math.max(scale_x, scale_y)}
-          strokeDasharray={`${300 / Math.max(scale_x, scale_y)} ${300 / Math.max(scale_x, scale_y)}`}
+          strokeWidth={selectionStyle.strokeWidth}
+          strokeDasharray={selectionStyle.dashArray}
           opacity="0.7"
           pointerEvents="none"
         />
@@ -137,6 +146,7 @@ function TextElement({
           alignOffset={alignOffset}
           scale_x={scale_x}
           scale_y={scale_y}
+          zoom={zoom}
           onScaleStart={onScaleStart}
           onRotateStart={onRotateStart}
         />
@@ -149,23 +159,19 @@ function TextElement({
  * Resize and rotation handles for selected text
  * Corner handles for scaling, top-center handle for rotation
  */
-function TextHandles({ bounds, fontSize, alignOffset, scale_x, scale_y, onScaleStart, onRotateStart }) {
-  const handleSize = Math.min(bounds.width, fontSize) * 0.15;
-  const minHandleSize = 100;
-  const maxHandleSize = 300;
-  const baseSize = Math.max(minHandleSize, Math.min(maxHandleSize, handleSize));
+function TextHandles({ bounds, fontSize, alignOffset, scale_x, scale_y, zoom, onScaleStart, onRotateStart }) {
+  // Get handle size that stays fixed on screen regardless of zoom/scale
+  const elementScale = Math.max(scale_x, scale_y);
+  const { size, strokeWidth, cornerRadius } = getHandleSize(zoom, elementScale);
+  const rotation = getRotationHandle(size);
 
-  // Adjust handle size inversely to scale so handles stay consistent screen size
-  const size = baseSize / Math.max(scale_x, scale_y);
-  const strokeWidth = 15 / Math.max(scale_x, scale_y);
+  // Bounding box dimensions for text (at base size) - matches selection indicator
+  const boxX = alignOffset - BOX_PADDING;
+  const boxY = -fontSize - BOX_PADDING;
+  const boxWidth = bounds.width + BOX_PADDING * 2;
+  const boxHeight = fontSize * 1.2 + BOX_PADDING * 2;
 
-  // Bounding box dimensions for text (at base size)
-  const boxX = alignOffset - 20;
-  const boxY = -fontSize - 20;
-  const boxWidth = bounds.width + 40;
-  const boxHeight = fontSize * 1.2 + 40;
-
-  // Corner handles for scaling
+  // Corner handles for scaling - positioned at box corners
   const scaleHandles = [
     { x: boxX - size / 2, y: boxY - size / 2, corner: 'nw', cursor: 'nwse-resize' },
     { x: boxX + boxWidth - size / 2, y: boxY - size / 2, corner: 'ne', cursor: 'nesw-resize' },
@@ -174,8 +180,6 @@ function TextHandles({ bounds, fontSize, alignOffset, scale_x, scale_y, onScaleS
   ];
 
   // Rotation handle - positioned above top center
-  const rotateHandleDistance = size * 2.5;
-  const rotateHandleSize = size * 0.8;
   const centerX = boxX + boxWidth / 2;
 
   return (
@@ -191,7 +195,7 @@ function TextHandles({ bounds, fontSize, alignOffset, scale_x, scale_y, onScaleS
           fill="#3b82f6"
           stroke="#fff"
           strokeWidth={strokeWidth}
-          rx={size / 4}
+          rx={cornerRadius}
           style={{ cursor: handle.cursor }}
           pointerEvents="all"
           onMouseDown={(e) => {
@@ -210,17 +214,17 @@ function TextHandles({ bounds, fontSize, alignOffset, scale_x, scale_y, onScaleS
         x1={centerX}
         y1={boxY}
         x2={centerX}
-        y2={boxY - rotateHandleDistance + rotateHandleSize / 2}
+        y2={boxY - rotation.distance + rotation.size / 2}
         stroke="#3b82f6"
-        strokeWidth={25 / Math.max(scale_x, scale_y)}
+        strokeWidth={rotation.stemWidth}
         pointerEvents="none"
       />
 
       {/* Rotation handle circle */}
       <circle
         cx={centerX}
-        cy={boxY - rotateHandleDistance}
-        r={rotateHandleSize}
+        cy={boxY - rotation.distance}
+        r={rotation.size}
         fill="#3b82f6"
         stroke="#fff"
         strokeWidth={strokeWidth}
@@ -238,19 +242,19 @@ function TextHandles({ bounds, fontSize, alignOffset, scale_x, scale_y, onScaleS
 
       {/* Rotation icon inside handle */}
       <path
-        d={`M ${centerX - rotateHandleSize * 0.4} ${boxY - rotateHandleDistance}
-            A ${rotateHandleSize * 0.4} ${rotateHandleSize * 0.4} 0 1 1
-            ${centerX + rotateHandleSize * 0.4} ${boxY - rotateHandleDistance}`}
+        d={`M ${centerX - rotation.size * 0.4} ${boxY - rotation.distance}
+            A ${rotation.size * 0.4} ${rotation.size * 0.4} 0 1 1
+            ${centerX + rotation.size * 0.4} ${boxY - rotation.distance}`}
         fill="none"
         stroke="#fff"
-        strokeWidth={20 / Math.max(scale_x, scale_y)}
+        strokeWidth={strokeWidth * 0.7}
         strokeLinecap="round"
         pointerEvents="none"
       />
       <polygon
-        points={`${centerX + rotateHandleSize * 0.4},${boxY - rotateHandleDistance - rotateHandleSize * 0.25}
-                 ${centerX + rotateHandleSize * 0.4},${boxY - rotateHandleDistance + rotateHandleSize * 0.25}
-                 ${centerX + rotateHandleSize * 0.65},${boxY - rotateHandleDistance}`}
+        points={`${centerX + rotation.size * 0.4},${boxY - rotation.distance - rotation.size * 0.25}
+                 ${centerX + rotation.size * 0.4},${boxY - rotation.distance + rotation.size * 0.25}
+                 ${centerX + rotation.size * 0.65},${boxY - rotation.distance}`}
         fill="#fff"
         pointerEvents="none"
       />
