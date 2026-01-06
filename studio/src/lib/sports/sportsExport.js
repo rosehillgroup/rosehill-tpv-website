@@ -16,18 +16,13 @@ export function generateSportsSVG(svgElement, state) {
   const clonedSvg = svgElement.cloneNode(true);
 
   // Remove selection indicators and transform handles
+  // Note: We specifically target selection classes, NOT [stroke-dasharray] which would
+  // remove legitimate dashed line markings (e.g., badminton service lines)
   const selectionElements = clonedSvg.querySelectorAll(
-    '.court-canvas__selection-outline, .transform-handles, [class*="selection"], [class*="handle"]'
+    '.court-canvas__selection-outline, .transform-handles, .track-resize-handles, ' +
+    '[class*="selection"], [class*="handle"]'
   );
   selectionElements.forEach(el => el.remove());
-
-  // Clean up any dashed selection borders
-  const selectedElements = clonedSvg.querySelectorAll('[stroke-dasharray]');
-  selectedElements.forEach(el => {
-    if (el.getAttribute('stroke-dasharray')) {
-      el.remove();
-    }
-  });
 
   // Add metadata
   const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
@@ -177,4 +172,116 @@ export function generateFilename(name, extension) {
 
   const timestamp = new Date().toISOString().split('T')[0];
   return `${sanitized}_${timestamp}.${extension}`;
+}
+
+/**
+ * Convert motif data URL images to inline SVG for Resvg compatibility.
+ * Resvg does not support data: URLs in <image> elements, so we need to
+ * decode and inline the SVG content directly.
+ *
+ * @param {Element} svgClone - Cloned SVG element to modify in place
+ */
+export function inlineMotifSvgs(svgClone) {
+  const images = svgClone.querySelectorAll('image[href^="data:image/svg+xml"]');
+  console.log(`[EXPORT] Found ${images.length} motif images to inline`);
+
+  images.forEach((img, index) => {
+    try {
+      const href = img.getAttribute('href');
+      if (!href) return;
+
+      // Decode the data URL - handle both encoded and raw formats
+      let svgContent;
+      if (href.includes(',')) {
+        const dataContent = href.split(',')[1];
+        // Check if it's base64 encoded
+        if (href.includes('base64')) {
+          svgContent = atob(dataContent);
+        } else {
+          svgContent = decodeURIComponent(dataContent);
+        }
+      } else {
+        console.warn(`[EXPORT] Motif ${index}: Invalid data URL format`);
+        return;
+      }
+
+      // Parse the SVG content
+      const parser = new DOMParser();
+      const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
+      const innerSvg = svgDoc.documentElement;
+
+      // Check for parse errors
+      if (innerSvg.querySelector('parsererror')) {
+        console.warn(`[EXPORT] Motif ${index}: SVG parse error`);
+        return;
+      }
+
+      // Get image dimensions and position from the <image> element
+      const x = parseFloat(img.getAttribute('x')) || 0;
+      const y = parseFloat(img.getAttribute('y')) || 0;
+      const width = parseFloat(img.getAttribute('width'));
+      const height = parseFloat(img.getAttribute('height'));
+
+      if (!width || !height) {
+        console.warn(`[EXPORT] Motif ${index}: Missing dimensions`);
+        return;
+      }
+
+      // Get the inner SVG's viewBox to calculate scaling
+      const viewBox = innerSvg.getAttribute('viewBox');
+      let scaleX = 1, scaleY = 1;
+      if (viewBox) {
+        const vbParts = viewBox.split(/\s+/).map(Number);
+        if (vbParts.length === 4) {
+          const [, , vbWidth, vbHeight] = vbParts;
+          if (vbWidth > 0 && vbHeight > 0) {
+            scaleX = width / vbWidth;
+            scaleY = height / vbHeight;
+          }
+        }
+      }
+
+      // Get the parent group's transform to apply position correctly
+      const parentG = img.closest('g');
+      const parentTransform = parentG?.getAttribute('transform') || '';
+
+      // Create a group to hold the inline content
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'motif-inline');
+
+      // Apply transform: translate to position, then scale to fit
+      g.setAttribute('transform', `translate(${x}, ${y}) scale(${scaleX}, ${scaleY})`);
+
+      // Move all children from inner SVG to the group (skip defs, we'll handle separately)
+      const defs = innerSvg.querySelector('defs');
+      if (defs) {
+        // Clone defs to root SVG if they exist
+        const rootDefs = svgClone.querySelector('defs') || (() => {
+          const d = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+          svgClone.insertBefore(d, svgClone.firstChild);
+          return d;
+        })();
+        while (defs.firstChild) {
+          rootDefs.appendChild(defs.firstChild);
+        }
+      }
+
+      // Move remaining children
+      while (innerSvg.firstChild) {
+        if (innerSvg.firstChild.nodeName !== 'defs') {
+          g.appendChild(innerSvg.firstChild);
+        } else {
+          innerSvg.removeChild(innerSvg.firstChild);
+        }
+      }
+
+      // Replace the image with the group
+      img.parentNode.replaceChild(g, img);
+      console.log(`[EXPORT] Motif ${index}: Inlined successfully (scale: ${scaleX.toFixed(3)}, ${scaleY.toFixed(3)})`);
+
+    } catch (e) {
+      console.warn(`[EXPORT] Failed to inline motif ${index}:`, e.message);
+      // Leave the image as-is if conversion fails - better to have black square than crash
+    }
+  });
 }

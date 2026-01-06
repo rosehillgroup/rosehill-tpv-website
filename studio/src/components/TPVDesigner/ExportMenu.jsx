@@ -3,7 +3,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
-import { generateSportsSVG, downloadSVG, downloadPNG, generateFilename } from '../../lib/sports/sportsExport.js';
+import { generateSportsSVG, downloadSVG, downloadPNG, generateFilename, inlineMotifSvgs } from '../../lib/sports/sportsExport.js';
 import { sliceSvgIntoTiles, downloadBlob } from '../../lib/svgTileSlicer.js';
 import { generateDXF, downloadDXF, cleanSvgForDxf } from '../../lib/dxf/dxfExport.js';
 import { auth } from '../../lib/api/auth.js';
@@ -170,14 +170,20 @@ export default function ExportMenu({ svgRef }) {
       // Serialize SVG (cleaned for export)
       const svgClone = svgElement.cloneNode(true);
       // Remove selection indicators and handles
+      // Note: We do NOT remove [stroke-dasharray] as it would remove legitimate dashed line markings
       svgClone.querySelectorAll(
         '[class*="selected"], .transform-handles, .track-resize-handles, ' +
-        '.court-canvas__selection-outline, [class*="selection"], [class*="handle"], ' +
-        '[stroke-dasharray]'
+        '.court-canvas__selection-outline, [class*="selection"], [class*="handle"]'
       ).forEach(el => el.remove());
       svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
       svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+
+      // Inline motif SVGs for Resvg compatibility (data URLs not supported)
+      inlineMotifSvgs(svgClone);
+
       const svgString = new XMLSerializer().serializeToString(svgClone);
+      console.log('[EXPORT] Courts in state:', Object.keys(state.courts).length);
+      console.log('[EXPORT] SVG contains court elements:', svgString.includes('court-canvas__court'));
 
       console.log('[EXPORT] Generating PDF report via API...');
 
@@ -336,13 +342,18 @@ export default function ExportMenu({ svgRef }) {
 
       // Clean SVG for export
       const svgClone = svgElement.cloneNode(true);
+      // Remove selection indicators and handles
+      // Note: We do NOT remove [stroke-dasharray] as it would remove legitimate dashed line markings
       svgClone.querySelectorAll(
         '[class*="selected"], .transform-handles, .track-resize-handles, ' +
-        '.court-canvas__selection-outline, [class*="selection"], [class*="handle"], ' +
-        '[stroke-dasharray]'
+        '.court-canvas__selection-outline, [class*="selection"], [class*="handle"]'
       ).forEach(el => el.remove());
       svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
       svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+
+      // Inline motif SVGs for Resvg compatibility (data URLs not supported)
+      inlineMotifSvgs(svgClone);
+
       const svgString = new XMLSerializer().serializeToString(svgClone);
 
       // Call server-side API
