@@ -1141,15 +1141,35 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         const svgPoint = screenToSVG(clientX, clientY);
 
-        let offset = {
+        // dragStart stores click-to-element offset (clickPos - elementPos)
+        // So newPosition = currentMouse - dragStart gives us the target position
+        let newPosition = {
           x: svgPoint.x - dragStart.x,
           y: svgPoint.y - dragStart.y
         };
 
         // Snap to grid if enabled
         if (snapToGrid) {
-          offset = snapPositionToGrid(offset, gridSize_mm);
+          newPosition = snapPositionToGrid(newPosition, gridSize_mm);
         }
+
+        // Get the element's store position (unchanged during drag) to calculate offset
+        let storePosition = null;
+        if (dragCourtId) storePosition = courts[dragCourtId]?.position;
+        else if (dragTrackId) storePosition = tracks[dragTrackId]?.position;
+        else if (dragMotifId) storePosition = motifs[dragMotifId]?.position;
+        else if (dragShapeId) storePosition = shapes[dragShapeId]?.position;
+        else if (dragTextId) storePosition = texts[dragTextId]?.position;
+        else if (dragExclusionZoneId) storePosition = exclusionZones[dragExclusionZoneId]?.position;
+        else if (dragGroupId) storePosition = { x: 0, y: 0 }; // Groups use relative offset
+
+        if (!storePosition) return;
+
+        // Calculate offset from store position (this is what applyDragOffset adds)
+        const offset = {
+          x: newPosition.x - storePosition.x,
+          y: newPosition.y - storePosition.y
+        };
 
         // Update preview state and ref (ref for closure access, state for render)
         const newPreview = dragPreviewRef.current ? { ...dragPreviewRef.current, offset } : null;
