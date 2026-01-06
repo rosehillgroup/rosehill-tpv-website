@@ -976,9 +976,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     const blob = new Blob([originalUnflattenedSvg], { type: 'image/svg+xml' });
     const newUrl = URL.createObjectURL(blob);
 
-    // Re-tag and set as current
-    const retaggedSvg = tagSvgRegions(originalUnflattenedSvg);
-    setOriginalTaggedSvg(retaggedSvg);
+    // Use the saved SVG directly - it already has region IDs from when it was first displayed
+    // DO NOT re-tag, as that would create new IDs that don't match the blob URL
+    setOriginalTaggedSvg(originalUnflattenedSvg);
 
     if (viewMode === 'solid') {
       setSolidSvgUrl(newUrl);
