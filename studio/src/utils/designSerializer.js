@@ -31,7 +31,8 @@ export function serializeDesign(state) {
     jobId,
     inSituData,
     regionOverrides,
-    originalTaggedSvg
+    originalTaggedSvg,
+    originalUnflattenedSvg
   } = state;
 
 
@@ -91,7 +92,10 @@ export function serializeDesign(state) {
 
     // Per-region overrides (for individual element edits like transparency)
     region_overrides: serializeMap(regionOverrides),
-    original_tagged_svg: originalTaggedSvg || null
+    original_tagged_svg: originalTaggedSvg || null,
+
+    // Original unflattened SVG for revert functionality
+    original_unflattened_svg: originalUnflattenedSvg || null
   };
 }
 
@@ -117,6 +121,7 @@ export function deserializeDesign(savedData) {
   // Determine region overrides source
   const regionOverridesData = getField('region_overrides');
   const originalTaggedSvgData = getField('original_tagged_svg');
+  const originalUnflattenedSvgData = getField('original_unflattened_svg');
 
 
   return {
@@ -170,6 +175,9 @@ export function deserializeDesign(savedData) {
     // Per-region overrides (for individual element edits like transparency)
     regionOverrides: deserializeMap(regionOverridesData),
     originalTaggedSvg: originalTaggedSvgData || null,
+
+    // Original unflattened SVG for revert functionality
+    originalUnflattenedSvg: originalUnflattenedSvgData || null,
 
     // Restore UI state
     generating: false,

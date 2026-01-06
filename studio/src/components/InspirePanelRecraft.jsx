@@ -153,6 +153,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   const [isFlattenProcessing, setIsFlattenProcessing] = useState(false);
   const [flattenProgress, setFlattenProgress] = useState(0);
   const [flattenError, setFlattenError] = useState(null);
+  const [originalUnflattenedSvg, setOriginalUnflattenedSvg] = useState(null); // Pre-flatten SVG for revert
+  const [troubleshootOpen, setTroubleshootOpen] = useState(false);
+  const [flattenConfirmOpen, setFlattenConfirmOpen] = useState(false);
+  const [pendingFlattenQuality, setPendingFlattenQuality] = useState(null);
 
   // True cut-out state (Phase 2 - Boolean operations)
   const [isCutoutProcessing, setIsCutoutProcessing] = useState(false);
@@ -311,6 +315,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         setCurrentDesignId(loadedDesign.id);
       }
 
+      // Restore original unflattened SVG if design was saved while flattened
+      if (restoredState.originalUnflattenedSvg) {
+        setOriginalUnflattenedSvg(restoredState.originalUnflattenedSvg);
+      }
 
       // Regenerate SVGs from saved state (blob URLs don't survive page reload)
       // This needs to happen after state is set, so we use a timeout
@@ -367,7 +375,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         }
       }, 100);
     }
-  }, [loadedDesign, loadDesignFromStore, setDesignName, setCurrentDesignId, setOriginalTaggedSvg]);
+  }, [loadedDesign, loadDesignFromStore, setDesignName, setCurrentDesignId, setOriginalTaggedSvg, setOriginalUnflattenedSvg]);
 
   // Track if we've done initial regeneration for directly-loaded designs
   const hasRegeneratedRef = useRef(false);
@@ -878,6 +886,12 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       const response = await fetch(svgUrl);
       const displayedSvg = await response.text();
 
+      // Save original before flattening (if not already saved) for revert functionality
+      if (!originalUnflattenedSvg) {
+        setOriginalUnflattenedSvg(displayedSvg);
+        console.log('[INSPIRE] Saved original SVG for revert');
+      }
+
       const { svg: flattenedSvg, stats } = await flattenSvg(displayedSvg, {
         quality,
         resolution: 4096,
@@ -918,6 +932,50 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     } finally {
       setIsFlattenProcessing(false);
     }
+  };
+
+  // Show flatten confirmation modal
+  const showFlattenConfirm = (quality) => {
+    setPendingFlattenQuality(quality);
+    setFlattenConfirmOpen(true);
+    setTroubleshootOpen(false);
+  };
+
+  // Confirm and execute flatten
+  const confirmFlatten = () => {
+    setFlattenConfirmOpen(false);
+    handleFlattenArtwork(pendingFlattenQuality);
+  };
+
+  // Revert to original (pre-flatten) SVG
+  const handleRevertToOriginal = async () => {
+    if (!originalUnflattenedSvg) return;
+
+    console.log('[INSPIRE] Reverting to original unflattened SVG');
+
+    // Create blob URL from original
+    const blob = new Blob([originalUnflattenedSvg], { type: 'image/svg+xml' });
+    const newUrl = URL.createObjectURL(blob);
+
+    // Re-tag and set as current
+    const retaggedSvg = tagSvgRegions(originalUnflattenedSvg);
+    setOriginalTaggedSvg(retaggedSvg);
+
+    if (viewMode === 'solid') {
+      setSolidSvgUrl(newUrl);
+    } else {
+      setBlendSvgUrl(newUrl);
+    }
+
+    // Clear the saved original (no longer flattened)
+    setOriginalUnflattenedSvg(null);
+
+    // Reset region overrides since we're back to original
+    setRegionOverrides(new Map());
+    setRegionOverridesHistory([new Map()]);
+    setHistoryIndex(0);
+
+    console.log('[INSPIRE] Reverted to original successfully');
   };
 
   // Download TPV PNG
@@ -975,6 +1033,11 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     setEyedropperRegion(null);
     setMixerOpen(false);
     setMixerColor(null);
+    // Reset flatten-related state
+    setOriginalUnflattenedSvg(null);
+    setTroubleshootOpen(false);
+    setFlattenConfirmOpen(false);
+    setPendingFlattenQuality(null);
   };
 
   // Handle save design click - check dimensions first
@@ -2409,38 +2472,88 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
             </div>
           )}
 
-          {/* SVG Complexity Indicator & Flatten Controls (Phase 1.5 & 3) */}
+          {/* SVG Complexity Indicator & Simplify Controls (Phase 1.5 & 3) */}
           {originalTaggedSvg && (blendSvgUrl || solidSvgUrl) && (
             <div className="complexity-indicator">
               <ComplexityBadge svgContent={originalTaggedSvg} />
 
-              {/* Flatten buttons - show if not already flattened */}
-              {!isFlattened(originalTaggedSvg) && (
-                <div className="flatten-controls">
-                  <span className="flatten-label">Simplify:</span>
+              {/* Show revert button if we have a saved original (was flattened) */}
+              {originalUnflattenedSvg && (
+                <>
+                  <span className="simplified-badge">Simplified</span>
                   <button
-                    className="flatten-btn flatten-fast"
-                    onClick={() => handleFlattenArtwork('fast')}
-                    disabled={isFlattenProcessing}
-                    title="Fast flatten - quicker but slightly rougher edges"
+                    className="revert-btn"
+                    onClick={handleRevertToOriginal}
+                    title="Restore original artwork"
                   >
-                    Fast
+                    ↩ Revert
                   </button>
+                </>
+              )}
+
+              {/* Show troubleshoot dropdown if NOT flattened and no saved original */}
+              {!originalUnflattenedSvg && !isFlattened(originalTaggedSvg) && (
+                <div className="troubleshoot-dropdown">
                   <button
-                    className="flatten-btn flatten-clean"
-                    onClick={() => handleFlattenArtwork('clean')}
-                    disabled={isFlattenProcessing}
-                    title="Clean flatten - smoother edges, takes longer"
+                    className="troubleshoot-toggle"
+                    onClick={() => setTroubleshootOpen(!troubleshootOpen)}
                   >
-                    Clean
+                    Having issues? {troubleshootOpen ? '▲' : '▼'}
                   </button>
+                  {troubleshootOpen && (
+                    <div className="troubleshoot-menu">
+                      <div className="troubleshoot-header">Simplify Artwork</div>
+                      <p className="troubleshoot-desc">
+                        If editing feels slow or you see visual artifacts, simplifying can help.
+                      </p>
+                      <div className="troubleshoot-buttons">
+                        <button
+                          onClick={() => showFlattenConfirm('fast')}
+                          disabled={isFlattenProcessing}
+                        >
+                          Quick
+                        </button>
+                        <button
+                          onClick={() => showFlattenConfirm('clean')}
+                          disabled={isFlattenProcessing}
+                        >
+                          Smooth
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Flattened badge */}
-              {isFlattened(originalTaggedSvg) && (
-                <span className="flattened-badge">Flattened</span>
+              {/* Show badge if already flattened from previous session */}
+              {!originalUnflattenedSvg && isFlattened(originalTaggedSvg) && (
+                <span className="simplified-badge">Simplified</span>
               )}
+            </div>
+          )}
+
+          {/* Simplify confirmation modal */}
+          {flattenConfirmOpen && (
+            <div className="modal-overlay" onClick={() => setFlattenConfirmOpen(false)}>
+              <div className="flatten-confirm-modal" onClick={e => e.stopPropagation()}>
+                <h3>Simplify Artwork?</h3>
+                <ul>
+                  <li>Converts vector paths to traced outlines</li>
+                  <li>Locks in current colors</li>
+                  <li>May slightly simplify geometry</li>
+                </ul>
+                <p className="modal-note">
+                  You can revert to the original later.
+                </p>
+                <div className="modal-actions">
+                  <button onClick={() => setFlattenConfirmOpen(false)}>
+                    Cancel
+                  </button>
+                  <button onClick={confirmFlatten} className="primary">
+                    Simplify
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -2694,7 +2807,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
             inSituData,
             // Region overrides for transparency edits
             regionOverrides,
-            originalTaggedSvg
+            originalTaggedSvg,
+            // Original unflattened SVG for revert functionality
+            originalUnflattenedSvg
           }}
           existingDesignId={currentDesignId}
           initialName={designName}
@@ -2783,55 +2898,87 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           margin-bottom: 0.5rem;
         }
 
-        /* Flatten Controls (Phase 3) */
-        .flatten-controls {
+        /* Troubleshoot Dropdown (Phase 3) */
+        .troubleshoot-dropdown {
+          position: relative;
+        }
+
+        .troubleshoot-toggle {
+          padding: 0.375rem 0.75rem;
+          font-size: 0.75rem;
+          font-weight: 500;
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 4px;
+          color: #64748b;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .troubleshoot-toggle:hover {
+          background: #f1f5f9;
+          border-color: #cbd5e1;
+          color: #475569;
+        }
+
+        .troubleshoot-menu {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          margin-top: 0.5rem;
+          padding: 1rem;
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          min-width: 240px;
+          z-index: 100;
+        }
+
+        .troubleshoot-header {
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #1e293b;
+          margin-bottom: 0.5rem;
+        }
+
+        .troubleshoot-desc {
+          font-size: 0.75rem;
+          color: #64748b;
+          margin: 0 0 0.75rem 0;
+          line-height: 1.4;
+        }
+
+        .troubleshoot-buttons {
           display: flex;
-          align-items: center;
           gap: 0.5rem;
         }
 
-        .flatten-label {
-          font-size: 0.75rem;
-          color: #64748b;
-        }
-
-        .flatten-btn {
-          padding: 0.25rem 0.75rem;
+        .troubleshoot-buttons button {
+          flex: 1;
+          padding: 0.5rem 0.75rem;
           font-size: 0.75rem;
           font-weight: 500;
           border-radius: 4px;
           cursor: pointer;
           transition: all 0.15s ease;
-        }
-
-        .flatten-fast {
           background: #f1f5f9;
           border: 1px solid #cbd5e1;
           color: #475569;
         }
 
-        .flatten-fast:hover:not(:disabled) {
+        .troubleshoot-buttons button:hover:not(:disabled) {
           background: #e2e8f0;
           border-color: #94a3b8;
         }
 
-        .flatten-clean {
-          background: #dbeafe;
-          border: 1px solid #93c5fd;
-          color: #1e40af;
-        }
-
-        .flatten-clean:hover:not(:disabled) {
-          background: #bfdbfe;
-          border-color: #60a5fa;
-        }
-
-        .flatten-btn:disabled {
+        .troubleshoot-buttons button:disabled {
           opacity: 0.5;
           cursor: not-allowed;
         }
 
-        .flattened-badge {
+        /* Simplified Badge & Revert Button */
+        .simplified-badge {
           display: inline-block;
           padding: 0.125rem 0.5rem;
           font-size: 0.65rem;
@@ -2841,6 +2988,93 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           border-radius: 3px;
           text-transform: uppercase;
           letter-spacing: 0.03em;
+        }
+
+        .revert-btn {
+          padding: 0.25rem 0.625rem;
+          font-size: 0.75rem;
+          font-weight: 500;
+          background: #fef3c7;
+          border: 1px solid #fcd34d;
+          border-radius: 4px;
+          color: #92400e;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .revert-btn:hover {
+          background: #fde68a;
+          border-color: #fbbf24;
+        }
+
+        /* Flatten Confirmation Modal */
+        .flatten-confirm-modal {
+          background: white;
+          padding: 1.5rem;
+          border-radius: 12px;
+          max-width: 360px;
+          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .flatten-confirm-modal h3 {
+          margin: 0 0 1rem 0;
+          font-size: 1.125rem;
+          color: #1e293b;
+        }
+
+        .flatten-confirm-modal ul {
+          margin: 0 0 1rem 0;
+          padding-left: 1.25rem;
+          color: #475569;
+          font-size: 0.875rem;
+        }
+
+        .flatten-confirm-modal li {
+          margin-bottom: 0.25rem;
+        }
+
+        .flatten-confirm-modal .modal-note {
+          margin: 0 0 1rem 0;
+          padding: 0.75rem;
+          background: #f0fdf4;
+          border-radius: 6px;
+          font-size: 0.8rem;
+          color: #166534;
+        }
+
+        .flatten-confirm-modal .modal-actions {
+          display: flex;
+          gap: 0.75rem;
+          justify-content: flex-end;
+        }
+
+        .flatten-confirm-modal .modal-actions button {
+          padding: 0.5rem 1rem;
+          font-size: 0.875rem;
+          font-weight: 500;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .flatten-confirm-modal .modal-actions button:first-child {
+          background: #f1f5f9;
+          border: 1px solid #cbd5e1;
+          color: #475569;
+        }
+
+        .flatten-confirm-modal .modal-actions button:first-child:hover {
+          background: #e2e8f0;
+        }
+
+        .flatten-confirm-modal .modal-actions button.primary {
+          background: #ff6b35;
+          border: 1px solid #ff6b35;
+          color: white;
+        }
+
+        .flatten-confirm-modal .modal-actions button.primary:hover {
+          background: #e55a2b;
         }
 
         /* Flatten Progress Overlay */
