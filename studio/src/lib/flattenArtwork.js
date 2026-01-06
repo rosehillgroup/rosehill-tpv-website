@@ -202,7 +202,13 @@ async function renderSvgToCanvas(svgString, maxSize = DEFAULT_RESOLUTION) {
     img.onload = () => {
       ctx.drawImage(img, 0, 0, canvasWidth, canvasHeight);
       URL.revokeObjectURL(url);
-      resolve({ canvas, width: canvasWidth, height: canvasHeight });
+      resolve({
+        canvas,
+        width: canvasWidth,
+        height: canvasHeight,
+        originalWidth: width,   // Original SVG dimensions for viewBox
+        originalHeight: height
+      });
     };
 
     img.onerror = () => {
@@ -343,7 +349,7 @@ export async function flattenSvg(svgString, options = {}) {
 
     // Step 1: Render SVG to canvas
     onProgress(10);
-    const { canvas, width, height } = await renderSvgToCanvas(svgString, resolution);
+    const { canvas, width, height, originalWidth, originalHeight } = await renderSvgToCanvas(svgString, resolution);
     const ctx = canvas.getContext('2d');
 
     // Step 2: Get image data
@@ -369,9 +375,9 @@ export async function flattenSvg(svgString, options = {}) {
     onProgress(80);
     let cleanedSvg = removeSmallPaths(tracedSvg);
 
-    // Step 6: Add proper structure
+    // Step 6: Add proper structure (use original dimensions for viewBox)
     onProgress(90);
-    cleanedSvg = structureSvg(cleanedSvg, width, height);
+    cleanedSvg = structureSvg(cleanedSvg, originalWidth, originalHeight);
 
     // Done
     onProgress(100);

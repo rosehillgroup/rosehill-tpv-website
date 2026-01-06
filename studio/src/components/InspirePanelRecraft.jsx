@@ -857,10 +857,12 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
   // Handle flatten artwork (Phase 3)
   const handleFlattenArtwork = async (quality = 'fast') => {
-    if (!originalTaggedSvg || isFlattenProcessing) return;
+    // Get the currently displayed SVG URL (with user colors applied)
+    const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
+    if (!svgUrl || isFlattenProcessing) return;
 
     // Check if already flattened
-    if (isFlattened(originalTaggedSvg)) {
+    if (originalTaggedSvg && isFlattened(originalTaggedSvg)) {
       setFlattenError('This artwork has already been flattened.');
       return;
     }
@@ -872,7 +874,11 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     try {
       console.log(`[INSPIRE] Starting flatten (quality: ${quality})`);
 
-      const { svg: flattenedSvg, stats } = await flattenSvg(originalTaggedSvg, {
+      // Fetch the displayed SVG content (which has user colors already applied)
+      const response = await fetch(svgUrl);
+      const displayedSvg = await response.text();
+
+      const { svg: flattenedSvg, stats } = await flattenSvg(displayedSvg, {
         quality,
         resolution: 4096,
         quantize: true,
@@ -887,22 +893,20 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       // Update the original tagged SVG
       setOriginalTaggedSvg(retaggedSvg);
 
-      // Clear region overrides since paths have changed
+      // Clear region overrides since paths have changed (colors are now baked in)
       setRegionOverrides(new Map());
       setRegionOverridesHistory([new Map()]);
       setHistoryIndex(0);
 
-      // Regenerate the displayed SVG
-      const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
-      if (svgUrl && result?.svg_url) {
-        // Trigger regeneration of the recolored SVG
-        if (viewMode === 'solid' && solidColorMapping) {
-          const { dataUrl } = await recolorSVG(result.svg_url, solidColorMapping, retaggedSvg, 'solid');
-          setSolidSvgUrl(dataUrl);
-        } else if (blendRecipes && colorMapping) {
-          const { dataUrl } = await recolorSVG(result.svg_url, colorMapping, retaggedSvg);
-          setBlendSvgUrl(dataUrl);
-        }
+      // Create new blob URL from flattened SVG (colors already baked in)
+      const blob = new Blob([retaggedSvg], { type: 'image/svg+xml' });
+      const newUrl = URL.createObjectURL(blob);
+
+      // Update the appropriate blob URL
+      if (viewMode === 'solid') {
+        setSolidSvgUrl(newUrl);
+      } else {
+        setBlendSvgUrl(newUrl);
       }
 
       setFlattenProgress(100);
@@ -1554,9 +1558,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   const handleTrueCutout = async () => {
     if (!eyedropperRegion) return;
 
-    // Get current SVG content
-    const currentSvg = viewMode === 'blend' ? blendSVG : solidSVG;
-    if (!currentSvg) {
+    // Get current SVG URL
+    const svgUrl = viewMode === 'blend' ? blendSvgUrl : solidSvgUrl;
+    if (!svgUrl) {
       setCutoutError('No SVG content to cut');
       return;
     }
@@ -1568,17 +1572,22 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       return;
     }
 
-    // Estimate cost and warn if complex
-    const cost = estimateBooleanCost(currentSvg);
-    if (!cost.canProceed) {
-      setCutoutError(`Operation blocked: ${cost.warning}. Try "Flatten Artwork" first.`);
-      return;
-    }
-
     setIsCutoutProcessing(true);
     setCutoutError(null);
 
     try {
+      // Fetch SVG content from blob URL
+      const response = await fetch(svgUrl);
+      const currentSvg = await response.text();
+
+      // Estimate cost and warn if complex
+      const cost = estimateBooleanCost(currentSvg);
+      if (!cost.canProceed) {
+        setCutoutError(`Operation blocked: ${cost.warning}. Try "Flatten Artwork" first.`);
+        setIsCutoutProcessing(false);
+        return;
+      }
+
       console.log('[InspirePanel] Starting true cut-out for region:', eyedropperRegion.regionId);
 
       // Perform the boolean subtraction
@@ -1587,12 +1596,19 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       if (result.svg) {
         console.log('[InspirePanel] Cut-out complete:', result.stats);
 
-        // Update the appropriate SVG state
+        // Create new blob URL from result
+        const blob = new Blob([result.svg], { type: 'image/svg+xml' });
+        const newUrl = URL.createObjectURL(blob);
+
+        // Update the appropriate SVG URL
         if (viewMode === 'blend') {
-          setBlendSVG(result.svg);
+          setBlendSvgUrl(newUrl);
         } else {
-          setSolidSVG(result.svg);
+          setSolidSvgUrl(newUrl);
         }
+
+        // Update originalTaggedSvg as well
+        setOriginalTaggedSvg(result.svg);
 
         // Clear selection
         setEyedropperActive(false);
