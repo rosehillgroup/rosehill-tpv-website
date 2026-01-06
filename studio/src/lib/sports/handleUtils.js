@@ -20,15 +20,21 @@ const BASE_STROKE_WIDTH_MM = 30;  // ~2px on screen at zoom=1
 const BASE_EDIT_HANDLE_SIZE_MM = 120;  // ~8px on screen at zoom=1
 
 /**
- * Calculate handle size that stays fixed on screen regardless of zoom and element scale
+ * Calculate handle size that stays fixed on screen regardless of zoom
+ *
+ * Note: We only compensate for zoom, NOT element scale. Handles are positioned
+ * relative to the element's scaled dimensions but are not inside a scale transform.
+ * This ensures handles stay a constant screen size (~12px) regardless of:
+ * - Canvas zoom level
+ * - Element's own scale factor
  *
  * @param {number} zoom - Current canvas zoom level (0.25 to 5.0)
- * @param {number} elementScale - Element's scale factor (default 1 for unscaled elements)
+ * @param {number} elementScale - (unused, kept for API compatibility)
  * @returns {Object} { size, strokeWidth, cornerRadius } in mm
  */
 export function getHandleSize(zoom = 1, elementScale = 1) {
-  // Inverse relationship: smaller mm values at higher zoom/scale to maintain screen size
-  const scaleFactor = 1 / (zoom * elementScale);
+  // Only compensate for zoom - handles stay constant screen size
+  const scaleFactor = 1 / zoom;
 
   const size = BASE_HANDLE_SIZE_MM * scaleFactor;
   const strokeWidth = BASE_STROKE_WIDTH_MM * scaleFactor;
@@ -71,11 +77,12 @@ export function getRotationHandle(handleSize) {
  * Calculate selection indicator styling
  *
  * @param {number} zoom - Current canvas zoom level
- * @param {number} elementScale - Element's scale factor
+ * @param {number} elementScale - (unused, kept for API compatibility)
  * @returns {Object} { strokeWidth, dashArray, padding } in mm
  */
 export function getSelectionStyle(zoom = 1, elementScale = 1) {
-  const scaleFactor = 1 / (zoom * elementScale);
+  // Only compensate for zoom - selection stays constant screen size
+  const scaleFactor = 1 / zoom;
 
   return {
     strokeWidth: 60 * scaleFactor,
