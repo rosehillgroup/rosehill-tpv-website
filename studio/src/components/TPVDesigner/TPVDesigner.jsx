@@ -40,6 +40,7 @@ function TPVDesigner({ loadedDesign }) {
   const [designId, setDesignId] = useState(null);
   const [designName, setDesignName] = useState('');
   const [showAlignMenu, setShowAlignMenu] = useState(false);
+  const [showElementsMenu, setShowElementsMenu] = useState(false);
   const svgRef = useRef(null);
 
   // Load design when loadedDesign prop changes
@@ -264,10 +265,21 @@ function TPVDesigner({ loadedDesign }) {
   // Close alignment menu when clicking outside
   useEffect(() => {
     if (!showAlignMenu) return;
-    const handleClickOutside = () => setShowAlignMenu(false);
+    const handleClickOutside = () => {
+      setShowAlignMenu(false);
+      setShowElementsMenu(false);
+    };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [showAlignMenu]);
+
+  // Close elements menu when clicking outside
+  useEffect(() => {
+    if (!showElementsMenu) return;
+    const handleClickOutside = () => setShowElementsMenu(false);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showElementsMenu]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -977,63 +989,86 @@ function TPVDesigner({ loadedDesign }) {
 
                 <div className="sports-toolbar__divider" />
 
-                {/* Element Creation */}
-                <div className="sports-toolbar__group sports-toolbar__elements">
+                {/* Elements Dropdown */}
+                <div className="sports-toolbar__group" style={{ position: 'relative' }}>
                   <button
-                    className="sports-toolbar__btn sports-toolbar__btn--labeled"
-                    onClick={() => addText()}
-                    title="Add Text (T)"
+                    className={`sports-toolbar__btn sports-toolbar__btn--with-label ${showElementsMenu ? 'sports-toolbar__btn--active' : ''}`}
+                    onClick={(e) => { e.stopPropagation(); setShowElementsMenu(!showElementsMenu); }}
+                    title="Add Elements"
                   >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M4 7V4h16v3" />
-                      <path d="M12 4v16" />
-                      <path d="M8 20h8" />
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                      <polyline points="2 17 12 22 22 17" />
+                      <polyline points="2 12 12 17 22 12" />
                     </svg>
-                    <span>Text</span>
-                  </button>
-                  <button
-                    className="sports-toolbar__btn sports-toolbar__btn--labeled"
-                    onClick={() => addShape('rectangle')}
-                    title="Add Shape (S)"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <span>Elements</span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M6 9l6 6 6-6" />
                     </svg>
-                    <span>Shape</span>
                   </button>
-                  <button
-                    className="sports-toolbar__btn sports-toolbar__btn--labeled"
-                    onClick={() => addShape('blob')}
-                    title="Add Blob (B)"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 3c-4 0-7 3-8 6s0 6 2 8c2 2 5 3 8 2s5-3 6-6-1-6-3-8c-1-1-3-2-5-2z" />
-                    </svg>
-                    <span>Blob</span>
-                  </button>
-                  <button
-                    className={`sports-toolbar__btn sports-toolbar__btn--labeled ${pathDrawingMode ? 'sports-toolbar__btn--active' : ''}`}
-                    onClick={() => startPathDrawing()}
-                    title="Draw Path (P)"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 19l7-7 3 3-7 7-3-3z" />
-                      <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
-                      <path d="M2 2l7.586 7.586" />
-                    </svg>
-                    <span>Pen</span>
-                  </button>
-                  <button
-                    className="sports-toolbar__btn sports-toolbar__btn--labeled sports-toolbar__btn--exclusion"
-                    onClick={() => addExclusionZone('rectangle')}
-                    title="Add Exclusion Zone (E)"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-                    </svg>
-                    <span>Exclusion</span>
-                  </button>
+                  {showElementsMenu && (
+                    <div
+                      className="sports-toolbar__dropdown-menu"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        className="sports-toolbar__dropdown-item"
+                        onClick={() => { addText(); setShowElementsMenu(false); }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M4 7V4h16v3" />
+                          <path d="M12 4v16" />
+                          <path d="M8 20h8" />
+                        </svg>
+                        <span>Text</span>
+                        <span className="sports-toolbar__dropdown-shortcut">T</span>
+                      </button>
+                      <button
+                        className="sports-toolbar__dropdown-item"
+                        onClick={() => { addShape('rectangle'); setShowElementsMenu(false); }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2" />
+                        </svg>
+                        <span>Shape</span>
+                        <span className="sports-toolbar__dropdown-shortcut">S</span>
+                      </button>
+                      <button
+                        className="sports-toolbar__dropdown-item"
+                        onClick={() => { addShape('blob'); setShowElementsMenu(false); }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 3c-4 0-7 3-8 6s0 6 2 8c2 2 5 3 8 2s5-3 6-6-1-6-3-8c-1-1-3-2-5-2z" />
+                        </svg>
+                        <span>Blob</span>
+                        <span className="sports-toolbar__dropdown-shortcut">B</span>
+                      </button>
+                      <button
+                        className={`sports-toolbar__dropdown-item ${pathDrawingMode ? 'sports-toolbar__dropdown-item--active' : ''}`}
+                        onClick={() => { startPathDrawing(); setShowElementsMenu(false); }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 19l7-7 3 3-7 7-3-3z" />
+                          <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+                          <path d="M2 2l7.586 7.586" />
+                        </svg>
+                        <span>Pen</span>
+                        <span className="sports-toolbar__dropdown-shortcut">P</span>
+                      </button>
+                      <div className="sports-toolbar__dropdown-divider" />
+                      <button
+                        className="sports-toolbar__dropdown-item sports-toolbar__dropdown-item--exclusion"
+                        onClick={() => { addExclusionZone('rectangle'); setShowElementsMenu(false); }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+                        </svg>
+                        <span>Exclusion Zone</span>
+                        <span className="sports-toolbar__dropdown-shortcut">E</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="sports-toolbar__divider" />

@@ -352,6 +352,111 @@
   color: #b91c1c;
 }
 
+/* Button with label and dropdown caret */
+.sports-toolbar__btn--with-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 8px;
+  height: auto;
+  width: auto;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.sports-toolbar__btn--with-label > svg:first-child {
+  width: 16px;
+  height: 16px;
+}
+
+.sports-toolbar__btn--with-label > svg:last-child {
+  width: 10px;
+  height: 10px;
+  margin-left: 2px;
+}
+
+.sports-toolbar__btn--with-label span {
+  font-family: var(--font-body, 'Source Sans Pro', sans-serif);
+}
+
+/* Dropdown menu for Elements, etc. */
+.sports-toolbar__dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  min-width: 180px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  padding: 4px;
+}
+
+.sports-toolbar__dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: var(--font-body, 'Source Sans Pro', sans-serif);
+  color: #374151;
+  text-align: left;
+  transition: background-color 0.15s;
+}
+
+.sports-toolbar__dropdown-item:hover {
+  background: #f3f4f6;
+}
+
+.sports-toolbar__dropdown-item--active {
+  background: rgba(59, 130, 246, 0.1);
+  color: #2563eb;
+}
+
+.sports-toolbar__dropdown-item--active:hover {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.sports-toolbar__dropdown-item--exclusion {
+  color: #dc2626;
+}
+
+.sports-toolbar__dropdown-item--exclusion:hover {
+  background: #fef2f2;
+}
+
+.sports-toolbar__dropdown-item svg {
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.sports-toolbar__dropdown-item span:first-of-type {
+  flex: 1;
+}
+
+.sports-toolbar__dropdown-shortcut {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 500;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.sports-toolbar__dropdown-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+}
+
 .sports-toolbar__dimensions {
   padding: 6px 10px;
   background: #f9fafb;

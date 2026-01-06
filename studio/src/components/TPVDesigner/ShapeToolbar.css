@@ -136,10 +136,15 @@
   color: #ef4444;
 }
 
+/* Hide on desktop - Elements dropdown in toolbar handles this */
+.shape-toolbar {
+  display: none;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .shape-toolbar {
-    /* Hide on mobile - shapes available in bottom sheet */
+    /* Also hidden on mobile - shapes available in bottom sheet */
     display: none;
   }
 }
