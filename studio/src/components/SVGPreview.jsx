@@ -37,7 +37,10 @@ export default function SVGPreview({
   onColorClick, // (colorData) => void - callback when user clicks a color
   onRegionClick, // (regionData) => void - callback when region clicked (eyedropper mode)
   onEyedropperCancel, // () => void - callback to cancel eyedropper mode
-  onMakeTransparent, // () => void - callback to make selected region transparent
+  onMakeTransparent, // () => void - callback to make selected region transparent (visual only)
+  onTrueCutout, // () => void - callback to perform true geometry cut-out (destructive)
+  isCutoutProcessing = false, // Whether cut-out is in progress
+  cutoutError = null, // Error message from cut-out operation
   onSelectTPVColor, // (colorData) => void - callback when user selects TPV color from palette ({code, name, hex})
   selectedColor, // Current color being edited (to highlight)
   editedColors, // Map of edited colors (originalHex -> {newHex})
@@ -708,19 +711,49 @@ export default function SVGPreview({
                 </div>
 
                 <div className="eyedropper-actions">
-                  <button
-                    className="eyedropper-transparent"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (onMakeTransparent) {
-                        onMakeTransparent();
-                      }
-                    }}
-                    title="Remove fill from this region"
-                  >
-                    <span className="transparent-icon">◼</span>
-                    Make Transparent
-                  </button>
+                  <div className="transparency-options">
+                    <button
+                      className="eyedropper-transparent"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (onMakeTransparent) {
+                          onMakeTransparent();
+                        }
+                      }}
+                      title="Make region visually transparent (reversible, fast)"
+                    >
+                      <span className="transparent-icon">◼</span>
+                      Transparent (Visual)
+                    </button>
+                    {onTrueCutout && (
+                      <button
+                        className="eyedropper-cutout"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onTrueCutout();
+                        }}
+                        disabled={isCutoutProcessing}
+                        title="Remove geometry completely - fixes hidden shapes (slower, irreversible)"
+                      >
+                        {isCutoutProcessing ? (
+                          <>
+                            <span className="cutout-spinner"></span>
+                            Cutting...
+                          </>
+                        ) : (
+                          <>
+                            <span className="cutout-icon">✂</span>
+                            True Cut-out
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
+                  {cutoutError && (
+                    <div className="cutout-error">
+                      {cutoutError}
+                    </div>
+                  )}
                   <button
                     className="eyedropper-cancel"
                     onClick={(e) => {
@@ -1164,6 +1197,7 @@ export default function SVGPreview({
 
         .eyedropper-actions {
           display: flex;
+          flex-direction: column;
           gap: 8px;
           align-items: center;
           justify-content: center;
@@ -1204,6 +1238,70 @@ export default function SVGPreview({
           border-radius: 2px;
           display: inline-block;
           font-size: 0;
+        }
+
+        .transparency-options {
+          display: flex;
+          gap: 6px;
+          flex-wrap: wrap;
+          justify-content: center;
+        }
+
+        .eyedropper-cutout {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          padding: 8px 14px;
+          background: #fef3c7;
+          color: #92400e;
+          border: 2px solid #f59e0b;
+          border-radius: 6px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          white-space: nowrap;
+        }
+
+        .eyedropper-cutout:hover:not(:disabled) {
+          background: #fde68a;
+          border-color: #d97706;
+          box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+          transform: translateY(-1px);
+        }
+
+        .eyedropper-cutout:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+
+        .cutout-icon {
+          font-size: 1rem;
+        }
+
+        .cutout-spinner {
+          width: 14px;
+          height: 14px;
+          border: 2px solid rgba(146, 64, 14, 0.3);
+          border-top-color: #92400e;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .cutout-error {
+          width: 100%;
+          padding: 6px 10px;
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          border-radius: 4px;
+          color: #dc2626;
+          font-size: 0.8rem;
+          text-align: center;
+          margin-top: 6px;
         }
 
         @keyframes pulse {

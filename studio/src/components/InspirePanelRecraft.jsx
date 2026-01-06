@@ -17,6 +17,10 @@ import DimensionModal from './DimensionModal.jsx';
 import { buildColorMapping } from '../utils/colorMapping.js';
 import { recolorSVG } from '../utils/svgRecolor.js';
 import { tagSvgRegions } from '../utils/svgRegionTagger.js';
+import { normalizeSVG } from '../utils/svgNormalize.js';
+import ComplexityBadge from './ComplexityBadge.jsx';
+import { flattenSvg, isFlattened } from '../lib/flattenArtwork.js';
+import { performTrueCutout, canPerformCutout, estimateBooleanCost } from '../lib/paperBoolean.js';
 import { applyRegionOverrides } from '../utils/svgRegionOverrides.js';
 import { deriveCurrentColors, hasColorEdits } from '../utils/deriveCurrentColors.js';
 import { mapDimensionsToRecraft, getLayoutDescription, needsLayoutWarning } from '../utils/aspectRatioMapping.js';
@@ -144,6 +148,15 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   const [svgAspectRatio, setSvgAspectRatio] = useState(null);
   const [pendingDownloadAction, setPendingDownloadAction] = useState(null); // 'pdf' or 'tiles'
   const [confirmedDimensions, setConfirmedDimensions] = useState(null); // {width, height} - directly passed to modals
+
+  // Flatten artwork state (Phase 3)
+  const [isFlattenProcessing, setIsFlattenProcessing] = useState(false);
+  const [flattenProgress, setFlattenProgress] = useState(0);
+  const [flattenError, setFlattenError] = useState(null);
+
+  // True cut-out state (Phase 2 - Boolean operations)
+  const [isCutoutProcessing, setIsCutoutProcessing] = useState(false);
+  const [cutoutError, setCutoutError] = useState(null);
 
   // Derived/current recipes (original + edits with accurate coverage)
   const [currentBlendRecipes, setCurrentBlendRecipes] = useState(null);
@@ -311,11 +324,12 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           if (taggedSvg) {
             setOriginalTaggedSvg(taggedSvg);
           } else {
-            // No saved tagged SVG - fetch and tag fresh
+            // No saved tagged SVG - fetch, normalize, and tag fresh
             try {
               const svgResponse = await fetch(restoredState.result.svg_url);
               const svgText = await svgResponse.text();
-              taggedSvg = tagSvgRegions(svgText);
+              const normalizedSvg = normalizeSVG(svgText);
+              taggedSvg = tagSvgRegions(normalizedSvg);
               setOriginalTaggedSvg(taggedSvg);
             } catch (tagError) {
               console.error('[INSPIRE] Failed to tag SVG regions:', tagError);
@@ -385,7 +399,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         try {
           const svgResponse = await fetch(result.svg_url);
           const svgText = await svgResponse.text();
-          taggedSvg = tagSvgRegions(svgText);
+          const normalizedSvg = normalizeSVG(svgText);
+          taggedSvg = tagSvgRegions(normalizedSvg);
           setOriginalTaggedSvg(taggedSvg);
         } catch (tagError) {
           console.error('[INSPIRE] Failed to tag SVG regions:', tagError);
@@ -840,6 +855,67 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     setShowInSituModal(true);
   };
 
+  // Handle flatten artwork (Phase 3)
+  const handleFlattenArtwork = async (quality = 'fast') => {
+    if (!originalTaggedSvg || isFlattenProcessing) return;
+
+    // Check if already flattened
+    if (isFlattened(originalTaggedSvg)) {
+      setFlattenError('This artwork has already been flattened.');
+      return;
+    }
+
+    setIsFlattenProcessing(true);
+    setFlattenProgress(0);
+    setFlattenError(null);
+
+    try {
+      console.log(`[INSPIRE] Starting flatten (quality: ${quality})`);
+
+      const { svg: flattenedSvg, stats } = await flattenSvg(originalTaggedSvg, {
+        quality,
+        resolution: 4096,
+        quantize: true,
+        onProgress: setFlattenProgress
+      });
+
+      console.log('[INSPIRE] Flatten complete:', stats);
+
+      // Re-tag the flattened SVG with region IDs
+      const retaggedSvg = tagSvgRegions(flattenedSvg);
+
+      // Update the original tagged SVG
+      setOriginalTaggedSvg(retaggedSvg);
+
+      // Clear region overrides since paths have changed
+      setRegionOverrides(new Map());
+      setRegionOverridesHistory([new Map()]);
+      setHistoryIndex(0);
+
+      // Regenerate the displayed SVG
+      const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
+      if (svgUrl && result?.svg_url) {
+        // Trigger regeneration of the recolored SVG
+        if (viewMode === 'solid' && solidColorMapping) {
+          const { dataUrl } = await recolorSVG(result.svg_url, solidColorMapping, retaggedSvg, 'solid');
+          setSolidSvgUrl(dataUrl);
+        } else if (blendRecipes && colorMapping) {
+          const { dataUrl } = await recolorSVG(result.svg_url, colorMapping, retaggedSvg);
+          setBlendSvgUrl(dataUrl);
+        }
+      }
+
+      setFlattenProgress(100);
+      console.log('[INSPIRE] Flatten applied successfully');
+
+    } catch (err) {
+      console.error('[INSPIRE] Flatten failed:', err);
+      setFlattenError(err.message || 'Flatten failed. Please try again.');
+    } finally {
+      setIsFlattenProcessing(false);
+    }
+  };
+
   // Download TPV PNG
   const handleDownloadPNG = () => {
     // Download the appropriate PNG based on current view mode
@@ -1109,12 +1185,13 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       setError(null);
       setProgressMessage('🎨 Processing design colours...');
 
-      // Still need to tag SVG for region-based editing
+      // Still need to normalize and tag SVG for region-based editing
       let taggedSvg = null;
       try {
         const svgResponse = await fetch(svg_url);
         const svgText = await svgResponse.text();
-        taggedSvg = tagSvgRegions(svgText);
+        const normalizedSvg = normalizeSVG(svgText);
+        taggedSvg = tagSvgRegions(normalizedSvg);
         setOriginalTaggedSvg(taggedSvg);
       } catch (tagError) {
         console.error('[TPV-STUDIO] Failed to tag SVG regions:', tagError);
@@ -1166,12 +1243,13 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         });
         setColorMapping(mapping);
 
-        // Fetch and tag original SVG with region IDs (for per-element editing)
+        // Fetch, normalize, and tag original SVG with region IDs (for per-element editing)
         let taggedSvg = null;
         try {
           const svgResponse = await fetch(svg_url);
           const svgText = await svgResponse.text();
-          taggedSvg = tagSvgRegions(svgText);
+          const normalizedSvg = normalizeSVG(svgText);
+          taggedSvg = tagSvgRegions(normalizedSvg);
           setOriginalTaggedSvg(taggedSvg);
         } catch (tagError) {
           console.error('[TPV-STUDIO] Failed to tag SVG regions:', tagError);
@@ -1463,13 +1541,69 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     setEyedropperRegion(null);
   };
 
-  // Make selected region transparent
+  // Make selected region transparent (visual only - opacity)
   const handleMakeTransparent = () => {
     if (!eyedropperRegion) return;
 
     applyRegionRecolor(eyedropperRegion.regionId, 'transparent');
     setEyedropperActive(false);
     setEyedropperRegion(null);
+  };
+
+  // True cut-out - actually removes geometry using boolean subtraction
+  const handleTrueCutout = async () => {
+    if (!eyedropperRegion) return;
+
+    // Get current SVG content
+    const currentSvg = viewMode === 'blend' ? blendSVG : solidSVG;
+    if (!currentSvg) {
+      setCutoutError('No SVG content to cut');
+      return;
+    }
+
+    // Check if we can perform cutout (scope check)
+    const canCut = canPerformCutout(document.querySelector(`[data-region-id="${eyedropperRegion.regionId}"]`));
+    if (!canCut.allowed) {
+      setCutoutError(canCut.reason);
+      return;
+    }
+
+    // Estimate cost and warn if complex
+    const cost = estimateBooleanCost(currentSvg);
+    if (!cost.canProceed) {
+      setCutoutError(`Operation blocked: ${cost.warning}. Try "Flatten Artwork" first.`);
+      return;
+    }
+
+    setIsCutoutProcessing(true);
+    setCutoutError(null);
+
+    try {
+      console.log('[InspirePanel] Starting true cut-out for region:', eyedropperRegion.regionId);
+
+      // Perform the boolean subtraction
+      const result = await performTrueCutout(currentSvg, eyedropperRegion.regionId);
+
+      if (result.svg) {
+        console.log('[InspirePanel] Cut-out complete:', result.stats);
+
+        // Update the appropriate SVG state
+        if (viewMode === 'blend') {
+          setBlendSVG(result.svg);
+        } else {
+          setSolidSVG(result.svg);
+        }
+
+        // Clear selection
+        setEyedropperActive(false);
+        setEyedropperRegion(null);
+      }
+    } catch (error) {
+      console.error('[InspirePanel] Cut-out error:', error);
+      setCutoutError(error.message || 'Failed to perform cut-out');
+    } finally {
+      setIsCutoutProcessing(false);
+    }
   };
 
   // Handle direct TPV color selection from palette
@@ -2259,6 +2393,69 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
             </div>
           )}
 
+          {/* SVG Complexity Indicator & Flatten Controls (Phase 1.5 & 3) */}
+          {originalTaggedSvg && (blendSvgUrl || solidSvgUrl) && (
+            <div className="complexity-indicator">
+              <ComplexityBadge svgContent={originalTaggedSvg} />
+
+              {/* Flatten buttons - show if not already flattened */}
+              {!isFlattened(originalTaggedSvg) && (
+                <div className="flatten-controls">
+                  <span className="flatten-label">Simplify:</span>
+                  <button
+                    className="flatten-btn flatten-fast"
+                    onClick={() => handleFlattenArtwork('fast')}
+                    disabled={isFlattenProcessing}
+                    title="Fast flatten - quicker but slightly rougher edges"
+                  >
+                    Fast
+                  </button>
+                  <button
+                    className="flatten-btn flatten-clean"
+                    onClick={() => handleFlattenArtwork('clean')}
+                    disabled={isFlattenProcessing}
+                    title="Clean flatten - smoother edges, takes longer"
+                  >
+                    Clean
+                  </button>
+                </div>
+              )}
+
+              {/* Flattened badge */}
+              {isFlattened(originalTaggedSvg) && (
+                <span className="flattened-badge">Flattened</span>
+              )}
+            </div>
+          )}
+
+          {/* Flatten progress overlay */}
+          {isFlattenProcessing && (
+            <div className="flatten-overlay">
+              <div className="flatten-modal">
+                <div className="flatten-spinner"></div>
+                <div className="flatten-title">Flattening Artwork...</div>
+                <div className="flatten-progress-bar">
+                  <div
+                    className="flatten-progress-fill"
+                    style={{ width: `${flattenProgress}%` }}
+                  />
+                </div>
+                <div className="flatten-progress-text">{flattenProgress}%</div>
+                <div className="flatten-warning">
+                  This converts paths to traced outlines. Region colors will be reset.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Flatten error message */}
+          {flattenError && (
+            <div className="flatten-error">
+              <span>{flattenError}</span>
+              <button onClick={() => setFlattenError(null)}>×</button>
+            </div>
+          )}
+
           {/* TPV Blend Preview - Blend Mode (only if enabled) */}
           {FEATURE_FLAGS.BLEND_MODE_ENABLED && viewMode === 'blend' && blendSvgUrl && blendRecipes && (
             <div ref={svgPreviewRef}>
@@ -2270,6 +2467,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
                 onRegionClick={handleRegionClick}
                 onEyedropperCancel={handleEyedropperCancel}
                 onMakeTransparent={handleMakeTransparent}
+                onTrueCutout={handleTrueCutout}
+                isCutoutProcessing={isCutoutProcessing}
+                cutoutError={cutoutError}
                 onSelectTPVColor={handleSelectTPVColor}
                 selectedColor={selectedColor}
                 editedColors={blendEditedColors}
@@ -2300,6 +2500,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
                 onRegionClick={handleRegionClick}
                 onEyedropperCancel={handleEyedropperCancel}
                 onMakeTransparent={handleMakeTransparent}
+                onTrueCutout={handleTrueCutout}
+                isCutoutProcessing={isCutoutProcessing}
+                cutoutError={cutoutError}
                 onSelectTPVColor={handleSelectTPVColor}
                 selectedColor={selectedColor}
                 editedColors={solidEditedColors}
@@ -2552,6 +2755,175 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           color: var(--color-text-secondary);
           font-size: var(--text-base);
           line-height: var(--leading-relaxed);
+        }
+
+        /* Complexity Indicator (Phase 1.5 Diagnostics) */
+        .complexity-indicator {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 1rem;
+          padding: 0.5rem 0;
+          margin-bottom: 0.5rem;
+        }
+
+        /* Flatten Controls (Phase 3) */
+        .flatten-controls {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .flatten-label {
+          font-size: 0.75rem;
+          color: #64748b;
+        }
+
+        .flatten-btn {
+          padding: 0.25rem 0.75rem;
+          font-size: 0.75rem;
+          font-weight: 500;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: all 0.15s ease;
+        }
+
+        .flatten-fast {
+          background: #f1f5f9;
+          border: 1px solid #cbd5e1;
+          color: #475569;
+        }
+
+        .flatten-fast:hover:not(:disabled) {
+          background: #e2e8f0;
+          border-color: #94a3b8;
+        }
+
+        .flatten-clean {
+          background: #dbeafe;
+          border: 1px solid #93c5fd;
+          color: #1e40af;
+        }
+
+        .flatten-clean:hover:not(:disabled) {
+          background: #bfdbfe;
+          border-color: #60a5fa;
+        }
+
+        .flatten-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .flattened-badge {
+          display: inline-block;
+          padding: 0.125rem 0.5rem;
+          font-size: 0.65rem;
+          font-weight: 600;
+          color: white;
+          background: #22c55e;
+          border-radius: 3px;
+          text-transform: uppercase;
+          letter-spacing: 0.03em;
+        }
+
+        /* Flatten Progress Overlay */
+        .flatten-overlay {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+
+        .flatten-modal {
+          background: white;
+          border-radius: 12px;
+          padding: 2rem;
+          text-align: center;
+          max-width: 320px;
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .flatten-spinner {
+          width: 48px;
+          height: 48px;
+          border: 4px solid #e2e8f0;
+          border-top-color: #3b82f6;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        .flatten-title {
+          font-size: 1.125rem;
+          font-weight: 600;
+          color: #1e293b;
+          margin-bottom: 1rem;
+        }
+
+        .flatten-progress-bar {
+          height: 8px;
+          background: #e2e8f0;
+          border-radius: 4px;
+          overflow: hidden;
+          margin-bottom: 0.5rem;
+        }
+
+        .flatten-progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #3b82f6, #60a5fa);
+          border-radius: 4px;
+          transition: width 0.2s ease;
+        }
+
+        .flatten-progress-text {
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #64748b;
+          margin-bottom: 1rem;
+        }
+
+        .flatten-warning {
+          font-size: 0.75rem;
+          color: #94a3b8;
+          line-height: 1.4;
+        }
+
+        /* Flatten Error */
+        .flatten-error {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.5rem;
+          padding: 0.75rem 1rem;
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          border-radius: 6px;
+          margin-bottom: 0.5rem;
+          font-size: 0.875rem;
+          color: #dc2626;
+        }
+
+        .flatten-error button {
+          background: none;
+          border: none;
+          font-size: 1.25rem;
+          color: #dc2626;
+          cursor: pointer;
+          padding: 0;
+          line-height: 1;
+          opacity: 0.6;
+        }
+
+        .flatten-error button:hover {
+          opacity: 1;
         }
 
         /* Welcome Guidance */
