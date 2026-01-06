@@ -54,6 +54,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const [dragPreview, setDragPreview] = useState(null); // { id, type, offset: {x, y} }
   const dragPreviewRef = useRef(null); // Ref to track current preview for closure access
 
+  // Track when scale/rotate operations end to prevent accidental deselection
+  // (cursor may no longer be over element after it moved during resize)
+  const lastOperationEndRef = useRef(0);
+
   // Motif scaling state
   const [isScaling, setIsScaling] = useState(false);
   const [scaleMotifId, setScaleMotifId] = useState(null);
@@ -1359,6 +1363,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       const { addToHistory } = useSportsDesignStore.getState();
       addToHistory();
 
+      // Record when operation ended to prevent accidental deselection
+      lastOperationEndRef.current = Date.now();
       setIsScaling(false);
       setScaleMotifId(null);
       setScaleStart(null);
@@ -1417,6 +1423,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       const { addToHistory } = useSportsDesignStore.getState();
       addToHistory();
 
+      // Record when operation ended to prevent accidental deselection
+      lastOperationEndRef.current = Date.now();
       setIsRotating(false);
       setRotateMotifId(null);
       setRotateStart(null);
@@ -1554,6 +1562,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       const { addToHistory } = useSportsDesignStore.getState();
       addToHistory();
 
+      // Record when operation ended to prevent accidental deselection
+      lastOperationEndRef.current = Date.now();
       setIsScalingShape(false);
       setScaleShapeId(null);
       setScaleShapeStart(null);
@@ -1612,6 +1622,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       const { addToHistory } = useSportsDesignStore.getState();
       addToHistory();
 
+      // Record when operation ended to prevent accidental deselection
+      lastOperationEndRef.current = Date.now();
       setIsRotatingShape(false);
       setRotateShapeId(null);
       setRotateShapeStart(null);
@@ -1718,6 +1730,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       const { addToHistory } = useSportsDesignStore.getState();
       addToHistory();
 
+      // Record when operation ended to prevent accidental deselection
+      lastOperationEndRef.current = Date.now();
       setIsScalingText(false);
       setScaleTextId(null);
       setScaleTextStart(null);
@@ -1776,6 +1790,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       const { addToHistory } = useSportsDesignStore.getState();
       addToHistory();
 
+      // Record when operation ended to prevent accidental deselection
+      lastOperationEndRef.current = Date.now();
       setIsRotatingText(false);
       setRotateTextId(null);
       setRotateTextStart(null);
@@ -1870,6 +1886,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       const { addToHistory } = useSportsDesignStore.getState();
       addToHistory();
 
+      // Record when operation ended to prevent accidental deselection
+      lastOperationEndRef.current = Date.now();
       setIsScalingExclusionZone(false);
       setScaleExclusionZoneId(null);
       setScaleExclusionZoneStart(null);
@@ -1924,6 +1942,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       const { addToHistory } = useSportsDesignStore.getState();
       addToHistory();
 
+      // Record when operation ended to prevent accidental deselection
+      lastOperationEndRef.current = Date.now();
       setIsRotatingExclusionZone(false);
       setRotateExclusionZoneId(null);
       setRotateExclusionZoneStart(null);
@@ -1986,6 +2006,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       refreshGroupBounds(scaleGroupId);
       addToHistory();
 
+      // Record when operation ended to prevent accidental deselection
+      lastOperationEndRef.current = Date.now();
       setIsScalingGroup(false);
       setScaleGroupId(null);
       setScaleGroupStart(null);
@@ -2038,6 +2060,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       refreshGroupBounds(rotateGroupId);
       addToHistory();
 
+      // Record when operation ended to prevent accidental deselection
+      lastOperationEndRef.current = Date.now();
       setIsRotatingGroup(false);
       setRotateGroupId(null);
       setRotateGroupStart(null);
@@ -2102,6 +2126,13 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     }
 
     // Normal behavior: deselect when clicking background
+    // But ignore clicks that happen immediately after scale/rotate operations end
+    // (cursor may no longer be over the element that just moved)
+    const timeSinceOperationEnd = Date.now() - lastOperationEndRef.current;
+    if (timeSinceOperationEnd < 100) {
+      return; // Ignore clicks within 100ms of operation ending
+    }
+
     // Check if clicked on container, SVG, or surface background elements
     const isBackground =
       e.target === e.currentTarget || // Container div
