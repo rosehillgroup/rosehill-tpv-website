@@ -49,6 +49,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   const [dragExclusionZoneId, setDragExclusionZoneId] = useState(null);
   const [dragGroupId, setDragGroupId] = useState(null);
 
+  // RAF batching for drag performance
+  const rafRef = useRef(null);
+  const [dragPreview, setDragPreview] = useState(null); // { id, type, offset: {x, y} }
+
   // Motif scaling state
   const [isScaling, setIsScaling] = useState(false);
   const [scaleMotifId, setScaleMotifId] = useState(null);
@@ -179,13 +183,31 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     updateGroupScale,
     updateGroupRotation,
     commitGroupMove,
-    setZoom: setStoreZoom
+    setZoom: setStoreZoom,
+    // Autosave interaction state
+    setInteracting
   } = useSportsDesignStore();
 
   // Sync local zoom state to store for element components to access
   useEffect(() => {
     setStoreZoom(zoom);
   }, [zoom, setStoreZoom]);
+
+  // Helper to apply drag preview offset to an element's position during drag
+  // Returns element with modified position if it's being dragged, otherwise original
+  const applyDragOffset = useCallback((element, elementId) => {
+    if (!dragPreview || dragPreview.id !== elementId || !element) {
+      return element;
+    }
+    // Clone element with offset applied to position
+    return {
+      ...element,
+      position: {
+        x: element.position.x + dragPreview.offset.x,
+        y: element.position.y + dragPreview.offset.y
+      }
+    };
+  }, [dragPreview]);
 
   // Convert screen coordinates to SVG coordinates
   // Uses useCallback to ensure stable reference for useEffect dependencies
@@ -1084,87 +1106,127 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   }, [surface.width_mm, surface.length_mm]);
 
   // Handle mouse/touch move (drag court, track, motif, shape, text, exclusion zone, or group)
+  // Uses RAF batching for smooth 60fps performance
   useEffect(() => {
     if (!isDragging || (!dragCourtId && !dragTrackId && !dragMotifId && !dragShapeId && !dragTextId && !dragExclusionZoneId && !dragGroupId)) return;
 
+    // Set interacting state to block autosave during drag
+    setInteracting(true);
+
+    // Determine drag element type and id
+    const dragType = dragCourtId ? 'court' :
+                     dragTrackId ? 'track' :
+                     dragMotifId ? 'motif' :
+                     dragShapeId ? 'shape' :
+                     dragTextId ? 'text' :
+                     dragExclusionZoneId ? 'exclusionZone' :
+                     dragGroupId ? 'group' : null;
+    const dragId = dragCourtId || dragTrackId || dragMotifId || dragShapeId || dragTextId || dragExclusionZoneId || dragGroupId;
+
+    // Initialize drag preview
+    setDragPreview({ id: dragId, type: dragType, offset: { x: 0, y: 0 } });
+
     const handleMove = (e) => {
-      // Handle both mouse and touch events
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const svgPoint = screenToSVG(clientX, clientY);
+      // Skip if RAF is already pending
+      if (rafRef.current) return;
 
-      let newPosition = {
-        x: svgPoint.x - dragStart.x,
-        y: svgPoint.y - dragStart.y
-      };
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
 
-      // Snap to grid if enabled
-      if (snapToGrid) {
-        newPosition = snapPositionToGrid(newPosition, gridSize_mm);
-      }
+        // Handle both mouse and touch events
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const svgPoint = screenToSVG(clientX, clientY);
 
-      // Update position based on what's being dragged
-      if (dragCourtId) {
-        const court = courts[dragCourtId];
-        const courtDimensions = {
-          width_mm: court.template.dimensions.width_mm * court.scale,
-          length_mm: court.template.dimensions.length_mm * court.scale
+        let offset = {
+          x: svgPoint.x - dragStart.x,
+          y: svgPoint.y - dragStart.y
         };
-        newPosition = constrainPosition(newPosition, courtDimensions, surface);
-        updateCourtPosition(dragCourtId, newPosition);
-      } else if (dragTrackId) {
-        // Tracks don't constrain to bounds (they're usually large)
-        updateTrackPosition(dragTrackId, newPosition);
-      } else if (dragMotifId) {
-        // Motifs: constrain to surface bounds
-        const motif = motifs[dragMotifId];
-        const motifDimensions = {
-          width_mm: motif.originalWidth_mm * (motif.scale || 1),
-          length_mm: motif.originalHeight_mm * (motif.scale || 1)
-        };
-        newPosition = constrainPosition(newPosition, motifDimensions, surface);
-        updateMotifPosition(dragMotifId, newPosition);
-      } else if (dragShapeId) {
-        // Shapes: constrain to surface bounds
-        const shape = shapes[dragShapeId];
-        const shapeDimensions = {
-          width_mm: shape.width_mm,
-          length_mm: shape.height_mm
-        };
-        newPosition = constrainPosition(newPosition, shapeDimensions, surface);
-        updateShapePosition(dragShapeId, newPosition);
-      } else if (dragTextId) {
-        // Text: just update position (no constraints needed for text)
-        updateTextPosition(dragTextId, newPosition);
-      } else if (dragExclusionZoneId) {
-        // Exclusion zones: constrain to surface bounds
-        const zone = exclusionZones[dragExclusionZoneId];
-        const zoneDimensions = {
-          width_mm: zone.width_mm,
-          length_mm: zone.height_mm
-        };
-        newPosition = constrainPosition(newPosition, zoneDimensions, surface);
-        updateExclusionZonePosition(dragExclusionZoneId, newPosition);
-      } else if (dragGroupId) {
-        // Groups: calculate delta and move all child shapes
-        const group = groups[dragGroupId];
-        if (group) {
-          const deltaX = newPosition.x - group.bounds.x;
-          const deltaY = newPosition.y - group.bounds.y;
-          updateGroupPosition(dragGroupId, deltaX, deltaY);
+
+        // Snap to grid if enabled
+        if (snapToGrid) {
+          offset = snapPositionToGrid(offset, gridSize_mm);
         }
-      }
+
+        // Update preview state only (lightweight, no store update)
+        setDragPreview(prev => prev ? { ...prev, offset } : null);
+      });
     };
 
     const handleEnd = () => {
-      // Add to history when drag completes
-      if (dragCourtId || dragTrackId || dragMotifId || dragShapeId || dragTextId || dragExclusionZoneId || dragGroupId) {
-        const { addToHistory, commitGroupMove } = useSportsDesignStore.getState();
-        if (dragGroupId) {
-          commitGroupMove(dragGroupId);
-        }
-        addToHistory();
+      // Cancel any pending RAF
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
       }
+
+      // Get the final preview offset
+      const preview = dragPreview;
+
+      // Commit final position to store if we have a valid preview
+      if (preview && (preview.offset.x !== 0 || preview.offset.y !== 0)) {
+        // Get current element position and add offset
+        if (dragCourtId) {
+          const court = courts[dragCourtId];
+          let newPosition = { x: court.position.x + preview.offset.x, y: court.position.y + preview.offset.y };
+          const courtDimensions = {
+            width_mm: court.template.dimensions.width_mm * court.scale,
+            length_mm: court.template.dimensions.length_mm * court.scale
+          };
+          newPosition = constrainPosition(newPosition, courtDimensions, surface);
+          updateCourtPosition(dragCourtId, newPosition);
+        } else if (dragTrackId) {
+          const track = tracks[dragTrackId];
+          const newPosition = { x: track.position.x + preview.offset.x, y: track.position.y + preview.offset.y };
+          updateTrackPosition(dragTrackId, newPosition);
+        } else if (dragMotifId) {
+          const motif = motifs[dragMotifId];
+          let newPosition = { x: motif.position.x + preview.offset.x, y: motif.position.y + preview.offset.y };
+          const motifDimensions = {
+            width_mm: motif.originalWidth_mm * (motif.scale || 1),
+            length_mm: motif.originalHeight_mm * (motif.scale || 1)
+          };
+          newPosition = constrainPosition(newPosition, motifDimensions, surface);
+          updateMotifPosition(dragMotifId, newPosition);
+        } else if (dragShapeId) {
+          const shape = shapes[dragShapeId];
+          let newPosition = { x: shape.position.x + preview.offset.x, y: shape.position.y + preview.offset.y };
+          const shapeDimensions = {
+            width_mm: shape.width_mm,
+            length_mm: shape.height_mm
+          };
+          newPosition = constrainPosition(newPosition, shapeDimensions, surface);
+          updateShapePosition(dragShapeId, newPosition);
+        } else if (dragTextId) {
+          const text = texts[dragTextId];
+          const newPosition = { x: text.position.x + preview.offset.x, y: text.position.y + preview.offset.y };
+          updateTextPosition(dragTextId, newPosition);
+        } else if (dragExclusionZoneId) {
+          const zone = exclusionZones[dragExclusionZoneId];
+          let newPosition = { x: zone.position.x + preview.offset.x, y: zone.position.y + preview.offset.y };
+          const zoneDimensions = {
+            width_mm: zone.width_mm,
+            length_mm: zone.height_mm
+          };
+          newPosition = constrainPosition(newPosition, zoneDimensions, surface);
+          updateExclusionZonePosition(dragExclusionZoneId, newPosition);
+        } else if (dragGroupId) {
+          const group = groups[dragGroupId];
+          if (group) {
+            updateGroupPosition(dragGroupId, preview.offset.x, preview.offset.y);
+            commitGroupMove(dragGroupId);
+          }
+        }
+
+        // Add to history after position committed
+        useSportsDesignStore.getState().addToHistory();
+      }
+
+      // Clear drag preview
+      setDragPreview(null);
+
+      // Re-enable autosave
+      setInteracting(false);
 
       setIsDragging(false);
       setDragCourtId(null);
@@ -1190,8 +1252,13 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       window.removeEventListener('touchmove', handleMove);
       window.removeEventListener('touchend', handleEnd);
       window.removeEventListener('touchcancel', handleEnd);
+      // Clear any pending RAF on cleanup
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
     };
-  }, [isDragging, dragCourtId, dragTrackId, dragMotifId, dragShapeId, dragTextId, dragExclusionZoneId, dragGroupId, dragStart, courts, tracks, motifs, shapes, texts, exclusionZones, groups, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition, updateMotifPosition, updateShapePosition, updateTextPosition, updateExclusionZonePosition, updateGroupPosition]);
+  }, [isDragging, dragCourtId, dragTrackId, dragMotifId, dragShapeId, dragTextId, dragExclusionZoneId, dragGroupId, dragStart, dragPreview, courts, tracks, motifs, shapes, texts, exclusionZones, groups, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition, updateMotifPosition, updateShapePosition, updateTextPosition, updateExclusionZonePosition, updateGroupPosition, commitGroupMove, setInteracting]);
 
   // Handle mouse/touch move for motif scaling
   useEffect(() => {
@@ -2379,13 +2446,15 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         )}
 
         {/* Exclusion Zones - rendered on top of surface, below elements */}
-        {Object.values(exclusionZones).map(zone => {
-          if (zone.visible === false) return null;
+        {Object.values(exclusionZones).map(zoneRaw => {
+          if (zoneRaw.visible === false) return null;
+          // Apply drag offset for visual preview during drag
+          const zone = applyDragOffset(zoneRaw, zoneRaw.id);
           return (
             <ExclusionZoneElement
-              key={zone.id}
+              key={zoneRaw.id}
               zone={zone}
-              isSelected={zone.id === selectedExclusionZoneId}
+              isSelected={zoneRaw.id === selectedExclusionZoneId}
               zoom={zoom}
               onMouseDown={(e) => handleExclusionZoneMouseDown(e, zone.id)}
               onTouchStart={(e) => handleExclusionZoneMouseDown(e, zone.id)}
@@ -2409,7 +2478,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             return (
               <CourtElement
                 key={elementId}
-                court={court}
+                court={applyDragOffset(court, elementId)}
                 isSelected={isCourtSelected}
                 onMouseDown={(e) => handleCourtMouseDown(e, elementId)}
                 onTouchStart={(e) => handleCourtMouseDown(e, elementId)}
@@ -2430,7 +2499,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             return (
               <TrackElement
                 key={elementId}
-                track={track}
+                track={applyDragOffset(track, elementId)}
                 isSelected={isTrackSelected}
                 onMouseDown={(e) => handleTrackMouseDown(e, elementId)}
                 onTouchStart={(e) => handleTrackMouseDown(e, elementId)}
@@ -2451,7 +2520,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             return (
               <MotifElement
                 key={elementId}
-                motif={motif}
+                motif={applyDragOffset(motif, elementId)}
                 isSelected={isMotifSelected}
                 zoom={zoom}
                 onMouseDown={(e) => handleMotifMouseDown(e, elementId)}
@@ -2465,10 +2534,13 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
 
           // Check if it's a shape
           if (elementId.startsWith('shape-')) {
-            const shape = shapes[elementId];
-            if (!shape) return null;
+            const shapeRaw = shapes[elementId];
+            if (!shapeRaw) return null;
             // Skip hidden shapes
-            if (shape.visible === false) return null;
+            if (shapeRaw.visible === false) return null;
+
+            // Apply drag offset for visual preview during drag
+            const shape = applyDragOffset(shapeRaw, elementId);
 
             // Check if this shape is selected (single or multi-selection)
             const isShapeSelected = elementId === selectedShapeId || selectedElementIds.includes(elementId);
@@ -2537,10 +2609,13 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
 
           // Check if it's a text
           if (elementId.startsWith('text-')) {
-            const text = texts[elementId];
-            if (!text) return null;
+            const textRaw = texts[elementId];
+            if (!textRaw) return null;
             // Skip hidden texts
-            if (text.visible === false) return null;
+            if (textRaw.visible === false) return null;
+
+            // Apply drag offset for visual preview during drag
+            const text = applyDragOffset(textRaw, elementId);
 
             return (
               <TextElement
@@ -2564,9 +2639,14 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             // Skip hidden groups
             if (group.visible === false) return null;
 
+            // Calculate group transform for drag preview
+            const groupTransform = dragPreview?.id === elementId
+              ? `translate(${dragPreview.offset.x}, ${dragPreview.offset.y})`
+              : undefined;
+
             // Render all child elements of the group
             return (
-              <g key={elementId}>
+              <g key={elementId} transform={groupTransform}>
                 {group.childIds.map(childId => {
                   // Render shape children
                   if (childId.startsWith('shape-')) {

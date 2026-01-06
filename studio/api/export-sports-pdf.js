@@ -6,6 +6,8 @@
  */
 
 import { checkRateLimit } from './_utils/rateLimit.js';
+import { getCached, setCache, hashInputs, CACHE_TTL, CACHE_PREFIX } from './_utils/cache.js';
+import { createLogger, getDesignContext, getExportContext } from './_utils/logger.js';
 
 export const config = {
   api: {
@@ -52,6 +54,9 @@ export default async function handler(req, res) {
     // Continue anyway if rate limit check fails
   }
 
+  // Initialize structured logger
+  const logger = createLogger(req, { endpoint: '/api/export-sports-pdf' });
+
   try {
     const {
       svgString,
@@ -75,15 +80,41 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Surface and dimensions are required' });
     }
 
-    console.log('[SPORTS-PDF] Starting generation...');
-    console.log('[SPORTS-PDF] Design:', designName);
-    console.log('[SPORTS-PDF] Surface:', surface.width_mm, 'x', surface.length_mm);
-    console.log('[SPORTS-PDF] Courts:', Object.keys(courts || {}).length);
-    console.log('[SPORTS-PDF] Tracks:', Object.keys(tracks || {}).length);
-    console.log('[SPORTS-PDF] Shapes:', Object.keys(shapes || {}).length);
-    console.log('[SPORTS-PDF] Texts:', Object.keys(texts || {}).length);
-    console.log('[SPORTS-PDF] Motifs:', (motifs || []).length);
-    console.log('[SPORTS-PDF] Exclusion Zones:', Object.keys(exclusionZones || {}).length);
+    // Generate cache key from design structure (not full SVG)
+    const designSignature = {
+      surfaceSize: `${surface.width_mm}x${surface.length_mm}`,
+      courtCount: Object.keys(courts || {}).length,
+      trackCount: Object.keys(tracks || {}).length,
+      shapeCount: Object.keys(shapes || {}).length,
+      textCount: Object.keys(texts || {}).length,
+      motifCount: (motifs || []).length,
+      exclusionCount: Object.keys(exclusionZones || {}).length,
+      designName: designName || 'untitled',
+      svgLength: svgString.length, // Include SVG length as rough content indicator
+    };
+    const cacheKey = CACHE_PREFIX.PDF + hashInputs(designSignature);
+
+    // Check if this exact PDF was recently generated (within TTL)
+    const cachedTimestamp = await getCached(cacheKey);
+    const cacheHit = !!cachedTimestamp;
+
+    // Get design context for logging
+    const designContext = getDesignContext({
+      surface,
+      courts,
+      tracks,
+      shapes,
+      texts,
+      motifs,
+      exclusionZones
+    });
+
+    logger.info('PDF export started', {
+      designName,
+      ...designContext,
+      cacheHit,
+      svgBytes: svgString.length
+    });
 
     // Import generator dynamically (for edge runtime compatibility)
     const { generateSportsSurfacePDF } = await import('./_utils/pdf/sportsGenerator.js');
@@ -101,7 +132,13 @@ export default async function handler(req, res) {
       dimensions,
     });
 
-    console.log('[SPORTS-PDF] Generated:', pdfBuffer.length, 'bytes');
+    // Cache the generation timestamp (for observability)
+    await setCache(cacheKey, Date.now(), CACHE_TTL.PDF_URL);
+
+    logger.info('PDF export completed', {
+      pdfBytes: pdfBuffer.length,
+      durationMs: logger.getDuration()
+    });
 
     // Set response headers
     const safeFilename = (designName || 'sports-surface')
@@ -111,11 +148,15 @@ export default async function handler(req, res) {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}-materials.pdf"`);
     res.setHeader('Content-Length', pdfBuffer.length);
+    res.setHeader('X-Correlation-Id', logger.correlationId);
 
     return res.status(200).send(pdfBuffer);
 
   } catch (error) {
-    console.error('[SPORTS-PDF] Generation error:', error);
+    logger.error('PDF generation failed', {
+      error: error.message,
+      stack: error.stack?.slice(0, 500)
+    });
     return res.status(500).json({
       error: 'PDF generation failed',
       message: error.message

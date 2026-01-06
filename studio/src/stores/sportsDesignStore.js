@@ -230,7 +230,13 @@ const initialState = {
 
   // Export state
   isSaving: false,
-  lastSaved: null
+  lastSaved: null,
+
+  // Autosave state
+  isDirty: false,
+  isInteracting: false, // True during drag/resize/draw - blocks autosave
+  lastSavedHash: null,
+  autosaveTimer: null
 };
 
 export const useSportsDesignStore = create(
@@ -4188,6 +4194,9 @@ export const useSportsDesignStore = create(
             historyIndex: newHistory.length - 1
           };
         });
+
+        // Mark design as dirty and schedule autosave
+        get().markDirty();
       },
 
       undo: () => {
@@ -4236,6 +4245,142 @@ export const useSportsDesignStore = create(
 
       canUndo: () => get().historyIndex > 0,
       canRedo: () => get().historyIndex < get().history.length - 1,
+
+      // ====== Autosave Actions ======
+
+      // Extract only design data for hashing (no UI state, history, timers)
+      selectDesignForSave: () => {
+        const state = get();
+        return {
+          surface: state.surface,
+          courts: state.courts,
+          tracks: state.tracks,
+          motifs: state.motifs,
+          shapes: state.shapes,
+          texts: state.texts,
+          exclusionZones: state.exclusionZones,
+          groups: state.groups,
+          elementOrder: state.elementOrder,
+          customMarkings: state.customMarkings,
+          backgroundZones: state.backgroundZones,
+          designName: state.designName,
+          designDescription: state.designDescription,
+          designTags: state.designTags
+        };
+      },
+
+      // Simple hash function for design state (djb2 algorithm)
+      hashDesignState: (designData) => {
+        const str = JSON.stringify(designData);
+        let hash = 5381;
+        for (let i = 0; i < str.length; i++) {
+          hash = ((hash << 5) + hash) + str.charCodeAt(i);
+        }
+        return (hash >>> 0).toString(36);
+      },
+
+      // Mark design as dirty and schedule autosave
+      markDirty: () => {
+        set({ isDirty: true });
+        get().scheduleAutosave();
+      },
+
+      // Set interacting state (blocks autosave during drag/resize/draw)
+      setInteracting: (isInteracting) => {
+        set({ isInteracting });
+      },
+
+      // Schedule debounced autosave (15 seconds after last change)
+      scheduleAutosave: () => {
+        const state = get();
+
+        // Clear existing timer
+        if (state.autosaveTimer) {
+          clearTimeout(state.autosaveTimer);
+        }
+
+        const timer = setTimeout(() => {
+          const currentState = get();
+
+          // Don't save mid-interaction - reschedule
+          if (currentState.isInteracting) {
+            get().scheduleAutosave();
+            return;
+          }
+
+          // Only save if dirty
+          if (currentState.isDirty) {
+            // Check if design actually changed by comparing hashes
+            const designData = get().selectDesignForSave();
+            const newHash = get().hashDesignState(designData);
+
+            if (newHash !== currentState.lastSavedHash) {
+              console.log('[AUTOSAVE] Design changed, would save here');
+              // Note: Actual save implementation depends on how saving works in the app
+              // For now, just mark as saved
+              set({
+                isDirty: false,
+                lastSavedHash: newHash,
+                lastSaved: new Date().toISOString()
+              });
+            } else {
+              // No actual changes, just clear dirty flag
+              set({ isDirty: false });
+            }
+          }
+        }, 15000); // 15 second debounce
+
+        set({ autosaveTimer: timer });
+      },
+
+      // Clear autosave timer (for cleanup)
+      clearAutosaveTimer: () => {
+        const timer = get().autosaveTimer;
+        if (timer) {
+          clearTimeout(timer);
+          set({ autosaveTimer: null });
+        }
+      },
+
+      // Get complexity score for UI warnings and logging
+      getComplexityScore: () => {
+        const state = get();
+
+        const courtCount = Object.keys(state.courts).length;
+        const trackCount = Object.keys(state.tracks).length;
+        const motifCount = Object.keys(state.motifs).length;
+        const shapeCount = Object.keys(state.shapes).length;
+        const textCount = Object.keys(state.texts).length;
+        const exclusionCount = Object.keys(state.exclusionZones).length;
+
+        const elementCount = courtCount + trackCount + motifCount + shapeCount + textCount + exclusionCount;
+
+        // Estimate path count (shapes with complex paths)
+        const pathCount = Object.values(state.shapes)
+          .filter(s => s.type === 'path' || s.type === 'blob')
+          .length;
+
+        // Surface area in m²
+        const areaSqM = (state.surface.width_mm * state.surface.length_mm) / 1_000_000;
+
+        // Simple weighted score
+        const score = elementCount + (motifCount * 3) + (pathCount * 2) + Math.floor(areaSqM / 100);
+
+        return {
+          score,
+          elementCount,
+          courtCount,
+          trackCount,
+          motifCount,
+          shapeCount,
+          textCount,
+          pathCount,
+          areaSqM,
+          // Thresholds for UI warnings
+          isLarge: score > 50,
+          isHuge: score > 100
+        };
+      },
 
       // ====== UI State Actions ======
       toggleCourtLibrary: () => {

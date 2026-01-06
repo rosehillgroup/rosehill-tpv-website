@@ -5,6 +5,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { getAuthenticatedClient } from './_utils/supabase.js';
 import { checkRateLimit, getRateLimitResponse, getRateLimitIdentifier } from './_utils/rateLimit.js';
+import { getCached, setCache, hashInputs, CACHE_TTL, CACHE_PREFIX } from './_utils/cache.js';
+import { createLogger } from './_utils/logger.js';
 
 /**
  * Initialize Anthropic client
@@ -37,6 +39,9 @@ function getAnthropicClient() {
  * }
  */
 export default async function handler(req, res) {
+  // Initialize structured logger
+  const logger = createLogger(req, { endpoint: '/api/generate-design-name' });
+
   // Only accept POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({
@@ -85,10 +90,28 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log('[GENERATE-NAME] Request:', {
-      prompt: prompt.substring(0, 100),
-      colors: colors.slice(0, 5),
-      dimensions
+    // Check cache first
+    const cacheKey = CACHE_PREFIX.DESIGN_NAME + hashInputs({
+      prompt: prompt.trim().toLowerCase(),
+      colors: colors.slice(0, 6).sort(), // Normalize colors
+      dimensions: { w: dimensions.widthMM, l: dimensions.lengthMM }
+    });
+
+    const cachedNames = await getCached(cacheKey);
+    if (cachedNames) {
+      logger.info('Cache hit for design name', { cacheHit: true });
+      res.setHeader('X-Correlation-Id', logger.correlationId);
+      return res.status(200).json({
+        success: true,
+        names: cachedNames,
+        cached: true
+      });
+    }
+
+    logger.info('Generating design names', {
+      promptLength: prompt.length,
+      colorCount: colors.length,
+      cacheHit: false
     });
 
     // Build context for Claude
@@ -163,15 +186,27 @@ The names should capture the essence of the design theme while sounding professi
       throw new Error('No names returned from AI');
     }
 
-    console.log('[GENERATE-NAME] Generated names:', parsed.names);
+    const names = parsed.names.slice(0, 3);
 
+    // Cache the result for 24 hours
+    await setCache(cacheKey, names, CACHE_TTL.DESIGN_NAME);
+
+    logger.info('Generated design names', {
+      nameCount: names.length,
+      durationMs: logger.getDuration()
+    });
+
+    res.setHeader('X-Correlation-Id', logger.correlationId);
     return res.status(200).json({
       success: true,
-      names: parsed.names.slice(0, 3)
+      names
     });
 
   } catch (error) {
-    console.error('[GENERATE-NAME] Error:', error);
+    logger.error('Design name generation failed', {
+      error: error.message,
+      stack: error.stack?.slice(0, 500)
+    });
 
     return res.status(500).json({
       success: false,

@@ -141,7 +141,10 @@ function TPVDesigner({ loadedDesign }) {
     setMobilePropertiesOpen,
     setMobileColoursOpen,
     setMobileActiveTab,
-    closeMobileSheets
+    closeMobileSheets,
+    // Autosave state
+    isDirty,
+    clearAutosaveTimer
   } = useSportsDesignStore();
 
   // Handle dimension form submit
@@ -280,6 +283,24 @@ function TPVDesigner({ loadedDesign }) {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [showElementsMenu]);
+
+  // Warn about unsaved changes on page unload
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes.';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
+
+  // Clean up autosave timer on unmount
+  useEffect(() => {
+    return () => clearAutosaveTimer();
+  }, [clearAutosaveTimer]);
 
   // Keyboard shortcuts
   useEffect(() => {
