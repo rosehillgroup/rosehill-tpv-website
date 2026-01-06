@@ -19,7 +19,7 @@ import { recolorSVG } from '../utils/svgRecolor.js';
 import { tagSvgRegions } from '../utils/svgRegionTagger.js';
 import { normalizeSVG } from '../utils/svgNormalize.js';
 import ComplexityBadge from './ComplexityBadge.jsx';
-import { flattenSvg, isFlattened } from '../lib/flattenArtwork.js';
+import { flattenSvg, isFlattened, buildRecipesFromFlattenedSvg } from '../lib/flattenArtwork.js';
 import { performTrueCutout, canPerformCutout, estimateBooleanCost } from '../lib/paperBoolean.js';
 import { applyRegionOverrides } from '../utils/svgRegionOverrides.js';
 import { deriveCurrentColors, hasColorEdits } from '../utils/deriveCurrentColors.js';
@@ -923,6 +923,17 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         setBlendSvgUrl(newUrl);
       }
 
+      // Rebuild recipes from flattened SVG so color legend shows TPV names
+      const { recipes: newRecipes, colorMapping: newMapping } = buildRecipesFromFlattenedSvg(retaggedSvg);
+      if (viewMode === 'solid') {
+        setSolidRecipes(newRecipes);
+        setSolidColorMapping(newMapping);
+      } else {
+        setBlendRecipes(newRecipes);
+        setColorMapping(newMapping);
+      }
+      console.log('[INSPIRE] Rebuilt recipes from flattened SVG:', newRecipes.length, 'colors');
+
       setFlattenProgress(100);
       console.log('[INSPIRE] Flatten applied successfully');
 
@@ -1652,6 +1663,12 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       }
 
       console.log('[InspirePanel] Starting true cut-out for region:', eyedropperRegion.regionId);
+
+      // Save original before cut-out (if not already saved) for revert functionality
+      if (!originalUnflattenedSvg) {
+        setOriginalUnflattenedSvg(currentSvg);
+        console.log('[InspirePanel] Saved original SVG for revert (before cut-out)');
+      }
 
       // Perform the boolean subtraction
       const result = await performTrueCutout(currentSvg, eyedropperRegion.regionId);

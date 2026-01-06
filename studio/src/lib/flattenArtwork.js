@@ -375,9 +375,9 @@ export async function flattenSvg(svgString, options = {}) {
     onProgress(80);
     let cleanedSvg = removeSmallPaths(tracedSvg);
 
-    // Step 6: Add proper structure (use original dimensions for viewBox)
+    // Step 6: Add proper structure (use canvas dimensions for viewBox - paths are traced at this scale)
     onProgress(90);
-    cleanedSvg = structureSvg(cleanedSvg, originalWidth, originalHeight);
+    cleanedSvg = structureSvg(cleanedSvg, width, height);
 
     // Done
     onProgress(100);
@@ -419,6 +419,113 @@ export function getTpvPalette() {
     name: c.name,
     code: c.code
   }));
+}
+
+/**
+ * Extract colors from SVG and build solid recipes
+ * Used after flattening to rebuild the color legend with TPV names
+ *
+ * @param {string} svgString - SVG content (should be flattened with TPV colors)
+ * @returns {{recipes: Array, colorMapping: Map}} Recipes and color mapping
+ */
+export function buildRecipesFromFlattenedSvg(svgString) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgString, 'image/svg+xml');
+  const svg = doc.documentElement;
+
+  // Collect all fill colors from paths
+  const colorCounts = new Map();
+  const paths = svg.querySelectorAll('path, rect, circle, ellipse, polygon');
+
+  paths.forEach(path => {
+    let fill = path.getAttribute('fill');
+    if (!fill) {
+      const style = path.getAttribute('style');
+      if (style) {
+        const match = style.match(/fill:\s*([^;]+)/);
+        if (match) fill = match[1].trim();
+      }
+    }
+
+    if (fill && fill !== 'none' && fill !== 'transparent') {
+      // Normalize hex format
+      fill = fill.toLowerCase();
+      if (fill.startsWith('rgb')) {
+        // Convert rgb to hex
+        const match = fill.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+        if (match) {
+          fill = '#' + [match[1], match[2], match[3]]
+            .map(x => parseInt(x).toString(16).padStart(2, '0'))
+            .join('');
+        }
+      }
+
+      const count = colorCounts.get(fill) || 0;
+      colorCounts.set(fill, count + 1);
+    }
+  });
+
+  // Calculate total for percentages
+  const total = Array.from(colorCounts.values()).reduce((a, b) => a + b, 0);
+
+  // Build recipes by matching to TPV palette
+  const recipes = [];
+  const colorMapping = new Map();
+
+  colorCounts.forEach((count, hex) => {
+    // Find closest TPV color
+    const tpvColor = findClosestTpvColorByHex(hex);
+    const areaPct = total > 0 ? Math.round((count / total) * 100) : 0;
+
+    if (tpvColor) {
+      recipes.push({
+        targetColor: {
+          hex: hex,
+          areaPct: areaPct
+        },
+        originalColor: {
+          hex: hex
+        },
+        blendColor: {
+          hex: tpvColor.hex
+        },
+        chosenRecipe: {
+          components: [{
+            code: tpvColor.code,
+            name: tpvColor.name,
+            hex: tpvColor.hex,
+            pct: 100
+          }],
+          hex: tpvColor.hex
+        },
+        // Include TPV info for display
+        tpvCode: tpvColor.code,
+        tpvName: tpvColor.name
+      });
+
+      colorMapping.set(hex, tpvColor.hex);
+    }
+  });
+
+  // Sort by area percentage (descending)
+  recipes.sort((a, b) => b.targetColor.areaPct - a.targetColor.areaPct);
+
+  console.log(`[FLATTEN] Built ${recipes.length} recipes from flattened SVG`);
+
+  return { recipes, colorMapping };
+}
+
+/**
+ * Find closest TPV color by hex value
+ */
+function findClosestTpvColorByHex(hex) {
+  // Parse hex
+  const cleanHex = hex.replace('#', '');
+  const r = parseInt(cleanHex.substring(0, 2), 16);
+  const g = parseInt(cleanHex.substring(2, 4), 16);
+  const b = parseInt(cleanHex.substring(4, 6), 16);
+
+  return findClosestTpvColor(r, g, b);
 }
 
 export default flattenSvg;
