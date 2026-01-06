@@ -1,5 +1,5 @@
 // TPV Designer - Full-Screen Design Editor Modal
-// Full-screen modal for generating and editing designs with proper space for color editing
+// Full-screen modal for generating and editing designs with proper space for colour editing
 
 import React, { useState, useEffect, useCallback } from 'react';
 import InspirePanelRecraft from '../InspirePanelRecraft.jsx';
@@ -16,7 +16,7 @@ import './DesignEditorModal.css';
  * Provides full viewport space for:
  * - AI prompt generation or SVG upload
  * - Large SVG preview with zoom/pan
- * - Color legend and editing tools
+ * - Colour legend and editing tools
  * - Mixer widget for blend adjustments
  */
 function DesignEditorModal({ isOpen, onClose }) {
@@ -61,6 +61,41 @@ function DesignEditorModal({ isOpen, onClose }) {
     console.log('[EDITOR] Design saved:', name, designId);
     setAddSuccess(false);
   }, []);
+
+  // Save changes to existing design without adding to canvas
+  // Use case: Edit source design → save → then Refresh from Source on motifs
+  const handleSaveChanges = async () => {
+    if (!currentDesignId || isSaving) return;
+
+    setIsSaving(true);
+    try {
+      // Serialize the current design state (includes all edits)
+      const designData = serializeDesign(playgroundStore);
+
+      // Save to database (update existing design)
+      await saveDesign({
+        id: currentDesignId,
+        name: designName || 'Untitled Design',
+        description: '',
+        tags: [],
+        design_data: designData,
+        input_mode: playgroundStore.inputMode
+      });
+
+      console.log('[EDITOR] Saved changes to design:', currentDesignId);
+
+      // Show brief success then close
+      setAddSuccess(true);
+      setTimeout(() => {
+        onClose();
+      }, 600);
+    } catch (error) {
+      console.error('[EDITOR] Failed to save changes:', error);
+      alert('Failed to save changes: ' + error.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Auto-save and add to canvas - uses current in-memory SVG directly
   const handleAddToCanvas = async () => {
@@ -253,6 +288,31 @@ function DesignEditorModal({ isOpen, onClose }) {
                 >
                   Cancel
                 </button>
+                {/* Save Changes button - only shown when editing an existing design */}
+                {isSaved && (
+                  <button
+                    className="design-editor__btn design-editor__btn--secondary"
+                    onClick={handleSaveChanges}
+                    disabled={!hasDesign || isSaving}
+                    title="Save changes to the source design without adding a new motif"
+                  >
+                    {isSaving && !isAddingToCanvas ? (
+                      <>
+                        <span className="design-editor__spinner"></span>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                          <polyline points="17 21 17 13 7 13 7 21" />
+                          <polyline points="7 3 7 8 15 8" />
+                        </svg>
+                        Save Changes
+                      </>
+                    )}
+                  </button>
+                )}
                 <button
                   className="design-editor__btn design-editor__btn--primary"
                   onClick={handleAddToCanvas}

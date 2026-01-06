@@ -1,5 +1,5 @@
 // TPV Studio - Design Generator State Management
-// Zustand store for preserving design generation state (AI prompts, SVG uploads, color editing)
+// Zustand store for preserving design generation state (AI prompts, SVG uploads, colour editing)
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 import { FEATURE_FLAGS } from '../lib/constants.js';
@@ -41,15 +41,20 @@ const initialState = {
 
   // Region-based editing
   // regionOverrides: Map<regionId, {
-  //   hex: string,           // The color hex value
+  //   hex: string,           // The colour hex value
   //   originalHex?: string,  // What it was before this edit
-  //   tpvCode?: string,      // TPV color code (e.g., "RH30") if selected from palette
-  //   tpvName?: string,      // TPV color name (e.g., "Funky Pink") if selected from palette
-  //   editType?: 'solid'|'blend'|'eyedrop', // How the color was applied
+  //   tpvCode?: string,      // TPV colour code (e.g., "RH30") if selected from palette
+  //   tpvName?: string,      // TPV colour name (e.g., "Funky Pink") if selected from palette
+  //   editType?: 'solid'|'blend'|'eyedrop', // How the colour was applied
   //   blendComponents?: Array<{code, name, parts}> // For blend mode mixer edits
   // }>
   regionOverrides: new Map(),
   originalTaggedSvg: null, // SVG with region IDs
+
+  // Flatten/Simplify revert support
+  // These are saved so user can revert a simplified design even after closing/reopening
+  originalUnflattenedSvg: null, // The SVG before flattening
+  originalRecipesState: null,   // The recipes state before flattening (for restoring colour legend)
 
   // Undo/redo history for region overrides
   regionOverridesHistory: [new Map()],
@@ -168,12 +173,16 @@ export const usePlaygroundDesignStore = create(
       // ====== Region Override Actions ======
       setOriginalTaggedSvg: (svg) => set({ originalTaggedSvg: svg }),
 
+      // ====== Flatten/Simplify Revert Support ======
+      setOriginalUnflattenedSvg: (svg) => set({ originalUnflattenedSvg: svg }),
+      setOriginalRecipesState: (state) => set({ originalRecipesState: state }),
+
       setRegionOverrides: (overrides) => set({
         regionOverrides: overrides,
         lastModified: Date.now()
       }),
 
-      // Add region override with rich color data
+      // Add region override with rich colour data
       // colorData can be:
       // - string (hex only, for backward compatibility)
       // - object { hex, originalHex?, tpvCode?, tpvName?, editType?, blendComponents? }
@@ -294,11 +303,14 @@ export const usePlaygroundDesignStore = create(
           showFinalRecipes: restoredState.showFinalRecipes || false,
           showSolidSummary: restoredState.showSolidSummary || false,
           hasGeneratedContent: !!restoredState.result,
-          // Per-region overrides (transparency, individual color edits)
+          // Per-region overrides (transparency, individual colour edits)
           regionOverrides: regionOverrides,
           originalTaggedSvg: restoredState.originalTaggedSvg || null,
           regionOverridesHistory: regionOverridesHistory,
           historyIndex: historyIndex,
+          // Flatten/Simplify revert support
+          originalUnflattenedSvg: restoredState.originalUnflattenedSvg || null,
+          originalRecipesState: restoredState.originalRecipesState || null,
           lastModified: Date.now()
         });
       },

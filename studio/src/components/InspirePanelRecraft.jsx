@@ -64,7 +64,9 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     viewMode, showFinalRecipes, showSolidSummary,
     regionOverrides, originalTaggedSvg, regionOverridesHistory, historyIndex,
     designName, currentDesignId,
-    hasUnsavedChanges, resetDesign
+    hasUnsavedChanges, resetDesign,
+    // Flatten/Simplify revert support (persisted in store for reload survival)
+    originalUnflattenedSvg, originalRecipesState
   } = store;
 
   // Store action shortcuts (for cleaner JSX)
@@ -102,6 +104,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   const setDesignName = store.setDesignName;
   const setCurrentDesignId = store.setCurrentDesignId;
   const loadDesignFromStore = store.loadDesign;
+  const setOriginalUnflattenedSvg = store.setOriginalUnflattenedSvg;
+  const setOriginalRecipesState = store.setOriginalRecipesState;
 
   // Helper setters for individual dimensions (wrap setDimensions)
   const setWidthMM = (width) => setDimensions(width, lengthMM);
@@ -150,11 +154,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   const [confirmedDimensions, setConfirmedDimensions] = useState(null); // {width, height} - directly passed to modals
 
   // Flatten artwork state (Phase 3)
+  // Note: originalUnflattenedSvg and originalRecipesState now come from Zustand store (for persistence)
   const [isFlattenProcessing, setIsFlattenProcessing] = useState(false);
   const [flattenProgress, setFlattenProgress] = useState(0);
   const [flattenError, setFlattenError] = useState(null);
-  const [originalUnflattenedSvg, setOriginalUnflattenedSvg] = useState(null); // Pre-flatten SVG for revert
-  const [originalRecipesState, setOriginalRecipesState] = useState(null); // Pre-flatten recipes/mapping for revert
   const [troubleshootOpen, setTroubleshootOpen] = useState(false);
   const [flattenConfirmOpen, setFlattenConfirmOpen] = useState(false);
   const [pendingFlattenQuality, setPendingFlattenQuality] = useState(null);
@@ -316,10 +319,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         setCurrentDesignId(loadedDesign.id);
       }
 
-      // Restore original unflattened SVG if design was saved while flattened
-      if (restoredState.originalUnflattenedSvg) {
-        setOriginalUnflattenedSvg(restoredState.originalUnflattenedSvg);
-      }
+      // Note: originalUnflattenedSvg and originalRecipesState are now restored via loadDesignFromStore
 
       // Regenerate SVGs from saved state (blob URLs don't survive page reload)
       // This needs to happen after state is set, so we use a timeout
@@ -376,7 +376,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         }
       }, 100);
     }
-  }, [loadedDesign, loadDesignFromStore, setDesignName, setCurrentDesignId, setOriginalTaggedSvg, setOriginalUnflattenedSvg]);
+  }, [loadedDesign, loadDesignFromStore, setDesignName, setCurrentDesignId, setOriginalTaggedSvg]);
 
   // Track if we've done initial regeneration for directly-loaded designs
   const hasRegeneratedRef = useRef(false);

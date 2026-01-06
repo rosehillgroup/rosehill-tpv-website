@@ -32,7 +32,8 @@ export function serializeDesign(state) {
     inSituData,
     regionOverrides,
     originalTaggedSvg,
-    originalUnflattenedSvg
+    originalUnflattenedSvg,
+    originalRecipesState
   } = state;
 
 
@@ -57,19 +58,19 @@ export function serializeDesign(state) {
     original_png_url: result?.png_url || null,
     thumbnail_url: result?.thumb_url || null,
 
-    // Color recipes (already plain objects)
+    // Colour recipes (already plain objects)
     blend_recipes: blendRecipes || null,
     solid_recipes: solidRecipes || null,
 
-    // Color mappings (convert Maps to objects)
+    // Colour mappings (convert Maps to objects)
     color_mapping: serializeMap(colorMapping),
     solid_color_mapping: serializeMap(solidColorMapping),
 
-    // User color edits (convert Maps to objects)
+    // User colour edits (convert Maps to objects)
     solid_color_edits: serializeMap(solidEditedColors),
     blend_color_edits: serializeMap(blendEditedColors),
 
-    // Final recolored SVGs
+    // Final recoloured SVGs
     final_blend_svg_url: blendSvgUrl || null,
     final_solid_svg_url: solidSvgUrl || null,
     preferred_view_mode: viewMode || 'solid',
@@ -95,7 +96,10 @@ export function serializeDesign(state) {
     original_tagged_svg: originalTaggedSvg || null,
 
     // Original unflattened SVG for revert functionality
-    original_unflattened_svg: originalUnflattenedSvg || null
+    original_unflattened_svg: originalUnflattenedSvg || null,
+
+    // Original recipes state for revert functionality (restores colour legend after simplify)
+    original_recipes_state: originalRecipesState || null
   };
 }
 
@@ -122,6 +126,7 @@ export function deserializeDesign(savedData) {
   const regionOverridesData = getField('region_overrides');
   const originalTaggedSvgData = getField('original_tagged_svg');
   const originalUnflattenedSvgData = getField('original_unflattened_svg');
+  const originalRecipesStateData = getField('original_recipes_state');
 
 
   return {
@@ -141,11 +146,11 @@ export function deserializeDesign(savedData) {
       thumbnail_url: getField('thumbnail_url')
     },
 
-    // Color recipes
+    // Colour recipes
     blendRecipes: getField('blend_recipes') || null,
     solidRecipes: getField('solid_recipes') || null,
 
-    // Color mappings (convert back to Maps)
+    // Colour mappings (convert back to Maps)
     colorMapping: deserializeMap(getField('color_mapping')),
     solidColorMapping: deserializeMap(getField('solid_color_mapping')),
 
@@ -178,6 +183,9 @@ export function deserializeDesign(savedData) {
 
     // Original unflattened SVG for revert functionality
     originalUnflattenedSvg: originalUnflattenedSvgData || null,
+
+    // Original recipes state for revert functionality (restores colour legend after simplify)
+    originalRecipesState: originalRecipesStateData || null,
 
     // Restore UI state
     generating: false,
