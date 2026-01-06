@@ -292,22 +292,40 @@ function removeSmallPaths(svgString, minArea = MIN_SHAPE_AREA) {
  * Add proper SVG structure and viewBox
  *
  * @param {string} svgString - Raw traced SVG
- * @param {number} width - Original width
- * @param {number} height - Original height
+ * @param {number} canvasWidth - Canvas width (traced paths are at this scale)
+ * @param {number} canvasHeight - Canvas height (traced paths are at this scale)
  * @returns {string} Properly structured SVG
  */
-function structureSvg(svgString, width, height) {
+function structureSvg(svgString, canvasWidth, canvasHeight) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgString, 'image/svg+xml');
   const svg = doc.documentElement;
 
+  // ImagetracerJS outputs SVG with width/height attributes matching the input image
+  // We need to ensure viewBox matches the actual path coordinates
+  // The traced paths use coordinates in canvas space (canvasWidth x canvasHeight)
+
+  // Check if ImagetracerJS already set dimensions
+  const existingWidth = svg.getAttribute('width');
+  const existingHeight = svg.getAttribute('height');
+
+  console.log(`[FLATTEN] structureSvg - canvas: ${canvasWidth}x${canvasHeight}, existing: ${existingWidth}x${existingHeight}`);
+
+  // Use the dimensions from ImagetracerJS output if available (paths are at this scale)
+  // Otherwise fall back to our canvas dimensions
+  const viewBoxWidth = existingWidth ? parseFloat(existingWidth) : canvasWidth;
+  const viewBoxHeight = existingHeight ? parseFloat(existingHeight) : canvasHeight;
+
   // Set proper attributes
   svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.setAttribute('viewBox', `0 0 ${viewBoxWidth} ${viewBoxHeight}`);
   svg.setAttribute('width', '100%');
   svg.setAttribute('height', '100%');
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
   svg.setAttribute('data-flattened', 'true');
   svg.setAttribute('data-flatten-date', new Date().toISOString());
+
+  console.log(`[FLATTEN] Final viewBox: 0 0 ${viewBoxWidth} ${viewBoxHeight}`);
 
   return new XMLSerializer().serializeToString(doc);
 }
@@ -503,7 +521,8 @@ export function buildRecipesFromFlattenedSvg(svgString) {
         tpvName: tpvColor.name
       });
 
-      colorMapping.set(hex, tpvColor.hex);
+      // Color mapping must have blendHex property for recolorSVG
+      colorMapping.set(hex, { blendHex: tpvColor.hex });
     }
   });
 

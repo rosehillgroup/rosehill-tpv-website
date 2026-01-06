@@ -154,6 +154,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   const [flattenProgress, setFlattenProgress] = useState(0);
   const [flattenError, setFlattenError] = useState(null);
   const [originalUnflattenedSvg, setOriginalUnflattenedSvg] = useState(null); // Pre-flatten SVG for revert
+  const [originalRecipesState, setOriginalRecipesState] = useState(null); // Pre-flatten recipes/mapping for revert
   const [troubleshootOpen, setTroubleshootOpen] = useState(false);
   const [flattenConfirmOpen, setFlattenConfirmOpen] = useState(false);
   const [pendingFlattenQuality, setPendingFlattenQuality] = useState(null);
@@ -889,7 +890,14 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       // Save original before flattening (if not already saved) for revert functionality
       if (!originalUnflattenedSvg) {
         setOriginalUnflattenedSvg(displayedSvg);
-        console.log('[INSPIRE] Saved original SVG for revert');
+        // Also save original recipes and color mapping for revert
+        setOriginalRecipesState({
+          solidRecipes: solidRecipes,
+          solidColorMapping: solidColorMapping,
+          blendRecipes: blendRecipes,
+          colorMapping: colorMapping
+        });
+        console.log('[INSPIRE] Saved original SVG and recipes for revert');
       }
 
       const { svg: flattenedSvg, stats } = await flattenSvg(displayedSvg, {
@@ -978,8 +986,18 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       setBlendSvgUrl(newUrl);
     }
 
+    // Restore original recipes and color mapping if available
+    if (originalRecipesState) {
+      setSolidRecipes(originalRecipesState.solidRecipes);
+      setSolidColorMapping(originalRecipesState.solidColorMapping);
+      setBlendRecipes(originalRecipesState.blendRecipes);
+      setColorMapping(originalRecipesState.colorMapping);
+      console.log('[INSPIRE] Restored original recipes and color mapping');
+    }
+
     // Clear the saved original (no longer flattened)
     setOriginalUnflattenedSvg(null);
+    setOriginalRecipesState(null);
 
     // Reset region overrides since we're back to original
     setRegionOverrides(new Map());
@@ -1046,6 +1064,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     setMixerColor(null);
     // Reset flatten-related state
     setOriginalUnflattenedSvg(null);
+    setOriginalRecipesState(null);
     setTroubleshootOpen(false);
     setFlattenConfirmOpen(false);
     setPendingFlattenQuality(null);
@@ -1667,7 +1686,14 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       // Save original before cut-out (if not already saved) for revert functionality
       if (!originalUnflattenedSvg) {
         setOriginalUnflattenedSvg(currentSvg);
-        console.log('[InspirePanel] Saved original SVG for revert (before cut-out)');
+        // Also save original recipes and color mapping for revert
+        setOriginalRecipesState({
+          solidRecipes: solidRecipes,
+          solidColorMapping: solidColorMapping,
+          blendRecipes: blendRecipes,
+          colorMapping: colorMapping
+        });
+        console.log('[InspirePanel] Saved original SVG and recipes for revert (before cut-out)');
       }
 
       // Perform the boolean subtraction
