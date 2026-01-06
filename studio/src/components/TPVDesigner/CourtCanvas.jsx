@@ -52,6 +52,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   // RAF batching for drag performance
   const rafRef = useRef(null);
   const [dragPreview, setDragPreview] = useState(null); // { id, type, offset: {x, y} }
+  const dragPreviewRef = useRef(null); // Ref to track current preview for closure access
 
   // Motif scaling state
   const [isScaling, setIsScaling] = useState(false);
@@ -1123,8 +1124,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                      dragGroupId ? 'group' : null;
     const dragId = dragCourtId || dragTrackId || dragMotifId || dragShapeId || dragTextId || dragExclusionZoneId || dragGroupId;
 
-    // Initialize drag preview
-    setDragPreview({ id: dragId, type: dragType, offset: { x: 0, y: 0 } });
+    // Initialize drag preview (update both state and ref)
+    const initialPreview = { id: dragId, type: dragType, offset: { x: 0, y: 0 } };
+    setDragPreview(initialPreview);
+    dragPreviewRef.current = initialPreview;
 
     const handleMove = (e) => {
       // Skip if RAF is already pending
@@ -1148,8 +1151,10 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
           offset = snapPositionToGrid(offset, gridSize_mm);
         }
 
-        // Update preview state only (lightweight, no store update)
-        setDragPreview(prev => prev ? { ...prev, offset } : null);
+        // Update preview state and ref (ref for closure access, state for render)
+        const newPreview = dragPreviewRef.current ? { ...dragPreviewRef.current, offset } : null;
+        dragPreviewRef.current = newPreview;
+        setDragPreview(newPreview);
       });
     };
 
@@ -1160,8 +1165,8 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         rafRef.current = null;
       }
 
-      // Get the final preview offset
-      const preview = dragPreview;
+      // Get the final preview offset from ref (not stale closure)
+      const preview = dragPreviewRef.current;
 
       // Commit final position to store if we have a valid preview
       if (preview && (preview.offset.x !== 0 || preview.offset.y !== 0)) {
@@ -1222,8 +1227,9 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         useSportsDesignStore.getState().addToHistory();
       }
 
-      // Clear drag preview
+      // Clear drag preview (both state and ref)
       setDragPreview(null);
+      dragPreviewRef.current = null;
 
       // Re-enable autosave
       setInteracting(false);
@@ -1257,8 +1263,11 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
       }
+      // Clear preview ref and re-enable autosave on cleanup
+      dragPreviewRef.current = null;
+      setInteracting(false);
     };
-  }, [isDragging, dragCourtId, dragTrackId, dragMotifId, dragShapeId, dragTextId, dragExclusionZoneId, dragGroupId, dragStart, dragPreview, courts, tracks, motifs, shapes, texts, exclusionZones, groups, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition, updateMotifPosition, updateShapePosition, updateTextPosition, updateExclusionZonePosition, updateGroupPosition, commitGroupMove, setInteracting]);
+  }, [isDragging, dragCourtId, dragTrackId, dragMotifId, dragShapeId, dragTextId, dragExclusionZoneId, dragGroupId, dragStart, courts, tracks, motifs, shapes, texts, exclusionZones, groups, snapToGrid, gridSize_mm, surface, updateCourtPosition, updateTrackPosition, updateMotifPosition, updateShapePosition, updateTextPosition, updateExclusionZonePosition, updateGroupPosition, commitGroupMove, setInteracting]);
 
   // Handle mouse/touch move for motif scaling
   useEffect(() => {
