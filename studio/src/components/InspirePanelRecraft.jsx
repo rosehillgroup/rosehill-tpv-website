@@ -194,6 +194,23 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     }
   }, [solidSvgUrl, blendSvgUrl, mixerOpen, colorEditorOpen]);
 
+  // Handle Escape key for mixer widget (stop propagation to prevent parent modal from closing)
+  useEffect(() => {
+    if (!mixerOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        e.preventDefault();
+        setMixerOpen(false);
+        setMixerColor(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true); // Use capture phase
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [mixerOpen]);
+
   // Check if user has any existing designs (for welcome box visibility)
   useEffect(() => {
     const checkForExistingDesigns = async () => {
