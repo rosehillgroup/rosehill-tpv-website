@@ -236,7 +236,7 @@ function DesignEditorModal({ isOpen, onClose }) {
             Generate a design with AI or upload your own SVG
           </div>
           <button className="design-editor__close" onClick={onClose} title="Close (Esc)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>

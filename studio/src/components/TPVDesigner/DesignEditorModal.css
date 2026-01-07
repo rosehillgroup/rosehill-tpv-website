@@ -43,68 +43,58 @@
   }
 }
 
-/* Header - Compact three column grid */
+/* Header - Minimal thin bar */
 .design-editor__header {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
-  padding: 0.5rem 1rem;
-  background: white;
-  border-bottom: 1px solid var(--color-border, #e4e9f0);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  justify-content: space-between;
+  padding: 0.375rem 0.75rem;
+  background: var(--color-primary, #1e4a7a);
   flex-shrink: 0;
 }
 
 .design-editor__title {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  justify-self: start;
+  gap: 0.375rem;
 }
 
 .design-editor__title svg {
-  width: 20px;
-  height: 20px;
-  color: var(--color-accent, #ff6b35);
-  flex-shrink: 0;
+  display: none; /* Hide icon for cleaner look */
 }
 
 .design-editor__title h2 {
   margin: 0;
-  font-size: 1rem;
-  font-family: var(--font-heading, 'Overpass', sans-serif);
-  font-weight: 700;
-  color: var(--color-primary, #1e4a7a);
-  line-height: 1.2;
+  font-size: 0.8125rem;
+  font-family: var(--font-body, 'Source Sans Pro', sans-serif);
+  font-weight: 600;
+  color: white;
+  line-height: 1;
+  letter-spacing: 0.02em;
 }
 
 .design-editor__hint {
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary, #64748b);
-  text-align: center;
-  font-weight: 500;
-  white-space: nowrap;
+  display: none; /* Hide hint - not needed when editing */
 }
 
 .design-editor__close {
   display: flex;
   align-items: center;
   justify-content: center;
-  justify-self: end;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   background: transparent;
   border: none;
-  border-radius: 6px;
-  color: var(--color-text-secondary, #64748b);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 
 .design-editor__close:hover {
-  background: var(--color-bg-hover, #f1f5f9);
-  color: var(--color-text-primary, #1a202c);
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
 }
 
 /* Content - Takes all available space */
@@ -272,12 +262,7 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .design-editor__header {
-    grid-template-columns: auto 1fr auto;
-    padding: 0.75rem 1rem;
-  }
-
-  .design-editor__hint {
-    display: none;
+    padding: 0.375rem 0.5rem;
   }
 
   .design-editor__footer {
