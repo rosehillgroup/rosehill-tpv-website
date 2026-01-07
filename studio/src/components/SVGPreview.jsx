@@ -78,6 +78,22 @@ export default function SVGPreview({
     return dismissed !== 'true';
   });
 
+  // Handle Escape key for eyedropper mode (stop immediate propagation to prevent parent modal from closing)
+  useEffect(() => {
+    if (!eyedropperActive || !onEyedropperCancel) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        onEyedropperCancel();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true); // Use capture phase
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [eyedropperActive, onEyedropperCancel]);
+
   const dismissColorTip = () => {
     setShowColorTip(false);
     localStorage.setItem('tpv_color_editing_tip_dismissed', 'true');
