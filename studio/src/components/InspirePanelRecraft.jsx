@@ -194,13 +194,13 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     }
   }, [solidSvgUrl, blendSvgUrl, mixerOpen, colorEditorOpen]);
 
-  // Handle Escape key for mixer widget (stop propagation to prevent parent modal from closing)
+  // Handle Escape key for mixer widget (stop immediate propagation to prevent parent modal from closing)
   useEffect(() => {
     if (!mixerOpen) return;
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        e.stopPropagation();
+        e.stopImmediatePropagation(); // Prevents other handlers on window from firing
         e.preventDefault();
         setMixerOpen(false);
         setMixerColor(null);

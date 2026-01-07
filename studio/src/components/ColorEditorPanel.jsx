@@ -21,11 +21,11 @@ export default function ColorEditorPanel({
     }
   }, [color?.hex]);
 
-  // Handle Escape key to close panel (stop propagation to prevent parent modal from closing)
+  // Handle Escape key to close panel (stop immediate propagation to prevent parent modal from closing)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') {
-        e.stopPropagation();
+        e.stopImmediatePropagation(); // Prevents other handlers on window from firing
         e.preventDefault();
         onClose();
       }
