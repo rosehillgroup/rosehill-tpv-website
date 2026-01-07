@@ -2639,9 +2639,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
                 onRegionClick={handleRegionClick}
                 onEyedropperCancel={handleEyedropperCancel}
                 onMakeTransparent={handleMakeTransparent}
-                onTrueCutout={handleTrueCutout}
-                isCutoutProcessing={isCutoutProcessing}
-                cutoutError={cutoutError}
+                // True cut-out disabled - causes issues and doesn't undo properly
+                // onTrueCutout={handleTrueCutout}
+                // isCutoutProcessing={isCutoutProcessing}
+                // cutoutError={cutoutError}
                 onSelectTPVColor={handleSelectTPVColor}
                 selectedColor={selectedColor}
                 editedColors={blendEditedColors}
@@ -2672,9 +2673,10 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
                 onRegionClick={handleRegionClick}
                 onEyedropperCancel={handleEyedropperCancel}
                 onMakeTransparent={handleMakeTransparent}
-                onTrueCutout={handleTrueCutout}
-                isCutoutProcessing={isCutoutProcessing}
-                cutoutError={cutoutError}
+                // True cut-out disabled - causes issues and doesn't undo properly
+                // onTrueCutout={handleTrueCutout}
+                // isCutoutProcessing={isCutoutProcessing}
+                // cutoutError={cutoutError}
                 onSelectTPVColor={handleSelectTPVColor}
                 selectedColor={selectedColor}
                 editedColors={solidEditedColors}
