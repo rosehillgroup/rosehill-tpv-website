@@ -26,6 +26,7 @@ import {
   drawInstallationChecklist,
   drawSectionBox,
 } from './unifiedPdfGenerator.js';
+import { calculateMaterialsFromDesign } from './materialCalculatorV2.js';
 
 const { pageWidth: PAGE_WIDTH, pageHeight: PAGE_HEIGHT, margin: MARGIN, contentWidth: CONTENT_WIDTH } = PDF_CONFIG;
 
@@ -142,28 +143,40 @@ export async function generateSportsSurfacePDF(data) {
     imageWidth = maxImageHeight * imageAspect;
   }
 
-  // Extract all known colors from the design (including shapes and texts)
-  const knownColors = extractKnownColors(surface, courts, tracks, shapes, texts, motifs);
-  console.log('[SPORTS-PDF] Known colors in design:', knownColors.length);
+  // Calculate all materials using the recipe-based approach (fast, no pixel counting)
+  // This uses geometric areas and pre-calculated recipe data from motifs
+  console.log('[SPORTS-PDF] Calculating materials from recipes and geometry...');
 
-  // Calculate VISIBLE area percentages from the rendered image
-  // This accounts for overlapping elements - only visible pixels are counted
-  const visibleAreaPcts = await calculateVisibleAreaPercentages(pngBuffer, knownColors);
+  const { elementMaterials, aggregatedMaterials } = calculateMaterialsFromDesign({
+    surface,
+    courts,
+    tracks,
+    shapes,
+    texts,
+    motifs,
+    exclusionZones,
+    totalAreaM2
+  });
 
-  // Calculate all materials upfront (for element breakdown display)
-  // First calculate motif total area so we can subtract from base surface
-  const motifTotalArea = motifs.reduce((sum, m) => sum + (m.areaM2 || 0), 0);
-  console.log('[SPORTS-PDF] Total motif area:', motifTotalArea.toFixed(2), 'm²');
+  // Separate materials for element breakdown display
+  const courtTrackMaterials = elementMaterials.filter(m =>
+    ['court-surface', 'track-surface', 'line-marking', 'base-surface'].includes(m.elementType)
+  );
+  const motifMaterials = elementMaterials.filter(m => m.elementType === 'motif-surface');
+  const shapeMaterials = elementMaterials.filter(m =>
+    ['shape-fill', 'shape-stroke', 'text-fill'].includes(m.elementType)
+  );
 
-  const courtTrackMaterials = calculateMaterials(surface, courts, tracks, totalAreaM2, motifTotalArea);
-  const motifMaterials = calculateMotifMaterials(motifs);
-  const allMaterials = [...courtTrackMaterials, ...motifMaterials];
+  // All materials for totals
+  const allMaterials = elementMaterials;
 
-  // Calculate accurate materials based on visible area (for totals)
-  const visibleMaterials = calculateMaterialsFromVisibleArea(visibleAreaPcts, knownColors, totalAreaM2);
+  // Use aggregated materials for the summary (replaces pixel counting)
+  const visibleMaterials = aggregatedMaterials;
 
   console.log('[SPORTS-PDF] Court/Track materials:', courtTrackMaterials.length);
   console.log('[SPORTS-PDF] Motif materials:', motifMaterials.length);
+  console.log('[SPORTS-PDF] Shape/Text materials:', shapeMaterials.length);
+  console.log('[SPORTS-PDF] Aggregated materials for summary:', aggregatedMaterials.length);
 
   const totalPages = 3;
 
@@ -405,6 +418,44 @@ export async function generateSportsSurfacePDF(data) {
       }
 
       y -= 5;
+    }
+  }
+
+  // ---- Shapes & Texts Section ----
+  if (shapeMaterials.length > 0 && y > 150) {
+    y -= 20;
+
+    // Section header
+    page2.drawText('Shapes & Text', {
+      x: MARGIN,
+      y,
+      size: 11,
+      font: fontBold,
+      color: COLORS.primary,
+    });
+
+    y -= 5;
+    page2.drawLine({
+      start: { x: MARGIN, y },
+      end: { x: PAGE_WIDTH - MARGIN, y },
+      thickness: 0.5,
+      color: COLORS.primary,
+    });
+    y -= 15;
+
+    for (const mat of shapeMaterials) {
+      if (y < 120) {
+        page2.drawText('(continued on next page...)', {
+          x: MARGIN,
+          y: y - 10,
+          size: 8,
+          font: fontRegular,
+          color: COLORS.textLight,
+        });
+        break;
+      }
+
+      y = drawElementRow(page2, fontBold, fontRegular, mat, y);
     }
   }
 

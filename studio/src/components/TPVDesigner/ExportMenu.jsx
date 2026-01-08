@@ -403,6 +403,21 @@ export default function ExportMenu({ svgRef }) {
 
   return (
     <div className="export-menu" ref={menuRef}>
+      {/* Loading overlay for PDF generation */}
+      {(exporting === 'pdf' || exporting === 'canvas-pdf') && (
+        <div className="export-loading-overlay">
+          <div className="export-loading-modal">
+            <div className="export-loading-spinner"></div>
+            <div className="export-loading-title">
+              {exporting === 'pdf' ? 'Generating Materials Report...' : 'Generating Canvas PDF...'}
+            </div>
+            <div className="export-loading-subtitle">
+              This may take a moment for complex designs
+            </div>
+          </div>
+        </div>
+      )}
+
       <button
         className="sports-toolbar__btn-export"
         onClick={() => setIsOpen(!isOpen)}
