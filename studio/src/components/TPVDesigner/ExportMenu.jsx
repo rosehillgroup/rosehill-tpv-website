@@ -3,7 +3,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
-import { generateSportsSVG, downloadSVG, downloadPNG, generateFilename, inlineMotifSvgs } from '../../lib/sports/sportsExport.js';
+import { generateSportsSVG, downloadSVG, downloadPNG, generateFilename, inlineMotifSvgs, waitForDomUpdate } from '../../lib/sports/sportsExport.js';
 import { sliceSvgIntoTiles, downloadBlob } from '../../lib/svgTileSlicer.js';
 import { generateDXF, downloadDXF, cleanSvgForDxf } from '../../lib/dxf/dxfExport.js';
 import { auth } from '../../lib/api/auth.js';
@@ -166,6 +166,9 @@ export default function ExportMenu({ svgRef }) {
 
       const state = exportDesignData();
       const name = state.name || 'TPV Design';
+
+      // Wait for DOM to be fully updated (ensures React has flushed motif data URLs)
+      await waitForDomUpdate();
 
       // Serialize SVG (cleaned for export)
       const svgClone = svgElement.cloneNode(true);

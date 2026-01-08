@@ -2,6 +2,19 @@
 // Client-side SVG and PNG export functionality
 
 /**
+ * Wait for next animation frame to ensure DOM is updated
+ * Uses double requestAnimationFrame to ensure React has flushed all updates
+ * and the browser has completed painting before we clone the SVG
+ */
+export function waitForDomUpdate() {
+  return new Promise(resolve => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(resolve);
+    });
+  });
+}
+
+/**
  * Get SVG content from the sports surface canvas
  * @param {SVGElement} svgElement - The SVG element from CourtCanvas
  * @param {Object} state - Design state from store
