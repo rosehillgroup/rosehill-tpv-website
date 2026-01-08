@@ -1,37 +1,14 @@
 /**
  * SVG Sanitization Utility for Server-Side (API endpoints)
- * Uses DOMPurify with strict allowlist for robust XSS prevention
+ * Uses regex-based approach for XSS prevention (DOMPurify fails in Vercel serverless)
+ *
+ * NOTE: isomorphic-dompurify doesn't work in Vercel serverless due to jsdom/parse5 ESM issues
+ * Error: "require() of ES Module not supported"
  */
 
-import DOMPurify from 'isomorphic-dompurify';
-
-// Strict SVG allowlist - presentation elements only
-const SVG_ALLOWED_TAGS = [
-  'svg', 'g', 'path', 'rect', 'circle', 'ellipse', 'line',
-  'polyline', 'polygon', 'text', 'tspan', 'defs', 'clipPath',
-  'linearGradient', 'radialGradient', 'stop', 'pattern', 'use',
-  'symbol', 'title', 'desc', 'mask', 'image'
-  // NOTE: 'filter' omitted - not needed and increases attack surface
-];
-
-// Explicit attributes - NO 'style' (use fill/stroke/etc directly)
-const SVG_ALLOWED_ATTRS = [
-  'id', 'class', 'fill', 'stroke', 'stroke-width', 'stroke-linecap',
-  'stroke-linejoin', 'stroke-dasharray', 'stroke-opacity', 'fill-opacity',
-  'opacity', 'transform', 'd', 'x', 'y', 'width', 'height', 'viewBox',
-  'cx', 'cy', 'r', 'rx', 'ry', 'points', 'x1', 'y1', 'x2', 'y2',
-  'font-family', 'font-size', 'font-weight', 'font-style', 'text-anchor',
-  'dominant-baseline', 'clip-path', 'offset', 'stop-color', 'stop-opacity',
-  'gradientUnits', 'gradientTransform', 'patternUnits', 'patternTransform',
-  'preserveAspectRatio', 'xmlns', 'xmlns:xlink', 'fill-rule', 'clip-rule',
-  'vector-effect', 'letter-spacing', 'text-decoration', 'alignment-baseline',
-  'baseline-shift', 'mask', 'overflow', 'visibility'
-  // NOTE: 'style' omitted - use explicit attributes instead
-  // NOTE: 'href'/'xlink:href' handled separately via hook
-];
-
 /**
- * Sanitize SVG content using DOMPurify with strict allowlist
+ * Sanitize SVG content using regex-based approach
+ * Effective XSS prevention without external dependencies
  * @param {string} svgString - Raw SVG content
  * @returns {string} Sanitized SVG content
  */
@@ -41,78 +18,60 @@ export function sanitizeSVG(svgString) {
     return '';
   }
 
-  try {
-    // Configure DOMPurify for strict SVG sanitization
-    const config = {
-      USE_PROFILES: { svg: true, svgFilters: false }, // Filters disabled
-      ALLOWED_TAGS: SVG_ALLOWED_TAGS,
-      ALLOWED_ATTR: SVG_ALLOWED_ATTRS,
-      FORBID_TAGS: ['script', 'foreignObject', 'iframe', 'object', 'embed', 'filter', 'link'],
-      FORBID_ATTR: ['onload', 'onerror', 'onclick', 'onmouseover', 'onfocus', 'style'],
-      SANITIZE_DOM: true,
-      KEEP_CONTENT: false, // Don't keep content of removed elements
-      ALLOW_DATA_ATTR: false, // No data-* attributes
-    };
+  let sanitized = svgString;
 
-    // Add hook to only allow internal href references (#id)
-    DOMPurify.addHook('uponSanitizeAttribute', (node, data) => {
-      if (data.attrName === 'href' || data.attrName === 'xlink:href') {
-        const value = data.attrValue;
-        // Block data: URLs explicitly
-        if (value && value.startsWith('data:')) {
-          data.attrValue = '';
-          data.keepAttr = false;
-          return;
-        }
-        // Only allow internal references (start with #) or valid image URLs
-        if (value && !value.startsWith('#') && !isValidImageUrl(value)) {
-          data.attrValue = '';
-          data.keepAttr = false;
-        }
-      }
+  try {
+    // Remove script tags (including content)
+    sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+
+    // Remove dangerous tags
+    const dangerousTags = ['script', 'foreignObject', 'iframe', 'object', 'embed', 'link'];
+    dangerousTags.forEach(tag => {
+      // Remove opening and closing tags with content
+      const regex = new RegExp(`<${tag}\\b[^>]*>.*?<\\/${tag}>`, 'gis');
+      sanitized = sanitized.replace(regex, '');
+      // Also remove self-closing versions
+      const selfClosing = new RegExp(`<${tag}\\b[^>]*\\/?>`, 'gi');
+      sanitized = sanitized.replace(selfClosing, '');
     });
 
-    const result = DOMPurify.sanitize(svgString, config);
+    // Remove event handlers
+    const eventHandlers = [
+      'onload', 'onerror', 'onclick', 'onmouseover', 'onmouseout',
+      'onmouseenter', 'onmouseleave', 'onmousemove', 'onmousedown',
+      'onmouseup', 'onfocus', 'onblur', 'onkeydown', 'onkeyup', 'onkeypress',
+      'onchange', 'oninput', 'onsubmit', 'onreset', 'onscroll', 'onwheel',
+      'ondrag', 'ondrop', 'onanimationstart', 'onanimationend'
+    ];
+    eventHandlers.forEach(handler => {
+      const regex = new RegExp(`\\s+${handler}\\s*=\\s*["'][^"']*["']`, 'gi');
+      sanitized = sanitized.replace(regex, '');
+    });
 
-    // Remove the hook after use to prevent leaking
-    DOMPurify.removeHook('uponSanitizeAttribute');
+    // Remove javascript: protocols
+    sanitized = sanitized.replace(/javascript:/gi, '');
 
-    // Verify result still contains SVG
-    if (!result || !result.includes('<svg')) {
+    // Remove data:text/html (but allow data:image for embedded images)
+    sanitized = sanitized.replace(/data:text\/html/gi, '');
+
+    // Remove vbscript: protocols
+    sanitized = sanitized.replace(/vbscript:/gi, '');
+
+    // Remove expression() in style (IE-specific XSS)
+    sanitized = sanitized.replace(/expression\s*\(/gi, '');
+
+    // Remove url() with javascript in style
+    sanitized = sanitized.replace(/url\s*\(\s*["']?\s*javascript:/gi, 'url(');
+
+    if (!sanitized || !sanitized.includes('<svg')) {
       console.error('[SVG-SANITIZE] Sanitization removed SVG content');
       return '';
     }
 
-    return result;
+    return sanitized;
   } catch (error) {
     console.error('[SVG-SANITIZE] Sanitization failed:', error);
-    // Remove hook on error too
-    try {
-      DOMPurify.removeHook('uponSanitizeAttribute');
-    } catch (e) {
-      // Ignore hook removal errors
-    }
     return '';
-  }
-}
-
-/**
- * Check if a URL is a valid image URL (for image elements)
- * @param {string} url - URL to validate
- * @returns {boolean} True if valid image URL
- */
-function isValidImageUrl(url) {
-  if (!url) return false;
-  try {
-    const parsed = new URL(url, 'https://example.com');
-    // Only allow https and common image extensions
-    if (parsed.protocol !== 'https:') return false;
-    const path = parsed.pathname.toLowerCase();
-    return path.endsWith('.png') || path.endsWith('.jpg') ||
-           path.endsWith('.jpeg') || path.endsWith('.svg') ||
-           path.endsWith('.gif') || path.endsWith('.webp');
-  } catch {
-    return false;
   }
 }
 

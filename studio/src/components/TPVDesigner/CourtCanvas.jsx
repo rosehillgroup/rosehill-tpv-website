@@ -3065,6 +3065,7 @@ function ZoneElement({ zone }) {
           width={zone.width}
           height={zone.height}
           fill={zone.fill}
+          pointerEvents="none"
         />
       );
 
@@ -3075,6 +3076,7 @@ function ZoneElement({ zone }) {
           cy={zone.cy}
           r={zone.r}
           fill={zone.fill}
+          pointerEvents="none"
         />
       );
 
@@ -3083,6 +3085,7 @@ function ZoneElement({ zone }) {
         <polygon
           points={zone.points}
           fill={zone.fill}
+          pointerEvents="none"
         />
       );
 

@@ -370,6 +370,38 @@ function renderCourt(ctx, court, colorMap, scale, state) {
     ctx.fillRect(x, y, w, h);
   }
 
+  // Draw zones (key areas, etc.)
+  const offsetX = -dims.width_mm / 2;
+  const offsetY = -dims.length_mm / 2;
+
+  for (const zone of template.zones || []) {
+    // Get zone color - check for overrides or use default
+    const zoneColor = court.zoneColorOverrides?.[zone.id]?.tpv_code || zone.defaultColor;
+    if (!zoneColor) continue;
+
+    const fillColor = colorMap[zoneColor] || colorMap['UNKNOWN'];
+    ctx.fillStyle = fillColor;
+
+    if (zone.type === 'rectangle' && zone.params) {
+      ctx.fillRect(
+        (zone.params.x + offsetX) * scale,
+        (zone.params.y + offsetY) * scale,
+        zone.params.width * scale,
+        zone.params.height * scale
+      );
+    } else if (zone.type === 'circle' && zone.params) {
+      ctx.beginPath();
+      ctx.arc(
+        (zone.params.cx + offsetX) * scale,
+        (zone.params.cy + offsetY) * scale,
+        zone.params.r * scale,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+    }
+  }
+
   // Draw court line markings
   for (const marking of template.markings || []) {
     const lineColor = court.lineColorOverrides?.[marking.id];
