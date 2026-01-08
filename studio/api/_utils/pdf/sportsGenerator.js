@@ -27,6 +27,7 @@ import {
   drawSectionBox,
 } from './unifiedPdfGenerator.js';
 import { calculateMaterialsFromDesign } from './materialCalculatorV2.js';
+import { convertTextToPaths } from './textToPath.js';
 
 const { pageWidth: PAGE_WIDTH, pageHeight: PAGE_HEIGHT, margin: MARGIN, contentWidth: CONTENT_WIDTH } = PDF_CONFIG;
 
@@ -658,9 +659,19 @@ export async function generateSportsSurfacePDF(data) {
 
 /**
  * Render SVG to PNG using resvg
+ * Converts text elements to paths first to ensure font rendering works
  */
 async function renderSvgToPng(svgString, dimensions, Resvg) {
   const { widthMM = 5000, lengthMM = 5000 } = dimensions;
+
+  // Convert text elements to paths for reliable rendering
+  // (Resvg may not have access to custom fonts)
+  let processedSvg = svgString;
+  try {
+    processedSvg = await convertTextToPaths(svgString);
+  } catch (error) {
+    console.warn('[SPORTS-PDF] Text-to-path conversion failed, using original:', error.message);
+  }
 
   // Calculate DPI based on surface size
   const maxDimension = Math.max(widthMM, lengthMM);
@@ -689,7 +700,7 @@ async function renderSvgToPng(svgString, dimensions, Resvg) {
     }
   };
 
-  const resvg = new Resvg(svgString, resvgOptions);
+  const resvg = new Resvg(processedSvg, resvgOptions);
   const pngData = resvg.render();
   return pngData.asPng();
 }
