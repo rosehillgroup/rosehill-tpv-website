@@ -349,12 +349,62 @@ export default function GenerationsTab() {
           white-space: nowrap;
         }
 
+        .admin-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 1.5rem;
+          margin-bottom: 2rem;
+        }
+
+        .admin-stat-card {
+          background: white;
+          border-radius: 12px;
+          padding: 1.5rem;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .admin-stat-card h3 {
+          font-size: 0.875rem;
+          color: #64748b;
+          margin-bottom: 0.5rem;
+          font-weight: 500;
+        }
+
+        .admin-stat-card .value {
+          font-size: 2rem;
+          font-weight: 700;
+          color: #1e293b;
+        }
+
         .admin-stat-card.success {
           border-left: 4px solid #10b981;
         }
 
         .admin-stat-card.warning {
           border-left: 4px solid #f59e0b;
+        }
+
+        .admin-filters {
+          display: flex;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+          flex-wrap: wrap;
+          align-items: center;
+        }
+
+        .admin-pagination {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 0.5rem;
+          margin-top: 1.5rem;
+          padding: 1rem 0;
+        }
+
+        .admin-empty {
+          text-align: center;
+          padding: 3rem;
+          color: #64748b;
         }
       `}</style>
     </div>
