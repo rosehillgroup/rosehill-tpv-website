@@ -123,25 +123,22 @@ function TextElement({
         style={{ cursor: 'move' }}
       />
 
-      {/* Selection indicator (at base size, scaled by transform) */}
-      {isSelected && (
-        <rect
-          x={alignOffset - BOX_PADDING}
-          y={-baseFontSize - BOX_PADDING}
-          width={textBounds.width + BOX_PADDING * 2}
-          height={baseFontSize * 1.2 + BOX_PADDING * 2}
-          fill="none"
-          stroke="#3b82f6"
-          strokeWidth={selectionStyle.strokeWidth}
-          strokeDasharray={selectionStyle.dashArray}
-          opacity="0.7"
-          pointerEvents="none"
-        />
-      )}
-
-      {/* Resize/rotate handles when selected - wrapped in inverse scale to maintain uniform size */}
+      {/* Selection indicator and handles - wrapped in inverse scale to maintain uniform size */}
       {isSelected && (
         <g transform={`scale(${1/scale_x}, ${1/scale_y})`}>
+          {/* Selection indicator */}
+          <rect
+            x={(alignOffset - BOX_PADDING) * scale_x}
+            y={(-baseFontSize - BOX_PADDING) * scale_y}
+            width={(textBounds.width + BOX_PADDING * 2) * scale_x}
+            height={(baseFontSize * 1.2 + BOX_PADDING * 2) * scale_y}
+            fill="none"
+            stroke="#3b82f6"
+            strokeWidth={selectionStyle.strokeWidth}
+            strokeDasharray={selectionStyle.dashArray}
+            opacity="0.7"
+            pointerEvents="none"
+          />
           <TextHandles
             bounds={textBounds}
             fontSize={baseFontSize}
