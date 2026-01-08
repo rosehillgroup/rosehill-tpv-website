@@ -149,16 +149,46 @@ export function calculateMaterialsFromDesign({
 
     usedArea += textAreaM2;
 
+    const textLabel = `Text: "${text.content.substring(0, 20)}${text.content.length > 20 ? '...' : ''}"`;
+
+    // Add fill color material
     if (text.fillColor) {
       const kg = textAreaM2 * densityKgPerM2 * safetyMargin;
       elementMaterials.push({
-        element: `Text: "${text.content.substring(0, 20)}${text.content.length > 20 ? '...' : ''}"`,
+        element: textLabel,
         elementType: 'text-fill',
         colour: text.fillColor,
         area: textAreaM2,
         kg,
         dimensions: ''
       });
+    }
+
+    // Add stroke/outline color material
+    if (text.strokeColor && text.strokeWidth_mm > 0) {
+      // Estimate stroke area: character perimeter × stroke width
+      // Perimeter ≈ character count × fontSize × 2.5 (rough approximation for character outlines)
+      const charCount = text.content.length;
+      const fontSize = text.fontSize_mm || 500;
+      const scale_x = text.scale_x || 1;
+      const scale_y = text.scale_y || 1;
+      const strokeWidth = text.strokeWidth_mm;
+
+      // Approximate perimeter of all characters
+      const perimeterMm = charCount * fontSize * 2.5 * Math.max(scale_x, scale_y);
+      const strokeAreaM2 = (perimeterMm * strokeWidth) / 1_000_000;
+
+      if (strokeAreaM2 > 0) {
+        const kg = strokeAreaM2 * densityKgPerM2 * safetyMargin;
+        elementMaterials.push({
+          element: `${textLabel} Outline`,
+          elementType: 'text-stroke',
+          colour: text.strokeColor,
+          area: strokeAreaM2,
+          kg,
+          dimensions: ''
+        });
+      }
     }
   }
 

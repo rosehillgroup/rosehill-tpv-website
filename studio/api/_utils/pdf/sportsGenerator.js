@@ -165,7 +165,7 @@ export async function generateSportsSurfacePDF(data) {
   );
   const motifMaterials = elementMaterials.filter(m => m.elementType === 'motif-surface');
   const shapeMaterials = elementMaterials.filter(m =>
-    ['shape-fill', 'shape-stroke', 'text-fill'].includes(m.elementType)
+    ['shape-fill', 'shape-stroke', 'text-fill', 'text-stroke'].includes(m.elementType)
   );
 
   // All materials for totals
