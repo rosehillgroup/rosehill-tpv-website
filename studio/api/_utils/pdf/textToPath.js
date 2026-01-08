@@ -160,10 +160,9 @@ export async function convertTextToPaths(svgString) {
 
   console.log('[TEXT-TO-PATH] Converting text elements to paths...');
 
-  // Parse SVG using JSDOM for Node.js
-  const { JSDOM } = await import('jsdom');
-  const dom = new JSDOM(svgString, { contentType: 'image/svg+xml' });
-  const doc = dom.window.document;
+  // Parse SVG using linkedom (serverless-compatible, unlike jsdom)
+  const { parseHTML } = await import('linkedom');
+  const { document: doc } = parseHTML(`<!DOCTYPE html><html><body>${svgString}</body></html>`);
 
   // Find all text elements
   const textElements = doc.querySelectorAll('text');
@@ -205,16 +204,15 @@ export async function convertTextToPaths(svgString) {
 
   console.log(`[TEXT-TO-PATH] Converted ${convertedCount}/${elementsToConvert.length} text elements`);
 
-  // Get the SVG element and serialize just it (not the full HTML document)
+  // Get the SVG element and serialize it
   const svgElement = doc.querySelector('svg');
   if (!svgElement) {
     console.error('[TEXT-TO-PATH] No SVG element found after conversion');
     return svgString;
   }
 
-  // Use XMLSerializer to get just the SVG
-  const serializer = new dom.window.XMLSerializer();
-  const result = serializer.serializeToString(svgElement);
+  // linkedom elements have outerHTML property
+  const result = svgElement.outerHTML;
 
   console.log('[TEXT-TO-PATH] Conversion complete, output length:', result.length);
   return result;
