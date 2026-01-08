@@ -247,7 +247,7 @@
 .sports-toolbar {
   position: fixed;
   top: 65px; /* Aligned with sidebar tops */
-  left: 50%; /* Center horizontally in canvas area */
+  left: calc(50% + 140px); /* Center on canvas area (offset by half sidebar width 280px/2) */
   transform: translateX(-50%);
   z-index: 40; /* Below floating elements box */
 
@@ -1236,6 +1236,9 @@
   .sports-designer__properties:not(.sports-designer__properties--collapsed) {
     width: 300px;
   }
+  .sports-toolbar {
+    left: calc(50% + 130px); /* sidebar 260px/2 */
+  }
 }
 
 /* Further reduce on medium screens */
@@ -1245,6 +1248,9 @@
   }
   .sports-designer__properties:not(.sports-designer__properties--collapsed) {
     width: 280px;
+  }
+  .sports-toolbar {
+    left: calc(50% + 120px); /* sidebar 240px/2 */
   }
 }
 
@@ -1256,6 +1262,9 @@
   .sports-designer__properties:not(.sports-designer__properties--collapsed) {
     width: 260px;
   }
+  .sports-toolbar {
+    left: calc(50% + 110px); /* sidebar 220px/2 */
+  }
 }
 
 /* At 900px, sidebars are narrow, toggles become important */
@@ -1265,6 +1274,9 @@
   }
   .sports-designer__properties:not(.sports-designer__properties--collapsed) {
     width: 240px;
+  }
+  .sports-toolbar {
+    left: calc(50% + 100px); /* sidebar 200px/2 */
   }
   /* Make toggle buttons more prominent */
   .sidebar-toggle {
