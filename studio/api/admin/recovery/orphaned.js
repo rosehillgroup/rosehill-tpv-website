@@ -53,7 +53,8 @@ export default async function handler(req, res) {
       jobsQuery = jobsQuery.gte('created_at', thirtyDaysAgo);
     }
 
-    const { data: jobs, error: jobsError } = await jobsQuery;
+    const { data: jobs, error: jobsError } = await jobsQuery
+      .order('created_at', { ascending: false });
 
     if (jobsError) {
       console.error('[ADMIN-RECOVERY] Error fetching jobs:', jobsError);

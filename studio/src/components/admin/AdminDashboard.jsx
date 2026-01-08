@@ -796,31 +796,6 @@ function ColoursPanel({ analytics }) {
         ))}
       </div>
 
-      {analytics.top_blends.length > 0 && (
-        <>
-          <h3>Top Blend Combinations</h3>
-          <div className="blend-list">
-            {analytics.top_blends.map((blend, i) => (
-              <div key={i} className="blend-item">
-                <div className="blend-swatches">
-                  {blend.components.map((comp, j) => (
-                    <div
-                      key={j}
-                      className="blend-swatch"
-                      style={{ backgroundColor: comp.hex }}
-                      title={`${comp.code} - ${comp.name}`}
-                    ></div>
-                  ))}
-                </div>
-                <div className="blend-codes">
-                  {blend.components.map(c => c.code).join(' + ')}
-                </div>
-                <div className="blend-count">{blend.count} uses</div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
 
       <style jsx>{`
         .colours-panel h2 {

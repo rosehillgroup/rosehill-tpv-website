@@ -33,15 +33,13 @@ export default async function handler(req, res) {
     // Use service client for admin operations
     const supabase = getSupabaseServiceClient();
 
-    // Get all designs with solid recipes
+    // Get all designs with recipes (solid or blend)
     const { data: designs } = await supabase
       .from('saved_designs')
-      .select('solid_recipes, blend_recipes, created_at')
-      .not('solid_recipes', 'is', null);
+      .select('solid_recipes, blend_recipes, created_at');
 
     // Count TPV colour usage from solid recipes
     const colourUsage = {};
-    const blendUsage = {};
 
     // Initialize all colours with 0
     TPV_COLOURS.forEach(c => {
@@ -70,29 +68,11 @@ export default async function handler(req, res) {
         });
       }
 
-      // Process blend recipes for component usage
+      // Also count individual colours from blend recipes
       const blendRecipes = design.blend_recipes;
       if (Array.isArray(blendRecipes)) {
         blendRecipes.forEach(recipe => {
           const components = recipe?.chosenRecipe?.components || [];
-
-          // Track blend combinations
-          if (components.length > 1) {
-            const blendKey = components.map(c => c.code).sort().join('+');
-            if (!blendUsage[blendKey]) {
-              blendUsage[blendKey] = {
-                components: components.map(c => ({
-                  code: c.code,
-                  name: c.name,
-                  hex: getHexForCode(c.code)
-                })),
-                count: 0
-              };
-            }
-            blendUsage[blendKey].count += 1;
-          }
-
-          // Also count individual colours in blends
           components.forEach(comp => {
             const code = comp.code;
             if (colourUsage[code]) {
@@ -106,11 +86,6 @@ export default async function handler(req, res) {
     // Convert to array and sort by usage
     const colourStats = Object.values(colourUsage)
       .sort((a, b) => b.count - a.count);
-
-    // Get top blends
-    const topBlends = Object.values(blendUsage)
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
 
     // Calculate totals
     const totalColourUsages = colourStats.reduce((sum, c) => sum + c.count, 0);
@@ -143,7 +118,6 @@ export default async function handler(req, res) {
         },
         colours: colourStats,
         top_colours: colourStats.slice(0, 10),
-        top_blends: topBlends,
         families: familyStats
       }
     });
