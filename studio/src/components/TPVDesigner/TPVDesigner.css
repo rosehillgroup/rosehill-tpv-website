@@ -3,7 +3,7 @@
 .sports-designer {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: calc(100vh - 65px);
   background: var(--color-bg-page, #f5f7fa);
   font-family: var(--font-body, 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
 }
