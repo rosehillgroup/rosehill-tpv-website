@@ -297,15 +297,25 @@ function calculateShapeArea(shape) {
   }
 
   // Path shapes: calculate from controlPoints if closed, or stroke area if open
-  if (shapeType === 'path') {
-    if (shape.controlPoints?.length >= 3 && shape.closed !== false) {
+  // NOTE: Path controlPoints are NORMALIZED (0-1), need to scale by width_mm/height_mm
+  if (shapeType === 'path' && shape.controlPoints?.length >= 2) {
+    const width_mm = shape.width_mm || 1000;
+    const height_mm = shape.height_mm || 1000;
+
+    // Convert normalized points to mm
+    const pointsInMm = shape.controlPoints.map(p => ({
+      x: p.x * width_mm,
+      y: p.y * height_mm
+    }));
+
+    if (pointsInMm.length >= 3 && shape.closed !== false) {
       // Closed path - calculate polygon area from control points
-      return polygonArea(shape.controlPoints);
-    } else if (shape.controlPoints?.length >= 2) {
+      return polygonArea(pointsInMm);
+    } else {
       // Open path - use stroke width × length
-      const length = calculatePathLength(shape.controlPoints);
-      const width = shape.strokeWidth_mm || 50;
-      return length * width;
+      const length = calculatePathLength(pointsInMm);
+      const strokeWidth = shape.strokeWidth_mm || 50;
+      return length * strokeWidth;
     }
   }
 
