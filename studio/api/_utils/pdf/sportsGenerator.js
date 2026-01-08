@@ -683,7 +683,9 @@ async function renderSvgToPng(svgString, dimensions, Resvg) {
       value: finalWidth
     },
     font: {
-      loadSystemFonts: false
+      loadSystemFonts: true,
+      // Use common fallback fonts available on most systems
+      defaultFontFamily: 'Arial, Helvetica, sans-serif'
     }
   };
 
