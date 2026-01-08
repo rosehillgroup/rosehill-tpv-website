@@ -139,18 +139,20 @@ function TextElement({
         />
       )}
 
-      {/* Resize/rotate handles when selected */}
+      {/* Resize/rotate handles when selected - wrapped in inverse scale to maintain uniform size */}
       {isSelected && (
-        <TextHandles
-          bounds={textBounds}
-          fontSize={baseFontSize}
-          alignOffset={alignOffset}
-          scale_x={scale_x}
-          scale_y={scale_y}
-          zoom={zoom}
-          onScaleStart={onScaleStart}
-          onRotateStart={onRotateStart}
-        />
+        <g transform={`scale(${1/scale_x}, ${1/scale_y})`}>
+          <TextHandles
+            bounds={textBounds}
+            fontSize={baseFontSize}
+            alignOffset={alignOffset}
+            scale_x={scale_x}
+            scale_y={scale_y}
+            zoom={zoom}
+            onScaleStart={onScaleStart}
+            onRotateStart={onRotateStart}
+          />
+        </g>
       )}
     </g>
   );
@@ -161,16 +163,16 @@ function TextElement({
  * Corner handles for scaling, top-center handle for rotation
  */
 function TextHandles({ bounds, fontSize, alignOffset, scale_x, scale_y, zoom, onScaleStart, onRotateStart }) {
-  // Get handle size that stays fixed on screen regardless of zoom/scale
-  const elementScale = Math.max(scale_x, scale_y);
-  const { size, strokeWidth, cornerRadius } = getHandleSize(zoom, elementScale);
+  // Get handle size that stays fixed on screen regardless of zoom
+  const { size, strokeWidth, cornerRadius } = getHandleSize(zoom);
   const rotation = getRotationHandle(size);
 
   // Bounding box dimensions for text (at base size) - matches selection indicator
-  const boxX = alignOffset - BOX_PADDING;
-  const boxY = -fontSize - BOX_PADDING;
-  const boxWidth = bounds.width + BOX_PADDING * 2;
-  const boxHeight = fontSize * 1.2 + BOX_PADDING * 2;
+  // Multiply by scale factors since we're inside an inverse-scale group
+  const boxX = (alignOffset - BOX_PADDING) * scale_x;
+  const boxY = (-fontSize - BOX_PADDING) * scale_y;
+  const boxWidth = (bounds.width + BOX_PADDING * 2) * scale_x;
+  const boxHeight = (fontSize * 1.2 + BOX_PADDING * 2) * scale_y;
 
   // Corner handles for scaling - positioned at box corners
   const scaleHandles = [
