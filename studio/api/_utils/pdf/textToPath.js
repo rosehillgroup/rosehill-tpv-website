@@ -10,12 +10,12 @@ import opentype from 'opentype.js';
 // Cache for loaded fonts
 const fontCache = new Map();
 
-// Google Fonts API URLs for common fonts
+// Google Fonts API URLs for common fonts (TTF format for opentype.js compatibility)
 const GOOGLE_FONT_URLS = {
-  'Open Sans': 'https://fonts.gstatic.com/s/opensans/v40/memvYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTS-mu0SC55I.woff2',
-  'Open Sans Bold': 'https://fonts.gstatic.com/s/opensans/v40/memSYaGs126MiZpBA-UvWbX2vVnXBbObj2OVZyOOSr4dVJWUgsg-1x4gaVQUwaEQbjB_mQ.woff2',
-  'Black Ops One': 'https://fonts.gstatic.com/s/blackopsone/v20/qWcsB6-ypo7xBdr6Xshe96H3aDvbtw.woff2',
-  'Roboto': 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff2',
+  'Open Sans': 'https://fonts.gstatic.com/s/opensans/v40/memSYaGs126MiZpBA-UvWbX2vVnXBbObj2OVTS-muw.ttf',
+  'Open Sans Bold': 'https://fonts.gstatic.com/s/opensans/v40/memSYaGs126MiZpBA-UvWbX2vVnXBbObj2OVZyOOSr4dVJWUgsjr.ttf',
+  'Black Ops One': 'https://fonts.gstatic.com/s/blackopsone/v20/qWcsB6-ypo7xBdr6Xshe96H3WDc.ttf',
+  'Roboto': 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5g.ttf',
   'Arial': null, // System font fallback
 };
 
@@ -154,13 +154,13 @@ function textElementToPathElement(textElement, font, doc) {
  */
 export async function convertTextToPaths(svgString) {
   if (!svgString || !svgString.includes('<text')) {
+    console.log('[TEXT-TO-PATH] No text elements found, skipping conversion');
     return svgString; // No text elements, return as-is
   }
 
   console.log('[TEXT-TO-PATH] Converting text elements to paths...');
 
-  // Parse SVG using JSDOM-style parsing for Node.js
-  // Note: In Node.js we need to use a different parser
+  // Parse SVG using JSDOM for Node.js
   const { JSDOM } = await import('jsdom');
   const dom = new JSDOM(svgString, { contentType: 'image/svg+xml' });
   const doc = dom.window.document;
@@ -175,11 +175,15 @@ export async function convertTextToPaths(svgString) {
 
   // Convert each text element to paths
   const elementsToConvert = Array.from(textElements);
+  let convertedCount = 0;
 
   for (const textEl of elementsToConvert) {
     try {
       const fontFamily = textEl.getAttribute('fontFamily') || textEl.getAttribute('font-family') || 'Open Sans';
       const fontWeight = textEl.getAttribute('fontWeight') || textEl.getAttribute('font-weight') || 'normal';
+      const textContent = textEl.textContent || '';
+
+      console.log(`[TEXT-TO-PATH] Processing: "${textContent.substring(0, 30)}" (font: ${fontFamily}, weight: ${fontWeight})`);
 
       // Load the font
       const font = await loadFont(fontFamily, fontWeight);
@@ -190,18 +194,29 @@ export async function convertTextToPaths(svgString) {
       if (pathGroup) {
         // Replace text with path group
         textEl.parentNode.replaceChild(pathGroup, textEl);
-        console.log(`[TEXT-TO-PATH] Converted: "${textEl.textContent?.substring(0, 20)}..."`);
+        convertedCount++;
+        console.log(`[TEXT-TO-PATH] Successfully converted: "${textContent.substring(0, 20)}..."`);
       }
     } catch (error) {
-      console.error(`[TEXT-TO-PATH] Failed to convert text:`, error.message);
+      console.error(`[TEXT-TO-PATH] Failed to convert text:`, error.message, error.stack?.substring(0, 200));
       // Leave the text element as-is if conversion fails
     }
   }
 
-  // Serialize back to string
-  const result = dom.serialize();
+  console.log(`[TEXT-TO-PATH] Converted ${convertedCount}/${elementsToConvert.length} text elements`);
 
-  console.log('[TEXT-TO-PATH] Conversion complete');
+  // Get the SVG element and serialize just it (not the full HTML document)
+  const svgElement = doc.querySelector('svg');
+  if (!svgElement) {
+    console.error('[TEXT-TO-PATH] No SVG element found after conversion');
+    return svgString;
+  }
+
+  // Use XMLSerializer to get just the SVG
+  const serializer = new dom.window.XMLSerializer();
+  const result = serializer.serializeToString(svgElement);
+
+  console.log('[TEXT-TO-PATH] Conversion complete, output length:', result.length);
   return result;
 }
 
