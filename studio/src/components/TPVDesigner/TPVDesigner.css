@@ -468,6 +468,7 @@
   cursor: pointer;
   font-family: var(--font-body, 'Source Sans Pro', sans-serif);
   transition: all 0.15s;
+  white-space: nowrap;
 }
 
 .sports-toolbar__dimensions:hover {
