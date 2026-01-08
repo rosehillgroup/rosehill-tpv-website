@@ -247,7 +247,7 @@
 .sports-toolbar {
   position: fixed;
   top: 65px; /* Aligned with sidebar tops */
-  left: calc(50% + 140px); /* Center on canvas area (offset by half sidebar width 280px/2) */
+  left: calc(50% - 20px); /* Center on canvas area: (sidebar 280px - properties 320px) / 2 */
   transform: translateX(-50%);
   z-index: 40; /* Below floating elements box */
 
@@ -1238,7 +1238,7 @@
     width: 300px;
   }
   .sports-toolbar {
-    left: calc(50% + 130px); /* sidebar 260px/2 */
+    left: calc(50% - 20px); /* (sidebar 260px - properties 300px) / 2 */
   }
 }
 
@@ -1251,7 +1251,7 @@
     width: 280px;
   }
   .sports-toolbar {
-    left: calc(50% + 120px); /* sidebar 240px/2 */
+    left: calc(50% - 20px); /* (sidebar 240px - properties 280px) / 2 */
   }
 }
 
@@ -1264,7 +1264,7 @@
     width: 260px;
   }
   .sports-toolbar {
-    left: calc(50% + 110px); /* sidebar 220px/2 */
+    left: calc(50% - 20px); /* (sidebar 220px - properties 260px) / 2 */
   }
 }
 
@@ -1277,7 +1277,7 @@
     width: 240px;
   }
   .sports-toolbar {
-    left: calc(50% + 100px); /* sidebar 200px/2 */
+    left: calc(50% - 20px); /* (sidebar 200px - properties 240px) / 2 */
   }
   /* Make toggle buttons more prominent */
   .sidebar-toggle {
