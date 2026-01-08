@@ -1165,7 +1165,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         else if (dragShapeId) storePosition = shapes[dragShapeId]?.position;
         else if (dragTextId) storePosition = texts[dragTextId]?.position;
         else if (dragExclusionZoneId) storePosition = exclusionZones[dragExclusionZoneId]?.position;
-        else if (dragGroupId) storePosition = { x: 0, y: 0 }; // Groups use relative offset
+        else if (dragGroupId) storePosition = groups[dragGroupId]?.bounds || { x: 0, y: 0 };
 
         if (!storePosition) return;
 
