@@ -173,6 +173,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     updatePathHandle,
     commitPathEdit,
     removePointFromPath,
+    addPointToExistingPath,
     // Group and multi-selection
     groups,
     selectedGroupId,
@@ -2647,6 +2648,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                   selectedPointIndex={elementId === selectedShapeId ? selectedPointIndex : null}
                   onPointSelect={(index) => setSelectedPointIndex(index)}
                   onPointDelete={(index) => removePointFromPath(elementId, index)}
+                  onAddPoint={(index, x, y) => addPointToExistingPath(elementId, index, x, y)}
                 />
               );
             }
@@ -2756,6 +2758,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
                           selectedPointIndex={childId === selectedShapeId ? selectedPointIndex : null}
                           onPointSelect={(index) => setSelectedPointIndex(index)}
                           onPointDelete={(index) => removePointFromPath(childId, index)}
+                          onAddPoint={(index, x, y) => addPointToExistingPath(childId, index, x, y)}
                         />
                       );
                     }

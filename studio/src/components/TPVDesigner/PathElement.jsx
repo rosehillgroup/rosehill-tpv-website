@@ -20,6 +20,8 @@ import BlobEditHandles from './BlobEditHandles';
  * @param {Function} props.onPointDrag - Handler for control point drag
  * @param {Function} props.onHandleDrag - Handler for bezier handle drag
  * @param {Function} props.onDragEnd - Handler for drag end (commit to history)
+ * @param {Function} props.onAddPoint - Handler for adding a new point to path
+ * @param {number} props.zoom - Current zoom level for handle sizing
  */
 function PathElement({
   shape,
@@ -34,7 +36,9 @@ function PathElement({
   onDragEnd,
   selectedPointIndex,
   onPointSelect,
-  onPointDelete
+  onPointDelete,
+  onAddPoint,
+  zoom = 1
 }) {
   const {
     controlPoints,
@@ -133,6 +137,7 @@ function PathElement({
           controlPoints={controlPoints}
           width={width_mm}
           height={height_mm}
+          zoom={zoom}
           onPointDrag={onPointDrag}
           onHandleDrag={onHandleDrag}
           onDragEnd={onDragEnd}
@@ -140,6 +145,8 @@ function PathElement({
           selectedPointIndex={selectedPointIndex}
           onPointSelect={onPointSelect}
           onPointDelete={onPointDelete}
+          onAddPoint={onAddPoint}
+          closed={closed}
         />
       )}
     </g>

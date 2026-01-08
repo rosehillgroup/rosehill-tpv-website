@@ -19,6 +19,8 @@ import { getEditHandleSize } from '../../lib/sports/handleUtils';
  * @param {number} props.selectedPointIndex - Index of currently selected point (for deletion)
  * @param {Function} props.onPointSelect - Callback when point is selected (index)
  * @param {Function} props.onPointDelete - Callback when point should be deleted (index)
+ * @param {Function} props.onAddPoint - Callback when point should be added (segmentIndex, normalizedX, normalizedY)
+ * @param {boolean} props.closed - Whether the path is closed (connects last point to first)
  */
 function BlobEditHandles({
   controlPoints,
@@ -31,7 +33,9 @@ function BlobEditHandles({
   showHandles = true,
   selectedPointIndex,
   onPointSelect,
-  onPointDelete
+  onPointDelete,
+  onAddPoint,
+  closed = true
 }) {
   const [dragging, setDragging] = useState(null);
   const [dragStartPos, setDragStartPos] = useState(null);
@@ -55,6 +59,65 @@ function BlobEditHandles({
     e.stopPropagation();
     onPointDelete?.(index);
   }, [onPointDelete]);
+
+  // Handle double-click on line segment to add a new point
+  const handleSegmentDoubleClick = useCallback((e, segmentIndex) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!onAddPoint) return;
+
+    // Get SVG coordinates from click event
+    const svg = document.querySelector('.court-canvas__svg');
+    if (!svg) return;
+
+    const svgRect = svg.getBoundingClientRect();
+    const viewBox = svg.viewBox.baseVal;
+
+    // Convert click position to SVG coordinates
+    const scaleX = viewBox.width / svgRect.width;
+    const scaleY = viewBox.height / svgRect.height;
+    const svgX = (e.clientX - svgRect.left) * scaleX;
+    const svgY = (e.clientY - svgRect.top) * scaleY;
+
+    // Get the segment endpoints
+    const p1 = controlPoints[segmentIndex];
+    const p2Index = (segmentIndex + 1) % controlPoints.length;
+    const p2 = controlPoints[p2Index];
+
+    // Convert to actual coordinates
+    const p1x = p1.x * width;
+    const p1y = p1.y * height;
+    const p2x = p2.x * width;
+    const p2y = p2.y * height;
+
+    // Find the closest point on the segment to the click
+    // Using projection formula
+    const dx = p2x - p1x;
+    const dy = p2y - p1y;
+    const lengthSq = dx * dx + dy * dy;
+
+    if (lengthSq === 0) {
+      // Degenerate segment, just use p1
+      onAddPoint(segmentIndex + 1, p1.x, p1.y);
+      return;
+    }
+
+    // Calculate t parameter (0-1) for projection onto segment
+    let t = ((svgX - p1x) * dx + (svgY - p1y) * dy) / lengthSq;
+    t = Math.max(0.1, Math.min(0.9, t)); // Clamp to avoid creating points too close to existing ones
+
+    // Calculate the new point position
+    const newX = p1x + t * dx;
+    const newY = p1y + t * dy;
+
+    // Convert back to normalized coordinates
+    const normalizedX = newX / width;
+    const normalizedY = newY / height;
+
+    // Add point after segmentIndex (so it becomes the new point at segmentIndex + 1)
+    onAddPoint(segmentIndex + 1, normalizedX, normalizedY);
+  }, [controlPoints, width, height, onAddPoint]);
 
   // Start dragging a bezier handle
   const startHandleDrag = useCallback((e, index, handleType) => {
@@ -122,8 +185,41 @@ function BlobEditHandles({
 
   if (!controlPoints || controlPoints.length === 0) return null;
 
+  // Generate clickable segments for adding points
+  const segments = [];
+  if (onAddPoint && controlPoints.length >= 2) {
+    const numSegments = closed ? controlPoints.length : controlPoints.length - 1;
+    for (let i = 0; i < numSegments; i++) {
+      const p1 = controlPoints[i];
+      const p2 = controlPoints[(i + 1) % controlPoints.length];
+      segments.push({
+        index: i,
+        x1: p1.x * width,
+        y1: p1.y * height,
+        x2: p2.x * width,
+        y2: p2.y * height
+      });
+    }
+  }
+
   return (
     <g className="blob-edit-handles">
+      {/* Clickable segments for adding new points (render first so they're behind control points) */}
+      {segments.map((seg) => (
+        <line
+          key={`segment-${seg.index}`}
+          x1={seg.x1}
+          y1={seg.y1}
+          x2={seg.x2}
+          y2={seg.y2}
+          stroke="transparent"
+          strokeWidth={pointSize * 2}
+          style={{ cursor: 'copy' }}
+          pointerEvents="stroke"
+          onDoubleClick={(e) => handleSegmentDoubleClick(e, seg.index)}
+        />
+      ))}
+
       {controlPoints.map((point, i) => {
         // Convert normalized coordinates to actual positions
         const x = point.x * width;
