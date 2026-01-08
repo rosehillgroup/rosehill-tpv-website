@@ -139,11 +139,11 @@ export function calculateMaterialsFromDesign({
     }
   }
 
-  // 3. Calculate text materials (approximate bounding box × coverage factor)
+  // 3. Calculate text materials (approximate from font size and content length)
   for (const text of Object.values(texts)) {
-    if (text.visible === false || !text.text) continue;
+    if (text.visible === false || !text.content) continue;
 
-    // Estimate text area from bounding box (typically ~60% coverage)
+    // Estimate text area from font size and scale
     const textAreaM2 = estimateTextArea(text) / 1_000_000;
     if (textAreaM2 <= 0) continue;
 
@@ -152,7 +152,7 @@ export function calculateMaterialsFromDesign({
     if (text.fillColor) {
       const kg = textAreaM2 * densityKgPerM2 * safetyMargin;
       elementMaterials.push({
-        element: `Text: "${text.text.substring(0, 20)}${text.text.length > 20 ? '...' : ''}"`,
+        element: `Text: "${text.content.substring(0, 20)}${text.content.length > 20 ? '...' : ''}"`,
         elementType: 'text-fill',
         colour: text.fillColor,
         area: textAreaM2,
@@ -279,35 +279,78 @@ export function calculateMaterialsFromDesign({
 }
 
 /**
- * Calculate shape area based on type
+ * Calculate shape area based on shapeType
+ * Shapes have: shapeType ('polygon', 'blob', 'path'), width_mm, height_mm, controlPoints[], sides
  */
 function calculateShapeArea(shape) {
-  const type = shape.type || 'polygon';
+  const shapeType = shape.shapeType || shape.type;
 
-  if (type === 'polygon' && shape.points?.length >= 3) {
-    // Shoelace formula for polygon area
-    return polygonArea(shape.points);
+  // Polygon shapes: use width_mm × height_mm with coverage factor based on sides
+  if (shapeType === 'polygon' && shape.width_mm && shape.height_mm) {
+    const coverageFactor = getPolygonCoverage(shape.sides || 4);
+    return shape.width_mm * shape.height_mm * coverageFactor;
   }
 
-  if (type === 'blob' && shape.pathData) {
-    // For blobs, use bounding box with coverage factor
-    const bounds = getBoundsFromPathData(shape.pathData);
-    return bounds.width * bounds.height * 0.7; // ~70% coverage for organic shapes
+  // Blob shapes: use bounding box with ~70% coverage for organic shapes
+  if (shapeType === 'blob' && shape.width_mm && shape.height_mm) {
+    return shape.width_mm * shape.height_mm * 0.7;
   }
 
-  if (type === 'path' && shape.pathData) {
-    // For paths (lines), use stroke width * length
-    const length = estimatePathLength(shape.pathData);
-    const width = shape.strokeWidth_mm || 50;
-    return length * width;
+  // Path shapes: calculate from controlPoints if closed, or stroke area if open
+  if (shapeType === 'path') {
+    if (shape.controlPoints?.length >= 3 && shape.closed !== false) {
+      // Closed path - calculate polygon area from control points
+      return polygonArea(shape.controlPoints);
+    } else if (shape.controlPoints?.length >= 2) {
+      // Open path - use stroke width × length
+      const length = calculatePathLength(shape.controlPoints);
+      const width = shape.strokeWidth_mm || 50;
+      return length * width;
+    }
   }
 
-  // Fallback: bounding box
-  if (shape.bounds) {
-    return (shape.bounds.width || 0) * (shape.bounds.height || 0);
+  // Fallback: try width_mm × height_mm
+  if (shape.width_mm && shape.height_mm) {
+    return shape.width_mm * shape.height_mm * 0.7;
   }
 
   return 0;
+}
+
+/**
+ * Get coverage factor for regular polygons inscribed in bounding box
+ */
+function getPolygonCoverage(sides) {
+  if (!sides || sides < 3) return 1.0;
+  if (sides >= 100) return Math.PI / 4; // Circle: ~0.785
+
+  const coverageMap = {
+    3: 0.50,   // Triangle
+    4: 1.00,   // Square/Rectangle
+    5: 0.69,   // Pentagon
+    6: 0.87,   // Hexagon
+    7: 0.80,   // Heptagon
+    8: 0.83,   // Octagon
+  };
+
+  return coverageMap[sides] || 0.8; // Default for other polygons
+}
+
+/**
+ * Calculate path length from control points
+ */
+function calculatePathLength(controlPoints) {
+  if (!controlPoints || controlPoints.length < 2) return 0;
+
+  let length = 0;
+  for (let i = 1; i < controlPoints.length; i++) {
+    const prev = controlPoints[i - 1];
+    const curr = controlPoints[i];
+    const dx = curr.x - prev.x;
+    const dy = curr.y - prev.y;
+    length += Math.sqrt(dx * dx + dy * dy);
+  }
+  return length;
 }
 
 /**
@@ -357,15 +400,26 @@ function calculatePerimeter(points) {
 }
 
 /**
- * Estimate text area from bounds and font characteristics
+ * Estimate text area from font size, content length, and scale
+ * Text has: content, fontSize_mm, scale_x, scale_y, fontWeight
  */
 function estimateTextArea(text) {
-  if (!text.bounds) return 0;
+  if (!text.content || !text.fontSize_mm) return 0;
 
-  const boundingArea = (text.bounds.width || 0) * (text.bounds.height || 0);
-  // Text typically covers ~50-70% of bounding box depending on font weight
+  // Estimate based on character count and font size
+  const charCount = text.content.length;
+  const charWidth = text.fontSize_mm * 0.6;  // Average character width ratio
+  const charHeight = text.fontSize_mm;
+  const scale_x = text.scale_x || 1;
+  const scale_y = text.scale_y || 1;
+
+  // Base area: characters × char dimensions × scale
+  const baseArea = charCount * charWidth * charHeight;
+  const scaledArea = baseArea * scale_x * scale_y;
+
+  // Coverage factor: text typically covers ~50-60% of bounding area
   const coverageFactor = text.fontWeight === 'bold' ? 0.65 : 0.55;
-  return boundingArea * coverageFactor;
+  return scaledArea * coverageFactor;
 }
 
 /**
