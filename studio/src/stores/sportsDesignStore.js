@@ -2828,10 +2828,18 @@ export const useSportsDesignStore = create(
         const groupId = `group-${Date.now()}`;
         const bounds = get().calculateGroupBounds(childIds);
 
+        // Sort childIds by their position in elementOrder to preserve layer order
+        const elementOrder = get().elementOrder;
+        const sortedChildIds = [...childIds].sort((a, b) => {
+          const indexA = elementOrder.indexOf(a);
+          const indexB = elementOrder.indexOf(b);
+          return indexA - indexB;
+        });
+
         const group = {
           id: groupId,
           type: 'group',
-          childIds: [...childIds],
+          childIds: sortedChildIds,
           compoundType: options.compoundType || null,
           generatorSeed: options.generatorSeed || null,
           customName: options.customName || null,
