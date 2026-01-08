@@ -208,7 +208,7 @@ function MotifElement({ motif, isSelected, zoom = 1, onMouseDown, onTouchStart, 
             width={scaledWidth + 20}
             height={scaledHeight + 20}
             fill="none"
-            stroke="#9333EA"
+            stroke="#3b82f6"
             strokeWidth={selectionStyle.strokeWidth}
             strokeDasharray={selectionStyle.dashArray}
             opacity="0.7"
@@ -259,7 +259,7 @@ function MotifHandles({ width, height, zoom, scale, onScaleStart, onRotateStart 
           y={handle.y}
           width={size}
           height={size}
-          fill="#9333EA"
+          fill="#3b82f6"
           stroke="#fff"
           strokeWidth={strokeWidth}
           rx={cornerRadius}
@@ -282,7 +282,7 @@ function MotifHandles({ width, height, zoom, scale, onScaleStart, onRotateStart 
         y1={0}
         x2={width / 2}
         y2={-rotation.distance + rotation.size / 2}
-        stroke="#9333EA"
+        stroke="#3b82f6"
         strokeWidth={rotation.stemWidth}
         pointerEvents="none"
       />
@@ -292,7 +292,7 @@ function MotifHandles({ width, height, zoom, scale, onScaleStart, onRotateStart 
         cx={width / 2}
         cy={-rotation.distance}
         r={rotation.size}
-        fill="#9333EA"
+        fill="#3b82f6"
         stroke="#fff"
         strokeWidth={strokeWidth}
         style={{ cursor: 'grab' }}
