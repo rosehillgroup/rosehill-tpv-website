@@ -67,18 +67,27 @@ function BlobEditHandles({
 
     if (!onAddPoint) return;
 
-    // Get SVG coordinates from click event
+    // Get SVG element
     const svg = document.querySelector('.court-canvas__svg');
     if (!svg) return;
 
-    const svgRect = svg.getBoundingClientRect();
-    const viewBox = svg.viewBox.baseVal;
+    // Get the parent path-element group (which has the transform applied)
+    const pathGroup = e.target.closest('g.path-element');
+    if (!pathGroup) return;
 
-    // Convert click position to SVG coordinates
-    const scaleX = viewBox.width / svgRect.width;
-    const scaleY = viewBox.height / svgRect.height;
-    const svgX = (e.clientX - svgRect.left) * scaleX;
-    const svgY = (e.clientY - svgRect.top) * scaleY;
+    // Create SVG point and transform to local coordinates using the path's CTM
+    const svgPoint = svg.createSVGPoint();
+    svgPoint.x = e.clientX;
+    svgPoint.y = e.clientY;
+
+    // Get the inverse of the path group's screen CTM to convert screen coords to local coords
+    const ctm = pathGroup.getScreenCTM();
+    if (!ctm) return;
+    const localPoint = svgPoint.matrixTransform(ctm.inverse());
+
+    // localPoint.x and localPoint.y are now in the path's local coordinate system
+    const svgX = localPoint.x;
+    const svgY = localPoint.y;
 
     // Get the segment endpoints
     const p1 = controlPoints[segmentIndex];
