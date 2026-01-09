@@ -83,11 +83,8 @@ export default async function handler(req, res) {
       jobsQuery = jobsQuery.not('id', 'in', `(${savedJobIds.join(',')})`);
     }
 
-    // Get count first for pagination info
-    const { count: totalOrphaned } = await jobsQuery;
-
-    // Now get paginated results
-    const { data: orphanedJobs, error: jobsError } = await jobsQuery
+    // Get paginated results with count in single query
+    const { data: orphanedJobs, error: jobsError, count: totalOrphaned } = await jobsQuery
       .order('created_at', { ascending: false })
       .range(offset, offset + limitNum - 1);
 
