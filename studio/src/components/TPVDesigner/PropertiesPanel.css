@@ -517,6 +517,18 @@
   color: var(--color-text-tertiary, #94a3b8);
 }
 
+/* ====== Change All Zones Item ====== */
+.color-item--all-zones {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-color: var(--color-primary, #1e4a7a);
+  margin-bottom: 1rem;
+}
+
+.color-item--all-zones .color-item__hint {
+  font-size: var(--text-xs, 0.75rem);
+  color: var(--color-text-tertiary, #94a3b8);
+}
+
 .color-item__swatch--all {
   background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899, #f59e0b);
   display: flex;
