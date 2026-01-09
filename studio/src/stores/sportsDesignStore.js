@@ -374,10 +374,10 @@ export const useSportsDesignStore = create(
           });
         }
 
-        // Apply default color to all zones if they exist
+        // Apply default color to all zones if they exist (use surface color so court appears solid)
         const zoneColorOverrides = {};
-        if (template.defaultLineColor && template.zones) {
-          const defaultColor = getTPVColorObject(template.defaultLineColor);
+        if (template.defaultSurfaceColor && template.zones) {
+          const defaultColor = getTPVColorObject(template.defaultSurfaceColor);
           template.zones.forEach(zone => {
             zoneColorOverrides[zone.id] = defaultColor;
           });
