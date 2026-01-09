@@ -26,6 +26,9 @@ export default function AdminDashboard({ onClose }) {
   // Colour analytics
   const [colourStats, setColourStats] = useState(null);
 
+  // Current user ID (for ownership checks)
+  const [currentUserId, setCurrentUserId] = useState(null);
+
   // Get auth headers
   const getAuthHeaders = async () => {
     const session = await supabase.auth.getSession();
@@ -105,6 +108,11 @@ export default function AdminDashboard({ onClose }) {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
+      // Get current user ID for ownership checks
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        setCurrentUserId(session.user.id);
+      }
       await fetchOverview();
       setLoading(false);
     };
@@ -211,7 +219,7 @@ export default function AdminDashboard({ onClose }) {
         )}
 
         {activeTab === 'designs' && (
-          <DesignsPanel designs={designs} total={designsTotal} />
+          <DesignsPanel designs={designs} total={designsTotal} currentUserId={currentUserId} />
         )}
 
         {activeTab === 'colours' && colourStats && (
@@ -632,19 +640,17 @@ function UsersPanel({ users }) {
 }
 
 // Designs Panel Component
-function DesignsPanel({ designs, total }) {
+function DesignsPanel({ designs, total, currentUserId }) {
   const [selectedDesign, setSelectedDesign] = useState(null);
 
-  // Open design in studio editor
-  const handleDesignClick = (design) => {
-    // Open design in a new tab at the studio editor with the design loaded
-    window.open(`/studio?design=${design.id}`, '_blank');
+  // Show design details in modal
+  const handleCardClick = (design) => {
+    setSelectedDesign(design);
   };
 
-  // Show design details in modal
-  const handleViewDetails = (e, design) => {
-    e.stopPropagation();
-    setSelectedDesign(design);
+  // Open design in studio (only works for own designs due to ownership checks)
+  const handleOpenInStudio = (design) => {
+    window.open(`/studio?design=${design.id}`, '_blank');
   };
 
   return (
@@ -656,8 +662,8 @@ function DesignsPanel({ designs, total }) {
           <div
             key={design.id}
             className="design-card"
-            onClick={() => handleDesignClick(design)}
-            title="Click to open in Studio"
+            onClick={() => handleCardClick(design)}
+            title="Click to view details"
           >
             <div className="design-thumbnail">
               {design.thumbnail_url || design.original_png_url ? (
@@ -689,7 +695,10 @@ function DesignsPanel({ designs, total }) {
               </div>
               <button
                 className="view-details-btn"
-                onClick={(e) => handleViewDetails(e, design)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedDesign(design);
+                }}
               >
                 View Details
               </button>
@@ -728,12 +737,18 @@ function DesignsPanel({ designs, total }) {
                 <p><strong>Job ID:</strong> <code>{selectedDesign.job_id}</code></p>
               )}
               <div className="modal-actions">
-                <button
-                  className="btn-primary"
-                  onClick={() => window.open(`/studio?design=${selectedDesign.id}`, '_blank')}
-                >
-                  Open in Studio
-                </button>
+                {currentUserId === selectedDesign.user_id ? (
+                  <button
+                    className="btn-primary"
+                    onClick={() => handleOpenInStudio(selectedDesign)}
+                  >
+                    Open in Studio
+                  </button>
+                ) : (
+                  <p className="ownership-note">
+                    Only the design owner can open this in Studio
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -947,6 +962,16 @@ function DesignsPanel({ designs, total }) {
 
         .btn-primary:hover {
           background: #e55a2b;
+        }
+
+        .ownership-note {
+          color: #64748b;
+          font-size: 13px;
+          font-style: italic;
+          margin: 0;
+          padding: 8px 12px;
+          background: #f8fafc;
+          border-radius: 6px;
         }
       `}</style>
     </div>
