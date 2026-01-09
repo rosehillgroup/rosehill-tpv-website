@@ -1,6 +1,7 @@
 /**
  * Admin Recovery Tab
  * View and recover orphaned generation jobs
+ * OPTIMIZED: Uses pagination for fast loading
  */
 
 import React, { useState, useEffect } from 'react';
@@ -13,6 +14,12 @@ export default function RecoveryTab() {
   const [error, setError] = useState(null);
   const [recovering, setRecovering] = useState(false);
   const [selectedJobs, setSelectedJobs] = useState(new Set());
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const limit = 50;
 
   // Filter
   const [ageFilter, setAgeFilter] = useState('all');
@@ -27,17 +34,19 @@ export default function RecoveryTab() {
     };
   };
 
-  // Fetch orphaned jobs
-  const fetchOrphanedJobs = async () => {
+  // Fetch orphaned jobs with pagination
+  const fetchOrphanedJobs = async (pageNum = page) => {
     setLoading(true);
     setError(null);
 
     try {
       const headers = await getAuthHeaders();
 
-      // Build query params
+      // Build query params with pagination
       const params = new URLSearchParams();
       if (ageFilter !== 'all') params.append('age_filter', ageFilter);
+      params.append('page', pageNum.toString());
+      params.append('limit', limit.toString());
 
       const response = await fetch(`/api/admin/recovery/orphaned?${params.toString()}`, { headers });
       const data = await response.json();
@@ -46,6 +55,9 @@ export default function RecoveryTab() {
 
       setOrphanedJobs(data.orphaned_jobs);
       setAgeBuckets(data.age_buckets);
+      setTotal(data.total || 0);
+      setTotalPages(data.total_pages || 1);
+      setPage(data.page || 1);
     } catch (err) {
       console.error('Failed to fetch orphaned jobs:', err);
       setError(err.message);
@@ -56,8 +68,18 @@ export default function RecoveryTab() {
 
   // Load on mount and when filter changes
   useEffect(() => {
-    fetchOrphanedJobs();
+    setPage(1); // Reset to page 1 when filter changes
+    fetchOrphanedJobs(1);
   }, [ageFilter]);
+
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+      fetchOrphanedJobs(newPage);
+      setSelectedJobs(new Set()); // Clear selection on page change
+    }
+  };
 
   // Toggle job selection
   const toggleJobSelection = (jobId) => {
@@ -129,7 +151,7 @@ export default function RecoveryTab() {
       <div className="admin-stats-grid">
         <div className="admin-stat-card warning">
           <h3>Total Orphaned</h3>
-          <p className="stat-value">{orphanedJobs.length}</p>
+          <p className="stat-value">{total}</p>
           <span className="stat-label">Designs not saved</span>
         </div>
         {ageBuckets && (
@@ -224,7 +246,7 @@ export default function RecoveryTab() {
                   </td>
                   <td className="thumbnail-cell">
                     {job.thumbnail_url ? (
-                      <img src={job.thumbnail_url} alt="Design" className="job-thumbnail" />
+                      <img src={job.thumbnail_url} alt="Design" className="job-thumbnail" loading="lazy" />
                     ) : (
                       <div className="thumbnail-placeholder">No image</div>
                     )}
@@ -256,6 +278,43 @@ export default function RecoveryTab() {
               ))}
             </tbody>
           </table>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="admin-pagination">
+              <button
+                onClick={() => handlePageChange(1)}
+                disabled={page === 1}
+                className="btn-secondary"
+              >
+                First
+              </button>
+              <button
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page === 1}
+                className="btn-secondary"
+              >
+                Previous
+              </button>
+              <span className="pagination-info">
+                Page {page} of {totalPages} ({total} total)
+              </span>
+              <button
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page === totalPages}
+                className="btn-secondary"
+              >
+                Next
+              </button>
+              <button
+                onClick={() => handlePageChange(totalPages)}
+                disabled={page === totalPages}
+                className="btn-secondary"
+              >
+                Last
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -310,6 +369,12 @@ export default function RecoveryTab() {
           gap: 0.5rem;
           margin-top: 1.5rem;
           padding: 1rem 0;
+        }
+
+        .pagination-info {
+          padding: 0 1rem;
+          color: #64748b;
+          font-size: 0.875rem;
         }
 
         .admin-empty {

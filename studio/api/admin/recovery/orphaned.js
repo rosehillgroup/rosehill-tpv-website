@@ -1,6 +1,8 @@
 /**
  * Admin Recovery - Orphaned Jobs API
  * GET /api/admin/recovery/orphaned - List orphaned generation jobs
+ *
+ * OPTIMIZED: Uses SQL-level filtering and pagination instead of fetching all records
  */
 
 import { getAuthenticatedClient, getSupabaseServiceClient } from '../../_utils/supabase.js';
@@ -26,42 +28,22 @@ export default async function handler(req, res) {
     const isAdminUser = await requireAdmin(req, res, user);
     if (!isAdminUser) return;
 
-    // Parse query params
+    // Parse query params with pagination
     const {
       age_filter, // 24h, 7d, 30d, all
-      group_by = 'none' // none, user, age
+      group_by = 'none', // none, user, age
+      page = '1',
+      limit = '50'
     } = req.query;
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 50));
+    const offset = (pageNum - 1) * limitNum;
 
     // Use service client for admin operations
     const supabase = getSupabaseServiceClient();
 
-    // Get all completed jobs
-    let jobsQuery = supabase
-      .from('studio_jobs')
-      .select('id, user_id, prompt, width_mm, length_mm, compliant, outputs, created_at, completed_at')
-      .eq('status', 'completed');
-
-    // Apply age filter
-    if (age_filter === '24h') {
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      jobsQuery = jobsQuery.gte('created_at', oneDayAgo);
-    } else if (age_filter === '7d') {
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      jobsQuery = jobsQuery.gte('created_at', sevenDaysAgo);
-    } else if (age_filter === '30d') {
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-      jobsQuery = jobsQuery.gte('created_at', thirtyDaysAgo);
-    }
-
-    const { data: jobs, error: jobsError } = await jobsQuery
-      .order('created_at', { ascending: false });
-
-    if (jobsError) {
-      console.error('[ADMIN-RECOVERY] Error fetching jobs:', jobsError);
-      throw new Error('Failed to fetch jobs');
-    }
-
-    // Get all saved designs job_ids
+    // First, get all saved job_ids (this is a small lookup table)
     const { data: savedDesigns, error: savedError } = await supabase
       .from('saved_designs')
       .select('job_id');
@@ -71,25 +53,68 @@ export default async function handler(req, res) {
       throw new Error('Failed to fetch saved designs');
     }
 
-    const savedJobIds = new Set((savedDesigns || []).map(sd => sd.job_id));
+    const savedJobIds = (savedDesigns || []).map(sd => sd.job_id);
 
-    // Filter orphaned jobs
-    const orphanedJobs = jobs.filter(job => !savedJobIds.has(job.id));
+    // Build age filter date
+    let ageFilterDate = null;
+    if (age_filter === '24h') {
+      ageFilterDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    } else if (age_filter === '7d') {
+      ageFilterDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    } else if (age_filter === '30d') {
+      ageFilterDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    }
 
-    // Get user emails
-    const userIds = [...new Set(orphanedJobs.map(j => j.user_id).filter(Boolean))];
+    // Build query for orphaned jobs - filter at SQL level
+    // Only select fields needed for display (not full outputs/metadata)
+    let jobsQuery = supabase
+      .from('studio_jobs')
+      .select('id, user_id, prompt, width_mm, length_mm, compliant, outputs, created_at, completed_at', { count: 'exact' })
+      .eq('status', 'completed');
+
+    // Apply age filter at SQL level
+    if (ageFilterDate) {
+      jobsQuery = jobsQuery.gte('created_at', ageFilterDate);
+    }
+
+    // Filter out saved jobs at SQL level (if we have saved IDs)
+    if (savedJobIds.length > 0) {
+      // Use NOT IN filter - Supabase uses 'not.in' for this
+      jobsQuery = jobsQuery.not('id', 'in', `(${savedJobIds.join(',')})`);
+    }
+
+    // Get count first for pagination info
+    const { count: totalOrphaned } = await jobsQuery;
+
+    // Now get paginated results
+    const { data: orphanedJobs, error: jobsError } = await jobsQuery
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limitNum - 1);
+
+    if (jobsError) {
+      console.error('[ADMIN-RECOVERY] Error fetching orphaned jobs:', jobsError);
+      throw new Error('Failed to fetch orphaned jobs');
+    }
+
+    // Get user emails only for users in current page (not all users)
+    const userIds = [...new Set((orphanedJobs || []).map(j => j.user_id).filter(Boolean))];
     let userMap = {};
 
     if (userIds.length > 0) {
-      const { data: authUsers } = await supabase.auth.admin.listUsers();
+      // Fetch only the users we need using getUserById for each (more efficient for small sets)
+      // Or use listUsers with pagination if the user count is large
+      const { data: authUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 });
       if (authUsers?.users) {
+        // Only map the users we need
         authUsers.users.forEach(u => {
-          userMap[u.id] = u.email;
+          if (userIds.includes(u.id)) {
+            userMap[u.id] = u.email;
+          }
         });
       }
     }
 
-    // Calculate age buckets
+    // Calculate age buckets (for stats display)
     const now = Date.now();
     const ageBuckets = {
       '<24h': 0,
@@ -99,7 +124,7 @@ export default async function handler(req, res) {
     };
 
     // Format orphaned jobs
-    const formattedJobs = orphanedJobs.map(job => {
+    const formattedJobs = (orphanedJobs || []).map(job => {
       const ageMs = now - new Date(job.created_at).getTime();
       const ageDays = ageMs / (1000 * 60 * 60 * 24);
 
@@ -119,7 +144,14 @@ export default async function handler(req, res) {
       }
 
       return {
-        ...job,
+        id: job.id,
+        user_id: job.user_id,
+        prompt: job.prompt,
+        width_mm: job.width_mm,
+        length_mm: job.length_mm,
+        compliant: job.compliant,
+        created_at: job.created_at,
+        completed_at: job.completed_at,
         user_email: userMap[job.user_id] || 'Unknown',
         age_bucket: ageBucket,
         age_days: Math.floor(ageDays),
@@ -128,7 +160,7 @@ export default async function handler(req, res) {
       };
     });
 
-    // Group by user if requested
+    // Group by user if requested (only for current page)
     let groupedByUser = null;
     if (group_by === 'user') {
       groupedByUser = {};
@@ -153,7 +185,10 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      total: formattedJobs.length,
+      total: totalOrphaned || 0,
+      page: pageNum,
+      limit: limitNum,
+      total_pages: Math.ceil((totalOrphaned || 0) / limitNum),
       age_buckets: ageBuckets,
       grouped_by_user: groupedByUser,
       orphaned_jobs: formattedJobs

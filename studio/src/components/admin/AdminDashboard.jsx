@@ -633,16 +633,39 @@ function UsersPanel({ users }) {
 
 // Designs Panel Component
 function DesignsPanel({ designs, total }) {
+  const [selectedDesign, setSelectedDesign] = useState(null);
+
+  // Open design in studio editor
+  const handleDesignClick = (design) => {
+    // Open design in a new tab at the studio editor with the design loaded
+    window.open(`/studio?design=${design.id}`, '_blank');
+  };
+
+  // Show design details in modal
+  const handleViewDetails = (e, design) => {
+    e.stopPropagation();
+    setSelectedDesign(design);
+  };
+
   return (
     <div className="designs-panel">
       <h2>All Designs ({total} total)</h2>
 
       <div className="designs-grid">
         {designs.map(design => (
-          <div key={design.id} className="design-card">
+          <div
+            key={design.id}
+            className="design-card"
+            onClick={() => handleDesignClick(design)}
+            title="Click to open in Studio"
+          >
             <div className="design-thumbnail">
               {design.thumbnail_url || design.original_png_url ? (
-                <img src={design.thumbnail_url || design.original_png_url} alt={design.name} />
+                <img
+                  src={design.thumbnail_url || design.original_png_url}
+                  alt={design.name}
+                  loading="lazy"
+                />
               ) : (
                 <div className="no-image">No preview</div>
               )}
@@ -651,18 +674,71 @@ function DesignsPanel({ designs, total }) {
               <h4>{design.name}</h4>
               <p className="design-user">{design.user_email}</p>
               <p className="design-date">{new Date(design.created_at).toLocaleDateString()}</p>
-              {design.project && (
-                <span
-                  className="project-badge"
-                  style={{ backgroundColor: design.project.color || '#64748b' }}
-                >
-                  {design.project.name}
-                </span>
-              )}
+              <div className="design-meta">
+                {design.width_mm && design.length_mm && (
+                  <span className="size-badge">{design.width_mm} × {design.length_mm} mm</span>
+                )}
+                {design.project && (
+                  <span
+                    className="project-badge"
+                    style={{ backgroundColor: design.project.color || '#64748b' }}
+                  >
+                    {design.project.name}
+                  </span>
+                )}
+              </div>
+              <button
+                className="view-details-btn"
+                onClick={(e) => handleViewDetails(e, design)}
+              >
+                View Details
+              </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Design Details Modal */}
+      {selectedDesign && (
+        <div className="design-modal-overlay" onClick={() => setSelectedDesign(null)}>
+          <div className="design-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close" onClick={() => setSelectedDesign(null)}>×</button>
+            <div className="modal-thumbnail">
+              {selectedDesign.thumbnail_url || selectedDesign.original_png_url ? (
+                <img
+                  src={selectedDesign.original_png_url || selectedDesign.thumbnail_url}
+                  alt={selectedDesign.name}
+                />
+              ) : (
+                <div className="no-image">No preview</div>
+              )}
+            </div>
+            <div className="modal-info">
+              <h3>{selectedDesign.name}</h3>
+              <p><strong>User:</strong> {selectedDesign.user_email}</p>
+              <p><strong>Created:</strong> {new Date(selectedDesign.created_at).toLocaleString()}</p>
+              {selectedDesign.width_mm && selectedDesign.length_mm && (
+                <p><strong>Dimensions:</strong> {selectedDesign.width_mm} × {selectedDesign.length_mm} mm</p>
+              )}
+              {selectedDesign.project && (
+                <p><strong>Project:</strong> {selectedDesign.project.name}</p>
+              )}
+              <p><strong>Design ID:</strong> <code>{selectedDesign.id}</code></p>
+              {selectedDesign.job_id && (
+                <p><strong>Job ID:</strong> <code>{selectedDesign.job_id}</code></p>
+              )}
+              <div className="modal-actions">
+                <button
+                  className="btn-primary"
+                  onClick={() => window.open(`/studio?design=${selectedDesign.id}`, '_blank')}
+                >
+                  Open in Studio
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .designs-panel h2 {
@@ -681,6 +757,13 @@ function DesignsPanel({ designs, total }) {
           border-radius: 8px;
           border: 1px solid #e5e7eb;
           overflow: hidden;
+          cursor: pointer;
+          transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .design-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
 
         .design-thumbnail {
@@ -730,12 +813,140 @@ function DesignsPanel({ designs, total }) {
           color: #9ca3af;
         }
 
+        .design-meta {
+          display: flex;
+          gap: 6px;
+          flex-wrap: wrap;
+          margin-top: 8px;
+        }
+
+        .size-badge {
+          display: inline-block;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 10px;
+          background: #f3f4f6;
+          color: #64748b;
+        }
+
         .project-badge {
           display: inline-block;
           padding: 2px 8px;
           border-radius: 10px;
           font-size: 10px;
           color: white;
+        }
+
+        .view-details-btn {
+          margin-top: 8px;
+          padding: 6px 12px;
+          font-size: 12px;
+          background: #f3f4f6;
+          border: 1px solid #e5e7eb;
+          border-radius: 4px;
+          cursor: pointer;
+          width: 100%;
+        }
+
+        .view-details-btn:hover {
+          background: #e5e7eb;
+        }
+
+        /* Modal styles */
+        .design-modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+        }
+
+        .design-modal {
+          background: white;
+          border-radius: 12px;
+          max-width: 600px;
+          width: 90%;
+          max-height: 90vh;
+          overflow-y: auto;
+          position: relative;
+        }
+
+        .modal-close {
+          position: absolute;
+          top: 12px;
+          right: 12px;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          border: none;
+          background: rgba(0, 0, 0, 0.1);
+          font-size: 20px;
+          cursor: pointer;
+          z-index: 1;
+        }
+
+        .modal-close:hover {
+          background: rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-thumbnail {
+          width: 100%;
+          aspect-ratio: 1;
+          background: #f3f4f6;
+          overflow: hidden;
+        }
+
+        .modal-thumbnail img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+
+        .modal-info {
+          padding: 20px;
+        }
+
+        .modal-info h3 {
+          margin: 0 0 16px 0;
+          font-size: 18px;
+        }
+
+        .modal-info p {
+          margin: 8px 0;
+          font-size: 14px;
+          color: #374151;
+        }
+
+        .modal-info code {
+          background: #f3f4f6;
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 12px;
+        }
+
+        .modal-actions {
+          margin-top: 20px;
+          display: flex;
+          gap: 12px;
+        }
+
+        .btn-primary {
+          padding: 10px 20px;
+          background: #ff6b35;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-weight: 500;
+          cursor: pointer;
+        }
+
+        .btn-primary:hover {
+          background: #e55a2b;
         }
       `}</style>
     </div>

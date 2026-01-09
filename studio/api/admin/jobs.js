@@ -1,6 +1,8 @@
 /**
  * Admin Jobs API Endpoint
  * GET /api/admin/jobs - List all generation jobs across all users
+ *
+ * OPTIMIZED: Reduced field selection, efficient user lookup
  */
 
 import { getAuthenticatedClient, getSupabaseServiceClient } from '../_utils/supabase.js';
@@ -42,7 +44,16 @@ export default async function handler(req, res) {
     // Use service client for admin operations
     const supabase = getSupabaseServiceClient();
 
-    // Build query with left join to check if saved
+    // For saved_status filtering, we need to get saved job IDs first
+    let savedJobIds = new Set();
+    if (saved_status === 'saved' || saved_status === 'orphaned') {
+      const { data: allSavedDesigns } = await supabase
+        .from('saved_designs')
+        .select('job_id');
+      savedJobIds = new Set((allSavedDesigns || []).map(sd => sd.job_id));
+    }
+
+    // Build query - ONLY select fields needed for display (not full metadata/outputs)
     let query = supabase
       .from('studio_jobs')
       .select(`
@@ -53,11 +64,8 @@ export default async function handler(req, res) {
         mode_type,
         width_mm,
         length_mm,
-        attempt_current,
-        attempt_max,
         compliant,
         outputs,
-        metadata,
         created_at,
         started_at,
         completed_at
@@ -80,6 +88,29 @@ export default async function handler(req, res) {
       query = query.ilike('prompt', `%${search}%`);
     }
 
+    // Apply saved_status filter at SQL level when possible
+    if (saved_status === 'orphaned') {
+      // For orphaned, we need completed jobs that aren't saved
+      query = query.eq('status', 'completed');
+      if (savedJobIds.size > 0) {
+        query = query.not('id', 'in', `(${Array.from(savedJobIds).join(',')})`);
+      }
+    } else if (saved_status === 'saved') {
+      // For saved, filter to only saved job IDs
+      if (savedJobIds.size > 0) {
+        query = query.in('id', Array.from(savedJobIds));
+      } else {
+        // No saved jobs - return empty
+        return res.status(200).json({
+          success: true,
+          jobs: [],
+          total: 0,
+          limit: parseInt(limit),
+          offset: parseInt(offset)
+        });
+      }
+    }
+
     // Apply sorting
     const validSortFields = ['created_at', 'completed_at', 'status'];
     const sortField = validSortFields.includes(sort_by) ? sort_by : 'created_at';
@@ -96,45 +127,56 @@ export default async function handler(req, res) {
       throw new Error('Failed to fetch jobs');
     }
 
-    // Get user emails for the jobs
-    const userIds = [...new Set(jobs.map(j => j.user_id).filter(Boolean))];
+    // Get user emails ONLY for users in current page (not all users)
+    const userIds = [...new Set((jobs || []).map(j => j.user_id).filter(Boolean))];
 
     let userMap = {};
     if (userIds.length > 0) {
-      const { data: authUsers } = await supabase.auth.admin.listUsers();
+      // Fetch users - with perPage to limit request size
+      const { data: authUsers } = await supabase.auth.admin.listUsers({ perPage: 1000 });
       if (authUsers?.users) {
+        // Only map users we need
         authUsers.users.forEach(u => {
-          userMap[u.id] = u.email;
+          if (userIds.includes(u.id)) {
+            userMap[u.id] = u.email;
+          }
         });
       }
     }
 
-    // Check which jobs have saved designs
-    const jobIds = jobs.map(j => j.id);
-    const { data: savedDesigns } = await supabase
-      .from('saved_designs')
-      .select('job_id')
-      .in('job_id', jobIds);
+    // Check which jobs in current page have saved designs (if not already filtered)
+    let savedJobIdsInPage = savedJobIds;
+    if (saved_status !== 'saved' && saved_status !== 'orphaned') {
+      const jobIds = (jobs || []).map(j => j.id);
+      if (jobIds.length > 0) {
+        const { data: savedDesigns } = await supabase
+          .from('saved_designs')
+          .select('job_id')
+          .in('job_id', jobIds);
+        savedJobIdsInPage = new Set((savedDesigns || []).map(sd => sd.job_id));
+      }
+    }
 
-    const savedJobIds = new Set((savedDesigns || []).map(sd => sd.job_id));
-
-    // Format jobs with user info and saved status
-    let formattedJobs = jobs.map(job => ({
-      ...job,
+    // Format jobs with user info and saved status - only include needed fields
+    const formattedJobs = (jobs || []).map(job => ({
+      id: job.id,
+      user_id: job.user_id,
+      status: job.status,
+      prompt: job.prompt,
+      mode_type: job.mode_type,
+      width_mm: job.width_mm,
+      length_mm: job.length_mm,
+      compliant: job.compliant,
+      created_at: job.created_at,
+      started_at: job.started_at,
+      completed_at: job.completed_at,
       user_email: userMap[job.user_id] || 'Unknown',
-      is_saved: savedJobIds.has(job.id),
+      is_saved: savedJobIdsInPage.has(job.id),
       thumbnail_url: job.outputs?.thumbnail_url || null,
       duration_seconds: job.completed_at && job.started_at
         ? Math.round((new Date(job.completed_at) - new Date(job.started_at)) / 1000)
         : null
     }));
-
-    // Apply saved_status filter after fetching
-    if (saved_status === 'saved') {
-      formattedJobs = formattedJobs.filter(j => j.is_saved);
-    } else if (saved_status === 'orphaned') {
-      formattedJobs = formattedJobs.filter(j => !j.is_saved && j.status === 'completed');
-    }
 
     return res.status(200).json({
       success: true,

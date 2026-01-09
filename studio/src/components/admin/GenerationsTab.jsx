@@ -160,7 +160,7 @@ export default function GenerationsTab() {
                 >
                   <td className="thumbnail-cell">
                     {job.thumbnail_url ? (
-                      <img src={job.thumbnail_url} alt="Design" className="job-thumbnail" />
+                      <img src={job.thumbnail_url} alt="Design" className="job-thumbnail" loading="lazy" />
                     ) : (
                       <div className="thumbnail-placeholder">No image</div>
                     )}
