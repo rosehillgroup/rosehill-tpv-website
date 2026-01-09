@@ -185,6 +185,11 @@ function PropertiesPanel({ onEditSourceDesign }) {
       template.markings.forEach(marking => {
         setLineColor(selectedCourtId, marking.id, colorObj);
       });
+    } else if (colorPickerTarget.type === 'allZones') {
+      // Apply color to all paint zones
+      template.zones.forEach(zone => {
+        setZoneColor(selectedCourtId, zone.id, colorObj);
+      });
     }
 
     setColorPickerTarget(null);
@@ -444,6 +449,23 @@ function PropertiesPanel({ onEditSourceDesign }) {
               </div>
             )}
 
+            {/* Change All Zones option */}
+            {template.zones && template.zones.length > 0 && (
+              <div className="color-item color-item--all-zones">
+                <div className="color-item__info">
+                  <span className="color-item__name">Change All Zones</span>
+                  <span className="color-item__hint">Set all zones to same colour</span>
+                </div>
+                <button
+                  className="color-item__swatch color-item__swatch--all"
+                  onClick={() => setColorPickerTarget({ type: 'allZones' })}
+                  title="Change all zone colours at once"
+                >
+                  <span style={{ fontSize: '1rem' }}>🎨</span>
+                </button>
+              </div>
+            )}
+
             {template.zones && template.zones.length > 0 && (
               <div className="color-list">
                 {template.zones.map(zone => {
@@ -480,6 +502,7 @@ function PropertiesPanel({ onEditSourceDesign }) {
             <div className="color-picker-modal__header">
               <h4>
                 {colorPickerTarget.type === 'allLines' ? 'Change All Line Colours' :
+                 colorPickerTarget.type === 'allZones' ? 'Change All Zone Colours' :
                  colorPickerTarget.type === 'courtSurface' ? 'Select Court Fill Colour' :
                  'Select TPV Colour'}
               </h4>

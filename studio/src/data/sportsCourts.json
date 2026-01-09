@@ -555,7 +555,85 @@
       }
     ],
 
-    "zones": []
+    "zones": [
+      {
+        "id": "goal-third-bottom",
+        "name": "Goal Third (Bottom)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 15250,
+          "height": 10167
+        },
+        "defaultColor": "RH01",
+        "paintable": true,
+        "area_m2": 155.05
+      },
+      {
+        "id": "center-third",
+        "name": "Center Third",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 10167,
+          "width": 15250,
+          "height": 10166
+        },
+        "defaultColor": "RH01",
+        "paintable": true,
+        "area_m2": 155.03
+      },
+      {
+        "id": "goal-third-top",
+        "name": "Goal Third (Top)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 20333,
+          "width": 15250,
+          "height": 10167
+        },
+        "defaultColor": "RH01",
+        "paintable": true,
+        "area_m2": 155.05
+      },
+      {
+        "id": "goal-circle-bottom",
+        "name": "Goal Circle (Bottom)",
+        "type": "path",
+        "params": {
+          "d": "M 2725,0 A 4900,4900 0 0,0 12525,0 Z"
+        },
+        "defaultColor": "RH01",
+        "paintable": true,
+        "area_m2": 37.72
+      },
+      {
+        "id": "goal-circle-top",
+        "name": "Goal Circle (Top)",
+        "type": "path",
+        "params": {
+          "d": "M 2725,30500 A 4900,4900 0 0,1 12525,30500 Z"
+        },
+        "defaultColor": "RH01",
+        "paintable": true,
+        "area_m2": 37.72
+      },
+      {
+        "id": "center-circle",
+        "name": "Center Circle",
+        "type": "circle",
+        "params": {
+          "cx": 7625,
+          "cy": 15250,
+          "radius": 450
+        },
+        "defaultColor": "RH01",
+        "paintable": true,
+        "area_m2": 0.64
+      }
+    ]
   },
 
   "tennis-doubles": {
@@ -699,7 +777,120 @@
       }
     ],
 
-    "zones": []
+    "zones": [
+      {
+        "id": "doubles-alley-left",
+        "name": "Doubles Alley (Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 1370,
+          "height": 23770
+        },
+        "defaultColor": "RH22",
+        "paintable": true,
+        "area_m2": 32.57
+      },
+      {
+        "id": "doubles-alley-right",
+        "name": "Doubles Alley (Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 9600,
+          "y": 0,
+          "width": 1370,
+          "height": 23770
+        },
+        "defaultColor": "RH22",
+        "paintable": true,
+        "area_m2": 32.57
+      },
+      {
+        "id": "back-court-bottom",
+        "name": "Back Court (Bottom)",
+        "type": "rectangle",
+        "params": {
+          "x": 1370,
+          "y": 0,
+          "width": 8230,
+          "height": 6400
+        },
+        "defaultColor": "RH22",
+        "paintable": true,
+        "area_m2": 52.67
+      },
+      {
+        "id": "back-court-top",
+        "name": "Back Court (Top)",
+        "type": "rectangle",
+        "params": {
+          "x": 1370,
+          "y": 17370,
+          "width": 8230,
+          "height": 6400
+        },
+        "defaultColor": "RH22",
+        "paintable": true,
+        "area_m2": 52.67
+      },
+      {
+        "id": "service-box-bottom-left",
+        "name": "Service Box (Bottom Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 1370,
+          "y": 6400,
+          "width": 4115,
+          "height": 5485
+        },
+        "defaultColor": "RH22",
+        "paintable": true,
+        "area_m2": 22.57
+      },
+      {
+        "id": "service-box-bottom-right",
+        "name": "Service Box (Bottom Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 5485,
+          "y": 6400,
+          "width": 4115,
+          "height": 5485
+        },
+        "defaultColor": "RH22",
+        "paintable": true,
+        "area_m2": 22.57
+      },
+      {
+        "id": "service-box-top-left",
+        "name": "Service Box (Top Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 1370,
+          "y": 11885,
+          "width": 4115,
+          "height": 5485
+        },
+        "defaultColor": "RH22",
+        "paintable": true,
+        "area_m2": 22.57
+      },
+      {
+        "id": "service-box-top-right",
+        "name": "Service Box (Top Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 5485,
+          "y": 11885,
+          "width": 4115,
+          "height": 5485
+        },
+        "defaultColor": "RH22",
+        "paintable": true,
+        "area_m2": 22.57
+      }
+    ]
   },
 
   "futsal-standard": {
@@ -933,7 +1124,71 @@
       }
     ],
 
-    "zones": []
+    "zones": [
+      {
+        "id": "half-bottom",
+        "name": "Half (Bottom)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 20000,
+          "height": 20000
+        },
+        "defaultColor": "RH50",
+        "paintable": true,
+        "area_m2": 400.0
+      },
+      {
+        "id": "half-top",
+        "name": "Half (Top)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 20000,
+          "width": 20000,
+          "height": 20000
+        },
+        "defaultColor": "RH50",
+        "paintable": true,
+        "area_m2": 400.0
+      },
+      {
+        "id": "penalty-area-bottom",
+        "name": "Penalty Area (Bottom)",
+        "type": "path",
+        "params": {
+          "d": "M 4000,0 A 6000,6000 0 0,0 16000,0 Z"
+        },
+        "defaultColor": "RH50",
+        "paintable": true,
+        "area_m2": 56.55
+      },
+      {
+        "id": "penalty-area-top",
+        "name": "Penalty Area (Top)",
+        "type": "path",
+        "params": {
+          "d": "M 4000,40000 A 6000,6000 0 0,1 16000,40000 Z"
+        },
+        "defaultColor": "RH50",
+        "paintable": true,
+        "area_m2": 56.55
+      },
+      {
+        "id": "center-circle",
+        "name": "Center Circle",
+        "type": "circle",
+        "params": {
+          "cx": 10000,
+          "cy": 20000,
+          "radius": 3000
+        },
+        "defaultColor": "RH50",
+        "paintable": true,
+        "area_m2": 28.27
+      }
+    ]
   },
 
   "volleyball-indoor": {
@@ -1017,7 +1272,64 @@
       }
     ],
 
-    "zones": []
+    "zones": [
+      {
+        "id": "back-court-bottom",
+        "name": "Back Court (Bottom)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 9000,
+          "height": 6000
+        },
+        "defaultColor": "RH40",
+        "paintable": true,
+        "area_m2": 54.0
+      },
+      {
+        "id": "attack-zone-bottom",
+        "name": "Attack Zone (Bottom)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 6000,
+          "width": 9000,
+          "height": 3000
+        },
+        "defaultColor": "RH40",
+        "paintable": true,
+        "area_m2": 27.0
+      },
+      {
+        "id": "attack-zone-top",
+        "name": "Attack Zone (Top)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 9000,
+          "width": 9000,
+          "height": 3000
+        },
+        "defaultColor": "RH40",
+        "paintable": true,
+        "area_m2": 27.0
+      },
+      {
+        "id": "back-court-top",
+        "name": "Back Court (Top)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 12000,
+          "width": 9000,
+          "height": 6000
+        },
+        "defaultColor": "RH40",
+        "paintable": true,
+        "area_m2": 54.0
+      }
+    ]
   },
 
   "badminton-full": {
@@ -1161,7 +1473,148 @@
       }
     ],
 
-    "zones": []
+    "zones": [
+      {
+        "id": "singles-alley-left",
+        "name": "Singles Alley (Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 460,
+          "height": 13400
+        },
+        "defaultColor": "RH26",
+        "paintable": true,
+        "area_m2": 6.16
+      },
+      {
+        "id": "singles-alley-right",
+        "name": "Singles Alley (Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 5640,
+          "y": 0,
+          "width": 460,
+          "height": 13400
+        },
+        "defaultColor": "RH26",
+        "paintable": true,
+        "area_m2": 6.16
+      },
+      {
+        "id": "back-service-bottom",
+        "name": "Back Service (Bottom)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 6100,
+          "height": 760
+        },
+        "defaultColor": "RH26",
+        "paintable": true,
+        "area_m2": 4.64
+      },
+      {
+        "id": "back-service-top",
+        "name": "Back Service (Top)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 12640,
+          "width": 6100,
+          "height": 760
+        },
+        "defaultColor": "RH26",
+        "paintable": true,
+        "area_m2": 4.64
+      },
+      {
+        "id": "service-box-bottom-left",
+        "name": "Service Box (Bottom Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 460,
+          "y": 1980,
+          "width": 2590,
+          "height": 4720
+        },
+        "defaultColor": "RH26",
+        "paintable": true,
+        "area_m2": 12.22
+      },
+      {
+        "id": "service-box-bottom-right",
+        "name": "Service Box (Bottom Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 3050,
+          "y": 1980,
+          "width": 2590,
+          "height": 4720
+        },
+        "defaultColor": "RH26",
+        "paintable": true,
+        "area_m2": 12.22
+      },
+      {
+        "id": "service-box-top-left",
+        "name": "Service Box (Top Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 460,
+          "y": 6700,
+          "width": 2590,
+          "height": 4720
+        },
+        "defaultColor": "RH26",
+        "paintable": true,
+        "area_m2": 12.22
+      },
+      {
+        "id": "service-box-top-right",
+        "name": "Service Box (Top Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 3050,
+          "y": 6700,
+          "width": 2590,
+          "height": 4720
+        },
+        "defaultColor": "RH26",
+        "paintable": true,
+        "area_m2": 12.22
+      },
+      {
+        "id": "rear-court-bottom",
+        "name": "Rear Court (Bottom)",
+        "type": "rectangle",
+        "params": {
+          "x": 460,
+          "y": 760,
+          "width": 5180,
+          "height": 1220
+        },
+        "defaultColor": "RH26",
+        "paintable": true,
+        "area_m2": 6.32
+      },
+      {
+        "id": "rear-court-top",
+        "name": "Rear Court (Top)",
+        "type": "rectangle",
+        "params": {
+          "x": 460,
+          "y": 11420,
+          "width": 5180,
+          "height": 1220
+        },
+        "defaultColor": "RH26",
+        "paintable": true,
+        "area_m2": 6.32
+      }
+    ]
   },
 
   "pickleball-standard": {
@@ -1260,7 +1713,92 @@
       }
     ],
 
-    "zones": []
+    "zones": [
+      {
+        "id": "kitchen-bottom",
+        "name": "Kitchen (Bottom)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 6100,
+          "height": 2130
+        },
+        "defaultColor": "RH11",
+        "paintable": true,
+        "area_m2": 12.99
+      },
+      {
+        "id": "kitchen-top",
+        "name": "Kitchen (Top)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 11280,
+          "width": 6100,
+          "height": 2130
+        },
+        "defaultColor": "RH11",
+        "paintable": true,
+        "area_m2": 12.99
+      },
+      {
+        "id": "service-box-bottom-left",
+        "name": "Service Box (Bottom Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 2130,
+          "width": 3050,
+          "height": 4575
+        },
+        "defaultColor": "RH11",
+        "paintable": true,
+        "area_m2": 13.95
+      },
+      {
+        "id": "service-box-bottom-right",
+        "name": "Service Box (Bottom Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 3050,
+          "y": 2130,
+          "width": 3050,
+          "height": 4575
+        },
+        "defaultColor": "RH11",
+        "paintable": true,
+        "area_m2": 13.95
+      },
+      {
+        "id": "service-box-top-left",
+        "name": "Service Box (Top Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 6705,
+          "width": 3050,
+          "height": 4575
+        },
+        "defaultColor": "RH11",
+        "paintable": true,
+        "area_m2": 13.95
+      },
+      {
+        "id": "service-box-top-right",
+        "name": "Service Box (Top Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 3050,
+          "y": 6705,
+          "width": 3050,
+          "height": 4575
+        },
+        "defaultColor": "RH11",
+        "paintable": true,
+        "area_m2": 13.95
+      }
+    ]
   },
 
   "basketball-half": {
@@ -1595,7 +2133,92 @@
       }
     ],
 
-    "zones": []
+    "zones": [
+      {
+        "id": "back-court-bottom",
+        "name": "Back Court (Bottom)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 8230,
+          "height": 6400
+        },
+        "defaultColor": "RH22",
+        "paintable": true,
+        "area_m2": 52.67
+      },
+      {
+        "id": "back-court-top",
+        "name": "Back Court (Top)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 17370,
+          "width": 8230,
+          "height": 6400
+        },
+        "defaultColor": "RH22",
+        "paintable": true,
+        "area_m2": 52.67
+      },
+      {
+        "id": "service-box-bottom-left",
+        "name": "Service Box (Bottom Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 6400,
+          "width": 4115,
+          "height": 5485
+        },
+        "defaultColor": "RH22",
+        "paintable": true,
+        "area_m2": 22.57
+      },
+      {
+        "id": "service-box-bottom-right",
+        "name": "Service Box (Bottom Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 4115,
+          "y": 6400,
+          "width": 4115,
+          "height": 5485
+        },
+        "defaultColor": "RH22",
+        "paintable": true,
+        "area_m2": 22.57
+      },
+      {
+        "id": "service-box-top-left",
+        "name": "Service Box (Top Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 11885,
+          "width": 4115,
+          "height": 5485
+        },
+        "defaultColor": "RH22",
+        "paintable": true,
+        "area_m2": 22.57
+      },
+      {
+        "id": "service-box-top-right",
+        "name": "Service Box (Top Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 4115,
+          "y": 11885,
+          "width": 4115,
+          "height": 5485
+        },
+        "defaultColor": "RH22",
+        "paintable": true,
+        "area_m2": 22.57
+      }
+    ]
   },
 
   "mini-tennis-red": {
@@ -1694,7 +2317,92 @@
       }
     ],
 
-    "zones": []
+    "zones": [
+      {
+        "id": "back-court-bottom",
+        "name": "Back Court (Bottom)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 5490,
+          "height": 2745
+        },
+        "defaultColor": "RH02",
+        "paintable": true,
+        "area_m2": 15.07
+      },
+      {
+        "id": "back-court-top",
+        "name": "Back Court (Top)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 8225,
+          "width": 5490,
+          "height": 2745
+        },
+        "defaultColor": "RH02",
+        "paintable": true,
+        "area_m2": 15.07
+      },
+      {
+        "id": "service-box-bottom-left",
+        "name": "Service Box (Bottom Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 2745,
+          "width": 2745,
+          "height": 2740
+        },
+        "defaultColor": "RH02",
+        "paintable": true,
+        "area_m2": 7.52
+      },
+      {
+        "id": "service-box-bottom-right",
+        "name": "Service Box (Bottom Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 2745,
+          "y": 2745,
+          "width": 2745,
+          "height": 2740
+        },
+        "defaultColor": "RH02",
+        "paintable": true,
+        "area_m2": 7.52
+      },
+      {
+        "id": "service-box-top-left",
+        "name": "Service Box (Top Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 5485,
+          "width": 2745,
+          "height": 2740
+        },
+        "defaultColor": "RH02",
+        "paintable": true,
+        "area_m2": 7.52
+      },
+      {
+        "id": "service-box-top-right",
+        "name": "Service Box (Top Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 2745,
+          "y": 5485,
+          "width": 2745,
+          "height": 2740
+        },
+        "defaultColor": "RH02",
+        "paintable": true,
+        "area_m2": 7.52
+      }
+    ]
   },
 
   "padel-standard": {
@@ -1823,7 +2531,120 @@
       }
     ],
 
-    "zones": []
+    "zones": [
+      {
+        "id": "service-box-bottom-left",
+        "name": "Service Box (Bottom Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 5000,
+          "height": 3000
+        },
+        "defaultColor": "RH60",
+        "paintable": true,
+        "area_m2": 15.0
+      },
+      {
+        "id": "service-box-bottom-right",
+        "name": "Service Box (Bottom Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 5000,
+          "y": 0,
+          "width": 5000,
+          "height": 3000
+        },
+        "defaultColor": "RH60",
+        "paintable": true,
+        "area_m2": 15.0
+      },
+      {
+        "id": "service-box-top-left",
+        "name": "Service Box (Top Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 17000,
+          "width": 5000,
+          "height": 3000
+        },
+        "defaultColor": "RH60",
+        "paintable": true,
+        "area_m2": 15.0
+      },
+      {
+        "id": "service-box-top-right",
+        "name": "Service Box (Top Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 5000,
+          "y": 17000,
+          "width": 5000,
+          "height": 3000
+        },
+        "defaultColor": "RH60",
+        "paintable": true,
+        "area_m2": 15.0
+      },
+      {
+        "id": "main-court-bottom-left",
+        "name": "Main Court (Bottom Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 3000,
+          "width": 5000,
+          "height": 7000
+        },
+        "defaultColor": "RH60",
+        "paintable": true,
+        "area_m2": 35.0
+      },
+      {
+        "id": "main-court-bottom-right",
+        "name": "Main Court (Bottom Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 5000,
+          "y": 3000,
+          "width": 5000,
+          "height": 7000
+        },
+        "defaultColor": "RH60",
+        "paintable": true,
+        "area_m2": 35.0
+      },
+      {
+        "id": "main-court-top-left",
+        "name": "Main Court (Top Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 10000,
+          "width": 5000,
+          "height": 7000
+        },
+        "defaultColor": "RH60",
+        "paintable": true,
+        "area_m2": 35.0
+      },
+      {
+        "id": "main-court-top-right",
+        "name": "Main Court (Top Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 5000,
+          "y": 10000,
+          "width": 5000,
+          "height": 7000
+        },
+        "defaultColor": "RH60",
+        "paintable": true,
+        "area_m2": 35.0
+      }
+    ]
   },
 
   "handball-standard": {
@@ -2005,7 +2826,58 @@
       }
     ],
 
-    "zones": []
+    "zones": [
+      {
+        "id": "half-bottom",
+        "name": "Half (Bottom)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 20000,
+          "height": 20000
+        },
+        "defaultColor": "RH10",
+        "paintable": true,
+        "area_m2": 400.0
+      },
+      {
+        "id": "half-top",
+        "name": "Half (Top)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 20000,
+          "width": 20000,
+          "height": 20000
+        },
+        "defaultColor": "RH10",
+        "paintable": true,
+        "area_m2": 400.0
+      },
+      {
+        "id": "goal-area-bottom",
+        "name": "Goal Area (Bottom)",
+        "type": "path",
+        "params": {
+          "d": "M 4000,0 A 6000,6000 0 0,0 16000,0 Z"
+        },
+        "defaultColor": "RH10",
+        "paintable": true,
+        "area_m2": 56.55
+      },
+      {
+        "id": "goal-area-top",
+        "name": "Goal Area (Top)",
+        "type": "path",
+        "params": {
+          "d": "M 4000,40000 A 6000,6000 0 0,1 16000,40000 Z"
+        },
+        "defaultColor": "RH10",
+        "paintable": true,
+        "area_m2": 56.55
+      }
+    ]
   },
 
   "hockey-d": {
@@ -2074,7 +2946,19 @@
       }
     ],
 
-    "zones": []
+    "zones": [
+      {
+        "id": "shooting-circle",
+        "name": "Shooting Circle",
+        "type": "path",
+        "params": {
+          "d": "M 0,0 A 14630,14630 0 0,0 29260,0 Z"
+        },
+        "defaultColor": "RH23",
+        "paintable": true,
+        "area_m2": 336.24
+      }
+    ]
   },
 
   "hockey-5s": {
@@ -2202,6 +3086,57 @@
       }
     ],
 
-    "zones": []
+    "zones": [
+      {
+        "id": "half-bottom",
+        "name": "Half (Bottom)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 41100,
+          "height": 27500
+        },
+        "defaultColor": "RH23",
+        "paintable": true,
+        "area_m2": 1130.25
+      },
+      {
+        "id": "half-top",
+        "name": "Half (Top)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 27500,
+          "width": 41100,
+          "height": 27500
+        },
+        "defaultColor": "RH23",
+        "paintable": true,
+        "area_m2": 1130.25
+      },
+      {
+        "id": "shooting-circle-bottom",
+        "name": "Shooting Circle (Bottom)",
+        "type": "path",
+        "params": {
+          "d": "M 11550,0 A 9000,9000 0 0,0 29550,0 Z"
+        },
+        "defaultColor": "RH23",
+        "paintable": true,
+        "area_m2": 127.23
+      },
+      {
+        "id": "shooting-circle-top",
+        "name": "Shooting Circle (Top)",
+        "type": "path",
+        "params": {
+          "d": "M 11550,55000 A 9000,9000 0 0,1 29550,55000 Z"
+        },
+        "defaultColor": "RH23",
+        "paintable": true,
+        "area_m2": 127.23
+      }
+    ]
   }
 }
