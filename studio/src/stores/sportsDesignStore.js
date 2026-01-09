@@ -1323,6 +1323,14 @@ export const useSportsDesignStore = create(
             ? (refreshedData.blendSvgContent || refreshedData.solidSvgContent)
             : (refreshedData.solidSvgContent || refreshedData.blendSvgContent);
 
+          // Calculate scale adjustment to preserve rendered size on canvas
+          // If originalWidth_mm changed, adjust scale to keep the rendered width the same
+          let adjustedScale = motif.scale || 1;
+          if (motif.originalWidth_mm && refreshedData.originalWidth_mm) {
+            const currentRenderedWidth = motif.originalWidth_mm * (motif.scale || 1);
+            adjustedScale = currentRenderedWidth / refreshedData.originalWidth_mm;
+          }
+
           set((state) => ({
             motifs: {
               ...state.motifs,
@@ -1336,9 +1344,10 @@ export const useSportsDesignStore = create(
                 svgContent: newSvgContent,
                 sourceThumbnailUrl: refreshedData.sourceThumbnailUrl,
                 sourceDesignName: refreshedData.sourceDesignName,
-                // Update dimensions if they changed
+                // Update dimensions and adjust scale to preserve rendered size
                 originalWidth_mm: refreshedData.originalWidth_mm,
-                originalHeight_mm: refreshedData.originalHeight_mm
+                originalHeight_mm: refreshedData.originalHeight_mm,
+                scale: adjustedScale
               }
             },
             lastModified: Date.now()
