@@ -278,6 +278,84 @@
 
     "zones": [
       {
+        "id": "three-point-arc-area-bottom",
+        "name": "3-Point Arc (Bottom)",
+        "type": "path",
+        "params": {
+          "d": "M 900,2990 A 6750,6750 0 0,1 14100,2990 L 14100,0 L 9950,0 L 9950,5800 L 5050,5800 L 5050,0 L 900,0 Z"
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 52.5
+      },
+      {
+        "id": "three-point-arc-area-top",
+        "name": "3-Point Arc (Top)",
+        "type": "path",
+        "params": {
+          "d": "M 900,25010 A 6750,6750 0 0,0 14100,25010 L 14100,28000 L 9950,28000 L 9950,22200 L 5050,22200 L 5050,28000 L 900,28000 Z"
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 52.5
+      },
+      {
+        "id": "three-point-corner-bottom-left",
+        "name": "3-Point Corner (Bottom Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 900,
+          "height": 2990
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 2.69
+      },
+      {
+        "id": "three-point-corner-bottom-right",
+        "name": "3-Point Corner (Bottom Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 14100,
+          "y": 0,
+          "width": 900,
+          "height": 2990
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 2.69
+      },
+      {
+        "id": "three-point-corner-top-left",
+        "name": "3-Point Corner (Top Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 25010,
+          "width": 900,
+          "height": 2990
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 2.69
+      },
+      {
+        "id": "three-point-corner-top-right",
+        "name": "3-Point Corner (Top Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 14100,
+          "y": 25010,
+          "width": 900,
+          "height": 2990
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 2.69
+      },
+      {
         "id": "key-area-top",
         "name": "Key Area (Top)",
         "type": "rectangle",
@@ -304,6 +382,63 @@
         "defaultColor": "RH20",
         "paintable": true,
         "area_m2": 28.42
+      },
+      {
+        "id": "free-throw-semicircle-top",
+        "name": "Free-Throw Semi-Circle (Top)",
+        "type": "path",
+        "params": {
+          "d": "M 5700,22200 A 1800,1800 0 0,1 9300,22200 Z"
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 5.09
+      },
+      {
+        "id": "free-throw-semicircle-bottom",
+        "name": "Free-Throw Semi-Circle (Bottom)",
+        "type": "path",
+        "params": {
+          "d": "M 5700,5800 A 1800,1800 0 0,0 9300,5800 Z"
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 5.09
+      },
+      {
+        "id": "restricted-area-bottom",
+        "name": "Restricted Area (Bottom)",
+        "type": "path",
+        "params": {
+          "d": "M 6250,0 A 1250,1250 0 0,0 8750,0 Z"
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 2.45
+      },
+      {
+        "id": "restricted-area-top",
+        "name": "Restricted Area (Top)",
+        "type": "path",
+        "params": {
+          "d": "M 6250,28000 A 1250,1250 0 0,1 8750,28000 Z"
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 2.45
+      },
+      {
+        "id": "center-circle",
+        "name": "Center Circle",
+        "type": "circle",
+        "params": {
+          "cx": 7500,
+          "cy": 14000,
+          "radius": 1800
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 10.18
       }
     ]
   },
@@ -1272,6 +1407,45 @@
 
     "zones": [
       {
+        "id": "three-point-arc-area",
+        "name": "3-Point Arc",
+        "type": "path",
+        "params": {
+          "d": "M 900,2990 A 6750,6750 0 0,1 14100,2990 L 14100,0 L 9950,0 L 9950,5800 L 5050,5800 L 5050,0 L 900,0 Z"
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 52.5
+      },
+      {
+        "id": "three-point-corner-left",
+        "name": "3-Point Corner (Left)",
+        "type": "rectangle",
+        "params": {
+          "x": 0,
+          "y": 0,
+          "width": 900,
+          "height": 2990
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 2.69
+      },
+      {
+        "id": "three-point-corner-right",
+        "name": "3-Point Corner (Right)",
+        "type": "rectangle",
+        "params": {
+          "x": 14100,
+          "y": 0,
+          "width": 900,
+          "height": 2990
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 2.69
+      },
+      {
         "id": "key-area",
         "name": "Key Area",
         "type": "rectangle",
@@ -1284,6 +1458,28 @@
         "defaultColor": "RH20",
         "paintable": true,
         "area_m2": 28.42
+      },
+      {
+        "id": "free-throw-semicircle",
+        "name": "Free-Throw Semi-Circle",
+        "type": "path",
+        "params": {
+          "d": "M 5700,5800 A 1800,1800 0 0,0 9300,5800 Z"
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 5.09
+      },
+      {
+        "id": "restricted-area",
+        "name": "Restricted Area",
+        "type": "path",
+        "params": {
+          "d": "M 6250,0 A 1250,1250 0 0,0 8750,0 Z"
+        },
+        "defaultColor": "RH20",
+        "paintable": true,
+        "area_m2": 2.45
       }
     ]
   },

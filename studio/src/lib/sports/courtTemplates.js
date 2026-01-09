@@ -77,6 +77,13 @@ export function renderZone(zone, color) {
         fill: color
       };
 
+    case 'path':
+      return {
+        type: 'path',
+        d: params.d,
+        fill: color
+      };
+
     default:
       console.warn(`Unknown zone type: ${type}`);
       return null;

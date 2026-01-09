@@ -3092,6 +3092,15 @@ function ZoneElement({ zone }) {
         />
       );
 
+    case 'path':
+      return (
+        <path
+          d={zone.d}
+          fill={zone.fill}
+          pointerEvents="none"
+        />
+      );
+
     default:
       return null;
   }
