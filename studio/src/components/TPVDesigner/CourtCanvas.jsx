@@ -2991,12 +2991,27 @@ function CourtElement({ court, isSelected, onMouseDown, onTouchStart, onDoubleCl
   // Get court surface color (if set) - this colors the entire court area
   const courtSurfaceColor = court.courtSurfaceColor?.hex || null;
 
+  // Unique clip path ID for this court
+  const clipPathId = `court-clip-${court.id}`;
+
   return (
     <g
       className={`court-canvas__court ${isSelected ? 'court-canvas__court--selected' : ''}`}
       transform={getCourtTransformString(court)}
       style={{ cursor: 'move' }}
     >
+      {/* Define clip path for zones - keeps them within court boundary */}
+      <defs>
+        <clipPath id={clipPathId}>
+          <rect
+            x="0"
+            y="0"
+            width={court.template.dimensions.width_mm}
+            height={court.template.dimensions.length_mm}
+          />
+        </clipPath>
+      </defs>
+
       {/* Court surface fill - renders behind all other elements */}
       {courtSurfaceColor && (
         <rect
@@ -3023,10 +3038,12 @@ function CourtElement({ court, isSelected, onMouseDown, onTouchStart, onDoubleCl
         style={{ cursor: 'move' }}
       />
 
-      {/* Zones (filled areas) - render first so they're behind lines */}
-      {zones.map(zone => (
-        <ZoneElement key={zone.id} zone={zone} />
-      ))}
+      {/* Zones (filled areas) - render first so they're behind lines, clipped to court boundary */}
+      <g clipPath={`url(#${clipPathId})`}>
+        {zones.map(zone => (
+          <ZoneElement key={zone.id} zone={zone} />
+        ))}
+      </g>
 
       {/* Line Markings - render on top */}
       {markings.map(marking => (
