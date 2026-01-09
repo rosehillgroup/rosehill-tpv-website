@@ -354,8 +354,8 @@ function TPVDesigner({ loadedDesign }) {
 
       const selectedId = selectedCourtId || selectedTrackId || selectedMotifId || currentSelectedShapeId || currentSelectedTextId;
 
-      // Delete key - remove selected element (skip if editing text inline)
-      if (e.key === 'Delete' && selectedId && !editingTextId) {
+      // Delete/Backspace key - remove selected element (skip if editing text inline)
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedId && !editingTextId) {
         e.preventDefault();
         if (selectedCourtId) {
           removeCourt(selectedCourtId);
