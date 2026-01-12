@@ -1,6 +1,7 @@
 // TPV Studio - TPV Designer State Management
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { forkDesign } from '../lib/api/designs.js';
 import {
   generateBlobControlPoints,
   generateEllipseControlPoints,
@@ -236,7 +237,14 @@ const initialState = {
   isDirty: false,
   isInteracting: false, // True during drag/resize/draw - blocks autosave
   lastSavedHash: null,
-  autosaveTimer: null
+  autosaveTimer: null,
+
+  // Borrowed design state (for admin viewing other users' designs)
+  isBorrowed: false,           // True when viewing another user's design
+  borrowedFromId: null,        // Original design ID
+  borrowedFromUser: null,      // Original owner email (for display)
+  isForking: false,            // True during fork operation
+  forkedDesignId: null         // New design ID after fork
 };
 
 export const useSportsDesignStore = create(
@@ -4297,7 +4305,36 @@ export const useSportsDesignStore = create(
       },
 
       // Mark design as dirty and schedule autosave
-      markDirty: () => {
+      // Also handles auto-fork when editing a borrowed design
+      markDirty: async () => {
+        const state = get();
+
+        // Auto-fork if this is the first edit of a borrowed design
+        if (state.isBorrowed && !state.isForking && state.borrowedFromId) {
+          set({ isForking: true });
+
+          try {
+            console.log('[STORE] Auto-forking borrowed design:', state.borrowedFromId);
+            const result = await forkDesign(state.borrowedFromId);
+
+            if (result.success && result.design) {
+              console.log('[STORE] Fork successful, new design ID:', result.design.id);
+              set({
+                isBorrowed: false,
+                borrowedFromId: null,
+                borrowedFromUser: null,
+                forkedDesignId: result.design.id,
+                designName: result.design.name
+              });
+            }
+          } catch (err) {
+            console.error('[STORE] Fork failed:', err);
+            // Don't block editing - user can save manually later
+          } finally {
+            set({ isForking: false });
+          }
+        }
+
         set({ isDirty: true });
         get().scheduleAutosave();
       },
@@ -4507,6 +4544,27 @@ export const useSportsDesignStore = create(
           historyIndex: -1
         });
         get().addToHistory();
+      },
+
+      // Set borrowed design state (for admin viewing other users' designs)
+      setBorrowed: (designId, ownerEmail) => {
+        set({
+          isBorrowed: true,
+          borrowedFromId: designId,
+          borrowedFromUser: ownerEmail,
+          forkedDesignId: null
+        });
+      },
+
+      // Clear borrowed state (when closing or after forking)
+      clearBorrowed: () => {
+        set({
+          isBorrowed: false,
+          borrowedFromId: null,
+          borrowedFromUser: null,
+          isForking: false,
+          forkedDesignId: null
+        });
       },
 
       // Export current design state

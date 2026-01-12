@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auth } from './lib/api/auth.js';
 import { loadDesign } from './lib/api/designs.js';
+import { useSportsDesignStore } from './stores/sportsDesignStore.js';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import TPVDesigner from './components/TPVDesigner/TPVDesigner.jsx';
 import Header from './components/Header.jsx';
@@ -49,8 +50,19 @@ function App() {
   const loadDesignFromUrl = async (designId) => {
     try {
       console.log('[APP] Loading design from URL:', designId);
-      const { design } = await loadDesign(designId);
+      const response = await loadDesign(designId);
+      const { design, is_borrowed, owner_email } = response;
+
       if (design) {
+        // Handle borrowed design state (admin viewing another user's design)
+        if (is_borrowed) {
+          console.log('[APP] Loading borrowed design from:', owner_email);
+          useSportsDesignStore.getState().setBorrowed(designId, owner_email);
+        } else {
+          // Clear any previous borrowed state
+          useSportsDesignStore.getState().clearBorrowed();
+        }
+
         handleLoadDesign(design);
         // Clear the URL parameter after loading
         const url = new URL(window.location);

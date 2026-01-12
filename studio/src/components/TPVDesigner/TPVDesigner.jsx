@@ -144,7 +144,12 @@ function TPVDesigner({ loadedDesign }) {
     closeMobileSheets,
     // Autosave state
     isDirty,
-    clearAutosaveTimer
+    clearAutosaveTimer,
+    // Borrowed design state (for admin viewing other users' designs)
+    isBorrowed,
+    borrowedFromUser,
+    isForking,
+    forkedDesignId
   } = useSportsDesignStore();
 
   // Handle dimension form submit
@@ -523,6 +528,19 @@ function TPVDesigner({ loadedDesign }) {
 
   return (
     <div className="sports-designer">
+      {/* Borrowed Design Banner */}
+      {(isBorrowed || forkedDesignId) && (
+        <div className={`borrowed-banner ${forkedDesignId ? 'forked' : ''}`}>
+          {isForking ? (
+            <span>Creating your copy...</span>
+          ) : forkedDesignId ? (
+            <span>Now editing your copy - original design unchanged</span>
+          ) : (
+            <span>Viewing {borrowedFromUser}'s design - changes will create your own copy</span>
+          )}
+        </div>
+      )}
+
       {/* Dimension Edit Modal */}
       {showDimensionModal && (
         <div className="sports-designer__modal-overlay" onClick={() => setShowDimensionModal(false)}>

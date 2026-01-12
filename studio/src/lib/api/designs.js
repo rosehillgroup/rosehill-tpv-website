@@ -144,3 +144,26 @@ export async function deleteDesign(designId) {
 
   return response.json();
 }
+
+/**
+ * Fork a design (create a copy under current user's account)
+ * Used by admins to create their own copy when editing another user's design
+ * @param {string} sourceDesignId - Source design UUID to fork
+ * @returns {Promise<Object>} New design data with new ID
+ */
+export async function forkDesign(sourceDesignId) {
+  const headers = await getAuthHeaders();
+
+  const response = await fetch('/api/designs/fork', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ source_design_id: sourceDesignId })
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Unable to create a copy of this design. Please try again.');
+  }
+
+  return response.json();
+}

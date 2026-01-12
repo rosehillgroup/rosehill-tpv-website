@@ -1,8 +1,9 @@
 // TPV Studio - Get/Update/Delete Single Design (Vercel)
 // Handles operations on a specific design by ID
 
-import { getAuthenticatedClient } from '../_utils/supabase.js';
+import { getAuthenticatedClient, getSupabaseServiceClient } from '../_utils/supabase.js';
 import { ensureOwnership, authorizedUpdate, authorizedDelete } from '../_utils/authorization.js';
+import { isAdmin } from '../_utils/admin.js';
 
 export default async function handler(req, res) {
   const { id } = req.query;
@@ -21,7 +22,47 @@ export default async function handler(req, res) {
 
     // GET - Load design
     if (req.method === 'GET') {
-      // First verify ownership (CRITICAL: IDOR protection)
+      // Check if user is admin - admins can view any design (read-only)
+      const userIsAdmin = await isAdmin(user.id);
+
+      if (userIsAdmin) {
+        // Admin can access any design using service client (bypasses RLS)
+        const serviceClient = getSupabaseServiceClient();
+        const { data: design, error } = await serviceClient
+          .from('saved_designs')
+          .select(`
+            *,
+            projects:project_id (
+              id,
+              name,
+              color
+            )
+          `)
+          .eq('id', id)
+          .single();
+
+        if (error || !design) {
+          return res.status(404).json({ error: 'Design not found' });
+        }
+
+        // Get owner email for display
+        let ownerEmail = 'Unknown';
+        if (design.user_id) {
+          const { data: ownerData } = await serviceClient.auth.admin.getUserById(design.user_id);
+          ownerEmail = ownerData?.user?.email || 'Unknown';
+        }
+
+        const isBorrowed = design.user_id !== user.id;
+        console.log(`[GET-DESIGN] ADMIN ${user.email} viewed design ${id} (owner: ${ownerEmail}, borrowed: ${isBorrowed})`);
+
+        return res.status(200).json({
+          design,
+          is_borrowed: isBorrowed,
+          owner_email: isBorrowed ? ownerEmail : null
+        });
+      }
+
+      // Non-admin flow: verify ownership (CRITICAL: IDOR protection)
       const ownedDesign = await ensureOwnership(client, 'saved_designs', id, user.id);
 
       if (!ownedDesign) {
@@ -59,7 +100,7 @@ export default async function handler(req, res) {
 
       console.log(`[GET-DESIGN] Loaded design ${id} for user ${user.email}`);
 
-      return res.status(200).json({ design });
+      return res.status(200).json({ design, is_borrowed: false });
     }
 
     // PUT - Update design metadata (name, description, project, etc.)

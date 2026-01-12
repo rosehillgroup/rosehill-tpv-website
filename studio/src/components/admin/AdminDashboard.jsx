@@ -737,16 +737,15 @@ function DesignsPanel({ designs, total, currentUserId }) {
                 <p><strong>Job ID:</strong> <code>{selectedDesign.job_id}</code></p>
               )}
               <div className="modal-actions">
-                {currentUserId === selectedDesign.user_id ? (
-                  <button
-                    className="btn-primary"
-                    onClick={() => handleOpenInStudio(selectedDesign)}
-                  >
-                    Open in Studio
-                  </button>
-                ) : (
+                <button
+                  className="btn-primary"
+                  onClick={() => handleOpenInStudio(selectedDesign)}
+                >
+                  Open in Studio
+                </button>
+                {currentUserId !== selectedDesign.user_id && (
                   <p className="ownership-note">
-                    Only the design owner can open this in Studio
+                    Changes will create your own copy
                   </p>
                 )}
               </div>
