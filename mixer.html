@@ -1879,19 +1879,18 @@
                         
                         // Renderer settings optimized for vibrant colors
                         renderer.physicallyCorrectLights = false; // Disable for more predictable lighting
-                        renderer.toneMapping = THREE.ReinhardToneMapping; // Better for vibrant colors
-                        renderer.toneMappingExposure = 1.1; // Higher exposure for color pop
+                        renderer.toneMapping = THREE.NoToneMapping; // No tone mapping for color accuracy
 
                         tileContainerRef.current.appendChild(renderer.domElement);
 
                         // Enhanced lighting setup for realistic rubber tile appearance
                         
-                        // 1. Ambient light - brighter for vibrant colors
-                        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); // Much brighter for color vibrancy
+                        // 1. Ambient light - reduced for color accuracy
+                        const ambientLight = new THREE.AmbientLight(0xffffff, 0.25); // Reduced for color accuracy
                         scene.add(ambientLight);
 
-                        // 2. Main directional light - bright enough to show true colors
-                        const mainLight = new THREE.DirectionalLight(0xffffff, 0.4); // Brighter for color pop
+                        // 2. Main directional light - reduced for color accuracy
+                        const mainLight = new THREE.DirectionalLight(0xffffff, 0.4); // Reduced for color accuracy
                         mainLight.position.set(400, 500, 300);
                         mainLight.castShadow = true;
                         mainLight.shadow.mapSize.width = 2048;
@@ -1905,13 +1904,13 @@
                         mainLight.shadow.bias = -0.0001;
                         scene.add(mainLight);
 
-                        // 3. Fill light - stronger fill for color vibrancy
-                        const fillLight = new THREE.DirectionalLight(0xffffff, 0.15); // More visible
+                        // 3. Fill light - minimal for color accuracy
+                        const fillLight = new THREE.DirectionalLight(0xffffff, 0.05); // Reduced for color accuracy
                         fillLight.position.set(-200, 250, -150);
                         scene.add(fillLight);
 
-                        // 4. Rim light - stronger edge definition for pop
-                        const rimLight = new THREE.DirectionalLight(0xffffff, 0.2); // Stronger rim lighting
+                        // 4. Rim light - minimal for color accuracy
+                        const rimLight = new THREE.DirectionalLight(0xffffff, 0.05); // Reduced for color accuracy
                         rimLight.position.set(-250, 200, 400);
                         scene.add(rimLight);
 
@@ -2001,11 +2000,8 @@
                                 // Always update subtle lighting animation
                                 const { lights } = tileSceneRef.current;
 
-                                // Lighting animation for vibrant appearance
-                                // Gentle intensity variation to maintain vibrancy
-                                lights.main.intensity = 0.4 + Math.sin(animationTime * 0.2) * 0.03;
-                                lights.rim.intensity = 0.2 + Math.cos(animationTime * 0.25) * 0.015;
-                                
+                                // Light intensities now fixed (no animation) for color accuracy
+
                                 // Only render if something changed
                                 if (sceneChanged) {
                                     renderer.render(scene, camera);
@@ -2270,7 +2266,7 @@
                         // Ambient occlusion for depth
                         const occlusion = Math.max(0, 1 - (normalizedSize / 4) * 0.15); // Large granules get slight darkening
 
-                        const lightColor = `rgba(255, 255, 255, ${finalLighting * 0.15})`;
+                        const lightColor = `rgba(255, 255, 255, 0)`; // Disabled for color accuracy
                         const shadowColor = `rgba(0, 0, 0, ${(1 - occlusion) * 0.1})`;
 
                         gradient.addColorStop(0, lightColor);
@@ -2291,20 +2287,8 @@
                         ctx.fill();
                         ctx.restore();
 
-                        // Add specular highlights for large granules (distance-appropriate)
-                        if (normalizedSize > 2.0 && finalLighting > 1.0) {
-                            const highlightIntensity = (finalLighting - 1.0) * (normalizedSize / 4) * 0.8;
-                            ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(0.4, highlightIntensity)})`;
-                            ctx.beginPath();
-                            ctx.arc(
-                                centerX - radius * 0.2,
-                                centerY - radius * 0.2,
-                                radius * 0.3,
-                                0,
-                                Math.PI * 2
-                            );
-                            ctx.fill();
-                        }
+                        // Specular highlights disabled for color accuracy
+                        // if (normalizedSize > 2.0 && finalLighting > 1.0) { ... }
                     }
 
                     return canvas;
@@ -2491,8 +2475,8 @@
                             const sampleX = sourceX;
                             const sampleY = sourceY;
 
-                            // Apply saturation boost filter
-                            tileCtx.filter = 'saturate(1.4) contrast(1.15) brightness(1.05)';
+                            // No filter for exact color match
+                            tileCtx.filter = 'none';
 
                             // Create 2x2 tiled pattern for smaller granules
                             const tileSize = 256; // Each tile is 256px (half of 512)
@@ -2534,8 +2518,8 @@
                             material.color.setHex(0xffffff); // Let enhanced texture handle all color
 
                             // Simplified material properties to preserve enhanced texture colors
-                            material.envMapIntensity = 0.2; // Reduced to preserve texture vibrancy
-                            material.clearcoat = 0.05; // Minimal clearcoat
+                            material.envMapIntensity = 0; // Disabled for color accuracy
+                            material.clearcoat = 0; // Disabled for color accuracy
                             material.clearcoatRoughness = 0.9; // Keep clearcoat matte
 
                             // Remove emissive - let enhanced texture provide the pop
