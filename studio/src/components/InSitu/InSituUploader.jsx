@@ -4,6 +4,8 @@
 import { useState, useRef } from 'react';
 import { supabase } from '../../lib/api/auth.js';
 
+const debug = import.meta.env.DEV ? console.log.bind(console) : () => {};
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
 
@@ -70,11 +72,11 @@ export default function InSituUploader({ onPhotoUploaded, disabled = false }) {
     setPreview(previewUrl);
 
     // Get dimensions from local file BEFORE uploading
-    console.log('[IN-SITU-UPLOADER] Loading local file to get dimensions...');
+    debug('[IN-SITU-UPLOADER] Loading local file to get dimensions...');
     const dimensions = await new Promise((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
-        console.log('[IN-SITU-UPLOADER] Local image loaded, dimensions:', img.naturalWidth, 'x', img.naturalHeight);
+        debug('[IN-SITU-UPLOADER] Local image loaded, dimensions:', img.naturalWidth, 'x', img.naturalHeight);
         resolve({ width: img.naturalWidth, height: img.naturalHeight });
         // Don't revoke - keep blob URL alive for FourPointEditor to use
       };
@@ -108,10 +110,10 @@ export default function InSituUploader({ onPhotoUploaded, disabled = false }) {
         .from('tpv-studio-uploads')
         .getPublicUrl(filePath);
 
-      console.log('[IN-SITU-UPLOADER] Photo uploaded:', publicUrl);
-      console.log('[IN-SITU-UPLOADER] Using dimensions from local file:', dimensions);
-      console.log('[IN-SITU-UPLOADER] Passing local blob URL for fast preview');
-      console.log('[IN-SITU-UPLOADER] Calling onPhotoUploaded callback...');
+      debug('[IN-SITU-UPLOADER] Photo uploaded:', publicUrl);
+      debug('[IN-SITU-UPLOADER] Using dimensions from local file:', dimensions);
+      debug('[IN-SITU-UPLOADER] Passing local blob URL for fast preview');
+      debug('[IN-SITU-UPLOADER] Calling onPhotoUploaded callback...');
 
       // Pass local blob URL for instant preview, Supabase URL for final save
       onPhotoUploaded({

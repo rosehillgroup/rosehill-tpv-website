@@ -4,8 +4,10 @@
 import { getAuthenticatedClient, getSupabaseServiceClient } from '../_utils/supabase.js';
 import { ensureOwnership, authorizedUpdate, authorizedDelete } from '../_utils/authorization.js';
 import { isAdmin } from '../_utils/admin.js';
+import { createLogger } from '../_utils/logger.js';
 
 export default async function handler(req, res) {
+  const logger = createLogger(req, { endpoint: '/api/designs/by-id' });
   const { id } = req.query;
 
   if (!id) {
@@ -160,16 +162,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
 
   } catch (error) {
-    console.error('[DESIGN-BY-ID ERROR]', {
-      message: error.message,
-      details: error.stack,
-      hint: error.hint || '',
-      code: error.code || ''
-    });
-
-    return res.status(500).json({
-      error: error.message,
-      hint: 'Check Vercel function logs for details'
-    });
+    logger.error('Design operation failed', { error: error.message, stack: error.stack, code: error.code || '' });
+    res.setHeader('X-Correlation-Id', logger.correlationId);
+    return res.status(500).json({ error: 'An unexpected error occurred. Please try again.' });
   }
 }

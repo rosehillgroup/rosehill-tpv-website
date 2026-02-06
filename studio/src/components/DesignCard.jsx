@@ -2,6 +2,7 @@
 // Individual design preview card for gallery
 
 import { useState } from 'react';
+import { showToast } from '../lib/toast.js';
 import './DesignCard.css';
 
 export default function DesignCard({
@@ -23,7 +24,7 @@ export default function DesignCard({
       await onDelete(design.id);
     } catch (err) {
       console.error('Failed to delete design:', err);
-      alert(`Failed to delete: ${err.message}`);
+      showToast('Failed to delete design. Please try again.');
       setIsDeleting(false);
     }
   };

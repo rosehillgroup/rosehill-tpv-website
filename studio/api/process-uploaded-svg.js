@@ -5,6 +5,7 @@
 import { getSupabaseServiceClient, getAuthenticatedClient } from './_utils/supabase.js';
 import { randomUUID } from 'crypto';
 import { sanitizeAndValidateSVG, quickValidateSVG } from './_utils/svgSanitize.js';
+import { createLogger } from './_utils/logger.js';
 
 /**
  * Process uploaded SVG file (direct path - no AI generation)
@@ -34,8 +35,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Get authenticated user (if available)
+    // Get authenticated user
     const { user } = await getAuthenticatedClient(req);
+
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
 
     const {
       svg_url,
@@ -197,8 +202,7 @@ export default async function handler(req, res) {
       console.error('[PROCESS-SVG] Failed to create job:', insertError);
       return res.status(500).json({
         success: false,
-        error: 'Failed to create job record',
-        details: insertError.message
+        error: 'Failed to create job record'
       });
     }
 
@@ -217,8 +221,7 @@ export default async function handler(req, res) {
     console.error('[PROCESS-SVG] Unexpected error:', error);
     return res.status(500).json({
       success: false,
-      error: 'Internal server error',
-      details: error.message
+      error: 'An unexpected error occurred. Please try again.'
     });
   }
 }

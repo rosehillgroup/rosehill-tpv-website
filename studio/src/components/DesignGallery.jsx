@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import DesignCard from './DesignCard.jsx';
 import { listDesigns, loadDesign, deleteDesign } from '../lib/api/designs.js';
 import { listProjects } from '../lib/api/projects.js';
+import { showToast } from '../lib/toast.js';
 import './DesignGallery.css';
 
 export default function DesignGallery({
@@ -85,7 +86,7 @@ export default function DesignGallery({
       onClose();
     } catch (err) {
       console.error('Failed to load design:', err);
-      alert(`Failed to load design: ${err.message}`);
+      showToast('Failed to load design. Please try again.');
     }
   };
 

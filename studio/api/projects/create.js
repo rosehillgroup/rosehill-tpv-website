@@ -2,8 +2,10 @@
 // Creates a new project for organizing designs
 
 import { getAuthenticatedClient } from '../_utils/supabase.js';
+import { createLogger } from '../_utils/logger.js';
 
 export default async function handler(req, res) {
+  const logger = createLogger(req, { endpoint: '/api/projects/create' });
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -52,16 +54,8 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('[CREATE-PROJECT ERROR]', {
-      message: error.message,
-      details: error.stack,
-      hint: error.hint || '',
-      code: error.code || ''
-    });
-
-    return res.status(500).json({
-      error: error.message,
-      hint: 'Check Vercel function logs for details'
-    });
+    logger.error('Create project failed', { error: error.message, stack: error.stack, code: error.code || '' });
+    res.setHeader('X-Correlation-Id', logger.correlationId);
+    return res.status(500).json({ error: 'An unexpected error occurred. Please try again.' });
   }
 }

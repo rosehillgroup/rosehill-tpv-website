@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/api/auth.js';
+import { showToast } from '../../lib/toast.js';
 
 export default function RecoveryTab() {
   const [orphanedJobs, setOrphanedJobs] = useState([]);
@@ -105,7 +106,7 @@ export default function RecoveryTab() {
   // Recover selected jobs
   const recoverSelected = async () => {
     if (selectedJobs.size === 0) {
-      alert('Please select at least one job to recover');
+      showToast('Please select at least one job to recover', 'warning');
       return;
     }
 
@@ -131,7 +132,7 @@ export default function RecoveryTab() {
 
       if (!response.ok) throw new Error(data.error || 'Failed to recover designs');
 
-      alert(`Successfully recovered ${data.recovered_count} ${data.recovered_count === 1 ? 'design' : 'designs'}!`);
+      showToast(`Successfully recovered ${data.recovered_count} ${data.recovered_count === 1 ? 'design' : 'designs'}!`, 'success');
 
       // Clear selection and refresh
       clearSelection();
@@ -139,7 +140,7 @@ export default function RecoveryTab() {
     } catch (err) {
       console.error('Failed to recover designs:', err);
       setError(err.message);
-      alert(`Recovery failed: ${err.message}`);
+      showToast('Recovery failed. Please try again.');
     } finally {
       setRecovering(false);
     }

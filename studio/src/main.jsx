@@ -13,6 +13,7 @@ import './components/TPVDesigner/CourtCanvas.css';
 import './components/TPVDesigner/CourtLibrary.css';
 import './components/TPVDesigner/PropertiesPanel.css';
 import './components/TPVDesigner/DesignEditorModal.css';
+import './styles/toast.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

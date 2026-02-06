@@ -5,6 +5,8 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import ColorLegend from './ColorLegend';
 import { sanitizeSVG } from '../utils/sanitizeSVG';
 
+const debug = import.meta.env.DEV ? console.log.bind(console) : () => {};
+
 // TPV color palette for manual recoloring
 const tpvColors = [
   { code: 'RH01', name: 'Standard Red', hex: '#A5362F' },
@@ -114,7 +116,7 @@ export default function SVGPreview({
         setInlineSvgContent(svgText);
         const hasRegionTags = svgText.includes('data-region-id');
         const regionCount = (svgText.match(/data-region-id/g) || []).length;
-        console.log('[SVGPreview] Fetched inline SVG content - length:', svgText.length, 'hasRegionTags:', hasRegionTags, 'regionCount:', regionCount);
+        debug('[SVGPreview] Fetched inline SVG content - length:', svgText.length, 'hasRegionTags:', hasRegionTags, 'regionCount:', regionCount);
       } catch (error) {
         console.error('[SVGPreview] Failed to fetch SVG content:', error);
         setInlineSvgContent(null);
@@ -130,7 +132,7 @@ export default function SVGPreview({
       return null;
     }
 
-    console.log('[SVGPreview] Sanitizing SVG content...');
+    debug('[SVGPreview] Sanitizing SVG content...');
     const sanitized = sanitizeSVG(inlineSvgContent);
 
     if (!sanitized) {
@@ -138,8 +140,8 @@ export default function SVGPreview({
       return null;
     }
 
-    console.log('[SVGPreview] SVG sanitization complete - length:', sanitized.length);
-    console.log('[SVGPreview] Sanitized content preview:', sanitized.substring(0, 200));
+    debug('[SVGPreview] SVG sanitization complete - length:', sanitized.length);
+    debug('[SVGPreview] Sanitized content preview:', sanitized.substring(0, 200));
 
     if (!sanitized.includes('<svg')) {
       console.error('[SVGPreview] Sanitized SVG does not contain <svg> tag!');
@@ -174,7 +176,7 @@ export default function SVGPreview({
 
     const createHighlightMask = async () => {
       try {
-        console.log('[SVGPreview] Creating highlight for color:', selectedColor);
+        debug('[SVGPreview] Creating highlight for color:', selectedColor);
 
         // Load the SVG image
         const img = new Image();
@@ -183,7 +185,7 @@ export default function SVGPreview({
         // Wait for image to load
         const loadPromise = new Promise((resolve, reject) => {
           img.onload = () => {
-            console.log('[SVGPreview] Image loaded:', img.width, 'x', img.height);
+            debug('[SVGPreview] Image loaded:', img.width, 'x', img.height);
             resolve();
           };
           img.onerror = (e) => {
@@ -211,7 +213,7 @@ export default function SVGPreview({
         // Parse selected color (hex to RGB) - use current hex (could be edited)
         const targetHex = selectedColor.hex; // Use current displayed color for highlighting
         const targetRgb = hexToRgb(targetHex);
-        console.log('[SVGPreview] Target color:', targetHex, targetRgb);
+        debug('[SVGPreview] Target color:', targetHex, targetRgb);
 
         // First pass: identify all matching pixels
         const matches = new Set();
@@ -232,7 +234,7 @@ export default function SVGPreview({
           }
         }
 
-        console.log('[SVGPreview] Matched pixels:', matchCount);
+        debug('[SVGPreview] Matched pixels:', matchCount);
 
         if (matchCount === 0) {
           console.warn('[SVGPreview] No pixels matched the target color');
@@ -273,7 +275,7 @@ export default function SVGPreview({
 
         // Convert to data URL
         const maskUrl = canvas.toDataURL();
-        console.log('[SVGPreview] Highlight mask created');
+        debug('[SVGPreview] Highlight mask created');
         setHighlightMask(maskUrl);
       } catch (error) {
         console.error('[SVGPreview] Failed to create highlight mask:', error);
@@ -428,23 +430,23 @@ export default function SVGPreview({
   const handleSVGClick = async (e) => {
     // Don't trigger color selection if we were dragging (panning)
     if (dragMovedRef.current) {
-      console.log('[SVGPreview] Click ignored - was dragging');
+      debug('[SVGPreview] Click ignored - was dragging');
       return;
     }
 
-    console.log('[SVGPreview] Click detected - onRegionClick:', !!onRegionClick, 'inlineSvgContent:', !!inlineSvgContent, 'target:', e.target.tagName);
+    debug('[SVGPreview] Click detected - onRegionClick:', !!onRegionClick, 'inlineSvgContent:', !!inlineSvgContent, 'target:', e.target.tagName);
 
     // Try region-based click detection first (for inline SVG with region IDs)
     if (onRegionClick && inlineSvgContent) {
-      console.log('[SVGPreview] Attempting region detection on target:', e.target);
+      debug('[SVGPreview] Attempting region detection on target:', e.target);
       const regionEl = findRegionElement(e.target);
-      console.log('[SVGPreview] Found region element:', regionEl);
+      debug('[SVGPreview] Found region element:', regionEl);
       if (regionEl) {
         const regionId = regionEl.getAttribute('data-region-id');
         const fill = regionEl.getAttribute('fill') ||
                      regionEl.getAttribute('style')?.match(/fill:\s*([^;]+)/)?.[1];
 
-        console.log('[SVGPreview] Region clicked:', regionId, 'fill:', fill);
+        debug('[SVGPreview] Region clicked:', regionId, 'fill:', fill);
 
         onRegionClick({
           regionId,
@@ -453,10 +455,10 @@ export default function SVGPreview({
         });
         return;
       } else {
-        console.log('[SVGPreview] No region element found from target');
+        debug('[SVGPreview] No region element found from target');
       }
     } else {
-      console.log('[SVGPreview] Region detection skipped - onRegionClick:', !!onRegionClick, 'inlineSvgContent:', !!inlineSvgContent);
+      debug('[SVGPreview] Region detection skipped - onRegionClick:', !!onRegionClick, 'inlineSvgContent:', !!inlineSvgContent);
     }
 
     // Fallback to pixel-based color detection (for palette clicks or if no region found)
@@ -467,16 +469,16 @@ export default function SVGPreview({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    console.log('[SVGPreview] Clicked at:', x, y);
+    debug('[SVGPreview] Clicked at:', x, y);
 
     // Get color at click position
     const clickedColor = await getColorAtPosition(x, y);
     if (!clickedColor || clickedColor.a === 0) {
-      console.log('[SVGPreview] Clicked on transparent area');
+      debug('[SVGPreview] Clicked on transparent area');
       return;
     }
 
-    console.log('[SVGPreview] Clicked color:', clickedColor);
+    debug('[SVGPreview] Clicked color:', clickedColor);
 
     // Find matching recipe
     let matchedRecipe = null;
@@ -503,7 +505,7 @@ export default function SVGPreview({
     }
 
     if (matchedRecipe) {
-      console.log('[SVGPreview] Matched recipe:', matchedRecipe.targetColor.hex);
+      debug('[SVGPreview] Matched recipe:', matchedRecipe.targetColor.hex);
 
       // Call onColorClick with the same data format as ColorLegend
       onColorClick({
@@ -518,7 +520,7 @@ export default function SVGPreview({
         chosenRecipe: matchedRecipe.chosenRecipe
       });
     } else {
-      console.log('[SVGPreview] No matching recipe found for clicked color');
+      debug('[SVGPreview] No matching recipe found for clicked color');
     }
   };
 

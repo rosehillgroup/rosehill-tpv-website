@@ -4,6 +4,7 @@ import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { getAllCourtTemplates, getCourtTemplate } from '../../lib/sports/courtTemplates.js';
 import { getAllTrackTemplates, getTrackTemplate } from '../../lib/sports/trackTemplates.js';
 import { listPlaygroundDesigns, fetchMotifFromDesign } from '../../lib/sports/motifUtils.js';
+import { showToast } from '../../lib/toast.js';
 import './CourtLibrary.css';
 
 function CourtLibrary({ onOpenGenerator, mobileMode = false, modalMode = false, activeTab: externalActiveTab, onItemAdded }) {
@@ -99,7 +100,7 @@ function CourtLibrary({ onOpenGenerator, mobileMode = false, modalMode = false, 
       }
     } catch (error) {
       console.error('[MOTIFS] Failed to add motif:', error);
-      alert(`Failed to add motif: ${error.message}`);
+      showToast('Failed to add motif. Please try again.');
     } finally {
       setAddingMotifId(null);
     }

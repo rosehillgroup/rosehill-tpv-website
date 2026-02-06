@@ -256,6 +256,11 @@
   background: #fef2f2;
 }
 
+.tpv-studio .menu-item.sign-out.confirming {
+  background: #fef2f2;
+  font-weight: 600;
+}
+
 /* Responsive */
 
 @media (max-width: 768px) {

@@ -17,6 +17,7 @@ import { generateSportsSVG } from '../../lib/sports/sportsExport.js';
 import { loadDesign } from '../../lib/api/designs.js';
 import { deserializeDesign } from '../../utils/designSerializer.js';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
+import { showToast } from '../../lib/toast.js';
 import './TPVDesigner.css';
 
 function TPVDesigner({ loadedDesign }) {
@@ -198,7 +199,7 @@ function TPVDesigner({ loadedDesign }) {
     // Get the SVG element
     const svgElement = svgRef.current || document.querySelector('.court-canvas__svg');
     if (!svgElement) {
-      alert('Canvas not ready');
+      showToast('Canvas not ready. Please wait a moment.');
       return;
     }
 
@@ -234,7 +235,7 @@ function TPVDesigner({ loadedDesign }) {
   // Handle editing a source design - loads design into playground store and opens editor
   const handleEditSourceDesign = async (sourceDesignId) => {
     if (!sourceDesignId) {
-      alert('Source design ID not found');
+      showToast('Source design ID not found');
       return;
     }
 
@@ -266,7 +267,7 @@ function TPVDesigner({ loadedDesign }) {
       console.log('[TPV] Loaded source design for editing:', design.name);
     } catch (error) {
       console.error('[TPV] Failed to load source design:', error);
-      alert('Failed to load design: ' + error.message);
+      showToast('Failed to load design. Please try again.');
     }
   };
 

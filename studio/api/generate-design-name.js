@@ -90,6 +90,13 @@ export default async function handler(req, res) {
       });
     }
 
+    if (prompt.length > 5000) {
+      return res.status(400).json({
+        success: false,
+        error: 'Prompt exceeds maximum length of 5000 characters'
+      });
+    }
+
     // Check cache first
     const cacheKey = CACHE_PREFIX.DESIGN_NAME + hashInputs({
       prompt: prompt.trim().toLowerCase(),
@@ -210,7 +217,7 @@ The names should capture the essence of the design theme while sounding professi
 
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to generate design name'
+      error: 'Failed to generate design name. Please try again.'
     });
   }
 }

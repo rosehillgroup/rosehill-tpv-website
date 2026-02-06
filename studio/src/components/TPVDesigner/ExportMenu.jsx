@@ -7,6 +7,7 @@ import { generateSportsSVG, downloadSVG, downloadPNG, generateFilename, inlineMo
 import { sliceSvgIntoTiles, downloadBlob } from '../../lib/svgTileSlicer.js';
 import { generateDXF, downloadDXF, cleanSvgForDxf } from '../../lib/dxf/dxfExport.js';
 import { auth } from '../../lib/api/auth.js';
+import { showToast } from '../../lib/toast.js';
 import { loadDesign } from '../../lib/api/designs.js';
 
 /**
@@ -121,7 +122,7 @@ export default function ExportMenu({ svgRef }) {
       downloadSVG(svgContent, filename);
     } catch (error) {
       console.error('SVG export failed:', error);
-      alert('Failed to export SVG: ' + error.message);
+      showToast('Failed to export SVG. Please try again.');
     } finally {
       setExporting(null);
       setIsOpen(false);
@@ -141,7 +142,7 @@ export default function ExportMenu({ svgRef }) {
       await downloadPNG(svgElement, state, filename, 2);
     } catch (error) {
       console.error('PNG export failed:', error);
-      alert('Failed to export PNG: ' + error.message);
+      showToast('Failed to export PNG. Please try again.');
     } finally {
       setExporting(null);
       setIsOpen(false);
@@ -238,7 +239,7 @@ export default function ExportMenu({ svgRef }) {
       console.log('[EXPORT] PDF downloaded:', filename);
     } catch (error) {
       console.error('PDF export failed:', error);
-      alert('Failed to export PDF: ' + error.message);
+      showToast('Failed to export PDF. Please try again.');
     } finally {
       setExporting(null);
     }
@@ -275,7 +276,7 @@ export default function ExportMenu({ svgRef }) {
       console.log('[EXPORT] Tiles ZIP downloaded:', filename);
     } catch (error) {
       console.error('Tiles export failed:', error);
-      alert('Failed to export tiles: ' + error.message);
+      showToast('Failed to export tiles. Please try again.');
     } finally {
       setExporting(null);
     }
@@ -314,11 +315,11 @@ export default function ExportMenu({ svgRef }) {
       // Show warnings if any
       if (result.warnings && result.warnings.length > 0) {
         const warningMessage = 'DXF Export Notes:\n\n' + result.warnings.join('\n\n');
-        alert(warningMessage);
+        showToast(warningMessage, 'warning');
       }
     } catch (error) {
       console.error('DXF export failed:', error);
-      alert('Failed to export DXF: ' + error.message);
+      showToast('Failed to export DXF. Please try again.');
     } finally {
       setExporting(null);
     }
@@ -395,7 +396,7 @@ export default function ExportMenu({ svgRef }) {
       console.log('[EXPORT] Canvas PDF downloaded:', filename);
     } catch (error) {
       console.error('Canvas PDF export failed:', error);
-      alert('Failed to export Canvas PDF: ' + error.message);
+      showToast('Failed to export PDF. Please try again.');
     } finally {
       setExporting(null);
     }

@@ -11,6 +11,7 @@ import {
   warpDesignOntoPhoto
 } from '../../lib/inSitu/perspectiveWarp.js';
 import { supabase } from '../../lib/api/auth.js';
+import { showToast } from '../../lib/toast.js';
 
 // Workflow steps
 const STEPS = {
@@ -110,7 +111,7 @@ export default function InSituModal({
       return canvas;
     } catch (error) {
       console.error('[InSitu] Failed to generate canvas:', error);
-      alert(`Failed to load design: ${error.message}`);
+      showToast('Failed to generate preview. Please try again.');
       return null;
     }
   };
@@ -173,7 +174,7 @@ export default function InSituModal({
 
     } catch (err) {
       console.error('[IN-SITU] Save failed:', err);
-      alert('Failed to save preview: ' + err.message);
+      showToast('Failed to save preview. Please try again.');
     } finally {
       setSaving(false);
     }

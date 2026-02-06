@@ -77,6 +77,13 @@ export default async function handler(req, res) {
       });
     }
 
+    if (prompt.length > 5000) {
+      return res.status(400).json({
+        success: false,
+        error: 'Prompt exceeds maximum length of 5000 characters'
+      });
+    }
+
     if (!width_mm || typeof width_mm !== 'number' || width_mm <= 0) {
       return res.status(400).json({
         success: false,
@@ -139,8 +146,7 @@ export default async function handler(req, res) {
       console.error('[RECRAFT-GENERATE] Failed to create job:', insertError);
       return res.status(500).json({
         success: false,
-        error: 'Failed to create job record',
-        details: insertError.message
+        error: 'Failed to create job record'
       });
     }
 
@@ -218,8 +224,7 @@ export default async function handler(req, res) {
 
       return res.status(500).json({
         success: false,
-        error: 'Failed to start Recraft generation',
-        details: replicateError.message,
+        error: 'Failed to start design generation. Please try again.',
         jobId // Return jobId so user can check status
       });
     }
@@ -229,8 +234,7 @@ export default async function handler(req, res) {
 
     return res.status(500).json({
       success: false,
-      error: error.message || 'Internal server error',
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      error: 'An unexpected error occurred. Please try again.'
     });
   }
 }

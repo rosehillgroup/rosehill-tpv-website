@@ -14,6 +14,8 @@ import {
   deriveLightingFactors
 } from '../../lib/inSitu/lightingUtils.js';
 
+const debug = import.meta.env.DEV ? console.log.bind(console) : () => {};
+
 // Debounce delay for onChange callback
 const DEBOUNCE_DELAY = 100;
 
@@ -112,19 +114,19 @@ export default function FourPointEditor({
   }, [editMode, selectedShapeIndex, shape, quad, opacity]);
 
   const loadImages = async () => {
-    console.log('[FOUR-POINT] Starting to load images - photo:', photoUrl?.substring(0, 50), 'svg:', svgUrl?.substring(0, 50));
+    debug('[FOUR-POINT] Starting to load images - photo:', photoUrl?.substring(0, 50), 'svg:', svgUrl?.substring(0, 50));
     setLoading(true);
     setError(null);
 
     try {
       // Load photo and rasterize SVG in parallel
-      console.log('[FOUR-POINT] Loading photo and rasterizing SVG...');
+      debug('[FOUR-POINT] Loading photo and rasterizing SVG...');
       const [photo, design] = await Promise.all([
         loadImage(photoUrl),
         rasterizeSvg(svgUrl, 1536)
       ]);
 
-      console.log('[FOUR-POINT] Both images loaded successfully - photo:', photo.naturalWidth, 'x', photo.naturalHeight, 'design:', design.naturalWidth, 'x', design.naturalHeight);
+      debug('[FOUR-POINT] Both images loaded successfully - photo:', photo.naturalWidth, 'x', photo.naturalHeight, 'design:', design.naturalWidth, 'x', design.naturalHeight);
 
       setPhotoImg(photo);
       setDesignImg(design);
@@ -136,7 +138,7 @@ export default function FourPointEditor({
       const scaleH = containerHeight / photo.naturalHeight;
       const scale = Math.min(1, scaleW, scaleH);
       setDisplayScale(scale);
-      console.log('[FOUR-POINT] Display scale set to:', scale.toFixed(3));
+      debug('[FOUR-POINT] Display scale set to:', scale.toFixed(3));
 
       // Initialize quad if not provided
       if (!initialQuad) {
@@ -147,9 +149,9 @@ export default function FourPointEditor({
           designSizeMm.length_mm
         );
         setQuad(defaultQuad);
-        console.log('[FOUR-POINT] Initialized default quad');
+        debug('[FOUR-POINT] Initialized default quad');
       } else {
-        console.log('[FOUR-POINT] Using provided initial quad');
+        debug('[FOUR-POINT] Using provided initial quad');
       }
 
     } catch (err) {
@@ -157,7 +159,7 @@ export default function FourPointEditor({
       setError(err.message);
     } finally {
       setLoading(false);
-      console.log('[FOUR-POINT] Loading complete');
+      debug('[FOUR-POINT] Loading complete');
     }
   };
 

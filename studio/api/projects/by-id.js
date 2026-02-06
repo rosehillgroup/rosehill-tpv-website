@@ -3,8 +3,10 @@
 
 import { getAuthenticatedClient } from '../_utils/supabase.js';
 import { authorizedUpdate, authorizedDelete, ensureOwnership } from '../_utils/authorization.js';
+import { createLogger } from '../_utils/logger.js';
 
 export default async function handler(req, res) {
+  const logger = createLogger(req, { endpoint: '/api/projects/by-id' });
   const { id } = req.query;
 
   if (!id) {
@@ -101,16 +103,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
 
   } catch (error) {
-    console.error('[PROJECT-BY-ID ERROR]', {
-      message: error.message,
-      details: error.stack,
-      hint: error.hint || '',
-      code: error.code || ''
-    });
-
-    return res.status(500).json({
-      error: error.message,
-      hint: 'Check Vercel function logs for details'
-    });
+    logger.error('Project operation failed', { error: error.message, stack: error.stack, code: error.code || '' });
+    res.setHeader('X-Correlation-Id', logger.correlationId);
+    return res.status(500).json({ error: 'An unexpected error occurred. Please try again.' });
   }
 }

@@ -3,8 +3,10 @@
 
 import { getAuthenticatedClient, getSupabaseServiceClient } from '../_utils/supabase.js';
 import { ensureOwnership } from '../_utils/authorization.js';
+import { createLogger } from '../_utils/logger.js';
 
 export default async function handler(req, res) {
+  const logger = createLogger(req, { endpoint: '/api/designs/save' });
   if (req.method !== 'POST' && req.method !== 'PUT') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -34,6 +36,15 @@ export default async function handler(req, res) {
         error: 'Missing required fields',
         required: ['name', 'design_data']
       });
+    }
+
+    // Validate field lengths
+    if (typeof name === 'string' && name.length > 200) {
+      return res.status(400).json({ error: 'Design name exceeds maximum length of 200 characters' });
+    }
+
+    if (description && typeof description === 'string' && description.length > 2000) {
+      return res.status(400).json({ error: 'Description exceeds maximum length of 2000 characters' });
     }
 
     // Determine design type and validate accordingly
@@ -212,16 +223,8 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error('[SAVE-DESIGN ERROR]', {
-      message: error.message,
-      details: error.stack,
-      hint: error.hint || '',
-      code: error.code || ''
-    });
-
-    return res.status(500).json({
-      error: error.message,
-      hint: 'Check Vercel function logs for details'
-    });
+    logger.error('Save design failed', { error: error.message, stack: error.stack, code: error.code || '' });
+    res.setHeader('X-Correlation-Id', logger.correlationId);
+    return res.status(500).json({ error: 'An unexpected error occurred. Please try again.' });
   }
 }

@@ -4,6 +4,8 @@ import { calculateTrackGeometry, calculateStaggeredStarts } from '../../lib/spor
 import TrackResizeHandles from './TrackResizeHandles.jsx';
 import StartingBoxes from './StartingBoxes.jsx';
 
+const debug = import.meta.env.DEV ? console.log.bind(console) : () => {};
+
 /**
  * Individual track element component
  * Renders a complete running track with all lanes
@@ -40,9 +42,9 @@ function TrackElement({ track, isSelected, onMouseDown, onTouchStart, onDoubleCl
   };
 
   // Debug logging
-  console.log('TrackRenderer - trackSurfaceColor:', trackSurfaceColor);
-  console.log('TrackRenderer - defaultSurfaceColor:', defaultSurfaceColor);
-  console.log('TrackRenderer - geometry.lanes.length:', geometry.lanes.length);
+  debug('TrackRenderer - trackSurfaceColor:', trackSurfaceColor);
+  debug('TrackRenderer - defaultSurfaceColor:', defaultSurfaceColor);
+  debug('TrackRenderer - geometry.lanes.length:', geometry.lanes.length);
 
   return (
     <g

@@ -8,6 +8,7 @@ import { usePlaygroundDesignStore } from '../../stores/playgroundDesignStore.js'
 import { extractSVGDimensions } from '../../lib/sports/motifUtils.js';
 import { saveDesign } from '../../lib/api/designs.js';
 import { serializeDesign } from '../../utils/designSerializer.js';
+import { showToast } from '../../lib/toast.js';
 import './DesignEditorModal.css';
 
 /**
@@ -91,7 +92,7 @@ function DesignEditorModal({ isOpen, onClose }) {
       }, 600);
     } catch (error) {
       console.error('[EDITOR] Failed to save changes:', error);
-      alert('Failed to save changes: ' + error.message);
+      showToast('Failed to save changes. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -215,7 +216,7 @@ function DesignEditorModal({ isOpen, onClose }) {
       }, 600);
     } catch (error) {
       console.error('[EDITOR] Failed to add to canvas:', error);
-      alert('Failed to add design to canvas: ' + error.message);
+      showToast('Failed to add design to canvas. Please try again.');
       setIsSaving(false);
     } finally {
       setIsAddingToCanvas(false);

@@ -7,6 +7,7 @@ import { BLOB_STYLES } from '../../lib/sports/blobGeometry.js';
 import { getAvailableFonts, measureText } from '../../lib/sports/textUtils.js';
 import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import { FEATURE_FLAGS } from '../../lib/constants.js';
+import { showToast } from '../../lib/toast.js';
 import './PropertiesPanel.css';
 
 function PropertiesPanel({ onEditSourceDesign }) {
@@ -1435,7 +1436,7 @@ function MotifPropertiesPanel({ motif, motifId, onEditSourceDesign }) {
     } else {
       // Fallback to opening in new tab if callback not provided
       if (!sourceDesignId) {
-        alert('Source design ID not found');
+        showToast('Source design ID not found');
         return;
       }
       window.open(`/studio/?design=${sourceDesignId}`, '_blank');
