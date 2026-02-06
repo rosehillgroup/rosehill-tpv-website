@@ -266,8 +266,10 @@
   }
 
   .court-canvas__zoom-controls {
-    bottom: 70px; /* Above the mobile action bar */
-    left: 0.75rem;
+    bottom: auto;
+    top: 68px; /* Below mobile header (56px + 12px gap) */
+    left: auto;
+    right: 0.75rem;
     gap: 0.5rem;
     padding: 0.5rem;
   }

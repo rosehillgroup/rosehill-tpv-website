@@ -33,6 +33,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
   // Touch gesture state
   const [touchState, setTouchState] = useState({
     active: false,
+    mode: null, // 'pan' (single-finger) or 'pinch' (two-finger)
     initialDistance: 0,
     initialZoom: 1,
     initialPan: { x: 0, y: 0 },
@@ -2232,16 +2233,29 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
 
       setTouchState({
         active: true,
+        mode: 'pinch',
         initialDistance: distance,
         initialZoom: zoom,
         initialPan: { ...pan },
         initialCenter: center
       });
+    } else if (e.touches.length === 1) {
+      // Single-finger pan on canvas background
+      // Element touches call stopPropagation(), so this only fires on background
+      e.preventDefault();
+      setTouchState({
+        active: true,
+        mode: 'pan',
+        initialDistance: 0,
+        initialZoom: zoom,
+        initialPan: { ...pan },
+        initialCenter: { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      });
     }
   };
 
   const handleTouchMove = (e) => {
-    if (e.touches.length === 2 && touchState.active) {
+    if (e.touches.length === 2 && touchState.active && touchState.mode === 'pinch') {
       e.preventDefault();
 
       // Calculate pinch zoom
@@ -2260,13 +2274,22 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         x: touchState.initialPan.x + panDeltaX,
         y: touchState.initialPan.y + panDeltaY
       });
+    } else if (e.touches.length === 1 && touchState.active && touchState.mode === 'pan') {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - touchState.initialCenter.x;
+      const dy = e.touches[0].clientY - touchState.initialCenter.y;
+      setPan({
+        x: touchState.initialPan.x + dx,
+        y: touchState.initialPan.y + dy
+      });
     }
   };
 
   const handleTouchEnd = (e) => {
-    if (e.touches.length < 2) {
+    if (e.touches.length === 0 || (touchState.mode === 'pinch' && e.touches.length < 2)) {
       setTouchState({
         active: false,
+        mode: null,
         initialDistance: 0,
         initialZoom: 1,
         initialPan: { x: 0, y: 0 },
