@@ -1688,7 +1688,7 @@ function renderFeaturedInstallation() {
         <a href="${url}" class="read-more-btn translate" data-key="View Full Details →">View Full Details →</a>
       </div>
       <div class="featured-image">
-        <img src="${imageUrl}" alt="${featured.displayTitle || featured.title || 'Installation'}">
+        <a href="${url}"><img src="${imageUrl}" alt="${featured.displayTitle || featured.title || 'Installation'}"></a>
       </div>
     </div>
   `;
@@ -1732,7 +1732,7 @@ function renderInstallations() {
     return `
       <div class="installation-card" data-category="${(installation.category || 'Playground')}">
         <div class="installation-image">
-          <img src="${src}" alt="${title}" loading="lazy" decoding="async">
+          <a href="${url}"><img src="${src}" alt="${title}" loading="lazy" decoding="async"></a>
         </div>
         <div class="installation-content">
           <div class="installation-meta">
