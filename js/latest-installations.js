@@ -1,6 +1,14 @@
 // Dynamic loading of latest installations for homepage
 // Fetches translated content based on current page language
 (function () {
+  // Escape helper for defence-in-depth against XSS in API data
+  function esc(s) {
+    if (!s) return '';
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
   // Find the installations grid on the homepage
   const grid = document.querySelector('#latest-installations-grid');
   if (!grid) return; // Not on a page with installations grid
@@ -57,22 +65,23 @@
           : excerpt;
 
         // Build the card HTML matching existing structure
+        const safeUrl = esc(installation.url);
         return `
-          <div class="installation-card" onclick="window.location.href='${installation.url}'">
+          <div class="installation-card" data-href="${safeUrl}" style="cursor:pointer">
             <div class="installation-image">
               ${imageHtml}
             </div>
             <div class="installation-content">
               <div class="installation-meta">
-                ${dateStr ? `<span class="installation-date">${dateStr}</span>` : ''}
-                ${installation.application ? `<span class="installation-application">${installation.application}</span>` : ''}
+                ${dateStr ? `<span class="installation-date">${esc(dateStr)}</span>` : ''}
+                ${installation.application ? `<span class="installation-application">${esc(installation.application)}</span>` : ''}
               </div>
-              <h3 class="installation-title">${installation.title || ''}</h3>
-              ${installation.locationText ? `<p class="installation-location">📍 ${installation.locationText}</p>` : ''}
+              <h3 class="installation-title">${esc(installation.title)}</h3>
+              ${installation.locationText ? `<p class="installation-location">📍 ${esc(installation.locationText)}</p>` : ''}
               <div class="installation-description">
-                <p>${displayExcerpt}</p>
+                <p>${esc(displayExcerpt)}</p>
               </div>
-              <a href="${installation.url}" class="read-more-btn" onclick="event.stopPropagation()">
+              <a href="${safeUrl}" class="read-more-btn">
                 ${readMoreText}
               </a>
             </div>
@@ -82,6 +91,15 @@
 
       // Replace grid content
       grid.innerHTML = html;
+
+      // Event delegation for card clicks (only internal URLs)
+      grid.addEventListener('click', function (e) {
+        const card = e.target.closest('.installation-card');
+        if (!card) return;
+        if (e.target.closest('.read-more-btn')) return; // let the <a> handle itself
+        const href = card.dataset.href;
+        if (href && href.startsWith('/')) window.location.href = href;
+      });
 
       // Re-apply animations
       const cards = grid.querySelectorAll('.installation-card');

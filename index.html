@@ -1805,7 +1805,7 @@
             <h2 class="section-title">Latest Installations</h2>
             <p class="section-subtitle">Discover our recent projects showcasing Rosehill TPV<sup>®</sup> surfaces worldwide</p>
             
-            <div class="installations-grid" id="latest-installations-grid">
+            <div class="installations-grid" id="latest-installations-grid" aria-live="polite">
                 <!-- Installations will be loaded here -->
                 <div class="loading-installations">
                     <div class="loading-spinner"></div>
@@ -2206,136 +2206,6 @@
             observer.observe(el);
         });
 
-        // Load latest installations
-        async function loadLatestInstallations() {
-            try {
-                const response = await fetch('/.netlify/functions/installations-public');
-                if (!response.ok) throw new Error('Failed to load installations');
-                
-                const data = await response.json();
-                const installations = data.installations;
-                
-                // Sort by date (most recent first) and take first 3
-                const latestInstallations = installations
-                    .sort((a, b) => new Date(b.installationDate) - new Date(a.installationDate))
-                    .slice(0, 3);
-                
-                displayLatestInstallations(latestInstallations);
-            } catch (error) {
-                console.error('Error loading installations:', error);
-                document.getElementById('latest-installations-grid').innerHTML = `
-                    <div class="loading-installations">
-                        <p style="color: #e74c3c;">Unable to load installations. Please check your connection.</p>
-                    </div>
-                `;
-            }
-        }
-
-        function displayLatestInstallations(installations) {
-            const grid = document.getElementById('latest-installations-grid');
-            
-            const installationsHtml = installations.map(installation => {
-                // Format location like installations.html does
-                const location = `${installation.location?.city || ''}, ${installation.location?.country || ''}`.replace(/^, |, $/, '');
-                const slug = installation.slug || createSlug(installation.title, location);
-                
-                // Convert overview blocks to text
-                const overviewText = installation.overview?.map(block => 
-                    block.children?.map(child => child.text).join('') || ''
-                ).join(' ') || '';
-                const previewText = overviewText.substring(0, 120) + '...';
-                
-                const formattedDate = formatDate(installation.installationDate);
-                const applicationName = capitalizeApplication(installation.application);
-                
-                const imageUrl = installation.coverImage?.url || '';
-                
-                return `
-                    <div class="installation-card" onclick="window.location.href='installations/${slug}.html'">
-                        <div class="installation-image">
-                            ${imageUrl ? `<img src="${imageUrl}" alt="${installation.title}" loading="lazy">` : '<div class="no-image">No image available</div>'}
-                        </div>
-                        <div class="installation-content">
-                            <div class="installation-meta">
-                                <span class="installation-date">${formattedDate}</span>
-                                <span class="installation-application">${applicationName}</span>
-                            </div>
-                            <h3 class="installation-title">${installation.title}</h3>
-                            <p class="installation-location">📍 ${location}</p>
-                            <div class="installation-description">
-                                <p>${previewText}</p>
-                            </div>
-                            <a href="installations/${slug}.html" class="read-more-btn" onclick="event.stopPropagation()">
-                                Read More →
-                            </a>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            grid.innerHTML = installationsHtml;
-            
-            // Animate the cards
-            setTimeout(() => {
-                document.querySelectorAll('.installation-card').forEach((card, index) => {
-                    card.style.opacity = '0';
-                    card.style.transform = 'translateY(30px)';
-                    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-                    
-                    setTimeout(() => {
-                        card.style.opacity = '1';
-                        card.style.transform = 'translateY(0)';
-                    }, index * 150);
-                });
-            }, 100);
-        }
-
-        // Helper functions
-        function createSlug(title, location) {
-            const combined = `${title} ${location}`.toLowerCase()
-                .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-                .replace(/\s+/g, '-') // Replace spaces with hyphens
-                .replace(/-+/g, '-') // Replace multiple hyphens with single
-                .trim() // Trim whitespace
-                .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
-            
-            return combined;
-        }
-
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-GB', { 
-                year: 'numeric', 
-                month: 'short'
-            });
-        }
-
-        function capitalizeApplication(app) {
-            const appMap = {
-                'playground': 'Playground',
-                'muga': 'MUGA',
-                'sports': 'Sports Court',
-                'athletics': 'Athletics Track',
-                'fitness': 'Fitness Area',
-                'safety': 'Safety Surface',
-                'tennis': 'Tennis Court'
-            };
-            return appMap[app] || app.charAt(0).toUpperCase() + app.slice(1);
-        }
-
-        // Helper function to get proper image URL
-        function getImageUrl(img) {
-            // Handle both string URLs and object formats
-            if (typeof img === 'string') {
-                return img;
-            } else if (img && typeof img === 'object' && img.url) {
-                return img.url;
-            } else if (img && typeof img === 'object' && img.filename) {
-                return `images/installations/${img.filename}`;
-            }
-            return img;
-        }
-
 
         // Cookie Consent Management
         const COOKIE_CONSENT_KEY = 'rosehill_cookie_consent';
@@ -2450,9 +2320,8 @@
             }
         });
 
-        // Load installations when page loads
+        // Initialize cookie consent when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            loadLatestInstallations();
             initializeConsent();
         });
     </script>

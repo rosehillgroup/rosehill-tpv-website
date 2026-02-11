@@ -2453,7 +2453,7 @@
                     if (recommendations.binders.length > 0) {
                     html += `<h3 style="color: #1a365d; font-size: 1.3rem; margin: 30px 0 15px 0; border-bottom: 2px solid #ff6b35; padding-bottom: 5px;">🔧 Primary Binders</h3>`;
                     recommendations.binders.slice(0, 3).forEach(rec => {
-                        const matchPercentage = Math.round((rec.score / 25) * 100); // Max possible score is around 25
+                        const matchPercentage = Math.min(100, Math.round((rec.score / 25) * 100)); // Max possible score is around 25
                         html += `
                             <div class="recommendation-card">
                                 <div class="binder-name">
@@ -2502,7 +2502,7 @@
                 if (recommendations.primers.length > 0) {
                     html += `<h3 style="color: #1a365d; font-size: 1.3rem; margin: 30px 0 15px 0; border-bottom: 2px solid #ff6b35; padding-bottom: 5px;">⚡ Primers</h3>`;
                     recommendations.primers.forEach(rec => {
-                        const matchPercentage = Math.round((rec.score / 25) * 100);
+                        const matchPercentage = Math.min(100, Math.round((rec.score / 25) * 100));
                         html += `
                             <div class="recommendation-card">
                                 <div class="binder-name">
@@ -2552,7 +2552,7 @@
                     }
                     
                     recommendations.pretreatments.forEach(rec => {
-                        const matchPercentage = Math.round((rec.score / 25) * 100);
+                        const matchPercentage = Math.min(100, Math.round((rec.score / 25) * 100));
                         html += `
                             <div class="recommendation-card">
                                 <div class="binder-name">

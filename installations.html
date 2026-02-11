@@ -1069,6 +1069,93 @@
                 font-size: 1.8rem;
             }
         }
+
+        /* Cookie Consent Banner */
+        .cookie-banner {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(26, 54, 93, 0.98);
+            color: white;
+            padding: 20px;
+            transform: translateY(100%);
+            transition: transform 0.4s ease;
+            z-index: 1001;
+            backdrop-filter: blur(10px);
+            border-top: 3px solid #ff6b35;
+        }
+        .cookie-banner.show {
+            transform: translateY(0);
+        }
+        .cookie-banner-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .cookie-text {
+            flex: 1;
+            min-width: 300px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .cookie-text strong {
+            color: #ff6b35;
+        }
+        .cookie-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .cookie-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .cookie-btn-accept {
+            background: #ff6b35;
+            color: white;
+        }
+        .cookie-btn-accept:hover {
+            background: #e55a2b;
+            transform: translateY(-1px);
+        }
+        .cookie-btn-essential {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        .cookie-btn-essential:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        @media (max-width: 768px) {
+            .cookie-banner-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+            }
+            .cookie-text {
+                min-width: auto;
+            }
+            .cookie-buttons {
+                justify-content: center;
+                width: 100%;
+            }
+            .cookie-btn {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1168,7 +1255,7 @@
                 <p>Loading installations...</p>
             </div>
             
-            <div class="installations-grid" id="installations-grid">
+            <div class="installations-grid" id="installations-grid" aria-live="polite">
                 <!-- Installations will be loaded here -->
             </div>
             
@@ -1291,6 +1378,20 @@
             </div>
         </div>
     </footer>
+
+    <!-- Cookie Consent Banner -->
+    <div id="cookie-banner" class="cookie-banner">
+        <div class="cookie-banner-content">
+            <div class="cookie-text">
+                <strong>We use cookies</strong> to improve your experience and analyse website usage.
+                <a href="#" id="cookie-settings-link" style="color: #ff6b35; text-decoration: underline;">Cookie Settings</a>
+            </div>
+            <div class="cookie-buttons">
+                <button class="cookie-btn cookie-btn-accept" id="cookie-accept-all">Accept All</button>
+                <button class="cookie-btn cookie-btn-essential" id="cookie-essential-only">Essential Only</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Client-side translation system -->
 
@@ -1631,7 +1732,7 @@ function renderInstallations() {
     return `
       <div class="installation-card" data-category="${(installation.category || 'Playground')}">
         <div class="installation-image">
-          <img src="${src}" alt="${title}">
+          <img src="${src}" alt="${title}" loading="lazy" decoding="async">
         </div>
         <div class="installation-content">
           <div class="installation-meta">
@@ -1860,5 +1961,6 @@ document.addEventListener('DOMContentLoaded', function () {
   initMobileMenu();
         });
     </script>
+    <script src="cookie-consent.js"></script>
 </body>
 </html>

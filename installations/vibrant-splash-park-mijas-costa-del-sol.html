@@ -13,14 +13,14 @@
     <meta property="og:url" content="https://rosehilltpv.com/installations/vibrant-splash-park-mijas-costa-del-sol/">
     <meta property="og:title" content="Vibrant Splash Park - Mijas, Costa Del Sol">
     <meta property="og:description" content="Take a look at this vibrant splash park in Mijas, Costa del Sol, where Rosehill TPV has been used to create a durable and safe surface for families to... Rosehill TPV installation in Mijas, Costa Del Sol.">
-    <meta property="og:image" content="IMG-20241217-WA0001.jpg">
+    <meta property="og:image" content="/images/installations/IMG-20241217-WA0001.jpg">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://rosehilltpv.com/installations/vibrant-splash-park-mijas-costa-del-sol/">
     <meta property="twitter:title" content="Vibrant Splash Park - Mijas, Costa Del Sol">
     <meta property="twitter:description" content="Take a look at this vibrant splash park in Mijas, Costa del Sol, where Rosehill TPV has been used to create a durable and safe surface for families to... Rosehill TPV installation in Mijas, Costa Del Sol.">
-    <meta property="twitter:image" content="IMG-20241217-WA0001.jpg">
+    <meta property="twitter:image" content="/images/installations/IMG-20241217-WA0001.jpg">
 
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -29,7 +29,7 @@
         "@type": "Article",
         "headline": "Vibrant Splash Park - Mijas, Costa Del Sol",
         "description": "Take a look at this vibrant splash park in Mijas, Costa del Sol, where Rosehill TPV has been used to create a durable and safe surface for families to... Rosehill TPV installation in Mijas, Costa Del Sol.",
-        "image": "IMG-20241217-WA0001.jpg",
+        "image": "/images/installations/IMG-20241217-WA0001.jpg",
         "datePublished": "January 13, 2025",
         "author": {
             "@type": "Organization",
@@ -295,36 +295,40 @@
             margin-bottom: 40px;
         }
 
-        .main-image {
-            width: 100%;
-            height: 400px;
-            object-fit: cover;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-
-        .thumbnail-grid {
+        .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
         }
 
-        .thumbnail {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 8px;
+        .gallery-item {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
             cursor: pointer;
-            border: 3px solid transparent;
             transition: all 0.3s ease;
         }
 
-        .thumbnail:hover,
-        .thumbnail.active {
-            border-color: #ff6b35;
-            transform: translateY(-2px);
+        .gallery-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            display: block;
+            aspect-ratio: 16/9;
+        }
+
+        .gallery-grid.single-image {
+            grid-template-columns: 1fr;
+            max-width: 800px;
+        }
+
+        .gallery-grid.single-image .gallery-item img {
+            height: 400px;
         }
 
         /* Content Sections */
@@ -701,16 +705,16 @@
                 padding: 25px;
             }
 
-            .main-image {
-                height: 250px;
+            .gallery-grid {
+                grid-template-columns: 1fr;
             }
 
-            .thumbnail-grid {
-                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            .gallery-item img {
+                height: 220px;
             }
 
-            .thumbnail {
-                height: 80px;
+            .gallery-grid.single-image .gallery-item img {
+                height: 280px;
             }
         }
     </style>
@@ -808,21 +812,27 @@
             </header>
 
             <!-- Image Gallery -->
-            <section class="image-gallery">
-                <img src="IMG-20241217-WA0001.jpg" alt="Vibrant Splash Park - Main Image" class="main-image" onclick="openLightbox(0)">
-                <div class="thumbnail-grid">
-                <img src="../images/installations/IMG-20241217-WA0001.jpg" 
-                     alt="Vibrant Splash Park - Image 1" 
-                     class="thumbnail" 
-                     onclick="setMainImage(0); openLightbox(0)">
-                <img src="../images/installations/IMG-20241217-WA0016.jpg" 
-                     alt="Vibrant Splash Park - Image 2" 
-                     class="thumbnail" 
-                     onclick="setMainImage(1); openLightbox(1)">
-                <img src="../images/installations/IMG-20241217-WA0013.jpg" 
-                     alt="Vibrant Splash Park - Image 3" 
-                     class="thumbnail" 
-                     onclick="setMainImage(2); openLightbox(2)"></div>
+                        <section class="image-gallery">
+                <div class="gallery-grid">
+                    <div class="gallery-item" data-index="0">
+                        <img src="/images/installations/IMG-20241217-WA0001.jpg"
+                             alt="Vibrant Splash Park - Image 1"
+                             loading="eager"
+                             decoding="async">
+                    </div>
+                    <div class="gallery-item" data-index="1">
+                        <img src="/images/installations/IMG-20241217-WA0016.jpg"
+                             alt="Vibrant Splash Park - Image 2"
+                             loading="lazy"
+                             decoding="async">
+                    </div>
+                    <div class="gallery-item" data-index="2">
+                        <img src="/images/installations/IMG-20241217-WA0013.jpg"
+                             alt="Vibrant Splash Park - Image 3"
+                             loading="lazy"
+                             decoding="async">
+                    </div>
+                </div>
             </section>
 
             <!-- Content -->
@@ -929,22 +939,8 @@
 
     <script>
         // Image data for lightbox
-        const images = ["IMG-20241217-WA0001.jpg", "IMG-20241217-WA0016.jpg", "IMG-20241217-WA0013.jpg"];
+        const images = ["/images/installations/IMG-20241217-WA0001.jpg", "/images/installations/IMG-20241217-WA0016.jpg", "/images/installations/IMG-20241217-WA0013.jpg"];
         let currentImageIndex = 0;
-
-        // Thumbnail functionality
-        function setMainImage(index) {
-            const mainImg = document.querySelector('.main-image');
-            const thumbnails = document.querySelectorAll('.thumbnail');
-            
-            mainImg.src = images[index];
-            
-            thumbnails.forEach((thumb, i) => {
-                thumb.classList.toggle('active', i === index);
-            });
-            
-            currentImageIndex = index;
-        }
 
         // Lightbox functionality
         function openLightbox(index) {
@@ -1035,13 +1031,18 @@
             });
         }
 
-        // Initialize first thumbnail as active
         document.addEventListener('DOMContentLoaded', function() {
-            const firstThumbnail = document.querySelector('.thumbnail');
-            if (firstThumbnail) {
-                firstThumbnail.classList.add('active');
+            // Gallery click delegation
+            const galleryGrid = document.querySelector('.gallery-grid');
+            if (galleryGrid) {
+                galleryGrid.addEventListener('click', function(e) {
+                    const item = e.target.closest('.gallery-item');
+                    if (!item) return;
+                    const index = Number(item.dataset.index);
+                    if (!isNaN(index)) openLightbox(index);
+                });
             }
-            
+
             // Initialize mobile menu
             initMobileMenu();
         });

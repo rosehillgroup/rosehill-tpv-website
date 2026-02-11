@@ -46,7 +46,7 @@ exports.handler = async function(event, context) {
   try {
     
     const sanity = createClient({
-      projectId: process.env.SANITY_PROJECT_ID || '68ola3dd',
+      projectId: process.env.SANITY_PROJECT_ID || (console.warn('SANITY_PROJECT_ID not set, using fallback'), '68ola3dd'),
       dataset: process.env.SANITY_DATASET || 'production',
       apiVersion: '2023-05-03',
       token: process.env.SANITY_WRITE_TOKEN, // Need token to read from dataset

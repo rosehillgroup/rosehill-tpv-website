@@ -76,26 +76,6 @@ class AnalyticsLanguageEnhancer {
     }
 
     /**
-     * Monitor for language changes (for SPA-style navigation)
-     */
-    monitorLanguageChanges() {
-        const initialLanguage = this.currentLanguage;
-        
-        // Check for language changes periodically (very lightweight)
-        setInterval(() => {
-            try {
-                const newLanguage = this.detectLanguage();
-                if (newLanguage !== this.currentLanguage) {
-                    this.trackLanguageSwitch(newLanguage, this.currentLanguage);
-                    this.currentLanguage = newLanguage;
-                }
-            } catch (error) {
-                // Silent fail - don't log to avoid spam
-            }
-        }, 5000); // Check every 5 seconds
-    }
-
-    /**
      * Initialize analytics enhancement safely
      */
     init() {
@@ -107,9 +87,6 @@ class AnalyticsLanguageEnhancer {
             
             // Push initial language data
             this.pushLanguageData();
-            
-            // Start monitoring for changes
-            this.monitorLanguageChanges();
             
             this.initialized = true;
         } catch (error) {

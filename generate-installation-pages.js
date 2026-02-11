@@ -62,6 +62,13 @@ function formatDate(dateString) {
     });
 }
 
+// Function to escape HTML attribute values
+function escAttr(s) {
+    if (!s) return '';
+    return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 // Function to capitalize application
 function capitalizeApplication(app) {
     const appMap = {
@@ -82,18 +89,24 @@ installationsData.installations.forEach((installation, index) => {
     const fileName = `${slug}.html`;
     const filePath = path.join(installationsDir, fileName);
     
-    // Create thumbnail grid HTML
-    let thumbnailGrid = '';
-    if (installation.images && installation.images.length > 1) {
-        thumbnailGrid = '<div class="thumbnail-grid">';
+    // Create gallery section HTML
+    let gallerySection = '';
+    if (installation.images && installation.images.length > 0) {
+        const singleClass = installation.images.length === 1 ? ' single-image' : '';
+        gallerySection = `            <section class="image-gallery">
+                <div class="gallery-grid${singleClass}">`;
         installation.images.forEach((image, imgIndex) => {
-            thumbnailGrid += `
-                <img src="../images/installations/${image}" 
-                     alt="${installation.title} - Image ${imgIndex + 1}" 
-                     class="thumbnail" 
-                     onclick="setMainImage(${imgIndex}); openLightbox(${imgIndex})">`;
+            gallerySection += `
+                    <div class="gallery-item" data-index="${imgIndex}">
+                        <img src="/images/installations/${image}"
+                             alt="${escAttr(installation.title)} - Image ${imgIndex + 1}"
+                             loading="${imgIndex === 0 ? 'eager' : 'lazy'}"
+                             decoding="async">
+                    </div>`;
         });
-        thumbnailGrid += '</div>';
+        gallerySection += `
+                </div>
+            </section>`;
     }
     
     // Create content paragraphs HTML
@@ -104,9 +117,14 @@ installationsData.installations.forEach((installation, index) => {
         });
     }
     
-    // Create image array for JavaScript
-    const imageArray = installation.images.map(img => `"${img}"`).join(', ');
+    // Create image array for JavaScript (root-relative paths for lightbox)
+    const imageArray = installation.images.map(img => `"/images/installations/${img}"`).join(', ');
     
+    // Root-relative path for first image (og:image, twitter:image, structured data)
+    const firstImagePath = installation.images.length > 0
+        ? `/images/installations/${installation.images[0]}`
+        : '';
+
     // Replace template placeholders
     let pageContent = template
         .replace(/{{TITLE}}/g, installation.title)
@@ -114,10 +132,10 @@ installationsData.installations.forEach((installation, index) => {
         .replace(/{{URL_SLUG}}/g, slug)
         .replace(/{{META_DESCRIPTION}}/g, createMetaDescription(installation.description, installation.location))
         .replace(/{{KEYWORDS}}/g, createKeywords(installation.title, installation.location, installation.application))
-        .replace(/{{FIRST_IMAGE}}/g, installation.images[0])
+        .replace(/{{FIRST_IMAGE}}/g, firstImagePath)
         .replace(/{{DATE}}/g, formatDate(installation.date))
         .replace(/{{APPLICATION}}/g, capitalizeApplication(installation.application))
-        .replace(/{{THUMBNAIL_GRID}}/g, thumbnailGrid)
+        .replace(/{{GALLERY_SECTION}}/g, gallerySection)
         .replace(/{{CONTENT_PARAGRAPHS}}/g, contentParagraphs)
         .replace(/{{IMAGE_ARRAY}}/g, imageArray);
     

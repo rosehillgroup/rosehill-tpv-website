@@ -13,14 +13,14 @@
     <meta property="og:url" content="https://rosehilltpv.com/installations/playground-transformed-cheltenham-primary-school/">
     <meta property="og:title" content="Playground Transformed - Cheltenham Primary School">
     <meta property="og:description" content="Last year, Grange Surfacing transformed the playground at Cheltenham Primary School in Melbourne with a series of blue and grey wetpour rubber mounds.... Rosehill TPV installation in Cheltenham Primary School.">
-    <meta property="og:image" content="Cheltenham_School_4.jpg">
+    <meta property="og:image" content="/images/installations/Cheltenham_School_4.jpg">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://rosehilltpv.com/installations/playground-transformed-cheltenham-primary-school/">
     <meta property="twitter:title" content="Playground Transformed - Cheltenham Primary School">
     <meta property="twitter:description" content="Last year, Grange Surfacing transformed the playground at Cheltenham Primary School in Melbourne with a series of blue and grey wetpour rubber mounds.... Rosehill TPV installation in Cheltenham Primary School.">
-    <meta property="twitter:image" content="Cheltenham_School_4.jpg">
+    <meta property="twitter:image" content="/images/installations/Cheltenham_School_4.jpg">
 
     <!-- Structured Data -->
     <script type="application/ld+json">
@@ -29,7 +29,7 @@
         "@type": "Article",
         "headline": "Playground Transformed - Cheltenham Primary School",
         "description": "Last year, Grange Surfacing transformed the playground at Cheltenham Primary School in Melbourne with a series of blue and grey wetpour rubber mounds.... Rosehill TPV installation in Cheltenham Primary School.",
-        "image": "Cheltenham_School_4.jpg",
+        "image": "/images/installations/Cheltenham_School_4.jpg",
         "datePublished": "January 20, 2025",
         "author": {
             "@type": "Organization",
@@ -295,36 +295,40 @@
             margin-bottom: 40px;
         }
 
-        .main-image {
-            width: 100%;
-            height: 400px;
-            object-fit: cover;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            cursor: pointer;
-            margin-bottom: 20px;
-        }
-
-        .thumbnail-grid {
+        .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
         }
 
-        .thumbnail {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 8px;
+        .gallery-item {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
             cursor: pointer;
-            border: 3px solid transparent;
             transition: all 0.3s ease;
         }
 
-        .thumbnail:hover,
-        .thumbnail.active {
-            border-color: #ff6b35;
-            transform: translateY(-2px);
+        .gallery-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            display: block;
+            aspect-ratio: 16/9;
+        }
+
+        .gallery-grid.single-image {
+            grid-template-columns: 1fr;
+            max-width: 800px;
+        }
+
+        .gallery-grid.single-image .gallery-item img {
+            height: 400px;
         }
 
         /* Content Sections */
@@ -701,16 +705,16 @@
                 padding: 25px;
             }
 
-            .main-image {
-                height: 250px;
+            .gallery-grid {
+                grid-template-columns: 1fr;
             }
 
-            .thumbnail-grid {
-                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            .gallery-item img {
+                height: 220px;
             }
 
-            .thumbnail {
-                height: 80px;
+            .gallery-grid.single-image .gallery-item img {
+                height: 280px;
             }
         }
     </style>
@@ -808,21 +812,27 @@
             </header>
 
             <!-- Image Gallery -->
-            <section class="image-gallery">
-                <img src="Cheltenham_School_4.jpg" alt="Playground Transformed - Main Image" class="main-image" onclick="openLightbox(0)">
-                <div class="thumbnail-grid">
-                <img src="../images/installations/Cheltenham_School_4.jpg" 
-                     alt="Playground Transformed - Image 1" 
-                     class="thumbnail" 
-                     onclick="setMainImage(0); openLightbox(0)">
-                <img src="../images/installations/Cheltenham_School_3.jpg" 
-                     alt="Playground Transformed - Image 2" 
-                     class="thumbnail" 
-                     onclick="setMainImage(1); openLightbox(1)">
-                <img src="../images/installations/Cheltenham_School_2.jpg" 
-                     alt="Playground Transformed - Image 3" 
-                     class="thumbnail" 
-                     onclick="setMainImage(2); openLightbox(2)"></div>
+                        <section class="image-gallery">
+                <div class="gallery-grid">
+                    <div class="gallery-item" data-index="0">
+                        <img src="/images/installations/Cheltenham_School_4.jpg"
+                             alt="Playground Transformed - Image 1"
+                             loading="eager"
+                             decoding="async">
+                    </div>
+                    <div class="gallery-item" data-index="1">
+                        <img src="/images/installations/Cheltenham_School_3.jpg"
+                             alt="Playground Transformed - Image 2"
+                             loading="lazy"
+                             decoding="async">
+                    </div>
+                    <div class="gallery-item" data-index="2">
+                        <img src="/images/installations/Cheltenham_School_2.jpg"
+                             alt="Playground Transformed - Image 3"
+                             loading="lazy"
+                             decoding="async">
+                    </div>
+                </div>
             </section>
 
             <!-- Content -->
@@ -930,22 +940,8 @@
 
     <script>
         // Image data for lightbox
-        const images = ["Cheltenham_School_4.jpg", "Cheltenham_School_3.jpg", "Cheltenham_School_2.jpg"];
+        const images = ["/images/installations/Cheltenham_School_4.jpg", "/images/installations/Cheltenham_School_3.jpg", "/images/installations/Cheltenham_School_2.jpg"];
         let currentImageIndex = 0;
-
-        // Thumbnail functionality
-        function setMainImage(index) {
-            const mainImg = document.querySelector('.main-image');
-            const thumbnails = document.querySelectorAll('.thumbnail');
-            
-            mainImg.src = images[index];
-            
-            thumbnails.forEach((thumb, i) => {
-                thumb.classList.toggle('active', i === index);
-            });
-            
-            currentImageIndex = index;
-        }
 
         // Lightbox functionality
         function openLightbox(index) {
@@ -1036,13 +1032,18 @@
             });
         }
 
-        // Initialize first thumbnail as active
         document.addEventListener('DOMContentLoaded', function() {
-            const firstThumbnail = document.querySelector('.thumbnail');
-            if (firstThumbnail) {
-                firstThumbnail.classList.add('active');
+            // Gallery click delegation
+            const galleryGrid = document.querySelector('.gallery-grid');
+            if (galleryGrid) {
+                galleryGrid.addEventListener('click', function(e) {
+                    const item = e.target.closest('.gallery-item');
+                    if (!item) return;
+                    const index = Number(item.dataset.index);
+                    if (!isNaN(index)) openLightbox(index);
+                });
             }
-            
+
             // Initialize mobile menu
             initMobileMenu();
         });
