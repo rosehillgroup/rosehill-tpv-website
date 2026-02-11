@@ -119,21 +119,41 @@ async function buildInstallationPages() {
     }).join('\n                ');
   }
 
-  function createThumbnailGrid(gallery, title, urlFor) {
-    if (!gallery || gallery.length === 0) return '';
-    let thumbnailGrid = '<div class="thumbnail-grid">';
-    gallery.forEach((image, index) => {
-      if (image.asset) {
-        const imageUrl = urlFor(image.asset).width(300).auto('format').quality(70).url();
-        thumbnailGrid += `
-                <img src="${imageUrl}" 
-                     alt="${image.alt || title}" 
-                     class="thumbnail" 
-                     onclick="setMainImage(${index + 1}); openLightbox(${index + 1})">`;
-      }
+  function escAttr(s) {
+    if (!s) return '';
+    return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function createGallerySection(coverImage, gallery, title, urlFor) {
+    const allImages = [];
+    if (coverImage?.asset) {
+      allImages.push({ asset: coverImage.asset, alt: coverImage.alt || title });
+    }
+    if (gallery) {
+      gallery.filter(img => img?.asset).forEach(img => {
+        allImages.push({ asset: img.asset, alt: img.alt || title });
+      });
+    }
+    if (allImages.length === 0) return '';
+
+    const singleClass = allImages.length === 1 ? ' single-image' : '';
+    let html = `            <section class="image-gallery">
+                <div class="gallery-grid${singleClass}">`;
+    allImages.forEach((image, index) => {
+      const imageUrl = urlFor(image.asset).width(1200).auto('format').quality(80).url();
+      html += `
+                    <div class="gallery-item" data-index="${index}">
+                        <img src="${imageUrl}"
+                             alt="${escAttr(image.alt)} - Image ${index + 1}"
+                             loading="${index === 0 ? 'eager' : 'lazy'}"
+                             decoding="async">
+                    </div>`;
     });
-    thumbnailGrid += '</div>';
-    return thumbnailGrid;
+    html += `
+                </div>
+            </section>`;
+    return html;
   }
 
   function createImageArray(coverImage, gallery, urlFor) {
@@ -207,7 +227,7 @@ async function buildInstallationPages() {
         logoPng: lang === 'en' ? '../rosehill_tpv_logo.png' : '../../rosehill_tpv_logo.png'
       };
 
-      const thumbnailGrid = createThumbnailGrid(installation.gallery, title, urlFor);
+      const gallerySection = createGallerySection(installation.coverImage, installation.gallery, title, urlFor);
       const contentParagraphs = portableTextToHtml(overview);
       const attributionSection = generateAttributionSection(thanksTo, thanksToUrls);
       const imageArray = createImageArray(installation.coverImage, installation.gallery, urlFor);
@@ -226,7 +246,7 @@ async function buildInstallationPages() {
         .replace(/{{FIRST_IMAGE}}/g, firstImageUrl)
         .replace(/{{DATE}}/g, formatDate(installation.installationDate))
         .replace(/{{APPLICATION}}/g, installation.application || 'Installation')
-        .replace(/{{THUMBNAIL_GRID}}/g, thumbnailGrid)
+        .replace(/{{GALLERY_SECTION}}/g, gallerySection)
         .replace(/{{CONTENT_PARAGRAPHS}}/g, contentParagraphs)
         .replace(/{{ATTRIBUTION_SECTION}}/g, attributionSection)
         .replace(/{{IMAGE_ARRAY}}/g, imageArray)

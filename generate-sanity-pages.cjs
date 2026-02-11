@@ -154,20 +154,33 @@ async function main() {
         logoPng: lang.code === 'en' ? '../rosehill_tpv_logo.png' : '../../rosehill_tpv_logo.png'
       };
       
-      // Create thumbnail grid if gallery exists
-      let thumbnailGrid = '';
-      if (installation.gallery && installation.gallery.length > 0) {
-        thumbnailGrid = '<div class="thumbnail-grid">';
-        installation.gallery.forEach((image, index) => {
-          if (image.url) {
-            thumbnailGrid += `
-                  <img src="${image.url}" 
-                       alt="${image.alt || title}" 
-                       class="thumbnail" 
-                       onclick="setMainImage(${index + 1}); openLightbox(${index + 1})">`;
-          }
+      // Create gallery section
+      let gallerySection = '';
+      const allImages = [];
+      if (installation.coverImage?.url) {
+        allImages.push({ url: installation.coverImage.url, alt: installation.coverImage.alt || title });
+      }
+      if (installation.gallery) {
+        installation.gallery.filter(img => img?.url).forEach(img => {
+          allImages.push({ url: img.url, alt: img.alt || title });
         });
-        thumbnailGrid += '</div>';
+      }
+      if (allImages.length > 0) {
+        const singleClass = allImages.length === 1 ? ' single-image' : '';
+        gallerySection = `            <section class="image-gallery">
+                <div class="gallery-grid${singleClass}">`;
+        allImages.forEach((image, index) => {
+          gallerySection += `
+                    <div class="gallery-item" data-index="${index}">
+                        <img src="${image.url}"
+                             alt="${(image.alt || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"
+                             loading="${index === 0 ? 'eager' : 'lazy'}"
+                             decoding="async">
+                    </div>`;
+        });
+        gallerySection += `
+                </div>
+            </section>`;
       }
       
       // Create content paragraphs using language-specific content
@@ -193,7 +206,7 @@ async function main() {
         .replace(/{{FIRST_IMAGE}}/g, installation.coverImage?.url || '')
         .replace(/{{DATE}}/g, formatDate(installation.installationDate))
         .replace(/{{APPLICATION}}/g, installation.application || 'Installation')
-        .replace(/{{THUMBNAIL_GRID}}/g, thumbnailGrid)
+        .replace(/{{GALLERY_SECTION}}/g, gallerySection)
         .replace(/{{CONTENT_PARAGRAPHS}}/g, contentParagraphs)
         .replace(/{{ATTRIBUTION_SECTION}}/g, attributionSection)
         .replace(/{{IMAGE_ARRAY}}/g, imageArray)

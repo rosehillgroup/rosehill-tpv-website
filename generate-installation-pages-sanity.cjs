@@ -111,19 +111,34 @@ async function main() {
     }).join('\n                ');
   }
 
-  function createThumbnailGrid(gallery, title) {
-    if (!gallery || gallery.length === 0) return '';
-    
-    let thumbnailGrid = '<div class="thumbnail-grid">';
-    gallery.forEach((image, index) => {
-      thumbnailGrid += `
-                <img src="${image.url}" 
-                     alt="${image.alt || title}" 
-                     class="thumbnail" 
-                     onclick="setMainImage(${index + 1}); openLightbox(${index + 1})">`;
+  function createGallerySection(coverImage, gallery, title) {
+    const allImages = [];
+    if (coverImage?.url) {
+      allImages.push({ url: coverImage.url, alt: coverImage.alt || title });
+    }
+    if (gallery) {
+      gallery.filter(img => img?.url).forEach(img => {
+        allImages.push({ url: img.url, alt: img.alt || title });
+      });
+    }
+    if (allImages.length === 0) return '';
+
+    const singleClass = allImages.length === 1 ? ' single-image' : '';
+    let html = `            <section class="image-gallery">
+                <div class="gallery-grid${singleClass}">`;
+    allImages.forEach((image, index) => {
+      html += `
+                    <div class="gallery-item" data-index="${index}">
+                        <img src="${image.url}"
+                             alt="${(image.alt || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"
+                             loading="${index === 0 ? 'eager' : 'lazy'}"
+                             decoding="async">
+                    </div>`;
     });
-    thumbnailGrid += '</div>';
-    return thumbnailGrid;
+    html += `
+                </div>
+            </section>`;
+    return html;
   }
 
   function createImageArray(coverImage, gallery) {
@@ -161,8 +176,8 @@ async function main() {
         ? path.join(installationsDir, fileName)
         : path.join(__dirname, lang, 'installations', fileName);
 
-      // Create thumbnail grid HTML
-      const thumbnailGrid = createThumbnailGrid(installation.gallery, title);
+      // Create gallery section HTML
+      const gallerySection = createGallerySection(installation.coverImage, installation.gallery, title);
       
       // Create content paragraphs HTML
       const contentParagraphs = portableTextToHtml(overview);
@@ -184,7 +199,7 @@ async function main() {
         .replace(/{{FIRST_IMAGE}}/g, installation.coverImage?.url || '')
         .replace(/{{DATE}}/g, formatDate(installation.installationDate))
         .replace(/{{APPLICATION}}/g, capitalizeApplication(installation.application))
-        .replace(/{{THUMBNAIL_GRID}}/g, thumbnailGrid)
+        .replace(/{{GALLERY_SECTION}}/g, gallerySection)
         .replace(/{{CONTENT_PARAGRAPHS}}/g, contentParagraphs)
         .replace(/{{THANKS_PARAGRAPHS}}/g, thanksParagraphs)
         .replace(/{{IMAGE_ARRAY}}/g, imageArray);
