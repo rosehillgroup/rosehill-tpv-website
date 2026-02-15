@@ -133,6 +133,7 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     selectedExclusionZoneId,
     snapToGrid,
     gridSize_mm,
+    showGridOverlay,
     selectCourt,
     deselectCourt,
     selectTrack,
@@ -2170,22 +2171,29 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
     setPan({ x: 0, y: 0 });
   };
 
-  const handleWheel = (e) => {
+  const handleWheel = useCallback((e) => {
+    e.preventDefault();
     // Ctrl/Cmd + scroll = zoom (also handles trackpad pinch which sets ctrlKey)
     if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
       const delta = e.deltaY * -0.002;
       setZoom(prevZoom => Math.min(Math.max(prevZoom + prevZoom * delta, 0.25), 5));
     } else {
       // Regular scroll = pan
-      e.preventDefault();
       const panSpeed = 1;
       setPan(prevPan => ({
         x: prevPan.x - e.deltaX * panSpeed,
         y: prevPan.y - e.deltaY * panSpeed
       }));
     }
-  };
+  }, []);
+
+  // Attach wheel listener as non-passive so preventDefault() works
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [handleWheel]);
 
   // Handle middle-click or space+click for panning
   const handlePanStart = (e) => {
@@ -2475,7 +2483,6 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
       <div
         ref={containerRef}
         className="court-canvas__viewport"
-        onWheel={handleWheel}
         onMouseDown={handlePanStart}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -2503,6 +2510,16 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
               <path d={generateSurfaceBoundaryPath(surface.boundary, surface.width_mm, surface.length_mm)} />
             </clipPath>
           )}
+
+          {/* Background grid pattern — 1m (1000mm) squares */}
+          <pattern id="bg-grid-pattern" width={1000} height={1000} patternUnits="userSpaceOnUse">
+            <path d={`M 1000 0 L 0 0 0 1000`} fill="none" stroke="#c8c8c8" strokeWidth="20" />
+          </pattern>
+
+          {/* Overlay grid pattern — gridSize_mm (default 100mm) squares */}
+          <pattern id="overlay-grid-pattern" width={gridSize_mm} height={gridSize_mm} patternUnits="userSpaceOnUse">
+            <path d={`M ${gridSize_mm} 0 L 0 0 0 ${gridSize_mm}`} fill="none" stroke="rgba(0,0,0,0.15)" strokeWidth="10" />
+          </pattern>
         </defs>
 
         {/* Surface Background - clipped if custom boundary */}
@@ -2516,6 +2533,16 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             className="court-canvas__surface"
           />
         </g>
+
+        {/* Background grid — 1m squares, always visible on surface */}
+        <rect
+          x="0"
+          y="0"
+          width={surface.width_mm}
+          height={surface.length_mm}
+          fill="url(#bg-grid-pattern)"
+          pointerEvents="none"
+        />
 
         {/* Boundary outline for non-rectangular surfaces */}
         {surface.boundary && surface.boundary.type !== 'rectangle' && surface.boundary.controlPoints && (
@@ -2909,6 +2936,18 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             onRotateStart={(e, gId) => handleGroupRotateStart(e, gId)}
           />
         ))}
+
+        {/* Overlay grid — fine gridlines on top of elements, togglable */}
+        {showGridOverlay && (
+          <rect
+            x="0"
+            y="0"
+            width={surface.width_mm}
+            height={surface.length_mm}
+            fill="url(#overlay-grid-pattern)"
+            pointerEvents="none"
+          />
+        )}
 
         {/* Preview line while drawing path */}
         {pathDrawingMode && activePath && lastPoint && drawingMousePos && (

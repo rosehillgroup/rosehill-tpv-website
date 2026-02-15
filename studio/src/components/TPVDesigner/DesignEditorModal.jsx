@@ -159,9 +159,9 @@ function DesignEditorModal({ isOpen, onClose }) {
         console.log('[EDITOR] Using SVG aspect ratio:', aspectRatio, '→', originalWidth_mm, 'x', originalHeight_mm, 'mm');
       }
 
-      // Always save to persist the current state (with edits)
+      // Always create a fresh design record — each motif needs its own independent source
       setIsSaving(true);
-      let designId = currentDesignId;
+      let designId = null;
 
       // Generate a name if none exists
       const autoName = designName || `Design ${new Date().toLocaleString('en-GB', {

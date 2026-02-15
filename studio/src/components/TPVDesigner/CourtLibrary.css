@@ -202,7 +202,7 @@
 /* ====== Generate Button ====== */
 .court-library__generate {
   padding: 0.75rem;
-  border-top: 1px solid var(--color-border, #e4e9f0);
+  border-bottom: 1px solid var(--color-border, #e4e9f0);
 }
 
 .court-library__generate-btn {

@@ -176,15 +176,15 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
   // Ref for SVG preview section (for auto-scroll)
   const svgPreviewRef = useRef(null);
+  const hasAutoScrolled = useRef(false);
 
   // Ref for polling abort controller (cancels polling on unmount)
   const pollingAbortRef = useRef(null);
 
-  // Auto-scroll to SVG preview when it becomes available
+  // Auto-scroll to SVG preview on first load only
   useEffect(() => {
-    // Don't auto-scroll if user is actively editing colors (prevents infinite scroll loop)
-    if ((solidSvgUrl || blendSvgUrl) && svgPreviewRef.current && !mixerOpen && !colorEditorOpen) {
-      // Delay scroll slightly to ensure content is rendered
+    if ((solidSvgUrl || blendSvgUrl) && svgPreviewRef.current && !hasAutoScrolled.current) {
+      hasAutoScrolled.current = true;
       setTimeout(() => {
         svgPreviewRef.current?.scrollIntoView({
           behavior: 'smooth',
@@ -192,7 +192,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         });
       }, 300);
     }
-  }, [solidSvgUrl, blendSvgUrl, mixerOpen, colorEditorOpen]);
+  }, [solidSvgUrl, blendSvgUrl]);
 
   // Handle Escape key for mixer widget (stop immediate propagation to prevent parent modal from closing)
   useEffect(() => {
@@ -1629,7 +1629,11 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
       // Truncate future if not at end (standard undo/redo behavior)
       const newHistory = currentHistory.slice(0, currentHistoryIndex + 1);
-      newHistory.push(new Map(newOverrides));
+      newHistory.push({
+        regionOverrides: new Map(newOverrides),
+        solidEditedColors: new Map(solidEditedColors),
+        blendEditedColors: new Map(blendEditedColors)
+      });
 
       // Limit history to 50 entries
       if (newHistory.length > 50) {
@@ -1765,43 +1769,55 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     setEyedropperRegion(null);
   };
 
-  // Undo last region override change
+  // Undo last color change (region overrides + palette edits)
   const handleRegionUndo = async () => {
     if (historyIndex <= 0) return; // Can't undo past the beginning
 
     const newIndex = historyIndex - 1;
-    const previousOverrides = regionOverridesHistory[newIndex];
+    const entry = regionOverridesHistory[newIndex];
 
+    // Support compound entries and legacy Map entries
+    const prevOverrides = entry instanceof Map ? entry : entry.regionOverrides;
+    const prevSolidEdits = entry instanceof Map ? solidEditedColors : entry.solidEditedColors;
+    const prevBlendEdits = entry instanceof Map ? blendEditedColors : entry.blendEditedColors;
 
     // Apply previous state
-    setRegionOverrides(new Map(previousOverrides));
+    setRegionOverrides(new Map(prevOverrides));
+    setSolidEditedColors(new Map(prevSolidEdits));
+    setBlendEditedColors(new Map(prevBlendEdits));
     setHistoryIndex(newIndex);
 
-    // Regenerate with previous overrides
+    // Regenerate with previous state
     if (viewMode === 'blend') {
-      await regenerateBlendSVG(null, null, previousOverrides);
+      await regenerateBlendSVG(prevBlendEdits, null, prevOverrides);
     } else {
-      await regenerateSolidSVG(null, null, previousOverrides);
+      await regenerateSolidSVG(prevSolidEdits, null, prevOverrides);
     }
   };
 
-  // Redo next region override change
+  // Redo next color change (region overrides + palette edits)
   const handleRegionRedo = async () => {
     if (historyIndex >= regionOverridesHistory.length - 1) return; // Can't redo past the end
 
     const newIndex = historyIndex + 1;
-    const nextOverrides = regionOverridesHistory[newIndex];
+    const entry = regionOverridesHistory[newIndex];
 
+    // Support compound entries and legacy Map entries
+    const nextOverrides = entry instanceof Map ? entry : entry.regionOverrides;
+    const nextSolidEdits = entry instanceof Map ? solidEditedColors : entry.solidEditedColors;
+    const nextBlendEdits = entry instanceof Map ? blendEditedColors : entry.blendEditedColors;
 
     // Apply next state
     setRegionOverrides(new Map(nextOverrides));
+    setSolidEditedColors(new Map(nextSolidEdits));
+    setBlendEditedColors(new Map(nextBlendEdits));
     setHistoryIndex(newIndex);
 
-    // Regenerate with next overrides
+    // Regenerate with next state
     if (viewMode === 'blend') {
-      await regenerateBlendSVG(null, null, nextOverrides);
+      await regenerateBlendSVG(nextBlendEdits, null, nextOverrides);
     } else {
-      await regenerateSolidSVG(null, null, nextOverrides);
+      await regenerateSolidSVG(nextSolidEdits, null, nextOverrides);
     }
   };
 
@@ -1845,7 +1861,11 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
         // Add to history
         const newHistory = regionOverridesHistory.slice(0, historyIndex + 1);
-        newHistory.push(new Map(updatedOverrides));
+        newHistory.push({
+          regionOverrides: new Map(updatedOverrides),
+          solidEditedColors: new Map(solidEditedColors),
+          blendEditedColors: new Map(blendEditedColors)
+        });
         if (newHistory.length > 50) newHistory.shift();
 
         setRegionOverrides(updatedOverrides);
@@ -1873,6 +1893,17 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
         setSolidEditedColors(updated);
 
+        // Add to history for undo/redo
+        const newHistory = regionOverridesHistory.slice(0, historyIndex + 1);
+        newHistory.push({
+          regionOverrides: new Map(regionOverrides),
+          solidEditedColors: new Map(updated),
+          blendEditedColors: new Map(blendEditedColors)
+        });
+        if (newHistory.length > 50) newHistory.shift();
+        setRegionOverridesHistory(newHistory);
+        setHistoryIndex(newHistory.length - 1);
+
         // Update selected color with new hex and blendHex for highlighting
         setSelectedColor({
           ...selectedColor,
@@ -1886,6 +1917,17 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       const updated = new Map(blendEditedColors);
       updated.set(selectedColor.originalHex.toLowerCase(), { newHex: newHex.toLowerCase() });
       setBlendEditedColors(updated);
+
+      // Add to history for undo/redo
+      const newHistory = regionOverridesHistory.slice(0, historyIndex + 1);
+      newHistory.push({
+        regionOverrides: new Map(regionOverrides),
+        solidEditedColors: new Map(solidEditedColors),
+        blendEditedColors: new Map(updated)
+      });
+      if (newHistory.length > 50) newHistory.shift();
+      setRegionOverridesHistory(newHistory);
+      setHistoryIndex(newHistory.length - 1);
 
       // Update selected color with new hex and blendHex for highlighting
       setSelectedColor({
@@ -1937,7 +1979,11 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
       // Now update regionOverrides state and history AFTER SVG is regenerated
       const newHistory = regionOverridesHistory.slice(0, historyIndex + 1);
-      newHistory.push(new Map(updatedOverrides));
+      newHistory.push({
+        regionOverrides: new Map(updatedOverrides),
+        solidEditedColors: new Map(solidEditedColors),
+        blendEditedColors: new Map(blendEditedColors)
+      });
       if (newHistory.length > 50) newHistory.shift();
 
       setRegionOverrides(updatedOverrides);
@@ -1952,6 +1998,17 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         parts // Store parts Map for potential re-editing
       });
       setBlendEditedColors(updated);
+
+      // Add to history for undo/redo
+      const newHistory = regionOverridesHistory.slice(0, historyIndex + 1);
+      newHistory.push({
+        regionOverrides: new Map(regionOverrides),
+        solidEditedColors: new Map(solidEditedColors),
+        blendEditedColors: new Map(updated)
+      });
+      if (newHistory.length > 50) newHistory.shift();
+      setRegionOverridesHistory(newHistory);
+      setHistoryIndex(newHistory.length - 1);
 
       // Update mixer color with new blend for highlighting
       setMixerColor({
@@ -2599,7 +2656,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
                 <h3>Simplify Artwork?</h3>
                 <ul>
                   <li>Converts vector paths to traced outlines</li>
-                  <li>Locks in current colors</li>
+                  <li>Locks in current colours</li>
                   <li>May slightly simplify geometry</li>
                 </ul>
                 <p className="modal-note">

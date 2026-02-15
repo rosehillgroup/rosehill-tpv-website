@@ -88,61 +88,9 @@ export default function ColorEditorPanel({
       </div>
 
       <div className="editor-content">
-        {/* Colour Info */}
-        <div className="color-info-section">
-          <div className="color-display">
-            <div className="swatch-pair">
-              <div className="swatch-group">
-                <div
-                  className="swatch original"
-                  style={{ backgroundColor: color.originalHex || color.hex }}
-                  title="Original colour"
-                />
-                <span className="swatch-label">Original</span>
-              </div>
-              <span className="arrow">→</span>
-              <div className="swatch-group">
-                <div
-                  className={`swatch current ${isTransparent ? 'transparent-preview' : ''}`}
-                  style={isTransparent ? {} : { backgroundColor: selectedHex }}
-                  title="Current colour"
-                />
-                <span className="swatch-label">{isTransparent ? 'Transparent' : 'Current'}</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="color-details">
-            <div className="detail-row">
-              <span className="label">Hex:</span>
-              <span className="value">{selectedHex}</span>
-            </div>
-            <div className="detail-row">
-              <span className="label">Coverage:</span>
-              <span className="value">{color.areaPct?.toFixed(1) || 0}%</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Transparent Option */}
-        <div className="transparent-section">
-          <h4>Remove Fill</h4>
-          <button
-            className={`transparent-option ${isTransparent ? 'selected' : ''}`}
-            onClick={handleMakeTransparent}
-            title="Make this area transparent (remove fill)"
-          >
-            <div className="transparent-swatch" />
-            <span>Make Transparent</span>
-          </button>
-        </div>
-
         {/* TPV Colour Palette */}
         <div className="tpv-palette-section">
           <h4>Standard TPV Colours</h4>
-          <p className="palette-description">
-            Select a pure TPV colour (no blending required)
-          </p>
           <div className="tpv-color-grid">
             {tpvColours.map((tpvColor) => (
               <div
@@ -161,6 +109,19 @@ export default function ColorEditorPanel({
           </div>
         </div>
 
+        {/* Transparent Option */}
+        <div className="transparent-section">
+          <h4>Remove Fill</h4>
+          <button
+            className={`transparent-option ${isTransparent ? 'selected' : ''}`}
+            onClick={handleMakeTransparent}
+            title="Make this area transparent (remove fill)"
+          >
+            <div className="transparent-swatch" />
+            <span>Make Transparent</span>
+          </button>
+        </div>
+
         {/* Custom Colour Picker - Only in Blend Mode (if enabled) */}
         {FEATURE_FLAGS.BLEND_MODE_ENABLED && mode === 'blend' && (
           <div className="picker-section">
@@ -173,21 +134,6 @@ export default function ColorEditorPanel({
               onChange={handleColorChange}
               disableAlpha={true}
             />
-            <button onClick={handleReset} className="reset-button">
-              Reset to Original Colour
-            </button>
-          </div>
-        )}
-
-        {/* Solid Mode Info - show if in solid mode OR if blend mode is disabled */}
-        {(mode === 'solid' || !FEATURE_FLAGS.BLEND_MODE_ENABLED) && (
-          <div className="solid-mode-info">
-            <h4>Solid Mode Editing</h4>
-            <p className="info-description">
-              {FEATURE_FLAGS.BLEND_MODE_ENABLED
-                ? 'In solid mode, you can only select from the standard TPV colours above. Custom colours require blending - switch to Blend Mode for full colour customisation.'
-                : 'Select from the standard TPV colours above. Only solid TPV colours are available.'}
-            </p>
             <button onClick={handleReset} className="reset-button">
               Reset to Original Colour
             </button>
@@ -248,92 +194,6 @@ export default function ColorEditorPanel({
           flex: 1;
           overflow-y: auto;
           padding: 1.5rem;
-        }
-
-        /* Color Info Section */
-        .color-info-section {
-          margin-bottom: 2rem;
-          padding: 1rem;
-          background: #f9f9f9;
-          border-radius: 6px;
-        }
-
-        .color-display {
-          margin-bottom: 1rem;
-        }
-
-        .swatch-pair {
-          display: flex;
-          align-items: center;
-          gap: 1rem;
-          justify-content: center;
-        }
-
-        .swatch-group {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0.5rem;
-        }
-
-        .swatch {
-          width: 60px;
-          height: 60px;
-          border-radius: 8px;
-          border: 3px solid #ddd;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .swatch.original {
-          border-color: #999;
-        }
-
-        .swatch.current {
-          border-color: #ff6b35;
-        }
-
-        .swatch.transparent-preview {
-          background:
-            linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%),
-            linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%);
-          background-size: 10px 10px;
-          background-position: 0 0, 5px 5px;
-          background-color: white;
-        }
-
-        .swatch-label {
-          font-size: 0.85rem;
-          color: #666;
-          font-weight: 500;
-        }
-
-        .arrow {
-          font-size: 1.5rem;
-          color: #666;
-          font-weight: bold;
-        }
-
-        .color-details {
-          display: flex;
-          flex-direction: column;
-          gap: 0.5rem;
-        }
-
-        .detail-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 0.95rem;
-        }
-
-        .detail-row .label {
-          font-weight: 600;
-          color: #666;
-        }
-
-        .detail-row .value {
-          font-family: 'Courier New', monospace;
-          color: #333;
         }
 
         /* Transparent Section */
@@ -404,12 +264,6 @@ export default function ColorEditorPanel({
           color: #1a365d;
           font-size: 1rem;
           font-weight: 600;
-        }
-
-        .palette-description {
-          margin: 0 0 1rem 0;
-          font-size: 0.85rem;
-          color: #666;
         }
 
         .tpv-color-grid {
@@ -501,29 +355,6 @@ export default function ColorEditorPanel({
           background: #d0d0d0;
         }
 
-        /* Solid Mode Info */
-        .solid-mode-info {
-          margin-bottom: 1rem;
-          padding: 1rem;
-          background: #fff5f0;
-          border: 2px solid #ff6b35;
-          border-radius: 6px;
-        }
-
-        .solid-mode-info h4 {
-          margin: 0 0 0.5rem 0;
-          color: #1a365d;
-          font-size: 1rem;
-          font-weight: 600;
-        }
-
-        .info-description {
-          margin: 0;
-          font-size: 0.85rem;
-          color: #666;
-          line-height: 1.5;
-        }
-
         /* Mobile Responsive - Fullscreen Modal */
         @media (max-width: 768px) {
           .color-editor-panel {
@@ -560,17 +391,6 @@ export default function ColorEditorPanel({
             padding: 1rem;
           }
 
-          /* Color swatches - larger for touch */
-          .swatch {
-            width: 50px;
-            height: 50px;
-          }
-
-          .color-info-section {
-            padding: 0.75rem;
-            margin-bottom: 1.5rem;
-          }
-
           /* TPV color grid - better touch targets */
           .tpv-color-grid {
             grid-template-columns: repeat(4, 1fr);
@@ -599,10 +419,6 @@ export default function ColorEditorPanel({
             font-size: 0.9rem;
           }
 
-          .palette-description {
-            font-size: 0.8rem;
-          }
-
           /* Picker section */
           .picker-section {
             padding: 0.75rem;
@@ -622,17 +438,6 @@ export default function ColorEditorPanel({
             font-size: 0.9rem;
           }
 
-          .solid-mode-info {
-            padding: 0.75rem;
-          }
-
-          .solid-mode-info h4 {
-            font-size: 0.9rem;
-          }
-
-          .info-description {
-            font-size: 0.8rem;
-          }
         }
 
         /* Extra small screens */
@@ -643,19 +448,6 @@ export default function ColorEditorPanel({
 
           .tpv-color-swatch {
             height: 44px;
-          }
-
-          .swatch {
-            width: 44px;
-            height: 44px;
-          }
-
-          .swatch-pair {
-            gap: 0.5rem;
-          }
-
-          .arrow {
-            font-size: 1.2rem;
           }
         }
       `}</style>

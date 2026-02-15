@@ -16,6 +16,9 @@ import {
   removePoint as removePathPoint
 } from '../lib/sports/pathGeometry.js';
 
+// Monotonic counter for collision-safe element IDs
+let _elementIdCounter = 0;
+
 // Helper function to generate control points for exclusion zone path presets
 function generateExclusionPathPoints(preset) {
   switch (preset) {
@@ -213,6 +216,7 @@ const initialState = {
   showColorEditor: false,
   snapToGrid: true,
   gridSize_mm: 100,
+  showGridOverlay: false,
   zoom: 1, // Canvas zoom level (0.25 to 5.0)
 
   // Mobile UI state
@@ -343,7 +347,7 @@ export const useSportsDesignStore = create(
 
       // ====== Court Actions ======
       addCourt: (templateId, template) => {
-        const courtId = `court-${Date.now()}`;
+        const courtId = `court-${Date.now()}-${++_elementIdCounter}`;
 
         // Helper: Convert TPV code to full color object (all 21 TPV colors)
         const getTPVColorObject = (tpvCode) => {
@@ -474,7 +478,7 @@ export const useSportsDesignStore = create(
         const court = get().courts[courtId];
         if (!court) return;
 
-        const newCourtId = `court-${Date.now()}`;
+        const newCourtId = `court-${Date.now()}-${++_elementIdCounter}`;
         const newCourt = {
           ...court,
           id: newCourtId,
@@ -500,7 +504,7 @@ export const useSportsDesignStore = create(
         const track = get().tracks[trackId];
         if (!track) return;
 
-        const newTrackId = `track-${Date.now()}`;
+        const newTrackId = `track-${Date.now()}-${++_elementIdCounter}`;
         const newTrack = {
           ...track,
           id: newTrackId,
@@ -858,7 +862,7 @@ export const useSportsDesignStore = create(
 
       // ====== Track Actions ======
       addTrack: (templateId, template) => {
-        const trackId = `track-${Date.now()}`;
+        const trackId = `track-${Date.now()}-${++_elementIdCounter}`;
         const surface = get().surface;
 
         const canvasWidth = surface.width_mm;
@@ -1178,7 +1182,7 @@ export const useSportsDesignStore = create(
 
       // ====== Motif Actions ======
       addMotif: (sourceDesignId, sourceDesignName, svgContent, originalWidth_mm, originalHeight_mm, thumbnailUrl = null, motifData = {}) => {
-        const motifId = `motif-${Date.now()}`;
+        const motifId = `motif-${Date.now()}-${++_elementIdCounter}`;
         const surface = get().surface;
 
         // Center the motif on the canvas
@@ -1292,7 +1296,7 @@ export const useSportsDesignStore = create(
         const motif = get().motifs[motifId];
         if (!motif) return;
 
-        const newMotifId = `motif-${Date.now()}`;
+        const newMotifId = `motif-${Date.now()}-${++_elementIdCounter}`;
         const newMotif = {
           ...motif,
           id: newMotifId,
@@ -1388,7 +1392,7 @@ export const useSportsDesignStore = create(
 
       // ====== Shape Actions ======
       addShape: (preset = 'rectangle') => {
-        const shapeId = `shape-${Date.now()}`;
+        const shapeId = `shape-${Date.now()}-${++_elementIdCounter}`;
         const surface = get().surface;
         const existingShapes = get().shapes;
 
@@ -1937,7 +1941,7 @@ export const useSportsDesignStore = create(
         const shape = get().shapes[shapeId];
         if (!shape) return;
 
-        const newShapeId = `shape-${Date.now()}`;
+        const newShapeId = `shape-${Date.now()}-${++_elementIdCounter}`;
         const newShape = {
           ...shape,
           id: newShapeId,
@@ -1995,7 +1999,7 @@ export const useSportsDesignStore = create(
 
       // ====== Path Drawing Actions (Pen Tool) ======
       startPathDrawing: () => {
-        const shapeId = `shape-path-${Date.now()}`;
+        const shapeId = `shape-path-${Date.now()}-${++_elementIdCounter}`;
         const surface = get().surface;
         const existingShapes = get().shapes;
 
@@ -2291,7 +2295,7 @@ export const useSportsDesignStore = create(
       // ====== Text Actions ======
       addText: () => {
         const { surface } = get();
-        const textId = `text-${Date.now()}`;
+        const textId = `text-${Date.now()}-${++_elementIdCounter}`;
 
         const newText = {
           id: textId,
@@ -2521,7 +2525,7 @@ export const useSportsDesignStore = create(
         const originalText = texts[textId];
         if (!originalText) return;
 
-        const newTextId = `text-${Date.now()}`;
+        const newTextId = `text-${Date.now()}-${++_elementIdCounter}`;
         const newText = {
           ...originalText,
           id: newTextId,
@@ -2549,7 +2553,7 @@ export const useSportsDesignStore = create(
 
       // ====== Exclusion Zone Actions ======
       addExclusionZone: (preset = 'rectangle') => {
-        const zoneId = `exclusion-${Date.now()}`;
+        const zoneId = `exclusion-${Date.now()}-${++_elementIdCounter}`;
         const surface = get().surface;
 
         // Define presets for exclusion zone shapes
@@ -2695,7 +2699,7 @@ export const useSportsDesignStore = create(
         const zone = get().exclusionZones[zoneId];
         if (!zone) return;
 
-        const newZoneId = `exclusion-${Date.now()}`;
+        const newZoneId = `exclusion-${Date.now()}-${++_elementIdCounter}`;
         const newZone = {
           ...zone,
           id: newZoneId,
@@ -2842,7 +2846,7 @@ export const useSportsDesignStore = create(
       createGroup: (childIds, options = {}) => {
         if (!childIds || childIds.length < 2) return null;
 
-        const groupId = `group-${Date.now()}`;
+        const groupId = `group-${Date.now()}-${++_elementIdCounter}`;
         const bounds = get().calculateGroupBounds(childIds);
 
         // Sort childIds by their position in elementOrder to preserve layer order
@@ -3964,7 +3968,7 @@ export const useSportsDesignStore = create(
 
         if (clipboard.type === 'group') {
           // Paste a group with all its children
-          const newGroupId = `group-${Date.now()}`;
+          const newGroupId = `group-${Date.now()}-${++_elementIdCounter}`;
           const newChildIds = [];
           const timestamp = Date.now();
 
@@ -4146,7 +4150,7 @@ export const useSportsDesignStore = create(
       // ====== Custom Markings Actions ======
       addCustomMarking: (marking) => {
         set((state) => ({
-          customMarkings: [...state.customMarkings, { ...marking, id: `custom-${Date.now()}` }]
+          customMarkings: [...state.customMarkings, { ...marking, id: `custom-${Date.now()}-${++_elementIdCounter}` }]
         }));
         get().addToHistory();
       },
@@ -4161,7 +4165,7 @@ export const useSportsDesignStore = create(
       // ====== Background Zones Actions ======
       addBackgroundZone: (zone) => {
         set((state) => ({
-          backgroundZones: [...state.backgroundZones, { ...zone, id: `zone-${Date.now()}` }]
+          backgroundZones: [...state.backgroundZones, { ...zone, id: `zone-${Date.now()}-${++_elementIdCounter}` }]
         }));
         get().addToHistory();
       },
@@ -4478,6 +4482,10 @@ export const useSportsDesignStore = create(
 
       setGridSize: (gridSize_mm) => {
         set({ gridSize_mm });
+      },
+
+      toggleGridOverlay: () => {
+        set((state) => ({ showGridOverlay: !state.showGridOverlay }));
       },
 
       setZoom: (zoom) => {

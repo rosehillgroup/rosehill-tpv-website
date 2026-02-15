@@ -57,7 +57,7 @@ const initialState = {
   originalRecipesState: null,   // The recipes state before flattening (for restoring colour legend)
 
   // Undo/redo history for region overrides
-  regionOverridesHistory: [new Map()],
+  regionOverridesHistory: [{ regionOverrides: new Map(), solidEditedColors: new Map(), blendEditedColors: new Map() }],
   historyIndex: 0,
 
   // Design metadata
@@ -359,7 +359,7 @@ export const usePlaygroundDesignStore = create(
           blendEditedColors: new Map(),
           solidEditedColors: new Map(),
           regionOverrides: new Map(),
-          regionOverridesHistory: [new Map()]
+          regionOverridesHistory: [{ regionOverrides: new Map(), solidEditedColors: new Map(), blendEditedColors: new Map() }]
         });
       },
 

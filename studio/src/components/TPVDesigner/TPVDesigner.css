@@ -817,13 +817,9 @@
 .sports-designer__canvas-container {
   flex: 1;
   position: relative;
-  overflow: auto;
+  overflow: hidden;
   padding-top: 52px; /* Space for toolbar */
-  background:
-    linear-gradient(90deg, #e0e0e0 1px, transparent 1px),
-    linear-gradient(#e0e0e0 1px, transparent 1px);
-  background-size: 20px 20px;
-  background-position: -1px -1px;
+  background: #e8e8e8;
 }
 
 /* ====== Empty State - Banner style above canvas ====== */

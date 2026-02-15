@@ -183,6 +183,19 @@ function CourtLibrary({ onOpenGenerator, mobileMode = false, modalMode = false, 
         </button>
       </div>}
 
+      {/* Generate New Design Button */}
+      <div className="court-library__generate">
+        <button
+          className="court-library__generate-btn"
+          onClick={onOpenGenerator}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Generate New Design
+        </button>
+      </div>
+
       <div className={`court-library__list ${mobileMode ? 'court-library__list--mobile' : ''}`}>
         {/* Courts View */}
         {activeTab === 'courts' && templates.map(template => (
@@ -341,19 +354,6 @@ function CourtLibrary({ onOpenGenerator, mobileMode = false, modalMode = false, 
             ))}
           </>
         )}
-      </div>
-
-      {/* Generate New Design Button */}
-      <div className="court-library__generate">
-        <button
-          className="court-library__generate-btn"
-          onClick={onOpenGenerator}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Generate New Design
-        </button>
       </div>
 
       {!mobileMode && !modalMode && (

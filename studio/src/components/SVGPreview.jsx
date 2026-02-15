@@ -71,6 +71,7 @@ export default function SVGPreview({
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [eyedropperClickPos, setEyedropperClickPos] = useState(null);
   const containerRef = useRef(null);
   const dragMovedRef = useRef(false); // Track if mouse actually moved during drag
 
@@ -448,6 +449,7 @@ export default function SVGPreview({
 
         debug('[SVGPreview] Region clicked:', regionId, 'fill:', fill);
 
+        setEyedropperClickPos({ x: e.clientX, y: e.clientY });
         onRegionClick({
           regionId,
           sourceColor: fill,
@@ -598,8 +600,8 @@ export default function SVGPreview({
             <span className="zoom-level">{Math.round(zoom * 100)}%</span>
           </div>
 
-          {/* Undo/Redo Controls - Show only when region overrides exist */}
-          {regionOverridesCount > 0 && (
+          {/* Undo/Redo Controls - Show when there's history to navigate */}
+          {(canUndo || canRedo) && (
             <div className="undo-redo-controls">
               <button
                 onClick={onRegionUndo}
@@ -691,7 +693,10 @@ export default function SVGPreview({
 
           {/* Eyedropper instructions overlay */}
           {eyedropperActive && eyedropperRegion && (
-            <div className="eyedropper-overlay">
+            <div className="eyedropper-overlay" style={eyedropperClickPos ? {
+              top: Math.max(20, Math.min(eyedropperClickPos.y - 40, window.innerHeight - 340)),
+              left: Math.min(eyedropperClickPos.x, window.innerWidth - 180)
+            } : undefined}>
               <div className="eyedropper-content">
                 <div className="eyedropper-header">
                   <div className="eyedropper-color-indicator">
@@ -1122,10 +1127,9 @@ export default function SVGPreview({
         }
 
         .eyedropper-overlay {
-          position: absolute;
+          position: fixed;
           top: 20px;
           left: 50%;
-          transform: translateX(-50%);
           z-index: 100;
         }
 
