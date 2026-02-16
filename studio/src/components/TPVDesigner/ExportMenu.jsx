@@ -8,65 +8,44 @@ import { sliceSvgIntoTiles, downloadBlob } from '../../lib/svgTileSlicer.js';
 import { generateDXF, downloadDXF, cleanSvgForDxf } from '../../lib/dxf/dxfExport.js';
 import { auth } from '../../lib/api/auth.js';
 import { showToast } from '../../lib/toast.js';
-import { loadDesign } from '../../lib/api/designs.js';
 
 /**
- * Collect motif data with recipes for PDF generation
- * Fetches recipe data from each motif's source playground design
+ * Collect motif data for PDF generation
+ * Includes position/scale/rotation for per-motif pixel counting on the server
+ * No DB fetch needed — server uses pixel counting from the rendered PNG
  */
-async function collectMotifDataForPdf(motifs) {
+function collectMotifDataForPdf(motifs) {
   const motifEntries = Object.values(motifs || {});
   if (motifEntries.length === 0) return [];
 
-  const results = await Promise.all(
-    motifEntries.map(async (motif) => {
-      try {
-        // Calculate motif area in m² (accounting for scale)
-        const scale = motif.scale || 1;
-        const widthM = (motif.originalWidth_mm * scale) / 1000;
-        const heightM = (motif.originalHeight_mm * scale) / 1000;
-        const areaM2 = widthM * heightM;
+  return motifEntries.map((motif) => {
+    const scale = motif.scale || 1;
+    const widthM = (motif.originalWidth_mm * scale) / 1000;
+    const heightM = (motif.originalHeight_mm * scale) / 1000;
+    const areaM2 = widthM * heightM;
+    const viewMode = motif.viewMode || 'solid';
 
-        const viewMode = motif.viewMode || 'solid';
+    // Use per-instance recipes if available (for fallback only)
+    const recipes = viewMode === 'blend'
+      ? (motif.blend_recipes || [])
+      : (motif.solid_recipes || []);
 
-        // Use per-instance recipes if available (captures state at add/refresh time)
-        let recipes;
-        if (motif.solid_recipes?.length || motif.blend_recipes?.length) {
-          recipes = viewMode === 'blend' ? motif.blend_recipes : motif.solid_recipes;
-          console.log(`[EXPORT] Using per-instance ${viewMode} recipes for motif ${motif.id}:`, recipes?.length || 0);
-        } else {
-          // Backward compat: fetch from DB for old designs without stored recipes
-          console.log(`[EXPORT] No per-instance recipes for motif ${motif.id}, fetching from DB...`);
-          const result = await loadDesign(motif.sourceDesignId);
-          const design = result?.design || result;
-
-          if (!design) {
-            console.warn(`[EXPORT] Could not fetch design for motif ${motif.id}`);
-            return null;
-          }
-
-          recipes = viewMode === 'blend' ? design.blend_recipes : design.solid_recipes;
-          console.log(`[EXPORT] Loaded DB ${viewMode} recipes:`, recipes?.length || 0);
-        }
-
-        return {
-          id: motif.id,
-          name: motif.customName || motif.sourceDesignName || 'Motif',
-          areaM2,
-          viewMode,
-          widthM,
-          heightM,
-          recipes: recipes || []
-        };
-      } catch (err) {
-        console.error(`[EXPORT] Error processing motif ${motif.id}:`, err);
-        return null;
-      }
-    })
-  );
-
-  // Filter out any failed fetches
-  return results.filter(Boolean);
+    return {
+      id: motif.id,
+      name: motif.customName || motif.sourceDesignName || 'Motif',
+      areaM2,
+      viewMode,
+      widthM,
+      heightM,
+      // Canvas position for per-motif pixel counting
+      position: motif.position,
+      scale,
+      originalWidth_mm: motif.originalWidth_mm,
+      originalHeight_mm: motif.originalHeight_mm,
+      rotation: motif.rotation || 0,
+      recipes,
+    };
+  });
 }
 
 export default function ExportMenu({ svgRef }) {

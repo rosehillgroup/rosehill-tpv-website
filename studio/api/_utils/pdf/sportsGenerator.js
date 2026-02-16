@@ -165,13 +165,9 @@ export async function generateSportsSurfacePDF(data) {
   const courtTrackMaterials = elementMaterials.filter(m =>
     ['court-surface', 'track-surface', 'line-marking', 'base-surface'].includes(m.elementType)
   );
-  const motifMaterials = elementMaterials.filter(m => m.elementType === 'motif-surface');
   const shapeMaterials = elementMaterials.filter(m =>
     ['shape-fill', 'shape-stroke', 'text-fill', 'text-stroke'].includes(m.elementType)
   );
-
-  // All materials for element breakdown totals
-  const allMaterials = elementMaterials;
 
   // Pixel-counting approach for materials summary (Page 3) — accurate totals
   // Counts visible pixels from the already-rendered PNG, accounts for overlapping elements
@@ -179,6 +175,15 @@ export async function generateSportsSurfacePDF(data) {
   const knownColors = extractKnownColors(surface, courts, tracks, shapes, texts, motifs);
   const visiblePcts = await calculateVisibleAreaPercentages(pngBuffer, knownColors);
   const visibleMaterials = calculateMaterialsFromVisibleArea(visiblePcts, knownColors, totalAreaM2);
+
+  // Per-motif pixel counting for element breakdown (replaces unreliable recipe-based data)
+  // Uses the rendered PNG to determine actual on-canvas colours per motif
+  console.log('[SPORTS-PDF] Calculating per-motif materials from pixel counting...');
+  const motifMaterials = await calculatePerMotifPixelMaterials(pngBuffer, motifs, surface, knownColors);
+
+  // All materials for element breakdown totals
+  const nonMotifMaterials = elementMaterials.filter(m => m.elementType !== 'motif-surface');
+  const allMaterials = [...nonMotifMaterials, ...motifMaterials];
 
   console.log('[SPORTS-PDF] Court/Track materials:', courtTrackMaterials.length);
   console.log('[SPORTS-PDF] Motif materials:', motifMaterials.length);
@@ -712,6 +717,65 @@ async function renderSvgToPng(svgString, dimensions, Resvg) {
 }
 
 /**
+ * Build a reusable colour matcher from known TPV colours.
+ * Pre-computes RGB values, builds exact-match lookup table, and caches
+ * nearest-neighbour results for anti-aliased pixels.
+ *
+ * @param {Array} knownColors - Array of known TPV colors [{hex, tpv_code, name}]
+ * @returns {Function} matchPixel(r, g, b) → hex string of nearest known colour
+ */
+function buildColorMatcher(knownColors) {
+  // Pre-compute known colour RGB values once (avoid repeated hex parsing)
+  const knownRgb = knownColors.map(c => {
+    const h = (c.hex || '#000000').replace('#', '');
+    return {
+      r: parseInt(h.slice(0, 2), 16),
+      g: parseInt(h.slice(2, 4), 16),
+      b: parseInt(h.slice(4, 6), 16),
+      hex: c.hex.toLowerCase(),
+    };
+  });
+
+  // Build exact-match lookup: pack RGB into a single integer key
+  const exactLookup = new Map();
+  for (let i = 0; i < knownRgb.length; i++) {
+    const k = knownRgb[i];
+    exactLookup.set((k.r << 16) | (k.g << 8) | k.b, k.hex);
+  }
+
+  // Cache for nearest-neighbour results (keyed by packed RGB)
+  const nearestCache = new Map();
+
+  return function matchPixel(r, g, b) {
+    const packed = (r << 16) | (g << 8) | b;
+
+    // Try exact match first (fast path — most pixels)
+    let hex = exactLookup.get(packed);
+    if (hex !== undefined) return hex;
+
+    // Check cache for previously computed nearest match
+    hex = nearestCache.get(packed);
+    if (hex !== undefined) return hex;
+
+    // Nearest-neighbour search using squared distance (skip sqrt)
+    let minDist = Infinity;
+    let bestHex = knownRgb[0].hex;
+    for (let j = 0; j < knownRgb.length; j++) {
+      const dr = r - knownRgb[j].r;
+      const dg = g - knownRgb[j].g;
+      const db = b - knownRgb[j].b;
+      const dist = dr * dr + dg * dg + db * db;
+      if (dist < minDist) {
+        minDist = dist;
+        bestHex = knownRgb[j].hex;
+      }
+    }
+    nearestCache.set(packed, bestHex);
+    return bestHex;
+  };
+}
+
+/**
  * Calculate visible area percentages by counting pixels in the rendered PNG
  * This accounts for overlapping elements - only visible pixels are counted
  *
@@ -732,28 +796,7 @@ async function calculateVisibleAreaPercentages(pngBuffer, knownColors) {
 
   console.log(`[SPORTS-PDF] Image: ${width}x${height}, ${channels} channels, ${totalPixels} pixels`);
 
-  // Pre-compute known colour RGB values once (avoid repeated hex parsing)
-  const knownRgb = knownColors.map(c => {
-    const h = (c.hex || '#000000').replace('#', '');
-    return {
-      r: parseInt(h.slice(0, 2), 16),
-      g: parseInt(h.slice(2, 4), 16),
-      b: parseInt(h.slice(4, 6), 16),
-      hex: c.hex.toLowerCase(),
-    };
-  });
-
-  // Build exact-match lookup: pack RGB into a single integer key
-  // Most canvas pixels are exact TPV colours, so this avoids nearest-neighbour search
-  const exactLookup = new Map();
-  for (let i = 0; i < knownRgb.length; i++) {
-    const k = knownRgb[i];
-    exactLookup.set((k.r << 16) | (k.g << 8) | k.b, k.hex);
-  }
-
-  // Cache for nearest-neighbour results (keyed by packed RGB)
-  // Handles anti-aliased / blended pixels without repeating the search
-  const nearestCache = new Map();
+  const matchPixel = buildColorMatcher(knownColors);
 
   // Count pixels by color
   const colorCounts = new Map();
@@ -771,34 +814,7 @@ async function calculateVisibleAreaPercentages(pngBuffer, knownColors) {
       continue;
     }
 
-    const packed = (r << 16) | (g << 8) | b;
-
-    // Try exact match first (fast path — most pixels)
-    let matchHex = exactLookup.get(packed);
-
-    if (matchHex === undefined) {
-      // Check cache for previously computed nearest match
-      matchHex = nearestCache.get(packed);
-
-      if (matchHex === undefined) {
-        // Nearest-neighbour search using squared distance (skip sqrt)
-        let minDist = Infinity;
-        let bestHex = knownRgb[0].hex;
-        for (let j = 0; j < knownRgb.length; j++) {
-          const dr = r - knownRgb[j].r;
-          const dg = g - knownRgb[j].g;
-          const db = b - knownRgb[j].b;
-          const dist = dr * dr + dg * dg + db * db;
-          if (dist < minDist) {
-            minDist = dist;
-            bestHex = knownRgb[j].hex;
-          }
-        }
-        matchHex = bestHex;
-        nearestCache.set(packed, matchHex);
-      }
-    }
-
+    const matchHex = matchPixel(r, g, b);
     colorCounts.set(matchHex, (colorCounts.get(matchHex) || 0) + 1);
   }
 
@@ -810,10 +826,128 @@ async function calculateVisibleAreaPercentages(pngBuffer, knownColors) {
     visiblePcts[hex] = (count / visiblePixels) * 100;
   }
 
-  console.log(`[SPORTS-PDF] Pixel counting: ${totalPixels} total, ${transparentPixels} transparent, ${nearestCache.size} unique non-exact colours`);
+  console.log(`[SPORTS-PDF] Pixel counting: ${totalPixels} total, ${transparentPixels} transparent`);
   console.log(`[SPORTS-PDF] Visible area breakdown:`, Object.entries(visiblePcts).map(([hex, pct]) => `${hex}: ${pct.toFixed(1)}%`).join(', '));
 
   return visiblePcts;
+}
+
+/**
+ * Calculate per-motif materials by pixel counting within each motif's bounding box
+ * Uses the already-rendered PNG to determine actual on-canvas colours
+ *
+ * @param {Buffer} pngBuffer - Rendered PNG buffer
+ * @param {Array} motifs - Motif data with position, scale, dimensions
+ * @param {Object} surface - Surface config with width_mm, length_mm
+ * @param {Array} knownColors - Array of known TPV colors
+ * @returns {Array} motifMaterials - Material entries (same format as recipe-based output)
+ */
+async function calculatePerMotifPixelMaterials(pngBuffer, motifs, surface, knownColors) {
+  if (!motifs || motifs.length === 0) return [];
+
+  const { densityKgPerM2, safetyMargin } = MATERIAL_CONFIG;
+
+  // Get raw pixel data from PNG
+  const { data, info } = await sharp(pngBuffer)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const { width: imageWidth, height: imageHeight, channels } = info;
+
+  // Build colour matcher (shared logic)
+  const matchPixel = buildColorMatcher(knownColors);
+
+  // Build colour info lookup for TPV code/name
+  const colorInfoMap = new Map();
+  for (const c of knownColors) {
+    colorInfoMap.set(c.hex.toLowerCase(), c);
+  }
+
+  // Coordinate mapping: canvas mm → pixel coords
+  const pxPerMmX = imageWidth / surface.width_mm;
+  const pxPerMmY = imageHeight / surface.length_mm;
+
+  const materials = [];
+
+  for (const motif of motifs) {
+    if (!motif.position) {
+      console.log(`[SPORTS-PDF] Motif ${motif.name} has no position data, skipping pixel count`);
+      continue;
+    }
+
+    const scale = motif.scale || 1;
+    const motifWidthMm = motif.originalWidth_mm * scale;
+    const motifHeightMm = motif.originalHeight_mm * scale;
+
+    // Calculate bounding box in pixel coordinates
+    const x1 = Math.max(0, Math.round(motif.position.x * pxPerMmX));
+    const y1 = Math.max(0, Math.round(motif.position.y * pxPerMmY));
+    const x2 = Math.min(imageWidth, Math.round((motif.position.x + motifWidthMm) * pxPerMmX));
+    const y2 = Math.min(imageHeight, Math.round((motif.position.y + motifHeightMm) * pxPerMmY));
+
+    if (x2 <= x1 || y2 <= y1) {
+      console.log(`[SPORTS-PDF] Motif ${motif.name} has zero-size bounding box, skipping`);
+      continue;
+    }
+
+    // Count pixels within this motif's bounding box
+    const colorCounts = new Map();
+    let totalCounted = 0;
+
+    for (let row = y1; row < y2; row++) {
+      const rowOffset = row * imageWidth * channels;
+      for (let col = x1; col < x2; col++) {
+        const i = rowOffset + col * channels;
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const a = channels === 4 ? data[i + 3] : 255;
+
+        // Skip transparent pixels
+        if (a < 128) continue;
+
+        const matchHex = matchPixel(r, g, b);
+        colorCounts.set(matchHex, (colorCounts.get(matchHex) || 0) + 1);
+        totalCounted++;
+      }
+    }
+
+    if (totalCounted === 0) {
+      console.log(`[SPORTS-PDF] Motif ${motif.name} has no visible pixels in bounding box`);
+      continue;
+    }
+
+    // Convert pixel counts to materials
+    const widthM = motifWidthMm / 1000;
+    const heightM = motifHeightMm / 1000;
+
+    for (const [hex, count] of colorCounts) {
+      const pct = (count / totalCounted) * 100;
+      const colorArea = (pct / 100) * motif.areaM2;
+      const kg = colorArea * densityKgPerM2 * safetyMargin;
+
+      const colorInfo = colorInfoMap.get(hex) || { hex, tpv_code: '', name: 'Unknown' };
+
+      materials.push({
+        element: motif.name,
+        elementType: 'motif-surface',
+        motifId: motif.id,
+        colour: {
+          hex: colorInfo.hex || hex,
+          tpv_code: colorInfo.tpv_code || colorInfo.code || '',
+          name: colorInfo.name || 'Unknown',
+        },
+        area: colorArea,
+        kg,
+        dimensions: `${widthM.toFixed(1)}m × ${heightM.toFixed(1)}m`,
+        coverage: pct,
+      });
+    }
+
+    console.log(`[SPORTS-PDF] Motif "${motif.name}" (${motif.id}): ${totalCounted} pixels, ${colorCounts.size} colours, bbox ${x2-x1}×${y2-y1}px`);
+  }
+
+  return materials;
 }
 
 /**
@@ -829,6 +963,16 @@ function extractKnownColors(surface, courts, tracks, shapes, texts, motifs) {
       tpv_code: entry.code,
       name: entry.name
     });
+  }
+
+  // Map common SVG default colours to nearest TPV equivalents
+  // SVG rendering uses pure black (#000000) for text/symbols; TPV Black is #231F20
+  // Pure white (#FFFFFF) appears in SVG backgrounds; nearest TPV is Cream
+  if (!colors.has('#000000')) {
+    colors.set('#000000', { hex: '#231F20', tpv_code: 'RH70', name: 'Black' });
+  }
+  if (!colors.has('#ffffff')) {
+    colors.set('#ffffff', { hex: '#E8E3D8', tpv_code: 'RH31', name: 'Cream' });
   }
 
   // Surface color
@@ -1203,22 +1347,40 @@ function calculateMotifMaterials(motifs) {
 }
 
 /**
- * Group motif materials by motif name for display
+ * Group motif materials by motif ID for display
+ * Uses motifId as grouping key so duplicate motifs appear separately
+ * Adds copy numbers when multiple motifs share the same name
  */
 function groupMaterialsByMotif(materials) {
   const groups = {};
+  const nameCount = {};
+
   for (const mat of materials) {
-    const name = mat.element;
-    if (!groups[name]) {
-      groups[name] = {
-        name,
+    const key = mat.motifId || mat.element;
+    if (!groups[key]) {
+      const baseName = mat.element;
+      nameCount[baseName] = (nameCount[baseName] || 0) + 1;
+      groups[key] = {
+        name: baseName,
+        copyNumber: nameCount[baseName],
         materials: [],
         totalArea: 0,
         dimensions: mat.dimensions
       };
     }
-    groups[name].materials.push(mat);
-    groups[name].totalArea += mat.area;
+    groups[key].materials.push(mat);
+    groups[key].totalArea += mat.area;
+  }
+
+  // Add copy numbers to display names when there are duplicates
+  const nameTotals = {};
+  for (const g of Object.values(groups)) {
+    nameTotals[g.name] = (nameTotals[g.name] || 0) + 1;
+  }
+  for (const g of Object.values(groups)) {
+    if (nameTotals[g.name] > 1) {
+      g.name = `${g.name} (${g.copyNumber})`;
+    }
   }
 
   // Deduplicate materials within each group by TPV code
