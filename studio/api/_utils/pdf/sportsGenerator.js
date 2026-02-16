@@ -834,11 +834,13 @@ async function calculateVisibleAreaPercentages(pngBuffer, knownColors) {
 
 /**
  * Calculate per-motif materials by pixel counting within each motif's bounding box
- * Uses the already-rendered PNG to determine actual on-canvas colours
+ * Uses the already-rendered PNG to determine actual on-canvas colours.
+ * Filters out the surface background colour (shows through motif transparency)
+ * and anti-aliased edge noise (< 1% coverage threshold).
  *
  * @param {Buffer} pngBuffer - Rendered PNG buffer
  * @param {Array} motifs - Motif data with position, scale, dimensions
- * @param {Object} surface - Surface config with width_mm, length_mm
+ * @param {Object} surface - Surface config with width_mm, length_mm, color
  * @param {Array} knownColors - Array of known TPV colors
  * @returns {Array} motifMaterials - Material entries (same format as recipe-based output)
  */
@@ -862,6 +864,11 @@ async function calculatePerMotifPixelMaterials(pngBuffer, motifs, surface, known
   for (const c of knownColors) {
     colorInfoMap.set(c.hex.toLowerCase(), c);
   }
+
+  // Determine the surface background colour to exclude from motif counts
+  // This colour shows through transparent regions of motif SVGs
+  const surfaceHex = (surface.color?.hex || '').toLowerCase();
+  console.log(`[SPORTS-PDF] Surface colour to exclude from motifs: ${surfaceHex}`);
 
   // Coordinate mapping: canvas mm → pixel coords
   const pxPerMmX = imageWidth / surface.width_mm;
@@ -891,8 +898,11 @@ async function calculatePerMotifPixelMaterials(pngBuffer, motifs, surface, known
     }
 
     // Count pixels within this motif's bounding box
+    // Skip surface-colour pixels (background showing through motif transparency)
     const colorCounts = new Map();
     let totalCounted = 0;
+    let surfacePixels = 0;
+    const boundingBoxPixels = (x2 - x1) * (y2 - y1);
 
     for (let row = y1; row < y2; row++) {
       const rowOffset = row * imageWidth * channels;
@@ -907,23 +917,38 @@ async function calculatePerMotifPixelMaterials(pngBuffer, motifs, surface, known
         if (a < 128) continue;
 
         const matchHex = matchPixel(r, g, b);
+
+        // Skip pixels matching the surface background colour
+        if (matchHex === surfaceHex) {
+          surfacePixels++;
+          continue;
+        }
+
         colorCounts.set(matchHex, (colorCounts.get(matchHex) || 0) + 1);
         totalCounted++;
       }
     }
 
     if (totalCounted === 0) {
-      console.log(`[SPORTS-PDF] Motif ${motif.name} has no visible pixels in bounding box`);
+      console.log(`[SPORTS-PDF] Motif "${motif.name}" has no non-background pixels (${surfacePixels} surface pixels filtered)`);
       continue;
     }
 
-    // Convert pixel counts to materials
+    // Calculate actual content area (ratio of motif pixels to bounding box pixels)
+    const contentRatio = totalCounted / boundingBoxPixels;
+    const contentAreaM2 = motif.areaM2 * contentRatio;
+
+    // Convert pixel counts to materials, filtering edge noise (< 1% coverage)
     const widthM = motifWidthMm / 1000;
     const heightM = motifHeightMm / 1000;
 
     for (const [hex, count] of colorCounts) {
       const pct = (count / totalCounted) * 100;
-      const colorArea = (pct / 100) * motif.areaM2;
+
+      // Skip anti-aliased edge artifacts (blends of motif + background colours)
+      if (pct < 1.0) continue;
+
+      const colorArea = (pct / 100) * contentAreaM2;
       const kg = colorArea * densityKgPerM2 * safetyMargin;
 
       const colorInfo = colorInfoMap.get(hex) || { hex, tpv_code: '', name: 'Unknown' };
@@ -944,7 +969,7 @@ async function calculatePerMotifPixelMaterials(pngBuffer, motifs, surface, known
       });
     }
 
-    console.log(`[SPORTS-PDF] Motif "${motif.name}" (${motif.id}): ${totalCounted} pixels, ${colorCounts.size} colours, bbox ${x2-x1}×${y2-y1}px`);
+    console.log(`[SPORTS-PDF] Motif "${motif.name}" (${motif.id}): ${totalCounted} content px, ${surfacePixels} background px filtered, ${colorCounts.size} colours, content ${(contentRatio * 100).toFixed(1)}% of bbox`);
   }
 
   return materials;
