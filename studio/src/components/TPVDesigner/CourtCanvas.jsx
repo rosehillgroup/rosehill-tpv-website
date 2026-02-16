@@ -2516,10 +2516,6 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
             <path d={`M 1000 0 L 0 0 0 1000`} fill="none" stroke="#c8c8c8" strokeWidth="20" />
           </pattern>
 
-          {/* Overlay grid pattern — gridSize_mm (default 100mm) squares */}
-          <pattern id="overlay-grid-pattern" width={gridSize_mm} height={gridSize_mm} patternUnits="userSpaceOnUse">
-            <path d={`M ${gridSize_mm} 0 L 0 0 0 ${gridSize_mm}`} fill="none" stroke="rgba(0,0,0,0.15)" strokeWidth="10" />
-          </pattern>
         </defs>
 
         {/* Surface Background - clipped if custom boundary */}
@@ -2534,15 +2530,17 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
           />
         </g>
 
-        {/* Background grid — 1m squares, always visible on surface */}
-        <rect
-          x="0"
-          y="0"
-          width={surface.width_mm}
-          height={surface.length_mm}
-          fill="url(#bg-grid-pattern)"
-          pointerEvents="none"
-        />
+        {/* Background grid — 1m squares, togglable */}
+        {showGridOverlay && (
+          <rect
+            x="0"
+            y="0"
+            width={surface.width_mm}
+            height={surface.length_mm}
+            fill="url(#bg-grid-pattern)"
+            pointerEvents="none"
+          />
+        )}
 
         {/* Boundary outline for non-rectangular surfaces */}
         {surface.boundary && surface.boundary.type !== 'rectangle' && surface.boundary.controlPoints && (
@@ -2937,17 +2935,6 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
           />
         ))}
 
-        {/* Overlay grid — fine gridlines on top of elements, togglable */}
-        {showGridOverlay && (
-          <rect
-            x="0"
-            y="0"
-            width={surface.width_mm}
-            height={surface.length_mm}
-            fill="url(#overlay-grid-pattern)"
-            pointerEvents="none"
-          />
-        )}
 
         {/* Preview line while drawing path */}
         {pathDrawingMode && activePath && lastPoint && drawingMousePos && (

@@ -1518,6 +1518,18 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
             console.warn('[TPV-STUDIO] Unmapped colors in solid mode:', Array.from(stats.colorsNotMapped));
           }
 
+          // Stabilize fallback assignments — add unmapped colours to mapping as exact matches
+          // so subsequent palette edits don't re-evaluate fallbacks (prevents random colour shifts)
+          if (stats.fallbackResolutions?.size > 0) {
+            stats.fallbackResolutions.forEach((parentKey, unmappedKey) => {
+              const parentEntry = mapping.get(parentKey);
+              if (parentEntry && !mapping.has(unmappedKey)) {
+                mapping.set(unmappedKey, { ...parentEntry, parentKey });
+              }
+            });
+            setSolidColorMapping(mapping);
+          }
+
           // Generate design name now that all processing is complete
           handleGenerateDesignName(data.recipes);
         } catch (svgError) {
@@ -2123,6 +2135,14 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
             ...updatedMapping.get(normalizedHex),
             blendHex: edit.newHex
           });
+
+          // Propagate to fallback children of this original colour
+          // (unmapped SVG colours that were assigned to this key during initial recolor)
+          for (const [key, entry] of updatedMapping) {
+            if (entry.parentKey === normalizedHex) {
+              updatedMapping.set(key, { ...entry, blendHex: edit.newHex });
+            }
+          }
         }
       });
 
@@ -2192,10 +2212,41 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         originalTaggedSvg // Pass tagged SVG to preserve region IDs
       );
 
+      // Stabilize any new fallback resolutions (e.g. after flatten/revert)
+      if (stats.fallbackResolutions?.size > 0) {
+        stats.fallbackResolutions.forEach((parentKey, unmappedKey) => {
+          if (!updatedMapping.has(unmappedKey)) {
+            const parentEntry = updatedMapping.get(parentKey);
+            if (parentEntry) {
+              updatedMapping.set(unmappedKey, { ...parentEntry, parentKey });
+            }
+          }
+        });
+      }
+
       // Stage 2: Apply region-level overrides (per-element edits)
       // Use provided overrides if available, otherwise use state
       const appliedOverrides = overrides !== null ? overrides : regionOverrides;
       const finalSvg = applyRegionOverrides(globalRecolored, appliedOverrides);
+
+      // Deduplicate recipes — merge entries that now share the same target hex
+      const deduped = new Map();
+      updatedRecipes.forEach(recipe => {
+        const hex = recipe.targetColor.hex.toLowerCase();
+        if (deduped.has(hex)) {
+          const existing = deduped.get(hex);
+          existing.targetColor = {
+            ...existing.targetColor,
+            areaPct: (existing.targetColor.areaPct || 0) + (recipe.targetColor.areaPct || 0)
+          };
+          const existingOriginals = existing.mergedOriginalColors || [existing.originalColor.hex.toLowerCase()];
+          const newOriginals = recipe.mergedOriginalColors || [recipe.originalColor.hex.toLowerCase()];
+          existing.mergedOriginalColors = [...new Set([...existingOriginals, ...newOriginals])];
+        } else {
+          deduped.set(hex, { ...recipe });
+        }
+      });
+      const finalRecipes = Array.from(deduped.values());
 
       // Clean up old blob URL before creating new one
       if (solidSvgUrl && solidSvgUrl.startsWith('blob:')) {
@@ -2208,7 +2259,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
       setSolidSvgUrl(dataUrl);
       setSolidColorMapping(updatedMapping);
-      setSolidRecipes(updatedRecipes); // Update recipes to show new colors in legend
+      setSolidRecipes(finalRecipes); // Update recipes (deduplicated) to show in legend
       if (appliedOverrides.size > 0) {
       }
     } catch (err) {

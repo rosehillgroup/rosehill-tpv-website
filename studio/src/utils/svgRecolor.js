@@ -90,7 +90,8 @@ function recolorSVGElement(svgElement, colorMapping) {
     strokesReplaced: 0,
     stopColorsReplaced: 0,
     stylesProcessed: 0,
-    colorsNotMapped: new Set()
+    colorsNotMapped: new Set(),
+    fallbackResolutions: new Map()  // unmappedKey → parentKey (for stabilizing fallback assignments)
   };
 
   // Walk all elements in the SVG
@@ -101,7 +102,7 @@ function recolorSVGElement(svgElement, colorMapping) {
     // Process fill attribute
     const fill = element.getAttribute('fill');
     if (fill && fill !== 'none') {
-      const newFill = replaceColor(fill, colorMapping, stats.colorsNotMapped);
+      const newFill = replaceColor(fill, colorMapping, stats.colorsNotMapped, stats.fallbackResolutions);
       if (newFill !== fill) {
         // Handle transparent as special case
         if (newFill === 'transparent' || newFill === 'none') {
@@ -117,7 +118,7 @@ function recolorSVGElement(svgElement, colorMapping) {
     // Process stroke attribute
     const stroke = element.getAttribute('stroke');
     if (stroke && stroke !== 'none') {
-      const newStroke = replaceColor(stroke, colorMapping, stats.colorsNotMapped);
+      const newStroke = replaceColor(stroke, colorMapping, stats.colorsNotMapped, stats.fallbackResolutions);
       if (newStroke !== stroke) {
         // Handle transparent as special case
         if (newStroke === 'transparent' || newStroke === 'none') {
@@ -133,7 +134,7 @@ function recolorSVGElement(svgElement, colorMapping) {
     // Process stop-color attribute (for gradients)
     const stopColor = element.getAttribute('stop-color');
     if (stopColor && stopColor !== 'none') {
-      const newStopColor = replaceColor(stopColor, colorMapping, stats.colorsNotMapped);
+      const newStopColor = replaceColor(stopColor, colorMapping, stats.colorsNotMapped, stats.fallbackResolutions);
       if (newStopColor !== stopColor) {
         element.setAttribute('stop-color', newStopColor);
         stats.stopColorsReplaced++;
@@ -168,7 +169,7 @@ function recolorSVGElement(svgElement, colorMapping) {
     // Check stop-color attribute
     const stopColor = stop.getAttribute('stop-color');
     if (stopColor && stopColor !== 'none') {
-      const newStopColor = replaceColor(stopColor, colorMapping, stats.colorsNotMapped);
+      const newStopColor = replaceColor(stopColor, colorMapping, stats.colorsNotMapped, stats.fallbackResolutions);
       if (newStopColor !== stopColor) {
         stop.setAttribute('stop-color', newStopColor);
         stats.stopColorsReplaced++;
@@ -195,9 +196,10 @@ function recolorSVGElement(svgElement, colorMapping) {
  * @param {string} color - Color string (hex, rgb, etc.)
  * @param {Map} colorMapping - Color mapping
  * @param {Set} notMappedSet - Set to collect unmapped colors
+ * @param {Map} [fallbackResolutions] - Map to record fallback assignments (unmappedKey → parentKey)
  * @returns {string} Replaced color or original if not in mapping
  */
-function replaceColor(color, colorMapping, notMappedSet) {
+function replaceColor(color, colorMapping, notMappedSet, fallbackResolutions) {
   // Normalize and try to find in mapping
   const normalized = normalizeColorValue(color);
   if (!normalized) return color;
@@ -216,6 +218,7 @@ function replaceColor(color, colorMapping, notMappedSet) {
 
   const colorLab = rgbToLab(colorRgb);
   let bestMatch = null;
+  let bestMatchKey = null;
   let smallestDeltaE = Infinity;
 
   for (const [key, mapping] of colorMapping.entries()) {
@@ -229,6 +232,7 @@ function replaceColor(color, colorMapping, notMappedSet) {
     if (deltaE < smallestDeltaE) {
       smallestDeltaE = deltaE;
       bestMatch = mapping;
+      bestMatchKey = key;
     }
 
     // If within tolerance (ΔE ≤ 9), return immediately
@@ -241,6 +245,10 @@ function replaceColor(color, colorMapping, notMappedSet) {
   if (bestMatch) {
     if (notMappedSet) {
       notMappedSet.add(color);
+    }
+    // Record which parent key this unmapped color was assigned to (for stabilization)
+    if (fallbackResolutions && bestMatchKey) {
+      fallbackResolutions.set(mappingKey, bestMatchKey);
     }
     return bestMatch.blendHex;
   }
@@ -374,19 +382,19 @@ function recolorStyleAttribute(style, colorMapping, stats) {
 
   // Match fill: color
   newStyle = newStyle.replace(/fill:\s*([^;]+)/gi, (match, color) => {
-    const newColor = replaceColor(color.trim(), colorMapping, stats.colorsNotMapped);
+    const newColor = replaceColor(color.trim(), colorMapping, stats.colorsNotMapped, stats.fallbackResolutions);
     return `fill: ${newColor}`;
   });
 
   // Match stroke: color
   newStyle = newStyle.replace(/stroke:\s*([^;]+)/gi, (match, color) => {
-    const newColor = replaceColor(color.trim(), colorMapping, stats.colorsNotMapped);
+    const newColor = replaceColor(color.trim(), colorMapping, stats.colorsNotMapped, stats.fallbackResolutions);
     return `stroke: ${newColor}`;
   });
 
   // Match stop-color: color
   newStyle = newStyle.replace(/stop-color:\s*([^;]+)/gi, (match, color) => {
-    const newColor = replaceColor(color.trim(), colorMapping, stats.colorsNotMapped);
+    const newColor = replaceColor(color.trim(), colorMapping, stats.colorsNotMapped, stats.fallbackResolutions);
     return `stop-color: ${newColor}`;
   });
 
@@ -408,7 +416,7 @@ function recolorCSS(css, colorMapping, stats) {
   // Match fill: color
   newCSS = newCSS.replace(/fill:\s*([^;}\s]+)/gi, (match, color) => {
     const trimmedColor = color.trim();
-    const newColor = replaceColor(trimmedColor, colorMapping, stats.colorsNotMapped);
+    const newColor = replaceColor(trimmedColor, colorMapping, stats.colorsNotMapped, stats.fallbackResolutions);
     if (newColor !== trimmedColor) {
       replacementCount++;
     }
@@ -418,7 +426,7 @@ function recolorCSS(css, colorMapping, stats) {
   // Match stroke: color
   newCSS = newCSS.replace(/stroke:\s*([^;}\s]+)/gi, (match, color) => {
     const trimmedColor = color.trim();
-    const newColor = replaceColor(trimmedColor, colorMapping, stats.colorsNotMapped);
+    const newColor = replaceColor(trimmedColor, colorMapping, stats.colorsNotMapped, stats.fallbackResolutions);
     if (newColor !== trimmedColor) {
       replacementCount++;
     }
@@ -428,7 +436,7 @@ function recolorCSS(css, colorMapping, stats) {
   // Match stop-color: color
   newCSS = newCSS.replace(/stop-color:\s*([^;}\s]+)/gi, (match, color) => {
     const trimmedColor = color.trim();
-    const newColor = replaceColor(trimmedColor, colorMapping, stats.colorsNotMapped);
+    const newColor = replaceColor(trimmedColor, colorMapping, stats.colorsNotMapped, stats.fallbackResolutions);
     if (newColor !== trimmedColor) {
       replacementCount++;
     }

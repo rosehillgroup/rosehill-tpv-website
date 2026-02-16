@@ -1,7 +1,7 @@
 // TPV Studio - SVG Preview Component
 // Shows TPV blend SVG with color legend and color highlighting
 
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import ColorLegend from './ColorLegend';
 import { sanitizeSVG } from '../utils/sanitizeSVG';
 
@@ -370,11 +370,19 @@ export default function SVGPreview({
     setPan({ x: 0, y: 0 });
   };
 
-  const handleWheel = (e) => {
+  const handleWheel = useCallback((e) => {
     e.preventDefault();
     const delta = e.deltaY * -0.001;
     setZoom(prevZoom => Math.min(Math.max(prevZoom + delta, 0.5), 5));
-  };
+  }, []);
+
+  // Attach non-passive wheel listener so preventDefault() works
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [handleWheel]);
 
   const handleMouseDown = (e) => {
     if (e.button !== 0) return; // Only left mouse button
@@ -647,7 +655,6 @@ export default function SVGPreview({
           <div
             ref={containerRef}
             className="svg-wrapper"
-            onWheel={handleWheel}
           >
             <div
               className="svg-image-container"
