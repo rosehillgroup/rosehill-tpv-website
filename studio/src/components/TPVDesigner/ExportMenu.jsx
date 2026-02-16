@@ -266,7 +266,7 @@ export default function ExportMenu({ svgRef }) {
       };
 
       // Generate tiles ZIP
-      const name = designName || 'sports-surface';
+      const name = designName || 'surface-design';
       const zipBlob = await sliceSvgIntoTiles(svgString, dimensions, name);
 
       // Download
@@ -301,7 +301,7 @@ export default function ExportMenu({ svgRef }) {
       const result = generateDXF(cleanedSvg, {
         widthMm: state.surface.width_mm,
         lengthMm: state.surface.length_mm,
-        designName: state.name || 'Sports Surface',
+        designName: state.name || 'Surface Design',
         seed: state.seed,
         motifs: motifs  // Pass motif data for SVG parsing
       });

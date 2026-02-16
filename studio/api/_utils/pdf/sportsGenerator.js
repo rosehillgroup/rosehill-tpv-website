@@ -56,7 +56,7 @@ export async function generateSportsSurfacePDF(data) {
 
   const {
     svgString,
-    designName = 'Sports Surface Design',
+    designName = 'Surface Design',
     surface,
     courts = {},
     tracks = {},
@@ -113,10 +113,10 @@ export async function generateSportsSurfacePDF(data) {
   const pdfDoc = await PDFDocument.create();
 
   // Set metadata
-  pdfDoc.setTitle(`${designName} - TPV Studio Sports Surface`);
+  pdfDoc.setTitle(`${designName} - TPV Studio Surface Design`);
   pdfDoc.setAuthor('TPV Studio');
-  pdfDoc.setSubject('Sports Surface Design Report');
-  pdfDoc.setKeywords(['TPV', 'sports surface', 'athletics', 'Rosehill']);
+  pdfDoc.setSubject('Surface Design Report');
+  pdfDoc.setKeywords(['TPV', 'surface design', 'Rosehill']);
   pdfDoc.setProducer('TPV Studio PDF Generator');
   pdfDoc.setCreator('TPV Studio');
   pdfDoc.setCreationDate(new Date());
@@ -144,11 +144,10 @@ export async function generateSportsSurfacePDF(data) {
     imageWidth = maxImageHeight * imageAspect;
   }
 
-  // Calculate all materials using the recipe-based approach (fast, no pixel counting)
-  // This uses geometric areas and pre-calculated recipe data from motifs
-  console.log('[SPORTS-PDF] Calculating materials from recipes and geometry...');
+  // Geometric approach for element breakdown (Page 2) — per-element detail
+  console.log('[SPORTS-PDF] Calculating element materials from geometry...');
 
-  const { elementMaterials, aggregatedMaterials } = calculateMaterialsFromDesign({
+  const { elementMaterials } = calculateMaterialsFromDesign({
     surface,
     courts,
     tracks,
@@ -168,16 +167,20 @@ export async function generateSportsSurfacePDF(data) {
     ['shape-fill', 'shape-stroke', 'text-fill', 'text-stroke'].includes(m.elementType)
   );
 
-  // All materials for totals
+  // All materials for element breakdown totals
   const allMaterials = elementMaterials;
 
-  // Use aggregated materials for the summary (replaces pixel counting)
-  const visibleMaterials = aggregatedMaterials;
+  // Pixel-counting approach for materials summary (Page 3) — accurate totals
+  // Counts visible pixels from the already-rendered PNG, accounts for overlapping elements
+  console.log('[SPORTS-PDF] Calculating visible materials from rasterized canvas...');
+  const knownColors = extractKnownColors(surface, courts, tracks, shapes, texts, motifs);
+  const visiblePcts = await calculateVisibleAreaPercentages(pngBuffer, knownColors);
+  const visibleMaterials = calculateMaterialsFromVisibleArea(visiblePcts, knownColors, totalAreaM2);
 
   console.log('[SPORTS-PDF] Court/Track materials:', courtTrackMaterials.length);
   console.log('[SPORTS-PDF] Motif materials:', motifMaterials.length);
   console.log('[SPORTS-PDF] Shape/Text materials:', shapeMaterials.length);
-  console.log('[SPORTS-PDF] Aggregated materials for summary:', aggregatedMaterials.length);
+  console.log('[SPORTS-PDF] Visible materials for summary:', visibleMaterials.length);
 
   const totalPages = 3;
 
@@ -189,7 +192,7 @@ export async function generateSportsSurfacePDF(data) {
   let y = PAGE_HEIGHT - MARGIN;
 
   // Header
-  y = drawHeader(page1, fontBold, fontRegular, y, 'Sports Surface Report');
+  y = drawHeader(page1, fontBold, fontRegular, y, 'Surface Report');
 
   // Design info
   y -= 30;
@@ -293,7 +296,7 @@ export async function generateSportsSurfacePDF(data) {
   y = PAGE_HEIGHT - MARGIN;
 
   // Header
-  y = drawHeader(page2, fontBold, fontRegular, y, 'Sports Surface Report');
+  y = drawHeader(page2, fontBold, fontRegular, y, 'Surface Report');
 
   // Title
   y -= 30;
@@ -516,7 +519,7 @@ export async function generateSportsSurfacePDF(data) {
   y = PAGE_HEIGHT - MARGIN;
 
   // Header
-  y = drawHeader(page3, fontBold, fontRegular, y, 'Sports Surface Report');
+  y = drawHeader(page3, fontBold, fontRegular, y, 'Surface Report');
 
   // Title
   y -= 30;
@@ -1208,6 +1211,25 @@ function groupMaterialsByMotif(materials) {
     groups[name].materials.push(mat);
     groups[name].totalArea += mat.area;
   }
+
+  // Deduplicate materials within each group by TPV code
+  for (const group of Object.values(groups)) {
+    const deduped = {};
+    for (const mat of group.materials) {
+      const code = mat.colour?.tpv_code || mat.colour?.code || '';
+      const hex = (mat.colour?.hex || '#808080').toLowerCase();
+      const key = code || hex;
+
+      if (deduped[key]) {
+        deduped[key].area += mat.area;
+        deduped[key].kg += mat.kg;
+      } else {
+        deduped[key] = { ...mat };
+      }
+    }
+    group.materials = Object.values(deduped);
+  }
+
   return groups;
 }
 

@@ -2739,7 +2739,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
                 </div>
                 <div className="flatten-progress-text">{flattenProgress}%</div>
                 <div className="flatten-warning">
-                  This converts paths to traced outlines. Region colors will be reset.
+                  This converts paths to traced outlines. Region colours will be reset.
                 </div>
               </div>
             </div>

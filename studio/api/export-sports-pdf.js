@@ -121,7 +121,7 @@ export default async function handler(req, res) {
 
     const pdfBuffer = await generateSportsSurfacePDF({
       svgString,
-      designName: designName || 'Sports Surface Design',
+      designName: designName || 'Surface Design',
       surface,
       courts: courts || {},
       tracks: tracks || {},
@@ -141,7 +141,7 @@ export default async function handler(req, res) {
     });
 
     // Set response headers
-    const safeFilename = (designName || 'sports-surface')
+    const safeFilename = (designName || 'surface-design')
       .replace(/[^a-z0-9]/gi, '-')
       .toLowerCase();
 

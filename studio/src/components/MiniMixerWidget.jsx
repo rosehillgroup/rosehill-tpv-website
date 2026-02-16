@@ -181,7 +181,7 @@ export default function MiniMixerWidget({
         {/* Color Palette */}
         <div className="mixer-palette-section">
           <div className="mixer-palette-header">
-            <h3>TPV Color Palette</h3>
+            <h3>TPV Colour Palette</h3>
             {totalParts > 0 && (
               <button className="clear-btn" onClick={clearParts}>
                 Clear All
@@ -216,7 +216,7 @@ export default function MiniMixerWidget({
                       className="mixer-parts-btn"
                       onClick={() => addPart(index)}
                       disabled={partCount >= 4 || totalParts >= 12}
-                      title={partCount >= 4 ? 'Max 4 parts per color' : totalParts >= 12 ? 'Max 12 total parts' : ''}
+                      title={partCount >= 4 ? 'Max 4 parts per colour' : totalParts >= 12 ? 'Max 12 total parts' : ''}
                     >
                       +
                     </button>

@@ -7,7 +7,7 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  padding: var(--space-4, 2rem);
+  padding: 0;
   font-family: var(--font-body, 'Source Sans Pro', sans-serif);
   overflow: hidden;
 }
@@ -261,10 +261,6 @@
 
 /* ====== Mobile Responsive ====== */
 @media (max-width: 768px) {
-  .court-canvas {
-    padding: 0.5rem;
-  }
-
   .court-canvas__zoom-controls {
     bottom: auto;
     top: 68px; /* Below mobile header (56px + 12px gap) */

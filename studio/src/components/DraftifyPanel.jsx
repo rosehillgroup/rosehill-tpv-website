@@ -241,7 +241,7 @@ function DraftifyPanel({ selectedConcept, onDesignComplete }) {
               <h4 style={{ margin: '0 0 0.5rem 0' }}>Bill of Materials</h4>
               <div style={{ fontSize: '0.875rem', color: '#718096' }}>
                 <div>Total: {(design.bom?.totalArea_m2 || 0).toFixed(2)} m²</div>
-                <div>Colors: {Object.keys(design.bom?.colourAreas_m2 || {}).length}</div>
+                <div>Colours: {Object.keys(design.bom?.colourAreas_m2 || {}).length}</div>
               </div>
             </div>
           </div>
