@@ -268,10 +268,7 @@ function DesignEditorModal({ isOpen, onClose }) {
                 {hasDesign ? (
                   isSaved ? (
                     <span className="design-editor__saved-indicator">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M20 6L9 17l-5-5" />
-                      </svg>
-                      Saved to library
+                      Update Source to edit existing motifs • Add to Canvas for a new copy
                     </span>
                   ) : (
                     <span className="design-editor__unsaved-indicator">
@@ -297,7 +294,7 @@ function DesignEditorModal({ isOpen, onClose }) {
                     className="design-editor__btn design-editor__btn--secondary"
                     onClick={handleSaveChanges}
                     disabled={!hasDesign || isSaving}
-                    title="Save changes to the source design without adding a new motif"
+                    title="Save edits to the source design — then use 'Refresh from Source' on canvas motifs to apply"
                   >
                     {isSaving && !isAddingToCanvas ? (
                       <>
@@ -311,7 +308,7 @@ function DesignEditorModal({ isOpen, onClose }) {
                           <polyline points="17 21 17 13 7 13 7 21" />
                           <polyline points="7 3 7 8 15 8" />
                         </svg>
-                        Save Changes
+                        Update Source
                       </>
                     )}
                   </button>
@@ -320,6 +317,7 @@ function DesignEditorModal({ isOpen, onClose }) {
                   className="design-editor__btn design-editor__btn--primary"
                   onClick={handleAddToCanvas}
                   disabled={!hasDesign || isAddingToCanvas}
+                  title="Add as a new independent motif on the canvas"
                 >
                   {isAddingToCanvas ? (
                     <>
