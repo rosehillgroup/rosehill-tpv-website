@@ -205,7 +205,9 @@ function DesignEditorModal({ isOpen, onClose }) {
         {
           solidSvgContent: solidSvgContent,
           blendSvgContent: blendSvgContent,
-          hasBothVersions: !!(solidSvgContent && blendSvgContent)
+          hasBothVersions: !!(solidSvgContent && blendSvgContent),
+          solid_recipes: playgroundStore.solidRecipes || [],
+          blend_recipes: playgroundStore.blendRecipes || [],
         }
       );
 

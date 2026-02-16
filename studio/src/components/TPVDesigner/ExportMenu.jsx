@@ -21,37 +21,37 @@ async function collectMotifDataForPdf(motifs) {
   const results = await Promise.all(
     motifEntries.map(async (motif) => {
       try {
-        // Fetch source design using authenticated API
-        const result = await loadDesign(motif.sourceDesignId);
-        const design = result?.design || result;
-
-        if (!design) {
-          console.warn(`[EXPORT] Could not fetch design for motif ${motif.id}`);
-          return null;
-        }
-
-        console.log(`[EXPORT] Loaded design for motif:`, design.name);
-        console.log(`[EXPORT] Design has solid_recipes:`, !!design.solid_recipes);
-        console.log(`[EXPORT] Design has blend_recipes:`, !!design.blend_recipes);
-
         // Calculate motif area in m² (accounting for scale)
         const scale = motif.scale || 1;
         const widthM = (motif.originalWidth_mm * scale) / 1000;
         const heightM = (motif.originalHeight_mm * scale) / 1000;
         const areaM2 = widthM * heightM;
 
-        // Get recipes based on current viewMode
-        // Recipes are stored at top level, not inside design.data
         const viewMode = motif.viewMode || 'solid';
-        const recipes = viewMode === 'blend'
-          ? design.blend_recipes
-          : design.solid_recipes;
 
-        console.log(`[EXPORT] Using ${viewMode} recipes:`, recipes?.length || 0, 'recipes');
+        // Use per-instance recipes if available (captures state at add/refresh time)
+        let recipes;
+        if (motif.solid_recipes?.length || motif.blend_recipes?.length) {
+          recipes = viewMode === 'blend' ? motif.blend_recipes : motif.solid_recipes;
+          console.log(`[EXPORT] Using per-instance ${viewMode} recipes for motif ${motif.id}:`, recipes?.length || 0);
+        } else {
+          // Backward compat: fetch from DB for old designs without stored recipes
+          console.log(`[EXPORT] No per-instance recipes for motif ${motif.id}, fetching from DB...`);
+          const result = await loadDesign(motif.sourceDesignId);
+          const design = result?.design || result;
+
+          if (!design) {
+            console.warn(`[EXPORT] Could not fetch design for motif ${motif.id}`);
+            return null;
+          }
+
+          recipes = viewMode === 'blend' ? design.blend_recipes : design.solid_recipes;
+          console.log(`[EXPORT] Loaded DB ${viewMode} recipes:`, recipes?.length || 0);
+        }
 
         return {
           id: motif.id,
-          name: motif.customName || motif.sourceDesignName || design.name || 'Motif',
+          name: motif.customName || motif.sourceDesignName || 'Motif',
           areaM2,
           viewMode,
           widthM,

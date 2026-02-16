@@ -122,7 +122,10 @@ function serializeMotifs(motifs) {
         originalHeight_mm: motif.originalHeight_mm,
         position: motif.position,
         rotation: motif.rotation,
-        scale: motif.scale
+        scale: motif.scale,
+        viewMode: motif.viewMode || 'solid',
+        solid_recipes: motif.solid_recipes || [],
+        blend_recipes: motif.blend_recipes || [],
       }
     ])
   );

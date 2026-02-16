@@ -168,7 +168,10 @@ export async function fetchMotifFromDesign(designId) {
     // Flag indicating if user can switch between versions
     hasBothVersions,
     originalWidth_mm: width_mm,
-    originalHeight_mm: height_mm
+    originalHeight_mm: height_mm,
+    // Snapshot recipes at fetch time for per-instance accuracy in PDF export
+    solid_recipes: design.solid_recipes || [],
+    blend_recipes: design.blend_recipes || [],
   };
 }
 

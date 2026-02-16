@@ -1202,6 +1202,9 @@ export const useSportsDesignStore = create(
           svgContent: motifData.solidSvgContent || svgContent,
           originalWidth_mm,
           originalHeight_mm,
+          // Snapshot recipes at add time for per-instance PDF accuracy
+          solid_recipes: motifData.solid_recipes || [],
+          blend_recipes: motifData.blend_recipes || [],
           position: {
             x: surface.width_mm / 2 - originalWidth_mm / 2,
             y: surface.length_mm / 2 - originalHeight_mm / 2
@@ -1359,7 +1362,10 @@ export const useSportsDesignStore = create(
                 // Update dimensions and adjust scale to preserve rendered size
                 originalWidth_mm: refreshedData.originalWidth_mm,
                 originalHeight_mm: refreshedData.originalHeight_mm,
-                scale: adjustedScale
+                scale: adjustedScale,
+                // Snapshot updated recipes from source design
+                solid_recipes: refreshedData.solid_recipes || [],
+                blend_recipes: refreshedData.blend_recipes || [],
               }
             },
             lastModified: Date.now()

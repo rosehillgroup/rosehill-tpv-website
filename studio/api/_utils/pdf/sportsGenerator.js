@@ -28,6 +28,9 @@ import {
 } from './unifiedPdfGenerator.js';
 import { calculateMaterialsFromDesign } from './materialCalculatorV2.js';
 import { convertTextToPaths } from './textToPath.js';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const TPV_PALETTE = require('../data/rosehill_tpv_21_colours.json');
 
 const { pageWidth: PAGE_WIDTH, pageHeight: PAGE_HEIGHT, margin: MARGIN, contentWidth: CONTENT_WIDTH } = PDF_CONFIG;
 
@@ -821,6 +824,15 @@ function findNearestColor(hex, knownColors) {
  */
 function extractKnownColors(surface, courts, tracks, shapes, texts, motifs) {
   const colors = new Map();
+
+  // Seed with full 21-colour TPV palette so every TPV colour on canvas can be matched
+  for (const entry of TPV_PALETTE) {
+    colors.set(entry.hex.toLowerCase(), {
+      hex: entry.hex,
+      tpv_code: entry.code,
+      name: entry.name
+    });
+  }
 
   // Surface color
   if (surface?.color?.hex) {

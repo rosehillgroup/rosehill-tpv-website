@@ -88,11 +88,13 @@ function CourtLibrary({ onOpenGenerator, mobileMode = false, modalMode = false, 
         motifData.originalWidth_mm,
         motifData.originalHeight_mm,
         motifData.sourceThumbnailUrl,
-        // Pass extra data for solid/blend switching
+        // Pass extra data for solid/blend switching + recipe snapshots
         {
           solidSvgContent: motifData.solidSvgContent,
           blendSvgContent: motifData.blendSvgContent,
-          hasBothVersions: motifData.hasBothVersions
+          hasBothVersions: motifData.hasBothVersions,
+          solid_recipes: motifData.solid_recipes,
+          blend_recipes: motifData.blend_recipes,
         }
       );
       if (singleClickAdd && onItemAdded) {
