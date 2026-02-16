@@ -732,6 +732,29 @@ async function calculateVisibleAreaPercentages(pngBuffer, knownColors) {
 
   console.log(`[SPORTS-PDF] Image: ${width}x${height}, ${channels} channels, ${totalPixels} pixels`);
 
+  // Pre-compute known colour RGB values once (avoid repeated hex parsing)
+  const knownRgb = knownColors.map(c => {
+    const h = (c.hex || '#000000').replace('#', '');
+    return {
+      r: parseInt(h.slice(0, 2), 16),
+      g: parseInt(h.slice(2, 4), 16),
+      b: parseInt(h.slice(4, 6), 16),
+      hex: c.hex.toLowerCase(),
+    };
+  });
+
+  // Build exact-match lookup: pack RGB into a single integer key
+  // Most canvas pixels are exact TPV colours, so this avoids nearest-neighbour search
+  const exactLookup = new Map();
+  for (let i = 0; i < knownRgb.length; i++) {
+    const k = knownRgb[i];
+    exactLookup.set((k.r << 16) | (k.g << 8) | k.b, k.hex);
+  }
+
+  // Cache for nearest-neighbour results (keyed by packed RGB)
+  // Handles anti-aliased / blended pixels without repeating the search
+  const nearestCache = new Map();
+
   // Count pixels by color
   const colorCounts = new Map();
   let transparentPixels = 0;
@@ -748,14 +771,35 @@ async function calculateVisibleAreaPercentages(pngBuffer, knownColors) {
       continue;
     }
 
-    // Convert to hex
-    const hex = rgbToHex(r, g, b);
+    const packed = (r << 16) | (g << 8) | b;
 
-    // Find nearest known TPV color
-    const nearestColor = findNearestColor(hex, knownColors);
-    const key = nearestColor.hex.toLowerCase();
+    // Try exact match first (fast path — most pixels)
+    let matchHex = exactLookup.get(packed);
 
-    colorCounts.set(key, (colorCounts.get(key) || 0) + 1);
+    if (matchHex === undefined) {
+      // Check cache for previously computed nearest match
+      matchHex = nearestCache.get(packed);
+
+      if (matchHex === undefined) {
+        // Nearest-neighbour search using squared distance (skip sqrt)
+        let minDist = Infinity;
+        let bestHex = knownRgb[0].hex;
+        for (let j = 0; j < knownRgb.length; j++) {
+          const dr = r - knownRgb[j].r;
+          const dg = g - knownRgb[j].g;
+          const db = b - knownRgb[j].b;
+          const dist = dr * dr + dg * dg + db * db;
+          if (dist < minDist) {
+            minDist = dist;
+            bestHex = knownRgb[j].hex;
+          }
+        }
+        matchHex = bestHex;
+        nearestCache.set(packed, matchHex);
+      }
+    }
+
+    colorCounts.set(matchHex, (colorCounts.get(matchHex) || 0) + 1);
   }
 
   // Convert counts to percentages
@@ -766,57 +810,10 @@ async function calculateVisibleAreaPercentages(pngBuffer, knownColors) {
     visiblePcts[hex] = (count / visiblePixels) * 100;
   }
 
+  console.log(`[SPORTS-PDF] Pixel counting: ${totalPixels} total, ${transparentPixels} transparent, ${nearestCache.size} unique non-exact colours`);
   console.log(`[SPORTS-PDF] Visible area breakdown:`, Object.entries(visiblePcts).map(([hex, pct]) => `${hex}: ${pct.toFixed(1)}%`).join(', '));
 
   return visiblePcts;
-}
-
-/**
- * Convert RGB values to hex string
- */
-function rgbToHex(r, g, b) {
-  return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
-}
-
-/**
- * Find the nearest color from a list of known colors using simple RGB distance
- * @param {string} hex - Hex color to match
- * @param {Array} knownColors - Array of known colors [{hex, code, name}]
- * @returns {Object} The nearest known color
- */
-function findNearestColor(hex, knownColors) {
-  if (!knownColors || knownColors.length === 0) {
-    return { hex, code: '', name: 'Unknown' };
-  }
-
-  // Parse input hex
-  const r1 = parseInt(hex.slice(1, 3), 16);
-  const g1 = parseInt(hex.slice(3, 5), 16);
-  const b1 = parseInt(hex.slice(5, 7), 16);
-
-  let nearest = knownColors[0];
-  let minDistance = Infinity;
-
-  for (const color of knownColors) {
-    const colorHex = color.hex || '#000000';
-    const r2 = parseInt(colorHex.slice(1, 3), 16);
-    const g2 = parseInt(colorHex.slice(3, 5), 16);
-    const b2 = parseInt(colorHex.slice(5, 7), 16);
-
-    // Simple RGB Euclidean distance
-    const distance = Math.sqrt(
-      Math.pow(r1 - r2, 2) +
-      Math.pow(g1 - g2, 2) +
-      Math.pow(b1 - b2, 2)
-    );
-
-    if (distance < minDistance) {
-      minDistance = distance;
-      nearest = color;
-    }
-  }
-
-  return nearest;
 }
 
 /**
