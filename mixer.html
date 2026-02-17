@@ -1975,73 +1975,20 @@
                             tileContainerRef.current.clientHeight
                         );
                         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Limit for performance
-                        renderer.shadowMap.enabled = true;
-                        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
                         renderer.outputEncoding = THREE.sRGBEncoding;
-                        
-                        // Renderer settings optimized for vibrant colors
-                        renderer.physicallyCorrectLights = false; // Disable for more predictable lighting
-                        renderer.toneMapping = THREE.NoToneMapping; // No tone mapping for color accuracy
 
                         tileContainerRef.current.appendChild(renderer.domElement);
 
-                        // Enhanced lighting setup for realistic rubber tile appearance
-                        
-                        // 1. Ambient light - reduced for color accuracy
-                        const ambientLight = new THREE.AmbientLight(0xffffff, 0.25); // Reduced for color accuracy
-                        scene.add(ambientLight);
-
-                        // 2. Main directional light - reduced for color accuracy
-                        const mainLight = new THREE.DirectionalLight(0xffffff, 0.4); // Reduced for color accuracy
-                        mainLight.position.set(400, 500, 300);
-                        mainLight.castShadow = true;
-                        mainLight.shadow.mapSize.width = 2048;
-                        mainLight.shadow.mapSize.height = 2048;
-                        mainLight.shadow.camera.near = 0.1;
-                        mainLight.shadow.camera.far = 1000;
-                        mainLight.shadow.camera.left = -300;
-                        mainLight.shadow.camera.right = 300;
-                        mainLight.shadow.camera.top = 300;
-                        mainLight.shadow.camera.bottom = -300;
-                        mainLight.shadow.bias = -0.0001;
-                        scene.add(mainLight);
-
-                        // 3. Fill light - minimal for color accuracy
-                        const fillLight = new THREE.DirectionalLight(0xffffff, 0.05); // Reduced for color accuracy
-                        fillLight.position.set(-200, 250, -150);
-                        scene.add(fillLight);
-
-                        // 4. Rim light - minimal for color accuracy
-                        const rimLight = new THREE.DirectionalLight(0xffffff, 0.05); // Reduced for color accuracy
-                        rimLight.position.set(-250, 200, 400);
-                        scene.add(rimLight);
-
-                        // Remove point light and hemisphere light - too much brightness
-                        // Focus on color accuracy for UV-stable TPV presentation
-
                         // Tile geometry (200x200x20mm - realistic size)
                         const geometry = new THREE.BoxGeometry(200, 20, 200);
-                        
-                        // Basic material (will be updated with texture)
-                        const material = new THREE.MeshStandardMaterial({
-                            color: 0xfafafa,
-                            roughness: 0.8,
-                            metalness: 0.1
+
+                        // MeshBasicMaterial for pixel-perfect color accuracy (no lighting distortion)
+                        const material = new THREE.MeshBasicMaterial({
+                            color: 0xffffff
                         });
 
                         const tile = new THREE.Mesh(geometry, material);
-                        tile.castShadow = true;
-                        tile.receiveShadow = true;
                         scene.add(tile);
-
-                        // Ground plane for shadows
-                        const groundGeometry = new THREE.PlaneGeometry(800, 800);
-                        const groundMaterial = new THREE.ShadowMaterial({ opacity: 0.2 });
-                        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
-                        ground.rotation.x = -Math.PI / 2;
-                        ground.position.y = -10; // Half the tile height (20mm/2)
-                        ground.receiveShadow = true;
-                        scene.add(ground);
 
                         // Controls
                         const controls = new OrbitControls(camera, renderer.domElement);
@@ -2051,7 +1998,7 @@
                         controls.maxDistance = 800;
                         controls.minDistance = 150;
 
-                        // Store scene references including lights for animation
+                        // Store scene references
                         tileSceneRef.current = {
                             scene,
                             camera,
@@ -2059,56 +2006,42 @@
                             controls,
                             tile,
                             material,
-                            lights: {
-                                main: mainLight,
-                                fill: fillLight,
-                                rim: rimLight
-                            },
                             isAnimating: true
                         };
 
                         // Animation loop with smart updates
                         let lastInteractionTime = Date.now();
-                        let animationTime = 0;
                         let lastFrameTime = Date.now();
                         let isUserControlling = false;
-                        
+
                         const animate = () => {
                             if (tileSceneRef.current && tileSceneRef.current.isAnimating) {
                                 const now = Date.now();
-                                const deltaTime = now - lastFrameTime;
                                 lastFrameTime = now;
-                                
-                                animationTime += deltaTime * 0.001; // Convert to seconds
-                                
+
                                 // Check if user is actively controlling
                                 const timeSinceInteraction = now - lastInteractionTime;
                                 isUserControlling = timeSinceInteraction < 100; // 100ms threshold
-                                
-                                // Update controls - this now returns whether an update was applied
+
+                                // Update controls
                                 const controlsUpdated = controls.update();
-                                
+
                                 // Check if material needs updating (texture changes)
                                 const materialNeedsUpdate = tileSceneRef.current.material && tileSceneRef.current.material.needsUpdate;
-                                
+
                                 let sceneChanged = controlsUpdated || materialNeedsUpdate;
-                                
+
                                 // Only apply auto-rotation if user isn't controlling and sufficient time has passed
-                                if (!isUserControlling && timeSinceInteraction > 3000) { // 3 seconds of no interaction  
-                                    tile.rotation.y += 0.003; // Slower rotation
+                                if (!isUserControlling && timeSinceInteraction > 3000) {
+                                    tile.rotation.y += 0.003;
                                     sceneChanged = true;
                                 }
-                                
-                                // Always update subtle lighting animation
-                                const { lights } = tileSceneRef.current;
-
-                                // Light intensities now fixed (no animation) for color accuracy
 
                                 // Only render if something changed
                                 if (sceneChanged) {
                                     renderer.render(scene, camera);
                                 }
-                                
+
                                 requestAnimationFrame(animate);
                             }
                         };
@@ -2154,363 +2087,6 @@
                     }
                 }, []);
 
-                // Create distance-optimized tile surface using enhanced Voronoi
-                const createTileSurface = useCallback((parts, tileSize = 512) => {
-                    if (!parts || parts.size === 0) return null;
-
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = tileSize;
-                    canvas.height = tileSize;
-
-                    // Calculate total parts for distribution
-                    const totalParts = Array.from(parts.values()).reduce((a, b) => a + b, 0);
-                    if (totalParts === 0) return null;
-
-                    // Balanced tile settings - realistic granule size with optimized performance
-                    const numPoints = Math.floor(tileSize * tileSize / 60); // ~4,500 granules for 512px - realistic size, good performance
-                    const points = [];
-
-                    // Generate points using enhanced Poisson disk sampling
-                    const baseMinDistance = Math.sqrt(60) * 0.75; // Smaller granules for realistic appearance
-                    let attempts = 0;
-                    const maxAttempts = numPoints * 50;
-
-                    // Use fixed seed for consistent tile generation
-                    const tileSeed = 'tile_surface_' + Array.from(parts.entries()).map(([k,v]) => `${k}:${v}`).join('_');
-                    const seedNum = tileSeed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-                    const tileRng = mulberry32(seedNum);
-
-                    while (points.length < numPoints && attempts < maxAttempts) {
-                        const x = tileRng() * tileSize;
-                        const y = tileRng() * tileSize;
-
-                        // Check minimum distance with clustering variation
-                        const maxTries = 20 + Math.floor(tileRng() * 20); // 20-40 variation
-                        const minDistance = baseMinDistance * (0.8 + tileRng() * 0.4); // Distance variation
-
-                        let validPoint = true;
-                        for (let i = 0; i < points.length; i++) {
-                            const distance = Math.sqrt((points[i].x - x) ** 2 + (points[i].y - y) ** 2);
-                            if (distance < minDistance) {
-                                validPoint = false;
-                                break;
-                            }
-                        }
-
-                        if (validPoint) {
-                            // Enhanced size distribution for distance viewing (25%-400% range)
-                            const sizeRng1 = tileRng();
-                            const sizeRng2 = tileRng();
-                            const sizeRng3 = tileRng();
-                            const weightedRandom = (sizeRng1 + sizeRng2 + sizeRng3) / 3; // Bell curve
-                            const exponentialWeight = Math.pow(weightedRandom, 1.5); // Favor medium sizes
-                            const granuleSize = 0.25 + exponentialWeight * 3.75; // 25%-400% range
-
-                            points.push({ x, y, size: granuleSize });
-                        }
-                        attempts++;
-                    }
-
-                    // Generate Delaunay triangulation and Voronoi cells
-                    const delaunay = d3.Delaunay.from(points, d => d.x, d => d.y);
-                    const voronoi = delaunay.voronoi([0, 0, tileSize, tileSize]);
-
-                    // Assign colors to cells based on parts distribution
-                    const cellAssignments = new Array(points.length).fill(-1);
-                    const indices = Array.from({ length: points.length }, (_, i) => i);
-
-                    // Fisher-Yates shuffle for randomization
-                    for (let i = indices.length - 1; i > 0; i--) {
-                        const j = Math.floor(tileRng() * (i + 1));
-                        [indices[i], indices[j]] = [indices[j], indices[i]];
-                    }
-
-                    // Assign colors based on parts
-                    let cursor = 0;
-                    parts.forEach((partCount, colourIndex) => {
-                        const quota = Math.round((partCount / totalParts) * indices.length);
-                        for (let i = 0; i < quota && cursor < indices.length; i++) {
-                            cellAssignments[indices[cursor]] = colourIndex;
-                            cursor++;
-                        }
-                    });
-
-                    // Render the tile surface with all realism enhancements
-                    // First pass: Base colors with enhanced variations
-                    for (let i = 0; i < points.length; i++) {
-                        const colourIndex = cellAssignments[i];
-                        if (colourIndex === -1) continue;
-
-                        const cell = voronoi.cellPolygon(i);
-                        if (!cell || cell.length < 3) continue;
-
-                        const baseColour = PALETTE[colourIndex];
-                        const variationRng = mulberry32(Math.floor(points[i].x + points[i].y * 1000));
-
-                        // Parse base color and apply enhanced variations
-                        const r = parseInt(baseColour.hex.slice(1, 3), 16);
-                        const g = parseInt(baseColour.hex.slice(3, 5), 16);
-                        const b = parseInt(baseColour.hex.slice(5, 7), 16);
-
-                        const hsl = rgbToHsl(r, g, b);
-
-                        // Color family detection for smart enhancements
-                        const isLightColor = hsl[2] > 0.6; // Light colors (yellows, whites, light blues, etc.)
-                        const isDarkColor = hsl[2] < 0.3;  // Dark colors (blacks, dark reds, etc.)
-                        const isVibrantColor = hsl[1] > 0.7; // Already saturated colors
-
-                        // Enhanced variations based on color family
-                        let satVariation, hueVariation, lightVariation;
-
-                        if (isLightColor) {
-                            // Light colors: boost saturation significantly, subtle hue shifts
-                            satVariation = (variationRng() - 0.5) * 0.15 + 0.1; // +10% base boost
-                            hueVariation = (variationRng() - 0.5) * 3;
-                            lightVariation = (variationRng() - 0.5) * 0.08;
-                        } else if (isDarkColor) {
-                            // Dark colors: enhance contrast, maintain depth
-                            satVariation = (variationRng() - 0.5) * 0.12;
-                            hueVariation = (variationRng() - 0.5) * 5;
-                            lightVariation = (variationRng() - 0.5) * 0.1; // More light variation for depth
-                        } else {
-                            // Mid-tone colors: balanced enhancement
-                            satVariation = (variationRng() - 0.5) * 0.13;
-                            hueVariation = (variationRng() - 0.5) * 4;
-                            lightVariation = (variationRng() - 0.5) * 0.08;
-                        }
-
-                        const newSat = Math.max(0, Math.min(1, hsl[1] + satVariation));
-                        const newHue = (hsl[0] + hueVariation + 360) % 360;
-                        let newLight = Math.max(0, Math.min(1, hsl[2] + lightVariation));
-
-                        // Smart size-based hierarchy - much less aggressive muting
-                        const granuleSize = points[i].size;
-                        const normalizedSize = Math.min(4, Math.max(0.25, granuleSize));
-                        const sizeContrastFactor = 0.85 + (normalizedSize / 4) * 0.3; // Less extreme range
-                        let contrastAdjustedSat = Math.max(0, Math.min(1, newSat * sizeContrastFactor));
-
-                        // Greatly reduced muting for small granules - keep them vibrant!
-                        if (normalizedSize < 1.0 && !isLightColor) {
-                            // Only mute dark colors slightly, preserve light color vibrancy
-                            const muteFactor = (1.0 - normalizedSize) * 0.1; // Reduced from 0.3
-                            newLight = newLight + (0.4 - newLight) * muteFactor; // Less gray (0.4 instead of 0.5)
-                        }
-
-                        // Extra boost for light colors to make them pop
-                        if (isLightColor && normalizedSize > 0.8) {
-                            contrastAdjustedSat = Math.min(1, contrastAdjustedSat * 1.15); // 15% saturation boost
-                            newLight = Math.min(1, newLight * 1.05); // Slight brightness boost
-                        }
-
-                        const [finalR, finalG, finalB] = hslToRgb(newHue / 360, contrastAdjustedSat, newLight);
-                        const finalColor = `rgb(${Math.round(finalR)}, ${Math.round(finalG)}, ${Math.round(finalB)})`;
-
-                        // Draw the cell
-                        ctx.fillStyle = finalColor;
-                        ctx.beginPath();
-                        ctx.moveTo(cell[0][0], cell[0][1]);
-                        for (let j = 1; j < cell.length; j++) {
-                            ctx.lineTo(cell[j][0], cell[j][1]);
-                        }
-                        ctx.closePath();
-                        ctx.fill();
-                    }
-
-                    // Second pass: Enhanced 3D lighting and surface effects
-                    for (let i = 0; i < points.length; i++) {
-                        const colourIndex = cellAssignments[i];
-                        if (colourIndex === -1) continue;
-
-                        const cell = voronoi.cellPolygon(i);
-                        if (!cell || cell.length < 3) continue;
-
-                        const granuleSize = points[i].size;
-                        const normalizedSize = Math.min(4, Math.max(0.25, granuleSize));
-
-                        // Calculate cell bounds for lighting
-                        let minX = cell[0][0], maxX = cell[0][0];
-                        let minY = cell[0][1], maxY = cell[0][1];
-                        let centerX = 0, centerY = 0;
-
-                        for (let j = 0; j < cell.length; j++) {
-                            minX = Math.min(minX, cell[j][0]);
-                            maxX = Math.max(maxX, cell[j][0]);
-                            minY = Math.min(minY, cell[j][1]);
-                            maxY = Math.max(maxY, cell[j][1]);
-                            centerX += cell[j][0];
-                            centerY += cell[j][1];
-                        }
-                        centerX /= cell.length;
-                        centerY /= cell.length;
-
-                        // Enhanced lighting simulation for tile surface
-                        const width = maxX - minX;
-                        const height = maxY - minY;
-                        const radius = Math.max(width, height) / 2;
-
-                        // Multiple light sources for realism
-                        const lightDir1 = { x: -0.7071, y: -0.7071 }; // Top-left primary
-                        const lightDir2 = { x: 0.5, y: -0.8 }; // Top-right rim
-
-                        // Create radial gradient for 3D effect
-                        const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
-
-                        // Calculate lighting based on granule size and position
-                        const lightIntensity1 = Math.max(0, -lightDir1.x * 0.3 + -lightDir1.y * 0.7) * 0.8;
-                        const lightIntensity2 = Math.max(0, lightDir2.x * 0.3 + -lightDir2.y * 0.7) * 0.3;
-                        const totalLighting = 0.2 + lightIntensity1 + lightIntensity2; // 20% ambient
-
-                        // Size-based lighting variation
-                        const lightingBoost = 0.9 + (normalizedSize / 4) * 0.2; // Large granules get more light
-                        const finalLighting = Math.min(1.2, totalLighting * lightingBoost);
-
-                        // Ambient occlusion for depth
-                        const occlusion = Math.max(0, 1 - (normalizedSize / 4) * 0.15); // Large granules get slight darkening
-
-                        const lightColor = `rgba(255, 255, 255, 0)`; // Disabled for color accuracy
-                        const shadowColor = `rgba(0, 0, 0, ${(1 - occlusion) * 0.1})`;
-
-                        gradient.addColorStop(0, lightColor);
-                        gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0)');
-                        gradient.addColorStop(1, shadowColor);
-
-                        // Apply gradient within cell bounds
-                        ctx.save();
-                        ctx.beginPath();
-                        ctx.moveTo(cell[0][0], cell[0][1]);
-                        for (let j = 1; j < cell.length; j++) {
-                            ctx.lineTo(cell[j][0], cell[j][1]);
-                        }
-                        ctx.closePath();
-                        ctx.clip();
-
-                        ctx.fillStyle = gradient;
-                        ctx.fill();
-                        ctx.restore();
-
-                        // Specular highlights disabled for color accuracy
-                        // if (normalizedSize > 2.0 && finalLighting > 1.0) { ... }
-                    }
-
-                    return canvas;
-                }, []);
-
-                // Create enhanced bump map from granule structure
-                const createEnhancedBumpMap = useCallback((parts, size = 256) => {
-                    const bumpCanvas = document.createElement('canvas');
-                    const bumpCtx = bumpCanvas.getContext('2d');
-                    bumpCanvas.width = size;
-                    bumpCanvas.height = size;
-
-                    if (!parts || parts.size === 0) {
-                        // Fill with neutral gray for no bump effect
-                        bumpCtx.fillStyle = '#808080';
-                        bumpCtx.fillRect(0, 0, size, size);
-                        return bumpCanvas;
-                    }
-
-                    // Generate granule structure for bump mapping to match realistic tile scale
-                    const numPoints = Math.floor(size * size / 60); // Match main tile granule density for consistency
-                    const points = [];
-
-                    // Use same seed as tile surface for consistency
-                    const totalParts = Array.from(parts.values()).reduce((a, b) => a + b, 0);
-                    const tileSeed = 'bump_surface_' + Array.from(parts.entries()).map(([k,v]) => `${k}:${v}`).join('_');
-                    const seedNum = tileSeed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-                    const bumpRng = mulberry32(seedNum);
-
-                    const baseMinDistance = Math.sqrt(60) * 0.75; // Match main tile scale for consistency
-                    let attempts = 0;
-                    const maxAttempts = numPoints * 50;
-
-                    while (points.length < numPoints && attempts < maxAttempts) {
-                        const x = bumpRng() * size;
-                        const y = bumpRng() * size;
-                        const minDistance = baseMinDistance * (0.8 + bumpRng() * 0.4);
-
-                        let validPoint = true;
-                        for (let i = 0; i < points.length; i++) {
-                            const distance = Math.sqrt((points[i].x - x) ** 2 + (points[i].y - y) ** 2);
-                            if (distance < minDistance) {
-                                validPoint = false;
-                                break;
-                            }
-                        }
-
-                        if (validPoint) {
-                            const sizeRng1 = bumpRng();
-                            const sizeRng2 = bumpRng();
-                            const sizeRng3 = bumpRng();
-                            const weightedRandom = (sizeRng1 + sizeRng2 + sizeRng3) / 3;
-                            const exponentialWeight = Math.pow(weightedRandom, 1.5);
-                            const granuleSize = 0.25 + exponentialWeight * 3.75;
-
-                            // Height varies with granule size for realistic bump mapping
-                            const height = 0.3 + (granuleSize / 4) * 0.4; // 0.3-0.7 height range
-
-                            points.push({ x, y, size: granuleSize, height: height });
-                        }
-                        attempts++;
-                    }
-
-                    // Generate Delaunay triangulation for height mapping
-                    const delaunay = d3.Delaunay.from(points, d => d.x, d => d.y);
-                    const voronoi = delaunay.voronoi([0, 0, size, size]);
-
-                    // Create height map from granule structure
-                    const imageData = bumpCtx.createImageData(size, size);
-                    const data = imageData.data;
-
-                    for (let y = 0; y < size; y++) {
-                        for (let x = 0; x < size; x++) {
-                            const index = (y * size + x) * 4;
-
-                            // Find closest granule center for height information
-                            let minDistance = Infinity;
-                            let closestPoint = null;
-
-                            for (let i = 0; i < points.length; i++) {
-                                const distance = Math.sqrt((points[i].x - x) ** 2 + (points[i].y - y) ** 2);
-                                if (distance < minDistance) {
-                                    minDistance = distance;
-                                    closestPoint = points[i];
-                                }
-                            }
-
-                            if (closestPoint) {
-                                // Calculate height based on distance to granule center (realistic scale)
-                                const granuleRadius = Math.sqrt(60) * closestPoint.size * 0.5;
-                                const distanceRatio = Math.min(1, minDistance / granuleRadius);
-
-                                // Create raised granule profile (dome-like)
-                                const heightProfile = Math.cos(distanceRatio * Math.PI * 0.5);
-                                const finalHeight = 0.5 + (closestPoint.height * heightProfile * 0.5);
-
-                                // Add subtle surface texture for rubber-like appearance
-                                const textureNoise = (bumpRng() - 0.5) * 0.05;
-                                const clampedHeight = Math.max(0, Math.min(1, finalHeight + textureNoise));
-
-                                const grayValue = Math.floor(clampedHeight * 255);
-
-                                data[index] = grayValue;     // R
-                                data[index + 1] = grayValue; // G
-                                data[index + 2] = grayValue; // B
-                                data[index + 3] = 255;       // A
-                            } else {
-                                // Fallback neutral color
-                                data[index] = 128;     // R
-                                data[index + 1] = 128; // G
-                                data[index + 2] = 128; // B
-                                data[index + 3] = 255; // A
-                            }
-                        }
-                    }
-
-                    bumpCtx.putImageData(imageData, 0, 0);
-                    return bumpCanvas;
-                }, []);
-
                 // Update tile texture when canvas changes
                 useEffect(() => {
                     if (!tileSceneRef.current || !canvasRef.current || totalParts === 0) {
@@ -2518,9 +2094,7 @@
                         if (tileSceneRef.current) {
                             const { material, controls } = tileSceneRef.current;
                             material.map = null;
-                            material.bumpMap = null;
-                            material.normalMap = null;
-                            material.color.setHex(0xfafafa);
+                            material.color.setHex(0xffffff);
                             material.needsUpdate = true;
                             
                             // Force a render update
@@ -2593,41 +2167,20 @@
                             }
                             tileCtx.filter = 'none';
 
-                            // Create main texture with realistic granule surface
+                            // Create texture with correct sRGB encoding to prevent double-gamma
                             const texture = new THREE.CanvasTexture(tileCanvas);
+                            texture.encoding = THREE.sRGBEncoding;
                             texture.wrapS = THREE.RepeatWrapping;
                             texture.wrapT = THREE.RepeatWrapping;
-                            texture.repeat.set(1, 1); // Single tile since we generate realistic surface at full resolution
+                            texture.repeat.set(1, 1);
                             texture.magFilter = THREE.LinearFilter;
                             texture.minFilter = THREE.LinearMipMapLinearFilter;
-                            texture.flipY = false; // Correct orientation for Three.js
+                            texture.flipY = false;
 
-                            // Create enhanced bump map from granule structure
-                            const bumpCanvas = createEnhancedBumpMap(parts, 256);
-                            const bumpTexture = new THREE.CanvasTexture(bumpCanvas);
-                            bumpTexture.wrapS = THREE.RepeatWrapping;
-                            bumpTexture.wrapT = THREE.RepeatWrapping;
-                            bumpTexture.repeat.set(1, 1); // Match main texture
-                            bumpTexture.flipY = false;
-
-                            // Update material with properties optimized for enhanced texture colors
+                            // Update material — MeshBasicMaterial for pixel-perfect colors
                             const { material } = tileSceneRef.current;
                             material.map = texture;
-                            material.bumpMap = bumpTexture;
-                            material.bumpScale = 0.06; // Reduced bump to let colors show through
-                            material.roughness = 0.8; // Slightly rough for realistic TPV
-                            material.metalness = 0.0; // No metalness for pure color representation
-                            material.color.setHex(0xffffff); // Let enhanced texture handle all color
-
-                            // Simplified material properties to preserve enhanced texture colors
-                            material.envMapIntensity = 0; // Disabled for color accuracy
-                            material.clearcoat = 0; // Disabled for color accuracy
-                            material.clearcoatRoughness = 0.9; // Keep clearcoat matte
-
-                            // Remove emissive - let enhanced texture provide the pop
-                            material.emissive = new THREE.Color(0x000000);
-                            material.emissiveIntensity = 0.0;
-
+                            material.color.setHex(0xffffff);
                             material.needsUpdate = true;
 
                             // Force a render update since texture has changed
@@ -2641,7 +2194,7 @@
                             setTileLoading(false);
                         }
                     }, 100);
-                }, [totalParts, parts, createTileSurface, createEnhancedBumpMap]);
+                }, [totalParts, parts]);
 
                 const resetTileView = useCallback(() => {
                     if (tileSceneRef.current) {
