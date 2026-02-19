@@ -156,6 +156,11 @@ function TPVDesigner({ loadedDesign }) {
     toggleGridOverlay
   } = useSportsDesignStore();
 
+  // Show align dropdown when any element is selected (single = align to canvas, multi = align to each other)
+  const anyElementSelected = selectedShapeId || selectedTextId || selectedCourtId || selectedTrackId || selectedMotifId;
+  const showAlignDropdown = selectedElementIds.length >= 1 || anyElementSelected;
+  const isSingleElementAlign = selectedElementIds.length < 2 && anyElementSelected;
+
   // Handle dimension form submit
   const handleSetDimensions = (e) => {
     e.preventDefault();
@@ -1204,14 +1209,16 @@ function TPVDesigner({ loadedDesign }) {
                         </button>
                       )}
                     </div>
+                  </>
+                )}
 
-                    {/* Alignment dropdown - only when 2+ elements selected */}
-                    {selectedElementIds.length >= 2 && (
-                      <div className="sports-toolbar__align-dropdown" style={{ position: 'relative' }}>
-                        <button
-                          className={`sports-toolbar__btn ${showAlignMenu ? 'sports-toolbar__btn--active' : ''}`}
-                          onClick={(e) => { e.stopPropagation(); setShowAlignMenu(!showAlignMenu); }}
-                          title="Align elements"
+                {/* Alignment dropdown - show when any element is selected */}
+                {showAlignDropdown && (
+                  <div className="sports-toolbar__align-dropdown" style={{ position: 'relative' }}>
+                    <button
+                      className={`sports-toolbar__btn ${showAlignMenu ? 'sports-toolbar__btn--active' : ''}`}
+                      onClick={(e) => { e.stopPropagation(); setShowAlignMenu(!showAlignMenu); }}
+                      title={isSingleElementAlign ? "Align to canvas" : "Align elements"}
                         >
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="21" y1="10" x2="3" y2="10" />
@@ -1238,7 +1245,7 @@ function TPVDesigner({ loadedDesign }) {
                             }}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px', textTransform: 'uppercase', fontWeight: 600 }}>Align</div>
+                            <div style={{ fontSize: '10px', color: '#666', padding: '4px 8px', textTransform: 'uppercase', fontWeight: 600 }}>{isSingleElementAlign ? 'Align to Canvas' : 'Align'}</div>
                             <button
                               style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 8px', border: 'none', background: 'transparent', cursor: 'pointer', borderRadius: '4px', fontSize: '12px' }}
                               onClick={() => { alignElements('left'); setShowAlignMenu(false); }}
@@ -1330,9 +1337,7 @@ function TPVDesigner({ loadedDesign }) {
                             )}
                           </div>
                         )}
-                      </div>
-                    )}
-                  </>
+                  </div>
                 )}
 
                 <div className="sports-toolbar__divider" />

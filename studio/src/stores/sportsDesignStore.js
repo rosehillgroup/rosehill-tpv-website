@@ -3421,10 +3421,17 @@ export const useSportsDesignStore = create(
         get().createGroup(selectedElementIds);
       },
 
-      // Alignment tools - align selected elements
+      // Alignment tools - align selected elements (or single element to canvas)
       alignElements: (alignment) => {
-        const { selectedElementIds, shapes, texts, courts, tracks, motifs } = get();
-        if (selectedElementIds.length < 2) return;
+        const { selectedElementIds, selectedShapeId, selectedTextId, selectedCourtId, selectedTrackId, selectedMotifId, selectedExclusionZoneId, shapes, texts, courts, tracks, motifs, surface } = get();
+
+        // Build effective selection: multi-selection or individual selection
+        let effectiveIds = [...selectedElementIds];
+        if (effectiveIds.length === 0) {
+          const singleId = selectedShapeId || selectedTextId || selectedCourtId || selectedTrackId || selectedMotifId || selectedExclusionZoneId;
+          if (singleId) effectiveIds = [singleId];
+        }
+        if (effectiveIds.length === 0) return;
 
         // Helper to get text bounds (text uses baseline positioning)
         const getTextBounds = (text) => {
@@ -3456,7 +3463,7 @@ export const useSportsDesignStore = create(
         };
 
         // Get bounds for all selected elements
-        const elementBounds = selectedElementIds.map(id => {
+        const elementBounds = effectiveIds.map(id => {
           // Shapes
           if (id.startsWith('shape-')) {
             const shape = shapes[id];
@@ -3530,13 +3537,23 @@ export const useSportsDesignStore = create(
           return null;
         }).filter(Boolean);
 
-        if (elementBounds.length < 2) return;
+        if (elementBounds.length === 0) return;
 
-        // Calculate overall bounds
-        const minX = Math.min(...elementBounds.map(b => b.x));
-        const maxX = Math.max(...elementBounds.map(b => b.x + b.width));
-        const minY = Math.min(...elementBounds.map(b => b.y));
-        const maxY = Math.max(...elementBounds.map(b => b.y + b.height));
+        // Calculate reference bounds: canvas for single element, selection bounding box for multi
+        let minX, maxX, minY, maxY;
+        if (elementBounds.length === 1) {
+          // Align to canvas
+          minX = 0;
+          maxX = surface.width_mm;
+          minY = 0;
+          maxY = surface.length_mm;
+        } else {
+          // Align to bounding box of selected elements
+          minX = Math.min(...elementBounds.map(b => b.x));
+          maxX = Math.max(...elementBounds.map(b => b.x + b.width));
+          minY = Math.min(...elementBounds.map(b => b.y));
+          maxY = Math.max(...elementBounds.map(b => b.y + b.height));
+        }
         const centerX = (minX + maxX) / 2;
         const centerY = (minY + maxY) / 2;
 
