@@ -580,28 +580,13 @@ export default function FourPointEditor({
       }
     }
 
-    // Also check if shape is smaller than quad (for shrinking)
-    let minScale = Infinity;
-    for (const shapePoint of currentShape) {
-      const dx = shapePoint.x - quadCenterX;
-      const dy = shapePoint.y - quadCenterY;
-      const distToPoint = Math.sqrt(dx * dx + dy * dy);
-
-      if (distToPoint < 1) continue;
-
-      const intersectDist = rayQuadIntersection(quadCenterX, quadCenterY, dx, dy, currentQuad);
-      if (intersectDist > 0) {
-        const scale = distToPoint / intersectDist;
-        minScale = Math.min(minScale, scale);
-      }
+    // Only expand, never shrink — shape is a clip within the quad,
+    // moving clip points inward should not shrink the perspective area
+    if (maxScale > 1) {
+      maxScale *= 1.05; // 5% breathing room so shape doesn't sit right at edge
     }
 
-    // Use maxScale if expanding, otherwise use the furthest shape point
-    let scale = maxScale;
-    if (maxScale <= 1 && minScale < Infinity) {
-      // All points inside quad, shrink to fit furthest point
-      scale = minScale;
-    }
+    const scale = maxScale;
 
     // If scale is essentially 1, no change needed
     if (Math.abs(scale - 1) < 0.01) {
