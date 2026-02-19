@@ -3,33 +3,31 @@
 .tpv-studio .studio-header {
   background: white;
   border-bottom: 1px solid #e5e7eb;
-  padding: 12px 24px;
+  padding: 8px 16px;
   position: sticky;
   top: 0;
   z-index: 100;
 }
 
 .tpv-studio .header-content {
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 24px;
+  gap: 12px;
 }
 
 .tpv-studio .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex: 1;
+  gap: 12px;
+  flex-shrink: 0;
   min-width: 0;
 }
 
 .tpv-studio .studio-title {
   font-family: var(--font-heading);
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
   color: #1a202c;
   white-space: nowrap;
@@ -39,7 +37,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
+  padding: 4px 10px;
   background: #f3f4f6;
   border-radius: 6px;
   font-size: 13px;
@@ -47,7 +45,15 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 300px;
+  max-width: 200px;
+}
+
+.tpv-studio .header-toolbar-portal {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
 }
 
 .tpv-studio .current-design-indicator svg {
@@ -127,48 +133,12 @@
   font-size: 14px;
 }
 
-.tpv-studio .btn-my-designs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
+.tpv-studio .menu-item.my-designs {
+  color: #3b82f6;
 }
 
-.tpv-studio .btn-my-designs:hover {
-  background: #2563eb;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
-}
-
-.tpv-studio .btn-admin {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: #7c3aed;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.tpv-studio .btn-admin:hover {
-  background: #6d28d9;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.3);
+.tpv-studio .menu-item.my-designs:hover {
+  background: #eff6ff;
 }
 
 .tpv-studio .user-menu {
@@ -284,14 +254,16 @@
     display: none;
   }
 
+  .tpv-studio .header-toolbar-portal {
+    display: none;
+  }
+
   .tpv-studio .header-right {
     gap: 8px;
   }
 
   /* Buttons - hide text, show only icons with proper touch targets */
-  .tpv-studio .btn-back-tools,
-  .tpv-studio .btn-my-designs,
-  .tpv-studio .btn-admin {
+  .tpv-studio .btn-back-tools {
     padding: 0;
     width: 44px;
     height: 44px;
@@ -299,29 +271,13 @@
     min-height: 44px;
     justify-content: center;
     border-radius: 8px;
+    font-size: 0;
+    gap: 0;
   }
 
-  .tpv-studio .btn-back-tools svg,
-  .tpv-studio .btn-my-designs svg,
-  .tpv-studio .btn-admin svg {
+  .tpv-studio .btn-back-tools svg {
     width: 20px;
     height: 20px;
-  }
-
-  /* Hide button text on mobile, use aria-label for accessibility */
-  .tpv-studio .btn-back-tools {
-    font-size: 0;
-    gap: 0;
-  }
-
-  .tpv-studio .btn-my-designs {
-    font-size: 0;
-    gap: 0;
-  }
-
-  .tpv-studio .btn-admin {
-    font-size: 0;
-    gap: 0;
   }
 
   /* User menu button - ensure 44px touch target */
@@ -365,10 +321,7 @@
     gap: 4px;
   }
 
-  /* Slightly smaller buttons on very small screens but still 44px min */
   .tpv-studio .btn-back-tools,
-  .tpv-studio .btn-my-designs,
-  .tpv-studio .btn-admin,
   .tpv-studio .user-menu-button {
     width: 40px;
     height: 40px;

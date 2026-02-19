@@ -145,8 +145,8 @@ export default function FourPointEditor({
         const defaultQuad = calculateDefaultQuad(
           photo.naturalWidth,
           photo.naturalHeight,
-          designSizeMm.width_mm,
-          designSizeMm.length_mm
+          design.naturalWidth,
+          design.naturalHeight
         );
         setQuad(defaultQuad);
         debug('[FOUR-POINT] Initialized default quad');

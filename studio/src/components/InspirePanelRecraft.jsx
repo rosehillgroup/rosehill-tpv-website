@@ -145,7 +145,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
 
   // In-situ preview modal state
   const [showInSituModal, setShowInSituModal] = useState(false);
-  const [inSituData, setInSituData] = useState(null);
 
   // Dimension modal state
   const [showDimensionModal, setShowDimensionModal] = useState(false);
@@ -2448,7 +2447,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
               className="prompt-input"
             />
             <p className="helper-text">
-              Describe the design you want to generate. The AI will create a vector illustration based on your description. Perfect for creating completely new designs from scratch - just describe colors, themes, and elements you want.
+              Describe the design you want to generate. The AI will create a vector illustration based on your description. Perfect for creating completely new designs from scratch - just describe colours, themes, and elements you want.
             </p>
           </div>
         )}
@@ -2902,41 +2901,46 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         </div>
       )}
 
-      {/* View Colours Button - Solid Mode */}
-      {viewMode === 'solid' && solidSvgUrl && solidRecipes && !showSolidSummary && (
-        <div className="finalize-section">
-          <button
-            onClick={() => setShowSolidSummary(true)}
-            className="finalize-button"
-          >
-            View TPV Colours Used
-          </button>
-          <p className="finalize-hint">
-            See which pure TPV colours are used in this design
-          </p>
-        </div>
-      )}
+      {/* View Colours Button & Summaries - only shown when blend mode is enabled */}
+      {FEATURE_FLAGS.BLEND_MODE_ENABLED && (
+        <>
+          {/* View Colours Button - Solid Mode */}
+          {viewMode === 'solid' && solidSvgUrl && solidRecipes && !showSolidSummary && (
+            <div className="finalize-section">
+              <button
+                onClick={() => setShowSolidSummary(true)}
+                className="finalize-button"
+              >
+                View TPV Colours Used
+              </button>
+              <p className="finalize-hint">
+                See which pure TPV colours are used in this design
+              </p>
+            </div>
+          )}
 
-      {/* Blend Recipes Display (only if blend mode enabled) */}
-      {FEATURE_FLAGS.BLEND_MODE_ENABLED && showFinalRecipes && blendRecipes && (
-        <BlendRecipesDisplay
-          recipes={currentBlendRecipes || blendRecipes}
-          onClose={() => {
-            setShowFinalRecipes(false);
-          }}
-          isRecalculating={isRecalculating}
-        />
-      )}
+          {/* Blend Recipes Display */}
+          {showFinalRecipes && blendRecipes && (
+            <BlendRecipesDisplay
+              recipes={currentBlendRecipes || blendRecipes}
+              onClose={() => {
+                setShowFinalRecipes(false);
+              }}
+              isRecalculating={isRecalculating}
+            />
+          )}
 
-      {/* Solid Color Summary */}
-      {showSolidSummary && solidRecipes && (
-        <SolidColorSummary
-          recipes={currentSolidRecipes || solidRecipes}
-          onClose={() => {
-            setShowSolidSummary(false);
-          }}
-          isRecalculating={isRecalculating}
-        />
+          {/* Solid Color Summary */}
+          {showSolidSummary && solidRecipes && (
+            <SolidColorSummary
+              recipes={currentSolidRecipes || solidRecipes}
+              onClose={() => {
+                setShowSolidSummary(false);
+              }}
+              isRecalculating={isRecalculating}
+            />
+          )}
+        </>
       )}
 
       {/* Color Editor Panel (Solid Mode) */}
@@ -2974,7 +2978,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
             solidSvgUrl,
             arMapping,
             jobId,
-            inSituData,
             // Region overrides for transparency edits
             regionOverrides,
             originalTaggedSvg,
@@ -3012,10 +3015,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
             length: lengthMM
           }}
           onClose={() => setShowInSituModal(false)}
-          onSaved={(inSituResult) => {
-            setInSituData(inSituResult);
-            setShowInSituModal(false);
-          }}
         />
       )}
 

@@ -178,7 +178,7 @@ function App() {
         />
 
         <main className="tpv-studio__container tpv-studio__container--full">
-          <TPVDesigner loadedDesign={loadedDesign} />
+          <TPVDesigner loadedDesign={loadedDesign} isAdmin={isAdmin} onShowAdmin={() => setShowAdmin(true)} />
         </main>
 
         {showGallery && (

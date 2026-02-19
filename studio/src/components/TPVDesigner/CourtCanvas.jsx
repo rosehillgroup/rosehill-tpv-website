@@ -2968,17 +2968,12 @@ const CourtCanvas = forwardRef(function CourtCanvas(props, ref) {
         </div>
       </div>
 
-      {/* Canvas Info Overlay */}
-      <div className="court-canvas__info">
-        <span>
-          {(surface.width_mm / 1000).toFixed(1)}m × {(surface.length_mm / 1000).toFixed(1)}m
-        </span>
-        {snapToGrid && (
-          <span className="court-canvas__grid-indicator">
-            Grid: {gridSize_mm}mm
-          </span>
-        )}
-      </div>
+      {/* Grid size indicator - only shown when grid is active */}
+      {snapToGrid && (
+        <div className="court-canvas__grid-label">
+          {gridSize_mm}mm
+        </div>
+      )}
 
       {/* Empty Canvas Guidance */}
       {elementOrder.length === 0 && (

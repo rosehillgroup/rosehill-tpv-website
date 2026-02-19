@@ -10,7 +10,6 @@ import {
   rasterizeSvg,
   warpDesignOntoPhoto
 } from '../../lib/inSitu/perspectiveWarp.js';
-import { supabase } from '../../lib/api/auth.js';
 import { showToast } from '../../lib/toast.js';
 
 // Workflow steps
@@ -22,8 +21,7 @@ const STEPS = {
 export default function InSituModal({
   designUrl,
   designDimensions, // { width: mm, length: mm }
-  onClose,
-  onSaved
+  onClose
 }) {
   const [currentStep, setCurrentStep] = useState(STEPS.UPLOAD);
 
@@ -40,9 +38,6 @@ export default function InSituModal({
     baseBrightness: 1.0,
     baseContrast: 1.0
   });
-
-  // Saving state
-  const [saving, setSaving] = useState(false);
 
   // Ref to get canvas from FourPointEditor
   const editorRef = useRef(null);
@@ -123,63 +118,6 @@ export default function InSituModal({
     }
   };
 
-  const handleSave = async () => {
-    if (!quad || !photo) return;
-
-    setSaving(true);
-
-    try {
-      // Generate clean canvas without handles
-      const canvas = await generateCleanCanvas();
-      if (!canvas) {
-        throw new Error('Failed to generate preview');
-      }
-
-      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-
-      // Upload preview to Supabase
-      const filename = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.png`;
-      const filePath = `in-situ-previews/${filename}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('tpv-studio-uploads')
-        .upload(filePath, blob, {
-          contentType: 'image/png',
-          cacheControl: '3600'
-        });
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('tpv-studio-uploads')
-        .getPublicUrl(filePath);
-
-      // Call onSaved callback with in-situ data
-      if (onSaved) {
-        onSaved({
-          photo_url: photo.supabaseUrl || photo.url,  // Use Supabase URL for persistence
-          quad,
-          shape,
-          opacity,
-          lighting,
-          preview_url: publicUrl
-        });
-      }
-
-      // Close modal after successful save
-      onClose();
-
-    } catch (err) {
-      console.error('[IN-SITU] Save failed:', err);
-      showToast('Failed to save preview. Please try again.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const getStepTitle = () => {
     switch (currentStep) {
       case STEPS.UPLOAD:
@@ -251,16 +189,9 @@ export default function InSituModal({
               <button
                 onClick={handleDownload}
                 disabled={!quad}
-                className="btn-secondary"
-              >
-                Download PNG
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={!quad || saving}
                 className="btn-primary"
               >
-                {saving ? 'Saving...' : 'Save to Project'}
+                Download PNG
               </button>
             </div>
           </div>

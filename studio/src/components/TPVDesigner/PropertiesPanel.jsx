@@ -559,6 +559,8 @@ function TrackPropertiesPanel({ track, trackId }) {
   const [isEditingWidth, setIsEditingWidth] = React.useState(false);
   const [isEditingHeight, setIsEditingHeight] = React.useState(false);
   const [isEditingRotation, setIsEditingRotation] = React.useState(false);
+  const [localCornerRadius, setLocalCornerRadius] = React.useState('');
+  const [isEditingCornerRadius, setIsEditingCornerRadius] = React.useState(false);
 
   // Detect track type
   const isStraightTrack = template.trackType === 'straight';
@@ -676,7 +678,7 @@ function TrackPropertiesPanel({ track, trackId }) {
     }
   };
 
-  const handleCornerRadiusChange = (corner, value) => {
+  const applyCornerRadius = (corner, value) => {
     const numValue = parseFloat(value) * 1000; // Convert meters to mm
     if (isNaN(numValue) || numValue < 0) return;
 
@@ -685,7 +687,6 @@ function TrackPropertiesPanel({ track, trackId }) {
     const clampedValue = Math.min(numValue, maxRadius);
 
     if (cornersLocked) {
-      // Update all corners to the same value
       updateTrackParameters(trackId, {
         cornerRadius: {
           topLeft: clampedValue,
@@ -695,13 +696,31 @@ function TrackPropertiesPanel({ track, trackId }) {
         }
       });
     } else {
-      // Update only the specified corner
       updateTrackParameters(trackId, {
         cornerRadius: {
           ...parameters.cornerRadius,
           [corner]: clampedValue
         }
       });
+    }
+  };
+
+  const handleCornerRadiusFocus = (cornerValue) => {
+    setIsEditingCornerRadius(true);
+    setLocalCornerRadius((cornerValue / 1000).toFixed(2));
+  };
+
+  const handleCornerRadiusBlur = (corner) => {
+    setIsEditingCornerRadius(false);
+    applyCornerRadius(corner, localCornerRadius);
+  };
+
+  const handleCornerRadiusKeyDown = (e, corner, cornerValue) => {
+    if (e.key === 'Enter') {
+      e.target.blur();
+    } else if (e.key === 'Escape') {
+      setIsEditingCornerRadius(false);
+      setLocalCornerRadius((cornerValue / 1000).toFixed(2));
     }
   };
 
@@ -933,8 +952,11 @@ function TrackPropertiesPanel({ track, trackId }) {
               <div className="property-input-group">
                 <input
                   type="number"
-                  value={(avgCornerRadius / 1000).toFixed(2)}
-                  onChange={(e) => handleCornerRadiusChange('topLeft', e.target.value)}
+                  value={isEditingCornerRadius ? localCornerRadius : (avgCornerRadius / 1000).toFixed(2)}
+                  onChange={(e) => setLocalCornerRadius(e.target.value)}
+                  onFocus={() => handleCornerRadiusFocus(avgCornerRadius)}
+                  onBlur={() => handleCornerRadiusBlur('topLeft')}
+                  onKeyDown={(e) => handleCornerRadiusKeyDown(e, 'topLeft', avgCornerRadius)}
                   min="0"
                   max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(0)}
                   step="0.5"
@@ -949,8 +971,11 @@ function TrackPropertiesPanel({ track, trackId }) {
                   <div className="property-input-group">
                     <input
                       type="number"
-                      value={(parameters.cornerRadius.topLeft / 1000).toFixed(2)}
-                      onChange={(e) => handleCornerRadiusChange('topLeft', e.target.value)}
+                      value={isEditingCornerRadius ? localCornerRadius : (parameters.cornerRadius.topLeft / 1000).toFixed(2)}
+                      onChange={(e) => setLocalCornerRadius(e.target.value)}
+                      onFocus={() => handleCornerRadiusFocus(parameters.cornerRadius.topLeft)}
+                      onBlur={() => handleCornerRadiusBlur('topLeft')}
+                      onKeyDown={(e) => handleCornerRadiusKeyDown(e, 'topLeft', parameters.cornerRadius.topLeft)}
                       min="0"
                       max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(0)}
                       step="0.5"
@@ -963,8 +988,11 @@ function TrackPropertiesPanel({ track, trackId }) {
                   <div className="property-input-group">
                     <input
                       type="number"
-                      value={(parameters.cornerRadius.topRight / 1000).toFixed(2)}
-                      onChange={(e) => handleCornerRadiusChange('topRight', e.target.value)}
+                      value={isEditingCornerRadius ? localCornerRadius : (parameters.cornerRadius.topRight / 1000).toFixed(2)}
+                      onChange={(e) => setLocalCornerRadius(e.target.value)}
+                      onFocus={() => handleCornerRadiusFocus(parameters.cornerRadius.topRight)}
+                      onBlur={() => handleCornerRadiusBlur('topRight')}
+                      onKeyDown={(e) => handleCornerRadiusKeyDown(e, 'topRight', parameters.cornerRadius.topRight)}
                       min="0"
                       max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(0)}
                       step="0.5"
@@ -977,8 +1005,11 @@ function TrackPropertiesPanel({ track, trackId }) {
                   <div className="property-input-group">
                     <input
                       type="number"
-                      value={(parameters.cornerRadius.bottomLeft / 1000).toFixed(2)}
-                      onChange={(e) => handleCornerRadiusChange('bottomLeft', e.target.value)}
+                      value={isEditingCornerRadius ? localCornerRadius : (parameters.cornerRadius.bottomLeft / 1000).toFixed(2)}
+                      onChange={(e) => setLocalCornerRadius(e.target.value)}
+                      onFocus={() => handleCornerRadiusFocus(parameters.cornerRadius.bottomLeft)}
+                      onBlur={() => handleCornerRadiusBlur('bottomLeft')}
+                      onKeyDown={(e) => handleCornerRadiusKeyDown(e, 'bottomLeft', parameters.cornerRadius.bottomLeft)}
                       min="0"
                       max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(0)}
                       step="0.5"
@@ -991,8 +1022,11 @@ function TrackPropertiesPanel({ track, trackId }) {
                   <div className="property-input-group">
                     <input
                       type="number"
-                      value={(parameters.cornerRadius.bottomRight / 1000).toFixed(2)}
-                      onChange={(e) => handleCornerRadiusChange('bottomRight', e.target.value)}
+                      value={isEditingCornerRadius ? localCornerRadius : (parameters.cornerRadius.bottomRight / 1000).toFixed(2)}
+                      onChange={(e) => setLocalCornerRadius(e.target.value)}
+                      onFocus={() => handleCornerRadiusFocus(parameters.cornerRadius.bottomRight)}
+                      onBlur={() => handleCornerRadiusBlur('bottomRight')}
+                      onKeyDown={(e) => handleCornerRadiusKeyDown(e, 'bottomRight', parameters.cornerRadius.bottomRight)}
                       min="0"
                       max={(Math.min(parameters.width_mm, parameters.height_mm) / 2000).toFixed(0)}
                       step="0.5"

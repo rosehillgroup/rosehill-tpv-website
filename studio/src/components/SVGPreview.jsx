@@ -356,6 +356,38 @@ export default function SVGPreview({
     }
   };
 
+  // Fit SVG to container (both width and height)
+  const fitToContainer = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const svgEl = container.querySelector('svg') || container.querySelector('img');
+    if (!svgEl) return;
+
+    const naturalW = svgEl.naturalWidth || svgEl.getBBox?.()?.width || svgEl.clientWidth;
+    const naturalH = svgEl.naturalHeight || svgEl.getBBox?.()?.height || svgEl.clientHeight;
+    if (!naturalW || !naturalH) return;
+
+    // Container available space (minus padding)
+    const containerW = container.clientWidth - 64;
+    const containerH = container.clientHeight - 64;
+    if (containerW <= 0 || containerH <= 0) return;
+
+    const scaleX = containerW / naturalW;
+    const scaleY = containerH / naturalH;
+    const fitZoom = Math.min(scaleX, scaleY, 1); // Never zoom above 100%
+
+    setZoom(fitZoom);
+    setPan({ x: 0, y: 0 });
+  }, []);
+
+  // Auto-fit when SVG URL changes (new generation)
+  useEffect(() => {
+    if (!blendSvgUrl) return;
+    const timer = setTimeout(() => fitToContainer(), 150);
+    return () => clearTimeout(timer);
+  }, [blendSvgUrl, fitToContainer]);
+
   // Zoom and pan handlers
   const handleZoomIn = () => {
     setZoom(prevZoom => Math.min(prevZoom * 1.5, 5));
@@ -366,8 +398,7 @@ export default function SVGPreview({
   };
 
   const handleZoomReset = () => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
+    fitToContainer();
   };
 
   const handleWheel = useCallback((e) => {
@@ -1085,6 +1116,7 @@ export default function SVGPreview({
         .svg-wrapper {
           padding: 2rem;
           background: white;
+          height: calc(100vh - 300px);
           min-height: 400px;
           display: flex;
           align-items: center;

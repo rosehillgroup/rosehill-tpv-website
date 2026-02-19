@@ -362,6 +362,11 @@ export function downloadCanvasAsPng(canvas, filename = 'tpv-in-situ-preview.png'
  * @returns {[QuadPoint, QuadPoint, QuadPoint, QuadPoint]} Default quad [TL, TR, BR, BL]
  */
 export function calculateDefaultQuad(photoWidth, photoHeight, designWidthMm, designLengthMm) {
+  // Defensive validation — fall back to 1:1 aspect if inputs are invalid
+  if (!designWidthMm || !designLengthMm || !isFinite(designWidthMm) || !isFinite(designLengthMm)) {
+    designWidthMm = 1;
+    designLengthMm = 1;
+  }
   const designAspect = designWidthMm / designLengthMm;
 
   // Target size: 60% of photo area

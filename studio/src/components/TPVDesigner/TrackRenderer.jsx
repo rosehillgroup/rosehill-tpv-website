@@ -81,12 +81,23 @@ function TrackElement({ track, isSelected, onMouseDown, onTouchStart, onDoubleCl
         </>
       ) : (
         // Curved track: render each lane as individual ring for per-lane colors
+        // Use a transparent hit-area covering all lanes (but not empty center)
         <>
+          <path
+            d={`${geometry.lanes[0].outerPath} ${geometry.lanes[geometry.lanes.length - 1].innerPath}`}
+            fill="transparent"
+            fillRule="evenodd"
+            stroke="none"
+            pointerEvents="all"
+            onMouseDown={onMouseDown}
+            onTouchStart={onTouchStart}
+            onDoubleClick={onDoubleClick}
+            style={{ cursor: 'move' }}
+          />
           {geometry.lanes.map((lane, index) => {
             // Use next lane's outer path as this lane's inner boundary
             const nextLane = geometry.lanes[index + 1];
             const innerPath = nextLane ? nextLane.outerPath : lane.innerPath;
-            const isFirstLane = index === 0;
 
             return (
               <path
@@ -95,11 +106,7 @@ function TrackElement({ track, isSelected, onMouseDown, onTouchStart, onDoubleCl
                 fill={getLaneColor(lane.laneNumber)}
                 fillRule="evenodd"
                 stroke="none"
-                pointerEvents={isFirstLane ? 'all' : 'none'}
-                onMouseDown={isFirstLane ? onMouseDown : undefined}
-                onTouchStart={isFirstLane ? onTouchStart : undefined}
-                onDoubleClick={isFirstLane ? onDoubleClick : undefined}
-                style={isFirstLane ? { cursor: 'move' } : undefined}
+                pointerEvents="none"
               />
             );
           })}

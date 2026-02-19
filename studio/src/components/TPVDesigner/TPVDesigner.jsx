@@ -1,5 +1,6 @@
 // TPV Studio - TPV Designer (Main Component)
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useSportsDesignStore } from '../../stores/sportsDesignStore.js';
 import { usePlaygroundDesignStore } from '../../stores/playgroundDesignStore.js';
 import CourtCanvas from './CourtCanvas.jsx';
@@ -20,7 +21,7 @@ import tpvColours from '../../../api/_utils/data/rosehill_tpv_21_colours.json';
 import { showToast } from '../../lib/toast.js';
 import './TPVDesigner.css';
 
-function TPVDesigner({ loadedDesign }) {
+function TPVDesigner({ loadedDesign, isAdmin, onShowAdmin }) {
   // Dimension modal - only shown when user clicks to edit (default surface is 50m x 50m)
   const [showDimensionModal, setShowDimensionModal] = useState(false);
   const [widthInput, setWidthInput] = useState(() => {
@@ -43,6 +44,12 @@ function TPVDesigner({ loadedDesign }) {
   const [showAlignMenu, setShowAlignMenu] = useState(false);
   const [showElementsMenu, setShowElementsMenu] = useState(false);
   const svgRef = useRef(null);
+
+  // Portal target for rendering toolbar into the header
+  const [toolbarPortalTarget, setToolbarPortalTarget] = useState(null);
+  useEffect(() => {
+    setToolbarPortalTarget(document.getElementById('header-toolbar-portal'));
+  }, []);
 
   // Load design when loadedDesign prop changes
   useEffect(() => {
@@ -997,9 +1004,9 @@ function TPVDesigner({ loadedDesign }) {
             )}
 
             {/* Canvas Area */}
-            <main className="sports-designer__canvas-container">
-              {/* Floating Toolbar - inside canvas container */}
-              <div className="sports-toolbar">
+            {/* Toolbar rendered via portal into header */}
+            {toolbarPortalTarget && createPortal(
+              <div className="sports-toolbar sports-toolbar--embedded">
                 {/* Panel toggles */}
                 <div className="sports-toolbar__group">
                   <button
@@ -1405,8 +1412,11 @@ function TPVDesigner({ loadedDesign }) {
                   </button>
                   <ExportMenu svgRef={svgRef} />
                 </div>
-              </div>
+              </div>,
+              toolbarPortalTarget
+            )}
 
+            <main className="sports-designer__canvas-container">
               <CourtCanvas ref={svgRef} />
               <ShapeToolbar />
             </main>
@@ -1503,11 +1513,21 @@ function TPVDesigner({ loadedDesign }) {
                 length: surface.length_mm
               }}
               onClose={handleCloseInSitu}
-              onSaved={(data) => {
-                console.log('[TPV] In-situ preview saved:', data);
-                handleCloseInSitu();
-              }}
             />
+          )}
+
+          {/* Floating Admin Button - bottom right */}
+          {isAdmin && onShowAdmin && (
+            <button
+              className="floating-admin-btn"
+              onClick={onShowAdmin}
+              title="Admin Dashboard"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+              </svg>
+            </button>
           )}
         </>
     </div>

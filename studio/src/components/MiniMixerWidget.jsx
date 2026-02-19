@@ -230,7 +230,7 @@ export default function MiniMixerWidget({
         {/* Instructions */}
         {totalParts === 0 ? (
           <div className="mixer-instructions">
-            Click colors above to add parts to your blend. The preview updates in real-time.
+            Click colours above to add parts to your blend. The preview updates in real-time.
           </div>
         ) : totalParts >= 12 ? (
           <div className="mixer-instructions" style={{ background: '#fef3c7', borderColor: '#fbbf24' }}>
