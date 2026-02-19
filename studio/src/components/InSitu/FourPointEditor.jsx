@@ -558,35 +558,27 @@ export default function FourPointEditor({
     const shapeCenterX = currentShape.reduce((sum, p) => sum + p.x, 0) / currentShape.length;
     const shapeCenterY = currentShape.reduce((sum, p) => sum + p.y, 0) / currentShape.length;
 
-    // For each shape point, calculate required scale to encompass it
-    // by finding the ratio of distance from center to point vs distance to quad edge
-    let maxScale = 1;
+    // For each shape point, find the ratio of distance-to-point vs distance-to-quad-edge.
+    // The MAX ratio across all points = the outermost point relative to the quad.
+    // This naturally handles expansion (ratio > 1) and contraction (ratio < 1).
+    let maxRatio = 0;
 
     for (const shapePoint of currentShape) {
-      // Vector from quad center to shape point
       const dx = shapePoint.x - quadCenterX;
       const dy = shapePoint.y - quadCenterY;
       const distToPoint = Math.sqrt(dx * dx + dy * dy);
 
       if (distToPoint < 1) continue; // Point is at center
 
-      // Find where ray from center through point intersects quad edges
       const intersectDist = rayQuadIntersection(quadCenterX, quadCenterY, dx, dy, currentQuad);
 
-      if (intersectDist > 0 && distToPoint > intersectDist) {
-        // Point is outside quad, calculate required scale
-        const requiredScale = distToPoint / intersectDist;
-        maxScale = Math.max(maxScale, requiredScale);
+      if (intersectDist > 0) {
+        maxRatio = Math.max(maxRatio, distToPoint / intersectDist);
       }
     }
 
-    // Only expand, never shrink — shape is a clip within the quad,
-    // moving clip points inward should not shrink the perspective area
-    if (maxScale > 1) {
-      maxScale *= 1.05; // 5% breathing room so shape doesn't sit right at edge
-    }
-
-    const scale = maxScale;
+    // Add 5% breathing room so shape doesn't sit right at quad edge
+    const scale = maxRatio > 0 ? maxRatio * 1.05 : 1;
 
     // If scale is essentially 1, no change needed
     if (Math.abs(scale - 1) < 0.01) {
