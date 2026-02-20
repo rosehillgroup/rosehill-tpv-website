@@ -467,11 +467,11 @@ async function drawColourTablePaginated(pdfDoc, fontBold, fontRegular, recipes, 
 function drawTableHeaders(page, fontBold, mode, y) {
   const headers = mode === 'blend'
     ? ['Colour', 'Blend Name', 'dE', 'Recipe', 'Coverage', 'Area (m\u00B2)']
-    : ['Colour', 'TPV Code', 'Name', 'Hex', 'Coverage', 'Area (m\u00B2)'];
+    : ['Colour', 'TPV Code', 'Name', 'Coverage', 'Area (m\u00B2)'];
 
   const colWidths = mode === 'blend'
     ? [45, 110, 40, 150, 60, 60]
-    : [45, 65, 110, 70, 60, 60];
+    : [45, 75, 170, 60, 60];
 
   let x = MARGIN;
   for (let i = 0; i < headers.length; i++) {
@@ -502,7 +502,7 @@ function drawTableHeaders(page, fontBold, mode, y) {
 function drawTableRow(page, fontBold, fontRegular, recipe, mode, areaM2, y) {
   const colWidths = mode === 'blend'
     ? [45, 110, 40, 150, 60, 60]
-    : [45, 65, 110, 70, 60, 60];
+    : [45, 75, 170, 60, 60];
 
   let x = MARGIN;
 
@@ -573,8 +573,8 @@ function drawTableRow(page, fontBold, fontRegular, recipe, mode, areaM2, y) {
     });
     x += colWidths[1];
 
-    // Name (with truncation)
-    const displayName = name.length > 16 ? name.substring(0, 15) + '\u2026' : name;
+    // Name (with truncation — wider column now Hex is removed)
+    const displayName = name.length > 28 ? name.substring(0, 27) + '\u2026' : name;
     page.drawText(displayName, {
       x: x + 5,
       y: y - 3,
@@ -583,19 +583,10 @@ function drawTableRow(page, fontBold, fontRegular, recipe, mode, areaM2, y) {
       color: COLORS.text,
     });
     x += colWidths[2];
-
-    // Hex
-    page.drawText(hex, {
-      x: x + 5,
-      y: y - 3,
-      size: 8,
-      font: fontRegular,
-      color: COLORS.textLight,
-    });
-    x += colWidths[3];
   }
 
   // Coverage
+  const coverageColIdx = mode === 'blend' ? 4 : 3;
   page.drawText(coverage, {
     x: x + 5,
     y: y - 3,
@@ -603,7 +594,7 @@ function drawTableRow(page, fontBold, fontRegular, recipe, mode, areaM2, y) {
     font: fontRegular,
     color: COLORS.text,
   });
-  x += colWidths[4];
+  x += colWidths[coverageColIdx];
 
   // Area needed
   page.drawText(areaNeeded, {
