@@ -1125,8 +1125,10 @@ function calculateMaterialsFromVisibleArea(visiblePcts, knownColors, totalAreaM2
   }
 
   // Calculate materials for each visible color
+  // Filter anti-aliasing artifacts: colours below 0.05% are edge noise from
+  // nearest-neighbour matching of blended pixels to the 21-colour TPV palette
   for (const [hex, pct] of Object.entries(visiblePcts)) {
-    if (pct <= 0) continue;
+    if (pct < 0.05) continue;
 
     const areaM2 = (pct / 100) * totalAreaM2;
     const kg = areaM2 * densityKgPerM2 * safetyMargin;

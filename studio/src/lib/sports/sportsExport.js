@@ -254,7 +254,7 @@ export function inlineMotifSvgs(svgClone) {
         }
       }
 
-      // Get the parent group's transform to apply position correctly
+      // Get the parent group's transform (contains motif position + rotation on canvas)
       const parentG = img.closest('g');
       const parentTransform = parentG?.getAttribute('transform') || '';
 
@@ -262,8 +262,12 @@ export function inlineMotifSvgs(svgClone) {
       const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       g.setAttribute('class', 'motif-inline');
 
-      // Apply transform: translate to position, then scale to fit
-      g.setAttribute('transform', `translate(${x}, ${y}) scale(${scaleX}, ${scaleY})`);
+      // Apply parent transform (position + rotation), then scale for viewBox mapping
+      if (parentTransform) {
+        g.setAttribute('transform', `${parentTransform} scale(${scaleX}, ${scaleY})`);
+      } else {
+        g.setAttribute('transform', `translate(${x}, ${y}) scale(${scaleX}, ${scaleY})`);
+      }
 
       // Move all children from inner SVG to the group (skip defs, we'll handle separately)
       const defs = innerSvg.querySelector('defs');
