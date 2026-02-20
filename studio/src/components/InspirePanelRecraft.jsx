@@ -22,7 +22,8 @@ import ComplexityBadge from './ComplexityBadge.jsx';
 import { flattenSvg, isFlattened, buildRecipesFromFlattenedSvg } from '../lib/flattenArtwork.js';
 import { performTrueCutout, canPerformCutout, estimateBooleanCost } from '../lib/paperBoolean.js';
 import { applyRegionOverrides } from '../utils/svgRegionOverrides.js';
-import { deriveCurrentColors, hasColorEdits } from '../utils/deriveCurrentColors.js';
+import { deriveCurrentColors, hasColorEdits, findCoverageWithFuzzyMatch } from '../utils/deriveCurrentColors.js';
+import { analyzeSvgCoverageFromUrl, groupSimilarColors, normalizeHex } from '../utils/svgCoverageAnalyzer.js';
 import { mapDimensionsToRecraft, getLayoutDescription, needsLayoutWarning } from '../utils/aspectRatioMapping.js';
 import { uploadFile, validateFile } from '../lib/supabase/uploadFile.js';
 import { deserializeDesign } from '../utils/designSerializer.js';
@@ -285,10 +286,34 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
         return;
       }
 
-      // Skip if no edits have been made (use original recipes)
+      // No colour edits — run pixel analysis to get accurate areaPct for PDF export
+      // (Server-side SVG extraction counts all layers; pixel counting shows visible surface only)
       if (!hasColorEdits(regionOverrides)) {
-        setCurrentBlendRecipes(blendRecipes);
-        setCurrentSolidRecipes(solidRecipes);
+        const svgUrl = blendSvgUrl || solidSvgUrl;
+        const recipes = blendRecipes || solidRecipes;
+        if (svgUrl && recipes && recipes.length > 0) {
+          try {
+            const rawCoverage = await analyzeSvgCoverageFromUrl(svgUrl, { canvasSize: 600 });
+            const coverageMap = groupSimilarColors(rawCoverage, 5);
+            const updated = recipes.map(recipe => {
+              const hex = normalizeHex(recipe.targetColor?.hex || recipe.blendColor?.hex);
+              const coverage = findCoverageWithFuzzyMatch(coverageMap, hex, 10);
+              if (coverage > 0) {
+                return { ...recipe, targetColor: { ...recipe.targetColor, areaPct: coverage } };
+              }
+              return recipe;
+            });
+            if (blendRecipes) setCurrentBlendRecipes(updated);
+            if (solidRecipes) setCurrentSolidRecipes(updated);
+          } catch (err) {
+            console.error('[INSPIRE] Pixel coverage analysis failed, using server values:', err);
+            setCurrentBlendRecipes(blendRecipes);
+            setCurrentSolidRecipes(solidRecipes);
+          }
+        } else {
+          setCurrentBlendRecipes(blendRecipes);
+          setCurrentSolidRecipes(solidRecipes);
+        }
         return;
       }
 

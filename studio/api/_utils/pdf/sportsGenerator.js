@@ -885,12 +885,36 @@ async function calculatePerMotifPixelMaterials(pngBuffer, motifs, surface, known
     const scale = motif.scale || 1;
     const motifWidthMm = motif.originalWidth_mm * scale;
     const motifHeightMm = motif.originalHeight_mm * scale;
+    const rotation = (motif.rotation || 0) * (Math.PI / 180);
 
-    // Calculate bounding box in pixel coordinates
-    const x1 = Math.max(0, Math.round(motif.position.x * pxPerMmX));
-    const y1 = Math.max(0, Math.round(motif.position.y * pxPerMmY));
-    const x2 = Math.min(imageWidth, Math.round((motif.position.x + motifWidthMm) * pxPerMmX));
-    const y2 = Math.min(imageHeight, Math.round((motif.position.y + motifHeightMm) * pxPerMmY));
+    // Calculate bounding box in pixel coordinates (rotation-aware)
+    let x1, y1, x2, y2;
+
+    if (Math.abs(rotation) < 0.01) {
+      // No rotation — simple axis-aligned bounding box
+      x1 = Math.round(motif.position.x * pxPerMmX);
+      y1 = Math.round(motif.position.y * pxPerMmY);
+      x2 = Math.round((motif.position.x + motifWidthMm) * pxPerMmX);
+      y2 = Math.round((motif.position.y + motifHeightMm) * pxPerMmY);
+    } else {
+      // Rotated — calculate enclosing bounding box of rotated rectangle
+      const cx = motif.position.x + motifWidthMm / 2;
+      const cy = motif.position.y + motifHeightMm / 2;
+      const cos = Math.abs(Math.cos(rotation));
+      const sin = Math.abs(Math.sin(rotation));
+      const rotW = motifWidthMm * cos + motifHeightMm * sin;
+      const rotH = motifWidthMm * sin + motifHeightMm * cos;
+      x1 = Math.round((cx - rotW / 2) * pxPerMmX);
+      y1 = Math.round((cy - rotH / 2) * pxPerMmY);
+      x2 = Math.round((cx + rotW / 2) * pxPerMmX);
+      y2 = Math.round((cy + rotH / 2) * pxPerMmY);
+    }
+
+    // Clamp to image bounds
+    x1 = Math.max(0, x1);
+    y1 = Math.max(0, y1);
+    x2 = Math.min(imageWidth, x2);
+    y2 = Math.min(imageHeight, y2);
 
     if (x2 <= x1 || y2 <= y1) {
       console.log(`[SPORTS-PDF] Motif ${motif.name} has zero-size bounding box, skipping`);
@@ -1059,21 +1083,19 @@ function extractKnownColors(surface, courts, tracks, shapes, texts, motifs) {
     }
   }
 
-  // Motif colors (from recipes)
+  // Motif colors — only add component colours (which have code/name).
+  // Skip blendColor/targetColor which only have hex and would overwrite
+  // full TPV palette entries, causing "Unknown" labels in the PDF.
   for (const motif of (motifs || [])) {
     if (motif.recipes) {
       for (const recipe of motif.recipes) {
-        if (recipe.blendColor?.hex) {
-          colors.set(recipe.blendColor.hex.toLowerCase(), recipe.blendColor);
-        }
-        if (recipe.targetColor?.hex) {
-          colors.set(recipe.targetColor.hex.toLowerCase(), recipe.targetColor);
-        }
-        // TPV component colors
         const components = recipe.chosenRecipe?.components || [];
         for (const comp of components) {
           if (comp.hex) {
-            colors.set(comp.hex.toLowerCase(), { hex: comp.hex, tpv_code: comp.code, name: comp.name });
+            const key = comp.hex.toLowerCase();
+            if (!colors.has(key)) {
+              colors.set(key, { hex: comp.hex, tpv_code: comp.code, name: comp.name });
+            }
           }
         }
       }

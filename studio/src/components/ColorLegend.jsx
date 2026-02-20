@@ -125,7 +125,6 @@ export default function ColorLegend({
             </div>
             <div className="color-info">
               <span className={mode === 'solid' ? 'tpv-label' : 'hex-value'}>{getColorLabel(recipe)}</span>
-              <span className="coverage">{recipe.targetColor.areaPct.toFixed(1)}%</span>
             </div>
           </div>
         ))}
@@ -301,11 +300,6 @@ export default function ColorLegend({
           font-weight: 600;
           color: #1a365d;
           font-size: 0.9rem;
-        }
-
-        .coverage {
-          color: #666;
-          font-size: 0.8rem;
         }
 
         /* Mobile - compact horizontal grid of swatches */

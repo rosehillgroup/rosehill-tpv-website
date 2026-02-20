@@ -11,9 +11,6 @@ export default function SolidColorSummary({ recipes, onClose }) {
     );
   }
 
-  // Calculate total coverage
-  const totalCoverage = recipes.reduce((sum, recipe) => sum + recipe.targetColor.areaPct, 0);
-
   return (
     <div className="solid-color-summary">
       <div className="summary-header">
@@ -31,7 +28,6 @@ export default function SolidColorSummary({ recipes, onClose }) {
       <div className="colors-list">
         {recipes.map((recipe, idx) => {
           const component = recipe.chosenRecipe.components[0];
-          const coverage = recipe.targetColor.areaPct;
 
           return (
             <div key={idx} className="color-item">
@@ -50,7 +46,6 @@ export default function SolidColorSummary({ recipes, onClose }) {
                 </div>
                 <div className="color-secondary">
                   <span className="hex-value">{recipe.blendColor.hex}</span>
-                  <span className="coverage-badge">{coverage.toFixed(1)}%</span>
                 </div>
               </div>
             </div>
@@ -60,10 +55,6 @@ export default function SolidColorSummary({ recipes, onClose }) {
 
       {/* Summary Footer */}
       <div className="summary-footer">
-        <div className="footer-stat">
-          <span className="stat-label">Total Coverage:</span>
-          <span className="stat-value">{totalCoverage.toFixed(1)}%</span>
-        </div>
         <div className="footer-stat">
           <span className="stat-label">TPV Colours:</span>
           <span className="stat-value">{recipes.length}</span>
@@ -203,15 +194,6 @@ export default function SolidColorSummary({ recipes, onClose }) {
           font-family: 'Courier New', monospace;
           font-size: 0.9rem;
           color: #666;
-        }
-
-        .coverage-badge {
-          background: #ff6b35;
-          color: white;
-          padding: 0.25rem 0.75rem;
-          border-radius: 12px;
-          font-weight: 600;
-          font-size: 0.9rem;
         }
 
         /* Summary Footer */

@@ -40,10 +40,6 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
                     <span className="meta-label">Hex:</span>
                     <span className="hex-value">{recipe.blendColor.hex}</span>
                   </div>
-                  <div className="meta-row">
-                    <span className="meta-label">Coverage:</span>
-                    <span className="coverage-value">{recipe.targetColor.areaPct.toFixed(1)}%</span>
-                  </div>
                 </div>
               </div>
 
@@ -200,12 +196,6 @@ export default function BlendRecipesDisplay({ recipes, onClose }) {
           color: #333;
           font-weight: 700;
           letter-spacing: 0.5px;
-        }
-
-        .coverage-value {
-          font-size: 1.1rem;
-          color: #1a365d;
-          font-weight: 700;
         }
 
         /* Card Formula Section */

@@ -30,6 +30,10 @@ function collectMotifDataForPdf(motifs) {
       ? (motif.blend_recipes || [])
       : (motif.solid_recipes || []);
 
+    if (!motif.position) {
+      console.warn(`[EXPORT] Motif "${motif.customName || motif.sourceDesignName}" has no position, defaulting to (0,0)`);
+    }
+
     return {
       id: motif.id,
       name: motif.customName || motif.sourceDesignName || 'Motif',
@@ -38,7 +42,7 @@ function collectMotifDataForPdf(motifs) {
       widthM,
       heightM,
       // Canvas position for per-motif pixel counting
-      position: motif.position,
+      position: motif.position || { x: 0, y: 0 },
       scale,
       originalWidth_mm: motif.originalWidth_mm,
       originalHeight_mm: motif.originalHeight_mm,

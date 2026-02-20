@@ -64,7 +64,7 @@ function hexToRgb(hex) {
  * @param {number} tolerance - Max distance to consider a match
  * @returns {number} Coverage percentage (0 if not found)
  */
-function findCoverageWithFuzzyMatch(coverageMap, targetHex, tolerance = 10) {
+export function findCoverageWithFuzzyMatch(coverageMap, targetHex, tolerance = 10) {
   const normalized = normalizeHex(targetHex);
   if (!normalized) return 0;
 
