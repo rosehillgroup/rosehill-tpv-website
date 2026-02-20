@@ -262,12 +262,9 @@ export function inlineMotifSvgs(svgClone) {
       const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       g.setAttribute('class', 'motif-inline');
 
-      // Apply parent transform (position + rotation), then scale for viewBox mapping
-      if (parentTransform) {
-        g.setAttribute('transform', `${parentTransform} scale(${scaleX}, ${scaleY})`);
-      } else {
-        g.setAttribute('transform', `translate(${x}, ${y}) scale(${scaleX}, ${scaleY})`);
-      }
+      // Only apply viewBox-to-dimensions scale — the parent <g> already provides
+      // the motif's canvas position and rotation via its own transform attribute
+      g.setAttribute('transform', `scale(${scaleX}, ${scaleY})`);
 
       // Move all children from inner SVG to the group (skip defs, we'll handle separately)
       const defs = innerSvg.querySelector('defs');
