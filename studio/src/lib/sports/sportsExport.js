@@ -189,8 +189,10 @@ export function generateFilename(name, extension) {
 
 /**
  * Convert motif data URL images to inline SVG for Resvg compatibility.
- * Resvg does not support data: URLs in <image> elements, so we need to
- * decode and inline the SVG content directly.
+ * Resvg does not support data: URLs in <image> elements, so we replace
+ * each <image> with a nested <svg> that provides the same viewport
+ * behaviour — the viewBox maps to the x/y/width/height area, preserving
+ * aspect ratio and coordinate isolation without manual transform math.
  *
  * @param {Element} svgClone - Cloned SVG element to modify in place
  */
@@ -240,58 +242,38 @@ export function inlineMotifSvgs(svgClone) {
         return;
       }
 
-      // Get the inner SVG's viewBox to calculate scaling
+      // Get the inner SVG's viewBox
       const viewBox = innerSvg.getAttribute('viewBox');
-      let scaleX = 1, scaleY = 1;
+
+      // Create a nested <svg> element that replicates the <image> viewport.
+      // This preserves the exact coordinate mapping: the viewBox defines the
+      // inner coordinate space, and x/y/width/height define the output area.
+      // The parent <g> already provides the motif's canvas position/rotation.
+      const nestedSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      nestedSvg.setAttribute('x', String(x));
+      nestedSvg.setAttribute('y', String(y));
+      nestedSvg.setAttribute('width', String(width));
+      nestedSvg.setAttribute('height', String(height));
       if (viewBox) {
-        const vbParts = viewBox.split(/\s+/).map(Number);
-        if (vbParts.length === 4) {
-          const [, , vbWidth, vbHeight] = vbParts;
-          if (vbWidth > 0 && vbHeight > 0) {
-            scaleX = width / vbWidth;
-            scaleY = height / vbHeight;
-          }
-        }
+        nestedSvg.setAttribute('viewBox', viewBox);
       }
+      nestedSvg.setAttribute('class', 'motif-inline');
+      // Prevent content from overflowing the viewport bounds
+      nestedSvg.setAttribute('overflow', 'hidden');
 
-      // Get the parent group's transform (contains motif position + rotation on canvas)
-      const parentG = img.closest('g');
-      const parentTransform = parentG?.getAttribute('transform') || '';
-
-      // Create a group to hold the inline content
-      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      g.setAttribute('class', 'motif-inline');
-
-      // Only apply viewBox-to-dimensions scale — the parent <g> already provides
-      // the motif's canvas position and rotation via its own transform attribute
-      g.setAttribute('transform', `scale(${scaleX}, ${scaleY})`);
-
-      // Move all children from inner SVG to the group (skip defs, we'll handle separately)
-      const defs = innerSvg.querySelector('defs');
-      if (defs) {
-        // Clone defs to root SVG if they exist
-        const rootDefs = svgClone.querySelector('defs') || (() => {
-          const d = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-          svgClone.insertBefore(d, svgClone.firstChild);
-          return d;
-        })();
-        while (defs.firstChild) {
-          rootDefs.appendChild(defs.firstChild);
-        }
-      }
-
-      // Move remaining children
+      // Move all children from inner SVG to the nested SVG
+      // (defs stay inside — they're scoped to this SVG's subtree)
       while (innerSvg.firstChild) {
-        if (innerSvg.firstChild.nodeName !== 'defs') {
-          g.appendChild(innerSvg.firstChild);
-        } else {
-          innerSvg.removeChild(innerSvg.firstChild);
-        }
+        nestedSvg.appendChild(innerSvg.firstChild);
       }
 
-      // Replace the image with the group
-      img.parentNode.replaceChild(g, img);
-      console.log(`[EXPORT] Motif ${index}: Inlined successfully (scale: ${scaleX.toFixed(3)}, ${scaleY.toFixed(3)})`);
+      // Log parent transform for debugging (before replacing removes img from tree)
+      const parentG = img.closest('g');
+      const parentTransform = parentG?.getAttribute('transform') || 'none';
+
+      // Replace the <image> with the nested <svg>
+      img.parentNode.replaceChild(nestedSvg, img);
+      console.log(`[EXPORT] Motif ${index}: Inlined as nested SVG (${width}x${height}, viewBox: ${viewBox || 'none'}, parent: ${parentTransform})`);
 
     } catch (e) {
       console.warn(`[EXPORT] Failed to inline motif ${index}:`, e.message);
