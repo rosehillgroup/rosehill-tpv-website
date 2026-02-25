@@ -29,8 +29,11 @@
 
         body {
             font-family: 'Source Sans Pro', sans-serif;
-            background: #f8f9fa;
-            color: #333;
+            background: linear-gradient(135deg, rgba(26, 54, 93, 0.85), rgba(45, 74, 113, 0.85)), url('hero_background_colour.webp');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: white;
             line-height: 1.6;
         }
 
@@ -204,32 +207,23 @@
             text-align: center;
             max-width: 600px;
             margin: 0 auto;
-            background: white;
+            background: rgba(255, 255, 255, 0.1);
             padding: 60px;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
 
         .success-icon {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 30px;
-            background: #28a745;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .success-icon svg {
-            width: 40px;
-            height: 40px;
-            fill: white;
+            font-size: 4rem;
+            margin-bottom: 30px;
+            color: #4ade80;
         }
 
         .thank-you-content h1 {
             font-family: 'Overpass', sans-serif;
-            color: #1a365d;
+            color: white;
             font-size: 2.5rem;
             margin-bottom: 20px;
             font-weight: 600;
@@ -237,7 +231,7 @@
 
         .thank-you-content p {
             font-size: 1.2rem;
-            color: #666;
+            color: rgba(255, 255, 255, 0.9);
             margin-bottom: 30px;
             line-height: 1.6;
         }
@@ -261,25 +255,26 @@
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #1a365d, #2d4a71);
+            background: linear-gradient(135deg, #FF6B35, #FF8C42);
             color: white;
         }
 
         .btn-primary:hover {
-            background: linear-gradient(135deg, #0f2a47, #1a365d);
+            background: linear-gradient(135deg, #FF8C42, #FF6B35);
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(26, 54, 93, 0.3);
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.4);
         }
 
         .btn-outline {
             background: transparent;
-            color: #1a365d;
-            border: 2px solid #1a365d;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.4);
         }
 
         .btn-outline:hover {
-            background: #1a365d;
+            background: rgba(255, 255, 255, 0.15);
             color: white;
+            border-color: rgba(255, 255, 255, 0.6);
         }
 
         /* Footer */
@@ -407,15 +402,11 @@
     <main class="main">
         <div class="container">
             <div class="thank-you-content">
-                <div class="success-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                    </svg>
-                </div>
-                
+                <div class="success-icon">✓</div>
+
                 <h1>Thank You!</h1>
                 <p>Your technical inquiry has been successfully submitted. Our expert team will review your requirements and respond within 24 hours with detailed information and recommendations.</p>
-                
+
                 <div class="action-buttons">
                     <a href="index.html" class="btn btn-primary">Return to Homepage</a>
                     <a href="products.html" class="btn btn-outline">Explore Products</a>
