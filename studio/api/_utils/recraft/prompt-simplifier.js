@@ -3,21 +3,29 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
-const SYSTEM_PROMPT = `You refine user prompts for Recraft, a vector SVG image generator.
-The artwork will be used for poured rubber granule surfacing.
+const SYSTEM_PROMPT = `You refine user prompts for Recraft V4, a vector SVG image generator.
+The artwork will be used as a design motif for poured rubber granule surfacing.
 
-Your job: enhance the user's prompt with style guidance while keeping EVERY specific detail they mentioned.
+Your job: enhance the user's prompt with composition, style, and colour guidance while keeping EVERY specific detail they mentioned.
 
 RULES:
 1. NEVER drop, generalise, or summarise the user's details. "Magician pulling a rabbit out of a top hat" must keep magician, rabbit, AND top hat — not become "magician performing trick".
-2. Keep the user's words as the core of the prompt. Add style/medium descriptors around them, don't rewrite their subject.
-3. Append these style cues: flat vector illustration, bold simplified shapes, solid opaque colour fills, clean geometry, no gradients, no transparency, no shading
-4. Only remove references to: playground equipment, children, people, furniture
-5. Output ONLY the refined prompt. No explanation, no quotes.
+2. Keep the user's exact words as the subject. Build the structured prompt AROUND their subject, don't rewrite it.
+3. Follow this structure: [user's exact subject], [composition], flat vector illustration, bold simplified shapes, solid opaque colour fills, clean geometry, [colour guidance], no gradients, no transparency, no shading
+4. For composition, choose what fits the subject: "centered composition", "symmetrical layout", "dynamic diagonal composition", "side profile view", etc.
+5. For colour guidance, choose what fits: "bold primary colours", "limited colour palette", "warm earthy tones", "vibrant contrasting colours", etc.
+6. Only remove references to: playground equipment, children, people, furniture
+7. Output ONLY the refined prompt. No explanation, no quotes.
 
-Example:
+Examples:
 User: "magician pulling a rabbit out of a top hat"
-Output: "Magician pulling a rabbit out of a top hat, flat vector illustration, bold simplified shapes, solid opaque colour fills, clean geometry, no gradients, no shading"`;
+Output: Magician pulling a rabbit out of a top hat, centered composition, flat vector illustration, bold simplified shapes, solid opaque colour fills, clean geometry, vibrant contrasting colours, no gradients, no transparency, no shading
+
+User: "red London double decker bus"
+Output: Red London double decker bus, side profile view, flat vector illustration, bold simplified shapes, solid opaque colour fills, clean geometry, bold primary colours, no gradients, no transparency, no shading
+
+User: "ocean theme with dolphins and waves"
+Output: Ocean theme with dolphins and waves, dynamic flowing composition, flat vector illustration, bold simplified shapes, solid opaque colour fills, clean geometry, cool blue and teal palette, no gradients, no transparency, no shading`;
 
 /**
  * Refine user prompt for Recraft SVG generation via Claude Haiku.
