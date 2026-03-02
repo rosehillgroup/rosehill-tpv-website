@@ -137,7 +137,7 @@ export async function generateRecraftSvg(params) {
       prompt: finalPrompt,
       aspect_ratio: aspect_ratio, // Use aspect ratio string like "16:9", "4:3", etc.
       seed: seed,
-      style: 'vector_illustration', // Recraft style: nudges toward clean flat vector output
+      style: 'any', // SVG models only support: any, engraving, line_art, line_circuit, linocut
       output_format: 'svg'
     };
 
