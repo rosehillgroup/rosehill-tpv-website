@@ -35,6 +35,7 @@ function PropertiesPanel({ onEditSourceDesign }) {
     setCourtSurfaceColor,
     resetCourtColors,
     removeCourt,
+    duplicateCourt,
     removeTrack,
     removeMotif,
     updateMotifPosition,
@@ -146,6 +147,11 @@ function PropertiesPanel({ onEditSourceDesign }) {
     if (isNaN(numValue) || numValue <= 0) return;
 
     updateCourtScale(selectedCourtId, numValue);
+  };
+
+  // Handle duplicate court
+  const handleDuplicateCourt = () => {
+    duplicateCourt(selectedCourtId);
   };
 
   // Handle delete court
@@ -349,6 +355,28 @@ function PropertiesPanel({ onEditSourceDesign }) {
                   {((template.dimensions.width_mm * scale) / 1000).toFixed(1)}m × {((template.dimensions.length_mm * scale) / 1000).toFixed(1)}m
                 </span>
               </div>
+            </div>
+
+            {/* Duplicate Button */}
+            <div className="property-group property-group--actions">
+              <button
+                className="btn-secondary"
+                onClick={handleDuplicateCourt}
+                title="Duplicate court (Ctrl+D)"
+                style={{
+                  width: '100%',
+                  padding: '0.5rem',
+                  background: '#f3f4f6',
+                  border: '1px solid #e4e9f0',
+                  borderRadius: '6px',
+                  fontSize: '0.875rem',
+                  fontFamily: 'inherit',
+                  cursor: 'pointer',
+                  marginBottom: '0.5rem'
+                }}
+              >
+                📋 Duplicate Court
+              </button>
             </div>
 
             {/* Delete Button */}
@@ -655,7 +683,6 @@ function TrackPropertiesPanel({ track, trackId }) {
     // Normalize to 0-360 range
     numValue = ((numValue % 360) + 360) % 360;
     updateTrackRotation(trackId, numValue);
-    addToHistory();
     return true;
   };
 
@@ -667,6 +694,7 @@ function TrackPropertiesPanel({ track, trackId }) {
   const handleRotationBlur = () => {
     setIsEditingRotation(false);
     applyRotation(localRotation);
+    addToHistory();
   };
 
   const handleRotationKeyDown = (e) => {
@@ -873,12 +901,12 @@ function TrackPropertiesPanel({ track, trackId }) {
                 <input
                   type="number"
                   value={isEditingWidth ? localWidth : (parameters.width_mm / 1000).toFixed(1)}
-                  onChange={(e) => setLocalWidth(e.target.value)}
+                  onChange={(e) => { setLocalWidth(e.target.value); applyWidth(e.target.value); }}
                   onFocus={handleWidthFocus}
                   onBlur={handleWidthBlur}
                   onKeyDown={handleWidthKeyDown}
                   min="3"
-                  max="100"
+                  max="200"
                   step="0.5"
                 />
                 <span className="property-unit">m</span>
@@ -893,12 +921,12 @@ function TrackPropertiesPanel({ track, trackId }) {
               <input
                 type="number"
                 value={isEditingHeight ? localHeight : (parameters.height_mm / 1000).toFixed(1)}
-                onChange={(e) => setLocalHeight(e.target.value)}
+                onChange={(e) => { setLocalHeight(e.target.value); applyHeight(e.target.value); }}
                 onFocus={handleHeightFocus}
                 onBlur={handleHeightBlur}
                 onKeyDown={handleHeightKeyDown}
                 min="3"
-                max="100"
+                max="200"
                 step="0.5"
               />
               <span className="property-unit">m</span>
@@ -912,7 +940,7 @@ function TrackPropertiesPanel({ track, trackId }) {
               <input
                 type="number"
                 value={isEditingRotation ? localRotation : rotation.toFixed(0)}
-                onChange={(e) => setLocalRotation(e.target.value)}
+                onChange={(e) => { setLocalRotation(e.target.value); applyRotation(e.target.value); }}
                 onFocus={handleRotationFocus}
                 onBlur={handleRotationBlur}
                 onKeyDown={handleRotationKeyDown}
@@ -953,7 +981,7 @@ function TrackPropertiesPanel({ track, trackId }) {
                 <input
                   type="number"
                   value={isEditingCornerRadius ? localCornerRadius : (avgCornerRadius / 1000).toFixed(2)}
-                  onChange={(e) => setLocalCornerRadius(e.target.value)}
+                  onChange={(e) => { setLocalCornerRadius(e.target.value); applyCornerRadius('topLeft', e.target.value); }}
                   onFocus={() => handleCornerRadiusFocus(avgCornerRadius)}
                   onBlur={() => handleCornerRadiusBlur('topLeft')}
                   onKeyDown={(e) => handleCornerRadiusKeyDown(e, 'topLeft', avgCornerRadius)}
@@ -972,7 +1000,7 @@ function TrackPropertiesPanel({ track, trackId }) {
                     <input
                       type="number"
                       value={isEditingCornerRadius ? localCornerRadius : (parameters.cornerRadius.topLeft / 1000).toFixed(2)}
-                      onChange={(e) => setLocalCornerRadius(e.target.value)}
+                      onChange={(e) => { setLocalCornerRadius(e.target.value); applyCornerRadius('topLeft', e.target.value); }}
                       onFocus={() => handleCornerRadiusFocus(parameters.cornerRadius.topLeft)}
                       onBlur={() => handleCornerRadiusBlur('topLeft')}
                       onKeyDown={(e) => handleCornerRadiusKeyDown(e, 'topLeft', parameters.cornerRadius.topLeft)}
@@ -989,7 +1017,7 @@ function TrackPropertiesPanel({ track, trackId }) {
                     <input
                       type="number"
                       value={isEditingCornerRadius ? localCornerRadius : (parameters.cornerRadius.topRight / 1000).toFixed(2)}
-                      onChange={(e) => setLocalCornerRadius(e.target.value)}
+                      onChange={(e) => { setLocalCornerRadius(e.target.value); applyCornerRadius('topRight', e.target.value); }}
                       onFocus={() => handleCornerRadiusFocus(parameters.cornerRadius.topRight)}
                       onBlur={() => handleCornerRadiusBlur('topRight')}
                       onKeyDown={(e) => handleCornerRadiusKeyDown(e, 'topRight', parameters.cornerRadius.topRight)}
@@ -1006,7 +1034,7 @@ function TrackPropertiesPanel({ track, trackId }) {
                     <input
                       type="number"
                       value={isEditingCornerRadius ? localCornerRadius : (parameters.cornerRadius.bottomLeft / 1000).toFixed(2)}
-                      onChange={(e) => setLocalCornerRadius(e.target.value)}
+                      onChange={(e) => { setLocalCornerRadius(e.target.value); applyCornerRadius('bottomLeft', e.target.value); }}
                       onFocus={() => handleCornerRadiusFocus(parameters.cornerRadius.bottomLeft)}
                       onBlur={() => handleCornerRadiusBlur('bottomLeft')}
                       onKeyDown={(e) => handleCornerRadiusKeyDown(e, 'bottomLeft', parameters.cornerRadius.bottomLeft)}
@@ -1023,7 +1051,7 @@ function TrackPropertiesPanel({ track, trackId }) {
                     <input
                       type="number"
                       value={isEditingCornerRadius ? localCornerRadius : (parameters.cornerRadius.bottomRight / 1000).toFixed(2)}
-                      onChange={(e) => setLocalCornerRadius(e.target.value)}
+                      onChange={(e) => { setLocalCornerRadius(e.target.value); applyCornerRadius('bottomRight', e.target.value); }}
                       onFocus={() => handleCornerRadiusFocus(parameters.cornerRadius.bottomRight)}
                       onBlur={() => handleCornerRadiusBlur('bottomRight')}
                       onKeyDown={(e) => handleCornerRadiusKeyDown(e, 'bottomRight', parameters.cornerRadius.bottomRight)}

@@ -294,38 +294,51 @@ function removeSmallPaths(svgString, minArea = MIN_SHAPE_AREA) {
  * @param {string} svgString - Raw traced SVG
  * @param {number} canvasWidth - Canvas width (traced paths are at this scale)
  * @param {number} canvasHeight - Canvas height (traced paths are at this scale)
+ * @param {number} originalWidth - Original SVG viewBox width
+ * @param {number} originalHeight - Original SVG viewBox height
  * @returns {string} Properly structured SVG
  */
-function structureSvg(svgString, canvasWidth, canvasHeight) {
+function structureSvg(svgString, canvasWidth, canvasHeight, originalWidth, originalHeight) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(svgString, 'image/svg+xml');
   const svg = doc.documentElement;
 
-  // ImagetracerJS outputs SVG with width/height attributes matching the input image
-  // We need to ensure viewBox matches the actual path coordinates
-  // The traced paths use coordinates in canvas space (canvasWidth x canvasHeight)
+  // ImagetracerJS outputs paths at canvas scale (e.g. 4096x4096).
+  // We need the viewBox to match the ORIGINAL SVG dimensions so the
+  // preview zoom/fit calculation stays consistent with the pre-flatten view.
+  // Wrap all traced content in a scale transform to map canvas coords → original coords.
 
-  // Check if ImagetracerJS already set dimensions
-  const existingWidth = svg.getAttribute('width');
-  const existingHeight = svg.getAttribute('height');
+  const tracedWidth = parseFloat(svg.getAttribute('width')) || canvasWidth;
+  const tracedHeight = parseFloat(svg.getAttribute('height')) || canvasHeight;
 
-  console.log(`[FLATTEN] structureSvg - canvas: ${canvasWidth}x${canvasHeight}, existing: ${existingWidth}x${existingHeight}`);
+  console.log(`[FLATTEN] structureSvg - canvas: ${canvasWidth}x${canvasHeight}, traced: ${tracedWidth}x${tracedHeight}, original: ${originalWidth}x${originalHeight}`);
 
-  // Use the dimensions from ImagetracerJS output if available (paths are at this scale)
-  // Otherwise fall back to our canvas dimensions
-  const viewBoxWidth = existingWidth ? parseFloat(existingWidth) : canvasWidth;
-  const viewBoxHeight = existingHeight ? parseFloat(existingHeight) : canvasHeight;
+  // Calculate scale to map traced paths back to original coordinate space
+  const scaleX = originalWidth / tracedWidth;
+  const scaleY = originalHeight / tracedHeight;
 
-  // Set proper attributes
+  // Wrap all existing children in a scale group if dimensions differ
+  if (Math.abs(scaleX - 1) > 0.001 || Math.abs(scaleY - 1) > 0.001) {
+    const g = doc.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('transform', `scale(${scaleX}, ${scaleY})`);
+
+    // Move all children into the group
+    while (svg.firstChild) {
+      g.appendChild(svg.firstChild);
+    }
+    svg.appendChild(g);
+  }
+
+  // Set viewBox to original dimensions so zoom/fit matches pre-flatten
   svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-  svg.setAttribute('viewBox', `0 0 ${viewBoxWidth} ${viewBoxHeight}`);
+  svg.setAttribute('viewBox', `0 0 ${originalWidth} ${originalHeight}`);
   svg.setAttribute('width', '100%');
   svg.setAttribute('height', '100%');
   svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
   svg.setAttribute('data-flattened', 'true');
   svg.setAttribute('data-flatten-date', new Date().toISOString());
 
-  console.log(`[FLATTEN] Final viewBox: 0 0 ${viewBoxWidth} ${viewBoxHeight}`);
+  console.log(`[FLATTEN] Final viewBox: 0 0 ${originalWidth} ${originalHeight}`);
 
   return new XMLSerializer().serializeToString(doc);
 }
@@ -362,21 +375,27 @@ export async function flattenSvg(svgString, options = {}) {
   };
 
   try {
+    // Yield to event loop so React can render progress updates between heavy sync steps
+    const yieldToUI = () => new Promise(resolve => setTimeout(resolve, 0));
+
     onProgress(5);
     console.log(`[FLATTEN] Starting flatten (quality: ${quality}, resolution: ${resolution})`);
 
     // Step 1: Render SVG to canvas
     onProgress(10);
+    await yieldToUI();
     const { canvas, width, height, originalWidth, originalHeight } = await renderSvgToCanvas(svgString, resolution);
     const ctx = canvas.getContext('2d');
 
     // Step 2: Get image data
     onProgress(20);
+    await yieldToUI();
     let imageData = ctx.getImageData(0, 0, width, height);
 
     // Step 3: Quantize to TPV palette (optional)
     if (quantize) {
       onProgress(30);
+      await yieldToUI();
       imageData = quantizeToPalette(imageData);
       // Put quantized data back on canvas
       ctx.putImageData(imageData, 0, 0);
@@ -384,6 +403,7 @@ export async function flattenSvg(svgString, options = {}) {
 
     // Step 4: Trace with ImagetracerJS
     onProgress(50);
+    await yieldToUI();
     const preset = QUALITY_PRESETS[quality] || QUALITY_PRESETS.fast;
 
     // ImagetracerJS works with ImageData
@@ -391,11 +411,13 @@ export async function flattenSvg(svgString, options = {}) {
 
     // Step 5: Clean up small paths
     onProgress(80);
+    await yieldToUI();
     let cleanedSvg = removeSmallPaths(tracedSvg);
 
-    // Step 6: Add proper structure (use canvas dimensions for viewBox - paths are traced at this scale)
+    // Step 6: Add proper structure (restore original viewBox, scale traced paths to match)
     onProgress(90);
-    cleanedSvg = structureSvg(cleanedSvg, width, height);
+    await yieldToUI();
+    cleanedSvg = structureSvg(cleanedSvg, width, height, originalWidth, originalHeight);
 
     // Done
     onProgress(100);

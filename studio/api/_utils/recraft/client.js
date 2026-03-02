@@ -109,7 +109,7 @@ export async function generateRecraftSvg(params) {
   if (!width_mm || !length_mm) throw new Error('width_mm and length_mm are required');
 
   const replicate = getReplicateClient();
-  const modelId = process.env.RECRAFT_MODEL || 'recraft-ai/recraft-v3-svg';
+  const modelId = process.env.RECRAFT_MODEL || 'recraft-ai/recraft-v4-svg';
 
   // Simplify prompt via Claude (removes problematic words)
   const simplifiedPrompt = await simplifyPrompt(prompt);
@@ -137,7 +137,7 @@ export async function generateRecraftSvg(params) {
       prompt: finalPrompt,
       aspect_ratio: aspect_ratio, // Use aspect ratio string like "16:9", "4:3", etc.
       seed: seed,
-      style: 'any', // Recraft style: "any" allows colorful vector illustrations
+      style: 'vector_illustration', // Recraft style: nudges toward clean flat vector output
       output_format: 'svg'
     };
 

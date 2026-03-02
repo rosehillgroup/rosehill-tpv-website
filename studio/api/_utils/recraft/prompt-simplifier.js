@@ -1,13 +1,14 @@
-// Recraft Prompt Simplifier - Simple regex-based prompt cleaning
-// Removes problematic words that lead to unwanted elements (playground equipment, people, etc.)
+// Recraft Prompt Simplifier - Wraps user prompts with TPV surfacing constraints
+// Ensures generated designs are suitable for poured rubber granule surfaces
 
 /**
- * Simplify user prompt for Recraft
- * Removes problematic words that lead to unwanted elements
- * Returns clean visual description of what user wants to see
+ * Simplify and constrain user prompt for Recraft SVG generation.
+ * Prepends TPV surfacing rules so Recraft produces flat, bold, simple designs
+ * suitable for rubber granule installation. Also removes problematic words
+ * that tend to generate unwanted 3D elements.
  *
  * @param {string} userPrompt - Original user prompt
- * @returns {Promise<string>} Simplified prompt for Recraft
+ * @returns {Promise<string>} Constrained prompt for Recraft
  */
 export async function simplifyPrompt(userPrompt) {
   if (!userPrompt || typeof userPrompt !== 'string' || userPrompt.trim().length === 0) {
@@ -18,7 +19,19 @@ export async function simplifyPrompt(userPrompt) {
 
   const startTime = Date.now();
 
-  // List of problematic words that cause unwanted elements
+  // TPV surfacing constraints — prepended to every prompt
+  const prefix = [
+    'Flat 2D top-down vector illustration suitable for a poured rubber granule surface.',
+    'Design rules: bold simple shapes, smooth curves, no fine detail smaller than a fist.',
+    'Solid opaque flat-colour fills only — absolutely no gradients, no transparency, no opacity, no shading, no strokes, no outlines.',
+    'No 3D, no perspective, no shadows, no realistic textures.',
+    'Maximum 8-10 distinct colours. Shapes should be large and clearly separated.',
+    'Think bold graphic mural, not detailed illustration.',
+    '',
+    'Subject:'
+  ].join(' ');
+
+  // Remove problematic words that cause unwanted 3D/structural elements
   const problematicWords = [
     'playground', 'playgrounds',
     'children', 'child', 'kids', 'kid',
@@ -29,25 +42,27 @@ export async function simplifyPrompt(userPrompt) {
     'furniture'
   ];
 
-  let simplified = userPrompt;
+  let cleaned = userPrompt;
 
   // Remove problematic words (case-insensitive)
   problematicWords.forEach(word => {
     const regex = new RegExp(`\\b${word}\\b`, 'gi');
-    simplified = simplified.replace(regex, '');
+    cleaned = cleaned.replace(regex, '');
   });
 
   // Clean up extra spaces
-  simplified = simplified.replace(/\s+/g, ' ').trim();
+  cleaned = cleaned.replace(/\s+/g, ' ').trim();
 
   // If everything was removed, return original prompt as last resort
-  if (simplified.length === 0) {
+  if (cleaned.length === 0) {
     console.warn('[PROMPT-SIMPLIFIER] Removed everything, using original');
-    simplified = userPrompt;
+    cleaned = userPrompt;
   }
 
-  const elapsed = Date.now() - startTime;
-  console.log(`[PROMPT-SIMPLIFIER] Output (${elapsed}ms):`, simplified);
+  const result = `${prefix} ${cleaned}`;
 
-  return simplified;
+  const elapsed = Date.now() - startTime;
+  console.log(`[PROMPT-SIMPLIFIER] Output (${elapsed}ms):`, result);
+
+  return result;
 }

@@ -572,7 +572,7 @@ function TPVDesigner({ loadedDesign, isAdmin, onShowAdmin }) {
                     id="width"
                     type="number"
                     min="5"
-                    max="100"
+                    max="200"
                     step="0.5"
                     value={widthInput}
                     onChange={(e) => setWidthInput(e.target.value)}
@@ -589,7 +589,7 @@ function TPVDesigner({ loadedDesign, isAdmin, onShowAdmin }) {
                     id="length"
                     type="number"
                     min="5"
-                    max="100"
+                    max="200"
                     step="0.5"
                     value={lengthInput}
                     onChange={(e) => setLengthInput(e.target.value)}
