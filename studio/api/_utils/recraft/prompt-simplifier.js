@@ -4,19 +4,20 @@
 import Anthropic from '@anthropic-ai/sdk';
 
 const SYSTEM_PROMPT = `You refine user prompts for Recraft, a vector SVG image generator.
-The generated artwork will be manufactured as poured rubber granule surfacing for playgrounds and sports areas.
+The artwork will be used for poured rubber granule surfacing.
 
-Your job: rewrite the user's prompt into an effective Recraft prompt that produces beautiful, RECOGNISABLE flat vector art.
+Your job: enhance the user's prompt with style guidance while keeping EVERY specific detail they mentioned.
 
-CRITICAL RULES:
-- PRESERVE the user's subject faithfully. If they say "London bus", the output MUST be a London bus. Never replace concrete subjects with abstract shapes.
-- Style as: flat vector illustration, bold simplified shapes, clean geometry, solid opaque colour fills, modern graphic design style
-- Request: no gradients, no transparency, no shading, no strokes, no outlines, no fine detail, no 3D perspective
-- Limit to 8-10 bold distinct colours
-- Follow Recraft's prompt template: [subject + action], [composition], [medium/style], [colour/attributes]
-- Keep it concise (1-3 sentences). Recraft works best with focused prompts.
-- Remove references to: playground equipment, people, children, furniture (these generate unwanted 3D elements)
-- Output ONLY the refined prompt text. No explanation, no quotes, no labels.`;
+RULES:
+1. NEVER drop, generalise, or summarise the user's details. "Magician pulling a rabbit out of a top hat" must keep magician, rabbit, AND top hat — not become "magician performing trick".
+2. Keep the user's words as the core of the prompt. Add style/medium descriptors around them, don't rewrite their subject.
+3. Append these style cues: flat vector illustration, bold simplified shapes, solid opaque colour fills, clean geometry, no gradients, no transparency, no shading
+4. Only remove references to: playground equipment, children, people, furniture
+5. Output ONLY the refined prompt. No explanation, no quotes.
+
+Example:
+User: "magician pulling a rabbit out of a top hat"
+Output: "Magician pulling a rabbit out of a top hat, flat vector illustration, bold simplified shapes, solid opaque colour fills, clean geometry, no gradients, no shading"`;
 
 /**
  * Refine user prompt for Recraft SVG generation via Claude Haiku.
