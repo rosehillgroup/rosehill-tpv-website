@@ -8,6 +8,7 @@ import { usePlaygroundDesignStore } from '../../stores/playgroundDesignStore.js'
 import { extractSVGDimensions } from '../../lib/sports/motifUtils.js';
 import { saveDesign } from '../../lib/api/designs.js';
 import { serializeDesign } from '../../utils/designSerializer.js';
+import { uploadFile } from '../../lib/supabase/uploadFile.js';
 import { showToast } from '../../lib/toast.js';
 import './DesignEditorModal.css';
 
@@ -72,6 +73,22 @@ function DesignEditorModal({ isOpen, onClose }) {
     try {
       // Serialize the current design state (includes all edits)
       const designData = serializeDesign(playgroundStore);
+
+      // Upload recoloured solid SVG as thumbnail so gallery shows TPV colours
+      if (solidSvgUrl && solidSvgUrl.startsWith('blob:')) {
+        try {
+          const thumbResp = await fetch(solidSvgUrl);
+          const thumbBlob = await thumbResp.blob();
+          const thumbFile = new File([thumbBlob], 'solid-thumbnail.svg', { type: 'image/svg+xml' });
+          const thumbUpload = await uploadFile(thumbFile);
+          if (thumbUpload.success) {
+            designData.thumbnail_url = thumbUpload.url;
+            console.log('[EDITOR] Uploaded solid SVG as thumbnail:', thumbUpload.url);
+          }
+        } catch (thumbErr) {
+          console.error('[EDITOR] Failed to upload solid SVG thumbnail:', thumbErr);
+        }
+      }
 
       // Save to database (update existing design)
       await saveDesign({
@@ -173,6 +190,22 @@ function DesignEditorModal({ isOpen, onClose }) {
 
       // Serialize the current design state (includes all edits)
       const designData = serializeDesign(playgroundStore);
+
+      // Upload recoloured solid SVG as thumbnail so gallery shows TPV colours
+      if (currentSolidUrl && currentSolidUrl.startsWith('blob:')) {
+        try {
+          const thumbResp = await fetch(currentSolidUrl);
+          const thumbBlob = await thumbResp.blob();
+          const thumbFile = new File([thumbBlob], 'solid-thumbnail.svg', { type: 'image/svg+xml' });
+          const thumbUpload = await uploadFile(thumbFile);
+          if (thumbUpload.success) {
+            designData.thumbnail_url = thumbUpload.url;
+            console.log('[EDITOR] Uploaded solid SVG as thumbnail:', thumbUpload.url);
+          }
+        } catch (thumbErr) {
+          console.error('[EDITOR] Failed to upload solid SVG thumbnail:', thumbErr);
+        }
+      }
 
       // Save to database (create or update)
       const savedDesign = await saveDesign({
