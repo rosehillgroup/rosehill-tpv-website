@@ -75,7 +75,7 @@ export default function SVGPreview({
   const containerRef = useRef(null);
   const dragMovedRef = useRef(false); // Track if mouse actually moved during drag
   const fitZoomRef = useRef(0.5); // Last computed fit-to-viewport zoom (dynamic min)
-  const prevSvgUrlRef = useRef(null); // Track previous URL to detect new designs vs colour edits
+  const prevSvgDimsRef = useRef(null); // Track SVG dimensions to detect new designs vs colour edits
 
   // Color editing tip banner state
   const [showColorTip, setShowColorTip] = useState(() => {
@@ -384,16 +384,24 @@ export default function SVGPreview({
     setPan({ x: 0, y: 0 });
   }, []);
 
-  // Auto-fit only when a genuinely new design is loaded (not on colour re-renders)
+  // Auto-fit when a new design loads (different dimensions), but not on colour re-renders
   useEffect(() => {
     if (!blendSvgUrl) return;
-    const wasEmpty = !prevSvgUrlRef.current;
-    prevSvgUrlRef.current = blendSvgUrl;
-    // Only fit when transitioning from no-design to having-a-design
-    if (wasEmpty) {
-      const timer = setTimeout(() => fitToContainer(), 150);
-      return () => clearTimeout(timer);
-    }
+    const timer = setTimeout(() => {
+      const container = containerRef.current;
+      if (!container) return;
+      const svgEl = container.querySelector('svg') || container.querySelector('img');
+      if (!svgEl) return;
+      const w = svgEl.naturalWidth || svgEl.getBBox?.()?.width || svgEl.clientWidth;
+      const h = svgEl.naturalHeight || svgEl.getBBox?.()?.height || svgEl.clientHeight;
+      const dimsKey = `${w}x${h}`;
+      if (dimsKey !== prevSvgDimsRef.current) {
+        // Dimensions changed → new design loaded → auto-fit
+        prevSvgDimsRef.current = dimsKey;
+        fitToContainer();
+      }
+    }, 150);
+    return () => clearTimeout(timer);
   }, [blendSvgUrl, fitToContainer]);
 
   // Zoom and pan handlers
