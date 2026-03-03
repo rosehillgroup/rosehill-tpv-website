@@ -74,6 +74,8 @@ export default function SVGPreview({
   const [eyedropperClickPos, setEyedropperClickPos] = useState(null);
   const containerRef = useRef(null);
   const dragMovedRef = useRef(false); // Track if mouse actually moved during drag
+  const fitZoomRef = useRef(0.5); // Last computed fit-to-viewport zoom (dynamic min)
+  const prevSvgUrlRef = useRef(null); // Track previous URL to detect new designs vs colour edits
 
   // Color editing tip banner state
   const [showColorTip, setShowColorTip] = useState(() => {
@@ -377,15 +379,21 @@ export default function SVGPreview({
     const scaleY = containerH / naturalH;
     const fitZoom = Math.min(scaleX, scaleY, 1); // Never zoom above 100%
 
+    fitZoomRef.current = fitZoom; // Store for dynamic zoom floor
     setZoom(fitZoom);
     setPan({ x: 0, y: 0 });
   }, []);
 
-  // Auto-fit when SVG URL changes (new generation)
+  // Auto-fit only when a genuinely new design is loaded (not on colour re-renders)
   useEffect(() => {
     if (!blendSvgUrl) return;
-    const timer = setTimeout(() => fitToContainer(), 150);
-    return () => clearTimeout(timer);
+    const wasEmpty = !prevSvgUrlRef.current;
+    prevSvgUrlRef.current = blendSvgUrl;
+    // Only fit when transitioning from no-design to having-a-design
+    if (wasEmpty) {
+      const timer = setTimeout(() => fitToContainer(), 150);
+      return () => clearTimeout(timer);
+    }
   }, [blendSvgUrl, fitToContainer]);
 
   // Zoom and pan handlers
@@ -394,7 +402,8 @@ export default function SVGPreview({
   };
 
   const handleZoomOut = () => {
-    setZoom(prevZoom => Math.max(prevZoom / 1.5, 0.5));
+    const minZoom = Math.min(fitZoomRef.current, 0.5);
+    setZoom(prevZoom => Math.max(prevZoom / 1.5, minZoom));
   };
 
   const handleZoomReset = () => {
@@ -404,7 +413,8 @@ export default function SVGPreview({
   const handleWheel = useCallback((e) => {
     e.preventDefault();
     const delta = e.deltaY * -0.001;
-    setZoom(prevZoom => Math.min(Math.max(prevZoom + delta, 0.5), 5));
+    const minZoom = Math.min(fitZoomRef.current, 0.5);
+    setZoom(prevZoom => Math.min(Math.max(prevZoom + delta, minZoom), 5));
   }, []);
 
   // Attach non-passive wheel listener so preventDefault() works

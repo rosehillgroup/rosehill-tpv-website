@@ -660,7 +660,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       // MODE: Text Prompt (existing Recraft generation)
       else if (inputMode === 'prompt') {
         // Map dimensions to canonical Recraft aspect ratio
-        const mapping = mapDimensionsToRecraft(lengthMM, widthMM);
+        const mapping = mapDimensionsToRecraft(widthMM, lengthMM);
         setArMapping(mapping);
 
 
