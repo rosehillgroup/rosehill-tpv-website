@@ -1,14 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createRequire } from 'module';
 import { PaletteExtractor } from './_utils/extraction/extractor.js';
-import { SmartBlendSolver } from './_utils/colour/smartSolver.js';
-import { calculateBlendColor, type BlendComponent, type TPVColor } from './_utils/colour/blendColor.js';
+import { deltaE2000 } from './_utils/colour/deltaE.js';
 
 const require = createRequire(import.meta.url);
 const tpvColours = require('./_utils/data/rosehill_tpv_21_colours.json');
 
 // Build version for cache busting
-const BUILD_VERSION = 'v3.10.0-exact-tpv-hex-dedup-20251117-1700';
+const BUILD_VERSION = 'v4.0.0-deconflict-colour-mapping-20260303';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log('[SOLID-RECIPES] API Handler invoked - Solid TPV colors only');
@@ -74,67 +73,92 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    // Initialize solver for SOLID colors only (maxComponents: 1)
-    console.log('[SOLID-RECIPES] Initializing solid color solver (100% single TPV colors)...');
-    const solver = new SmartBlendSolver(tpvColours, {
-      maxComponents: 1,      // SOLID ONLY: Single component recipes
-      stepPct: 0.04,
-      minPct: 1.0,           // 100% of one color
-      mode: 'parts',
-      parts: {
-        enabled: true,
-        total: 12,
-        minPer: 12           // All 12 parts = 100%
-      },
-      preferAnchor: true
+    // Rank all 21 TPV colours by deltaE for each extracted colour
+    console.log('[SOLID-RECIPES] Ranking TPV colours for each extracted colour...');
+    const solveStartTime = Date.now();
+
+    type RankedMatch = { tpv: any; deltaE: number };
+    type RankedColor = { color: any; index: number; ranked: RankedMatch[] };
+
+    const rankedMatches: RankedColor[] = extraction.palette.map((color, index) => {
+      const colorLab = { L: color.lab.L, a: color.lab.a, b: color.lab.b };
+      const distances = tpvColours.map((tpv: any) => ({
+        tpv,
+        deltaE: deltaE2000(colorLab, { L: tpv.L, a: tpv.a, b: tpv.b })
+      }));
+      distances.sort((a: RankedMatch, b: RankedMatch) => a.deltaE - b.deltaE);
+
+      console.log(`[SOLID-RECIPES]   Color ${index + 1}/${extraction.palette.length}: RGB(${color.rgb.R}, ${color.rgb.G}, ${color.rgb.B}) - ${color.areaPct.toFixed(1)}% → best: ${distances[0].tpv.code} (ΔE ${distances[0].deltaE.toFixed(2)})`);
+
+      return { color, index, ranked: distances };
     });
 
-    // Generate solid color recipes for each extracted color
-    console.log('[SOLID-RECIPES] Finding nearest solid TPV colors...');
-    const recipes = [];
-    const solveStartTime = Date.now();
+    // Greedy deconfliction: assign TPV colours avoiding collisions
+    // Sort by coverage (descending) so backgrounds get first pick
+    const sortedByArea = [...rankedMatches].sort((a, b) => b.color.areaPct - a.color.areaPct);
+    const assigned = new Set<string>(); // TPV codes already assigned
+    const assignments = new Map<number, RankedMatch>(); // index → assigned TPV match
+
+    // Max deltaE penalty before we accept a collision instead of an absurd reassignment
+    const MAX_REASSIGNMENT_PENALTY = 30;
+
+    for (const entry of sortedByArea) {
+      const bestMatch = entry.ranked[0];
+
+      if (!assigned.has(bestMatch.tpv.code)) {
+        // Best match is free — assign it
+        assignments.set(entry.index, bestMatch);
+        assigned.add(bestMatch.tpv.code);
+      } else {
+        // Collision — find next-best unassigned TPV colour
+        let reassigned = false;
+        for (let r = 1; r < entry.ranked.length; r++) {
+          const alt = entry.ranked[r];
+          if (!assigned.has(alt.tpv.code)) {
+            // Check if the penalty is acceptable
+            const penalty = alt.deltaE - bestMatch.deltaE;
+            if (penalty <= MAX_REASSIGNMENT_PENALTY) {
+              assignments.set(entry.index, alt);
+              assigned.add(alt.tpv.code);
+              console.log(`[SOLID-RECIPES]   DECONFLICT: Color ${entry.index + 1} reassigned from ${bestMatch.tpv.code} (ΔE ${bestMatch.deltaE.toFixed(2)}) → ${alt.tpv.code} (ΔE ${alt.deltaE.toFixed(2)}, penalty +${penalty.toFixed(2)})`);
+              reassigned = true;
+              break;
+            }
+          }
+        }
+        if (!reassigned) {
+          // All alternatives are too far or taken — keep the collision
+          assignments.set(entry.index, bestMatch);
+          console.log(`[SOLID-RECIPES]   COLLISION KEPT: Color ${entry.index + 1} stays on ${bestMatch.tpv.code} (no acceptable alternative)`);
+        }
+      }
+    }
+
+    // Build recipes from deconflicted assignments
+    const recipes: any[] = [];
 
     for (let i = 0; i < extraction.palette.length; i++) {
       const color = extraction.palette[i];
-      console.log(`[SOLID-RECIPES]   Color ${i + 1}/${extraction.palette.length}: RGB(${color.rgb.R}, ${color.rgb.G}, ${color.rgb.B}) - ${color.areaPct.toFixed(1)}%`);
+      const match = assignments.get(i)!;
+      const tpv = match.tpv;
 
-      // Solve for single best solid color (no alternatives needed)
-      const colorRecipes = solver.solve(color.lab, 1);
-      const bestRecipe = colorRecipes[0];
-
-      // Get the exact TPV color from palette (100% pure color)
-      const tpvColorCode = bestRecipe.components[0].code;
-      const exactTpvColor = tpvColours.find(col => col.code === tpvColorCode);
-
-      if (!exactTpvColor) {
-        console.error(`[SOLID-RECIPES] TPV color not found: ${tpvColorCode}`);
-        continue;
-      }
-
-      // Use exact TPV hex from palette (not calculated)
-      const tpvHex = exactTpvColor.hex;
-      const tpvRgb = exactTpvColor.rgb;
-      const tpvLab = exactTpvColor.lab;
-
-      // Format recipe (should have exactly 1 component at 100%)
       const chosenRecipe = {
         id: `solid_${i + 1}`,
-        parts: bestRecipe.parts || {},
-        total: bestRecipe.total || 12,
-        deltaE: bestRecipe.deltaE,
-        quality: bestRecipe.deltaE < 1.0 ? 'Excellent' : bestRecipe.deltaE < 3.0 ? 'Good' : 'Fair',
-        resultRgb: bestRecipe.rgb,
+        parts: { [tpv.code]: 12 },
+        total: 12,
+        deltaE: match.deltaE,
+        quality: match.deltaE < 1.0 ? 'Excellent' : match.deltaE < 3.0 ? 'Good' : match.deltaE < 6.0 ? 'Fair' : 'Approximate',
+        resultRgb: { R: tpv.R, G: tpv.G, B: tpv.B },
         components: [{
-          code: tpvColorCode,
-          name: exactTpvColor.name,
+          code: tpv.code,
+          name: tpv.name,
           weight: 1.0,
           parts: 12
         }]
       };
 
-      console.log(`[SOLID-RECIPES]     Matched to: ${tpvColorCode} (${exactTpvColor.name}), ΔE ${bestRecipe.deltaE.toFixed(2)}`);
+      console.log(`[SOLID-RECIPES]     Color ${i + 1} → ${tpv.code} (${tpv.name}), ΔE ${match.deltaE.toFixed(2)}`);
 
-      // Pre-normalize: Use exact TPV color as targetColor
       recipes.push({
         originalColor: {
           hex: rgbToHex(color.rgb),
@@ -143,18 +167,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           areaPct: color.areaPct
         },
         targetColor: {
-          hex: tpvHex,
-          rgb: tpvRgb,
-          lab: tpvLab,
+          hex: tpv.hex,
+          rgb: { R: tpv.R, G: tpv.G, B: tpv.B },
+          lab: { L: tpv.L, a: tpv.a, b: tpv.b },
           areaPct: color.areaPct
         },
         chosenRecipe,
         blendColor: {
-          hex: tpvHex,
-          rgb: tpvRgb,
-          lab: tpvLab
+          hex: tpv.hex,
+          rgb: { R: tpv.R, G: tpv.G, B: tpv.B },
+          lab: { L: tpv.L, a: tpv.a, b: tpv.b }
         },
-        alternativeRecipes: [] // No alternatives for solid colors
+        alternativeRecipes: []
       });
     }
 
