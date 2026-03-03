@@ -4,8 +4,8 @@
  *
  * Workflow:
  * 1. Rasterize SVG to canvas at high resolution
- * 2. Quantize colors to TPV palette + transparency
- * 3. Trace back to vector using ImagetracerJS
+ * 2. Quantize colors to TPV palette (using perceptual deltaE2000) + transparency
+ * 3. Trace back to vector using ImagetracerJS with TPV palette lock
  * 4. Clean up micro-shapes
  * 5. Return clean SVG
  *
@@ -23,80 +23,154 @@ const DEFAULT_RESOLUTION = 4096;
 const MIN_SHAPE_AREA = 25; // 5x5 pixels
 
 /**
- * Quality presets for ImagetracerJS
+ * ImagetracerJS tracing preset — smooth edges, high fidelity.
+ * Custom palette is injected at runtime to prevent re-quantization.
  */
-const QUALITY_PRESETS = {
-  fast: {
-    // Faster, slightly rougher edges
-    colorsampling: 2,      // 2 = random sampling
-    numberofcolors: 24,    // Number of colors to use
-    mincolorratio: 0,      // Minimum color ratio
-    colorquantcycles: 1,   // Color quantization cycles (fewer = faster)
-    ltres: 1,              // Line threshold
-    qtres: 1,              // Quadratic spline threshold
-    pathomit: 8,           // Omit paths shorter than this
-    rightangleenhance: true,
-    blurradius: 0,         // No blur
-    blurdelta: 20,
-    strokewidth: 1,
-    linefilter: false,
-    scale: 1,
-    roundcoords: 1,        // Round coordinates to integers
-    viewbox: false,
-    desc: false,
-    lcpr: 0,
-    qcpr: 0
-  },
-  clean: {
-    // Cleaner, smoother output (slower)
-    colorsampling: 1,      // 1 = deterministic
-    numberofcolors: 32,    // More colors for better fidelity
-    mincolorratio: 0,
-    colorquantcycles: 3,   // More cycles for better color matching
-    ltres: 0.5,            // Tighter line threshold
-    qtres: 0.5,            // Tighter curve threshold
-    pathomit: 4,           // Keep smaller paths
-    rightangleenhance: true,
-    blurradius: 1,         // Slight blur for smoother edges
-    blurdelta: 20,
-    strokewidth: 1,
-    linefilter: false,
-    scale: 1,
-    roundcoords: 2,        // More precision
-    viewbox: false,
-    desc: false,
-    lcpr: 0,
-    qcpr: 0
-  }
+const TRACE_PRESET = {
+  colorsampling: 0,        // 0 = use custom palette (pal option)
+  numberofcolors: 24,      // Ignored when pal is provided
+  mincolorratio: 0,
+  colorquantcycles: 1,     // 1 cycle only — prevents palette drift from our exact TPV values
+  ltres: 0.5,              // Tighter line threshold (smoother)
+  qtres: 0.5,              // Tighter curve threshold (smoother)
+  pathomit: 4,             // Keep smaller paths
+  rightangleenhance: true,
+  blurradius: 1,           // Slight blur for edge smoothing
+  blurdelta: 20,
+  strokewidth: 1,
+  linefilter: false,
+  scale: 1,
+  roundcoords: 2,          // More precision
+  viewbox: false,
+  desc: false,
+  lcpr: 0,
+  qcpr: 0
 };
 
+// --- Perceptual colour matching (CIE Lab + deltaE2000) ---
+
 /**
- * Calculate color distance (Euclidean in RGB space)
+ * Convert sRGB to CIE Lab
  */
-function colorDistance(r1, g1, b1, r2, g2, b2) {
-  return Math.sqrt(
-    Math.pow(r1 - r2, 2) +
-    Math.pow(g1 - g2, 2) +
-    Math.pow(b1 - b2, 2)
-  );
+function rgbToLab(r, g, b) {
+  // Linearize sRGB
+  let rl = r / 255;
+  let gl = g / 255;
+  let bl = b / 255;
+
+  rl = rl > 0.04045 ? Math.pow((rl + 0.055) / 1.055, 2.4) : rl / 12.92;
+  gl = gl > 0.04045 ? Math.pow((gl + 0.055) / 1.055, 2.4) : gl / 12.92;
+  bl = bl > 0.04045 ? Math.pow((bl + 0.055) / 1.055, 2.4) : bl / 12.92;
+
+  // RGB to XYZ (D65 illuminant)
+  const x = (rl * 0.4124 + gl * 0.3576 + bl * 0.1805) * 100;
+  const y = (rl * 0.2126 + gl * 0.7152 + bl * 0.0722) * 100;
+  const z = (rl * 0.0193 + gl * 0.1192 + bl * 0.9505) * 100;
+
+  // XYZ to Lab
+  const xn = 95.047, yn = 100.000, zn = 108.883;
+  let fx = x / xn;
+  let fy = y / yn;
+  let fz = z / zn;
+
+  fx = fx > 0.008856 ? Math.pow(fx, 1 / 3) : (7.787 * fx + 16 / 116);
+  fy = fy > 0.008856 ? Math.pow(fy, 1 / 3) : (7.787 * fy + 16 / 116);
+  fz = fz > 0.008856 ? Math.pow(fz, 1 / 3) : (7.787 * fz + 16 / 116);
+
+  return {
+    L: (116 * fy) - 16,
+    a: 500 * (fx - fy),
+    b: 200 * (fy - fz)
+  };
 }
 
 /**
- * Find closest TPV color to given RGB
+ * CIEDE2000 perceptual colour difference
+ */
+function deltaE2000(lab1, lab2) {
+  const kL = 1, kC = 1, kH = 1;
+  const deg360 = Math.PI * 2;
+  const deg180 = Math.PI;
+
+  const avgL = (lab1.L + lab2.L) / 2;
+  const c1 = Math.sqrt(lab1.a * lab1.a + lab1.b * lab1.b);
+  const c2 = Math.sqrt(lab2.a * lab2.a + lab2.b * lab2.b);
+  const avgC = (c1 + c2) / 2;
+  const g = 0.5 * (1 - Math.sqrt(Math.pow(avgC, 7) / (Math.pow(avgC, 7) + Math.pow(25, 7))));
+
+  const a1p = lab1.a * (1 + g);
+  const a2p = lab2.a * (1 + g);
+  const c1p = Math.sqrt(a1p * a1p + lab1.b * lab1.b);
+  const c2p = Math.sqrt(a2p * a2p + lab2.b * lab2.b);
+  const avgCp = (c1p + c2p) / 2;
+
+  let h1p = Math.atan2(lab1.b, a1p);
+  if (h1p < 0) h1p += deg360;
+  let h2p = Math.atan2(lab2.b, a2p);
+  if (h2p < 0) h2p += deg360;
+
+  const avghp = Math.abs(h1p - h2p) > deg180 ? (h1p + h2p + deg360) / 2 : (h1p + h2p) / 2;
+  const t = 1 - 0.17 * Math.cos(avghp - Math.PI / 6) + 0.24 * Math.cos(2 * avghp) + 0.32 * Math.cos(3 * avghp + Math.PI / 30) - 0.2 * Math.cos(4 * avghp - 63 * Math.PI / 180);
+
+  let deltahp = h2p - h1p;
+  if (Math.abs(deltahp) > deg180) {
+    deltahp = deltahp > 0 ? deltahp - deg360 : deltahp + deg360;
+  }
+
+  const deltaL = lab2.L - lab1.L;
+  const deltaCp = c2p - c1p;
+  const deltaHp = 2 * Math.sqrt(c1p * c2p) * Math.sin(deltahp / 2);
+
+  const sL = 1 + (0.015 * Math.pow(avgL - 50, 2)) / Math.sqrt(20 + Math.pow(avgL - 50, 2));
+  const sC = 1 + 0.045 * avgCp;
+  const sH = 1 + 0.015 * avgCp * t;
+
+  const deltaTheta = 30 * Math.PI / 180 * Math.exp(-Math.pow((avghp - 275 * Math.PI / 180) / (25 * Math.PI / 180), 2));
+  const rC = 2 * Math.sqrt(Math.pow(avgCp, 7) / (Math.pow(avgCp, 7) + Math.pow(25, 7)));
+  const rT = -rC * Math.sin(2 * deltaTheta);
+
+  return Math.sqrt(
+    Math.pow(deltaL / (kL * sL), 2) +
+    Math.pow(deltaCp / (kC * sC), 2) +
+    Math.pow(deltaHp / (kH * sH), 2) +
+    rT * (deltaCp / (kC * sC)) * (deltaHp / (kH * sH))
+  );
+}
+
+// Pre-compute Lab values for all 21 TPV colours (once at module load)
+const TPV_LAB_CACHE = tpvColours.map(c => ({
+  ...c,
+  lab: rgbToLab(c.R, c.G, c.B)
+}));
+
+/**
+ * Find closest TPV color to given RGB using perceptual deltaE2000
  */
 function findClosestTpvColor(r, g, b) {
+  const lab = rgbToLab(r, g, b);
   let closest = null;
-  let minDistance = Infinity;
+  let minDelta = Infinity;
 
-  for (const color of tpvColours) {
-    const distance = colorDistance(r, g, b, color.R, color.G, color.B);
-    if (distance < minDistance) {
-      minDistance = distance;
-      closest = color;
+  for (const tpv of TPV_LAB_CACHE) {
+    const delta = deltaE2000(lab, tpv.lab);
+    if (delta < minDelta) {
+      minDelta = delta;
+      closest = tpv;
     }
   }
 
   return closest;
+}
+
+/**
+ * Build ImagetracerJS palette from TPV colours + transparent white.
+ * This locks the tracer to our exact palette so it doesn't re-quantize.
+ */
+function buildTracerPalette() {
+  const pal = tpvColours.map(c => ({ r: c.R, g: c.G, b: c.B, a: 255 }));
+  // Add transparent white for background/transparent regions
+  pal.push({ r: 255, g: 255, b: 255, a: 0 });
+  return pal;
 }
 
 /**
@@ -110,7 +184,7 @@ function quantizeToPalette(imageData, transparencyThreshold = 128) {
   const data = imageData.data;
   const quantized = new Uint8ClampedArray(data.length);
 
-  // Build a color cache for performance
+  // Build a color cache for performance (deltaE2000 is expensive per-pixel)
   const colorCache = new Map();
 
   for (let i = 0; i < data.length; i += 4) {
@@ -130,7 +204,7 @@ function quantizeToPalette(imageData, transparencyThreshold = 128) {
     }
 
     // Check cache for this color
-    const cacheKey = `${r},${g},${b}`;
+    const cacheKey = (r << 16) | (g << 8) | b;
     let closestColor = colorCache.get(cacheKey);
 
     if (!closestColor) {
@@ -145,7 +219,7 @@ function quantizeToPalette(imageData, transparencyThreshold = 128) {
     quantized[i + 3] = 255; // Fully opaque
   }
 
-  console.log(`[FLATTEN] Quantized to ${colorCache.size} unique colors mapped to TPV palette`);
+  console.log(`[FLATTEN] Quantized ${colorCache.size} unique colors to TPV palette (deltaE2000)`);
 
   return new ImageData(quantized, imageData.width, imageData.height);
 }
@@ -221,6 +295,144 @@ async function renderSvgToCanvas(svgString, maxSize = DEFAULT_RESOLUTION) {
 }
 
 /**
+ * Parse SVG path d attribute and extract coordinate points.
+ * Handles M, L, H, V, C, S, Q, T, A, Z commands (absolute and relative).
+ *
+ * @param {string} d - SVG path d attribute
+ * @returns {{points: Array<{x: number, y: number}>}} Extracted points
+ */
+function parsePathPoints(d) {
+  const points = [];
+  let curX = 0, curY = 0;
+  let startX = 0, startY = 0;
+
+  // Tokenize: split into commands and their numeric arguments
+  const tokens = d.match(/[a-zA-Z][^a-zA-Z]*/g);
+  if (!tokens) return { points };
+
+  for (const token of tokens) {
+    const cmd = token[0];
+    const nums = token.slice(1).trim().match(/-?\d+\.?\d*/g);
+    const args = nums ? nums.map(Number) : [];
+
+    switch (cmd) {
+      case 'M':
+        for (let i = 0; i < args.length; i += 2) {
+          curX = args[i]; curY = args[i + 1];
+          points.push({ x: curX, y: curY });
+        }
+        startX = points.length > 0 ? points[points.length - args.length / 2].x : curX;
+        startY = points.length > 0 ? points[points.length - args.length / 2].y : curY;
+        break;
+      case 'm':
+        for (let i = 0; i < args.length; i += 2) {
+          curX += args[i]; curY += args[i + 1];
+          points.push({ x: curX, y: curY });
+        }
+        startX = points.length > 0 ? points[points.length - args.length / 2].x : curX;
+        startY = points.length > 0 ? points[points.length - args.length / 2].y : curY;
+        break;
+      case 'L':
+        for (let i = 0; i < args.length; i += 2) {
+          curX = args[i]; curY = args[i + 1];
+          points.push({ x: curX, y: curY });
+        }
+        break;
+      case 'l':
+        for (let i = 0; i < args.length; i += 2) {
+          curX += args[i]; curY += args[i + 1];
+          points.push({ x: curX, y: curY });
+        }
+        break;
+      case 'H':
+        for (const a of args) { curX = a; points.push({ x: curX, y: curY }); }
+        break;
+      case 'h':
+        for (const a of args) { curX += a; points.push({ x: curX, y: curY }); }
+        break;
+      case 'V':
+        for (const a of args) { curY = a; points.push({ x: curX, y: curY }); }
+        break;
+      case 'v':
+        for (const a of args) { curY += a; points.push({ x: curX, y: curY }); }
+        break;
+      case 'C':
+        for (let i = 0; i < args.length; i += 6) {
+          // Control points + endpoint
+          points.push({ x: args[i], y: args[i + 1] });
+          points.push({ x: args[i + 2], y: args[i + 3] });
+          curX = args[i + 4]; curY = args[i + 5];
+          points.push({ x: curX, y: curY });
+        }
+        break;
+      case 'c':
+        for (let i = 0; i < args.length; i += 6) {
+          points.push({ x: curX + args[i], y: curY + args[i + 1] });
+          points.push({ x: curX + args[i + 2], y: curY + args[i + 3] });
+          curX += args[i + 4]; curY += args[i + 5];
+          points.push({ x: curX, y: curY });
+        }
+        break;
+      case 'S': case 's':
+        for (let i = 0; i < args.length; i += 4) {
+          if (cmd === 'S') {
+            points.push({ x: args[i], y: args[i + 1] });
+            curX = args[i + 2]; curY = args[i + 3];
+          } else {
+            points.push({ x: curX + args[i], y: curY + args[i + 1] });
+            curX += args[i + 2]; curY += args[i + 3];
+          }
+          points.push({ x: curX, y: curY });
+        }
+        break;
+      case 'Q':
+        for (let i = 0; i < args.length; i += 4) {
+          points.push({ x: args[i], y: args[i + 1] });
+          curX = args[i + 2]; curY = args[i + 3];
+          points.push({ x: curX, y: curY });
+        }
+        break;
+      case 'q':
+        for (let i = 0; i < args.length; i += 4) {
+          points.push({ x: curX + args[i], y: curY + args[i + 1] });
+          curX += args[i + 2]; curY += args[i + 3];
+          points.push({ x: curX, y: curY });
+        }
+        break;
+      case 'T':
+        for (let i = 0; i < args.length; i += 2) {
+          curX = args[i]; curY = args[i + 1];
+          points.push({ x: curX, y: curY });
+        }
+        break;
+      case 't':
+        for (let i = 0; i < args.length; i += 2) {
+          curX += args[i]; curY += args[i + 1];
+          points.push({ x: curX, y: curY });
+        }
+        break;
+      case 'A':
+        for (let i = 0; i < args.length; i += 7) {
+          curX = args[i + 5]; curY = args[i + 6];
+          points.push({ x: curX, y: curY });
+        }
+        break;
+      case 'a':
+        for (let i = 0; i < args.length; i += 7) {
+          curX += args[i + 5]; curY += args[i + 6];
+          points.push({ x: curX, y: curY });
+        }
+        break;
+      case 'Z': case 'z':
+        curX = startX; curY = startY;
+        break;
+    }
+  }
+
+  return { points };
+}
+
+/**
  * Remove small paths from SVG (speckle cleanup)
  *
  * @param {string} svgString - SVG content
@@ -236,41 +448,29 @@ function removeSmallPaths(svgString, minArea = MIN_SHAPE_AREA) {
   let removedCount = 0;
 
   paths.forEach(path => {
-    // Try to estimate path area from bounding box
-    // This is a rough heuristic - actual area calculation would require path parsing
     try {
-      // For ImagetracerJS output, paths have simple d attributes
-      // We can estimate size from the coordinate ranges
       const d = path.getAttribute('d');
       if (!d) return;
 
-      // Extract all numbers from path
-      const numbers = d.match(/-?\d+\.?\d*/g);
-      if (!numbers || numbers.length < 4) {
-        // Very short path - likely speckle
+      const { points } = parsePathPoints(d);
+      if (points.length < 2) {
         path.remove();
         removedCount++;
         return;
       }
 
-      // Estimate bounding box
-      const coords = numbers.map(Number);
+      // Calculate bounding box from parsed points
       let minX = Infinity, maxX = -Infinity;
       let minY = Infinity, maxY = -Infinity;
 
-      // Assume alternating x,y coordinates (simplified)
-      for (let i = 0; i < coords.length - 1; i += 2) {
-        const x = coords[i];
-        const y = coords[i + 1];
-        minX = Math.min(minX, x);
-        maxX = Math.max(maxX, x);
-        minY = Math.min(minY, y);
-        maxY = Math.max(maxY, y);
+      for (const pt of points) {
+        if (pt.x < minX) minX = pt.x;
+        if (pt.x > maxX) maxX = pt.x;
+        if (pt.y < minY) minY = pt.y;
+        if (pt.y > maxY) maxY = pt.y;
       }
 
-      const bboxWidth = maxX - minX;
-      const bboxHeight = maxY - minY;
-      const area = bboxWidth * bboxHeight;
+      const area = (maxX - minX) * (maxY - minY);
 
       if (area < minArea) {
         path.remove();
@@ -350,7 +550,6 @@ function structureSvg(svgString, canvasWidth, canvasHeight, originalWidth, origi
  *
  * @param {string} svgString - Source SVG content
  * @param {Object} options - Configuration options
- * @param {string} options.quality - 'fast' or 'clean' (default: 'fast')
  * @param {number} options.resolution - Max dimension in pixels (default: 4096)
  * @param {boolean} options.quantize - Apply TPV palette quantization (default: true)
  * @param {Function} options.onProgress - Progress callback (0-100)
@@ -358,7 +557,6 @@ function structureSvg(svgString, canvasWidth, canvasHeight, originalWidth, origi
  */
 export async function flattenSvg(svgString, options = {}) {
   const {
-    quality = 'fast',
     resolution = DEFAULT_RESOLUTION,
     quantize = true,
     onProgress = () => {}
@@ -366,7 +564,6 @@ export async function flattenSvg(svgString, options = {}) {
 
   const startTime = Date.now();
   const stats = {
-    quality,
     resolution,
     quantized: quantize,
     originalSize: svgString.length,
@@ -379,7 +576,7 @@ export async function flattenSvg(svgString, options = {}) {
     const yieldToUI = () => new Promise(resolve => setTimeout(resolve, 0));
 
     onProgress(5);
-    console.log(`[FLATTEN] Starting flatten (quality: ${quality}, resolution: ${resolution})`);
+    console.log(`[FLATTEN] Starting flatten (resolution: ${resolution})`);
 
     // Step 1: Render SVG to canvas
     onProgress(10);
@@ -401,10 +598,13 @@ export async function flattenSvg(svgString, options = {}) {
       ctx.putImageData(imageData, 0, 0);
     }
 
-    // Step 4: Trace with ImagetracerJS
+    // Step 4: Trace with ImagetracerJS using locked TPV palette
     onProgress(50);
     await yieldToUI();
-    const preset = QUALITY_PRESETS[quality] || QUALITY_PRESETS.fast;
+    const preset = {
+      ...TRACE_PRESET,
+      pal: buildTracerPalette()  // Lock tracer to our TPV palette — prevents re-quantization
+    };
 
     // ImagetracerJS works with ImageData
     const tracedSvg = ImageTracer.imagedataToSVG(imageData, preset);
@@ -557,7 +757,7 @@ export function buildRecipesFromFlattenedSvg(svgString) {
 }
 
 /**
- * Find closest TPV color by hex value
+ * Find closest TPV color by hex value (uses perceptual deltaE2000)
  */
 function findClosestTpvColorByHex(hex) {
   // Parse hex

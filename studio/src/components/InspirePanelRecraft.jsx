@@ -160,7 +160,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   const [flattenError, setFlattenError] = useState(null);
   const [troubleshootOpen, setTroubleshootOpen] = useState(false);
   const [flattenConfirmOpen, setFlattenConfirmOpen] = useState(false);
-  const [pendingFlattenQuality, setPendingFlattenQuality] = useState(null);
+  // pendingFlattenQuality removed — single mode only
 
   // True cut-out state (Phase 2 - Boolean operations)
   const [isCutoutProcessing, setIsCutoutProcessing] = useState(false);
@@ -387,8 +387,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
           }
 
           try {
-            // Regenerate blend SVG if we have blend recipes
-            if (restoredState.blendRecipes && restoredState.colorMapping) {
+            // Regenerate blend SVG if we have blend recipes AND blend mode is enabled
+            if (FEATURE_FLAGS.BLEND_MODE_ENABLED && restoredState.blendRecipes && restoredState.colorMapping) {
               await regenerateBlendSVGFromState(
                 restoredState.result.svg_url,
                 restoredState.colorMapping,
@@ -458,8 +458,8 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       }
 
       try {
-        // Regenerate blend SVG if we have blend recipes
-        if (blendRecipes && colorMapping) {
+        // Regenerate blend SVG if we have blend recipes AND blend mode is enabled
+        if (FEATURE_FLAGS.BLEND_MODE_ENABLED && blendRecipes && colorMapping) {
           await regenerateBlendSVGFromState(
             result.svg_url,
             colorMapping,
@@ -906,7 +906,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   };
 
   // Handle flatten artwork (Phase 3)
-  const handleFlattenArtwork = async (quality = 'fast') => {
+  const handleFlattenArtwork = async () => {
     // Get the currently displayed SVG URL (with user colors applied)
     const svgUrl = viewMode === 'solid' ? solidSvgUrl : blendSvgUrl;
     if (!svgUrl || isFlattenProcessing) return;
@@ -922,7 +922,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
     setFlattenError(null);
 
     try {
-      console.log(`[INSPIRE] Starting flatten (quality: ${quality})`);
+      console.log('[INSPIRE] Starting flatten');
 
       // Fetch the displayed SVG content (which has user colors already applied)
       const response = await fetch(svgUrl);
@@ -942,7 +942,6 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
       }
 
       const { svg: flattenedSvg, stats } = await flattenSvg(displayedSvg, {
-        quality,
         resolution: 4096,
         quantize: true,
         onProgress: setFlattenProgress
@@ -995,8 +994,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   };
 
   // Show flatten confirmation modal
-  const showFlattenConfirm = (quality) => {
-    setPendingFlattenQuality(quality);
+  const showFlattenConfirm = () => {
     setFlattenConfirmOpen(true);
     setTroubleshootOpen(false);
   };
@@ -1004,7 +1002,7 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
   // Confirm and execute flatten
   const confirmFlatten = () => {
     setFlattenConfirmOpen(false);
-    handleFlattenArtwork(pendingFlattenQuality);
+    handleFlattenArtwork();
   };
 
   // Revert to original (pre-flatten) SVG
@@ -2694,22 +2692,15 @@ export default function InspirePanelRecraft({ loadedDesign, onDesignSaved, isEmb
                   </button>
                   {troubleshootOpen && (
                     <div className="troubleshoot-menu">
-                      <div className="troubleshoot-header">Simplify Artwork</div>
                       <p className="troubleshoot-desc">
                         If editing feels slow or you see visual artifacts, simplifying can help.
                       </p>
                       <div className="troubleshoot-buttons">
                         <button
-                          onClick={() => showFlattenConfirm('fast')}
+                          onClick={() => showFlattenConfirm()}
                           disabled={isFlattenProcessing}
                         >
-                          Quick
-                        </button>
-                        <button
-                          onClick={() => showFlattenConfirm('clean')}
-                          disabled={isFlattenProcessing}
-                        >
-                          Smooth
+                          Simplify Artwork
                         </button>
                       </div>
                     </div>

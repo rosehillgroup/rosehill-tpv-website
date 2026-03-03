@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { saveDesign } from '../lib/api/designs.js';
 import { createProject, listProjects } from '../lib/api/projects.js';
 import { serializeDesign, validateDesignState } from '../utils/designSerializer.js';
+import { uploadFile } from '../lib/supabase/uploadFile.js';
 import './SaveDesignModal.css';
 
 export default function SaveDesignModal({
@@ -100,6 +101,24 @@ export default function SaveDesignModal({
 
       console.log('[SAVE-MODAL] Serialized design data:', designData);
       console.log('[SAVE-MODAL] SVG URL from serialized data:', designData.original_svg_url);
+
+      // For playground designs: upload the recoloured solid SVG as thumbnail
+      // so the gallery shows the TPV-coloured version, not the original Recraft colours
+      if (currentState.solidSvgUrl && currentState.solidSvgUrl.startsWith('blob:')) {
+        try {
+          const response = await fetch(currentState.solidSvgUrl);
+          const blob = await response.blob();
+          const file = new File([blob], 'solid-thumbnail.svg', { type: 'image/svg+xml' });
+          const uploadResult = await uploadFile(file);
+          if (uploadResult.success) {
+            designData.thumbnail_url = uploadResult.url;
+            console.log('[SAVE-MODAL] Uploaded solid SVG as thumbnail:', uploadResult.url);
+          }
+        } catch (uploadErr) {
+          console.error('[SAVE-MODAL] Failed to upload solid SVG thumbnail:', uploadErr);
+          // Non-fatal — save will proceed with original thumbnail
+        }
+      }
 
       // Prepare save payload
       const payload = {
